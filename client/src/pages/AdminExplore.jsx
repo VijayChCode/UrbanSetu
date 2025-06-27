@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import ListingItem from "../components/ListingItem";
 import ContactSupportWrapper from "../components/ContactSupportWrapper";
 import LocationSelector from "../components/LocationSelector";
+import duckImg from "../assets/duck-404.png";
 
 export default function AdminExplore() {
   const location = useLocation();
@@ -255,7 +256,13 @@ export default function AdminExplore() {
           <div className="mt-4">
             <h2 className="text-2xl font-bold text-gray-800 mb-4">All Properties ({listings.length})</h2>
             {loading && <p className="text-center text-lg font-semibold text-blue-600 animate-pulse">Loading...</p>}
-            {!loading && listings.length === 0 && <p className="text-center text-gray-500 text-lg">No properties found</p>}
+            {!loading && listings.length === 0 && (
+              <div className="text-center py-8">
+                <img src={duckImg} alt="No properties found" className="w-32 h-32 object-contain mx-auto mb-4 animate-float" />
+                <h3 className="text-xl font-bold text-gray-700 mb-2">No Properties Found</h3>
+                <p className="text-gray-500 mb-4">Try adjusting your search criteria or filters</p>
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {listings.map((listing) => (
                 <ListingItem key={listing._id} listing={listing} />

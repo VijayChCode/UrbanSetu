@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import ListingItem from "../components/ListingItem";
 import LocationSelector from "../components/LocationSelector";
+import duckImg from "../assets/duck-404.png";
 
 export default function PublicSearch() {
     const location = useLocation();
@@ -269,7 +270,13 @@ export default function PublicSearch() {
                     <h2 className="text-2xl font-bold text-gray-800 mb-4">Listings</h2>
                     {loading && <p className="text-center text-lg font-semibold text-blue-600 animate-pulse">Loading...</p>}
                     {error && <p className="text-center text-red-600 text-lg mb-4">{error}</p>}
-                    {!loading && !error && listings.length === 0 && <p className="text-center text-gray-500 text-lg">No Listings found</p>}
+                    {!loading && !error && listings.length === 0 && (
+                      <div className="text-center py-8">
+                        <img src={duckImg} alt="No listings found" className="w-32 h-32 object-contain mx-auto mb-4 animate-float" />
+                        <h3 className="text-xl font-bold text-gray-700 mb-2">No Listings Found</h3>
+                        <p className="text-gray-500 mb-4">Try adjusting your search criteria or filters</p>
+                      </div>
+                    )}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {listings && listings.map((listing) => (
                             <ListingItem key={listing._id} listing={listing} />
