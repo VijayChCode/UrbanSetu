@@ -1,0 +1,38 @@
+{
+  "name": "UrbanSetu",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon api/index.js",
+    "start": "node api/index.js",
+    "build": "npm install && npm install --prefix client && npm run build --prefix client",
+    "seed-admin": "node api/seedDefaultAdmin.js",
+    "check-admin": "node api/checkDefaultAdmin.js",
+    "fix-admin": "node api/fixDefaultAdmin.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/G-Rajashekar/mern-estate.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/G-Rajashekar/mern-estate/issues"
+  },
+  "homepage": "https://github.com/G-Rajashekar/mern-estate#readme",
+  "description": "",
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "cookie-parse": "^0.4.0",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.12.1",
+    "multer": "^2.0.1",
+    "nodemon": "^3.1.10",
+    "react-hot-toast": "^2.5.2"
+  }
+}
