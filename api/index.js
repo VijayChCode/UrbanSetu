@@ -97,6 +97,25 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Root endpoint
+app.get('/', (req, res) => {
+  res.status(200).json({ 
+    message: 'UrbanSetu API is running',
+    version: '1.0.0',
+    endpoints: {
+      health: '/api/health',
+      auth: '/api/auth',
+      user: '/api/user',
+      listing: '/api/listing',
+      bookings: '/api/bookings',
+      admin: '/api/admin',
+      contact: '/api/contact',
+      wishlist: '/api/wishlist',
+      about: '/api/about'
+    }
+  });
+});
+
 const startServer = () => {
   app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}!!!`);
@@ -122,11 +141,6 @@ app.use("/api/admin", adminRouter);
 app.use("/api/contact", contactRouter);
 app.use("/api/wishlist", wishlistRouter);
 
-app.use(express.static(path.join(__dirname,'/client/dist')))
-
-app.get('*',(req,res,next)=>{
-    res.sendFile(path.join(__dirname,'client','dist','index.html'))
-})
 app.use((err,req,res,next)=>{
     const statusCode=err.statusCode||500;
     const message=err.message||"internal server error"
