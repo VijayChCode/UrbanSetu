@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: urbansetu-backend
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGO
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+    healthCheckPath: /api/health 
