@@ -85,7 +85,12 @@ export const SignIn=async(req,res,next)=>{
         const token=jwt.sign({id:validUser._id},process.env.JWT_TOKEN)
 
         // Return only the necessary fields
-        res.cookie('access_token',token,{httpOnly:true}).status(200).json({
+        res.cookie('access_token',token,{
+            httpOnly:true,
+            maxAge: 30 * 60 * 1000, // 30 minutes
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+            secure: process.env.NODE_ENV === 'production'
+        }).status(200).json({
             _id: validUser._id,
             username: validUser.username,
             email: validUser.email,
@@ -108,7 +113,12 @@ export const Google=async (req,res,next)=>{
         const validUser=await User.findOne({email})
         if (validUser){
             const token=jwt.sign({id:validUser._id},process.env.JWT_TOKEN)
-            res.cookie('access_token',token,{httpOnly:true}).status(200).json(validUser)
+            res.cookie('access_token',token,{
+                httpOnly:true,
+                maxAge: 30 * 60 * 1000, // 30 minutes
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+                secure: process.env.NODE_ENV === 'production'
+            }).status(200).json(validUser)
         }
         else{
             const generatedPassword=Math.random().toString(36).slice(-8)
@@ -122,7 +132,12 @@ export const Google=async (req,res,next)=>{
             })
             await newUser.save()
             const token=jwt.sign({id:newUser._id},process.env.JWT_TOKEN)
-            res.cookie('access_token',token,{httpOnly:true}).status(200).json(newUser)
+            res.cookie('access_token',token,{
+                httpOnly:true,
+                maxAge: 30 * 60 * 1000, // 30 minutes
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+                secure: process.env.NODE_ENV === 'production'
+            }).status(200).json(newUser)
 
         }
 
@@ -156,7 +171,13 @@ export const verifyAuth = async (req, res, next) => {
         if (!user) {
             return next(errorHandler(404, "User not found"));
         }
-        
+        // Refresh cookie expiry
+        res.cookie('access_token', token, {
+            httpOnly: true,
+            maxAge: 30 * 60 * 1000, // 30 minutes
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+            secure: process.env.NODE_ENV === 'production'
+        });
         res.status(200).json(user);
     } catch (error) {
         if (error.name === 'JsonWebTokenError') {

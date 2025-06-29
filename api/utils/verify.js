@@ -13,6 +13,13 @@ export const verifyToken = async (req, res, next) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
+    // Refresh cookie expiry
+    res.cookie('access_token', token, {
+      httpOnly: true,
+      maxAge: 30 * 60 * 1000, // 30 minutes
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      secure: process.env.NODE_ENV === 'production'
+    });
     req.user = user;
     next();
   } catch (error) {

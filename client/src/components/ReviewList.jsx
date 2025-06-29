@@ -3,6 +3,8 @@ import { useSelector } from 'react-redux';
 import { FaStar, FaTrash, FaEdit, FaCheck, FaTimes, FaThumbsUp, FaCheckCircle, FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
 import ReviewForm from './ReviewForm.jsx';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export default function ReviewList({ listingId, onReviewDeleted }) {
   const { currentUser } = useSelector((state) => state.user);
   const [reviews, setReviews] = useState([]);
@@ -18,7 +20,9 @@ export default function ReviewList({ listingId, onReviewDeleted }) {
 
   const fetchReviews = async () => {
     try {
-      const res = await fetch(`/api/review/listing/${listingId}?sort=${sortBy}&order=${sortOrder}`);
+      const res = await fetch(`${API_BASE_URL}/api/review/listing/${listingId}?sort=${sortBy}&order=${sortOrder}`, {
+        credentials: 'include',
+      });
       const data = await res.json();
       
       if (res.ok) {
@@ -39,7 +43,7 @@ export default function ReviewList({ listingId, onReviewDeleted }) {
     }
 
     try {
-      const res = await fetch(`/api/review/delete/${reviewId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/review/delete/${reviewId}`, {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -76,7 +80,7 @@ export default function ReviewList({ listingId, onReviewDeleted }) {
     }
 
     try {
-      const res = await fetch(`/api/review/helpful/${reviewId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/review/helpful/${reviewId}`, {
         method: 'POST',
         credentials: 'include',
       });

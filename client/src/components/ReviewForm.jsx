@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { FaStar, FaEdit, FaTimes } from 'react-icons/fa';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export default function ReviewForm({ listingId, existingReview, onReviewSubmitted }) {
   const { currentUser } = useSelector((state) => state.user);
   const [rating, setRating] = useState(existingReview?.rating || 0);
@@ -32,7 +34,7 @@ export default function ReviewForm({ listingId, existingReview, onReviewSubmitte
       }
 
       // Check if user is property owner by fetching listing details
-      const res = await fetch(`/api/listing/get/${listingId}`);
+      const res = await fetch(`${API_BASE_URL}/api/listing/get/${listingId}`);
       const listingData = await res.json();
       
       if (res.ok && listingData.userRef === currentUser._id) {
@@ -42,7 +44,7 @@ export default function ReviewForm({ listingId, existingReview, onReviewSubmitte
       }
 
       // Check if user has already reviewed this property
-      const reviewRes = await fetch(`/api/review/user`, {
+      const reviewRes = await fetch(`${API_BASE_URL}/api/review/user`, {
         credentials: 'include',
       });
       
@@ -83,8 +85,8 @@ export default function ReviewForm({ listingId, existingReview, onReviewSubmitte
 
     try {
       const url = isEditing 
-        ? `/api/review/update/${existingReview._id}`
-        : '/api/review/create';
+        ? `${API_BASE_URL}/api/review/update/${existingReview._id}`
+        : `${API_BASE_URL}/api/review/create`;
       
       const method = isEditing ? 'PUT' : 'POST';
       

@@ -16,6 +16,7 @@ import cookieParser from 'cookie-parser';
 import path from 'path'
 import User from './models/user.model.js';
 import bcryptjs from 'bcryptjs';
+import cors from 'cors';
 
 dotenv.config();
 
@@ -62,30 +63,19 @@ let PORT = process.env.PORT || 3000;
 
 const app = express();
 
-// CORS configuration
-app.use((req, res, next) => {
-    const allowedOrigins = [
-        'http://localhost:5173',
-        'https://urbansetu.vercel.app',
-        'https://urbansetu-git-main-vijaychcode.vercel.app',
-        'https://urbansetu-vijaychcode.vercel.app'
-    ];
-    
-    const origin = req.headers.origin;
-    if (allowedOrigins.includes(origin)) {
-        res.header('Access-Control-Allow-Origin', origin);
-    }
-    
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-    res.header('Access-Control-Allow-Credentials', 'true');
-    
-    if (req.method === 'OPTIONS') {
-        res.sendStatus(200);
-    } else {
-        next();
-    }
-});
+// Remove manual CORS middleware and use cors package
+const allowedOrigins = [
+    'http://localhost:5173',
+    'https://urbansetu.vercel.app',
+    'https://urbansetu-git-main-vijaychcode.vercel.app',
+    'https://urbansetu-vijaychcode.vercel.app'
+];
+app.use(cors({
+    origin: allowedOrigins,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
+}));
 
 app.use(express.json())
 app.use(cookieParser())

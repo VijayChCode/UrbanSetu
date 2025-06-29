@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { FaStar, FaCheck, FaTimes, FaTrash, FaEye, FaBan, FaSort, FaSortUp, FaSortDown, FaCheckCircle, FaThumbsUp } from 'react-icons/fa';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export default function AdminReviews() {
   const { currentUser } = useSelector((state) => state.user);
   const [reviews, setReviews] = useState([]);
@@ -37,7 +39,7 @@ export default function AdminReviews() {
         params.append('status', selectedStatus);
       }
 
-      const res = await fetch(`/api/review/admin/all?${params}`, {
+      const res = await fetch(`${API_BASE_URL}/api/review/admin/all?${params}`, {
         credentials: 'include',
       });
 
@@ -58,7 +60,7 @@ export default function AdminReviews() {
 
   const handleStatusChange = async (reviewId, newStatus, adminNote = '') => {
     try {
-      const res = await fetch(`/api/review/admin/status/${reviewId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/review/admin/status/${reviewId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -88,7 +90,7 @@ export default function AdminReviews() {
       return;
     }
     try {
-      const res = await fetch(`/api/review/admin/remove/${reviewToRemove._id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/review/admin/remove/${reviewToRemove._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
