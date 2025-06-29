@@ -117,7 +117,7 @@ export default function ReviewForm({ listingId, existingReview, onReviewSubmitte
         }
         setIsEditing(false);
         alert(data.message || 'Review submitted successfully!');
-        navigate(`/user/listing/${listingId}`);
+        navigate(0);
       } else {
         setError(data.message || 'Failed to submit review');
       }
