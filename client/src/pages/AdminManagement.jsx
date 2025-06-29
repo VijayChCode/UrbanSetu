@@ -224,6 +224,19 @@ export default function AdminManagement() {
     );
   };
 
+  // Guard: If users/admins are not arrays, show session expired/unauthorized message
+  if (!Array.isArray(users) || (tab === 'admins' && !Array.isArray(admins) && currentUser.isDefaultAdmin)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-100">
+        <div className="bg-white rounded-xl shadow-lg p-8 text-center">
+          <h2 className="text-2xl font-bold text-red-600 mb-4">Session expired or unauthorized</h2>
+          <p className="text-gray-700 mb-4">Please sign in again to access admin management.</p>
+          <a href="/sign-in" className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium transition-colors">Go to Sign In</a>
+        </div>
+      </div>
+    );
+  }
+
   if (!currentUser) return null;
 
   return (

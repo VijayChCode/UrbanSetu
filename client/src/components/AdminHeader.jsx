@@ -14,6 +14,7 @@ export default function AdminHeader() {
   const [fadeIn, setFadeIn] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
   const [appointmentCount, setAppointmentCount] = useState(0);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   useEffect(() => {
     setFadeIn(true);
@@ -111,7 +112,7 @@ export default function AdminHeader() {
   const handleSignout = async () => {
     try {
       dispatch(signoutUserStart());
-      const res = await fetch("/api/auth/signout");
+      const res = await fetch(`${API_BASE_URL}/api/auth/signout`, { credentials: 'include' });
       const data = await res.json();
       if (data.success === false) {
         dispatch(signoutUserFailure(data.message));

@@ -23,7 +23,7 @@ export default function AdminMyListings() {
         setLoading(true);
         setError(null);
         
-        const res = await fetch('/api/listing/user', {
+        const res = await fetch(`${API_BASE_URL}/api/listing/user`, {
           credentials: 'include'
         });
         
