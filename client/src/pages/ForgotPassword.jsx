@@ -5,6 +5,8 @@ import ContactSupportWrapper from "../components/ContactSupportWrapper";
 import { useSelector } from "react-redux";
 import NotFound from "./NotFound";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export default function ForgotPassword() {
   const [step, setStep] = useState(1); // 1: verification, 2: reset password
   const [formData, setFormData] = useState({
@@ -134,7 +136,7 @@ export default function ForgotPassword() {
     setError("");
 
     try {
-      const res = await fetch("/api/auth/forgot-password", {
+      const res = await fetch(`${API_BASE_URL}/api/auth/forgot-password`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -177,7 +179,7 @@ export default function ForgotPassword() {
     }
 
     try {
-      const res = await fetch("/api/auth/reset-password", {
+      const res = await fetch(`${API_BASE_URL}/api/auth/reset-password`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

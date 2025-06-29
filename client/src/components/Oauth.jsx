@@ -5,6 +5,8 @@ import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { FcGoogle } from 'react-icons/fc';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export default function Oauth({ pageType }) {
     const dispatch = useDispatch();
     const navigate = useNavigate();
@@ -26,7 +28,7 @@ export default function Oauth({ pageType }) {
                     photo: result.user.photoURL
                 })
             };
-            const res = await fetch(apiUrl, options);
+            const res = await fetch(`${API_BASE_URL}${apiUrl}`, options);
             const data = await res.json();
             dispatch(signInSuccess(data));
             navigate("/");

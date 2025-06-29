@@ -5,6 +5,8 @@ import Oauth from "../components/Oauth";
 import ContactSupportWrapper from "../components/ContactSupportWrapper";
 import { useSelector } from "react-redux";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export default function SignUp() {
   const [formData, setFormData] = useState({
     username: "",
@@ -91,7 +93,7 @@ export default function SignUp() {
     }
 
     try {
-      const apiUrl = "/api/auth/signup";
+      const apiUrl = `${API_BASE_URL}/api/auth/signup`;
       const options = {
         method: "POST",
         headers: {

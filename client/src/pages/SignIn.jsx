@@ -5,6 +5,8 @@ import { signInFailure, signInStart, signInSuccess } from "../redux/user/userSli
 import Oauth from "../components/Oauth.jsx";
 import ContactSupportWrapper from "../components/ContactSupportWrapper.jsx";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export default function SignIn() {
     const [formData, setFormData] = useState({
         email: "",
@@ -60,7 +62,7 @@ export default function SignIn() {
         e.preventDefault();
         dispatch(signInStart());
         try {
-            const apiUrl = "/api/auth/signin";
+            const apiUrl = `${API_BASE_URL}/api/auth/signin`;
             const options = {
                 method: "POST",
                 headers: {

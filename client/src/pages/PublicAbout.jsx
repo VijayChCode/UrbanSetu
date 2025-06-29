@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import ContactSupportWrapper from '../components/ContactSupportWrapper';
 import { FaBullseye, FaGlobe, FaUsers, FaShieldAlt, FaUserFriends, FaEnvelope, FaStar } from 'react-icons/fa';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export default function PublicAbout() {
   const [aboutData, setAboutData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -9,7 +11,7 @@ export default function PublicAbout() {
   useEffect(() => {
     const fetchAboutData = async () => {
       try {
-        const response = await fetch('/api/about');
+        const response = await fetch(`${API_BASE_URL}/api/about`);
         if (response.ok) {
           const data = await response.json();
           setAboutData(data);
