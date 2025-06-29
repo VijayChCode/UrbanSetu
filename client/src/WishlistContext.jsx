@@ -25,9 +25,19 @@ const WishlistProvider = ({ children }) => {
       
       if (response.ok) {
         const data = await response.json();
+        if (!Array.isArray(data)) {
+          setWishlist([]);
+          window.alert('Session expired or unauthorized. Please sign in again.');
+          window.location.href = '/sign-in';
+          return;
+        }
         // Extract the full listing data from populated wishlist items
         const listings = data.map(item => item.listingId).filter(listing => listing !== null);
         setWishlist(listings);
+      } else if (response.status === 401) {
+        setWishlist([]);
+        window.alert('Session expired or unauthorized. Please sign in again.');
+        window.location.href = '/sign-in';
       } else {
         console.error('Failed to fetch wishlist');
         setWishlist([]);

@@ -54,15 +54,21 @@ export default function ContactSupport() {
   const fetchUserMessages = async () => {
     setLoadingMessages(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/contact/user-messages/${encodeURIComponent(currentUser.email)}`);
+      const response = await fetch(`${API_BASE_URL}/api/contact/user-messages/${encodeURIComponent(currentUser.email)}`, { credentials: 'include' });
       const data = await response.json();
+      if (!Array.isArray(data)) {
+        setUserMessages([]);
+        setUnreadReplies(0);
+        return;
+      }
       setUserMessages(data);
-      
       // Count unread replies (messages with admin replies that are still marked as unread)
       const unreadCount = data.filter(msg => msg.adminReply && msg.status === 'unread').length;
       setUnreadReplies(unreadCount);
     } catch (error) {
       console.error('Error fetching user messages:', error);
+      setUserMessages([]);
+      setUnreadReplies(0);
     } finally {
       setLoadingMessages(false);
     }
@@ -160,6 +166,7 @@ export default function ContactSupport() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(formData),
       });
 

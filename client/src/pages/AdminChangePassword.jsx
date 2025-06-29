@@ -59,9 +59,10 @@ export default function AdminChangePassword() {
     }
     setLoading(true);
     try {
-      const res = await fetch(`/api/user/change-password/${currentUser._id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/user/change-password/${currentUser._id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include',
         body: JSON.stringify({
           previousPassword: formData.previousPassword,
           newPassword: formData.newPassword,
@@ -69,6 +70,11 @@ export default function AdminChangePassword() {
       });
       const data = await res.json();
       setLoading(false);
+      if (res.status === 401) {
+        setError("Session expired or unauthorized. Please sign in again.");
+        setTimeout(() => navigate("/sign-in"), 1500);
+        return;
+      }
       if (!res.ok || data.success === false) {
         setError(data.message || "Failed to change password");
       } else {
