@@ -3,6 +3,8 @@ import ContactSupportWrapper from '../components/ContactSupportWrapper';
 import { FaBullseye, FaGlobe, FaUsers, FaShieldAlt, FaUserFriends, FaEnvelope, FaStar, FaEdit } from 'react-icons/fa';
 import { useSelector } from 'react-redux';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export default function AdminAbout() {
   const [aboutData, setAboutData] = useState(null);
   const [editData, setEditData] = useState(null);
@@ -19,7 +21,7 @@ export default function AdminAbout() {
   useEffect(() => {
     const fetchAboutData = async () => {
       try {
-        const response = await fetch('/api/about');
+        const response = await fetch(`${API_BASE_URL}/api/about`);
         if (response.ok) {
           const data = await response.json();
           setAboutData(data);
@@ -83,7 +85,7 @@ export default function AdminAbout() {
       return;
     }
     try {
-      const res = await fetch(`/api/user/verify-password/${currentUser._id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/user/verify-password/${currentUser._id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -106,7 +108,7 @@ export default function AdminAbout() {
     setError('');
     setSuccess(false);
     try {
-      const res = await fetch('/api/about', {
+      const res = await fetch(`${API_BASE_URL}/api/about`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editData),

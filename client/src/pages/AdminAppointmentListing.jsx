@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export default function AdminAppointmentListing() {
   const { currentUser } = useSelector((state) => state.user);
   const location = useLocation();
@@ -61,7 +63,7 @@ export default function AdminAppointmentListing() {
 
     setLoading(true);
     try {
-      const res = await fetch("/api/bookings", {
+      const res = await fetch(`${API_BASE_URL}/api/bookings`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

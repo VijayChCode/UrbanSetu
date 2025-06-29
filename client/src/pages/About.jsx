@@ -22,7 +22,7 @@ export default function About() {
   useEffect(() => {
     const fetchAboutData = async () => {
       try {
-        const response = await fetch('/api/about');
+        const response = await fetch(`${API_BASE_URL}/api/about`);
         if (response.ok) {
           const data = await response.json();
           setAboutData(data);
