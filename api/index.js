@@ -11,6 +11,7 @@ import contactRouter from "./routes/contact.route.js";
 import wishlistRouter from "./routes/wishlist.route.js";
 import notificationRouter from "./routes/notification.route.js";
 import reviewRouter from "./routes/review.route.js";
+import cors from 'cors';
 
 import path from 'path'
 import User from './models/user.model.js';
@@ -62,6 +63,19 @@ let PORT = process.env.PORT || 3000;
 const app = express();
 
 app.use(express.json())
+
+const allowedOrigins = [
+    'http://localhost:5173',
+    'https://urbansetu.vercel.app',
+    'https://urbansetu-git-main-vijaychcode.vercel.app',
+    'https://urbansetu-vijaychcode.vercel.app'
+];
+app.use(cors({
+    origin: allowedOrigins,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
+}));
 
 // Health check endpoint for Render
 app.get('/api/health', (req, res) => {

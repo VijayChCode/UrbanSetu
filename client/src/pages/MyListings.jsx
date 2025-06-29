@@ -23,7 +23,7 @@ export default function MyListings() {
         setLoading(true);
         setError(null);
         
-        const res = await fetch('/api/listing/user', {
+        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/listing/user`, {
           credentials: 'include'
         });
         
