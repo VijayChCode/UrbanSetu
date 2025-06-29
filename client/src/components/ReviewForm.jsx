@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { FaStar, FaEdit, FaTimes } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -13,6 +14,7 @@ export default function ReviewForm({ listingId, existingReview, onReviewSubmitte
   const [isEditing, setIsEditing] = useState(!!existingReview);
   const [userCanReview, setUserCanReview] = useState(true);
   const [restrictionReason, setRestrictionReason] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     checkUserReviewPermissions();
@@ -115,6 +117,7 @@ export default function ReviewForm({ listingId, existingReview, onReviewSubmitte
         }
         setIsEditing(false);
         alert(data.message || 'Review submitted successfully!');
+        navigate(`/user/listing/${listingId}`);
       } else {
         setError(data.message || 'Failed to submit review');
       }

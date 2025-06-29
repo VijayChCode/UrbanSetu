@@ -309,7 +309,6 @@ export default function Listing() {
               <div className="mb-4">
                 <a
                   href={listing.locationLink}
-                  target="_blank"
                   rel="noopener noreferrer"
                   className="inline-block bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-3 rounded-lg hover:from-red-600 hover:to-red-700 transition-all transform hover:scale-105 shadow-lg font-semibold"
                 >

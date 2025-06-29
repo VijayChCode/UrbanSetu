@@ -1405,13 +1405,45 @@ export default function Profile() {
       <div className="mt-8 flex flex-col items-center space-y-2 text-sm text-gray-600">
         {currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? (
           <>
-            <a href="/admin/terms" className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">Admin Terms & Conditions</a>
-            <a href="/admin/privacy" className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">Admin Privacy Policy</a>
+            <Link
+              to="/admin/terms"
+              className="text-blue-600 hover:underline"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={e => { e.preventDefault(); window.open('/admin/terms', '_blank', 'noopener,noreferrer'); }}
+            >
+              Admin Terms & Conditions
+            </Link>
+            <Link
+              to="/admin/privacy"
+              className="text-blue-600 hover:underline"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={e => { e.preventDefault(); window.open('/admin/privacy', '_blank', 'noopener,noreferrer'); }}
+            >
+              Admin Privacy Policy
+            </Link>
           </>
         ) : (
           <>
-            <a href="/user/terms" className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">User Terms & Conditions</a>
-            <a href="/user/privacy" className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">User Privacy Policy</a>
+            <Link
+              to="/user/terms"
+              className="text-blue-600 hover:underline"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={e => { e.preventDefault(); window.open('/user/terms', '_blank', 'noopener,noreferrer'); }}
+            >
+              User Terms & Conditions
+            </Link>
+            <Link
+              to="/user/privacy"
+              className="text-blue-600 hover:underline"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={e => { e.preventDefault(); window.open('/user/privacy', '_blank', 'noopener,noreferrer'); }}
+            >
+              User Privacy Policy
+            </Link>
           </>
         )}
       </div>

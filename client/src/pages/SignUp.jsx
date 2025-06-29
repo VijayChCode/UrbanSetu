@@ -372,7 +372,7 @@ export default function SignUp() {
                   required
                 />
                 <label htmlFor="consent" className="text-sm text-gray-700 select-none">
-                  I agree to the <Link to="/terms" className="text-blue-600 hover:underline" target="_blank">Terms of Use</Link> and <Link to="/privacy" className="text-blue-600 hover:underline" target="_blank">Privacy Policy</Link>.
+                  I agree to the <Link to="/terms" className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer" onClick={e => { e.preventDefault(); window.open('/terms', '_blank', 'noopener,noreferrer'); }}>Terms of Use</Link> and <Link to="/privacy" className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer" onClick={e => { e.preventDefault(); window.open('/privacy', '_blank', 'noopener,noreferrer'); }}>Privacy Policy</Link>.
                 </label>
               </div>
 

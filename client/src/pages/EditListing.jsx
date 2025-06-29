@@ -53,8 +53,8 @@ export default function EditListing() {
   useEffect(() => {
     const fetchListing = async () => {
       const listingId = params.listingId;
-      const apiUrl = `/api/listing/get/${listingId}`;
-      const res = await fetch(apiUrl);
+      const apiUrl = `${API_BASE_URL}/api/listing/get/${listingId}`;
+      const res = await fetch(apiUrl, { credentials: 'include' });
       const data = await res.json();
       if (data.success === false) {
         setError(data.message);

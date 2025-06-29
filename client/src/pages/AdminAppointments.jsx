@@ -252,7 +252,7 @@ export default function AdminAppointments() {
         <div className="bg-white rounded-xl shadow-lg p-8 text-center">
           <h2 className="text-2xl font-bold text-red-600 mb-4">Session expired or unauthorized</h2>
           <p className="text-gray-700 mb-4">Please sign in again to access admin appointments.</p>
-          <a href="/sign-in" className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium transition-colors">Go to Sign In</a>
+          <Link to="/sign-in" className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium transition-colors">Go to Sign In</Link>
         </div>
       </div>
     );

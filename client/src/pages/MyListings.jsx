@@ -48,7 +48,7 @@ export default function MyListings() {
     if (!window.confirm("Are you sure you want to delete this listing?")) return;
     
     try {
-      const res = await fetch(`/api/listing/delete/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/listing/delete/${id}`, {
         method: "DELETE",
         credentials: 'include'
       });
