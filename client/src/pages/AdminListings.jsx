@@ -5,6 +5,8 @@ import ContactSupportWrapper from "../components/ContactSupportWrapper";
 import { maskAddress } from '../utils/addressMasking';
 import { useSelector } from "react-redux";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export default function AdminListings() {
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -23,7 +25,7 @@ export default function AdminListings() {
       try {
         setLoading(true);
         setError(null);
-        const res = await fetch('/api/listing/get', { credentials: 'include' });
+        const res = await fetch(`${API_BASE_URL}/api/listing/get`, { credentials: 'include' });
         if (res.ok) {
           const data = await res.json();
           setListings(data);
@@ -67,7 +69,7 @@ export default function AdminListings() {
     setDeleteError("");
     try {
       // Verify password
-      const verifyRes = await fetch(`http://localhost:3000/api/user/verify-password/${currentUser._id}`, {
+      const verifyRes = await fetch(`${API_BASE_URL}/api/user/verify-password/${currentUser._id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -79,7 +81,7 @@ export default function AdminListings() {
         return;
       }
       // Proceed to delete
-      const res = await fetch(`http://localhost:3000/api/listing/delete/${pendingDeleteId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/listing/delete/${pendingDeleteId}`, {
         method: 'DELETE',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },

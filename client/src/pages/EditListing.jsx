@@ -4,6 +4,8 @@ import { useNavigate, useParams, useLocation } from "react-router-dom";
 import LocationSelector from "../components/LocationSelector";
 import toast from "react-hot-toast";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export default function EditListing() {
   const [formData, setFormData] = useState({
     imageUrls: [],
@@ -143,7 +145,7 @@ export default function EditListing() {
     setLoading(true);
     setError("");
     try {
-      const apiUrl = `/api/listing/update/${params.listingId}`;
+      const apiUrl = `${API_BASE_URL}/api/listing/update/${params.listingId}`;
       
       // Prepare request body - preserve original ownership for admin edits
       let requestBody = formData;

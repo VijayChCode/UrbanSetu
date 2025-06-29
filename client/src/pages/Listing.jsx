@@ -11,6 +11,8 @@ import ReviewForm from "../components/ReviewForm.jsx";
 import ReviewList from "../components/ReviewList.jsx";
 import { maskAddress, shouldShowLocationLink, getLocationLinkText } from "../utils/addressMasking";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export default function Listing() {
   const params = useParams();
   const navigate = useNavigate();
@@ -124,7 +126,7 @@ export default function Listing() {
     const fetchListing = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/listing/get/${params.listingId}`);
+        const res = await fetch(`${API_BASE_URL}/api/listing/get/${params.listingId}`);
         const data = await res.json();
         if (data.success === false) {
           console.log(data.message);

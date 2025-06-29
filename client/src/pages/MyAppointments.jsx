@@ -5,6 +5,8 @@ import { useState as useLocalState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import Appointment from "../components/Appointment";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export default function MyAppointments() {
   const { currentUser } = useSelector((state) => state.user);
   const [appointments, setAppointments] = useState([]);
@@ -33,7 +35,7 @@ export default function MyAppointments() {
         setLoading(true);
         setError(null);
         
-        const res = await fetch('/api/bookings/my', {
+        const res = await fetch(`${API_BASE_URL}/api/bookings/my`, {
           credentials: 'include'
         });
         
@@ -65,7 +67,7 @@ export default function MyAppointments() {
   const handleStatusUpdate = async (id, status) => {
     setActionLoading(id + status);
     try {
-      const res = await fetch(`/api/bookings/${id}/status`, {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${id}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
@@ -95,7 +97,7 @@ export default function MyAppointments() {
     if (!window.confirm("Are you sure you want to delete this appointment?")) return;
     
     try {
-      const res = await fetch(`/api/bookings/${id}`, { 
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${id}`, { 
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
@@ -167,7 +169,7 @@ export default function MyAppointments() {
       reinitiationCount: (reinitiateData.reinitiationCount || 0) + 1,
     };
     try {
-      const res = await fetch('/api/bookings/reinitiate', {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/reinitiate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -385,7 +387,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     if (!comment.trim()) return;
     setSending(true);
     try {
-      const res = await fetch(`/api/bookings/${appt._id}/comment`, {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
@@ -407,7 +409,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const handleEditComment = async (commentId) => {
     if (!editText.trim()) return;
     try {
-      const res = await fetch(`/api/bookings/${appt._id}/comment/${commentId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${commentId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
@@ -454,7 +456,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     }
     if (!window.confirm('Are you sure you want to cancel this appointment?')) return;
     try {
-      const res = await fetch(`/api/bookings/${appt._id}/cancel`, {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/cancel`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -478,7 +480,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     if (!reason) return alert('Reason is required for admin cancellation.');
     if (!window.confirm('Are you sure you want to cancel this appointment as admin?')) return;
     try {
-      const res = await fetch(`/api/bookings/${appt._id}/cancel`, {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/cancel`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -502,7 +504,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     try {
       const who = isBuyer ? 'buyer' : isSeller ? 'seller' : null;
       if (!who) return;
-      const res = await fetch(`/api/bookings/${appt._id}/soft-delete`, {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/soft-delete`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -740,7 +742,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           onClick={async () => {
                             if (!window.confirm('Are you sure you want to delete this comment?')) return;
                             try {
-                              const res = await fetch(`/api/bookings/${appt._id}/comment/${c._id}`, {
+                              const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${c._id}`, {
                                 method: 'DELETE',
                                 credentials: 'include'
                               });

@@ -4,6 +4,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import LocationSelector from "../components/LocationSelector";
 import toast from "react-hot-toast";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export default function AdminCreateListing() {
   const [formData, setFormData] = useState({
     imageUrls: [],
@@ -182,7 +184,7 @@ export default function AdminCreateListing() {
     
     try {
       setEmailValidationLoading(true);
-      const res = await fetch(`/api/user/validate-email/${encodeURIComponent(email.trim())}`, {
+      const res = await fetch(`${API_BASE_URL}/api/user/validate-email/${encodeURIComponent(email.trim())}`, {
         credentials: 'include'
       });
       
@@ -232,7 +234,7 @@ export default function AdminCreateListing() {
     try {
       console.log("Sending form data:", formData);
 
-      const res = await fetch("/api/listing/create", {
+      const res = await fetch(`${API_BASE_URL}/api/listing/create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...formData, userRef: currentUser._id }),

@@ -4,6 +4,8 @@ import { useSelector } from "react-redux";
 import { useState as useLocalState } from "react";
 import { Link } from "react-router-dom";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export default function AdminAppointments() {
   const { currentUser } = useSelector((state) => state.user);
   const [appointments, setAppointments] = useState([]);
@@ -21,7 +23,7 @@ export default function AdminAppointments() {
   useEffect(() => {
     const fetchAppointments = async () => {
       try {
-        const res = await fetch("/api/bookings");
+        const res = await fetch(`${API_BASE_URL}/api/bookings`);
         const data = await res.json();
         setAppointments(data);
         setLoading(false);
@@ -36,7 +38,7 @@ export default function AdminAppointments() {
   useEffect(() => {
     const fetchArchivedAppointments = async () => {
       try {
-        const res = await fetch("/api/bookings/archived", {
+        const res = await fetch(`${API_BASE_URL}/api/bookings/archived`, {
           credentials: 'include'
         });
         const data = await res.json();
@@ -68,7 +70,7 @@ export default function AdminAppointments() {
         console.log('Appointment time:', appointment.time);
       }
       
-      const res = await fetch(`/api/bookings/${id}/cancel`, { 
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${id}/cancel`, { 
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
@@ -99,7 +101,7 @@ export default function AdminAppointments() {
     try {
       console.log('Attempting to reinitiate appointment:', id);
       
-      const res = await fetch(`/api/bookings/${id}/reinitiate`, { 
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${id}/reinitiate`, { 
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
@@ -127,7 +129,7 @@ export default function AdminAppointments() {
     if (!window.confirm("Are you sure you want to archive this appointment? It will be moved to the archived section.")) return;
     
     try {
-      const res = await fetch(`/api/bookings/${id}/archive`, { 
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${id}/archive`, { 
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
@@ -156,7 +158,7 @@ export default function AdminAppointments() {
     if (!window.confirm("Are you sure you want to unarchive this appointment? It will be moved back to the active appointments.")) return;
     
     try {
-      const res = await fetch(`/api/bookings/${id}/unarchive`, { 
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${id}/unarchive`, { 
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
@@ -190,7 +192,7 @@ export default function AdminAppointments() {
     setUserLoading(true);
     setShowUserModal(true);
     try {
-      const res = await fetch(`/api/user/id/${userId}`);
+      const res = await fetch(`${API_BASE_URL}/api/user/id/${userId}`);
       const data = await res.json();
       if (res.ok) {
         setSelectedUser(data);
@@ -456,7 +458,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
     if (!newComment.trim()) return;
     setSending(true);
     try {
-      const res = await fetch(`/api/bookings/${appt._id}/comment`, {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
@@ -478,7 +480,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
   const handleEditComment = async (commentId) => {
     if (!editText.trim()) return;
     try {
-      const res = await fetch(`/api/bookings/${appt._id}/comment/${commentId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${commentId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
@@ -697,7 +699,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                         onClick={async () => {
                           if (!window.confirm('Are you sure you want to delete this comment?')) return;
                           try {
-                            const res = await fetch(`/api/bookings/${appt._id}/comment/${c._id}`, {
+                            const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${c._id}`, {
                               method: 'DELETE',
                               credentials: 'include'
                             });

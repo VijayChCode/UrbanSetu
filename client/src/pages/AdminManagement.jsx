@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { FaUser, FaUserShield, FaEnvelope, FaCalendarAlt, FaCheckCircle, FaBan, FaTrash, FaUserLock, FaPhone, FaList, FaCalendar, FaArrowDown, FaSearch } from "react-icons/fa";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export default function AdminManagement() {
   const { currentUser } = useSelector((state) => state.user);
   const navigate = useNavigate();
@@ -44,12 +46,12 @@ export default function AdminManagement() {
     setLoading(true);
     try {
       // Fetch users
-      const userRes = await fetch("/api/admin/management/users", { credentials: "include" });
+      const userRes = await fetch(`${API_BASE_URL}/api/admin/management/users`, { credentials: "include" });
       const userData = await userRes.json();
       setUsers(userData);
       // Fetch admins if default admin
       if (currentUser.isDefaultAdmin) {
-        const adminRes = await fetch("/api/admin/management/admins", { credentials: "include" });
+        const adminRes = await fetch(`${API_BASE_URL}/api/admin/management/admins`, { credentials: "include" });
         const adminData = await adminRes.json();
         setAdmins(adminData);
       }
@@ -62,7 +64,7 @@ export default function AdminManagement() {
 
   const handleSuspend = async (id, type) => {
     try {
-      const res = await fetch(`/api/admin/management/suspend/${type}/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/management/suspend/${type}/${id}`, {
         method: "PATCH",
         credentials: "include",
       });
@@ -86,7 +88,7 @@ export default function AdminManagement() {
   const handleDelete = async (id, type) => {
     if (!window.confirm(`Are you sure you want to delete this ${type}?`)) return;
     try {
-      const res = await fetch(`/api/admin/management/delete/${type}/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/management/delete/${type}/${id}`, {
         method: "DELETE",
         credentials: "include",
       });
@@ -109,15 +111,15 @@ export default function AdminManagement() {
     setAccountStats({ listings: 0, appointments: 0 });
     try {
       // Fetch full user/admin details
-      const res = await fetch(`/api/user/id/${account._id}`);
+      const res = await fetch(`${API_BASE_URL}/api/user/id/${account._id}`);
       const data = await res.json();
       if (res.ok) {
         setSelectedAccount({ ...data, type });
         // Fetch stats
         try {
         const [listingsRes, appointmentsRes] = await Promise.all([
-          fetch(`/api/listing/user/${account._id}`, { credentials: 'include' }),
-          fetch(`/api/bookings/user/${account._id}`, { credentials: 'include' })
+          fetch(`${API_BASE_URL}/api/listing/user/${account._id}`, { credentials: 'include' }),
+          fetch(`${API_BASE_URL}/api/bookings/user/${account._id}`, { credentials: 'include' })
         ]);
           
           let listingsCount = 0;
@@ -156,7 +158,7 @@ export default function AdminManagement() {
   const handleDemote = async (id) => {
     if (!window.confirm("Are you sure you want to demote this admin to a user?")) return;
     try {
-      const res = await fetch(`/api/admin/management/demote/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/management/demote/${id}`, {
         method: "PATCH",
         credentials: "include",
       });
@@ -175,7 +177,7 @@ export default function AdminManagement() {
   const handlePromote = async (id) => {
     if (!window.confirm("Are you sure you want to promote this user to admin?")) return;
     try {
-      const res = await fetch(`/api/admin/management/promote/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/management/promote/${id}`, {
         method: "PATCH",
         credentials: "include",
       });

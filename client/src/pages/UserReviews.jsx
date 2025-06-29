@@ -3,6 +3,8 @@ import { useSelector } from 'react-redux';
 import { FaStar, FaEdit, FaTrash, FaCheck, FaTimes } from 'react-icons/fa';
 import ReviewForm from '../components/ReviewForm.jsx';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export default function UserReviews() {
   const { currentUser } = useSelector((state) => state.user);
   const [reviews, setReviews] = useState([]);
@@ -18,7 +20,7 @@ export default function UserReviews() {
     try {
       setLoading(true);
       console.log('Fetching user reviews...');
-      const res = await fetch('/api/review/user', {
+      const res = await fetch(`${API_BASE_URL}/api/review/user`, {
         credentials: 'include',
       });
 
@@ -44,7 +46,7 @@ export default function UserReviews() {
     }
 
     try {
-      const res = await fetch(`/api/review/delete/${reviewId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/review/delete/${reviewId}`, {
         method: 'DELETE',
         credentials: 'include',
       });

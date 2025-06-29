@@ -4,6 +4,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import LocationSelector from "../components/LocationSelector";
 import toast from "react-hot-toast";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export default function CreateListing() {
   const [formData, setFormData] = useState({
     imageUrls: [],
@@ -151,7 +153,7 @@ export default function CreateListing() {
     try {
       console.log("Sending form data:", formData);
 
-      const res = await fetch("/api/listing/create", {
+      const res = await fetch(`${API_BASE_URL}/api/listing/create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...formData, userRef: currentUser._id }),
