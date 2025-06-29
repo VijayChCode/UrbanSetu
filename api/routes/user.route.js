@@ -1,5 +1,5 @@
 import express from 'express'
-import {test,updateUser,deleteUser,getUserListings,getUserByEmail,changePassword,getApprovedAdmins,transferDefaultAdminRights,deleteUserAfterTransfer,verifyPassword} from '../controllers/user.controller.js'
+import {test,updateUser,deleteUser,getUserListings,getUserByEmail,changePassword,getApprovedAdmins,transferDefaultAdminRights,deleteUserAfterTransfer,verifyPassword,getAllUsersForAutocomplete,getUserByEmailForAssignment,checkEmailAvailability,checkMobileAvailability} from '../controllers/user.controller.js'
 import { verifyToken } from '../utils/verify.js'
 import bcryptjs from 'bcryptjs'
 import jwt from 'jsonwebtoken'
@@ -156,5 +156,13 @@ router.get("/signout", (req, res, next) => {
 router.get("/approved-admins/:currentUserId", verifyToken, getApprovedAdmins);
 router.post("/transfer-default-admin", verifyToken, transferDefaultAdminRights);
 router.delete("/delete-after-transfer/:id", verifyToken, deleteUserAfterTransfer);
+
+// New routes for admin functionality
+router.get("/all-users-autocomplete", verifyToken, getAllUsersForAutocomplete);
+router.get("/validate-email/:email", verifyToken, getUserByEmailForAssignment);
+
+// New routes for profile validation
+router.get("/check-email/:email", verifyToken, checkEmailAvailability);
+router.get("/check-mobile/:mobile", verifyToken, checkMobileAvailability);
 
 export default router

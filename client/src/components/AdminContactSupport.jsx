@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
-import { FaHeadset, FaTimes, FaCheck, FaReply, FaEnvelope, FaClock, FaUser, FaEye, FaTrash } from 'react-icons/fa';
+import { FaHeadset, FaTimes, FaCheck, FaReply, FaEnvelope, FaClock, FaUser, FaEye, FaTrash, FaPaperPlane } from 'react-icons/fa';
 
 export default function AdminContactSupport() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -9,6 +9,9 @@ export default function AdminContactSupport() {
   const [loading, setLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [selectedMessage, setSelectedMessage] = useState(null);
+  const [replyMessage, setReplyMessage] = useState("");
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [replyLoading, setReplyLoading] = useState(false);
   const { currentUser } = useSelector((state) => state.user);
   const location = useLocation();
 
@@ -113,6 +116,42 @@ export default function AdminContactSupport() {
     }
   };
 
+  const sendReply = async (messageId) => {
+    if (!replyMessage.trim()) {
+      alert('Please enter a reply message');
+      return;
+    }
+
+    setReplyLoading(true);
+    try {
+      const response = await fetch(`/api/contact/messages/${messageId}/reply`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ replyMessage: replyMessage.trim() }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setReplyMessage("");
+        setReplyingTo(null);
+        fetchMessages();
+        fetchUnreadCount();
+        alert('Reply sent successfully!');
+      } else {
+        alert('Failed to send reply. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error sending reply:', error);
+      alert('Failed to send reply. Please try again.');
+    } finally {
+      setReplyLoading(false);
+    }
+  };
+
   const getStatusBadge = (status) => {
     const statusConfig = {
       unread: { 
@@ -143,16 +182,27 @@ export default function AdminContactSupport() {
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     const now = new Date();
-    const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
+    const diffInMs = now - date;
+    const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+    const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
     
-    if (diffInHours < 1) {
+    if (diffInMinutes < 1) {
       return 'Just now';
+    } else if (diffInMinutes < 60) {
+      return `${diffInMinutes}m ago`;
     } else if (diffInHours < 24) {
       return `${diffInHours}h ago`;
-    } else if (diffInHours < 48) {
+    } else if (diffInDays === 1) {
       return 'Yesterday';
+    } else if (diffInDays < 7) {
+      return `${diffInDays} days ago`;
     } else {
-      return date.toLocaleDateString();
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
     }
   };
 
@@ -338,11 +388,92 @@ export default function AdminContactSupport() {
                               {new Date(message.createdAt).toLocaleString()}
                             </span>
                           </div>
-                          <div className="bg-white p-4 rounded-lg border">
+                          <div className="bg-white p-4 rounded-lg border mb-4">
                             <p className="text-gray-800 whitespace-pre-wrap leading-relaxed">
                               {message.message}
                             </p>
                           </div>
+
+                          {/* Admin Reply Section */}
+                          {message.adminReply && (
+                            <div className="mb-4">
+                              <div className="flex items-center justify-between mb-2">
+                                <h6 className="font-medium text-green-700">Admin Reply</h6>
+                                <span className="text-xs text-gray-500">
+                                  {new Date(message.adminReplyAt).toLocaleString()}
+                                </span>
+                              </div>
+                              <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                                <p className="text-gray-800 whitespace-pre-wrap leading-relaxed">
+                                  {message.adminReply}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Reply Form */}
+                          {!message.adminReply && (
+                            <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
+                              <div className="flex items-center justify-between">
+                                <h6 className="font-medium text-blue-700">Send Reply</h6>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setReplyingTo(replyingTo === message._id ? null : message._id);
+                                  }}
+                                  className="text-sm text-blue-600 hover:text-blue-800"
+                                >
+                                  {replyingTo === message._id ? 'Cancel' : 'Reply'}
+                                </button>
+                              </div>
+                              
+                              {replyingTo === message._id && (
+                                <div className="space-y-3">
+                                  <textarea
+                                    value={replyMessage}
+                                    onChange={(e) => setReplyMessage(e.target.value)}
+                                    onClick={(e) => e.stopPropagation()}
+                                    onFocus={(e) => e.stopPropagation()}
+                                    placeholder="Type your reply here..."
+                                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                                    rows="4"
+                                  />
+                                  <div className="flex gap-2">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        sendReply(message._id);
+                                      }}
+                                      disabled={replyLoading}
+                                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                    >
+                                      {replyLoading ? (
+                                        <>
+                                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                          Sending...
+                                        </>
+                                      ) : (
+                                        <>
+                                          <FaPaperPlane className="w-4 h-4" />
+                                          Send Reply
+                                        </>
+                                      )}
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setReplyingTo(null);
+                                        setReplyMessage("");
+                                      }}
+                                      className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>

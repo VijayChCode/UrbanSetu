@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { FaSearch, FaHome, FaInfoCircle, FaCompass, FaPlus, FaList, FaHeart, FaCalendarAlt, FaUser, FaSignOutAlt } from "react-icons/fa";
+import { FaSearch, FaHome, FaInfoCircle, FaCompass, FaPlus, FaList, FaHeart, FaCalendarAlt, FaUser, FaSignOutAlt, FaStar } from "react-icons/fa";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { signoutUserSuccess } from "../redux/user/userSlice.js";
+import NotificationBell from "./NotificationBell.jsx";
 
 export default function Header() {
   const { currentUser } = useSelector((state) => state.user);
@@ -95,7 +96,16 @@ export default function Header() {
     const urlParams = new URLSearchParams(location.search);
     urlParams.set("searchTerm", searchTerm);
     const searchQuery = urlParams.toString();
-    navigate(`/search?${searchQuery}`);
+    
+    // Redirect to user explore page if user is logged in, otherwise to public search
+    if (currentUser) {
+      navigate(`/user/search?${searchQuery}`);
+    } else {
+      navigate(`/search?${searchQuery}`);
+    }
+    
+    // Clear the search term after navigation
+    setSearchTerm("");
   };
 
   return (
@@ -144,11 +154,13 @@ function UserNavLinks() {
         return;
       }
       dispatch(signoutUserSuccess());
+      alert("You have been signed out.");
       navigate("/sign-in");
     } catch (error) {
       console.log(error.message);
       // Even if API call fails, clear local state and redirect
       dispatch(signoutUserSuccess());
+      alert("You have been signed out.");
       navigate("/sign-in");
     }
   };
@@ -182,6 +194,9 @@ function UserNavLinks() {
       )}
       {currentUser ? (
         <>
+          <li className="flex items-center">
+            <NotificationBell />
+          </li>
           <li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 cursor-pointer transition-all" onClick={handleSignout}>
             <FaSignOutAlt /> Sign Out
           </li>

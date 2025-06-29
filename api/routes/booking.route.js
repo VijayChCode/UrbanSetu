@@ -3,6 +3,7 @@ import booking from "../models/booking.model.js";
 import Listing from "../models/listing.model.js";
 import User from "../models/user.model.js";
 import { verifyToken } from '../utils/verify.js';
+import Review from '../models/review.model.js';
 
 const router = express.Router();
 
@@ -136,7 +137,23 @@ router.patch('/:id/status', verifyToken, async (req, res) => {
     ).populate('buyerId', 'username email mobileNumber')
      .populate('sellerId', 'username email mobileNumber')
      .populate('listingId', '_id name address');
-    
+
+    // --- NEW LOGIC: Update review for verified badge if booking is accepted/completed ---
+    if (status === 'accepted' || status === 'completed') {
+      await Review.findOneAndUpdate(
+        {
+          userId: bookingToUpdate.buyerId,
+          listingId: bookingToUpdate.listingId,
+          verifiedByBooking: { $ne: true }
+        },
+        {
+          verifiedByBooking: true,
+          verificationDate: new Date()
+        }
+      );
+    }
+    // --- END NEW LOGIC ---
+
     res.status(200).json(updated);
   } catch (err) {
     res.status(500).json({ message: 'Failed to update appointment status.' });
@@ -297,8 +314,12 @@ router.get("/user/:userId", verifyToken, async (req, res) => {
   try {
     const { userId } = req.params;
     
-    // Verify the user is requesting their own stats
-    if (req.user._id.toString() !== userId) {
+    // Check if user is admin or rootadmin
+    const user = await User.findById(req.user.id);
+    const isAdmin = (user && user.role === 'admin' && user.adminApprovalStatus === 'approved') || (user && user.role === 'rootadmin');
+    
+    // Allow admins to view any user's stats, or users to view their own stats
+    if (!isAdmin && req.user.id !== userId) {
       return res.status(403).json({ message: "You can only view your own stats" });
     }
     
@@ -633,6 +654,53 @@ router.post('/reinitiate', verifyToken, async (req, res) => {
   } catch (err) {
     console.error('Error in user reinitiate:', err);
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// GET: Get booking statistics (admin only)
+router.get('/stats', verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const isRootAdmin = req.user.role === 'rootadmin';
+    const isAdmin = req.user.role === 'admin' && req.user.adminApprovalStatus === 'approved';
+
+    // Only allow admin/rootadmin to view booking stats
+    if (!isAdmin && !isRootAdmin) {
+      return res.status(403).json({ message: 'Only admins can view booking statistics.' });
+    }
+
+    // Get counts for different statuses
+    const [accepted, pending, rejected] = await Promise.all([
+      booking.countDocuments({ 
+        status: 'accepted',
+        archivedByAdmin: { $ne: true }
+      }),
+      booking.countDocuments({ 
+        status: 'pending',
+        archivedByAdmin: { $ne: true }
+      }),
+      booking.countDocuments({ 
+        status: { 
+          $in: [
+            'rejected', 'deletedByAdmin', 'cancelledByBuyer', 
+            'cancelledBySeller', 'cancelledByAdmin', 'noShow'
+          ]
+        },
+        archivedByAdmin: { $ne: true }
+      })
+    ]);
+
+    const total = accepted + pending + rejected;
+
+    res.status(200).json({
+      total,
+      accepted,
+      pending,
+      rejected
+    });
+  } catch (err) {
+    console.error('Error fetching booking stats:', err);
+    res.status(500).json({ message: 'Failed to fetch booking statistics.' });
   }
 });
 

@@ -22,6 +22,15 @@ export default function WishListItem ({ listing }) {
     listingLink = `/user/listing/${listing._id}`;
   }
 
+  const handleRemoveFromWishlist = async () => {
+    const result = await removeFromWishlist(listing._id);
+    if (result.success) {
+      alert(result.message);
+    } else {
+      alert(result.message);
+    }
+  };
+
   return (
     <div className="bg-white shadow-md rounded-lg overflow-hidden p-4"> 
       <Link to={listingLink}>
@@ -75,7 +84,7 @@ export default function WishListItem ({ listing }) {
        
       </Link>
       <button 
-        onClick={() => removeFromWishlist(listing._id)}
+        onClick={handleRemoveFromWishlist}
         className="p-2 rounded-full bg-red-500 hover:bg-red-600 transition"
       >
         <FaTrash className="text-white text-md" />

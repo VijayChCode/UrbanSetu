@@ -253,10 +253,10 @@ export default function AdminAppointments() {
           </h3>
           <button
             onClick={() => setShowArchived(!showArchived)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-colors ${
+            className={`bg-gradient-to-r text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2 ${
               showArchived 
-                ? 'bg-blue-500 text-white hover:bg-blue-600' 
-                : 'bg-gray-500 text-white hover:bg-gray-600'
+                ? 'from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600' 
+                : 'from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700'
             }`}
           >
             {showArchived ? (
@@ -430,7 +430,7 @@ export default function AdminAppointments() {
             )}
             <button
               onClick={() => setShowUserModal(false)}
-              className="mt-4 bg-blue-500 text-white px-4 py-2 rounded"
+              className="mt-4 bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg font-semibold"
             >
               Close
             </button>
@@ -588,40 +588,40 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
           {isArchived ? (
             // Archived appointments - show unarchive button
             <button
-              className="text-green-500 hover:text-green-700 text-xl"
+              className="bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-2 rounded-lg hover:from-green-600 hover:to-green-700 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2"
               onClick={() => handleUnarchiveAppointment(appt._id)}
               title="Unarchive Appointment"
             >
-              <FaUndo />
+              <FaUndo /> Unarchive
             </button>
           ) : (
             // Active appointments - show archive button and other actions
             <>
               {appt.status === "cancelledByAdmin" ? (
                 <button
-                  className="text-green-500 hover:text-green-700 text-xl"
+                  className="bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-2 rounded-lg hover:from-green-600 hover:to-green-700 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2"
                   onClick={() => handleReinitiateAppointment(appt._id)}
                   title="Reinitiate Appointment (Admin)"
                 >
-                  <FaUserShield />
+                  <FaUserShield /> Reinitiate
                 </button>
               ) : appt.status !== "deletedByAdmin" ? (
                 <button
-                  className="text-red-500 hover:text-red-700 text-xl"
+                  className="bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-lg hover:from-red-600 hover:to-red-700 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2"
                   onClick={() => handleAdminCancel(appt._id)}
                   title="Cancel Appointment (Admin)"
                 >
-                  <FaUserShield />
+                  <FaUserShield /> Cancel
                 </button>
               ) : null}
               
               {/* Archive button for all active appointments */}
               <button
-                className="text-orange-500 hover:text-orange-700 text-xl"
+                className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-4 py-2 rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2"
                 onClick={() => handleArchiveAppointment(appt._id)}
                 title="Archive Appointment"
               >
-                <FaArchive />
+                <FaArchive /> Archive
               </button>
             </>
           )}

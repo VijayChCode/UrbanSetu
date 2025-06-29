@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import LocationSelector from "../components/LocationSelector";
+import toast from "react-hot-toast";
 
 export default function AdminEditListing() {
   const [formData, setFormData] = useState({
@@ -30,7 +31,17 @@ export default function AdminEditListing() {
   const { currentUser } = useSelector((state) => state.user);
   const navigate = useNavigate();
   const params = useParams();
-  const [location, setLocation] = useState({ state: "", district: "", city: "", cities: [] });
+  const location = useLocation();
+  const [locationState, setLocationState] = useState({ state: "", district: "", city: "", cities: [] });
+
+  // Get the previous path for redirection
+  const getPreviousPath = () => {
+    const from = location.state?.from;
+    if (from) return from;
+    
+    // Default paths for admin
+    return "/admin/my-listings";
+  };
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -46,7 +57,7 @@ export default function AdminEditListing() {
         ...formData,
         ...data,
       });
-      setLocation({
+      setLocationState({
         state: data.state || "",
         district: data.district || "",
         city: data.city || "",
@@ -60,10 +71,10 @@ export default function AdminEditListing() {
   useEffect(() => {
     setFormData((prev) => ({
       ...prev,
-      state: location.state,
-      city: location.city || "",
+      state: locationState.state,
+      city: locationState.city || "",
     }));
-  }, [location]);
+  }, [locationState]);
 
   const validateImageUrl = (url) => {
     if (!url) return true;
@@ -128,19 +139,24 @@ export default function AdminEditListing() {
       const options = {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, userRef: currentUser._id }),
+        body: JSON.stringify(formData),
       };
       const res = await fetch(apiUrl, options);
       const data = await res.json();
-      if (data.success === false) {
-        setLoading(false);
-        setError(data.message);
-        return;
+      
+      if (res.ok) {
+        alert(data.message || "Property Details Updated Successfully!!");
+        navigate(getPreviousPath());
+      } else {
+        const errorMessage = data.message || "Failed to update listing";
+        setError(errorMessage);
+        toast.error(errorMessage);
       }
       setLoading(false);
-      navigate(`/admin/listings`);
     } catch (error) {
-      setError(error.message);
+      const errorMessage = error.message || "An error occurred while updating the listing";
+      setError(errorMessage);
+      toast.error(errorMessage);
       setLoading(false);
     }
   };
@@ -181,7 +197,7 @@ export default function AdminEditListing() {
           <div className="bg-gray-50 p-4 rounded-lg">
             <h4 className="font-semibold text-gray-800 mb-3">Address Information</h4>
             <div className="mb-4">
-              <LocationSelector value={location} onChange={setLocation} mode="form" />
+              <LocationSelector value={locationState} onChange={setLocationState} mode="form" />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <input

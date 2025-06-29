@@ -5,8 +5,10 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/navigation";
 import { Navigation } from "swiper/modules";
-import { FaBath, FaBed, FaChair, FaMapMarkerAlt, FaParking, FaShare, FaEdit, FaTrash, FaArrowLeft } from "react-icons/fa";
+import { FaBath, FaBed, FaChair, FaMapMarkerAlt, FaParking, FaShare, FaEdit, FaTrash, FaArrowLeft, FaStar, FaLock } from "react-icons/fa";
 import ContactSupportWrapper from "../components/ContactSupportWrapper";
+import ReviewForm from "../components/ReviewForm.jsx";
+import ReviewList from "../components/ReviewList.jsx";
 import { maskAddress, shouldShowLocationLink, getLocationLinkText } from "../utils/addressMasking";
 
 export default function Listing() {
@@ -17,12 +19,34 @@ export default function Listing() {
   const [listing, setListing] = useState(null);
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showReasonModal, setShowReasonModal] = useState(false);
+  const [deleteReason, setDeleteReason] = useState("");
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   // Check if user is admin
   const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'rootadmin';
   
   // Check if we're in admin context
   const isAdminContext = location.pathname.includes('/admin');
+
+  // Determine back button destination and text
+  const getBackButtonInfo = () => {
+    if (!currentUser) {
+      // Public user - go to home
+      return { path: '/', text: 'Back to Home' };
+    } else if (isAdminContext) {
+      // Admin context - go to admin dashboard
+      return { path: '/admin', text: 'Back to Dashboard' };
+    } else {
+      // User context - go to user dashboard
+      return { path: '/user', text: 'Back to Home' };
+    }
+  };
+
+  const backButtonInfo = getBackButtonInfo();
 
   const formatINR = (amount) => {
     return `₹${Number(amount).toLocaleString("en-IN")}`;
@@ -36,25 +60,63 @@ export default function Listing() {
     return 0;
   };
 
-  const handleDelete = async () => {
-    if (!window.confirm('Are you sure you want to delete this property?')) return;
-    
+  const handleDelete = () => {
+    setDeleteReason("");
+    setDeleteError("");
+    setShowReasonModal(true);
+  };
+
+  const handleReasonSubmit = (e) => {
+    e.preventDefault();
+    if (!deleteReason.trim()) {
+      setDeleteError("Reason is required");
+      return;
+    }
+    setShowReasonModal(false);
+    setDeleteError("");
+    setShowPasswordModal(true);
+  };
+
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+    if (!deletePassword) {
+      setDeleteError("Password is required");
+      return;
+    }
+    setDeleteLoading(true);
+    setDeleteError("");
     try {
-      const res = await fetch(`/api/listing/delete/${listing._id}`, { 
-        method: 'DELETE',
-        credentials: 'include'
+      // Verify password
+      const verifyRes = await fetch(`/api/user/verify-password/${currentUser._id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ password: deletePassword }),
       });
-      
+      if (!verifyRes.ok) {
+        setDeleteError("Incorrect password. Property not deleted.");
+        setDeleteLoading(false);
+        return;
+      }
+      // Proceed to delete
+      const res = await fetch(`/api/listing/delete/${listing._id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: deleteReason }),
+      });
       if (res.ok) {
         alert('Property deleted successfully!');
+        setShowPasswordModal(false);
         navigate('/admin/my-listings');
       } else {
         const data = await res.json();
-        alert(data.message || 'Failed to delete property.');
+        setDeleteError(data.message || 'Failed to delete property.');
       }
     } catch (error) {
-      console.error('Error deleting property:', error);
-      alert('An error occurred while deleting the property.');
+      setDeleteError('An error occurred while deleting the property.');
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -99,10 +161,10 @@ export default function Listing() {
             <h3 className="text-2xl font-bold text-red-600 mb-4">Property Not Found</h3>
             <p className="text-gray-600 mb-6">The property you're looking for doesn't exist or has been removed.</p>
             <Link 
-              to={isAdminContext ? "/admin/my-listings" : "/user/my-listings"}
-              className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+              to={backButtonInfo.path}
+              className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg font-semibold"
             >
-              {isAdminContext ? "Back to My Listings" : "Back to My Listings"}
+              {backButtonInfo.text}
             </Link>
           </div>
         </div>
@@ -118,23 +180,23 @@ export default function Listing() {
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
               <button
-                onClick={() => navigate(isAdminContext ? '/admin/my-listings' : '/user/my-listings')}
-                className="flex items-center gap-2 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+                onClick={() => navigate(backButtonInfo.path)}
+                className="bg-gradient-to-r from-gray-500 to-gray-600 text-white px-6 py-3 rounded-lg hover:from-gray-600 hover:to-gray-700 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2"
               >
-                <FaArrowLeft /> {isAdminContext ? "Back to My Listings" : "Back to My Listings"}
+                <FaArrowLeft /> {backButtonInfo.text}
               </button>
             </div>
             {isAdmin && isAdminContext && (
               <div className="flex items-center gap-3">
                 <Link
                   to={`/admin/update-listing/${listing._id}`}
-                  className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                  className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2"
                 >
                   <FaEdit /> Edit Property
                 </Link>
                 <button
                   onClick={handleDelete}
-                  className="flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
+                  className="bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-3 rounded-lg hover:from-red-600 hover:to-red-700 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2"
                 >
                   <FaTrash /> Delete Property
                 </button>
@@ -247,7 +309,7 @@ export default function Listing() {
                   href={listing.locationLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-block bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
+                  className="inline-block bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-3 rounded-lg hover:from-red-600 hover:to-red-700 transition-all transform hover:scale-105 shadow-lg font-semibold"
                 >
                   {getLocationLinkText(!!currentUser)}
                 </a>
@@ -258,7 +320,7 @@ export default function Listing() {
               <div className="mb-4">
                 <button
                   onClick={() => navigate('/sign-in')}
-                  className="inline-block bg-gray-400 text-white px-4 py-2 rounded cursor-pointer"
+                  className="inline-block bg-gradient-to-r from-gray-500 to-gray-600 text-white px-6 py-3 rounded-lg hover:from-gray-600 hover:to-gray-700 transition-all transform hover:scale-105 shadow-lg font-semibold"
                 >
                   {getLocationLinkText(!!currentUser)}
                 </button>
@@ -342,9 +404,86 @@ export default function Listing() {
               </button>
             )}
           </div>
+
+          {/* Reviews Section */}
+          <div className="mt-8">
+            <div className="border-t border-gray-200 pt-8">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-2xl font-bold text-gray-800 flex items-center">
+                  <FaStar className="text-yellow-500 mr-2" />
+                  Reviews
+                  {listing.averageRating > 0 && (
+                    <span className="ml-2 text-lg text-gray-600">
+                      ({listing.averageRating.toFixed(1)} ⭐ • {listing.reviewCount} review{listing.reviewCount !== 1 ? 's' : ''})
+                    </span>
+                  )}
+                </h3>
+              </div>
+
+              {/* Review Form */}
+              <ReviewForm 
+                listingId={listing._id} 
+                onReviewSubmitted={() => {
+                  // Refresh the listing data to update rating
+                  window.location.reload();
+                }}
+              />
+
+              {/* Review List */}
+              <ReviewList 
+                listingId={listing._id}
+                onReviewDeleted={() => {
+                  // Refresh the listing data to update rating
+                  window.location.reload();
+                }}
+              />
+            </div>
+          </div>
         </div>
       </div>
       <ContactSupportWrapper />
+      {/* Reason Modal */}
+      {showReasonModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+          <form onSubmit={handleReasonSubmit} className="bg-white rounded-lg shadow-lg p-6 w-full max-w-xs flex flex-col gap-4">
+            <h3 className="text-lg font-bold text-blue-700 flex items-center gap-2"><FaTrash /> Reason for Deletion</h3>
+            <textarea
+              className="border rounded p-2 w-full"
+              placeholder="Enter reason for deleting this property"
+              value={deleteReason}
+              onChange={e => setDeleteReason(e.target.value)}
+              rows={3}
+              autoFocus
+            />
+            {deleteError && <div className="text-red-600 text-sm">{deleteError}</div>}
+            <div className="flex gap-2 justify-end">
+              <button type="button" onClick={() => setShowReasonModal(false)} className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold">Cancel</button>
+              <button type="submit" className="px-4 py-2 rounded bg-red-600 text-white font-semibold">Next</button>
+            </div>
+          </form>
+        </div>
+      )}
+      {/* Password Modal */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+          <form onSubmit={handlePasswordSubmit} className="bg-white rounded-lg shadow-lg p-6 w-full max-w-xs flex flex-col gap-4">
+            <h3 className="text-lg font-bold text-blue-700 flex items-center gap-2"><FaLock /> Confirm Password</h3>
+            <input
+              type="password"
+              className="border rounded p-2 w-full"
+              placeholder="Enter your password"
+              value={deletePassword}
+              onChange={e => setDeletePassword(e.target.value)}
+              autoFocus
+            />
+            {deleteError && <div className="text-red-600 text-sm">{deleteError}</div>}
+            <div className="flex gap-2 justify-end">
+              <button type="button" onClick={() => setShowPasswordModal(false)} className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold">Cancel</button>
+              <button type="submit" className="px-4 py-2 rounded bg-blue-700 text-white font-semibold" disabled={deleteLoading}>{deleteLoading ? 'Deleting...' : 'Confirm & Delete'}</button>
+            </div>
+          </form>
+        </div>
+      )}
     </>
   );
 }

@@ -1,20 +1,44 @@
 import mongoose from "mongoose";
 
 const aboutSchema = new mongoose.Schema({
-  title: {
+  heroTitle: {
     type: String,
     required: true,
-    default: "About Real Estate"
+    default: "Welcome to UrbanSetu"
   },
-  content: {
+  heroText: {
     type: String,
     required: true,
-    default: "Real Estate is a leading real estate agency that specializes in helping clients buy, sell, and rent properties in the most desirable neighborhoods. Our team of experienced agents is dedicated to providing exceptional service and making the buying and selling process as smooth as possible."
+    default: "Your trusted platform for seamless real estate experiences. Whether you're buying, renting, or managing properties, UrbanSetu bridges the gap between people and properties through smart technology and user-first design."
   },
-  paragraphs: [{
+  mission: {
+    type: String,
+    required: true,
+    default: "Our mission is to simplify real estate transactions by providing a transparent, intuitive, and powerful platform that connects buyers, sellers, renters, and agents effectively."
+  },
+  features: [{
     type: String,
     required: true
   }],
+  whoWeServe: [{
+    type: String,
+    required: true
+  }],
+  trust: {
+    type: String,
+    required: true,
+    default: "Every listing goes through a verification process, and reviews help ensure transparency. Our platform is designed with user security and data privacy at its core."
+  },
+  team: {
+    type: String,
+    required: true,
+    default: "UrbanSetu is built by a passionate team of real estate and technology enthusiasts, dedicated to making property transactions simple, secure, and enjoyable for everyone."
+  },
+  contact: {
+    type: String,
+    required: true,
+    default: "Have questions or feedback?\n📧 Email us at: support@urbansetu.com\n🧑‍💻 Or visit our Help Center"
+  },
   lastUpdated: {
     type: Date,
     default: Date.now

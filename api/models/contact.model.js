@@ -21,6 +21,21 @@ const contactSchema = new mongoose.Schema({
         enum: ['unread', 'read', 'replied'],
         default: 'unread'
     },
+    // Reply fields
+    adminReply: {
+        type: String,
+        trim: true,
+        default: null
+    },
+    adminReplyAt: {
+        type: Date,
+        default: null
+    },
+    adminRepliedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null
+    },
     createdAt: {
         type: Date,
         default: Date.now

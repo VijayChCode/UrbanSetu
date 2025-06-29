@@ -26,8 +26,8 @@ A full-stack real estate management application built with MERN stack (MongoDB, 
 
 The system includes a default admin account with exclusive privileges:
 
-- **Email**: adminvijay@gmail.com
-- **Password**: Salendra@2004
+- **Email**: email@gmail.com
+- **Password**: ********
 - **Status**: Pre-approved (no approval required)
 - **Privileges**: Only this admin can approve new admin requests
 

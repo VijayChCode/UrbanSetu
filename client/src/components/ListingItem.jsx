@@ -174,9 +174,9 @@ export default function ListingItem({ listing, onDelete }) {
       <div className="mt-4">
         <button
           onClick={onHandleAppointment}
-          className="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center justify-center gap-2"
         >
-          Book Appointment
+          📅 Book Appointment
         </button>
       </div>
     </div>

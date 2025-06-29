@@ -1,17 +1,9 @@
-import React, { useState, useEffect } from 'react'
-import ContactSupportWrapper from '../components/ContactSupportWrapper'
+import React, { useState, useEffect } from 'react';
+import ContactSupportWrapper from '../components/ContactSupportWrapper';
+import { FaBullseye, FaGlobe, FaUsers, FaShieldAlt, FaUserFriends, FaEnvelope, FaStar } from 'react-icons/fa';
 
 export default function PublicAbout() {
-  const [aboutData, setAboutData] = useState({
-    title: "About Real Estate",
-    content: "Real Estate is a leading real estate agency that specializes in helping clients buy, sell, and rent properties in the most desirable neighborhoods. Our team of experienced agents is dedicated to providing exceptional service and making the buying and selling process as smooth as possible.",
-    paragraphs: [
-      "Our mission is to help our clients achieve their real estate goals by providing expert advice, personalized service, and a deep understanding of the local market. Whether you are looking to buy, sell, or rent a property, we are here to help you every step of the way.",
-      "Our team of agents has a wealth of experience and knowledge in the real estate industry, and we are committed to providing the highest level of service to our clients. We believe that buying or selling a property should be an exciting and rewarding experience, and we are dedicated to making that a reality for each and every one of our clients."
-    ],
-    lastUpdated: null,
-    updatedBy: null
-  });
+  const [aboutData, setAboutData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -23,16 +15,16 @@ export default function PublicAbout() {
           setAboutData(data);
         }
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('Error fetching about data:', error);
       } finally {
         setLoading(false);
       }
     };
-
     fetchAboutData();
   }, []);
 
-  if (loading) {
+  if (loading || !aboutData) {
     return (
       <div className="bg-gradient-to-br from-blue-50 to-purple-100 min-h-screen py-10 px-2 md:px-8">
         <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-6 relative">
@@ -52,31 +44,75 @@ export default function PublicAbout() {
   return (
     <div className="bg-gradient-to-br from-blue-50 to-purple-100 min-h-screen py-10 px-2 md:px-8">
       <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-6 relative">
-        <h3 className="text-3xl font-extrabold text-blue-700 mb-6 text-center drop-shadow">
-          {aboutData.title}
-        </h3>
-        <div className="space-y-4">
-          <p className="text-slate-700 text-lg leading-relaxed">{aboutData.content}</p>
-          {aboutData.paragraphs && aboutData.paragraphs.map((paragraph, index) => (
-            <p key={index} className="text-slate-700 text-lg leading-relaxed">{paragraph}</p>
-          ))}
+        {/* 1. Introduction / Hero Section */}
+        <div className="mb-8 text-center">
+          <h1 className="text-4xl font-extrabold text-blue-700 mb-4 drop-shadow flex items-center justify-center gap-2">
+            <FaGlobe className="inline-block text-blue-400 mr-2" /> {aboutData.heroTitle || 'Welcome to UrbanSetu'}
+          </h1>
+          <p className="text-lg text-slate-700 font-medium">
+            {aboutData.heroText || ''}
+          </p>
         </div>
-        {(aboutData.lastUpdated || aboutData.updatedBy) && (
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-            {aboutData.lastUpdated && (
-              <p className="text-sm text-gray-600">
-                <strong>Last updated:</strong> {new Date(aboutData.lastUpdated).toLocaleString()}
-              </p>
-            )}
-            {aboutData.updatedBy && (
-              <p className="text-sm text-gray-600">
-                <strong>Updated by:</strong> {aboutData.updatedBy}
-              </p>
-            )}
-          </div>
-        )}
+        {/* 2. Our Mission */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-purple-700 flex items-center gap-2 mb-2">
+            <FaBullseye className="text-purple-500" /> Our Mission
+          </h2>
+          <p className="text-slate-700 text-lg">
+            {aboutData.mission || ''}
+          </p>
+        </div>
+        {/* 3. What We Offer / Key Features */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-blue-700 flex items-center gap-2 mb-2">
+            <FaStar className="text-yellow-500" /> What We Offer
+          </h2>
+          <ul className="list-disc pl-6 space-y-2 text-slate-700 text-lg">
+            {(aboutData.features || []).map((item, idx) => (
+              <li key={idx}>{item}</li>
+            ))}
+          </ul>
+        </div>
+        {/* 4. Who We Serve */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-green-700 flex items-center gap-2 mb-2">
+            <FaUsers className="text-green-500" /> Who We Serve
+          </h2>
+          <ul className="list-disc pl-6 space-y-2 text-slate-700 text-lg">
+            {(aboutData.whoWeServe || []).map((item, idx) => (
+              <li key={idx}>{item}</li>
+            ))}
+          </ul>
+        </div>
+        {/* 5. Trust & Transparency */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-blue-700 flex items-center gap-2 mb-2">
+            <FaShieldAlt className="text-blue-500" /> Trust & Transparency
+          </h2>
+          <p className="text-slate-700 text-lg">
+            {aboutData.trust || ''}
+          </p>
+        </div>
+        {/* 6. Our Team (Optional) */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-purple-700 flex items-center gap-2 mb-2">
+            <FaUserFriends className="text-purple-500" /> Our Team
+          </h2>
+          <p className="text-slate-700 text-lg">
+            {aboutData.team || ''}
+          </p>
+        </div>
+        {/* 7. Contact / Support Info */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-green-700 flex items-center gap-2 mb-2">
+            <FaEnvelope className="text-green-500" /> Contact & Support
+          </h2>
+          <p className="text-slate-700 text-lg whitespace-pre-line">
+            {aboutData.contact || ''}
+          </p>
+        </div>
       </div>
       <ContactSupportWrapper />
     </div>
-  )
+  );
 } 

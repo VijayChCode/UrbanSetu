@@ -76,7 +76,7 @@ const WishlistProvider = ({ children }) => {
   const removeFromWishlist = async (id) => {
     if (!currentUser) {
       console.error('User must be logged in to remove from wishlist');
-      return;
+      return { success: false, message: 'User must be logged in to remove from wishlist' };
     }
 
     try {
@@ -87,11 +87,15 @@ const WishlistProvider = ({ children }) => {
 
       if (response.ok) {
         setWishlist(prev => prev.filter(item => item._id !== id));
+        return { success: true, message: 'Item removed from your wishlist.' };
       } else {
-        console.error('Failed to remove from wishlist');
+        const errorData = await response.json();
+        console.error('Failed to remove from wishlist:', errorData.message);
+        return { success: false, message: 'Failed to remove item. Please try again.' };
       }
     } catch (error) {
       console.error('Error removing from wishlist:', error);
+      return { success: false, message: 'Failed to remove item. Please try again.' };
     }
   };
 

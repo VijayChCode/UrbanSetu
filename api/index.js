@@ -9,6 +9,8 @@ import aboutRouter from "./routes/about.route.js";
 import adminRouter from "./routes/admin.route.js";
 import contactRouter from "./routes/contact.route.js";
 import wishlistRouter from "./routes/wishlist.route.js";
+import notificationRouter from "./routes/notification.route.js";
+import reviewRouter from "./routes/review.route.js";
 
 import cookieParser from 'cookie-parser';
 import path from 'path'
@@ -140,6 +142,8 @@ app.use("/api/about", aboutRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/contact", contactRouter);
 app.use("/api/wishlist", wishlistRouter);
+app.use("/api/notifications", notificationRouter);
+app.use("/api/review", reviewRouter);
 
 app.use((err,req,res,next)=>{
     const statusCode=err.statusCode||500;

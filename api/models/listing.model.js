@@ -81,6 +81,21 @@ const listingSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    // Review-related fields
+    averageRating: {
+        type: Number,
+        default: 0,
+        min: 0,
+        max: 5
+    },
+    reviewCount: {
+        type: Number,
+        default: 0
+    },
+    totalRating: {
+        type: Number,
+        default: 0
+    }
 }, { timestamps: true });
 
 const Listing = mongoose.model('Listing', listingSchema);

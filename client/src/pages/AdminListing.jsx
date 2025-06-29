@@ -81,10 +81,10 @@ export default function AdminListing() {
             <h3 className="text-2xl font-bold text-red-600 mb-4">Property Not Found</h3>
             <p className="text-gray-600 mb-6">The property you're looking for doesn't exist or has been removed.</p>
             <Link 
-              to="/admin/my-listings"
+              to="/admin"
               className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors"
             >
-              Back to My Listings
+              Back to Dashboard
             </Link>
           </div>
         </div>
@@ -99,10 +99,10 @@ export default function AdminListing() {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
             <Link 
-              to="/admin/my-listings"
+              to="/admin"
               className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors"
             >
-              Back to My Listings
+              Back to Dashboard
             </Link>
           </div>
           <div className="flex items-center gap-3">

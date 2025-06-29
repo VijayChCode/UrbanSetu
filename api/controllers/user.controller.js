@@ -18,6 +18,17 @@ export const updateUser=async (req,res,next)=>{
         if (!user) {
             return next(errorHandler(404, "User not found"));
         }
+        
+        // Validate password if provided (for profile updates)
+        if (req.body.password) {
+            const isMatch = await bcryptjs.compare(req.body.password, user.password);
+            if (!isMatch) {
+                return res.status(200).json({ status: "invalid_password" });
+            }
+            // Remove password from body since it's just for validation
+            delete req.body.password;
+        }
+        
         // Validate mobile number if provided
         if (req.body.mobileNumber && !/^[0-9]{10}$/.test(req.body.mobileNumber)) {
             return res.status(200).json({ status: "mobile_invalid" });
@@ -36,16 +47,14 @@ export const updateUser=async (req,res,next)=>{
                 return res.status(200).json({ status: "mobile_exists" });
             }
         }
-        if (req.body.password){
-            req.body.password=bcryptjs.hashSync(req.body.password,10)
-        }
+        
         // Build update object only with provided fields
         const updateFields = {};
         if (req.body.username) updateFields.username = req.body.username;
         if (req.body.email) updateFields.email = req.body.email;
-        if (req.body.password) updateFields.password = req.body.password;
         if (req.body.avatar) updateFields.avatar = req.body.avatar;
         if (req.body.mobileNumber) updateFields.mobileNumber = req.body.mobileNumber;
+        
         const updatedUser = await User.findByIdAndUpdate(req.params.id, {
             $set: updateFields
         }, { new: true });
@@ -115,6 +124,56 @@ export const getApprovedAdmins = async (req, res, next) => {
         }).select('-password');
         
         res.status(200).json(admins);
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Get all users for email autocomplete (admin only)
+export const getAllUsersForAutocomplete = async (req, res, next) => {
+    try {
+        // Only allow admin, rootadmin, or default admin to access this
+        if (req.user.role !== 'admin' && req.user.role !== 'rootadmin' && !req.user.isDefaultAdmin) {
+            return next(errorHandler(403, "Only admins can access user list"));
+        }
+        
+        // Get all users except the current admin
+        const users = await User.find({
+            _id: { $ne: req.user.id },
+            status: { $ne: 'suspended' } // Exclude suspended users
+        }).select('email username _id').sort({ email: 1 });
+        
+        res.status(200).json(users);
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Get user by email for assignment validation
+export const getUserByEmailForAssignment = async (req, res, next) => {
+    try {
+        const { email } = req.params;
+        
+        if (!email) {
+            return next(errorHandler(400, "Email is required"));
+        }
+        
+        const user = await User.findOne({ 
+            email: email,
+            status: { $ne: 'suspended' } // Exclude suspended users
+        }).select('email username _id');
+        
+        if (!user) {
+            return res.status(404).json({ 
+                success: false, 
+                message: "User not found with this email" 
+            });
+        }
+        
+        res.status(200).json({ 
+            success: true, 
+            user 
+        });
     } catch (error) {
         next(error);
     }
@@ -259,6 +318,78 @@ export const verifyPassword = async (req, res, next) => {
             return next(errorHandler(401, "Password is incorrect"));
         }
         res.status(200).json({ success: true, message: "Password verified successfully" });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Check email availability for profile updates
+export const checkEmailAvailability = async (req, res, next) => {
+    try {
+        const { email } = req.params;
+        const currentUserId = req.user.id;
+        
+        if (!email) {
+            return next(errorHandler(400, "Email is required"));
+        }
+        
+        // Check if email exists (excluding current user)
+        const existingUser = await User.findOne({ 
+            email: email,
+            _id: { $ne: currentUserId }
+        });
+        
+        if (existingUser) {
+            return res.status(200).json({ 
+                available: false, 
+                message: "Email already exists" 
+            });
+        }
+        
+        res.status(200).json({ 
+            available: true, 
+            message: "Email available" 
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Check mobile number availability for profile updates
+export const checkMobileAvailability = async (req, res, next) => {
+    try {
+        const { mobile } = req.params;
+        const currentUserId = req.user.id;
+        
+        if (!mobile) {
+            return next(errorHandler(400, "Mobile number is required"));
+        }
+        
+        // Validate mobile number format
+        if (!/^[0-9]{10}$/.test(mobile)) {
+            return res.status(200).json({ 
+                available: false, 
+                message: "Please provide a valid 10-digit mobile number" 
+            });
+        }
+        
+        // Check if mobile number exists (excluding current user)
+        const existingUser = await User.findOne({ 
+            mobileNumber: mobile,
+            _id: { $ne: currentUserId }
+        });
+        
+        if (existingUser) {
+            return res.status(200).json({ 
+                available: false, 
+                message: "Mobile number already exists" 
+            });
+        }
+        
+        res.status(200).json({ 
+            available: true, 
+            message: "Mobile number available" 
+        });
     } catch (error) {
         next(error);
     }

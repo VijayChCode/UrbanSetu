@@ -53,6 +53,8 @@ const AdminMyListings = lazy(() => import("./pages/AdminMyListings"));
 const AdminEditListing = lazy(() => import("./pages/AdminEditListing"));
 const Oauth = lazy(() => import("./components/Oauth"));
 const AdminAppointmentListing = lazy(() => import("./pages/AdminAppointmentListing"));
+const AdminReviews = lazy(() => import("./pages/AdminReviews"));
+const UserReviews = lazy(() => import("./pages/UserReviews"));
 
 // Loading component
 const LoadingSpinner = () => (
@@ -164,6 +166,7 @@ function AppRoutes({ bootstrapped }) {
             <Route path="/user/change-password" element={<UserChangePassword />} />
             <Route path="/user/terms" element={<UserTerms />} />
             <Route path="/user/privacy" element={<UserPrivacy />} />
+            <Route path="/user/reviews" element={<UserReviews />} />
           </Route>
 
           {/* Admin Routes */}
@@ -185,6 +188,7 @@ function AppRoutes({ bootstrapped }) {
             <Route path="/admin/terms" element={<AdminTerms />} />
             <Route path="/admin/privacy" element={<AdminPrivacy />} />
             <Route path="/admin/management" element={<AdminManagement />} />
+            <Route path="/admin/reviews" element={<AdminReviews />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />

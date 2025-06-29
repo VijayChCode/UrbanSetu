@@ -30,6 +30,9 @@
   .animate-shake {
     animation: shake 0.4s;
   }
+  .animate-bell-ring {
+    animation: bellRing 1.5s ease-in-out;
+  }
 }
 
 @keyframes fadeIn {
@@ -71,4 +74,17 @@
   60% { transform: translateX(-2px); }
   80% { transform: translateX(2px); }
   100% { transform: translateX(0); }
+}
+@keyframes bellRing {
+  0% { transform: rotate(0deg); }
+  10% { transform: rotate(8deg); }
+  20% { transform: rotate(-8deg); }
+  30% { transform: rotate(6deg); }
+  40% { transform: rotate(-6deg); }
+  50% { transform: rotate(4deg); }
+  60% { transform: rotate(-4deg); }
+  70% { transform: rotate(2deg); }
+  80% { transform: rotate(-2deg); }
+  90% { transform: rotate(1deg); }
+  100% { transform: rotate(0deg); }
 }

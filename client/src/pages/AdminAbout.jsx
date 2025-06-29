@@ -1,20 +1,20 @@
-import React, { useState, useEffect } from "react";
-import { FaEdit, FaSave, FaTimes } from "react-icons/fa";
-import ContactSupportWrapper from "../components/ContactSupportWrapper";
+import React, { useState, useEffect } from 'react';
+import ContactSupportWrapper from '../components/ContactSupportWrapper';
+import { FaBullseye, FaGlobe, FaUsers, FaShieldAlt, FaUserFriends, FaEnvelope, FaStar, FaEdit } from 'react-icons/fa';
+import { useSelector } from 'react-redux';
 
 export default function AdminAbout() {
-  const [aboutData, setAboutData] = useState({
-    title: "About Real Estate",
-    content: "Real Estate is a leading real estate agency that specializes in helping clients buy, sell, and rent properties in the most desirable neighborhoods. Our team of experienced agents is dedicated to providing exceptional service and making the buying and selling process as smooth as possible.",
-    paragraphs: [
-      "Our mission is to help our clients achieve their real estate goals by providing expert advice, personalized service, and a deep understanding of the local market. Whether you are looking to buy, sell, or rent a property, we are here to help you every step of the way.",
-      "Our team of agents has a wealth of experience and knowledge in the real estate industry, and we are committed to providing the highest level of service to our clients. We believe that buying or selling a property should be an exciting and rewarding experience, and we are dedicated to making that a reality for each and every one of our clients."
-    ]
-  });
+  const [aboutData, setAboutData] = useState(null);
+  const [editData, setEditData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [editData, setEditData] = useState({});
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState('');
+  const [editMode, setEditMode] = useState(false);
+  const { currentUser } = useSelector((state) => state.user) || {};
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [password, setPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
 
   useEffect(() => {
     const fetchAboutData = async () => {
@@ -23,101 +23,127 @@ export default function AdminAbout() {
         if (response.ok) {
           const data = await response.json();
           setAboutData(data);
-          setEditData({
-            title: data.title,
-            content: data.content,
-            paragraphs: [...data.paragraphs]
-          });
         }
-      } catch (error) {
-        console.error('Error fetching about data:', error);
+      } catch (err) {
+        setError('Failed to fetch About data.');
       } finally {
         setLoading(false);
       }
     };
-
     fetchAboutData();
   }, []);
 
   const handleEdit = () => {
     setEditData({
-      title: aboutData.title,
-      content: aboutData.content,
-      paragraphs: [...aboutData.paragraphs]
+      heroTitle: aboutData.heroTitle || 'Welcome to UrbanSetu',
+      heroText: aboutData.heroText || '',
+      mission: aboutData.mission || '',
+      features: aboutData.features ? [...aboutData.features] : [],
+      whoWeServe: aboutData.whoWeServe ? [...aboutData.whoWeServe] : [],
+      trust: aboutData.trust || '',
+      team: aboutData.team || '',
+      contact: aboutData.contact || '',
     });
-    setEditing(true);
+    setEditMode(true);
+    setSuccess(false);
+    setError('');
   };
 
-  const handleCancel = () => {
-    setEditing(false);
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setEditData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSave = async () => {
-    setSaving(true);
+  const handleListChange = (name, idx, value) => {
+    setEditData((prev) => ({
+      ...prev,
+      [name]: prev[name].map((item, i) => (i === idx ? value : item)),
+    }));
+  };
+
+  const handleAddListItem = (name) => {
+    setEditData((prev) => ({ ...prev, [name]: [...prev[name], ''] }));
+  };
+
+  const handleRemoveListItem = (name, idx) => {
+    setEditData((prev) => ({ ...prev, [name]: prev[name].filter((_, i) => i !== idx) }));
+  };
+
+  const handleSave = () => {
+    setShowPasswordModal(true);
+    setPassword('');
+    setPasswordError('');
+  };
+
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+    setPasswordError('');
+    if (!password) {
+      setPasswordError('Password is required');
+      return;
+    }
     try {
-      const response = await fetch('/api/about', {
+      const res = await fetch(`/api/user/verify-password/${currentUser._id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ password }),
+      });
+      if (res.ok) {
+        // Password correct, proceed to save changes
+        setShowPasswordModal(false);
+        await doSaveEdit();
+      } else {
+        setPasswordError('Incorrect password, no information changed');
+      }
+    } catch (err) {
+      setPasswordError('Incorrect password, no information changed');
+    }
+  };
+
+  const doSaveEdit = async () => {
+    setSaving(true);
+    setError('');
+    setSuccess(false);
+    try {
+      const res = await fetch('/api/about', {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editData),
       });
-
-      if (response.ok) {
-        const updatedData = await response.json();
-        setAboutData(updatedData);
-        setEditing(false);
-        alert('About page updated successfully!');
+      if (res.ok) {
+        setAboutData(editData);
+        setEditMode(false);
+        setSuccess(true);
+        setTimeout(() => setSuccess(false), 2000);
       } else {
-        alert('Failed to update about page');
+        setError('Failed to save changes.');
       }
-    } catch (error) {
-      console.error('Error updating about page:', error);
-      alert('Error updating about page');
+    } catch (err) {
+      setError('Failed to save changes.');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleInputChange = (field, value) => {
-    setEditData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+  const handleCancel = () => {
+    setEditMode(false);
+    setEditData(null);
+    setError('');
+    setSuccess(false);
   };
 
-  const handleParagraphChange = (index, value) => {
-    const newParagraphs = [...editData.paragraphs];
-    newParagraphs[index] = value;
-    setEditData(prev => ({
-      ...prev,
-      paragraphs: newParagraphs
-    }));
-  };
-
-  const addParagraph = () => {
-    setEditData(prev => ({
-      ...prev,
-      paragraphs: [...prev.paragraphs, '']
-    }));
-  };
-
-  const removeParagraph = (index) => {
-    setEditData(prev => ({
-      ...prev,
-      paragraphs: prev.paragraphs.filter((_, i) => i !== index)
-    }));
-  };
-
-  if (loading) {
+  if (loading || !aboutData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-100 py-10 px-2 md:px-8">
-        <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-6">
+      <div className="bg-gradient-to-br from-blue-50 to-purple-100 min-h-screen py-10 px-2 md:px-8">
+        <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-6 relative">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 rounded mb-4"></div>
             <div className="h-4 bg-gray-200 rounded mb-2"></div>
             <div className="h-4 bg-gray-200 rounded mb-2"></div>
             <div className="h-4 bg-gray-200 rounded mb-4"></div>
+            <div className="h-4 bg-gray-200 rounded mb-2"></div>
+            <div className="h-4 bg-gray-200 rounded mb-2"></div>
           </div>
         </div>
       </div>
@@ -125,105 +151,182 @@ export default function AdminAbout() {
   }
 
   return (
-    <>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-100 py-10 px-2 md:px-8">
-        <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl font-bold text-slate-800">About Page Management</h1>
-            {!editing ? (
-              <button
-                onClick={handleEdit}
-                className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
-              >
-                <FaEdit /> Edit Content
-              </button>
-            ) : (
-              <div className="flex gap-2">
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50"
-                >
-                  <FaSave /> {saving ? 'Saving...' : 'Save'}
-                </button>
-                <button
-                  onClick={handleCancel}
-                  className="flex items-center gap-2 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
-                >
-                  <FaTimes /> Cancel
-                </button>
-              </div>
-            )}
-          </div>
-
-          {editing ? (
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Page Title
-                </label>
-                <input
-                  type="text"
-                  value={editData.title}
-                  onChange={(e) => handleInputChange('title', e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Main Content
-                </label>
-                <textarea
-                  value={editData.content}
-                  onChange={(e) => handleInputChange('content', e.target.value)}
-                  rows={4}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Additional Paragraphs
-                  </label>
-                  <button
-                    onClick={addParagraph}
-                    className="text-blue-500 hover:text-blue-700 text-sm"
-                  >
-                    + Add Paragraph
-                  </button>
-                </div>
-                {editData.paragraphs.map((paragraph, index) => (
-                  <div key={index} className="flex gap-2 mb-3">
-                    <textarea
-                      value={paragraph}
-                      onChange={(e) => handleParagraphChange(index, e.target.value)}
-                      rows={3}
-                      className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                    <button
-                      onClick={() => removeParagraph(index)}
-                      className="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <h2 className="text-2xl font-bold text-slate-800">{aboutData.title}</h2>
-              <p className="text-slate-700 text-lg leading-relaxed">{aboutData.content}</p>
-              {aboutData.paragraphs && aboutData.paragraphs.map((paragraph, index) => (
-                <p key={index} className="text-slate-700 text-lg leading-relaxed">{paragraph}</p>
-              ))}
-            </div>
+    <div className="bg-gradient-to-br from-blue-50 to-purple-100 min-h-screen py-10 px-2 md:px-8">
+      <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-6 relative">
+        {/* Edit/View Mode Toggle */}
+        <div className="flex justify-end items-center mb-4">
+          {!editMode && (
+            <button
+              onClick={handleEdit}
+              className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2"
+            >
+              <FaEdit /> Edit
+            </button>
           )}
         </div>
+        {error && <div className="text-red-600 mb-2">{error}</div>}
+        {success && <div className="text-green-600 mb-2">Saved successfully!</div>}
+        {/* VIEW MODE */}
+        {!editMode && (
+          <>
+            {/* 1. Introduction / Hero Section */}
+            <div className="mb-8 text-center">
+              <h1 className="text-4xl font-extrabold text-blue-700 mb-4 drop-shadow flex items-center justify-center gap-2">
+                <FaGlobe className="inline-block text-blue-400 mr-2" /> {aboutData.heroTitle || 'Welcome to UrbanSetu'}
+              </h1>
+              <p className="text-lg text-slate-700 font-medium">
+                {aboutData.heroText || ''}
+              </p>
+            </div>
+            {/* 2. Our Mission */}
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold text-purple-700 flex items-center gap-2 mb-2">
+                <FaBullseye className="text-purple-500" /> Our Mission
+              </h2>
+              <p className="text-slate-700 text-lg">
+                {aboutData.mission || ''}
+              </p>
+            </div>
+            {/* 3. What We Offer / Key Features */}
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold text-blue-700 flex items-center gap-2 mb-2">
+                <FaStar className="text-yellow-500" /> What We Offer
+              </h2>
+              <ul className="list-disc pl-6 space-y-2 text-slate-700 text-lg">
+                {(aboutData.features || []).map((item, idx) => (
+                  <li key={idx}>{item}</li>
+                ))}
+              </ul>
+            </div>
+            {/* 4. Who We Serve */}
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold text-green-700 flex items-center gap-2 mb-2">
+                <FaUsers className="text-green-500" /> Who We Serve
+              </h2>
+              <ul className="list-disc pl-6 space-y-2 text-slate-700 text-lg">
+                {(aboutData.whoWeServe || []).map((item, idx) => (
+                  <li key={idx}>{item}</li>
+                ))}
+              </ul>
+            </div>
+            {/* 5. Trust & Transparency */}
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold text-blue-700 flex items-center gap-2 mb-2">
+                <FaShieldAlt className="text-blue-500" /> Trust & Transparency
+              </h2>
+              <p className="text-slate-700 text-lg">
+                {aboutData.trust || ''}
+              </p>
+            </div>
+            {/* 6. Our Team (Optional) */}
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold text-purple-700 flex items-center gap-2 mb-2">
+                <FaUserFriends className="text-purple-500" /> Our Team
+              </h2>
+              <p className="text-slate-700 text-lg">
+                {aboutData.team || ''}
+              </p>
+            </div>
+            {/* 7. Contact / Support Info */}
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold text-green-700 flex items-center gap-2 mb-2">
+                <FaEnvelope className="text-green-500" /> Contact & Support
+              </h2>
+              <p className="text-slate-700 text-lg whitespace-pre-line">
+                {aboutData.contact || ''}
+              </p>
+            </div>
+          </>
+        )}
+        {/* EDIT MODE */}
+        {editMode && (
+          <>
+            <div className="flex items-center gap-2 mb-6">
+              <FaEdit className="text-blue-600" />
+              <h2 className="text-2xl font-bold text-blue-700">Edit Information</h2>
+            </div>
+            {/* Hero Section */}
+            <div className="mb-6">
+              <label className="block font-semibold mb-1">Hero Title</label>
+              <input name="heroTitle" value={editData.heroTitle} onChange={handleChange} className="w-full border rounded p-2 mb-2" />
+              <label className="block font-semibold mb-1">Hero Text</label>
+              <textarea name="heroText" value={editData.heroText} onChange={handleChange} className="w-full border rounded p-2" rows={2} />
+            </div>
+            {/* Mission */}
+            <div className="mb-6">
+              <label className="block font-semibold mb-1 flex items-center gap-2"><FaBullseye className="text-purple-500" /> Our Mission</label>
+              <textarea name="mission" value={editData.mission} onChange={handleChange} className="w-full border rounded p-2" rows={2} />
+            </div>
+            {/* Features */}
+            <div className="mb-6">
+              <label className="block font-semibold mb-1 flex items-center gap-2"><FaStar className="text-yellow-500" /> What We Offer</label>
+              {editData.features.map((item, idx) => (
+                <div key={idx} className="flex gap-2 mb-2">
+                  <input value={item} onChange={e => handleListChange('features', idx, e.target.value)} className="w-full border rounded p-2" />
+                  <button type="button" onClick={() => handleRemoveListItem('features', idx)} className="text-red-500 font-bold">&times;</button>
+                </div>
+              ))}
+              <button type="button" onClick={() => handleAddListItem('features')} className="text-blue-600 underline">+ Add Feature</button>
+            </div>
+            {/* Who We Serve */}
+            <div className="mb-6">
+              <label className="block font-semibold mb-1 flex items-center gap-2"><FaUsers className="text-green-500" /> Who We Serve</label>
+              {editData.whoWeServe.map((item, idx) => (
+                <div key={idx} className="flex gap-2 mb-2">
+                  <input value={item} onChange={e => handleListChange('whoWeServe', idx, e.target.value)} className="w-full border rounded p-2" />
+                  <button type="button" onClick={() => handleRemoveListItem('whoWeServe', idx)} className="text-red-500 font-bold">&times;</button>
+                </div>
+              ))}
+              <button type="button" onClick={() => handleAddListItem('whoWeServe')} className="text-blue-600 underline">+ Add Audience</button>
+            </div>
+            {/* Trust & Transparency */}
+            <div className="mb-6">
+              <label className="block font-semibold mb-1 flex items-center gap-2"><FaShieldAlt className="text-blue-500" /> Trust & Transparency</label>
+              <textarea name="trust" value={editData.trust} onChange={handleChange} className="w-full border rounded p-2" rows={2} />
+            </div>
+            {/* Our Team */}
+            <div className="mb-6">
+              <label className="block font-semibold mb-1 flex items-center gap-2"><FaUserFriends className="text-purple-500" /> Our Team</label>
+              <textarea name="team" value={editData.team} onChange={handleChange} className="w-full border rounded p-2" rows={2} />
+            </div>
+            {/* Contact & Support */}
+            <div className="mb-6">
+              <label className="block font-semibold mb-1 flex items-center gap-2"><FaEnvelope className="text-green-500" /> Contact & Support</label>
+              <textarea name="contact" value={editData.contact} onChange={handleChange} className="w-full border rounded p-2" rows={2} />
+            </div>
+            <div className="flex gap-4 mt-4">
+              <button onClick={handleSave} disabled={saving} className="bg-blue-700 text-white px-6 py-2 rounded font-bold hover:bg-blue-800 disabled:opacity-50">
+                {saving ? 'Saving...' : 'Save Changes'}
+              </button>
+              <button onClick={handleCancel} disabled={saving} className="bg-gray-300 text-gray-800 px-6 py-2 rounded font-bold hover:bg-gray-400 disabled:opacity-50">
+                Cancel
+              </button>
+            </div>
+          </>
+        )}
+        {/* Password Modal */}
+        {showPasswordModal && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+            <form onSubmit={handlePasswordSubmit} className="bg-white rounded-lg shadow-lg p-6 w-full max-w-xs flex flex-col gap-4">
+              <h3 className="text-lg font-bold text-blue-700 flex items-center gap-2"><FaEdit /> Confirm Password</h3>
+              <input
+                type="password"
+                className="border rounded p-2 w-full"
+                placeholder="Enter your password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                autoFocus
+              />
+              {passwordError && <div className="text-red-600 text-sm">{passwordError}</div>}
+              <div className="flex gap-2 justify-end">
+                <button type="button" onClick={() => setShowPasswordModal(false)} className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold">Cancel</button>
+                <button type="submit" className="px-4 py-2 rounded bg-blue-700 text-white font-semibold">Confirm</button>
+              </div>
+            </form>
+          </div>
+        )}
       </div>
       <ContactSupportWrapper />
-    </>
+    </div>
   );
-} 
+}

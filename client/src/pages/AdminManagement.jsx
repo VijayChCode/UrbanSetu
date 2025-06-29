@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { FaUser, FaUserShield, FaEnvelope, FaCalendarAlt, FaCheckCircle, FaBan, FaTrash, FaUserLock, FaPhone, FaList, FaCalendar, FaArrowDown } from "react-icons/fa";
+import { FaUser, FaUserShield, FaEnvelope, FaCalendarAlt, FaCheckCircle, FaBan, FaTrash, FaUserLock, FaPhone, FaList, FaCalendar, FaArrowDown, FaSearch } from "react-icons/fa";
 
 export default function AdminManagement() {
   const { currentUser } = useSelector((state) => state.user);
@@ -17,11 +17,28 @@ export default function AdminManagement() {
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [accountLoading, setAccountLoading] = useState(false);
   const [accountStats, setAccountStats] = useState({ listings: 0, appointments: 0 });
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     if (!currentUser) return;
     fetchData();
   }, [currentUser]);
+
+  // Keyboard shortcut for search (Ctrl+F)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault();
+        const searchInput = document.getElementById('admin-management-search');
+        if (searchInput) {
+          searchInput.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const fetchData = async () => {
     setLoading(true);
@@ -97,20 +114,40 @@ export default function AdminManagement() {
       if (res.ok) {
         setSelectedAccount({ ...data, type });
         // Fetch stats
+        try {
         const [listingsRes, appointmentsRes] = await Promise.all([
           fetch(`/api/listing/user/${account._id}`, { credentials: 'include' }),
           fetch(`/api/bookings/user/${account._id}`, { credentials: 'include' })
         ]);
+          
+          let listingsCount = 0;
+          let appointmentsCount = 0;
+          
+          if (listingsRes.ok) {
         const listingsData = await listingsRes.json();
+            listingsCount = Array.isArray(listingsData) ? listingsData.length : 0;
+          }
+          
+          if (appointmentsRes.ok) {
         const appointmentsData = await appointmentsRes.json();
+            appointmentsCount = appointmentsData.count || 0;
+          }
+          
         setAccountStats({
-          listings: Array.isArray(listingsData) ? listingsData.length : 0,
-          appointments: Array.isArray(appointmentsData) ? appointmentsData.length : 0
+            listings: listingsCount,
+            appointments: appointmentsCount
         });
+        } catch (statsError) {
+          console.error('Error fetching account stats:', statsError);
+          // Keep the account details but with zero stats
+          setAccountStats({ listings: 0, appointments: 0 });
+        }
       } else {
+        console.error('Failed to fetch account details:', data.message);
         setSelectedAccount(null);
       }
     } catch (e) {
+      console.error('Error in handleAccountClick:', e);
       setSelectedAccount(null);
     }
     setAccountLoading(false);
@@ -154,6 +191,37 @@ export default function AdminManagement() {
     }
   };
 
+  // Filter accounts based on search term
+  const filterAccounts = (accounts) => {
+    if (!searchTerm.trim()) return accounts;
+    
+    const term = searchTerm.toLowerCase();
+    return accounts.filter(account => 
+      account.username?.toLowerCase().includes(term) ||
+      account.email?.toLowerCase().includes(term) ||
+      account.mobileNumber?.toLowerCase().includes(term)
+    );
+  };
+
+  const filteredUsers = filterAccounts(users);
+  const filteredAdmins = filterAccounts(admins);
+
+  // Helper function to highlight search matches
+  const highlightMatch = (text) => {
+    if (!searchTerm.trim() || !text) return text;
+    
+    const regex = new RegExp(`(${searchTerm})`, 'gi');
+    const parts = text.split(regex);
+    
+    return parts.map((part, index) => 
+      regex.test(part) ? (
+        <span key={index} className="bg-yellow-200 font-semibold rounded px-1">
+          {part}
+        </span>
+      ) : part
+    );
+  };
+
   if (!currentUser) return null;
 
   return (
@@ -166,6 +234,7 @@ export default function AdminManagement() {
             onClick={() => {
               setTab("users");
               setShowRestriction(false);
+              setSearchTerm("");
             }}
           >
             Users
@@ -176,15 +245,51 @@ export default function AdminManagement() {
               if (!currentUser.isDefaultAdmin) {
                 setShowRestriction(true);
                 setTab("admins");
+                setSearchTerm("");
               } else {
                 setShowRestriction(false);
                 setTab("admins");
+                setSearchTerm("");
               }
             }}
           >
             Admins
           </button>
         </div>
+
+        {/* Search Box */}
+        <div className="mb-6 animate-fadeIn">
+          <div className="relative max-w-md">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <FaSearch className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              id="admin-management-search"
+              type="text"
+              placeholder={`Search ${tab === "users" ? "users" : "admins"} by name, email, or mobile number...`}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 shadow-sm"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm("")}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+              >
+                <span className="text-xl">&times;</span>
+              </button>
+            )}
+          </div>
+          {searchTerm && (
+            <div className="mt-2 text-sm text-gray-600">
+              Found {tab === "users" ? filteredUsers.length : filteredAdmins.length} {tab === "users" ? "user" : "admin"}{tab === "users" ? (filteredUsers.length !== 1 ? "s" : "") : (filteredAdmins.length !== 1 ? "s" : "")} matching "{searchTerm}"
+            </div>
+          )}
+          <div className="mt-1 text-xs text-gray-400">
+            💡 Tip: Press Ctrl+F to quickly focus the search box
+          </div>
+        </div>
+
         {loading ? (
           <div className="flex flex-col items-center justify-center h-64 animate-fadeIn">
             <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mb-4"></div>
@@ -197,14 +302,24 @@ export default function AdminManagement() {
                 <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2 animate-fadeIn">
                   <FaUser className="text-blue-500" /> Users
                 </h2>
-                {users.length === 0 ? (
+                {filteredUsers.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 animate-fadeIn">
                     <FaUserLock className="text-6xl text-gray-300 mb-4" />
-                    <p className="text-gray-500 text-lg font-medium">No users found.</p>
+                    <p className="text-gray-500 text-lg font-medium">
+                      {searchTerm ? `No users found matching "${searchTerm}"` : "No users found."}
+                    </p>
+                    {searchTerm && (
+                      <button
+                        onClick={() => setSearchTerm("")}
+                        className="mt-4 text-blue-500 hover:text-blue-600 underline"
+                      >
+                        Clear search
+                      </button>
+                    )}
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 animate-fadeIn">
-                    {users.map((user) => (
+                    {filteredUsers.map((user) => (
                       <div
                         key={user._id}
                         className="bg-gradient-to-br from-blue-50 to-purple-100 rounded-2xl shadow-lg p-6 flex flex-col gap-4 hover:scale-105 transition-transform duration-200 animate-slideUp cursor-pointer"
@@ -217,12 +332,17 @@ export default function AdminManagement() {
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
-                              <span className="text-lg font-semibold text-gray-800">{user.username}</span>
+                              <span className="text-lg font-semibold text-gray-800">{highlightMatch(user.username)}</span>
                               <span className={`text-xs px-2 py-1 rounded-full font-bold ${user.status === "active" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>{user.status}</span>
                             </div>
                             <div className="flex items-center gap-2 text-gray-500 text-sm mt-1">
-                              <FaEnvelope /> {user.email}
+                              <FaEnvelope /> {highlightMatch(user.email)}
                             </div>
+                            {user.mobileNumber && (
+                              <div className="flex items-center gap-2 text-gray-500 text-sm mt-1">
+                                <FaPhone /> {highlightMatch(user.mobileNumber)}
+                              </div>
+                            )}
                             <div className="flex items-center gap-2 text-gray-400 text-xs mt-1">
                               <FaCalendarAlt /> {new Date(user.createdAt).toLocaleDateString()}
                             </div>
@@ -271,14 +391,24 @@ export default function AdminManagement() {
                 <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2 animate-fadeIn">
                   <FaUserShield className="text-purple-500" /> Admins
                 </h2>
-                {admins.length === 0 ? (
+                {filteredAdmins.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 animate-fadeIn">
                     <FaUserLock className="text-6xl text-gray-300 mb-4" />
-                    <p className="text-gray-500 text-lg font-medium">No admins found.</p>
+                    <p className="text-gray-500 text-lg font-medium">
+                      {searchTerm ? `No admins found matching "${searchTerm}"` : "No admins found."}
+                    </p>
+                    {searchTerm && (
+                      <button
+                        onClick={() => setSearchTerm("")}
+                        className="mt-4 text-blue-500 hover:text-blue-600 underline"
+                      >
+                        Clear search
+                      </button>
+                    )}
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 animate-fadeIn">
-                    {admins.map((admin) => (
+                    {filteredAdmins.map((admin) => (
                       <div
                         key={admin._id}
                         className="bg-gradient-to-br from-purple-50 to-blue-100 rounded-2xl shadow-lg p-6 flex flex-col gap-4 hover:scale-105 transition-transform duration-200 animate-slideUp cursor-pointer"
@@ -291,12 +421,17 @@ export default function AdminManagement() {
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
-                              <span className="text-lg font-semibold text-gray-800">{admin.username}</span>
+                              <span className="text-lg font-semibold text-gray-800">{highlightMatch(admin.username)}</span>
                               <span className={`text-xs px-2 py-1 rounded-full font-bold ${admin.status === "active" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>{admin.status}</span>
                             </div>
                             <div className="flex items-center gap-2 text-gray-500 text-sm mt-1">
-                              <FaEnvelope /> {admin.email}
+                              <FaEnvelope /> {highlightMatch(admin.email)}
                             </div>
+                            {admin.mobileNumber && (
+                              <div className="flex items-center gap-2 text-gray-500 text-sm mt-1">
+                                <FaPhone /> {highlightMatch(admin.mobileNumber)}
+                              </div>
+                            )}
                             <div className="flex items-center gap-2 text-gray-400 text-xs mt-1">
                               <FaCalendarAlt /> {new Date(admin.createdAt).toLocaleDateString()}
                             </div>

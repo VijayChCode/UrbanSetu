@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { signoutUserStart, signoutUserSuccess, signoutUserFailure } from "../redux/user/userSlice";
 import { FaHome, FaCalendarAlt, FaPlus, FaSignOutAlt, FaSearch, FaUserCheck, FaList, FaInfoCircle, FaCompass, FaHeart } from "react-icons/fa";
+import NotificationBell from "./NotificationBell.jsx";
 
 export default function AdminHeader() {
   const { currentUser } = useSelector((state) => state.user);
@@ -116,6 +117,7 @@ export default function AdminHeader() {
         dispatch(signoutUserFailure(data.message));
       } else {
         dispatch(signoutUserSuccess(data));
+        alert("You have been signed out.");
         navigate("/sign-in");
       }
     } catch (error) {
@@ -156,19 +158,9 @@ export default function AdminHeader() {
           <FaSearch />
         </button>
       </form>
-      <ul className="flex space-x-6 items-center text-white text-base font-normal">
+      <ul className="flex space-x-4 items-center text-white text-base font-normal">
         <Link to="/admin">
           <li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all"><FaHome /> Dashboard</li>
-        </Link>
-        <Link to="/admin/appointments">
-          <li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all relative">
-            <FaCalendarAlt /> Appointments
-            {appointmentCount > 0 && (
-              <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                {appointmentCount}
-              </span>
-            )}
-          </li>
         </Link>
         <Link to="/admin/create-listing">
           <li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all"><FaPlus /> Add Property</li>
@@ -199,6 +191,9 @@ export default function AdminHeader() {
         <Link to="/admin/wishlist">
           <li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all"><FaHeart /> Wish List</li>
         </Link>
+        <li className="flex items-center">
+          <NotificationBell />
+        </li>
         <li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 cursor-pointer transition-all" onClick={handleSignout}>
           <FaSignOutAlt /> Sign Out
         </li>

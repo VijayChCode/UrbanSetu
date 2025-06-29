@@ -1,17 +1,58 @@
 import Listing from "../models/listing.model.js"
 import Wishlist from "../models/wishlist.model.js"
+import User from "../models/user.model.js"
+import Notification from "../models/notification.model.js"
 import { errorHandler } from "../utils/error.js"
 
 
 
 export const createListing=async (req,res,next)=>{
     try{
-        const listing=await Listing.create(req.body)
-
-        return res.status(201).json(listing)
+        const { assignToEmail, ...listingData } = req.body;
+        
+        // Determine the user reference for the listing
+        let userRef = req.user.id; // Default to current admin
+        
+        // If email is provided, validate and assign to that user
+        if (assignToEmail && assignToEmail.trim()) {
+            const targetUser = await User.findOne({ 
+                email: assignToEmail.trim(),
+                status: { $ne: 'suspended' }
+            });
+            
+            if (!targetUser) {
+                return res.status(400).json({
+                    success: false,
+                    message: "User not found with the provided email"
+                });
+            }
+            
+            userRef = targetUser._id;
+        }
+        
+        // Create the listing with the determined user reference
+        const listing = await Listing.create({
+            ...listingData,
+            userRef: userRef
+        });
+        
+        // Prepare success message based on assignment
+        let successMessage = "Property Added Successfully";
+        if (assignToEmail && assignToEmail.trim()) {
+            successMessage = `Listing assigned to ${assignToEmail}`;
+        } else {
+            successMessage = "Listing created under admin ownership";
+        }
+        
+        return res.status(201).json({
+            success: true,
+            message: successMessage,
+            listing,
+            assignedTo: assignToEmail || "admin"
+        });
     }
     catch(error){
-        next(error)
+        return next(errorHandler(500, "Failed to create listing"));
     }
 }
 
@@ -49,14 +90,60 @@ export const deleteListing=async (req,res,next)=>{
       return next(errorHandler(401, 'You can only delete your own listing (unless you are admin/rootadmin)'))
     }
 
+    // If admin is deleting someone else's property, require a reason
+    const isAdminDeletingOthersProperty = (
+      (req.user.role === 'admin' || req.user.role === 'rootadmin' || req.user.isDefaultAdmin) &&
+      req.user.id !== listing.userRef.toString()
+    );
+
+    if (isAdminDeletingOthersProperty) {
+      const { reason } = req.body;
+      if (!reason || reason.trim().length === 0) {
+        return next(errorHandler(400, 'Reason is required when deleting another user\'s property'));
+      }
+    }
+
     try{
+        // Create notification if admin is deleting someone else's property
+        let notificationMessage = "Listing deleted successfully";
+        if (isAdminDeletingOthersProperty) {
+          try {
+            // Get the property owner's details
+            const propertyOwner = await User.findById(listing.userRef);
+            
+            if (propertyOwner) {
+              // Create notification for the property owner
+              const notification = new Notification({
+                userId: listing.userRef,
+                type: 'property_deleted',
+                title: 'Property Deleted by Admin',
+                message: `Your property "${listing.name}" has been deleted by an administrator. Reason: ${req.body.reason}`,
+                listingId: listing._id,
+                adminId: req.user.id,
+                adminNote: req.body.reason
+              });
+              
+              await notification.save();
+              
+              // Update success message to include user email
+              notificationMessage = `Property deleted successfully and notified to ${propertyOwner.email}`;
+            }
+          } catch (notificationError) {
+            // Log notification error but don't fail the listing deletion
+            console.error('Failed to create notification:', notificationError);
+          }
+        }
+
         // Delete the listing
         await Listing.findByIdAndDelete(req.params.id)
         
         // Delete all wishlist items associated with this listing
         await Wishlist.deleteMany({ listingId: req.params.id })
         
-        res.status(200).json("Listing deleted")
+        res.status(200).json({
+          success: true,
+          message: notificationMessage
+        });
     }
     catch(error){
         return next(error)
@@ -82,11 +169,56 @@ export const updateListing=async (req,res,next)=>{
     }
 
     try{
-        const updateListing=await Listing.findByIdAndUpdate(req.params.id,req.body,{new:true})
-        res.status(200).json(updateListing)
+        // For admin updates, exclude userRef to preserve original ownership
+        let updateData = req.body;
+        if (req.user.role === 'admin' || req.user.role === 'rootadmin' || req.user.isDefaultAdmin) {
+          // Remove userRef from update data to preserve original ownership
+          const { userRef, ...dataWithoutUserRef } = req.body;
+          updateData = dataWithoutUserRef;
+        }
+        
+        const updateListing=await Listing.findByIdAndUpdate(req.params.id, updateData, {new:true})
+        
+        // Create notification if admin is editing someone else's property
+        let notificationMessage = "Property Updated Successfully";
+        if (
+          (req.user.role === 'admin' || req.user.role === 'rootadmin' || req.user.isDefaultAdmin) &&
+          req.user.id !== listing.userRef.toString()
+        ) {
+          try {
+            // Get the property owner's details
+            const propertyOwner = await User.findById(listing.userRef);
+            
+            if (propertyOwner) {
+              // Create notification for the property owner
+              const notification = new Notification({
+                userId: listing.userRef,
+                type: 'property_edited',
+                title: 'Property Updated by Admin',
+                message: `Your property "${listing.name}" has been updated by an administrator. Please review the changes.`,
+                listingId: listing._id,
+                adminId: req.user.id,
+              });
+              
+              await notification.save();
+              
+              // Update success message to include user email
+              notificationMessage = `Property updated successfully and notified to ${propertyOwner.email}`;
+            }
+          } catch (notificationError) {
+            // Log notification error but don't fail the listing update
+            console.error('Failed to create notification:', notificationError);
+          }
+        }
+        
+        return res.status(200).json({
+            success: true,
+            message: notificationMessage,
+            listing: updateListing
+        })
     }
     catch(error){
-        return next(error)
+        return next(errorHandler(500, "Failed to update listing"))
     }
     
 }

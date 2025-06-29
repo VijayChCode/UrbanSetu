@@ -124,4 +124,95 @@ export const deleteSupportMessage = async (req, res, next) => {
     } catch (error) {
         next(error);
     }
+};
+
+// Send admin reply to support message
+export const sendAdminReply = async (req, res, next) => {
+    try {
+        const { messageId } = req.params;
+        const { replyMessage } = req.body;
+        const adminId = req.user.id;
+
+        // Validate required fields
+        if (!replyMessage || !replyMessage.trim()) {
+            return next(errorHandler(400, "Reply message is required"));
+        }
+
+        const message = await Contact.findById(messageId);
+        if (!message) {
+            return next(errorHandler(404, "Message not found"));
+        }
+
+        // Update message with admin reply
+        message.adminReply = replyMessage.trim();
+        message.adminReplyAt = new Date();
+        message.adminRepliedBy = adminId;
+        message.status = 'replied';
+        message.repliedAt = new Date();
+        
+        await message.save();
+
+        // TODO: Send email notification to user
+        // For now, we'll just return success
+        // In a real implementation, you'd integrate with an email service like Nodemailer
+
+        res.status(200).json({
+            success: true,
+            message: "Reply sent successfully"
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Get user's support messages and replies
+export const getUserSupportMessages = async (req, res, next) => {
+    try {
+        const { email } = req.params;
+        
+        if (!email) {
+            return next(errorHandler(400, "Email is required"));
+        }
+
+        const messages = await Contact.find({ email })
+            .sort({ createdAt: -1 })
+            .select('-__v');
+
+        res.status(200).json(messages);
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Delete user's own message
+export const deleteUserMessage = async (req, res, next) => {
+    try {
+        const { messageId } = req.params;
+        const { email } = req.query; // Get email from query params for verification
+        
+        if (!messageId) {
+            return next(errorHandler(400, "Message ID is required"));
+        }
+
+        // Find the message and verify it belongs to the user
+        const message = await Contact.findById(messageId);
+        if (!message) {
+            return next(errorHandler(404, "Message not found"));
+        }
+
+        // Verify the message belongs to the user (email verification)
+        if (message.email !== email) {
+            return next(errorHandler(403, "You can only delete your own messages"));
+        }
+
+        // Allow deletion of any message (unread, read, or replied)
+        await Contact.findByIdAndDelete(messageId);
+        
+        res.status(200).json({
+            success: true,
+            message: "Message deleted successfully"
+        });
+    } catch (error) {
+        next(error);
+    }
 }; 

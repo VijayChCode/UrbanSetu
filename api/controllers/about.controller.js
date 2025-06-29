@@ -9,12 +9,25 @@ export const getAbout = async (req, res, next) => {
     // If no about content exists, create default content
     if (!about) {
       about = await About.create({
-        title: "About Real Estate",
-        content: "Real Estate is a leading real estate agency that specializes in helping clients buy, sell, and rent properties in the most desirable neighborhoods. Our team of experienced agents is dedicated to providing exceptional service and making the buying and selling process as smooth as possible.",
-        paragraphs: [
-          "Our mission is to help our clients achieve their real estate goals by providing expert advice, personalized service, and a deep understanding of the local market. Whether you are looking to buy, sell, or rent a property, we are here to help you every step of the way.",
-          "Our team of agents has a wealth of experience and knowledge in the real estate industry, and we are committed to providing the highest level of service to our clients. We believe that buying or selling a property should be an exciting and rewarding experience, and we are dedicated to making that a reality for each and every one of our clients."
+        heroTitle: "Welcome to UrbanSetu",
+        heroText: "Your trusted platform for seamless real estate experiences. Whether you're buying, renting, or managing properties, UrbanSetu bridges the gap between people and properties through smart technology and user-first design.",
+        mission: "Our mission is to simplify real estate transactions by providing a transparent, intuitive, and powerful platform that connects buyers, sellers, renters, and agents effectively.",
+        features: [
+          "Advanced property search with filters & map view",
+          "Virtual tours, property videos, and floor plans",
+          "In-app messaging between users and agents",
+          "Review system and user dashboards",
+          "Admin analytics, listing management & appointments",
+          "Mobile-ready Progressive Web App (PWA)"
         ],
+        whoWeServe: [
+          "Home buyers and renters looking for verified properties",
+          "Property owners and agents seeking visibility and tools",
+          "Admins needing oversight and smart analytics"
+        ],
+        trust: "Every listing goes through a verification process, and reviews help ensure transparency. Our platform is designed with user security and data privacy at its core.",
+        team: "UrbanSetu is built by a passionate team of real estate and technology enthusiasts, dedicated to making property transactions simple, secure, and enjoyable for everyone.",
+        contact: "Have questions or feedback?\n📧 Email us at: support@urbansetu.com\n🧑‍💻 Or visit our Help Center",
         updatedBy: "System"
       });
     }
@@ -28,7 +41,7 @@ export const getAbout = async (req, res, next) => {
 // Update About content (Admin only)
 export const updateAbout = async (req, res, next) => {
   try {
-    const { title, content, paragraphs } = req.body;
+    const { heroTitle, heroText, mission, features, whoWeServe, trust, team, contact } = req.body;
     const { username } = req.user; // From verifyToken middleware
     
     let about = await About.findOne();
@@ -36,9 +49,14 @@ export const updateAbout = async (req, res, next) => {
     if (!about) {
       // Create new about content if it doesn't exist
       about = await About.create({
-        title,
-        content,
-        paragraphs,
+        heroTitle,
+        heroText,
+        mission,
+        features,
+        whoWeServe,
+        trust,
+        team,
+        contact,
         updatedBy: username
       });
     } else {
@@ -46,9 +64,14 @@ export const updateAbout = async (req, res, next) => {
       about = await About.findByIdAndUpdate(
         about._id,
         {
-          title,
-          content,
-          paragraphs,
+          heroTitle,
+          heroText,
+          mission,
+          features,
+          whoWeServe,
+          trust,
+          team,
+          contact,
           lastUpdated: Date.now(),
           updatedBy: username
         },

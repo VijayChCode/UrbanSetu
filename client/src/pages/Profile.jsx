@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
-import { FaEdit, FaUser, FaEnvelope, FaPhone, FaKey, FaTrash, FaSignOutAlt, FaHome, FaCalendarAlt, FaHeart, FaEye, FaCrown, FaTimes, FaCheck } from "react-icons/fa";
+import { FaEdit, FaUser, FaEnvelope, FaPhone, FaKey, FaTrash, FaSignOutAlt, FaHome, FaCalendarAlt, FaHeart, FaEye, FaCrown, FaTimes, FaCheck, FaStar } from "react-icons/fa";
 import {
   updateUserStart,
   updateUserSuccess,
@@ -50,10 +50,30 @@ export default function Profile() {
   const [emailError, setEmailError] = useState("");
   const [mobileError, setMobileError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showUpdatePasswordModal, setShowUpdatePasswordModal] = useState(false);
+  const [updatePassword, setUpdatePassword] = useState("");
+  const [updatePasswordError, setUpdatePasswordError] = useState("");
+  
+  // Real-time validation states
+  const [emailValidation, setEmailValidation] = useState({ loading: false, message: "", available: null });
+  const [mobileValidation, setMobileValidation] = useState({ loading: false, message: "", available: null });
+  const [emailDebounceTimer, setEmailDebounceTimer] = useState(null);
+  const [mobileDebounceTimer, setMobileDebounceTimer] = useState(null);
+  const [originalEmail, setOriginalEmail] = useState("");
+  const [originalMobile, setOriginalMobile] = useState("");
+  
   const navigate = useNavigate();
 
   // Hide My Appointments button in admin context
   const isAdminProfile = window.location.pathname.startsWith('/admin');
+
+  // Set original values when component mounts or user changes
+  useEffect(() => {
+    if (currentUser) {
+      setOriginalEmail(currentUser.email || "");
+      setOriginalMobile(currentUser.mobileNumber || "");
+    }
+  }, [currentUser]);
 
   // Fetch user stats
   useEffect(() => {
@@ -71,6 +91,18 @@ export default function Profile() {
       }));
     }
   }, [wishlist, currentUser]);
+
+  // Cleanup debounce timers on unmount
+  useEffect(() => {
+    return () => {
+      if (emailDebounceTimer) {
+        clearTimeout(emailDebounceTimer);
+      }
+      if (mobileDebounceTimer) {
+        clearTimeout(mobileDebounceTimer);
+      }
+    };
+  }, [emailDebounceTimer, mobileDebounceTimer]);
 
   const fetchUserStats = async () => {
     try {
@@ -125,19 +157,161 @@ export default function Profile() {
     });
   };
 
+  // Email validation function
+  const validateEmail = async (email) => {
+    if (!email.trim()) {
+      setEmailValidation({ loading: false, message: "", available: null });
+      return;
+    }
+    // Show format error if no @
+    if (!email.includes('@')) {
+      setEmailValidation({ loading: false, message: "Enter a valid email", available: false });
+      return;
+    }
+    // Skip validation if email hasn't changed
+    if (email === originalEmail) {
+      setEmailValidation({ loading: false, message: "", available: true });
+      return;
+    }
+    try {
+      setEmailValidation({ loading: true, message: "", available: null });
+      const res = await fetch(`/api/user/check-email/${encodeURIComponent(email.trim())}`, {
+        credentials: 'include'
+      });
+      const data = await res.json();
+      setEmailValidation({ 
+        loading: false, 
+        message: data.message, 
+        available: data.available 
+      });
+    } catch (error) {
+      setEmailValidation({ 
+        loading: false, 
+        message: "Error checking email availability", 
+        available: false 
+      });
+    }
+  };
+
+  // Mobile validation function
+  const validateMobile = async (mobile) => {
+    if (!mobile.trim()) {
+      setMobileValidation({ loading: false, message: "", available: null });
+      return;
+    }
+    // Show format error if not 10 digits
+    if (!/^[0-9]{10}$/.test(mobile)) {
+      setMobileValidation({ loading: false, message: "Enter a valid 10-digit mobile number", available: false });
+      return;
+    }
+    // Skip validation if mobile hasn't changed
+    if (mobile === originalMobile) {
+      setMobileValidation({ loading: false, message: "", available: true });
+      return;
+    }
+    try {
+      setMobileValidation({ loading: true, message: "", available: null });
+      const res = await fetch(`/api/user/check-mobile/${encodeURIComponent(mobile.trim())}`, {
+        credentials: 'include'
+      });
+      const data = await res.json();
+      setMobileValidation({ 
+        loading: false, 
+        message: data.message, 
+        available: data.available 
+      });
+    } catch (error) {
+      setMobileValidation({ 
+        loading: false, 
+        message: "Error checking mobile availability", 
+        available: false 
+      });
+    }
+  };
+
+  // Debounced email validation
+  const debouncedEmailValidation = (email) => {
+    if (emailDebounceTimer) {
+      clearTimeout(emailDebounceTimer);
+    }
+    const timer = setTimeout(() => validateEmail(email), 300);
+    setEmailDebounceTimer(timer);
+  };
+
+  // Debounced mobile validation
+  const debouncedMobileValidation = (mobile) => {
+    if (mobileDebounceTimer) {
+      clearTimeout(mobileDebounceTimer);
+    }
+    const timer = setTimeout(() => validateMobile(mobile), 300);
+    setMobileDebounceTimer(timer);
+  };
+
+  // Enhanced handleChange with validation
+  const handleChangeWithValidation = (e) => {
+    const { id, value } = e.target;
+    
+    setFormData({
+      ...formData,
+      [id]: value,
+    });
+    
+    // Clear existing errors
+    if (id === 'email') {
+      setEmailError("");
+    } else if (id === 'mobileNumber') {
+      setMobileError("");
+    }
+    
+    // Trigger validation
+    if (id === 'email') {
+      debouncedEmailValidation(value);
+    } else if (id === 'mobileNumber') {
+      debouncedMobileValidation(value);
+    }
+  };
+
   const onSubmitForm = async (e) => {
     e.preventDefault();
     setUpdateError("");
     setUpdateSuccess(false);
     setEmailError("");
     setMobileError("");
-    setLoading(true);
-    // Validate mobile number
-    if (!formData.mobileNumber || !/^[0-9]{10}$/.test(formData.mobileNumber)) {
-      setMobileError("Please provide a valid 10-digit mobile number");
-      setLoading(false);
+    
+    // Check if email is provided
+    if (!formData.email || !formData.email.trim()) {
+      setEmailError("Please provide valid email id");
       return;
     }
+    
+    // Check validation status
+    if (emailValidation.available === false) {
+      setEmailError("Email already exists. Please use a different one.");
+      return;
+    }
+    
+    if (mobileValidation.available === false) {
+      setMobileError("Mobile number already exists. Please use a different one.");
+      return;
+    }
+    
+    // Validate mobile number format
+    if (!formData.mobileNumber || !/^[0-9]{10}$/.test(formData.mobileNumber)) {
+      setMobileError("Please provide a valid 10-digit mobile number");
+      return;
+    }
+    
+    // Show password modal for confirmation
+    setShowUpdatePasswordModal(true);
+  };
+
+  const handleConfirmUpdate = async () => {
+    setUpdatePasswordError("");
+    if (!updatePassword) {
+      setUpdatePasswordError("Password is required");
+      return;
+    }
+    setLoading(true);
     try {
       dispatch(updateUserStart());
       const apiUrl = `/api/user/update/${currentUser._id}`;
@@ -148,26 +322,42 @@ export default function Profile() {
         },
         body: JSON.stringify({
           ...formData,
+          password: updatePassword,
         }),
       };
       const res = await fetch(apiUrl, options);
       const data = await res.json();
+      console.log('Profile update response:', data); // Debug log
       // Handle new backend validation responses
       if (data.status === "email_exists") {
+        alert("Email already registered. Please use a different one.");
         setEmailError("Email already registered. Please use a different one.");
         dispatch(updateUserFailure("Email already registered. Please use a different one."));
         setLoading(false);
+        setShowUpdatePasswordModal(false);
+        setUpdatePassword("");
         return;
       }
       if (data.status === "mobile_exists") {
+        alert("Mobile number already in use. Please choose another one.");
         setMobileError("Mobile number already in use. Please choose another one.");
         dispatch(updateUserFailure("Mobile number already in use. Please choose another one."));
         setLoading(false);
+        setShowUpdatePasswordModal(false);
+        setUpdatePassword("");
         return;
       }
       if (data.status === "mobile_invalid") {
         setMobileError("Please provide a valid 10-digit mobile number");
         dispatch(updateUserFailure("Please provide a valid 10-digit mobile number"));
+        setLoading(false);
+        setShowUpdatePasswordModal(false);
+        setUpdatePassword("");
+        return;
+      }
+      if (data.status === "invalid_password") {
+        console.log('Invalid password detected'); // Debug log
+        setUpdatePasswordError("Incorrect password. Profile details unchanged.");
         setLoading(false);
         return;
       }
@@ -176,6 +366,9 @@ export default function Profile() {
         setUpdateSuccess(true);
         setIsEditing(false);
         setLoading(false);
+        setShowUpdatePasswordModal(false);
+        setUpdatePassword("");
+        alert("Profile Updated Successfully!!");
         setTimeout(() => {
           setUpdateSuccess(false);
         }, 3000);
@@ -186,13 +379,23 @@ export default function Profile() {
         setUpdateError(data.message || "Profile Update Failed!");
         dispatch(updateUserFailure(data.message));
         setLoading(false);
+        setShowUpdatePasswordModal(false);
+        setUpdatePassword("");
         return;
       }
+      // If we reach here, it means we got an unexpected response
+      console.log('Unexpected response:', data);
+      setUpdateError("Profile Update Failed!");
       setLoading(false);
+      setShowUpdatePasswordModal(false);
+      setUpdatePassword("");
     } catch (error) {
+      console.log('Profile update error:', error); // Debug log
       setUpdateError("Profile Update Failed!");
       dispatch(updateUserFailure(error.message));
       setLoading(false);
+      setShowUpdatePasswordModal(false);
+      setUpdatePassword("");
     }
   };
 
@@ -229,7 +432,7 @@ export default function Profile() {
       }
       if (res.status === 401) {
         setShowPasswordModal(false);
-        alert("Your session has expired. Please sign in again.");
+        alert("For your security, you've been signed out automatically.");
         // Signout and redirect
         dispatch(signoutUserStart());
         const signoutRes = await fetch("/api/auth/signout");
@@ -244,7 +447,7 @@ export default function Profile() {
       }
       if (data.message && data.message.toLowerCase().includes('password')) {
         setShowPasswordModal(false);
-        alert("Your session has expired. Please sign in again.");
+        alert("For your security, you've been signed out automatically.");
         // Signout and redirect
         dispatch(signoutUserStart());
         const signoutRes = await fetch("/api/auth/signout");
@@ -342,7 +545,7 @@ export default function Profile() {
       // Check if password verification failed
       if (!verifyRes.ok || verifyData.success === false) {
         setShowTransferPasswordModal(false);
-        alert("Your session has expired. Please sign in again. No admin rights are Transferred");
+        alert("For your security, you've been signed out automatically.");
         // Signout and redirect
         dispatch(signoutUserStart());
         const signoutRes = await fetch("/api/auth/signout");
@@ -408,6 +611,7 @@ export default function Profile() {
         dispatch(signoutUserFailure(data.message));
       } else {
         dispatch(signoutUserSuccess(data));
+        alert("You have been signed out.");
         
         await new Promise(resolve => setTimeout(resolve, 50));
         
@@ -491,7 +695,7 @@ export default function Profile() {
       const data = await res.json();
       if (res.status === 401 && data.error === 'invalidPassword') {
         setShowTransferModal(false);
-        alert('Your session has expired. Please sign in again.');
+        alert("For your security, you've been signed out automatically.");
         dispatch(signoutUserStart());
         const signoutRes = await fetch('/api/auth/signout');
         const signoutData = await signoutRes.json();
@@ -527,6 +731,14 @@ export default function Profile() {
         mobileNumber: currentUser.mobileNumber ? String(currentUser.mobileNumber) : '',
         avatar: currentUser.avatar || '',
       });
+      
+      // Trigger validation for current values
+      if (currentUser.email) {
+        validateEmail(currentUser.email);
+      }
+      if (currentUser.mobileNumber) {
+        validateMobile(currentUser.mobileNumber);
+      }
     }
   }, [isEditing, currentUser]);
 
@@ -604,9 +816,9 @@ export default function Profile() {
             </div>
             <button
               onClick={() => setIsEditing(!isEditing)}
-              className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors flex items-center"
+              className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2"
             >
-              <FaEdit className="w-4 h-4 mr-2" />
+              <FaEdit className="w-4 h-4" />
               {isEditing ? 'Cancel Edit' : 'Edit Profile'}
             </button>
           </div>
@@ -658,7 +870,7 @@ export default function Profile() {
               id="username"
                     placeholder="Enter username"
               value={formData.username || ''}
-              onChange={handleChange}
+              onChange={handleChangeWithValidation}
                     className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   />
                 </div>
@@ -668,16 +880,50 @@ export default function Profile() {
                     <FaEnvelope className="w-4 h-4 mr-2" />
                     Email Address
                   </label>
-            <input
-                    type="email"
-              id="email"
-                    placeholder="Enter email address"
-              value={formData.email || ''}
-              onChange={handleChange}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  />
+                  <div className="relative">
+                    <input
+                      type="email"
+                      id="email"
+                      placeholder="Enter email address"
+                      value={formData.email || ''}
+                      onChange={handleChangeWithValidation}
+                      className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all ${
+                        emailValidation.available === false 
+                          ? 'border-red-500 focus:ring-red-500' 
+                          : emailValidation.available === true 
+                          ? 'border-green-500 focus:ring-green-500' 
+                          : 'border-gray-300 focus:ring-blue-500'
+                      }`}
+                    />
+                    {emailValidation.loading && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <svg className="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                        </svg>
+                      </div>
+                    )}
+                    {emailValidation.available === true && !emailValidation.loading && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <FaCheck className="h-5 w-5 text-green-500" />
+                      </div>
+                    )}
+                    {emailValidation.available === false && !emailValidation.loading && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <FaTimes className="h-5 w-5 text-red-500" />
+                      </div>
+                    )}
+                  </div>
                   {emailError && (
                     <div className="text-red-600 text-sm mt-1">{emailError}</div>
+                  )}
+                  {emailValidation.message && !emailError && (
+                    <div className={`text-sm mt-1 ${
+                      emailValidation.available === true ? 'text-green-600' : 
+                      emailValidation.available === false ? 'text-red-600' : 'text-gray-600'
+                    }`}>
+                      {emailValidation.message}
+                    </div>
                   )}
                 </div>
                 
@@ -686,18 +932,52 @@ export default function Profile() {
                     <FaPhone className="w-4 h-4 mr-2" />
                     Mobile Number
                   </label>
-            <input
-              type="tel"
-              id="mobileNumber"
-                    placeholder="Enter 10-digit mobile number"
-              value={formData.mobileNumber || ''}
-              onChange={handleChange}
-              pattern="[0-9]{10}"
-              maxLength="10"
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  />
+                  <div className="relative">
+                    <input
+                      type="tel"
+                      id="mobileNumber"
+                      placeholder="Enter 10-digit mobile number"
+                      value={formData.mobileNumber || ''}
+                      onChange={handleChangeWithValidation}
+                      pattern="[0-9]{10}"
+                      maxLength="10"
+                      className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all ${
+                        mobileValidation.available === false 
+                          ? 'border-red-500 focus:ring-red-500' 
+                          : mobileValidation.available === true 
+                          ? 'border-green-500 focus:ring-green-500' 
+                          : 'border-gray-300 focus:ring-blue-500'
+                      }`}
+                    />
+                    {mobileValidation.loading && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <svg className="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                        </svg>
+                      </div>
+                    )}
+                    {mobileValidation.available === true && !mobileValidation.loading && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <FaCheck className="h-5 w-5 text-green-500" />
+                      </div>
+                    )}
+                    {mobileValidation.available === false && !mobileValidation.loading && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <FaTimes className="h-5 w-5 text-red-500" />
+                      </div>
+                    )}
+                  </div>
                   {mobileError && (
                     <div className="text-red-600 text-sm mt-1">{mobileError}</div>
+                  )}
+                  {mobileValidation.message && !mobileError && (
+                    <div className={`text-sm mt-1 ${
+                      mobileValidation.available === true ? 'text-green-600' : 
+                      mobileValidation.available === false ? 'text-red-600' : 'text-gray-600'
+                    }`}>
+                      {mobileValidation.message}
+                    </div>
                   )}
                 </div>
               </div>
@@ -706,17 +986,30 @@ export default function Profile() {
                 <button
                   type="button"
                   onClick={() => setIsEditing(false)}
-                  className="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors"
+                  className="bg-gradient-to-r from-gray-500 to-gray-600 text-white px-6 py-3 rounded-lg hover:from-gray-600 hover:to-gray-700 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className={`bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center ${loading ? 'opacity-60 cursor-not-allowed' : ''}`}
-                  disabled={loading}
+                  className={`bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2 ${
+                    loading || 
+                    emailValidation.loading || 
+                    mobileValidation.loading || 
+                    emailValidation.available === false || 
+                    mobileValidation.available === false 
+                      ? 'opacity-60 cursor-not-allowed transform-none' : ''
+                  }`}
+                  disabled={
+                    loading || 
+                    emailValidation.loading || 
+                    mobileValidation.loading || 
+                    emailValidation.available === false || 
+                    mobileValidation.available === false
+                  }
                 >
                   {loading ? (
-                    <span className="flex items-center"><svg className="animate-spin h-5 w-5 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>Saving...</span>
+                    <span className="flex items-center gap-2"><svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>Saving...</span>
                   ) : (
                     'Save Changes'
                   )}
@@ -736,7 +1029,7 @@ export default function Profile() {
         {/* Quick Actions Section */}
         <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">Quick Actions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
             <button
               onClick={handleShowListings}
               className="bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600 transition-colors flex flex-col items-center"
@@ -759,6 +1052,14 @@ export default function Profile() {
             >
               <FaHeart className="w-5 h-5 mb-1" />
               <span className="font-medium text-sm">My Wishlist</span>
+            </Link>
+            
+            <Link
+              to={(currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? "/admin/reviews" : "/user/reviews"}
+              className="bg-yellow-500 text-white p-3 rounded-lg hover:bg-yellow-600 transition-colors flex flex-col items-center"
+            >
+              <FaStar className="w-5 h-5 mb-1" />
+              <span className="font-medium text-sm">My Reviews</span>
             </Link>
             
             <button
@@ -794,15 +1095,19 @@ export default function Profile() {
               Transfer Rights
             </button>
           )}
-            
+          
+          {/* Note for default admin about account deletion */}
           {currentUser.isDefaultAdmin && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-              <div className="flex items-center">
-                <FaCrown className="w-5 h-5 text-yellow-600 mr-2" />
-                <div>
-                  <h3 className="font-semibold text-yellow-800">Default Admin Account</h3>
-                  <p className="text-yellow-700 text-sm">
-                    As the default admin, you must assign a new default admin before deleting your account.
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  <svg className="h-4 w-4 text-blue-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-2">
+                  <p className="text-sm text-blue-700">
+                    <strong>Note:</strong> You must transfer your default admin rights to another admin before you can delete your account.
                   </p>
                 </div>
               </div>
@@ -962,6 +1267,46 @@ export default function Profile() {
                   className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
                   disabled={transferLoading}
                 >{transferLoading ? 'Processing...' : 'Transfer & Delete'}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Update Profile Password Modal */}
+      {showUpdatePasswordModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
+            <div className="p-6">
+              <h3 className="text-xl font-bold text-gray-800 mb-4">Confirm Profile Update</h3>
+              <p className="mb-4 text-gray-600">Please enter your password to confirm the profile changes.</p>
+              <input
+                type="password"
+                className="w-full p-3 border border-gray-300 rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter your password"
+                value={updatePassword}
+                onChange={e => setUpdatePassword(e.target.value)}
+              />
+              {updatePasswordError && <div className="text-red-600 text-sm mb-2">{updatePasswordError}</div>}
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => { setShowUpdatePasswordModal(false); setUpdatePassword(""); setUpdatePasswordError(""); }}
+                  className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+                >Cancel</button>
+                <button
+                  onClick={handleConfirmUpdate}
+                  disabled={loading}
+                  className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center"
+                >
+                  {loading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Updating...
+                    </>
+                  ) : (
+                    'Update Profile'
+                  )}
+                </button>
               </div>
             </div>
           </div>
