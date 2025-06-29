@@ -4,6 +4,8 @@ import ListingItem from "../components/ListingItem";
 import LocationSelector from "../components/LocationSelector";
 import duckImg from "../assets/duck-404.png";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export default function Search() {
     const location = useLocation();
     const navigate = useNavigate();
@@ -55,7 +57,7 @@ export default function Search() {
             setLoading(true);
             setError(null);
             try {
-                const res = await fetch(`/api/listing/get?${urlParams.toString()}`);
+                const res = await fetch(`${API_BASE_URL}/api/listing/get?${urlParams.toString()}`);
                 if (!res.ok) {
                     throw new Error(`HTTP error! status: ${res.status}`);
                 }
@@ -91,7 +93,7 @@ export default function Search() {
         try {
             const urlParams = new URLSearchParams(location.search);
             urlParams.set("startIndex", listings.length);
-            const res = await fetch(`/api/listing/get?${urlParams.toString()}`);
+            const res = await fetch(`${API_BASE_URL}/api/listing/get?${urlParams.toString()}`);
             if (!res.ok) {
                 throw new Error(`HTTP error! status: ${res.status}`);
             }

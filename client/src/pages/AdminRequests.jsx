@@ -3,6 +3,8 @@ import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import ContactSupportWrapper from "../components/ContactSupportWrapper";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 const AdminRequests = () => {
   const [pendingRequests, setPendingRequests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -38,7 +40,7 @@ const AdminRequests = () => {
   const fetchPendingRequests = async () => {
     try {
       setLoading(true);
-      const res = await fetch('http://localhost:3000/api/admin/pending-requests', {
+      const res = await fetch(`${API_BASE_URL}/api/admin/pending-requests`, {
         headers: {
           'Content-Type': 'application/json',
         },
@@ -60,7 +62,7 @@ const AdminRequests = () => {
 
   const handleApprove = async (userId) => {
     try {
-      const res = await fetch(`http://localhost:3000/api/admin/approve/${userId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/approve/${userId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -93,7 +95,7 @@ const AdminRequests = () => {
 
   const handleReject = async (userId) => {
     try {
-      const res = await fetch(`http://localhost:3000/api/admin/reject/${userId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/reject/${userId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

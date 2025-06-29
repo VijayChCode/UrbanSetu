@@ -3,6 +3,8 @@ import { useLocation } from 'react-router-dom';
 import { FaHeadset, FaTimes, FaPaperPlane, FaEnvelope, FaUser, FaFileAlt, FaClock, FaTrash } from 'react-icons/fa';
 import { useSelector } from 'react-redux';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export default function ContactSupport() {
   const { currentUser } = useSelector((state) => state.user);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -52,7 +54,7 @@ export default function ContactSupport() {
   const fetchUserMessages = async () => {
     setLoadingMessages(true);
     try {
-      const response = await fetch(`/api/contact/user-messages/${encodeURIComponent(currentUser.email)}`);
+      const response = await fetch(`${API_BASE_URL}/api/contact/user-messages/${encodeURIComponent(currentUser.email)}`);
       const data = await response.json();
       setUserMessages(data);
       
@@ -93,7 +95,7 @@ export default function ContactSupport() {
     }
 
     try {
-      const response = await fetch(`/api/contact/user-messages/${messageId}?email=${encodeURIComponent(currentUser.email)}`, {
+      const response = await fetch(`${API_BASE_URL}/api/contact/user-messages/${messageId}?email=${encodeURIComponent(currentUser.email)}`, {
         method: 'DELETE',
         credentials: 'include'
       });
@@ -153,7 +155,7 @@ export default function ContactSupport() {
     setSubmitStatus('');
 
     try {
-      const response = await fetch('/api/contact/support', {
+      const response = await fetch(`${API_BASE_URL}/api/contact/support`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

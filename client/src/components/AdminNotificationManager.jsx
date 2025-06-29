@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { FaBell, FaTimes, FaPaperPlane, FaUsers, FaEnvelope } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export default function AdminNotificationManager() {
   const [isOpen, setIsOpen] = useState(false);
   const [users, setUsers] = useState([]);
@@ -15,7 +17,7 @@ export default function AdminNotificationManager() {
   const fetchUsers = async () => {
     setFetchingUsers(true);
     try {
-      const res = await fetch('http://localhost:3000/api/notifications/admin/users', {
+      const res = await fetch(`${API_BASE_URL}/api/notifications/admin/users`, {
         credentials: 'include',
       });
       const data = await res.json();
@@ -44,7 +46,7 @@ export default function AdminNotificationManager() {
 
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:3000/api/notifications/admin/send', {
+      const res = await fetch(`${API_BASE_URL}/api/notifications/admin/send`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

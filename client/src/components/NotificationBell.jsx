@@ -3,6 +3,8 @@ import { useSelector } from 'react-redux';
 import { FaBell, FaTimes, FaCheck, FaTrash, FaEye, FaCalendarAlt, FaEdit, FaEnvelope, FaPaperPlane, FaUsers, FaUser } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export default function NotificationBell() {
   const { currentUser } = useSelector((state) => state.user);
   const [notifications, setNotifications] = useState([]);
@@ -29,7 +31,7 @@ export default function NotificationBell() {
     if (!currentUser) return;
     
     try {
-      const res = await fetch(`http://localhost:3000/api/notifications/user/${currentUser._id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/notifications/user/${currentUser._id}`, {
         credentials: 'include',
       });
       const data = await res.json();
@@ -47,7 +49,7 @@ export default function NotificationBell() {
     if (!currentUser) return;
     
     try {
-      const res = await fetch(`http://localhost:3000/api/notifications/user/${currentUser._id}/unread-count`, {
+      const res = await fetch(`${API_BASE_URL}/api/notifications/user/${currentUser._id}/unread-count`, {
         credentials: 'include',
       });
       const data = await res.json();
@@ -81,7 +83,7 @@ export default function NotificationBell() {
     setFetchingUsers(true);
     try {
       console.log('Fetching users for admin notification...');
-      const res = await fetch('http://localhost:3000/api/notifications/admin/users', {
+      const res = await fetch(`${API_BASE_URL}/api/notifications/admin/users`, {
         credentials: 'include',
       });
       const data = await res.json();
@@ -114,7 +116,7 @@ export default function NotificationBell() {
 
     setSendingNotification(true);
     try {
-      const res = await fetch('http://localhost:3000/api/notifications/admin/send', {
+      const res = await fetch(`${API_BASE_URL}/api/notifications/admin/send`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -159,7 +161,7 @@ export default function NotificationBell() {
 
     setSendingNotification(true);
     try {
-      const res = await fetch('http://localhost:3000/api/notifications/admin/send-all', {
+      const res = await fetch(`${API_BASE_URL}/api/notifications/admin/send-all`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -194,7 +196,7 @@ export default function NotificationBell() {
   // Mark notification as read
   const markAsRead = async (notificationId) => {
     try {
-      const res = await fetch(`http://localhost:3000/api/notifications/${notificationId}/read`, {
+      const res = await fetch(`${API_BASE_URL}/api/notifications/${notificationId}/read`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -222,7 +224,7 @@ export default function NotificationBell() {
   // Mark all notifications as read
   const markAllAsRead = async () => {
     try {
-      const res = await fetch(`http://localhost:3000/api/notifications/user/${currentUser._id}/read-all`, {
+      const res = await fetch(`${API_BASE_URL}/api/notifications/user/${currentUser._id}/read-all`, {
         method: 'PUT',
         credentials: 'include',
       });
@@ -242,7 +244,7 @@ export default function NotificationBell() {
   // Delete notification
   const deleteNotification = async (notificationId) => {
     try {
-      const res = await fetch(`http://localhost:3000/api/notifications/${notificationId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/notifications/${notificationId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -511,7 +513,7 @@ export default function NotificationBell() {
                   <button
                     onClick={() => {
                       // Clear all notifications
-                      fetch(`http://localhost:3000/api/notifications/user/${currentUser._id}/all`, {
+                      fetch(`${API_BASE_URL}/api/notifications/user/${currentUser._id}/all`, {
                         method: 'DELETE',
                         credentials: 'include',
                       }).then(() => {

@@ -17,6 +17,8 @@ import ContactSupportWrapper from "../components/ContactSupportWrapper";
 import { useWishlist } from "../WishlistContext";
 import { toast } from 'react-toastify';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export default function Profile() {
   const { currentUser, error } = useSelector((state) => state.user);
   const { wishlist } = useWishlist();
@@ -109,8 +111,8 @@ export default function Profile() {
       if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) {
         // Fetch admin-specific stats
         const [listingsRes, appointmentsRes] = await Promise.all([
-          fetch('/api/listing/user', { credentials: 'include' }),
-          fetch('/api/bookings/', { credentials: 'include' })
+          fetch(`${API_BASE_URL}/api/listing/user`, { credentials: 'include' }),
+          fetch(`${API_BASE_URL}/api/bookings/`, { credentials: 'include' })
         ]);
 
         const listingsData = await listingsRes.json();
@@ -126,8 +128,8 @@ export default function Profile() {
       } else {
         // Fetch regular user stats
         const [listingsRes, appointmentsRes] = await Promise.all([
-          fetch('/api/listing/user', { credentials: 'include' }),
-          fetch(`/api/bookings/user/${currentUser._id}`, { credentials: 'include' })
+          fetch(`${API_BASE_URL}/api/listing/user`, { credentials: 'include' }),
+          fetch(`${API_BASE_URL}/api/bookings/user/${currentUser._id}`, { credentials: 'include' })
         ]);
 
         const listingsData = await listingsRes.json();
@@ -175,7 +177,7 @@ export default function Profile() {
     }
     try {
       setEmailValidation({ loading: true, message: "", available: null });
-      const res = await fetch(`/api/user/check-email/${encodeURIComponent(email.trim())}`, {
+      const res = await fetch(`${API_BASE_URL}/api/user/check-email/${encodeURIComponent(email.trim())}`, {
         credentials: 'include'
       });
       const data = await res.json();
@@ -211,7 +213,7 @@ export default function Profile() {
     }
     try {
       setMobileValidation({ loading: true, message: "", available: null });
-      const res = await fetch(`/api/user/check-mobile/${encodeURIComponent(mobile.trim())}`, {
+      const res = await fetch(`${API_BASE_URL}/api/user/check-mobile/${encodeURIComponent(mobile.trim())}`, {
         credentials: 'include'
       });
       const data = await res.json();
@@ -314,7 +316,7 @@ export default function Profile() {
     setLoading(true);
     try {
       dispatch(updateUserStart());
-      const apiUrl = `/api/user/update/${currentUser._id}`;
+      const apiUrl = `${API_BASE_URL}/api/user/update/${currentUser._id}`;
       const options = {
         method: "POST",
         headers: {
@@ -416,7 +418,7 @@ export default function Profile() {
     }
     try {
       dispatch(deleteUserStart());
-      const apiUrl = `/api/user/delete/${currentUser._id}`;
+      const apiUrl = `${API_BASE_URL}/api/user/delete/${currentUser._id}`;
       const options = {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
@@ -435,7 +437,7 @@ export default function Profile() {
         alert("For your security, you've been signed out automatically.");
         // Signout and redirect
         dispatch(signoutUserStart());
-        const signoutRes = await fetch("/api/auth/signout");
+        const signoutRes = await fetch(`${API_BASE_URL}/api/auth/signout`);
         const signoutData = await signoutRes.json();
         if (signoutData.success === false) {
           dispatch(signoutUserFailure(signoutData.message));
@@ -450,7 +452,7 @@ export default function Profile() {
         alert("For your security, you've been signed out automatically.");
         // Signout and redirect
         dispatch(signoutUserStart());
-        const signoutRes = await fetch("/api/auth/signout");
+        const signoutRes = await fetch(`${API_BASE_URL}/api/auth/signout`);
         const signoutData = await signoutRes.json();
         if (signoutData.success === false) {
           dispatch(signoutUserFailure(signoutData.message));
@@ -478,7 +480,7 @@ export default function Profile() {
   const fetchAdmins = async () => {
     try {
       setLoadingAdmins(true);
-      const res = await fetch(`/api/user/approved-admins/${currentUser._id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/user/approved-admins/${currentUser._id}`, {
         credentials: 'include'
       });
       const data = await res.json();
@@ -513,7 +515,7 @@ export default function Profile() {
       setTransferLoading(true);
       
       // First, verify the password by checking it directly
-      const verifyRes = await fetch(`/api/user/verify-password/${currentUser._id}`, {
+      const verifyRes = await fetch(`${API_BASE_URL}/api/user/verify-password/${currentUser._id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -531,7 +533,7 @@ export default function Profile() {
         alert("Your session has expired. Please sign in again. No admin rights are Transferred");
         // Signout and redirect
         dispatch(signoutUserStart());
-        const signoutRes = await fetch("/api/auth/signout");
+        const signoutRes = await fetch(`${API_BASE_URL}/api/auth/signout`);
         const signoutData = await signoutRes.json();
         if (signoutData.success === false) {
           dispatch(signoutUserFailure(signoutData.message));
@@ -548,7 +550,7 @@ export default function Profile() {
         alert("For your security, you've been signed out automatically.");
         // Signout and redirect
         dispatch(signoutUserStart());
-        const signoutRes = await fetch("/api/auth/signout");
+        const signoutRes = await fetch(`${API_BASE_URL}/api/auth/signout`);
         const signoutData = await signoutRes.json();
         if (signoutData.success === false) {
           dispatch(signoutUserFailure(signoutData.message));
@@ -560,7 +562,7 @@ export default function Profile() {
       }
       
       // Password is correct, now transfer default admin rights
-      const transferRes = await fetch('/api/user/transfer-default-admin', {
+      const transferRes = await fetch(`${API_BASE_URL}/api/user/transfer-default-admin`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -576,7 +578,7 @@ export default function Profile() {
       }
 
       // Now delete the account (user is no longer default admin)
-      const deleteRes = await fetch(`/api/user/delete/${currentUser._id}`, {
+      const deleteRes = await fetch(`${API_BASE_URL}/api/user/delete/${currentUser._id}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -605,7 +607,7 @@ export default function Profile() {
     e.preventDefault();
     try {
       dispatch(signoutUserStart());
-      const res = await fetch("/api/auth/signout");
+      const res = await fetch(`${API_BASE_URL}/api/auth/signout`);
       const data = await res.json();
       if (data.success === false) {
         dispatch(signoutUserFailure(data.message));
@@ -650,7 +652,7 @@ export default function Profile() {
   const fetchTransferAdmins = async () => {
     try {
       setLoadingAdmins(true);
-      const res = await fetch('/api/admin/management/admins', { credentials: 'include' });
+      const res = await fetch(`${API_BASE_URL}/api/admin/management/admins`, { credentials: 'include' });
       const data = await res.json();
       if (res.ok) {
         setTransferAdmins(data.filter(a => a.role === 'admin' || a.role === 'rootadmin'));
@@ -686,7 +688,7 @@ export default function Profile() {
     }
     setTransferSubmitting(true);
     try {
-      const res = await fetch('/api/admin/transfer-rights', {
+      const res = await fetch(`${API_BASE_URL}/api/admin/transfer-rights`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -697,7 +699,7 @@ export default function Profile() {
         setShowTransferModal(false);
         alert("For your security, you've been signed out automatically.");
         dispatch(signoutUserStart());
-        const signoutRes = await fetch('/api/auth/signout');
+        const signoutRes = await fetch(`${API_BASE_URL}/api/auth/signout`);
         const signoutData = await signoutRes.json();
         if (signoutData.success === false) {
           dispatch(signoutUserFailure(signoutData.message));
@@ -747,7 +749,7 @@ export default function Profile() {
     async function fetchLatestUser() {
       if (currentUser && currentUser._id) {
         try {
-          const res = await fetch(`/api/user/id/${currentUser._id}`);
+          const res = await fetch(`${API_BASE_URL}/api/user/id/${currentUser._id}`);
           if (res.ok) {
             const user = await res.json();
             dispatch({ type: 'user/signInSuccess', payload: user });

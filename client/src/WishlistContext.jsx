@@ -3,6 +3,8 @@ import { useSelector } from 'react-redux';
 
 const WishlistContext = createContext();
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 const WishlistProvider = ({ children }) => {
   const { currentUser } = useSelector((state) => state.user);
   const [wishlist, setWishlist] = useState([]);
@@ -17,7 +19,7 @@ const WishlistProvider = ({ children }) => {
 
     setLoading(true);
     try {
-      const response = await fetch(`/api/wishlist/user/${currentUser._id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/wishlist/user/${currentUser._id}`, {
         credentials: 'include'
       });
       
@@ -46,7 +48,7 @@ const WishlistProvider = ({ children }) => {
     }
 
     try {
-      const response = await fetch('/api/wishlist/add', {
+      const response = await fetch(`${API_BASE_URL}/api/wishlist/add`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -80,7 +82,7 @@ const WishlistProvider = ({ children }) => {
     }
 
     try {
-      const response = await fetch(`/api/wishlist/remove/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/wishlist/remove/${id}`, {
         method: 'DELETE',
         credentials: 'include',
       });

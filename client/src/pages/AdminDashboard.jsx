@@ -19,6 +19,8 @@ import {
 } from "react-icons/fa";
 import ContactSupportWrapper from "../components/ContactSupportWrapper";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export default function AdminDashboard() {
   const { currentUser } = useSelector((state) => state.user);
   const [offerListings, setOfferListings] = useState([]);
@@ -84,7 +86,7 @@ export default function AdminDashboard() {
 
   const fetchOfferListings = async () => {
     try {
-      const res = await fetch("http://localhost:3000/api/listing/get?offer=true&limit=6");
+      const res = await fetch(`${API_BASE_URL}/api/listing/get?offer=true&limit=6`);
       const data = await res.json();
       setOfferListings(data);
     } catch (error) {
@@ -94,7 +96,7 @@ export default function AdminDashboard() {
 
   const fetchRentListings = async () => {
     try {
-      const res = await fetch("http://localhost:3000/api/listing/get?type=rent&limit=6");
+      const res = await fetch(`${API_BASE_URL}/api/listing/get?type=rent&limit=6`);
       const data = await res.json();
       setRentListings(data);
     } catch (error) {
@@ -104,7 +106,7 @@ export default function AdminDashboard() {
 
   const fetchSaleListings = async () => {
     try {
-      const res = await fetch("http://localhost:3000/api/listing/get?type=sale&limit=6");
+      const res = await fetch(`${API_BASE_URL}/api/listing/get?type=sale&limit=6`);
       const data = await res.json();
       setSaleListings(data);
     } catch (error) {
@@ -114,7 +116,7 @@ export default function AdminDashboard() {
 
   const fetchAppointmentCount = async () => {
     try {
-      const res = await fetch('http://localhost:3000/api/bookings', {
+      const res = await fetch(`${API_BASE_URL}/api/bookings`, {
         headers: {
           'Content-Type': 'application/json',
         },
@@ -131,7 +133,7 @@ export default function AdminDashboard() {
 
   const fetchBookingStats = async () => {
     try {
-      const res = await fetch('http://localhost:3000/api/bookings/stats', {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/stats`, {
         credentials: 'include',
       });
       if (res.ok) {
@@ -146,12 +148,12 @@ export default function AdminDashboard() {
   const fetchAnalytics = async () => {
     try {
       // Fetch user statistics
-      const usersRes = await fetch('http://localhost:3000/api/admin/management/users', { credentials: 'include' });
-      const adminsRes = await fetch('http://localhost:3000/api/admin/management/admins', { credentials: 'include' });
+      const usersRes = await fetch(`${API_BASE_URL}/api/admin/management/users`, { credentials: 'include' });
+      const adminsRes = await fetch(`${API_BASE_URL}/api/admin/management/admins`, { credentials: 'include' });
       // Fetch review statistics
-      const reviewsRes = await fetch('http://localhost:3000/api/review/admin/stats', { credentials: 'include' });
+      const reviewsRes = await fetch(`${API_BASE_URL}/api/review/admin/stats`, { credentials: 'include' });
       // Fetch listing statistics
-      const listingsRes = await fetch('http://localhost:3000/api/listing/get?limit=10000', { credentials: 'include' });
+      const listingsRes = await fetch(`${API_BASE_URL}/api/listing/get?limit=10000`, { credentials: 'include' });
 
       let usersData = [];
       let adminsData = [];
@@ -219,7 +221,7 @@ export default function AdminDashboard() {
     setDeleteError("");
     try {
       // Verify password
-      const verifyRes = await fetch(`http://localhost:3000/api/user/verify-password/${currentUser._id}`, {
+      const verifyRes = await fetch(`${API_BASE_URL}/api/user/verify-password/${currentUser._id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -231,7 +233,7 @@ export default function AdminDashboard() {
         return;
       }
       // Proceed to delete
-      const res = await fetch(`http://localhost:3000/api/listing/delete/${pendingDelete.id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/listing/delete/${pendingDelete.id}`, {
         method: 'DELETE',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },

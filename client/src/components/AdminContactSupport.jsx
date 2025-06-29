@@ -3,6 +3,8 @@ import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { FaHeadset, FaTimes, FaCheck, FaReply, FaEnvelope, FaClock, FaUser, FaEye, FaTrash, FaPaperPlane } from 'react-icons/fa';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export default function AdminContactSupport() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -59,7 +61,7 @@ export default function AdminContactSupport() {
   const fetchMessages = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/contact/messages');
+      const response = await fetch(`${API_BASE_URL}/api/contact/messages`);
       const data = await response.json();
       setMessages(data);
     } catch (error) {
@@ -71,7 +73,7 @@ export default function AdminContactSupport() {
 
   const fetchUnreadCount = async () => {
     try {
-      const response = await fetch('/api/contact/unread-count');
+      const response = await fetch(`${API_BASE_URL}/api/contact/unread-count`);
       const data = await response.json();
       setUnreadCount(data.count);
     } catch (error) {
@@ -81,7 +83,7 @@ export default function AdminContactSupport() {
 
   const markAsRead = async (messageId) => {
     try {
-      await fetch(`/api/contact/messages/${messageId}/read`, {
+      await fetch(`${API_BASE_URL}/api/contact/messages/${messageId}/read`, {
         method: 'PUT'
       });
       fetchMessages();
@@ -93,7 +95,7 @@ export default function AdminContactSupport() {
 
   const markAsReplied = async (messageId) => {
     try {
-      await fetch(`/api/contact/messages/${messageId}/replied`, {
+      await fetch(`${API_BASE_URL}/api/contact/messages/${messageId}/replied`, {
         method: 'PUT'
       });
       fetchMessages();
@@ -106,7 +108,7 @@ export default function AdminContactSupport() {
   const handleDeleteMessage = async (messageId) => {
     if (!window.confirm('Are you sure you want to delete this message?')) return;
     try {
-      await fetch(`/api/contact/messages/${messageId}`, {
+      await fetch(`${API_BASE_URL}/api/contact/messages/${messageId}`, {
         method: 'DELETE',
       });
       fetchMessages();
@@ -124,7 +126,7 @@ export default function AdminContactSupport() {
 
     setReplyLoading(true);
     try {
-      const response = await fetch(`/api/contact/messages/${messageId}/reply`, {
+      const response = await fetch(`${API_BASE_URL}/api/contact/messages/${messageId}/reply`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

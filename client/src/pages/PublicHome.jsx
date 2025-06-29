@@ -6,6 +6,8 @@ import "swiper/css/bundle";
 import ListingItem from "../components/ListingItem";
 import ContactSupportWrapper from "../components/ContactSupportWrapper";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export default function PublicHome() {
   const [offerListings, setOfferListings] = useState([]);
   const [saleListings, setSaleListings] = useState([]);
@@ -14,7 +16,7 @@ export default function PublicHome() {
   useEffect(() => {
     const fetchOfferListings = async () => {
       try {
-        const res = await fetch("/api/listing/get?offer=true&limit=6");
+        const res = await fetch(`${API_BASE_URL}/api/listing/get?offer=true&limit=6`);
         const data = await res.json();
         setOfferListings(data);
       } catch (error) {
@@ -24,7 +26,7 @@ export default function PublicHome() {
 
     const fetchRentListings = async () => {
       try {
-        const res = await fetch("/api/listing/get?type=rent&limit=6");
+        const res = await fetch(`${API_BASE_URL}/api/listing/get?type=rent&limit=6`);
         const data = await res.json();
         setRentListings(data);
       } catch (error) {
@@ -34,7 +36,7 @@ export default function PublicHome() {
 
     const fetchSaleListings = async () => {
       try {
-        const res = await fetch("/api/listing/get?type=sale&limit=6");
+        const res = await fetch(`${API_BASE_URL}/api/listing/get?type=sale&limit=6`);
         const data = await res.json();
         setSaleListings(data);
       } catch (error) {
