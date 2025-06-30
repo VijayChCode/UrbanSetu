@@ -81,6 +81,8 @@ const LoadingSpinner = () => (
   </div>
 );
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 function AppRoutes({ bootstrapped }) {
   const location = useLocation();
   const dispatch = useDispatch();
@@ -92,7 +94,7 @@ function AppRoutes({ bootstrapped }) {
     const checkSession = async () => {
       dispatch(verifyAuthStart());
       try {
-        const res = await fetch('/api/auth/verify', {
+        const res = await fetch(`${API_BASE_URL}/api/auth/verify`, {
           method: 'GET',
           credentials: 'include',
         });
@@ -203,7 +205,7 @@ export default function App() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const res = await fetch("/api/auth/verify");
+        const res = await fetch(`${API_BASE_URL}/api/auth/verify`);
         const data = await res.json();
         if (data.success === false) {
           dispatch(signoutUserSuccess());
