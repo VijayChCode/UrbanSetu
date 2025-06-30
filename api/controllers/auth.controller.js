@@ -53,6 +53,7 @@ export const SignUp=async (req,res,next)=>{
         }
     }
     catch(error){ 
+       console.error(error);
        next(error)
     }
 }
@@ -103,6 +104,7 @@ export const SignIn=async(req,res,next)=>{
         });
     }
     catch(error){
+        console.error(error);
         next(error)
     }
 }
@@ -143,6 +145,7 @@ export const Google=async (req,res,next)=>{
 
     }
     catch(error){
+        console.error(error);
         next(error)
     }
 }

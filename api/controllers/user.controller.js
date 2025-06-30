@@ -107,6 +107,7 @@ export const deleteUser=async(req,res,next)=>{
         res.json("User deleted successfully")
     }
     catch(error){
+        console.error(error);
         next(error)
     }
 }
@@ -254,6 +255,7 @@ export const getUserListings=async (req,res,next)=>{
             res.json(listing)
         }
         catch(error){
+            console.error(error);
             next(error)
         }
     }
@@ -268,6 +270,7 @@ export const getUserByEmail=async (req,res,next)=>{
         res.status(200).json(user)
     }
     catch(error){
+        console.error(error);
         next(error)
     }
 }

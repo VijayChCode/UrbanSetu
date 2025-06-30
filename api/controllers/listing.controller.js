@@ -52,6 +52,7 @@ export const createListing=async (req,res,next)=>{
         });
     }
     catch(error){
+        console.error(error);
         return next(errorHandler(500, "Failed to create listing"));
     }
 }
@@ -69,6 +70,7 @@ export const getUserListings=async (req,res,next)=>{
         res.status(200).json(listings)
     }
     catch(error){
+        console.error(error);
         next(error)
     }
 }
@@ -146,6 +148,7 @@ export const deleteListing=async (req,res,next)=>{
         });
     }
     catch(error){
+        console.error(error);
         return next(error)
     }
     
@@ -218,6 +221,7 @@ export const updateListing=async (req,res,next)=>{
         })
     }
     catch(error){
+        console.error(error);
         return next(errorHandler(500, "Failed to update listing"))
     }
     
@@ -234,6 +238,7 @@ export const getListing =async (req,res,next)=>{
         res.json(listing)
     }
     catch(error){
+        console.error(error);
         next(error)
     }
 }
