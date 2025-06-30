@@ -70,14 +70,24 @@ export default function MyAppointments() {
 
   useEffect(() => {
     const fetchArchivedAppointments = async () => {
+      if (!currentUser) return;
+      
       try {
-        const res = await fetch(`${API_BASE_URL}/api/bookings/archived`, {
+        const res = await fetch(`${API_BASE_URL}/api/bookings/my/archived`, {
           credentials: 'include'
         });
-        const data = await res.json();
-        setArchivedAppointments(data);
+        
+        if (res.ok) {
+          const data = await res.json();
+          setArchivedAppointments(Array.isArray(data) ? data : []);
+        } else {
+          console.error('Failed to fetch archived appointments:', res.status);
+          setArchivedAppointments([]);
+        }
       } catch (err) {
+        console.error('Error fetching archived appointments:', err);
         toast.error("Failed to fetch archived appointments");
+        setArchivedAppointments([]);
       }
     };
     fetchArchivedAppointments();
@@ -141,54 +151,6 @@ export default function MyAppointments() {
         navigate("/user/appointments");
       } else {
         toast.error(data.message || "Failed to delete appointment.");
-      }
-    } catch (err) {
-      toast.error("An error occurred. Please try again.");
-    }
-  };
-
-  const handleArchiveAppointment = async (id) => {
-    if (!window.confirm("Are you sure you want to archive this appointment? It will be moved to the archived section.")) return;
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${id}/archive`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: 'include',
-      });
-      const data = await res.json();
-      if (res.ok) {
-        const archivedAppt = appointments.find(appt => appt._id === id);
-        if (archivedAppt) {
-          setAppointments((prev) => prev.filter((appt) => appt._id !== id));
-          setArchivedAppointments((prev) => [{ ...archivedAppt, archivedAt: new Date() }, ...prev]);
-        }
-        toast.success("Appointment archived successfully.");
-      } else {
-        toast.error(data.message || "Failed to archive appointment.");
-      }
-    } catch (err) {
-      toast.error("An error occurred. Please try again.");
-    }
-  };
-
-  const handleUnarchiveAppointment = async (id) => {
-    if (!window.confirm("Are you sure you want to unarchive this appointment? It will be moved back to the active appointments.")) return;
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${id}/unarchive`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: 'include',
-      });
-      const data = await res.json();
-      if (res.ok) {
-        const unarchivedAppt = archivedAppointments.find(appt => appt._id === id);
-        if (unarchivedAppt) {
-          setArchivedAppointments((prev) => prev.filter((appt) => appt._id !== id));
-          setAppointments((prev) => [{ ...unarchivedAppt, archivedAt: undefined }, ...prev]);
-        }
-        toast.success("Appointment unarchived successfully.");
-      } else {
-        toast.error(data.message || "Failed to unarchive appointment.");
       }
     } catch (err) {
       toast.error("An error occurred. Please try again.");
@@ -414,9 +376,6 @@ export default function MyAppointments() {
                       actionLoading={actionLoading}
                       onShowOtherParty={party => { setSelectedOtherParty(party); setShowOtherPartyModal(true); }}
                       onOpenReinitiate={() => handleOpenReinitiate(appt)}
-                      handleArchiveAppointment={handleArchiveAppointment}
-                      handleUnarchiveAppointment={handleUnarchiveAppointment}
-                      isArchived={true}
                     />
                   ))}
                 </tbody>
@@ -453,9 +412,6 @@ export default function MyAppointments() {
                       actionLoading={actionLoading}
                       onShowOtherParty={party => { setSelectedOtherParty(party); setShowOtherPartyModal(true); }}
                       onOpenReinitiate={() => handleOpenReinitiate(appt)}
-                      handleArchiveAppointment={handleArchiveAppointment}
-                      handleUnarchiveAppointment={handleUnarchiveAppointment}
-                      isArchived={false}
                     />
                   ))}
                 </tbody>
@@ -522,7 +478,7 @@ export default function MyAppointments() {
   );
 }
 
-function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDelete, actionLoading, onShowOtherParty, onOpenReinitiate, handleArchiveAppointment, handleUnarchiveAppointment, isArchived }) {
+function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDelete, actionLoading, onShowOtherParty, onOpenReinitiate }) {
   const [comment, setComment] = useLocalState("");
   const [comments, setComments] = useLocalState(appt.comments || []);
   const [sending, setSending] = useLocalState(false);

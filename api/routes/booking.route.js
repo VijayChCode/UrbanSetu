@@ -607,6 +607,37 @@ router.get('/archived', verifyToken, async (req, res) => {
   }
 });
 
+// GET: Get user's archived appointments (for regular users)
+router.get('/my/archived', verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    // Find archived appointments where user is either buyer or seller
+    const archivedAppointments = await booking.find({
+      $or: [{ buyerId: userId }, { sellerId: userId }],
+      archivedByAdmin: true
+    })
+    .populate('buyerId', 'username email mobileNumber')
+    .populate('sellerId', 'username email mobileNumber')
+    .populate('listingId', '_id name address')
+    .sort({ archivedAt: -1 });
+    
+    // Add role information to each booking
+    const appointmentsWithRole = archivedAppointments
+      .filter(booking => booking.buyerId && booking.buyerId._id && booking.sellerId && booking.sellerId._id)
+      .map(booking => {
+        const bookingObj = booking.toObject();
+        bookingObj.role = booking.buyerId._id.toString() === userId ? 'buyer' : 'seller';
+        return bookingObj;
+      });
+    
+    res.status(200).json(appointmentsWithRole);
+  } catch (err) {
+    console.error('Error fetching user archived appointments:', err);
+    res.status(500).json({ message: 'Failed to fetch archived appointments.' });
+  }
+});
+
 // POST: Reinitiate a cancelled appointment (user-side)
 router.post('/reinitiate', verifyToken, async (req, res) => {
   try {
