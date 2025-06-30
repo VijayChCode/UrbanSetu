@@ -177,7 +177,7 @@ export default function Listing() {
   return (
     <>
       <div className="bg-gradient-to-br from-blue-50 to-purple-100 min-h-screen py-10 px-2 md:px-8">
-        <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-6 relative">
+        <div className="max-w-4xl w-full mx-auto bg-white rounded-xl shadow-lg p-3 sm:p-6 relative overflow-x-hidden">
           {/* Header with Back Button and Admin Actions */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
@@ -218,10 +218,10 @@ export default function Listing() {
                   <img
                     src={url}
                     alt={`${listing.name} - Image ${index + 1}`}
-                    className="w-full h-64 md:h-96 object-cover"
+                    className="w-full h-40 sm:h-64 md:h-96 object-cover"
                     onError={(e) => {
                       e.target.src = "https://via.placeholder.com/800x600?text=Image+Not+Available";
-                      e.target.className = "w-full h-64 md:h-96 object-cover opacity-50";
+                      e.target.className = "w-full h-40 sm:h-64 md:h-96 object-cover opacity-50";
                     }}
                   />
                 </SwiperSlide>
@@ -252,9 +252,9 @@ export default function Listing() {
           {copied && <p className="text-green-500 text-sm text-center mb-4">Link copied!</p>}
 
           {/* Details Card */}
-          <div className="p-6 bg-gray-50 shadow-md rounded-lg mb-6">
-            <div className="flex items-start justify-between mb-4">
-              <h2 className="text-3xl font-bold text-gray-800">{listing.name}</h2>
+          <div className="p-3 sm:p-6 bg-gray-50 shadow-md rounded-lg mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
+              <h2 className="text-lg sm:text-2xl md:text-3xl font-bold text-gray-800 break-words">{listing.name}</h2>
               {/* Offer Badge */}
               {listing.offer && getDiscountPercentage() > 0 && (
                 <span 
@@ -269,20 +269,20 @@ export default function Listing() {
             {/* Price Display */}
             <div className="mb-4">
               {listing.offer && getDiscountPercentage() > 0 ? (
-                <div className="flex items-center gap-3">
-                  <p className="text-3xl text-blue-600 font-semibold">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                  <p className="text-lg sm:text-2xl md:text-3xl text-blue-600 font-semibold">
                     {formatINR(listing.discountPrice)}
                     {listing.type === "rent" && " / month"}
                   </p>
-                  <p className="text-xl text-gray-500 line-through">
+                  <p className="text-base sm:text-xl text-gray-500 line-through">
                     {formatINR(listing.regularPrice)}
                   </p>
-                  <span className="text-sm text-green-600 font-semibold">
+                  <span className="text-xs sm:text-sm text-green-600 font-semibold">
                     Save {formatINR(listing.regularPrice - listing.discountPrice)}
                   </span>
                 </div>
               ) : (
-                <p className="text-3xl text-blue-600 font-semibold">
+                <p className="text-lg sm:text-2xl md:text-3xl text-blue-600 font-semibold">
                   {formatINR(listing.regularPrice)}
                   {listing.type === "rent" && " / month"}
                 </p>
@@ -338,7 +338,7 @@ export default function Listing() {
               <span className="font-semibold">Description:</span> {listing.description}
             </p>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
               <div className="flex items-center p-3 bg-white rounded-lg shadow-sm">
                 <FaBed className="mr-2 text-blue-500" /> {listing.bedrooms} {listing.bedrooms > 1 ? "beds" : "bed"}
               </div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { FaSearch, FaHome, FaInfoCircle, FaCompass, FaPlus, FaList, FaHeart, FaCalendarAlt, FaUser, FaSignOutAlt, FaStar, FaBars, FaTimes } from "react-icons/fa";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
@@ -12,6 +12,8 @@ export default function Header() {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchInputRef = useRef(null);
 
   useEffect(() => {
     setFadeIn(true);
@@ -21,6 +23,12 @@ export default function Header() {
       setSearchTerm(searchTermFromUrl);
     }
   }, [location.search]);
+
+  useEffect(() => {
+    if (searchOpen && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [searchOpen]);
 
   // Function to get header gradient based on current route
   const getHeaderGradient = () => {
@@ -111,7 +119,18 @@ export default function Header() {
   };
 
   return (
-    <div className={`flex min-w-0 items-center justify-between px-2 sm:px-4 md:px-6 py-2 sm:py-3 ${getHeaderGradient()} shadow-lg sticky top-0 z-50 transition-all duration-300 ${fadeIn ? 'opacity-100' : 'opacity-0'}`}>
+    <div className={`flex min-w-0 items-center justify-between px-2 sm:px-4 md:px-6 py-2 sm:py-3 ${getHeaderGradient()} shadow-lg sticky top-0 z-50 transition-all duration-300 ${fadeIn ? 'opacity-100' : 'opacity-0'} flex-row sm:flex-row-reverse`}>
+      {/* Hamburger menu for mobile (left side) */}
+      <div className="flex items-center sm:hidden mr-2">
+        <button
+          className="text-white text-2xl p-2 focus:outline-none"
+          onClick={() => setMobileMenuOpen((prev) => !prev)}
+          aria-label="Open navigation menu"
+        >
+          {mobileMenuOpen ? <FaTimes /> : <FaBars />}
+        </button>
+      </div>
+      {/* Logo/Title */}
       <Link to={location.pathname.startsWith('/user') ? '/user' : '/'} className="flex-shrink-0">
         <h1 className="text-lg xs:text-xl sm:text-2xl md:text-3xl font-extrabold tracking-wide drop-shadow flex items-center gap-2 transition-transform duration-300 hover:scale-110 group">
           <span className="relative flex items-center justify-center">
@@ -122,27 +141,35 @@ export default function Header() {
           <span className="bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-gradient-x">Setu</span>
         </h1>
       </Link>
-      <form onSubmit={handleSubmit} className="hidden xs:flex items-center border rounded-lg overflow-hidden bg-white mx-2 sm:mx-4 focus-within:ring-2 focus-within:ring-yellow-300 transition-all w-28 xs:w-40 sm:w-64">
-        <input
-          type="text"
-          placeholder="Search..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="px-2 py-1 sm:px-3 sm:py-2 outline-none w-full text-black focus:bg-blue-50 transition-colors text-sm sm:text-base"
-        />
-        <button className={`${getSearchButtonColor()} text-white p-2 hover:bg-yellow-400 hover:text-blue-700 transition-colors`} type="submit">
-          <FaSearch />
-        </button>
-      </form>
-      {/* Hamburger menu for mobile */}
-      <div className="flex items-center sm:hidden">
-        <button
-          className="text-white text-2xl p-2 focus:outline-none"
-          onClick={() => setMobileMenuOpen((prev) => !prev)}
-          aria-label="Open navigation menu"
-        >
-          {mobileMenuOpen ? <FaTimes /> : <FaBars />}
-        </button>
+      {/* Desktop/tablet search: icon expands to input */}
+      <div className="hidden xs:flex items-center relative">
+        {!searchOpen ? (
+          <button
+            className="p-2 text-blue-600 hover:text-blue-800 focus:outline-none transition-all"
+            onClick={() => setSearchOpen(true)}
+            aria-label="Open search"
+          >
+            <FaSearch className="text-lg" />
+          </button>
+        ) : (
+          <form
+            onSubmit={handleSubmit}
+            className="flex items-center border rounded-lg overflow-hidden bg-white mx-2 sm:mx-4 focus-within:ring-2 focus-within:ring-yellow-300 transition-all w-28 xs:w-40 sm:w-64 animate-fade-in"
+          >
+            <input
+              ref={searchInputRef}
+              type="text"
+              placeholder="Search..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onBlur={() => setSearchOpen(false)}
+              className="px-2 py-1 sm:px-3 sm:py-2 outline-none w-full text-black focus:bg-blue-50 transition-colors text-sm sm:text-base"
+            />
+            <button className={`${getSearchButtonColor()} text-white p-2 hover:bg-yellow-400 hover:text-blue-700 transition-colors`} type="submit">
+              <FaSearch />
+            </button>
+          </form>
+        )}
       </div>
       {/* Desktop nav links */}
       <div className="hidden sm:block">

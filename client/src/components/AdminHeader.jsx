@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { signoutUserStart, signoutUserSuccess, signoutUserFailure } from "../redux/user/userSlice";
@@ -16,6 +16,8 @@ export default function AdminHeader() {
   const [appointmentCount, setAppointmentCount] = useState(0);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchInputRef = useRef(null);
 
   useEffect(() => {
     setFadeIn(true);
@@ -25,6 +27,12 @@ export default function AdminHeader() {
       fetchAppointmentCount();
     }
   }, [currentUser]);
+
+  useEffect(() => {
+    if (searchOpen && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [searchOpen]);
 
   // Function to get header gradient based on current route
   const getHeaderGradient = () => {
@@ -147,18 +155,36 @@ export default function AdminHeader() {
           <span className="bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-gradient-x">Panel</span>
         </h1>
       </Link>
-      <form onSubmit={handleSearch} className="hidden xs:flex items-center border rounded-lg overflow-hidden bg-white mx-2 sm:mx-4 focus-within:ring-2 focus-within:ring-yellow-300 transition-all w-28 xs:w-40 sm:w-64">
-        <input
-          type="text"
-          placeholder="Search..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="px-2 py-1 sm:px-3 sm:py-2 outline-none w-full text-black focus:bg-blue-50 transition-colors text-sm sm:text-base"
-        />
-        <button className={`${getSearchButtonColor()} text-white p-2 hover:bg-yellow-400 hover:text-blue-700 transition-colors`} type="submit">
-          <FaSearch />
-        </button>
-      </form>
+      {/* Desktop/tablet search: icon expands to input */}
+      <div className="hidden xs:flex items-center relative">
+        {!searchOpen ? (
+          <button
+            className="p-2 text-blue-600 hover:text-blue-800 focus:outline-none transition-all"
+            onClick={() => setSearchOpen(true)}
+            aria-label="Open search"
+          >
+            <FaSearch className="text-lg" />
+          </button>
+        ) : (
+          <form
+            onSubmit={handleSearch}
+            className="flex items-center border rounded-lg overflow-hidden bg-white mx-2 sm:mx-4 focus-within:ring-2 focus-within:ring-yellow-300 transition-all w-28 xs:w-40 sm:w-64 animate-fade-in"
+          >
+            <input
+              ref={searchInputRef}
+              type="text"
+              placeholder="Search..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onBlur={() => setSearchOpen(false)}
+              className="px-2 py-1 sm:px-3 sm:py-2 outline-none w-full text-black focus:bg-blue-50 transition-colors text-sm sm:text-base"
+            />
+            <button className={`${getSearchButtonColor()} text-white p-2 hover:bg-yellow-400 hover:text-blue-700 transition-colors`} type="submit">
+              <FaSearch />
+            </button>
+          </form>
+        )}
+      </div>
       {/* Hamburger menu for mobile */}
       <div className="flex items-center sm:hidden">
         <button
