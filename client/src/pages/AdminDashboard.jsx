@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import ListingItem from "../components/ListingItem";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { 
   FaCalendarAlt, 
@@ -66,6 +66,8 @@ export default function AdminDashboard() {
   const [managementPassword, setManagementPassword] = useState("");
   const [managementPasswordError, setManagementPasswordError] = useState("");
   const [managementPasswordLoading, setManagementPasswordLoading] = useState(false);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchAllData = async () => {

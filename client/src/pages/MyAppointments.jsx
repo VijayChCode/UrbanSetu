@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone } from "react-icons/fa";
+import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo } from "react-icons/fa";
 import { useSelector } from "react-redux";
 import { useState as useLocalState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate, useNavigation } from "react-router-dom";
 import Appointment from "../components/Appointment";
+import toast from "react-hot-toast";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -22,6 +23,8 @@ export default function MyAppointments() {
   const [endDate, setEndDate] = useState("");
   const [showReinitiateModal, setShowReinitiateModal] = useState(false);
   const [reinitiateData, setReinitiateData] = useState(null);
+  const [archivedAppointments, setArchivedAppointments] = useState([]);
+  const [showArchived, setShowArchived] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -65,6 +68,21 @@ export default function MyAppointments() {
     };
   }, [currentUser]);
 
+  useEffect(() => {
+    const fetchArchivedAppointments = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/bookings/archived`, {
+          credentials: 'include'
+        });
+        const data = await res.json();
+        setArchivedAppointments(data);
+      } catch (err) {
+        toast.error("Failed to fetch archived appointments");
+      }
+    };
+    fetchArchivedAppointments();
+  }, [currentUser]);
+
   const handleStatusUpdate = async (id, status) => {
     setActionLoading(id + status);
     try {
@@ -75,20 +93,23 @@ export default function MyAppointments() {
         body: JSON.stringify({ status }),
       });
       const data = await res.json();
+      if (res.status === 401) {
+        toast.error("Session expired or unauthorized. Please sign in again.");
+        navigate("/sign-in");
+        return;
+      }
       if (res.ok) {
         setAppointments((prev) =>
           prev.map((appt) => (appt._id === id ? { ...appt, status } : appt))
         );
-        // Show success message
         const statusText = status === "accepted" ? "accepted" : "rejected";
-        alert(`Appointment ${statusText} successfully! ${status === "accepted" ? "Contact information is now visible to both parties." : ""}`);
-        // Redirect to appointments list
+        toast.success(`Appointment ${statusText} successfully! ${status === "accepted" ? "Contact information is now visible to both parties." : ""}`);
         navigate("/user/appointments");
       } else {
-        alert(data.message || "Failed to update appointment status.");
+        toast.error(data.message || "Failed to update appointment status.");
       }
     } catch (err) {
-      alert("An error occurred. Please try again.");
+      toast.error("An error occurred. Please try again.");
     }
     setActionLoading("");
   };
@@ -107,24 +128,75 @@ export default function MyAppointments() {
         body: JSON.stringify({ reason }),
       });
       const data = await res.json();
+      if (res.status === 401) {
+        toast.error("Session expired or unauthorized. Please sign in again.");
+        navigate("/sign-in");
+        return;
+      }
       if (res.ok) {
         setAppointments((prev) =>
           prev.map((appt) => (appt._id === id ? { ...appt, status: "deletedByAdmin", adminComment: reason } : appt))
         );
-        alert("Appointment deleted successfully. Both buyer and seller have been notified.");
-        // Redirect to appointments list
+        toast.success("Appointment deleted successfully. Both buyer and seller have been notified.");
         navigate("/user/appointments");
       } else {
-        alert(data.message || "Failed to delete appointment.");
+        toast.error(data.message || "Failed to delete appointment.");
       }
     } catch (err) {
-      alert("An error occurred. Please try again.");
+      toast.error("An error occurred. Please try again.");
+    }
+  };
+
+  const handleArchiveAppointment = async (id) => {
+    if (!window.confirm("Are you sure you want to archive this appointment? It will be moved to the archived section.")) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${id}/archive`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: 'include',
+      });
+      const data = await res.json();
+      if (res.ok) {
+        const archivedAppt = appointments.find(appt => appt._id === id);
+        if (archivedAppt) {
+          setAppointments((prev) => prev.filter((appt) => appt._id !== id));
+          setArchivedAppointments((prev) => [{ ...archivedAppt, archivedAt: new Date() }, ...prev]);
+        }
+        toast.success("Appointment archived successfully.");
+      } else {
+        toast.error(data.message || "Failed to archive appointment.");
+      }
+    } catch (err) {
+      toast.error("An error occurred. Please try again.");
+    }
+  };
+
+  const handleUnarchiveAppointment = async (id) => {
+    if (!window.confirm("Are you sure you want to unarchive this appointment? It will be moved back to the active appointments.")) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${id}/unarchive`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: 'include',
+      });
+      const data = await res.json();
+      if (res.ok) {
+        const unarchivedAppt = archivedAppointments.find(appt => appt._id === id);
+        if (unarchivedAppt) {
+          setArchivedAppointments((prev) => prev.filter((appt) => appt._id !== id));
+          setAppointments((prev) => [{ ...unarchivedAppt, archivedAt: undefined }, ...prev]);
+        }
+        toast.success("Appointment unarchived successfully.");
+      } else {
+        toast.error(data.message || "Failed to unarchive appointment.");
+      }
+    } catch (err) {
+      toast.error("An error occurred. Please try again.");
     }
   };
 
   // Filter appointments by status, role, search, and date range
   const filteredAppointments = appointments.filter((appt) => {
-    // Hide if soft-deleted for this user
     if (currentUser._id === appt.buyerId?._id?.toString() && appt.visibleToBuyer === false) return false;
     if (currentUser._id === appt.sellerId?._id?.toString() && appt.visibleToSeller === false) return false;
     const matchesStatus = statusFilter === "all" ? true : appt.status === statusFilter;
@@ -142,6 +214,22 @@ export default function MyAppointments() {
       matchesDate = matchesDate && new Date(appt.date) <= new Date(endDate);
     }
     return matchesStatus && matchesRole && matchesSearch && matchesDate;
+  });
+
+  const filteredArchivedAppointments = archivedAppointments.filter((appt) => {
+    const matchesSearch =
+      appt.propertyName?.toLowerCase().includes(search.toLowerCase()) ||
+      appt.message?.toLowerCase().includes(search.toLowerCase()) ||
+      appt.buyerId?.username?.toLowerCase().includes(search.toLowerCase()) ||
+      appt.sellerId?.username?.toLowerCase().includes(search.toLowerCase());
+    let matchesDate = true;
+    if (startDate) {
+      matchesDate = matchesDate && new Date(appt.date) >= new Date(startDate);
+    }
+    if (endDate) {
+      matchesDate = matchesDate && new Date(appt.date) <= new Date(endDate);
+    }
+    return matchesSearch && matchesDate;
   });
 
   function handleOpenReinitiate(appt) {
@@ -212,7 +300,29 @@ export default function MyAppointments() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-100 py-10 px-2 md:px-8">
       <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-6">
-        <h3 className="text-3xl font-extrabold text-blue-700 mb-6 text-center drop-shadow">My Appointments</h3>
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-3xl font-extrabold text-blue-700 drop-shadow">
+            {showArchived ? "Archived Appointments" : "My Appointments"}
+          </h3>
+          <button
+            onClick={() => setShowArchived(!showArchived)}
+            className={`bg-gradient-to-r text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2 ${
+              showArchived 
+                ? 'from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600' 
+                : 'from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700'
+            }`}
+          >
+            {showArchived ? (
+              <>
+                <FaUndo /> Active Appointments
+              </>
+            ) : (
+              <>
+                <FaArchive /> Archived Appointments ({archivedAppointments.length})
+              </>
+            )}
+          </button>
+        </div>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div className="flex items-center gap-2">
             <label className="font-semibold">Status:</label>
@@ -221,7 +331,7 @@ export default function MyAppointments() {
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >
-              <option value="all">All</option>
+              <option value="all">All Appointments</option>
               <option value="pending">Pending</option>
               <option value="accepted">Accepted</option>
               <option value="rejected">Rejected</option>
@@ -229,6 +339,8 @@ export default function MyAppointments() {
               <option value="cancelledBySeller">Cancelled by Seller</option>
               <option value="cancelledByAdmin">Cancelled by Admin</option>
               <option value="deletedByAdmin">Deleted by Admin</option>
+              <option value="completed">Completed</option>
+              <option value="noShow">No Show</option>
             </select>
           </div>
           <div className="flex items-center gap-2">
@@ -272,103 +384,145 @@ export default function MyAppointments() {
             />
           </div>
         </div>
-        {filteredAppointments.length === 0 ? (
-          <div className="text-center text-gray-500 text-lg">
-            {appointments.length === 0 ? "No appointments found." : "No appointments match your filters."}
-          </div>
+        {showArchived ? (
+          filteredArchivedAppointments.length === 0 ? (
+            <div className="text-center text-gray-500 text-lg">No archived appointments found.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse rounded-lg overflow-hidden">
+                <thead>
+                  <tr className="bg-gradient-to-r from-gray-100 to-gray-200">
+                    <th className="border p-2">Date & Time</th>
+                    <th className="border p-2">Property</th>
+                    <th className="border p-2">Role</th>
+                    <th className="border p-2">Other Party</th>
+                    <th className="border p-2">Purpose</th>
+                    <th className="border p-2">Message</th>
+                    <th className="border p-2">Status</th>
+                    <th className="border p-2">Actions</th>
+                    <th className="border p-2">Comments</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredArchivedAppointments.map((appt) => (
+                    <AppointmentRow
+                      key={appt._id}
+                      appt={appt}
+                      currentUser={currentUser}
+                      handleStatusUpdate={handleStatusUpdate}
+                      handleAdminDelete={handleAdminDelete}
+                      actionLoading={actionLoading}
+                      onShowOtherParty={party => { setSelectedOtherParty(party); setShowOtherPartyModal(true); }}
+                      onOpenReinitiate={() => handleOpenReinitiate(appt)}
+                      handleArchiveAppointment={handleArchiveAppointment}
+                      handleUnarchiveAppointment={handleUnarchiveAppointment}
+                      isArchived={true}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse rounded-lg overflow-hidden">
-              <thead>
-                <tr className="bg-gradient-to-r from-blue-100 to-purple-100">
-                  <th className="border p-2">Date & Time</th>
-                  <th className="border p-2">Property</th>
-                  <th className="border p-2">Role</th>
-                  <th className="border p-2">Other Party</th>
-                  <th className="border p-2">Purpose</th>
-                  <th className="border p-2">Message</th>
-                  <th className="border p-2">Status</th>
-                  <th className="border p-2">Actions</th>
-                  <th className="border p-2">Comments</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredAppointments.map((appt) => (
-                  <AppointmentRow 
-                    key={appt._id} 
-                    appt={appt} 
-                    currentUser={currentUser} 
-                    handleStatusUpdate={handleStatusUpdate}
-                    handleAdminDelete={handleAdminDelete}
-                    actionLoading={actionLoading}
-                    onShowOtherParty={party => { setSelectedOtherParty(party); setShowOtherPartyModal(true); }}
-                    onOpenReinitiate={() => handleOpenReinitiate(appt)}
-                  />
-                ))}
-              </tbody>
-            </table>
+          filteredAppointments.length === 0 ? (
+            <div className="text-center text-gray-500 text-lg">No appointments found.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse rounded-lg overflow-hidden">
+                <thead>
+                  <tr className="bg-gradient-to-r from-blue-100 to-purple-100">
+                    <th className="border p-2">Date & Time</th>
+                    <th className="border p-2">Property</th>
+                    <th className="border p-2">Role</th>
+                    <th className="border p-2">Other Party</th>
+                    <th className="border p-2">Purpose</th>
+                    <th className="border p-2">Message</th>
+                    <th className="border p-2">Status</th>
+                    <th className="border p-2">Actions</th>
+                    <th className="border p-2">Comments</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredAppointments.map((appt) => (
+                    <AppointmentRow
+                      key={appt._id}
+                      appt={appt}
+                      currentUser={currentUser}
+                      handleStatusUpdate={handleStatusUpdate}
+                      handleAdminDelete={handleAdminDelete}
+                      actionLoading={actionLoading}
+                      onShowOtherParty={party => { setSelectedOtherParty(party); setShowOtherPartyModal(true); }}
+                      onOpenReinitiate={() => handleOpenReinitiate(appt)}
+                      handleArchiveAppointment={handleArchiveAppointment}
+                      handleUnarchiveAppointment={handleUnarchiveAppointment}
+                      isArchived={false}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
+        )}
+        {/* Other Party Details Modal */}
+        {showOtherPartyModal && selectedOtherParty && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 relative">
+              <button
+                className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-2xl"
+                onClick={() => setShowOtherPartyModal(false)}
+                title="Close"
+              >
+                &times;
+              </button>
+              <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <FaUser className="text-blue-500" />
+                {selectedOtherParty.username || 'User Details'}
+              </h3>
+              <div className="space-y-2">
+                <p className="flex items-center gap-2"><FaEnvelope className="text-gray-500" /> <span>{selectedOtherParty.email}</span></p>
+                <p className="flex items-center gap-2"><FaPhone className="text-gray-500" /> <span>{selectedOtherParty.mobileNumber || 'Not provided'}</span></p>
+                <p><strong>Role:</strong> {selectedOtherParty.role}</p>
+                <p><strong>Member Since:</strong> {selectedOtherParty.createdAt ? new Date(selectedOtherParty.createdAt).toLocaleDateString() : ''}</p>
+              </div>
+              <button
+                onClick={() => setShowOtherPartyModal(false)}
+                className="mt-6 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 w-full"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
+        {/* Reinitiate Modal */}
+        {showReinitiateModal && reinitiateData && (
+          <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
+              <h3 className="text-xl font-bold mb-4 text-blue-700">Reinitiate Appointment</h3>
+              <form onSubmit={handleReinitiateSubmit} className="space-y-4">
+                <div>
+                  <label className="block font-semibold mb-1">Date</label>
+                  <input type="date" className="border rounded px-2 py-1 w-full" value={reinitiateData.date} onChange={e => setReinitiateData(d => ({ ...d, date: e.target.value }))} required />
+                </div>
+                <div>
+                  <label className="block font-semibold mb-1">Time</label>
+                  <input type="time" className="border rounded px-2 py-1 w-full" value={reinitiateData.time} onChange={e => setReinitiateData(d => ({ ...d, time: e.target.value }))} required />
+                </div>
+                <div>
+                  <label className="block font-semibold mb-1">Message</label>
+                  <textarea className="border rounded px-2 py-1 w-full" value={reinitiateData.message} onChange={e => setReinitiateData(d => ({ ...d, message: e.target.value }))} required />
+                </div>
+                <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 w-full">Submit</button>
+                <button type="button" className="mt-2 w-full bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400" onClick={() => setShowReinitiateModal(false)}>Cancel</button>
+              </form>
+            </div>
           </div>
         )}
       </div>
-      {/* Other Party Details Modal */}
-      {showOtherPartyModal && selectedOtherParty && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 relative">
-            <button
-              className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-2xl"
-              onClick={() => setShowOtherPartyModal(false)}
-              title="Close"
-            >
-              &times;
-            </button>
-            <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-              <FaUser className="text-blue-500" />
-              {selectedOtherParty.username || 'User Details'}
-            </h3>
-            <div className="space-y-2">
-              <p className="flex items-center gap-2"><FaEnvelope className="text-gray-500" /> <span>{selectedOtherParty.email}</span></p>
-              <p className="flex items-center gap-2"><FaPhone className="text-gray-500" /> <span>{selectedOtherParty.mobileNumber || 'Not provided'}</span></p>
-              <p><strong>Role:</strong> {selectedOtherParty.role}</p>
-              <p><strong>Member Since:</strong> {selectedOtherParty.createdAt ? new Date(selectedOtherParty.createdAt).toLocaleDateString() : ''}</p>
-            </div>
-            <button
-              onClick={() => setShowOtherPartyModal(false)}
-              className="mt-6 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 w-full"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
-      {/* Reinitiate Modal */}
-      {showReinitiateModal && reinitiateData && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
-            <h3 className="text-xl font-bold mb-4 text-blue-700">Reinitiate Appointment</h3>
-            <form onSubmit={handleReinitiateSubmit} className="space-y-4">
-              <div>
-                <label className="block font-semibold mb-1">Date</label>
-                <input type="date" className="border rounded px-2 py-1 w-full" value={reinitiateData.date} onChange={e => setReinitiateData(d => ({ ...d, date: e.target.value }))} required />
-              </div>
-              <div>
-                <label className="block font-semibold mb-1">Time</label>
-                <input type="time" className="border rounded px-2 py-1 w-full" value={reinitiateData.time} onChange={e => setReinitiateData(d => ({ ...d, time: e.target.value }))} required />
-              </div>
-              <div>
-                <label className="block font-semibold mb-1">Message</label>
-                <textarea className="border rounded px-2 py-1 w-full" value={reinitiateData.message} onChange={e => setReinitiateData(d => ({ ...d, message: e.target.value }))} required />
-              </div>
-              <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 w-full">Submit</button>
-              <button type="button" className="mt-2 w-full bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400" onClick={() => setShowReinitiateModal(false)}>Cancel</button>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
 
-function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDelete, actionLoading, onShowOtherParty, onOpenReinitiate }) {
+function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDelete, actionLoading, onShowOtherParty, onOpenReinitiate, handleArchiveAppointment, handleUnarchiveAppointment, isArchived }) {
   const [comment, setComment] = useLocalState("");
   const [comments, setComments] = useLocalState(appt.comments || []);
   const [sending, setSending] = useLocalState(false);
@@ -470,9 +624,14 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         body: JSON.stringify({ reason }),
       });
       const data = await res.json();
+      if (res.status === 401) {
+        alert('Session expired or unauthorized. Please sign in again.');
+        navigate('/sign-in');
+        return;
+      }
       if (res.ok) {
         alert('Appointment cancelled successfully.');
-        window.location.href = '/user/my-appointments';
+        navigate('/user/appointments');
       } else {
         alert(data.message || 'Failed to cancel appointment.');
       }
@@ -494,9 +653,14 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         body: JSON.stringify({ reason }),
       });
       const data = await res.json();
+      if (res.status === 401) {
+        alert('Session expired or unauthorized. Please sign in again.');
+        navigate('/sign-in');
+        return;
+      }
       if (res.ok) {
         alert('Appointment cancelled by admin.');
-        window.location.href = '/user/my-appointments';
+        navigate('/user/appointments');
       } else {
         alert(data.message || 'Failed to cancel appointment.');
       }

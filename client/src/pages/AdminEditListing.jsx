@@ -4,6 +4,8 @@ import { useNavigate, useParams, useLocation } from "react-router-dom";
 import LocationSelector from "../components/LocationSelector";
 import toast from "react-hot-toast";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export default function AdminEditListing() {
   const [formData, setFormData] = useState({
     imageUrls: [],
@@ -46,8 +48,8 @@ export default function AdminEditListing() {
   useEffect(() => {
     const fetchListing = async () => {
       const listingId = params.listingId;
-      const apiUrl = `/api/listing/get/${listingId}`;
-      const res = await fetch(apiUrl);
+      const apiUrl = `${API_BASE_URL}/api/listing/get/${listingId}`;
+      const res = await fetch(apiUrl, { credentials: 'include' });
       const data = await res.json();
       if (data.success === false) {
         setError(data.message);
@@ -139,9 +141,10 @@ export default function AdminEditListing() {
       const options = {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include',
         body: JSON.stringify(formData),
       };
-      const res = await fetch(apiUrl, options);
+      const res = await fetch(`${API_BASE_URL}${apiUrl}`, options);
       const data = await res.json();
       
       if (res.ok) {
