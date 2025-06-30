@@ -140,12 +140,8 @@ app.use("/api/wishlist", wishlistRouter);
 app.use("/api/notifications", notificationRouter);
 app.use("/api/review", reviewRouter);
 
-app.use((err,req,res,next)=>{
-    const statusCode=err.statusCode||500;
-    const message=err.message||"internal server error"
-    return res.status(statusCode).json({
-        success:false,
-        statusCode,
-        message
-    });
+// Global error handler (should be after all routes)
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(err.status || 500).json({ success: false, message: err.message || 'Internal Server Error' });
 });
