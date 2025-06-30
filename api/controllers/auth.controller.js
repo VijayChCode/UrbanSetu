@@ -95,8 +95,7 @@ export const SignIn=async(req,res,next)=>{
             httpOnly:true,
             maxAge,
             sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-            secure: process.env.NODE_ENV === 'production',
-            domain: process.env.NODE_ENV === 'production' ? process.env.COOKIE_DOMAIN : undefined
+            secure: process.env.NODE_ENV === 'production'
         }).status(200).json({
             _id: validUser._id,
             username: validUser.username,
@@ -130,8 +129,7 @@ export const Google=async (req,res,next)=>{
                 httpOnly:true,
                 maxAge,
                 sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-                secure: process.env.NODE_ENV === 'production',
-                domain: process.env.NODE_ENV === 'production' ? process.env.COOKIE_DOMAIN : undefined
+                secure: process.env.NODE_ENV === 'production'
             }).status(200).json(validUser)
         }
         else{
@@ -151,8 +149,7 @@ export const Google=async (req,res,next)=>{
                 httpOnly:true,
                 maxAge,
                 sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-                secure: process.env.NODE_ENV === 'production',
-                domain: process.env.NODE_ENV === 'production' ? process.env.COOKIE_DOMAIN : undefined
+                secure: process.env.NODE_ENV === 'production'
             }).status(200).json(newUser)
         }
 
@@ -170,8 +167,7 @@ export const Signout = async (req, res, next) => {
         httpOnly: true,
         sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         secure: process.env.NODE_ENV === 'production',
-        path: '/',
-        domain: process.env.NODE_ENV === 'production' ? process.env.COOKIE_DOMAIN : undefined
+        path: '/'
       });
       res.status(200).json('User has been logged out!');
     } catch (error) {
@@ -204,8 +200,7 @@ export const verifyAuth = async (req, res, next) => {
             httpOnly: true,
             maxAge,
             sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-            secure: process.env.NODE_ENV === 'production',
-            domain: process.env.NODE_ENV === 'production' ? process.env.COOKIE_DOMAIN : undefined
+            secure: process.env.NODE_ENV === 'production'
         });
         res.status(200).json(user);
     } catch (error) {
