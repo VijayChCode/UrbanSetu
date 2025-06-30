@@ -69,10 +69,10 @@ export default function ListingItem({ listing, onDelete }) {
   }
 
   return (
-    <div className="relative bg-white shadow-md rounded-lg overflow-hidden p-4">
+    <div className="relative bg-white shadow-md rounded-lg overflow-hidden p-2 sm:p-4">
       {/* Offer Badge */}
       {listing.offer && getDiscountPercentage() > 0 && (
-        <div className="absolute top-4 left-4 z-20">
+        <div className="absolute top-2 sm:top-4 left-2 sm:left-4 z-20">
           <span 
             className="bg-yellow-400 text-gray-900 text-xs font-semibold px-2 py-1 rounded-full shadow-md animate-pulse"
             title="Limited-time offer!"
@@ -85,23 +85,23 @@ export default function ListingItem({ listing, onDelete }) {
       {/* Wishlist Icon */}
       <button
         onClick={handleWishList}
-        className={`absolute top-4 right-4 p-2 rounded-full transition z-20 ${
+        className={`absolute top-2 sm:top-4 right-2 sm:right-4 p-2 rounded-full transition z-20 ${
           isInWishlistState ? 'bg-red-500 text-white' : 'bg-gray-200 text-red-500'
         }`}
         title={isInWishlistState ? 'Remove from wishlist' : 'Add to wishlist'}
       >
-        <FaHeart className="text-lg" />
+        <FaHeart className="text-base sm:text-lg" />
       </button>
 
       {/* Admin Delete Button */}
       {onDelete && (
         <button
           onClick={() => onDelete(listing._id)}
-          className="absolute top-4 left-4 p-2 rounded-full bg-red-100 text-red-600 hover:bg-red-500 hover:text-white transition shadow-md z-10"
+          className="absolute top-2 sm:top-4 left-2 sm:left-4 p-2 rounded-full bg-red-100 text-red-600 hover:bg-red-500 hover:text-white transition shadow-md z-10"
           title="Delete Listing"
-          style={{ left: listing.offer && getDiscountPercentage() > 0 ? '4.5rem' : '1rem' }}
+          style={{ left: listing.offer && getDiscountPercentage() > 0 ? '4.5rem' : '0.5rem' }}
         >
-          <FaTrash className="text-lg" />
+          <FaTrash className="text-base sm:text-lg" />
         </button>
       )}
 
@@ -110,10 +110,10 @@ export default function ListingItem({ listing, onDelete }) {
           <img
             src={listing.imageUrls[0]}
             alt="home"
-            className="w-full h-48 object-cover rounded-md"
+            className="w-full h-32 sm:h-48 object-cover rounded-md"
             onError={(e) => {
               e.target.src = "https://via.placeholder.com/400x300?text=No+Image";
-              e.target.className = "w-full h-48 object-cover rounded-md opacity-50";
+              e.target.className = "w-full h-32 sm:h-48 object-cover rounded-md opacity-50";
             }}
           />
         ) : (
@@ -124,8 +124,8 @@ export default function ListingItem({ listing, onDelete }) {
             </div>
           </div>
         )}
-        <div className="p-3">
-          <p className="text-gray-700 font-semibold text-lg truncate">
+        <div className="p-2 sm:p-3">
+          <p className="text-gray-700 font-semibold text-base sm:text-lg truncate">
             {listing.name}
           </p>
           <div className="text-sm text-gray-500 flex items-center gap-1 mt-1">
@@ -145,36 +145,36 @@ export default function ListingItem({ listing, onDelete }) {
               )}
             </p>
           </div>
-          <p className="text-gray-600 text-sm mt-2 truncate">{listing.description}</p>
+          <p className="text-gray-600 text-xs sm:text-sm mt-2 truncate">{listing.description}</p>
           <div className="mt-2">
             {listing.offer && getDiscountPercentage() > 0 ? (
               <div className="flex items-center gap-2">
-                <p className="text-lg font-bold text-blue-500">
+                <p className="text-base sm:text-lg font-bold text-blue-500">
                   {formatINR(listing.discountPrice)}
                   {listing.type === 'rent' && ' / month'}
                 </p>
-                <p className="text-sm text-gray-500 line-through">
+                <p className="text-xs sm:text-sm text-gray-500 line-through">
                   {formatINR(listing.regularPrice)}
                 </p>
               </div>
             ) : (
-              <p className="text-lg font-bold text-blue-500">
+              <p className="text-base sm:text-lg font-bold text-blue-500">
                 {formatINR(listing.regularPrice)}
                 {listing.type === 'rent' && ' / month'}
               </p>
             )}
           </div>
-          <div className="flex space-x-4 text-gray-600 text-sm mt-2">
+          <div className="flex space-x-2 sm:space-x-4 text-gray-600 text-xs sm:text-sm mt-2">
             <p>{listing.bedrooms > 1 ? `${listing.bedrooms} beds` : `${listing.bedrooms} bed`}</p>
             <p>{listing.bathrooms > 1 ? `${listing.bathrooms} bathrooms` : `${listing.bathrooms} bathroom`}</p>
           </div>
         </div>
       </Link>
 
-      <div className="mt-4">
+      <div className="mt-2 sm:mt-4">
         <button
           onClick={onHandleAppointment}
-          className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center justify-center gap-2"
+          className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center justify-center gap-2 text-sm sm:text-base"
         >
           📅 Book Appointment
         </button>

@@ -88,7 +88,7 @@ export default function Home() {
               <h2 className="text-2xl font-bold text-blue-700 animate-slide-in-left">🔥 Exclusive Offers</h2>
               <Link to="/search?offer=true" className="text-blue-600 hover:underline">View All Offers</Link>
             </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {offerListings.map((listing) => (
                 <div className="transition-transform duration-300 hover:scale-105 hover:shadow-xl" key={listing._id}>
                   <ListingItem listing={listing} />
@@ -105,7 +105,7 @@ export default function Home() {
               <h2 className="text-2xl font-bold text-blue-700 animate-slide-in-left delay-200">🏡 Homes for Rent</h2>
               <Link to="/search?type=rent" className="text-blue-600 hover:underline">View All Rentals</Link>
             </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {rentListings.map((listing) => (
                 <div className="transition-transform duration-300 hover:scale-105 hover:shadow-xl" key={listing._id}>
                   <ListingItem listing={listing} />
@@ -122,7 +122,7 @@ export default function Home() {
               <h2 className="text-2xl font-bold text-blue-700 animate-slide-in-left delay-400">🏠 Homes for Sale</h2>
               <Link to="/search?type=sale" className="text-blue-600 hover:underline">View All Sales</Link>
             </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {saleListings.map((listing) => (
                 <div className="transition-transform duration-300 hover:scale-105 hover:shadow-xl" key={listing._id}>
                   <ListingItem listing={listing} />
