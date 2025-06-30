@@ -773,12 +773,13 @@ export default function Profile() {
         {/* Header Section */}
         <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
           <div className="flex flex-col md:flex-row items-center justify-between">
-            <div className="flex items-center space-x-6 mb-4 md:mb-0">
-              <div className="relative">
-              <img
-                alt="avatar"
-                src={currentUser.avatar}
-                  className="h-24 w-24 rounded-full border-4 border-blue-200 object-cover shadow-lg"
+            <div className="flex flex-col sm:flex-row items-center sm:space-x-6 w-full text-center sm:text-left mb-4 md:mb-0">
+              <div className="relative flex-shrink-0 mx-auto sm:mx-0">
+                <img
+                  alt="avatar"
+                  src={currentUser.avatar}
+                  className="h-24 w-24 rounded-full border-4 border-blue-200 object-cover shadow-lg aspect-square"
+                  style={{ aspectRatio: '1/1' }}
                 />
                 {currentUser.role === 'admin' && (
                   <div className="absolute -top-2 -right-2 bg-purple-500 text-white rounded-full p-2">
@@ -791,8 +792,8 @@ export default function Profile() {
                   </div>
                 )}
               </div>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-800 flex items-center">
+              <div className="mt-4 sm:mt-0 w-full">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 flex flex-wrap items-center justify-center sm:justify-start">
                   {currentUser.username}
                   {currentUser.role === 'admin' && (
                     <span className="ml-2 bg-purple-100 text-purple-800 text-sm px-3 py-1 rounded-full font-medium">
@@ -805,18 +806,18 @@ export default function Profile() {
                     </span>
                   )}
                 </h1>
-                <p className="text-gray-600 flex items-center">
+                <p className="text-gray-600 flex flex-wrap items-center justify-center sm:justify-start break-all">
                   <FaEnvelope className="w-4 h-4 mr-2" />
                   {currentUser.email}
                 </p>
-                <p className="text-gray-600 flex items-center">
+                <p className="text-gray-600 flex flex-wrap items-center justify-center sm:justify-start break-all">
                   <FaPhone className="w-4 h-4 mr-2" />
                   {currentUser.mobileNumber && currentUser.mobileNumber !== "0000000000" 
                     ? `+91 ${currentUser.mobileNumber.slice(0, 5)} ${currentUser.mobileNumber.slice(5)}`
                     : "Mobile number not provided"
                   }
                 </p>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500 text-justify mt-1">
                   Member since {formatDate(currentUser.createdAt)}
                 </p>
               </div>
