@@ -119,17 +119,7 @@ export default function Header() {
   };
 
   return (
-    <div className={`flex min-w-0 items-center justify-between px-2 sm:px-4 md:px-6 py-2 sm:py-3 ${getHeaderGradient()} shadow-lg sticky top-0 z-50 transition-all duration-300 ${fadeIn ? 'opacity-100' : 'opacity-0'} flex-row sm:flex-row-reverse`}>
-      {/* Hamburger menu for mobile (left side) */}
-      <div className="flex items-center sm:hidden mr-2">
-        <button
-          className="text-white text-2xl p-2 focus:outline-none"
-          onClick={() => setMobileMenuOpen((prev) => !prev)}
-          aria-label="Open navigation menu"
-        >
-          {mobileMenuOpen ? <FaTimes /> : <FaBars />}
-        </button>
-      </div>
+    <div className={`flex min-w-0 items-center justify-between px-2 sm:px-4 md:px-6 py-2 sm:py-3 ${getHeaderGradient()} shadow-lg sticky top-0 z-50 transition-all duration-300 ${fadeIn ? 'opacity-100' : 'opacity-0'}`}>
       {/* Logo/Title */}
       <Link to={location.pathname.startsWith('/user') ? '/user' : '/'} className="flex-shrink-0">
         <h1 className="text-lg xs:text-xl sm:text-2xl md:text-3xl font-extrabold tracking-wide drop-shadow flex items-center gap-2 transition-transform duration-300 hover:scale-110 group">
@@ -141,8 +131,18 @@ export default function Header() {
           <span className="bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-gradient-x">Setu</span>
         </h1>
       </Link>
+      {/* Hamburger menu for mobile (right side) */}
+      <div className="flex items-center sm:hidden">
+        <button
+          className="text-white text-2xl p-2 focus:outline-none"
+          onClick={() => setMobileMenuOpen((prev) => !prev)}
+          aria-label="Open navigation menu"
+        >
+          {mobileMenuOpen ? <FaTimes /> : <FaBars />}
+        </button>
+      </div>
       {/* Desktop/tablet search: icon expands to input */}
-      <div className="hidden xs:flex items-center relative">
+      <div className="hidden sm:flex items-center relative">
         {!searchOpen ? (
           <button
             className="p-2 text-blue-600 hover:text-blue-800 focus:outline-none transition-all"

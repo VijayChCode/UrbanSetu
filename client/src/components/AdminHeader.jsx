@@ -156,7 +156,7 @@ export default function AdminHeader() {
         </h1>
       </Link>
       {/* Desktop/tablet search: icon expands to input */}
-      <div className="hidden xs:flex items-center relative">
+      <div className="hidden sm:flex items-center relative">
         {!searchOpen ? (
           <button
             className="p-2 text-blue-600 hover:text-blue-800 focus:outline-none transition-all"
