@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { FaSearch, FaHome, FaInfoCircle, FaCompass, FaPlus, FaList, FaHeart, FaCalendarAlt, FaUser, FaSignOutAlt, FaStar } from "react-icons/fa";
+import { FaSearch, FaHome, FaInfoCircle, FaCompass, FaPlus, FaList, FaHeart, FaCalendarAlt, FaUser, FaSignOutAlt, FaStar, FaBars, FaTimes } from "react-icons/fa";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { signoutUserSuccess } from "../redux/user/userSlice.js";
@@ -11,6 +11,7 @@ export default function Header() {
   const [fadeIn, setFadeIn] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     setFadeIn(true);
@@ -109,35 +110,75 @@ export default function Header() {
   };
 
   return (
-    <div className={`flex justify-between items-center px-6 py-3 ${getHeaderGradient()} shadow-lg sticky top-0 z-50 transition-all duration-300 ${fadeIn ? 'opacity-100' : 'opacity-0'}`}>
-      <Link to={location.pathname.startsWith('/user') ? '/user' : '/'}>
-        <h1 className="text-2xl md:text-3xl font-extrabold tracking-wide drop-shadow flex items-center gap-2 transition-transform duration-300 hover:scale-110 group">
+    <div className={`flex items-center justify-between px-2 sm:px-6 py-2 sm:py-3 ${getHeaderGradient()} shadow-lg sticky top-0 z-50 transition-all duration-300 ${fadeIn ? 'opacity-100' : 'opacity-0'}`}>
+      <Link to={location.pathname.startsWith('/user') ? '/user' : '/'} className="flex-shrink-0">
+        <h1 className="text-xl xs:text-2xl md:text-3xl font-extrabold tracking-wide drop-shadow flex items-center gap-2 transition-transform duration-300 hover:scale-110 group">
           <span className="relative flex items-center justify-center">
-            <FaHome className="text-3xl md:text-4xl text-yellow-400 drop-shadow-lg animate-bounce-slow group-hover:animate-bounce" style={{ filter: 'drop-shadow(0 2px 8px #facc15)' }} />
+            <FaHome className="text-2xl xs:text-3xl md:text-4xl text-yellow-400 drop-shadow-lg animate-bounce-slow group-hover:animate-bounce" style={{ filter: 'drop-shadow(0 2px 8px #facc15)' }} />
             <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-4 h-1 bg-gradient-to-r from-yellow-300 to-purple-400 rounded-full opacity-60 blur-sm"></span>
           </span>
           <span className="bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-600 bg-clip-text text-transparent animate-gradient-x">Urban</span>
           <span className="bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-gradient-x">Setu</span>
         </h1>
       </Link>
-      <form onSubmit={handleSubmit} className="flex items-center border rounded-lg overflow-hidden bg-white mx-4 focus-within:ring-2 focus-within:ring-yellow-300 transition-all">
+      <form onSubmit={handleSubmit} className="hidden xs:flex items-center border rounded-lg overflow-hidden bg-white mx-2 sm:mx-4 focus-within:ring-2 focus-within:ring-yellow-300 transition-all w-28 xs:w-40 sm:w-64">
         <input
           type="text"
           placeholder="Search..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="px-3 py-2 outline-none w-40 sm:w-64 text-black focus:bg-blue-50 transition-colors"
+          className="px-2 py-1 sm:px-3 sm:py-2 outline-none w-full text-black focus:bg-blue-50 transition-colors text-sm sm:text-base"
         />
         <button className={`${getSearchButtonColor()} text-white p-2 hover:bg-yellow-400 hover:text-blue-700 transition-colors`} type="submit">
           <FaSearch />
         </button>
       </form>
-      <UserNavLinks />
+      {/* Hamburger menu for mobile */}
+      <div className="flex items-center sm:hidden">
+        <button
+          className="text-white text-2xl p-2 focus:outline-none"
+          onClick={() => setMobileMenuOpen((prev) => !prev)}
+          aria-label="Open navigation menu"
+        >
+          {mobileMenuOpen ? <FaTimes /> : <FaBars />}
+        </button>
+      </div>
+      {/* Desktop nav links */}
+      <div className="hidden sm:block">
+        <UserNavLinks />
+      </div>
+      {/* Mobile nav menu */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex flex-col items-end sm:hidden">
+          <div className="w-3/4 max-w-xs bg-white h-full shadow-lg p-6 flex flex-col gap-4 animate-slide-in-right">
+            <button
+              className="self-end text-2xl text-gray-700 mb-2"
+              onClick={() => setMobileMenuOpen(false)}
+              aria-label="Close navigation menu"
+            >
+              <FaTimes />
+            </button>
+            <form onSubmit={handleSubmit} className="flex items-center border rounded-lg overflow-hidden bg-white mb-4 focus-within:ring-2 focus-within:ring-yellow-300 transition-all w-full">
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="px-2 py-1 outline-none w-full text-black focus:bg-blue-50 transition-colors text-sm"
+              />
+              <button className={`${getSearchButtonColor()} text-white p-2 hover:bg-yellow-400 hover:text-blue-700 transition-colors`} type="submit">
+                <FaSearch />
+              </button>
+            </form>
+            <UserNavLinks mobile onNavigate={() => setMobileMenuOpen(false)} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function UserNavLinks() {
+function UserNavLinks({ mobile = false, onNavigate }) {
   const { currentUser } = useSelector((state) => state.user);
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -166,28 +207,28 @@ function UserNavLinks() {
   };
 
   return (
-    <ul className="flex space-x-4 items-center text-white text-base font-normal">
-      <Link to={location.pathname.startsWith('/user') ? '/user' : '/'}>
+    <ul className={`${mobile ? 'flex flex-col gap-4 text-gray-800 text-lg' : 'flex space-x-2 sm:space-x-4 items-center text-white text-base font-normal'}`}>
+      <Link to={location.pathname.startsWith('/user') ? '/user' : '/'} onClick={onNavigate}>
         <li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all"><FaHome /> Home</li>
       </Link>
-      <Link to="/about">
+      <Link to="/about" onClick={onNavigate}>
         <li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all"><FaInfoCircle /> About</li>
       </Link>
-      <Link to="/search">
+      <Link to="/search" onClick={onNavigate}>
         <li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all"><FaCompass /> Explore</li>
       </Link>
       {currentUser && (
         <>
-          <Link to="/user/create-listing">
+          <Link to="/user/create-listing" onClick={onNavigate}>
             <li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all"><FaPlus /> Add Property</li>
           </Link>
-          <Link to="/user/my-listings">
+          <Link to="/user/my-listings" onClick={onNavigate}>
             <li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all"><FaList /> My Listings</li>
           </Link>
-          <Link to="/user/wishlist">
+          <Link to="/user/wishlist" onClick={onNavigate}>
             <li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all"><FaHeart /> Wish List</li>
           </Link>
-          <Link to="/user/my-appointments">
+          <Link to="/user/my-appointments" onClick={onNavigate}>
             <li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all"><FaCalendarAlt /> My Appointments</li>
           </Link>
         </>
@@ -197,21 +238,12 @@ function UserNavLinks() {
           <li className="flex items-center">
             <NotificationBell />
           </li>
-          <li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 cursor-pointer transition-all" onClick={handleSignout}>
+          <li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 cursor-pointer transition-all" onClick={() => { handleSignout(); if (onNavigate) onNavigate(); }}>
             <FaSignOutAlt /> Sign Out
-          </li>
-          <li>
-            <img
-              alt="avatar"
-              src={currentUser.avatar}
-              className="h-8 w-8 rounded-full border-2 border-white shadow cursor-pointer transition-transform duration-300 hover:scale-110 object-cover"
-              onClick={() => navigate("/user/profile")}
-              title="Profile"
-            />
           </li>
         </>
       ) : (
-        <Link to="/sign-in">
+        <Link to="/sign-in" onClick={onNavigate}>
           <li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all"><FaUser /> Sign In</li>
         </Link>
       )}
