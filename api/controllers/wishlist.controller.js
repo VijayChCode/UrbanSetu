@@ -5,13 +5,8 @@ import Listing from "../models/listing.model.js";
 // Get user's wishlist
 export const getUserWishlist = async (req, res, next) => {
     try {
-        const { userId } = req.params;
+        const userId = req.user.id;
         
-        // Verify the user is requesting their own wishlist
-        if (req.user._id.toString() !== userId) {
-            return next(errorHandler(403, "You can only view your own wishlist"));
-        }
-
         const wishlistItems = await Wishlist.find({ userId })
             .populate('listingId')
             .sort({ addedAt: -1 });

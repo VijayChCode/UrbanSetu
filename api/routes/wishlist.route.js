@@ -14,7 +14,7 @@ const router = express.Router();
 router.use(verifyToken);
 
 // Get user's wishlist
-router.get('/user/:userId', getUserWishlist);
+router.get('/user', getUserWishlist);
 
 // Add item to wishlist
 router.post('/add', addToWishlist);

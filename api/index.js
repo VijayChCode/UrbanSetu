@@ -69,18 +69,34 @@ app.use(cookieParser());
 const allowedOrigins = [
     'https://urbansetu.vercel.app',
     'https://urbansetu-vijaychcode.vercel.app',
+    'https://urbansetu-client.vercel.app',
+    'https://urbansetu-client-vijaychcode.vercel.app',
     'http://localhost:5173', // for local development
+    'http://localhost:3000', // for local development
 ];
 
 app.use(cors({
     origin: function(origin, callback) {
         // allow requests with no origin (like mobile apps, curl, etc.)
         if (!origin) return callback(null, true);
-        if (allowedOrigins.indexOf(origin) === -1) {
-            const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-            return callback(new Error(msg), false);
+        
+        // Check if origin is in allowed list
+        if (allowedOrigins.indexOf(origin) !== -1) {
+            return callback(null, true);
         }
-        return callback(null, true);
+        
+        // For development, allow any localhost origin
+        if (origin && origin.includes('localhost')) {
+            return callback(null, true);
+        }
+        
+        // For production, check if it's a vercel.app domain
+        if (origin && origin.includes('vercel.app')) {
+            return callback(null, true);
+        }
+        
+        const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+        return callback(new Error(msg), false);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
