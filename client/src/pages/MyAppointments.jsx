@@ -69,15 +69,25 @@ export default function MyAppointments() {
   }, [currentUser]);
 
   useEffect(() => {
+    // Only fetch archived appointments if user is admin/rootadmin
+    if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'rootadmin')) {
+      setArchivedAppointments([]);
+      return;
+    }
     const fetchArchivedAppointments = async () => {
       try {
         const res = await fetch(`${API_BASE_URL}/api/bookings/archived`, {
           credentials: 'include'
         });
+        if (!res.ok) throw new Error('Not allowed');
         const data = await res.json();
-        setArchivedAppointments(data);
+        setArchivedAppointments(Array.isArray(data) ? data : []);
       } catch (err) {
-        toast.error("Failed to fetch archived appointments");
+        setArchivedAppointments([]); // Defensive: always set to array
+        // Only show error toast for admins
+        if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) {
+          toast.error("Failed to fetch archived appointments");
+        }
       }
     };
     fetchArchivedAppointments();
@@ -216,7 +226,8 @@ export default function MyAppointments() {
     return matchesStatus && matchesRole && matchesSearch && matchesDate;
   });
 
-  const filteredArchivedAppointments = archivedAppointments.filter((appt) => {
+  // Defensive: ensure archivedAppointments is always an array
+  const filteredArchivedAppointments = Array.isArray(archivedAppointments) ? archivedAppointments.filter((appt) => {
     const matchesSearch =
       appt.propertyName?.toLowerCase().includes(search.toLowerCase()) ||
       appt.message?.toLowerCase().includes(search.toLowerCase()) ||
@@ -230,7 +241,7 @@ export default function MyAppointments() {
       matchesDate = matchesDate && new Date(appt.date) <= new Date(endDate);
     }
     return matchesSearch && matchesDate;
-  });
+  }) : [];
 
   function handleOpenReinitiate(appt) {
     setReinitiateData({

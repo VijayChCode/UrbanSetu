@@ -1467,18 +1467,12 @@ export default function Profile() {
             <Link
               to="/admin/terms"
               className="text-blue-600 hover:underline"
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={e => { e.preventDefault(); window.open('/admin/terms', '_blank', 'noopener,noreferrer'); }}
             >
               Admin Terms & Conditions
             </Link>
             <Link
               to="/admin/privacy"
               className="text-blue-600 hover:underline"
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={e => { e.preventDefault(); window.open('/admin/privacy', '_blank', 'noopener,noreferrer'); }}
             >
               Admin Privacy Policy
             </Link>
@@ -1488,18 +1482,12 @@ export default function Profile() {
             <Link
               to="/user/terms"
               className="text-blue-600 hover:underline"
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={e => { e.preventDefault(); window.open('/user/terms', '_blank', 'noopener,noreferrer'); }}
             >
               User Terms & Conditions
             </Link>
             <Link
               to="/user/privacy"
               className="text-blue-600 hover:underline"
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={e => { e.preventDefault(); window.open('/user/privacy', '_blank', 'noopener,noreferrer'); }}
             >
               User Privacy Policy
             </Link>
