@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { FaEdit, FaTrash, FaEye, FaPlus } from "react-icons/fa";
 import ContactSupportWrapper from '../components/ContactSupportWrapper';
 import { maskAddress } from '../utils/addressMasking';
@@ -10,6 +10,7 @@ export default function MyListings() {
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUserListings = async () => {
@@ -56,6 +57,7 @@ export default function MyListings() {
       if (res.ok) {
         setListings((prev) => prev.filter((listing) => listing._id !== id));
         alert("Listing deleted successfully!");
+        navigate("/user/listings");
       } else {
         const data = await res.json();
         alert(data.message || "Failed to delete listing.");

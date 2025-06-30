@@ -16,6 +16,7 @@ export default function AdminContactSupport() {
   const [replyLoading, setReplyLoading] = useState(false);
   const { currentUser } = useSelector((state) => state.user);
   const location = useLocation();
+  const [error, setError] = useState("");
 
   // Check if user is admin
   const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin');
@@ -60,11 +61,20 @@ export default function AdminContactSupport() {
 
   const fetchMessages = async () => {
     setLoading(true);
+    setError("");
     try {
       const response = await fetch(`${API_BASE_URL}/api/contact/messages`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        setError(errorData.message || "Failed to fetch messages.");
+        setMessages([]);
+        return;
+      }
       const data = await response.json();
       setMessages(data);
     } catch (error) {
+      setError("Network error or server unavailable.");
+      setMessages([]);
       console.error('Error fetching messages:', error);
     } finally {
       setLoading(false);
@@ -288,6 +298,11 @@ export default function AdminContactSupport() {
 
             {/* Content */}
             <div className="overflow-y-auto max-h-[calc(90vh-120px)]">
+              {error && (
+                <div className="p-6 text-center text-red-600 font-semibold bg-red-50 border border-red-200 rounded-xl mb-4">
+                  {error}
+                </div>
+              )}
               {loading ? (
                 <div className="p-12 text-center">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>

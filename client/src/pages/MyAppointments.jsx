@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone } from "react-icons/fa";
 import { useSelector } from "react-redux";
 import { useState as useLocalState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import Appointment from "../components/Appointment";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -22,6 +22,7 @@ export default function MyAppointments() {
   const [endDate, setEndDate] = useState("");
   const [showReinitiateModal, setShowReinitiateModal] = useState(false);
   const [reinitiateData, setReinitiateData] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -81,6 +82,8 @@ export default function MyAppointments() {
         // Show success message
         const statusText = status === "accepted" ? "accepted" : "rejected";
         alert(`Appointment ${statusText} successfully! ${status === "accepted" ? "Contact information is now visible to both parties." : ""}`);
+        // Redirect to appointments list
+        navigate("/user/appointments");
       } else {
         alert(data.message || "Failed to update appointment status.");
       }
@@ -109,6 +112,8 @@ export default function MyAppointments() {
           prev.map((appt) => (appt._id === id ? { ...appt, status: "deletedByAdmin", adminComment: reason } : appt))
         );
         alert("Appointment deleted successfully. Both buyer and seller have been notified.");
+        // Redirect to appointments list
+        navigate("/user/appointments");
       } else {
         alert(data.message || "Failed to delete appointment.");
       }
@@ -180,6 +185,8 @@ export default function MyAppointments() {
         alert('Appointment reinitiated successfully!');
         setShowReinitiateModal(false);
         setReinitiateData(null);
+        // Redirect to appointments list
+        navigate("/user/appointments");
         // Update the appointment in-place
         setAppointments((prev) => prev.map(appt => appt._id === data.appointment._id ? { ...appt, ...data.appointment } : appt));
       } else {
