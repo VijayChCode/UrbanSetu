@@ -12,6 +12,7 @@ import wishlistRouter from "./routes/wishlist.route.js";
 import notificationRouter from "./routes/notification.route.js";
 import reviewRouter from "./routes/review.route.js";
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 
 import path from 'path'
 import User from './models/user.model.js';
@@ -63,6 +64,7 @@ let PORT = process.env.PORT || 3000;
 const app = express();
 
 app.use(express.json())
+app.use(cookieParser());
 
 const allowedOrigins = [
     'https://urbansetu.vercel.app',
