@@ -214,31 +214,65 @@ function UserNavLinks({ mobile = false, onNavigate }) {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const location = useLocation();
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const searchInputRef = useRef(null);
 
-  const handleSignout = async () => {
-    try {
-      const res = await fetch("/api/auth/signout", {
-        method: "GET",
-      });
-      const data = await res.json();
-      if (data.success === false) {
-        console.log(data.message);
-        return;
-      }
-      dispatch(signoutUserSuccess());
-      alert("You have been signed out.");
-      navigate("/sign-in");
-    } catch (error) {
-      console.log(error.message);
-      // Even if API call fails, clear local state and redirect
-      dispatch(signoutUserSuccess());
-      alert("You have been signed out.");
-      navigate("/sign-in");
+  useEffect(() => {
+    if (searchOpen && searchInputRef.current) {
+      searchInputRef.current.focus();
     }
+  }, [searchOpen]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const urlParams = new URLSearchParams(location.search);
+    urlParams.set("searchTerm", searchTerm);
+    const searchQuery = urlParams.toString();
+    if (currentUser) {
+      navigate(`/user/search?${searchQuery}`);
+    } else {
+      navigate(`/search?${searchQuery}`);
+    }
+    if (onNavigate) onNavigate();
+    setSearchTerm("");
+    setSearchOpen(false);
   };
 
   return (
     <ul className={`${mobile ? 'flex flex-col gap-4 text-gray-800 text-lg' : 'flex space-x-2 sm:space-x-4 items-center text-white text-base font-normal'}`}>
+      {/* Search icon/input first, white color */}
+      {!mobile ? (
+        <li className="flex items-center">
+          {!searchOpen ? (
+            <button
+              className="p-2 text-white hover:text-yellow-300 focus:outline-none transition-all"
+              onClick={() => setSearchOpen(true)}
+              aria-label="Open search"
+            >
+              <FaSearch className="text-lg" />
+            </button>
+          ) : (
+            <form
+              onSubmit={handleSubmit}
+              className="flex items-center border rounded-lg overflow-hidden bg-white mx-2 sm:mx-4 focus-within:ring-2 focus-within:ring-yellow-300 transition-all w-28 xs:w-40 sm:w-64 animate-fade-in"
+            >
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Search..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onBlur={() => setSearchOpen(false)}
+                className="px-2 py-1 sm:px-3 sm:py-2 outline-none w-full text-black focus:bg-blue-50 transition-colors text-sm sm:text-base"
+              />
+              <button className={`bg-blue-500 hover:bg-blue-600 text-white p-2 hover:bg-yellow-400 hover:text-blue-700 transition-colors`} type="submit">
+                <FaSearch />
+              </button>
+            </form>
+          )}
+        </li>
+      ) : null}
       <Link to={location.pathname.startsWith('/user') ? '/user' : '/'} onClick={onNavigate}>
         <li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all"><FaHome /> Home</li>
       </Link>
@@ -272,6 +306,25 @@ function UserNavLinks({ mobile = false, onNavigate }) {
           <li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 cursor-pointer transition-all" onClick={() => { handleSignout(); if (onNavigate) onNavigate(); }}>
             <FaSignOutAlt /> Sign Out
           </li>
+          {/* Profile avatar for desktop/tablet */}
+          {!mobile && (
+            <li>
+              <img
+                alt="avatar"
+                src={currentUser.avatar}
+                className="h-8 w-8 rounded-full border-2 border-gray-300 shadow cursor-pointer transition-transform duration-300 hover:scale-110 object-cover"
+                onClick={() => {
+                  if (currentUser.role === 'admin' || currentUser.role === 'rootadmin') {
+                    navigate('/admin/profile');
+                  } else {
+                    navigate('/user/profile');
+                  }
+                  if (onNavigate) onNavigate();
+                }}
+                title="Profile"
+              />
+            </li>
+          )}
           {mobile && (
             <li>
               <img
