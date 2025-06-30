@@ -157,6 +157,61 @@ export default function MyAppointments() {
     }
   };
 
+  const handleArchiveAppointment = async (id) => {
+    if (!window.confirm("Are you sure you want to archive this appointment? It will be moved to your archived section.")) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${id}/user-archive`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: 'include',
+      });
+      const data = await res.json();
+      if (res.ok) {
+        const archivedAppt = appointments.find(appt => appt._id === id);
+        if (archivedAppt) {
+          setAppointments((prev) => prev.filter((appt) => appt._id !== id));
+          setArchivedAppointments((prev) => [{ ...archivedAppt, archivedByUsers: [{ userId: currentUser._id, archivedAt: new Date() }] }, ...prev]);
+        }
+        toast.success("Appointment archived successfully.");
+      } else {
+        toast.error(data.message || "Failed to archive appointment.");
+      }
+    } catch (err) {
+      toast.error("An error occurred. Please try again.");
+    }
+  };
+
+  const handleUnarchiveAppointment = async (id) => {
+    if (!window.confirm("Are you sure you want to unarchive this appointment? It will be moved back to your active appointments.")) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${id}/user-unarchive`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: 'include',
+      });
+      const data = await res.json();
+      if (res.ok) {
+        const unarchivedAppt = archivedAppointments.find(appt => appt._id === id);
+        if (unarchivedAppt) {
+          setArchivedAppointments((prev) => prev.filter((appt) => appt._id !== id));
+          // Remove the archivedByUsers entry for this user
+          const cleanedAppt = { ...unarchivedAppt };
+          if (cleanedAppt.archivedByUsers) {
+            cleanedAppt.archivedByUsers = cleanedAppt.archivedByUsers.filter(
+              archive => archive.userId !== currentUser._id
+            );
+          }
+          setAppointments((prev) => [cleanedAppt, ...prev]);
+        }
+        toast.success("Appointment unarchived successfully.");
+      } else {
+        toast.error(data.message || "Failed to unarchive appointment.");
+      }
+    } catch (err) {
+      toast.error("An error occurred. Please try again.");
+    }
+  };
+
   // Filter appointments by status, role, search, and date range
   const filteredAppointments = appointments.filter((appt) => {
     if (currentUser._id === appt.buyerId?._id?.toString() && appt.visibleToBuyer === false) return false;
@@ -376,6 +431,9 @@ export default function MyAppointments() {
                       actionLoading={actionLoading}
                       onShowOtherParty={party => { setSelectedOtherParty(party); setShowOtherPartyModal(true); }}
                       onOpenReinitiate={() => handleOpenReinitiate(appt)}
+                      handleArchiveAppointment={handleArchiveAppointment}
+                      handleUnarchiveAppointment={handleUnarchiveAppointment}
+                      isArchived={true}
                     />
                   ))}
                 </tbody>
@@ -412,6 +470,9 @@ export default function MyAppointments() {
                       actionLoading={actionLoading}
                       onShowOtherParty={party => { setSelectedOtherParty(party); setShowOtherPartyModal(true); }}
                       onOpenReinitiate={() => handleOpenReinitiate(appt)}
+                      handleArchiveAppointment={handleArchiveAppointment}
+                      handleUnarchiveAppointment={handleUnarchiveAppointment}
+                      isArchived={false}
                     />
                   ))}
                 </tbody>
@@ -478,7 +539,7 @@ export default function MyAppointments() {
   );
 }
 
-function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDelete, actionLoading, onShowOtherParty, onOpenReinitiate }) {
+function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDelete, actionLoading, onShowOtherParty, onOpenReinitiate, handleArchiveAppointment, handleUnarchiveAppointment, isArchived }) {
   const [comment, setComment] = useLocalState("");
   const [comments, setComments] = useLocalState(appt.comments || []);
   const [sending, setSending] = useLocalState(false);
@@ -807,6 +868,24 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
               </button>
               <span className="text-xs text-gray-500 mt-1">{2 - (appt.reinitiationCount || 0)} left</span>
             </div>
+          )}
+          {/* Archive/Unarchive buttons */}
+          {!isArchived ? (
+            <button
+              className="text-gray-500 hover:text-gray-700 text-xl"
+              onClick={() => handleArchiveAppointment(appt._id)}
+              title="Archive Appointment"
+            >
+              <FaArchive />
+            </button>
+          ) : (
+            <button
+              className="text-gray-500 hover:text-gray-700 text-xl"
+              onClick={() => handleUnarchiveAppointment(appt._id)}
+              title="Unarchive Appointment"
+            >
+              <FaUndo />
+            </button>
           )}
         </div>
       </td>
