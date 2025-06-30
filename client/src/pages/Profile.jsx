@@ -817,14 +817,14 @@ export default function Profile() {
                     : "Mobile number not provided"
                   }
                 </p>
-                <p className="text-sm text-gray-500 text-justify mt-1">
+                <p className="text-sm text-gray-500 text-center sm:text-left mt-1">
                   Member since {formatDate(currentUser.createdAt)}
                 </p>
               </div>
             </div>
             <button
               onClick={() => setIsEditing(!isEditing)}
-              className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2"
+              className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 sm:px-3 md:px-4 lg:px-5 py-2 sm:py-1.5 md:py-2 lg:py-2.5 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2 text-base sm:text-sm md:text-base lg:text-lg"
             >
               <FaEdit className="w-4 h-4" />
               {isEditing ? 'Cancel Edit' : 'Edit Profile'}
