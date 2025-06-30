@@ -247,6 +247,18 @@ function AdminNavLinks({ mobile = false, onNavigate, pendingCount, handleSignout
       <Link to="/admin/explore" onClick={onNavigate}><li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all"><FaCompass /> Explore</li></Link>
       <li className="flex items-center"><NotificationBell mobile={mobile} /></li>
       <li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 cursor-pointer transition-all" onClick={() => { handleSignout(); if (onNavigate) onNavigate(); }}><FaSignOutAlt /> Sign Out</li>
+      {/* Profile avatar for desktop/tablet */}
+      {currentUser && !mobile && (
+        <li>
+          <img
+            alt="avatar"
+            src={currentUser.avatar}
+            className="h-8 w-8 rounded-full border-2 border-gray-300 shadow cursor-pointer transition-transform duration-300 hover:scale-110 object-cover"
+            onClick={() => { navigate("/admin/profile"); if (onNavigate) onNavigate(); }}
+            title="Profile"
+          />
+        </li>
+      )}
       {currentUser && mobile && (
         <li>
           <img
