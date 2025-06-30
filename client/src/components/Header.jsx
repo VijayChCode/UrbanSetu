@@ -174,36 +174,6 @@ export default function Header() {
       {/* Desktop nav links */}
       <div className="hidden sm:block">
         <div className="flex items-center gap-2">
-          {/* Search icon/input first, white color */}
-          <div className="hidden sm:flex items-center relative">
-            {!searchOpen ? (
-              <button
-                className="p-2 text-white hover:text-yellow-300 focus:outline-none transition-all"
-                onClick={() => setSearchOpen(true)}
-                aria-label="Open search"
-              >
-                <FaSearch className="text-lg" />
-              </button>
-            ) : (
-              <form
-                onSubmit={handleSubmit}
-                className="flex items-center border rounded-lg overflow-hidden bg-white mx-2 sm:mx-4 focus-within:ring-2 focus-within:ring-yellow-300 transition-all w-28 xs:w-40 sm:w-64 animate-fade-in"
-              >
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  placeholder="Search..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onBlur={() => setSearchOpen(false)}
-                  className="px-2 py-1 sm:px-3 sm:py-2 outline-none w-full text-black focus:bg-blue-50 transition-colors text-sm sm:text-base"
-                />
-                <button className={`${getSearchButtonColor()} text-white p-2 hover:bg-yellow-400 hover:text-blue-700 transition-colors`} type="submit">
-                  <FaSearch />
-                </button>
-              </form>
-            )}
-          </div>
           {/* Nav links start with Home */}
           <UserNavLinks />
         </div>
