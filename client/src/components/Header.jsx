@@ -241,6 +241,17 @@ function UserNavLinks({ mobile = false, onNavigate }) {
           <li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 cursor-pointer transition-all" onClick={() => { handleSignout(); if (onNavigate) onNavigate(); }}>
             <FaSignOutAlt /> Sign Out
           </li>
+          {mobile && (
+            <li>
+              <img
+                alt="avatar"
+                src={currentUser.avatar}
+                className="h-8 w-8 rounded-full border-2 border-gray-300 shadow cursor-pointer transition-transform duration-300 hover:scale-110 object-cover"
+                onClick={() => { navigate("/user/profile"); if (onNavigate) onNavigate(); }}
+                title="Profile"
+              />
+            </li>
+          )}
         </>
       ) : (
         <Link to="/sign-in" onClick={onNavigate}>

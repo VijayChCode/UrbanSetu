@@ -374,7 +374,7 @@ export default function NotificationBell() {
 
       {/* Notification Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-96 overflow-hidden">
+        <div className="absolute left-1/2 -translate-x-1/2 right-auto mt-2 w-full max-w-xs sm:w-96 sm:left-auto sm:right-0 sm:-translate-x-0 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-96 overflow-hidden">
           {/* Header with Tabs */}
           <div className="border-b border-gray-100">
             <div className="flex items-center justify-between p-4">

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { signoutUserStart, signoutUserSuccess, signoutUserFailure } from "../redux/user/userSlice";
-import { FaHome, FaCalendarAlt, FaPlus, FaSignOutAlt, FaSearch, FaUserCheck, FaList, FaInfoCircle, FaCompass } from "react-icons/fa";
+import { FaHome, FaCalendarAlt, FaPlus, FaSignOutAlt, FaSearch, FaUserCheck, FaList, FaInfoCircle, FaCompass, FaBars, FaTimes } from "react-icons/fa";
 import NotificationBell from "./NotificationBell.jsx";
 
 export default function AdminHeader() {
@@ -15,6 +15,7 @@ export default function AdminHeader() {
   const [pendingCount, setPendingCount] = useState(0);
   const [appointmentCount, setAppointmentCount] = useState(0);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     setFadeIn(true);
@@ -135,78 +136,99 @@ export default function AdminHeader() {
   };
 
   return (
-    <div className={`flex justify-between items-center px-6 py-3 ${getHeaderGradient()} shadow-lg sticky top-0 z-50 transition-opacity duration-700 ${fadeIn ? 'opacity-100' : 'opacity-0'}`}>
-      <Link to="/admin">
-        <h1 className="text-2xl md:text-3xl font-extrabold tracking-wide drop-shadow flex items-center gap-2 transition-transform duration-300 hover:scale-110 group">
+    <div className={`flex items-center justify-between px-2 sm:px-6 py-2 sm:py-3 ${getHeaderGradient()} shadow-lg sticky top-0 z-50 transition-all duration-300 ${fadeIn ? 'opacity-100' : 'opacity-0'}`}>
+      <Link to="/admin" className="flex-shrink-0">
+        <h1 className="text-xl xs:text-2xl md:text-3xl font-extrabold tracking-wide drop-shadow flex items-center gap-2 transition-transform duration-300 hover:scale-110 group">
           <span className="relative flex items-center justify-center">
-            <FaHome className="text-3xl md:text-4xl text-yellow-400 drop-shadow-lg animate-bounce-slow group-hover:animate-bounce" style={{ filter: 'drop-shadow(0 2px 8px #facc15)' }} />
+            <FaHome className="text-2xl xs:text-3xl md:text-4xl text-yellow-400 drop-shadow-lg animate-bounce-slow group-hover:animate-bounce" style={{ filter: 'drop-shadow(0 2px 8px #facc15)' }} />
             <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-4 h-1 bg-gradient-to-r from-yellow-300 to-purple-400 rounded-full opacity-60 blur-sm"></span>
           </span>
           <span className="bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-600 bg-clip-text text-transparent animate-gradient-x">Admin</span>
           <span className="bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-gradient-x">Panel</span>
         </h1>
       </Link>
-      {/* Search Bar */}
-      <form onSubmit={handleSearch} className="flex items-center border rounded-lg overflow-hidden bg-white mx-4 focus-within:ring-2 focus-within:ring-yellow-300 transition-all">
+      <form onSubmit={handleSearch} className="hidden xs:flex items-center border rounded-lg overflow-hidden bg-white mx-2 sm:mx-4 focus-within:ring-2 focus-within:ring-yellow-300 transition-all w-28 xs:w-40 sm:w-64">
         <input
           type="text"
           placeholder="Search..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="px-3 py-2 outline-none w-40 sm:w-64 text-black focus:bg-blue-50 transition-colors"
+          className="px-2 py-1 sm:px-3 sm:py-2 outline-none w-full text-black focus:bg-blue-50 transition-colors text-sm sm:text-base"
         />
         <button className={`${getSearchButtonColor()} text-white p-2 hover:bg-yellow-400 hover:text-blue-700 transition-colors`} type="submit">
           <FaSearch />
         </button>
       </form>
-      <ul className="flex space-x-4 items-center text-white text-base font-normal">
-        <Link to="/admin">
-          <li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all"><FaHome /> Dashboard</li>
-        </Link>
-        <Link to="/admin/create-listing">
-          <li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all"><FaPlus /> Add Property</li>
-        </Link>
-        <Link to="/admin/listings">
-          <li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all"><FaList /> All Listings</li>
-        </Link>
-        {/* Only show Requests link for approved admin */}
-        {currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin') && currentUser.adminApprovalStatus === 'approved' && (
-          <Link to="/admin/requests">
-            <li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all relative cursor-pointer">
-              <FaUserCheck />
-              Requests
-              {pendingCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {pendingCount}
-                </span>
-              )}
-            </li>
-          </Link>
-        )}
-        <Link to="/admin/about">
-          <li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all"><FaInfoCircle /> About</li>
-        </Link>
-        <Link to="/admin/explore">
-          <li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all"><FaCompass /> Explore</li>
-        </Link>
-        <li className="flex items-center">
-          <NotificationBell />
-        </li>
-        <li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 cursor-pointer transition-all" onClick={handleSignout}>
-          <FaSignOutAlt /> Sign Out
-        </li>
-        <li>
-          {currentUser && (
-            <img
-              alt="avatar"
-              src={currentUser.avatar}
-              className="h-8 w-8 rounded-full border-2 border-white shadow cursor-pointer transition-transform duration-300 hover:scale-110 object-cover"
-              onClick={() => navigate("/admin/profile")}
-              title="Profile"
-            />
-          )}
-        </li>
-      </ul>
+      {/* Hamburger menu for mobile */}
+      <div className="flex items-center sm:hidden">
+        <button
+          className="text-white text-2xl p-2 focus:outline-none"
+          onClick={() => setMobileMenuOpen((prev) => !prev)}
+          aria-label="Open navigation menu"
+        >
+          {mobileMenuOpen ? <FaTimes /> : <FaBars />}
+        </button>
+      </div>
+      {/* Desktop nav links */}
+      <div className="hidden sm:block">
+        <AdminNavLinks pendingCount={pendingCount} handleSignout={handleSignout} currentUser={currentUser} />
+      </div>
+      {/* Mobile nav menu */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex flex-col items-end sm:hidden">
+          <div className="w-3/4 max-w-xs bg-white h-full shadow-lg p-6 flex flex-col gap-4 animate-slide-in-right">
+            <button
+              className="self-end text-2xl text-gray-700 mb-2"
+              onClick={() => setMobileMenuOpen(false)}
+              aria-label="Close navigation menu"
+            >
+              <FaTimes />
+            </button>
+            <form onSubmit={handleSearch} className="flex items-center border rounded-lg overflow-hidden bg-white mb-4 focus-within:ring-2 focus-within:ring-yellow-300 transition-all w-full">
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="px-2 py-1 outline-none w-full text-black focus:bg-blue-50 transition-colors text-sm"
+              />
+              <button className={`${getSearchButtonColor()} text-white p-2 hover:bg-yellow-400 hover:text-blue-700 transition-colors`} type="submit">
+                <FaSearch />
+              </button>
+            </form>
+            <AdminNavLinks mobile onNavigate={() => setMobileMenuOpen(false)} pendingCount={pendingCount} handleSignout={handleSignout} currentUser={currentUser} />
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+function AdminNavLinks({ mobile = false, onNavigate, pendingCount, handleSignout, currentUser }) {
+  const navigate = useNavigate();
+  return (
+    <ul className={`${mobile ? 'flex flex-col gap-4 text-gray-800 text-lg' : 'flex space-x-2 sm:space-x-4 items-center text-white text-base font-normal'}`}>
+      <Link to="/admin" onClick={onNavigate}><li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all"><FaHome /> Dashboard</li></Link>
+      <Link to="/admin/create-listing" onClick={onNavigate}><li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all"><FaPlus /> Add Property</li></Link>
+      <Link to="/admin/listings" onClick={onNavigate}><li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all"><FaList /> All Listings</li></Link>
+      {currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin') && currentUser.adminApprovalStatus === 'approved' && (
+        <Link to="/admin/requests" onClick={onNavigate}><li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all relative cursor-pointer"><FaUserCheck /> Requests{pendingCount > 0 && (<span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">{pendingCount}</span>)}</li></Link>
+      )}
+      <Link to="/admin/about" onClick={onNavigate}><li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all"><FaInfoCircle /> About</li></Link>
+      <Link to="/admin/explore" onClick={onNavigate}><li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all"><FaCompass /> Explore</li></Link>
+      <li className="flex items-center"><NotificationBell /></li>
+      <li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 cursor-pointer transition-all" onClick={() => { handleSignout(); if (onNavigate) onNavigate(); }}><FaSignOutAlt /> Sign Out</li>
+      {currentUser && mobile && (
+        <li>
+          <img
+            alt="avatar"
+            src={currentUser.avatar}
+            className="h-8 w-8 rounded-full border-2 border-gray-300 shadow cursor-pointer transition-transform duration-300 hover:scale-110 object-cover"
+            onClick={() => { navigate("/admin/profile"); if (onNavigate) onNavigate(); }}
+            title="Profile"
+          />
+        </li>
+      )}
+    </ul>
   );
 } 
