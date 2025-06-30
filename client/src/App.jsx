@@ -92,7 +92,7 @@ function AppRoutes({ bootstrapped }) {
   // Persistent session check on app load
   useEffect(() => {
     const checkSession = async () => {
-      dispatch(verifyAuthStart());
+        dispatch(verifyAuthStart());
       try {
         const res = await fetch(`${API_BASE_URL}/api/auth/verify`, {
           method: 'GET',

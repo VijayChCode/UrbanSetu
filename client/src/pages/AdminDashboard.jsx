@@ -439,7 +439,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Listings Section */}
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="max-w-6xl w-full mx-auto px-2 sm:px-4 md:px-8 py-8 overflow-x-hidden">
         {/* Offer Listings */}
         {offerListings.length > 0 && (
           <div className="mb-8 bg-white rounded-xl shadow-lg p-6">
@@ -447,7 +447,7 @@ export default function AdminDashboard() {
               <h2 className="text-2xl font-bold text-blue-700 animate-slide-in-left">🔥 Exclusive Offers</h2>
               <Link to="/admin/explore?offer=true" className="text-blue-600 hover:underline">View All Offers</Link>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
               {offerListings.map((listing) => (
                 <div className="transition-transform duration-300 hover:scale-105 hover:shadow-xl" key={listing._id}>
                   <ListingItem listing={listing} onDelete={() => handleDeleteListing(listing._id, listing.userRef)} />
@@ -464,7 +464,7 @@ export default function AdminDashboard() {
               <h2 className="text-2xl font-bold text-blue-700 animate-slide-in-left delay-200">🏡 Homes for Rent</h2>
               <Link to="/admin/explore?type=rent" className="text-blue-600 hover:underline">View All Rentals</Link>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
               {rentListings.map((listing) => (
                 <div className="transition-transform duration-300 hover:scale-105 hover:shadow-xl" key={listing._id}>
                   <ListingItem listing={listing} onDelete={() => handleDeleteListing(listing._id, listing.userRef)} />
@@ -481,7 +481,7 @@ export default function AdminDashboard() {
               <h2 className="text-2xl font-bold text-blue-700 animate-slide-in-left delay-400">🏠 Homes for Sale</h2>
               <Link to="/admin/explore?type=sale" className="text-blue-600 hover:underline">View All Sales</Link>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
               {saleListings.map((listing) => (
                 <div className="transition-transform duration-300 hover:scale-105 hover:shadow-xl" key={listing._id}>
                   <ListingItem listing={listing} onDelete={() => handleDeleteListing(listing._id, listing.userRef)} />

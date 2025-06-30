@@ -111,7 +111,7 @@ export default function AdminMyListings() {
   return (
     <>
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-100 py-10 px-2 md:px-8">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-6xl w-full mx-auto px-2 sm:px-4 md:px-8 py-8 overflow-x-hidden">
           <div className="bg-white rounded-xl shadow-lg p-6">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
               <h3 className="text-3xl font-extrabold text-blue-700 drop-shadow">My Listings (Admin)</h3>
@@ -136,7 +136,7 @@ export default function AdminMyListings() {
                 </Link>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
                 {listings.map((listing) => (
                   <div key={listing._id} className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
                     {/* Image */}

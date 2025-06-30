@@ -104,15 +104,16 @@ export default function Header() {
     } else {
       navigate(`/search?${searchQuery}`);
     }
-    
+    // Close mobile menu if open
+    setMobileMenuOpen(false);
     // Clear the search term after navigation
     setSearchTerm("");
   };
 
   return (
-    <div className={`flex items-center justify-between px-2 sm:px-6 py-2 sm:py-3 ${getHeaderGradient()} shadow-lg sticky top-0 z-50 transition-all duration-300 ${fadeIn ? 'opacity-100' : 'opacity-0'}`}>
+    <div className={`flex min-w-0 items-center justify-between px-2 sm:px-4 md:px-6 py-2 sm:py-3 ${getHeaderGradient()} shadow-lg sticky top-0 z-50 transition-all duration-300 ${fadeIn ? 'opacity-100' : 'opacity-0'}`}>
       <Link to={location.pathname.startsWith('/user') ? '/user' : '/'} className="flex-shrink-0">
-        <h1 className="text-xl xs:text-2xl md:text-3xl font-extrabold tracking-wide drop-shadow flex items-center gap-2 transition-transform duration-300 hover:scale-110 group">
+        <h1 className="text-lg xs:text-xl sm:text-2xl md:text-3xl font-extrabold tracking-wide drop-shadow flex items-center gap-2 transition-transform duration-300 hover:scale-110 group">
           <span className="relative flex items-center justify-center">
             <FaHome className="text-2xl xs:text-3xl md:text-4xl text-yellow-400 drop-shadow-lg animate-bounce-slow group-hover:animate-bounce" style={{ filter: 'drop-shadow(0 2px 8px #facc15)' }} />
             <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-4 h-1 bg-gradient-to-r from-yellow-300 to-purple-400 rounded-full opacity-60 blur-sm"></span>
