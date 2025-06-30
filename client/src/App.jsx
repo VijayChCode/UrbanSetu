@@ -84,47 +84,44 @@ const LoadingSpinner = () => (
 function AppRoutes({ bootstrapped }) {
   const location = useLocation();
   const dispatch = useDispatch();
-  const { currentUser } = useSelector((state) => state.user);
+  const { currentUser, loading } = useSelector((state) => state.user);
+  const [sessionChecked, setSessionChecked] = useState(false);
 
-  // Verify authentication on app startup
+  // Persistent session check on app load
   useEffect(() => {
-    const verifyAuth = async () => {
+    const checkSession = async () => {
+      dispatch(verifyAuthStart());
       try {
-        dispatch(verifyAuthStart());
-        const res = await fetch('/api/auth/verify');
+        const res = await fetch('/api/auth/verify', {
+          method: 'GET',
+          credentials: 'include',
+        });
         const data = await res.json();
-        
-        if (data.success === false) {
-          dispatch(verifyAuthFailure(data.message));
+        if (res.ok) {
+          dispatch(verifyAuthSuccess(data));
+        } else {
+          dispatch(verifyAuthFailure(data.message || 'Session invalid'));
           dispatch(signoutUserSuccess());
-          return;
         }
-        
-        dispatch(verifyAuthSuccess(data));
-      } catch (error) {
-        dispatch(verifyAuthFailure(error.message));
+      } catch (err) {
+        dispatch(verifyAuthFailure('Network error'));
         dispatch(signoutUserSuccess());
+      } finally {
+        setSessionChecked(true);
       }
     };
-
     if (bootstrapped) {
-      verifyAuth();
+      checkSession();
     }
   }, [bootstrapped, dispatch]);
 
+  // Show loader while checking session
+  if (!bootstrapped || !sessionChecked) {
+    return <LoadingSpinner />;
+  }
+
   // Do not show header on /appointments admin route
   const hideHeaderRoutes = ["/appointments"];
-
-  if (!bootstrapped) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <>

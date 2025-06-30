@@ -436,102 +436,102 @@ export default function MyAppointments() {
                   ))}
                 </tbody>
               </table>
-            </div>
+          </div>
           )
         ) : (
           filteredAppointments.length === 0 ? (
             <div className="text-center text-gray-500 text-lg">No appointments found.</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse rounded-lg overflow-hidden">
-                <thead>
-                  <tr className="bg-gradient-to-r from-blue-100 to-purple-100">
-                    <th className="border p-2">Date & Time</th>
-                    <th className="border p-2">Property</th>
-                    <th className="border p-2">Role</th>
-                    <th className="border p-2">Other Party</th>
-                    <th className="border p-2">Purpose</th>
-                    <th className="border p-2">Message</th>
-                    <th className="border p-2">Status</th>
-                    <th className="border p-2">Actions</th>
-                    <th className="border p-2">Comments</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredAppointments.map((appt) => (
-                    <AppointmentRow
-                      key={appt._id}
-                      appt={appt}
-                      currentUser={currentUser}
-                      handleStatusUpdate={handleStatusUpdate}
-                      handleAdminDelete={handleAdminDelete}
-                      actionLoading={actionLoading}
-                      onShowOtherParty={party => { setSelectedOtherParty(party); setShowOtherPartyModal(true); }}
-                      onOpenReinitiate={() => handleOpenReinitiate(appt)}
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse rounded-lg overflow-hidden">
+              <thead>
+                <tr className="bg-gradient-to-r from-blue-100 to-purple-100">
+                  <th className="border p-2">Date & Time</th>
+                  <th className="border p-2">Property</th>
+                  <th className="border p-2">Role</th>
+                  <th className="border p-2">Other Party</th>
+                  <th className="border p-2">Purpose</th>
+                  <th className="border p-2">Message</th>
+                  <th className="border p-2">Status</th>
+                  <th className="border p-2">Actions</th>
+                  <th className="border p-2">Comments</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredAppointments.map((appt) => (
+                  <AppointmentRow 
+                    key={appt._id} 
+                    appt={appt} 
+                    currentUser={currentUser} 
+                    handleStatusUpdate={handleStatusUpdate}
+                    handleAdminDelete={handleAdminDelete}
+                    actionLoading={actionLoading}
+                    onShowOtherParty={party => { setSelectedOtherParty(party); setShowOtherPartyModal(true); }}
+                    onOpenReinitiate={() => handleOpenReinitiate(appt)}
                       handleArchiveAppointment={handleArchiveAppointment}
                       handleUnarchiveAppointment={handleUnarchiveAppointment}
                       isArchived={false}
-                    />
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
           )
         )}
-        {/* Other Party Details Modal */}
-        {showOtherPartyModal && selectedOtherParty && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 relative">
-              <button
-                className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-2xl"
-                onClick={() => setShowOtherPartyModal(false)}
-                title="Close"
-              >
-                &times;
-              </button>
-              <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                <FaUser className="text-blue-500" />
-                {selectedOtherParty.username || 'User Details'}
-              </h3>
-              <div className="space-y-2">
-                <p className="flex items-center gap-2"><FaEnvelope className="text-gray-500" /> <span>{selectedOtherParty.email}</span></p>
-                <p className="flex items-center gap-2"><FaPhone className="text-gray-500" /> <span>{selectedOtherParty.mobileNumber || 'Not provided'}</span></p>
-                <p><strong>Role:</strong> {selectedOtherParty.role}</p>
-                <p><strong>Member Since:</strong> {selectedOtherParty.createdAt ? new Date(selectedOtherParty.createdAt).toLocaleDateString() : ''}</p>
+      {/* Other Party Details Modal */}
+      {showOtherPartyModal && selectedOtherParty && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 relative">
+            <button
+              className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-2xl"
+              onClick={() => setShowOtherPartyModal(false)}
+              title="Close"
+            >
+              &times;
+            </button>
+            <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <FaUser className="text-blue-500" />
+              {selectedOtherParty.username || 'User Details'}
+            </h3>
+            <div className="space-y-2">
+              <p className="flex items-center gap-2"><FaEnvelope className="text-gray-500" /> <span>{selectedOtherParty.email}</span></p>
+              <p className="flex items-center gap-2"><FaPhone className="text-gray-500" /> <span>{selectedOtherParty.mobileNumber || 'Not provided'}</span></p>
+              <p><strong>Role:</strong> {selectedOtherParty.role}</p>
+              <p><strong>Member Since:</strong> {selectedOtherParty.createdAt ? new Date(selectedOtherParty.createdAt).toLocaleDateString() : ''}</p>
+            </div>
+            <button
+              onClick={() => setShowOtherPartyModal(false)}
+              className="mt-6 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 w-full"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+      {/* Reinitiate Modal */}
+      {showReinitiateModal && reinitiateData && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
+            <h3 className="text-xl font-bold mb-4 text-blue-700">Reinitiate Appointment</h3>
+            <form onSubmit={handleReinitiateSubmit} className="space-y-4">
+              <div>
+                <label className="block font-semibold mb-1">Date</label>
+                <input type="date" className="border rounded px-2 py-1 w-full" value={reinitiateData.date} onChange={e => setReinitiateData(d => ({ ...d, date: e.target.value }))} required />
               </div>
-              <button
-                onClick={() => setShowOtherPartyModal(false)}
-                className="mt-6 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 w-full"
-              >
-                Close
-              </button>
-            </div>
+              <div>
+                <label className="block font-semibold mb-1">Time</label>
+                <input type="time" className="border rounded px-2 py-1 w-full" value={reinitiateData.time} onChange={e => setReinitiateData(d => ({ ...d, time: e.target.value }))} required />
+              </div>
+              <div>
+                <label className="block font-semibold mb-1">Message</label>
+                <textarea className="border rounded px-2 py-1 w-full" value={reinitiateData.message} onChange={e => setReinitiateData(d => ({ ...d, message: e.target.value }))} required />
+              </div>
+              <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 w-full">Submit</button>
+              <button type="button" className="mt-2 w-full bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400" onClick={() => setShowReinitiateModal(false)}>Cancel</button>
+            </form>
           </div>
-        )}
-        {/* Reinitiate Modal */}
-        {showReinitiateModal && reinitiateData && (
-          <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
-              <h3 className="text-xl font-bold mb-4 text-blue-700">Reinitiate Appointment</h3>
-              <form onSubmit={handleReinitiateSubmit} className="space-y-4">
-                <div>
-                  <label className="block font-semibold mb-1">Date</label>
-                  <input type="date" className="border rounded px-2 py-1 w-full" value={reinitiateData.date} onChange={e => setReinitiateData(d => ({ ...d, date: e.target.value }))} required />
-                </div>
-                <div>
-                  <label className="block font-semibold mb-1">Time</label>
-                  <input type="time" className="border rounded px-2 py-1 w-full" value={reinitiateData.time} onChange={e => setReinitiateData(d => ({ ...d, time: e.target.value }))} required />
-                </div>
-                <div>
-                  <label className="block font-semibold mb-1">Message</label>
-                  <textarea className="border rounded px-2 py-1 w-full" value={reinitiateData.message} onChange={e => setReinitiateData(d => ({ ...d, message: e.target.value }))} required />
-                </div>
-                <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 w-full">Submit</button>
-                <button type="button" className="mt-2 w-full bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400" onClick={() => setShowReinitiateModal(false)}>Cancel</button>
-              </form>
-            </div>
-          </div>
-        )}
+        </div>
+      )}
       </div>
     </div>
   );
