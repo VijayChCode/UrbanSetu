@@ -166,7 +166,8 @@ export const Signout = async (req, res, next) => {
       res.clearCookie('access_token', {
         httpOnly: true,
         sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        secure: process.env.NODE_ENV === 'production'
+        secure: process.env.NODE_ENV === 'production',
+        path: '/'
       });
       res.status(200).json('User has been logged out!');
     } catch (error) {
