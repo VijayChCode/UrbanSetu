@@ -196,10 +196,10 @@ export default function AdminReviews() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-100 py-10 px-2 md:px-8 animate-fadeIn">
-      <div className="max-w-6xl mx-auto bg-white rounded-2xl shadow-2xl p-8 animate-slideUp">
-        <h1 className="text-4xl font-extrabold text-blue-700 mb-8 drop-shadow animate-fade-in">Review Management</h1>
-        <div className="flex items-center justify-between mb-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-100 py-4 sm:py-10 px-1 sm:px-2 md:px-8 animate-fadeIn">
+      <div className="max-w-full sm:max-w-3xl md:max-w-6xl mx-auto bg-white rounded-2xl shadow-2xl p-2 sm:p-4 md:p-8 animate-slideUp">
+        <h1 className="text-2xl sm:text-4xl font-extrabold text-blue-700 mb-4 sm:mb-8 drop-shadow animate-fade-in">Review Management</h1>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-2 sm:gap-0">
           <div className="flex items-center gap-4">
             <select
               value={selectedStatus}
@@ -244,19 +244,19 @@ export default function AdminReviews() {
         )}
 
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
+          <table className="min-w-[600px] w-full text-xs sm:text-sm divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   User & Property
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Rating & Comment
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status & Date
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -264,7 +264,7 @@ export default function AdminReviews() {
             <tbody className="bg-white divide-y divide-gray-200">
               {reviews.map((review) => (
                 <tr key={review._id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-2 sm:px-4 md:px-6 py-2 sm:py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <img
                         src={review.userAvatar}
@@ -289,7 +289,7 @@ export default function AdminReviews() {
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-2 sm:px-4 md:px-6 py-2 sm:py-4">
                     <div className="flex items-center mb-2">
                       {renderStars(review.rating)}
                       <span className="ml-2 text-sm text-gray-600">
@@ -311,7 +311,7 @@ export default function AdminReviews() {
                       </span>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-2 sm:px-4 md:px-6 py-2 sm:py-4 whitespace-nowrap">
                     <div className="mb-2">
                       {getStatusBadge(review.status)}
                     </div>
@@ -329,8 +329,8 @@ export default function AdminReviews() {
                       </div>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex items-center gap-2">
+                  <td className="px-2 sm:px-4 md:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
                       {review.status === 'pending' && (
                         <>
                           <button
@@ -419,10 +419,10 @@ export default function AdminReviews() {
 
       {/* Review Detail Modal */}
       {selectedReview && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">Review Details</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-white rounded-lg max-w-xs sm:max-w-2xl w-full mx-2 sm:mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex flex-col sm:flex-row items-center sm:justify-between mb-2 sm:mb-4 gap-2 sm:gap-0">
+              <h2 className="text-lg sm:text-xl font-semibold">Review Details</h2>
               <button
                 onClick={() => setSelectedReview(null)}
                 className="text-gray-500 hover:text-gray-700"

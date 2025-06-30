@@ -140,9 +140,9 @@ export default function UserReviews() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">My Reviews</h1>
+    <div className="max-w-full sm:max-w-2xl md:max-w-4xl mx-auto px-2 sm:px-4 py-4 sm:py-8">
+      <div className="bg-white rounded-xl shadow-lg p-3 sm:p-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-4 sm:mb-6">My Reviews</h1>
 
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
@@ -157,10 +157,10 @@ export default function UserReviews() {
             <p className="text-gray-600">You haven't written any reviews yet. Start reviewing properties you've visited!</p>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {reviews.map((review) => (
-              <div key={review._id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
-                <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+              <div key={review._id} className="border border-gray-200 rounded-lg p-3 sm:p-6 hover:shadow-md transition-shadow overflow-x-auto">
+                <div className="flex flex-col gap-2 sm:gap-4 lg:flex-row lg:items-start lg:justify-between">
                   {/* Review Content */}
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-3">
@@ -200,7 +200,7 @@ export default function UserReviews() {
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex flex-col gap-2 lg:flex-shrink-0">
+                  <div className="flex flex-col gap-2 lg:flex-shrink-0 w-full sm:w-auto">
                     {review.status !== 'approved' && (
                       <button
                         onClick={() => handleEditReview(review)}
@@ -228,10 +228,10 @@ export default function UserReviews() {
 
       {/* Edit Review Modal */}
       {editingReview && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-md w-full">
-            <div className="p-6">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Edit Review</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-white rounded-lg max-w-xs sm:max-w-md w-full">
+            <div className="p-4 sm:p-6">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-4">Edit Review</h2>
               <ReviewForm
                 listingId={typeof editingReview.listingId === 'object' ? editingReview.listingId._id : editingReview.listingId}
                 existingReview={editingReview}

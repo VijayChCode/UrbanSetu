@@ -261,13 +261,13 @@ export default function AdminAppointments() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-100 py-10 px-2 md:px-8">
       <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-3xl font-extrabold text-blue-700 drop-shadow">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-6">
+          <h3 className="text-2xl sm:text-3xl font-extrabold text-blue-700 drop-shadow">
             {showArchived ? "Archived Appointments" : "All Appointments (Admin View)"}
           </h3>
           <button
             onClick={() => setShowArchived(!showArchived)}
-            className={`bg-gradient-to-r text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2 ${
+            className={`bg-gradient-to-r text-white px-3 sm:px-6 py-2 sm:py-3 rounded-lg transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-1 sm:gap-2 text-sm sm:text-base w-full sm:w-auto justify-center ${
               showArchived 
                 ? 'from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600' 
                 : 'from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700'
@@ -275,11 +275,11 @@ export default function AdminAppointments() {
           >
             {showArchived ? (
               <>
-                <FaUndo /> Active Appointments
+                <FaUndo /> <span>Active Appointments</span>
               </>
             ) : (
               <>
-                <FaArchive /> Archived Appointments ({archivedAppointments.length})
+                <FaArchive /> <span>Archived Appointments ({archivedAppointments.length})</span>
               </>
             )}
           </button>
