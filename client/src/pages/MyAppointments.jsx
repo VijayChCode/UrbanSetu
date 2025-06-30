@@ -70,24 +70,14 @@ export default function MyAppointments() {
 
   useEffect(() => {
     const fetchArchivedAppointments = async () => {
-      if (!currentUser) return;
-      
       try {
-        const res = await fetch(`${API_BASE_URL}/api/bookings/my/archived`, {
+        const res = await fetch(`${API_BASE_URL}/api/bookings/archived`, {
           credentials: 'include'
         });
-        
-        if (res.ok) {
-          const data = await res.json();
-          setArchivedAppointments(Array.isArray(data) ? data : []);
-        } else {
-          console.error('Failed to fetch archived appointments:', res.status);
-          setArchivedAppointments([]);
-        }
+        const data = await res.json();
+        setArchivedAppointments(data);
       } catch (err) {
-        console.error('Error fetching archived appointments:', err);
         toast.error("Failed to fetch archived appointments");
-        setArchivedAppointments([]);
       }
     };
     fetchArchivedAppointments();
@@ -158,9 +148,9 @@ export default function MyAppointments() {
   };
 
   const handleArchiveAppointment = async (id) => {
-    if (!window.confirm("Are you sure you want to archive this appointment? It will be moved to your archived section.")) return;
+    if (!window.confirm("Are you sure you want to archive this appointment? It will be moved to the archived section.")) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${id}/user-archive`, {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${id}/archive`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
@@ -170,7 +160,7 @@ export default function MyAppointments() {
         const archivedAppt = appointments.find(appt => appt._id === id);
         if (archivedAppt) {
           setAppointments((prev) => prev.filter((appt) => appt._id !== id));
-          setArchivedAppointments((prev) => [{ ...archivedAppt, archivedByUsers: [{ userId: currentUser._id, archivedAt: new Date() }] }, ...prev]);
+          setArchivedAppointments((prev) => [{ ...archivedAppt, archivedAt: new Date() }, ...prev]);
         }
         toast.success("Appointment archived successfully.");
       } else {
@@ -182,9 +172,9 @@ export default function MyAppointments() {
   };
 
   const handleUnarchiveAppointment = async (id) => {
-    if (!window.confirm("Are you sure you want to unarchive this appointment? It will be moved back to your active appointments.")) return;
+    if (!window.confirm("Are you sure you want to unarchive this appointment? It will be moved back to the active appointments.")) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${id}/user-unarchive`, {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${id}/unarchive`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
@@ -194,14 +184,7 @@ export default function MyAppointments() {
         const unarchivedAppt = archivedAppointments.find(appt => appt._id === id);
         if (unarchivedAppt) {
           setArchivedAppointments((prev) => prev.filter((appt) => appt._id !== id));
-          // Remove the archivedByUsers entry for this user
-          const cleanedAppt = { ...unarchivedAppt };
-          if (cleanedAppt.archivedByUsers) {
-            cleanedAppt.archivedByUsers = cleanedAppt.archivedByUsers.filter(
-              archive => archive.userId !== currentUser._id
-            );
-          }
-          setAppointments((prev) => [cleanedAppt, ...prev]);
+          setAppointments((prev) => [{ ...unarchivedAppt, archivedAt: undefined }, ...prev]);
         }
         toast.success("Appointment unarchived successfully.");
       } else {
@@ -868,24 +851,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
               </button>
               <span className="text-xs text-gray-500 mt-1">{2 - (appt.reinitiationCount || 0)} left</span>
             </div>
-          )}
-          {/* Archive/Unarchive buttons */}
-          {!isArchived ? (
-            <button
-              className="text-gray-500 hover:text-gray-700 text-xl"
-              onClick={() => handleArchiveAppointment(appt._id)}
-              title="Archive Appointment"
-            >
-              <FaArchive />
-            </button>
-          ) : (
-            <button
-              className="text-gray-500 hover:text-gray-700 text-xl"
-              onClick={() => handleUnarchiveAppointment(appt._id)}
-              title="Unarchive Appointment"
-            >
-              <FaUndo />
-            </button>
           )}
         </div>
       </td>

@@ -19,22 +19,22 @@ const router = express.Router();
 router.post('/create', verifyToken, createNotification);
 
 // Get user notifications
-router.get('/user', verifyToken, getUserNotifications);
+router.get('/user/:userId', verifyToken, getUserNotifications);
 
 // Mark notification as read
 router.put('/:notificationId/read', verifyToken, markNotificationAsRead);
 
 // Mark all notifications as read
-router.put('/user/read-all', verifyToken, markAllNotificationsAsRead);
+router.put('/user/:userId/read-all', verifyToken, markAllNotificationsAsRead);
 
 // Get unread notification count
-router.get('/user/unread-count', verifyToken, getUnreadNotificationCount);
+router.get('/user/:userId/unread-count', verifyToken, getUnreadNotificationCount);
 
 // Delete notification
 router.delete('/:notificationId', verifyToken, deleteNotification);
 
 // Delete all notifications for a user
-router.delete('/user/all', verifyToken, deleteAllNotifications);
+router.delete('/user/:userId/all', verifyToken, deleteAllNotifications);
 
 // Admin routes for notification management
 router.post('/admin/send', verifyToken, adminSendNotification);

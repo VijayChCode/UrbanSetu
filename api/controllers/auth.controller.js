@@ -90,8 +90,7 @@ export const SignIn=async(req,res,next)=>{
             httpOnly:true,
             maxAge: 30 * 60 * 1000, // 30 minutes
             sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-            secure: process.env.NODE_ENV === 'production',
-            domain: process.env.NODE_ENV === 'production' ? '.urbansetu.vercel.app' : undefined
+            secure: process.env.NODE_ENV === 'production'
         }).status(200).json({
             _id: validUser._id,
             username: validUser.username,
@@ -120,8 +119,7 @@ export const Google=async (req,res,next)=>{
                 httpOnly:true,
                 maxAge: 30 * 60 * 1000, // 30 minutes
                 sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-                secure: process.env.NODE_ENV === 'production',
-                domain: process.env.NODE_ENV === 'production' ? '.urbansetu.vercel.app' : undefined
+                secure: process.env.NODE_ENV === 'production'
             }).status(200).json(validUser)
         }
         else{
@@ -140,8 +138,7 @@ export const Google=async (req,res,next)=>{
                 httpOnly:true,
                 maxAge: 30 * 60 * 1000, // 30 minutes
                 sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-                secure: process.env.NODE_ENV === 'production',
-                domain: process.env.NODE_ENV === 'production' ? '.urbansetu.vercel.app' : undefined
+                secure: process.env.NODE_ENV === 'production'
             }).status(200).json(newUser)
 
         }
@@ -182,8 +179,7 @@ export const verifyAuth = async (req, res, next) => {
             httpOnly: true,
             maxAge: 30 * 60 * 1000, // 30 minutes
             sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-            secure: process.env.NODE_ENV === 'production',
-            domain: process.env.NODE_ENV === 'production' ? '.urbansetu.vercel.app' : undefined
+            secure: process.env.NODE_ENV === 'production'
         });
         res.status(200).json(user);
     } catch (error) {

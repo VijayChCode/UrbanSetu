@@ -85,10 +85,6 @@ const bookingSchema = new mongoose.Schema({
   archivedAt: {
     type: Date
   },
-  archivedByUsers: [{ 
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    archivedAt: { type: Date, default: Date.now }
-  }],
   reinitiationCount: { type: Number, default: 0 },
   reinitiationHistory: [
     {

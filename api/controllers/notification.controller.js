@@ -27,8 +27,13 @@ export const createNotification = async (req, res, next) => {
 // Get user notifications
 export const getUserNotifications = async (req, res, next) => {
   try {
-    const userId = req.user.id;
+    const { userId } = req.params;
     
+    // Verify the user is requesting their own notifications
+    if (req.user.id !== userId && req.user.role !== 'admin' && req.user.role !== 'rootadmin') {
+      return next(errorHandler(403, 'You can only view your own notifications'));
+    }
+
     const notifications = await Notification.find({ userId })
       .sort({ createdAt: -1 })
       .populate('listingId', 'name address')
@@ -69,7 +74,12 @@ export const markNotificationAsRead = async (req, res, next) => {
 // Mark all notifications as read
 export const markAllNotificationsAsRead = async (req, res, next) => {
   try {
-    const userId = req.user.id;
+    const { userId } = req.params;
+
+    // Verify the user is marking their own notifications
+    if (req.user.id !== userId && req.user.role !== 'admin' && req.user.role !== 'rootadmin') {
+      return next(errorHandler(403, 'You can only mark your own notifications as read'));
+    }
 
     await Notification.updateMany(
       { userId, isRead: false },
@@ -85,7 +95,12 @@ export const markAllNotificationsAsRead = async (req, res, next) => {
 // Get unread notification count
 export const getUnreadNotificationCount = async (req, res, next) => {
   try {
-    const userId = req.user.id;
+    const { userId } = req.params;
+
+    // Verify the user is requesting their own count
+    if (req.user.id !== userId && req.user.role !== 'admin' && req.user.role !== 'rootadmin') {
+      return next(errorHandler(403, 'You can only view your own notification count'));
+    }
 
     const count = await Notification.countDocuments({ userId, isRead: false });
     res.status(200).json({ count });
@@ -119,7 +134,11 @@ export const deleteNotification = async (req, res, next) => {
 // Delete all notifications for a user
 export const deleteAllNotifications = async (req, res, next) => {
   try {
-    const userId = req.user.id;
+    const { userId } = req.params;
+
+    if (req.user.id !== userId && req.user.role !== 'admin' && req.user.role !== 'rootadmin') {
+      return next(errorHandler(403, 'You can only delete your own notifications'));
+    }
 
     await Notification.deleteMany({ userId });
     res.status(200).json({ message: 'All notifications deleted successfully' });

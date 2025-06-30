@@ -58,12 +58,7 @@ router.post("/", verifyToken, async (req, res) => {
 // GET: Fetch all bookings (for admin - read only)
 router.get("/", async (req, res) => {
   try {
-    const bookings = await booking.find({ 
-      $and: [
-        { archivedByAdmin: { $ne: true } },
-        { archivedByUsers: { $size: 0 } } // Exclude appointments archived by any user
-      ]
-    })
+    const bookings = await booking.find({ archivedByAdmin: { $ne: true } })
       .populate('buyerId', 'username email mobileNumber')
       .populate('sellerId', 'username email mobileNumber')
       .populate('listingId', '_id name address')
@@ -79,13 +74,9 @@ router.get("/my", verifyToken, async (req, res) => {
   try {
     const userId = req.user.id;
     
-    // Find all appointments where user is either buyer or seller and not archived by admin or by this user
+    // Find all appointments where user is either buyer or seller
     const bookings = await booking.find({
-      $and: [
-        { $or: [{ buyerId: userId }, { sellerId: userId }] },
-        { archivedByAdmin: { $ne: true } },
-        { archivedByUsers: { $not: { $elemMatch: { userId: userId } } } }
-      ]
+      $or: [{ buyerId: userId }, { sellerId: userId }]
     })
     .populate('buyerId', 'username email mobileNumber')
     .populate('sellerId', 'username email mobileNumber')
@@ -111,13 +102,7 @@ router.get("/my", verifyToken, async (req, res) => {
 // GET: Fetch pending appointments (for admin)
 router.get("/pending", async (req, res) => {
   try {
-    const pendingBookings = await booking.find({ 
-      $and: [
-        { status: "pending" },
-        { archivedByAdmin: { $ne: true } },
-        { archivedByUsers: { $size: 0 } } // Exclude appointments archived by any user
-      ]
-    })
+    const pendingBookings = await booking.find({ status: "pending" })
       .populate('buyerId', 'username email mobileNumber')
       .populate('sellerId', 'username email mobileNumber')
       .populate('listingId', '_id name address')
@@ -609,7 +594,6 @@ router.get('/archived', verifyToken, async (req, res) => {
       return res.status(403).json({ message: 'Only admins can view archived appointments.' });
     }
 
-    // Only show appointments archived by admins, not by users
     const archivedAppointments = await booking.find({ archivedByAdmin: true })
       .populate('buyerId', 'username email mobileNumber')
       .populate('sellerId', 'username email mobileNumber')
@@ -619,39 +603,6 @@ router.get('/archived', verifyToken, async (req, res) => {
     res.status(200).json(archivedAppointments);
   } catch (err) {
     console.error('Error fetching archived appointments:', err);
-    res.status(500).json({ message: 'Failed to fetch archived appointments.' });
-  }
-});
-
-// GET: Get user's archived appointments (for regular users)
-router.get('/my/archived', verifyToken, async (req, res) => {
-  try {
-    const userId = req.user.id;
-    
-    // Find appointments where user is either buyer or seller AND has archived them themselves
-    const archivedAppointments = await booking.find({
-      $and: [
-        { $or: [{ buyerId: userId }, { sellerId: userId }] },
-        { archivedByUsers: { $elemMatch: { userId: userId } } }
-      ]
-    })
-    .populate('buyerId', 'username email mobileNumber')
-    .populate('sellerId', 'username email mobileNumber')
-    .populate('listingId', '_id name address')
-    .sort({ 'archivedByUsers.archivedAt': -1 });
-    
-    // Add role information to each booking
-    const appointmentsWithRole = archivedAppointments
-      .filter(booking => booking.buyerId && booking.buyerId._id && booking.sellerId && booking.sellerId._id)
-      .map(booking => {
-        const bookingObj = booking.toObject();
-        bookingObj.role = booking.buyerId._id.toString() === userId ? 'buyer' : 'seller';
-        return bookingObj;
-      });
-    
-    res.status(200).json(appointmentsWithRole);
-  } catch (err) {
-    console.error('Error fetching user archived appointments:', err);
     res.status(500).json({ message: 'Failed to fetch archived appointments.' });
   }
 });
@@ -722,13 +673,11 @@ router.get('/stats', verifyToken, async (req, res) => {
     const [accepted, pending, rejected] = await Promise.all([
       booking.countDocuments({ 
         status: 'accepted',
-        archivedByAdmin: { $ne: true },
-        archivedByUsers: { $size: 0 } // Exclude appointments archived by any user
+        archivedByAdmin: { $ne: true }
       }),
       booking.countDocuments({ 
         status: 'pending',
-        archivedByAdmin: { $ne: true },
-        archivedByUsers: { $size: 0 } // Exclude appointments archived by any user
+        archivedByAdmin: { $ne: true }
       }),
       booking.countDocuments({ 
         status: { 
@@ -737,8 +686,7 @@ router.get('/stats', verifyToken, async (req, res) => {
             'cancelledBySeller', 'cancelledByAdmin', 'noShow'
           ]
         },
-        archivedByAdmin: { $ne: true },
-        archivedByUsers: { $size: 0 } // Exclude appointments archived by any user
+        archivedByAdmin: { $ne: true }
       })
     ]);
 
@@ -753,100 +701,6 @@ router.get('/stats', verifyToken, async (req, res) => {
   } catch (err) {
     console.error('Error fetching booking stats:', err);
     res.status(500).json({ message: 'Failed to fetch booking statistics.' });
-  }
-});
-
-// PATCH: User archive appointment (for regular users)
-router.patch('/:id/user-archive', verifyToken, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const userId = req.user.id;
-
-    const bookingToArchive = await booking.findById(id);
-    if (!bookingToArchive) {
-      return res.status(404).json({ message: 'Appointment not found.' });
-    }
-
-    // Check if user is the buyer or seller of this appointment
-    const isBuyer = bookingToArchive.buyerId.toString() === userId;
-    const isSeller = bookingToArchive.sellerId.toString() === userId;
-    
-    if (!isBuyer && !isSeller) {
-      return res.status(403).json({ message: 'You can only archive your own appointments.' });
-    }
-
-    // Check if user has already archived this appointment
-    const alreadyArchived = bookingToArchive.archivedByUsers.some(
-      archive => archive.userId.toString() === userId
-    );
-    
-    if (alreadyArchived) {
-      return res.status(400).json({ message: 'You have already archived this appointment.' });
-    }
-
-    // Add user to archivedByUsers array
-    bookingToArchive.archivedByUsers.push({
-      userId: userId,
-      archivedAt: new Date()
-    });
-    
-    await bookingToArchive.save();
-
-    // Populate the updated booking for response
-    const updated = await booking.findById(id)
-      .populate('buyerId', 'username email mobileNumber')
-      .populate('sellerId', 'username email mobileNumber')
-      .populate('listingId', '_id name address');
-
-    res.status(200).json({
-      message: 'Appointment archived successfully.',
-      appointment: updated
-    });
-  } catch (err) {
-    console.error('Error archiving appointment:', err);
-    res.status(500).json({ message: 'Failed to archive appointment.' });
-  }
-});
-
-// PATCH: User unarchive appointment (for regular users)
-router.patch('/:id/user-unarchive', verifyToken, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const userId = req.user.id;
-
-    const bookingToUnarchive = await booking.findById(id);
-    if (!bookingToUnarchive) {
-      return res.status(404).json({ message: 'Appointment not found.' });
-    }
-
-    // Check if user is the buyer or seller of this appointment
-    const isBuyer = bookingToUnarchive.buyerId.toString() === userId;
-    const isSeller = bookingToUnarchive.sellerId.toString() === userId;
-    
-    if (!isBuyer && !isSeller) {
-      return res.status(403).json({ message: 'You can only unarchive your own appointments.' });
-    }
-
-    // Remove user from archivedByUsers array
-    bookingToUnarchive.archivedByUsers = bookingToUnarchive.archivedByUsers.filter(
-      archive => archive.userId.toString() !== userId
-    );
-    
-    await bookingToUnarchive.save();
-
-    // Populate the updated booking for response
-    const updated = await booking.findById(id)
-      .populate('buyerId', 'username email mobileNumber')
-      .populate('sellerId', 'username email mobileNumber')
-      .populate('listingId', '_id name address');
-
-    res.status(200).json({
-      message: 'Appointment unarchived successfully.',
-      appointment: updated
-    });
-  } catch (err) {
-    console.error('Error unarchiving appointment:', err);
-    res.status(500).json({ message: 'Failed to unarchive appointment.' });
   }
 });
 
