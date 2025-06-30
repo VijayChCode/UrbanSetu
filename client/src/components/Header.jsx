@@ -236,7 +236,7 @@ function UserNavLinks({ mobile = false, onNavigate }) {
       {currentUser ? (
         <>
           <li className="flex items-center">
-            <NotificationBell />
+            <NotificationBell mobile={mobile} />
           </li>
           <li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 cursor-pointer transition-all" onClick={() => { handleSignout(); if (onNavigate) onNavigate(); }}>
             <FaSignOutAlt /> Sign Out

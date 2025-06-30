@@ -216,7 +216,7 @@ function AdminNavLinks({ mobile = false, onNavigate, pendingCount, handleSignout
       )}
       <Link to="/admin/about" onClick={onNavigate}><li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all"><FaInfoCircle /> About</li></Link>
       <Link to="/admin/explore" onClick={onNavigate}><li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all"><FaCompass /> Explore</li></Link>
-      <li className="flex items-center"><NotificationBell /></li>
+      <li className="flex items-center"><NotificationBell mobile={mobile} /></li>
       <li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 cursor-pointer transition-all" onClick={() => { handleSignout(); if (onNavigate) onNavigate(); }}><FaSignOutAlt /> Sign Out</li>
       {currentUser && mobile && (
         <li>
