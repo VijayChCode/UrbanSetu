@@ -57,4 +57,23 @@ router.delete('/management/delete/:type/:id', verifyToken, deleteUserOrAdmin);
 router.patch('/management/demote/:id', verifyToken, demoteAdminToUser);
 router.patch('/management/promote/:id', verifyToken, promoteUserToAdmin);
 
+// Verify admin password for management access
+router.post('/management/verify-password', verifyToken, async (req, res, next) => {
+    try {
+        const { password } = req.body;
+        const user = await User.findById(req.user.id);
+        if (!user || (user.role !== 'admin' && user.role !== 'rootadmin')) {
+            return res.status(403).json({ message: 'Access denied' });
+        }
+        const bcryptjs = (await import('bcryptjs')).default;
+        const isMatch = await bcryptjs.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(401).json({ message: 'Invalid password' });
+        }
+        return res.status(200).json({ message: 'Password verified' });
+    } catch (err) {
+        next(err);
+    }
+});
+
 export default router; 

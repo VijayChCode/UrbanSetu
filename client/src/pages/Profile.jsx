@@ -716,8 +716,7 @@ export default function Profile() {
       }
       toast.success(data.message || 'Admin rights transferred successfully!');
       setShowTransferModal(false);
-      // Optionally, reload or update user state
-      setTimeout(() => window.location.reload(), 1500);
+      navigate('/sign-in');
     } catch (e) {
       setTransferError('Failed to transfer rights.');
     } finally {
@@ -762,6 +761,11 @@ export default function Profile() {
     }
     fetchLatestUser();
   }, []);
+
+  const [showManagementPasswordModal, setShowManagementPasswordModal] = useState(false);
+  const [managementPassword, setManagementPassword] = useState("");
+  const [managementPasswordError, setManagementPasswordError] = useState("");
+  const [managementPasswordLoading, setManagementPasswordLoading] = useState(false);
 
   return (
     <div className="bg-gradient-to-br from-blue-50 to-purple-100 min-h-screen py-10 px-2 md:px-8">
@@ -1081,7 +1085,7 @@ export default function Profile() {
           
           {(currentUser.role === 'admin' || currentUser.role === 'rootadmin') && (
             <button
-              onClick={() => navigate('/admin/management')}
+              onClick={() => setShowManagementPasswordModal(true)}
               className="bg-blue-600 text-white px-6 py-3 rounded-lg mb-6 hover:bg-blue-700 transition-colors flex items-center justify-center font-semibold"
             >
               Accounts
@@ -1396,6 +1400,61 @@ export default function Profile() {
                     </>
                   )}
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showManagementPasswordModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
+            <div className="p-6">
+              <h3 className="text-xl font-bold text-gray-800 mb-4">Confirm Password</h3>
+              <p className="mb-4 text-gray-600">Please enter your password to access Accounts Management.</p>
+              <input
+                type="password"
+                className="w-full p-3 border border-gray-300 rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter your password"
+                value={managementPassword}
+                onChange={e => setManagementPassword(e.target.value)}
+                autoFocus
+              />
+              {managementPasswordError && <div className="text-red-600 text-sm mb-2">{managementPasswordError}</div>}
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => { setShowManagementPasswordModal(false); setManagementPassword(""); setManagementPasswordError(""); }}
+                  className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+                >Cancel</button>
+                <button
+                  onClick={async () => {
+                    setManagementPasswordLoading(true);
+                    setManagementPasswordError("");
+                    try {
+                      const res = await fetch(`${API_BASE_URL}/api/admin/management/verify-password`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ password: managementPassword })
+                      });
+                      if (res.ok) {
+                        setShowManagementPasswordModal(false);
+                        setManagementPassword("");
+                        setManagementPasswordError("");
+                        navigate('/admin/management');
+                      } else {
+                        const data = await res.json();
+                        setManagementPasswordError(data.message || 'Invalid password');
+                      }
+                    } catch (err) {
+                      setManagementPasswordError('Network error');
+                    } finally {
+                      setManagementPasswordLoading(false);
+                    }
+                  }}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                  disabled={managementPasswordLoading}
+                >{managementPasswordLoading ? 'Verifying...' : 'Confirm'}</button>
               </div>
             </div>
           </div>

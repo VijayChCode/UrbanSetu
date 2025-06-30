@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { signoutUserStart, signoutUserSuccess, signoutUserFailure } from "../redux/user/userSlice";
-import { FaHome, FaCalendarAlt, FaPlus, FaSignOutAlt, FaSearch, FaUserCheck, FaList, FaInfoCircle, FaCompass, FaHeart } from "react-icons/fa";
+import { FaHome, FaCalendarAlt, FaPlus, FaSignOutAlt, FaSearch, FaUserCheck, FaList, FaInfoCircle, FaCompass } from "react-icons/fa";
 import NotificationBell from "./NotificationBell.jsx";
 
 export default function AdminHeader() {
@@ -188,9 +188,6 @@ export default function AdminHeader() {
         </Link>
         <Link to="/admin/explore">
           <li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all"><FaCompass /> Explore</li>
-        </Link>
-        <Link to="/admin/wishlist">
-          <li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all"><FaHeart /> Wish List</li>
         </Link>
         <li className="flex items-center">
           <NotificationBell />

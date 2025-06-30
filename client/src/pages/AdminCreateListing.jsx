@@ -65,7 +65,7 @@ export default function AdminCreateListing() {
   const fetchAllUsers = async () => {
     try {
       setLoadingUsers(true);
-      const res = await fetch('/api/user/all-users-autocomplete', {
+      const res = await fetch(`${API_BASE_URL}/api/user/all-users-autocomplete`, {
         credentials: 'include'
       });
       

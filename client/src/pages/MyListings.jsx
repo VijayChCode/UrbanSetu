@@ -5,6 +5,8 @@ import { FaEdit, FaTrash, FaEye, FaPlus } from "react-icons/fa";
 import ContactSupportWrapper from '../components/ContactSupportWrapper';
 import { maskAddress } from '../utils/addressMasking';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export default function MyListings() {
   const { currentUser } = useSelector((state) => state.user);
   const [listings, setListings] = useState([]);
@@ -24,7 +26,7 @@ export default function MyListings() {
         setLoading(true);
         setError(null);
         
-        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/listing/user`, {
+        const res = await fetch(`${API_BASE_URL}/api/listing/user`, {
           credentials: 'include'
         });
         
@@ -49,7 +51,7 @@ export default function MyListings() {
     if (!window.confirm("Are you sure you want to delete this listing?")) return;
     
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/listing/delete/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/listing/delete/${id}`, {
         method: "DELETE",
         credentials: 'include'
       });

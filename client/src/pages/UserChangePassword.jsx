@@ -3,6 +3,8 @@ import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export default function UserChangePassword() {
   const { currentUser } = useSelector((state) => state.user);
   const navigate = useNavigate();
@@ -59,7 +61,7 @@ export default function UserChangePassword() {
     }
     setLoading(true);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/user/change-password/${currentUser._id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/user/change-password/${currentUser._id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',

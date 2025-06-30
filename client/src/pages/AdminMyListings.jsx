@@ -5,6 +5,8 @@ import { FaEdit, FaTrash, FaEye, FaPlus } from "react-icons/fa";
 import ContactSupportWrapper from "../components/ContactSupportWrapper";
 import { maskAddress } from '../utils/addressMasking';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export default function AdminMyListings() {
   const { currentUser } = useSelector((state) => state.user);
   const [listings, setListings] = useState([]);

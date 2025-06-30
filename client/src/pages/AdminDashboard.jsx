@@ -62,6 +62,10 @@ export default function AdminDashboard() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const [pendingDelete, setPendingDelete] = useState({ id: null, ownerId: null });
+  const [showManagementPasswordModal, setShowManagementPasswordModal] = useState(false);
+  const [managementPassword, setManagementPassword] = useState("");
+  const [managementPasswordError, setManagementPasswordError] = useState("");
+  const [managementPasswordLoading, setManagementPasswordLoading] = useState(false);
 
   useEffect(() => {
     const fetchAllData = async () => {
@@ -362,7 +366,10 @@ export default function AdminDashboard() {
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Link to="/admin/management" className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all hover:scale-105">
+          <button
+            className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all hover:scale-105 w-full text-left"
+            onClick={() => setShowManagementPasswordModal(true)}
+          >
             <div className="flex items-center space-x-4">
               <div className="bg-blue-100 p-3 rounded-full">
                 <FaUsers className="text-2xl text-blue-600" />
@@ -372,8 +379,7 @@ export default function AdminDashboard() {
                 <p className="text-sm text-gray-600">View and manage user accounts</p>
               </div>
             </div>
-          </Link>
-
+          </button>
           <Link to="/admin/reviews" className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all hover:scale-105">
             <div className="flex items-center space-x-4">
               <div className="bg-yellow-100 p-3 rounded-full">
@@ -390,7 +396,6 @@ export default function AdminDashboard() {
               </div>
             </div>
           </Link>
-
           <Link to="/admin/explore" className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all hover:scale-105">
             <div className="flex items-center space-x-4">
               <div className="bg-green-100 p-3 rounded-full">
@@ -524,6 +529,51 @@ export default function AdminDashboard() {
             <div className="flex gap-2 justify-end">
               <button type="button" onClick={() => setShowPasswordModal(false)} className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold">Cancel</button>
               <button type="submit" className="px-4 py-2 rounded bg-blue-700 text-white font-semibold" disabled={deleteLoading}>{deleteLoading ? 'Deleting...' : 'Confirm & Delete'}</button>
+            </div>
+          </form>
+        </div>
+      )}
+      {showManagementPasswordModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+          <form className="bg-white rounded-lg shadow-lg p-6 w-full max-w-xs flex flex-col gap-4" onSubmit={async (e) => {
+            e.preventDefault();
+            setManagementPasswordLoading(true);
+            setManagementPasswordError("");
+            try {
+              const res = await fetch(`${API_BASE_URL}/api/admin/management/verify-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ password: managementPassword })
+              });
+              if (res.ok) {
+                setShowManagementPasswordModal(false);
+                setManagementPassword("");
+                setManagementPasswordError("");
+                navigate('/admin/management');
+              } else {
+                const data = await res.json();
+                setManagementPasswordError(data.message || 'Invalid password');
+              }
+            } catch (err) {
+              setManagementPasswordError('Network error');
+            } finally {
+              setManagementPasswordLoading(false);
+            }
+          }}>
+            <h3 className="text-lg font-bold text-blue-700 flex items-center gap-2"><FaLock /> Confirm Password</h3>
+            <input
+              type="password"
+              className="border rounded p-2 w-full"
+              placeholder="Enter your password"
+              value={managementPassword}
+              onChange={e => setManagementPassword(e.target.value)}
+              autoFocus
+            />
+            {managementPasswordError && <div className="text-red-600 text-sm">{managementPasswordError}</div>}
+            <div className="flex gap-2 justify-end">
+              <button type="button" onClick={() => setShowManagementPasswordModal(false)} className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold">Cancel</button>
+              <button type="submit" className="px-4 py-2 rounded bg-blue-700 text-white font-semibold" disabled={managementPasswordLoading}>{managementPasswordLoading ? 'Verifying...' : 'Confirm'}</button>
             </div>
           </form>
         </div>

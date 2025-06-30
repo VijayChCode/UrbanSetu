@@ -63,7 +63,7 @@ export default function AdminContactSupport() {
     setLoading(true);
     setError("");
     try {
-      const response = await fetch(`${API_BASE_URL}/api/contact/messages`);
+      const response = await fetch(`${API_BASE_URL}/api/contact/messages`, { credentials: 'include' });
       if (!response.ok) {
         const errorData = await response.json();
         setError(errorData.message || "Failed to fetch messages.");
@@ -83,7 +83,7 @@ export default function AdminContactSupport() {
 
   const fetchUnreadCount = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/contact/unread-count`);
+      const response = await fetch(`${API_BASE_URL}/api/contact/unread-count`, { credentials: 'include' });
       const data = await response.json();
       setUnreadCount(data.count);
     } catch (error) {
@@ -94,7 +94,8 @@ export default function AdminContactSupport() {
   const markAsRead = async (messageId) => {
     try {
       await fetch(`${API_BASE_URL}/api/contact/messages/${messageId}/read`, {
-        method: 'PUT'
+        method: 'PUT',
+        credentials: 'include',
       });
       fetchMessages();
       fetchUnreadCount();
@@ -106,7 +107,8 @@ export default function AdminContactSupport() {
   const markAsReplied = async (messageId) => {
     try {
       await fetch(`${API_BASE_URL}/api/contact/messages/${messageId}/replied`, {
-        method: 'PUT'
+        method: 'PUT',
+        credentials: 'include',
       });
       fetchMessages();
       fetchUnreadCount();
@@ -120,6 +122,7 @@ export default function AdminContactSupport() {
     try {
       await fetch(`${API_BASE_URL}/api/contact/messages/${messageId}`, {
         method: 'DELETE',
+        credentials: 'include',
       });
       fetchMessages();
       fetchUnreadCount();
