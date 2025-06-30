@@ -315,24 +315,27 @@ export default function MyAppointments() {
           <h3 className="text-3xl font-extrabold text-blue-700 drop-shadow">
             {showArchived ? "Archived Appointments" : "My Appointments"}
           </h3>
-          <button
-            onClick={() => setShowArchived(!showArchived)}
-            className={`bg-gradient-to-r text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2 ${
-              showArchived 
-                ? 'from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600' 
-                : 'from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700'
-            }`}
-          >
-            {showArchived ? (
-              <>
-                <FaUndo /> Active Appointments
-              </>
-            ) : (
-              <>
-                <FaArchive /> Archived Appointments ({archivedAppointments.length})
-              </>
-            )}
-          </button>
+          {/* Only show archived toggle for admin/rootadmin */}
+          {currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin') && (
+            <button
+              onClick={() => setShowArchived(!showArchived)}
+              className={`bg-gradient-to-r text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2 ${
+                showArchived 
+                  ? 'from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600' 
+                  : 'from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700'
+              }`}
+            >
+              {showArchived ? (
+                <>
+                  <FaUndo /> Active Appointments
+                </>
+              ) : (
+                <>
+                  <FaArchive /> Archived Appointments ({archivedAppointments.length})
+                </>
+              )}
+            </button>
+          )}
         </div>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div className="flex items-center gap-2">
@@ -395,7 +398,8 @@ export default function MyAppointments() {
             />
           </div>
         </div>
-        {showArchived ? (
+        {/* Only show archived appointments table for admin/rootadmin */}
+        {showArchived && currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? (
           filteredArchivedAppointments.length === 0 ? (
             <div className="text-center text-gray-500 text-lg">No archived appointments found.</div>
           ) : (
