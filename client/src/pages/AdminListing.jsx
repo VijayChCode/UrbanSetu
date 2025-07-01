@@ -96,25 +96,25 @@ export default function AdminListing() {
     <div className="bg-gradient-to-br from-blue-50 to-purple-100 min-h-screen py-10 px-2 md:px-8">
       <div className="max-w-4xl w-full mx-auto bg-white rounded-xl shadow-lg p-3 sm:p-6 relative overflow-x-hidden">
         {/* Header with Back Button and Admin Actions */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between mb-6 gap-2 xs:gap-3">
+          <div className="flex flex-1 items-center gap-2 xs:gap-4">
             <Link 
               to="/admin"
-              className="bg-blue-500 text-white px-4 py-1 text-sm sm:px-6 sm:py-2 sm:text-base rounded-lg hover:bg-blue-600 transition-colors"
+              className="bg-blue-500 text-white px-2 py-1 text-xs xs:px-4 xs:py-2 xs:text-base rounded-lg hover:bg-blue-600 transition-colors min-w-[110px] text-center"
             >
               Back to Dashboard
             </Link>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-1 flex-col xs:flex-row items-center gap-2 xs:gap-3">
             <Link
               to={`/admin/update-listing/${listing._id}`}
-              className="flex items-center gap-2 bg-blue-500 text-white px-3 py-1 text-sm sm:px-4 sm:py-2 sm:text-base rounded-lg hover:bg-blue-600 transition-colors"
+              className="flex items-center gap-1 bg-blue-500 text-white px-2 py-1 text-xs xs:px-4 xs:py-2 xs:text-base rounded-lg hover:bg-blue-600 transition-colors min-w-[110px] justify-center"
             >
               <FaEdit /> Edit Property
             </Link>
             <button
               onClick={handleDelete}
-              className="flex items-center gap-2 bg-red-500 text-white px-3 py-1 text-sm sm:px-4 sm:py-2 sm:text-base rounded-lg hover:bg-red-600 transition-colors"
+              className="flex items-center gap-1 bg-red-500 text-white px-2 py-1 text-xs xs:px-4 xs:py-2 xs:text-base rounded-lg hover:bg-red-600 transition-colors min-w-[110px] justify-center"
             >
               <FaTrash /> Delete Property
             </button>
