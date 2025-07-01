@@ -4,6 +4,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { signoutUserStart, signoutUserSuccess, signoutUserFailure } from "../redux/user/userSlice";
 import { FaHome, FaCalendarAlt, FaPlus, FaSignOutAlt, FaSearch, FaUserCheck, FaList, FaInfoCircle, FaCompass, FaBars, FaTimes } from "react-icons/fa";
 import NotificationBell from "./NotificationBell.jsx";
+import { persistor } from '../redux/store';
 
 export default function AdminHeader() {
   const { currentUser } = useSelector((state) => state.user);
@@ -127,6 +128,7 @@ export default function AdminHeader() {
         dispatch(signoutUserFailure(data.message));
       } else {
         dispatch(signoutUserSuccess(data));
+        await persistor.purge();
         alert("You have been signed out.");
         navigate("/sign-in");
       }
