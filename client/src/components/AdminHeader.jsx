@@ -87,7 +87,7 @@ export default function AdminHeader() {
 
   const fetchPendingCount = async () => {
     try {
-      const res = await fetch('http://localhost:3000/api/admin/pending-requests', {
+      const res = await fetch(`${API_BASE_URL}/api/admin/pending-requests`, {
         headers: {
           'Content-Type': 'application/json',
         },
@@ -104,7 +104,7 @@ export default function AdminHeader() {
 
   const fetchAppointmentCount = async () => {
     try {
-      const res = await fetch('http://localhost:3000/api/bookings', {
+      const res = await fetch(`${API_BASE_URL}/api/bookings`, {
         headers: {
           'Content-Type': 'application/json',
         },
