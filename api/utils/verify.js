@@ -16,7 +16,6 @@ export const verifyToken = async (req, res, next) => {
     // Refresh cookie expiry
     res.cookie('access_token', token, {
       httpOnly: true,
-      maxAge: 30 * 60 * 1000, // 30 minutes
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       secure: process.env.NODE_ENV === 'production'
     });

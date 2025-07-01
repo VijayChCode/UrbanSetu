@@ -84,16 +84,8 @@ export const SignIn=async(req,res,next)=>{
         }
         
         const token=jwt.sign({id:validUser._id},process.env.JWT_TOKEN)
-        // Set session duration based on role
-        let maxAge;
-        if (validUser.role === 'admin' || validUser.role === 'rootadmin') {
-            maxAge = 30 * 60 * 1000; // 30 minutes
-        } else {
-            maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days
-        }
         res.cookie('access_token',token,{
             httpOnly:true,
-            maxAge,
             sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
             secure: process.env.NODE_ENV === 'production',
             domain: process.env.NODE_ENV === 'production' ? process.env.COOKIE_DOMAIN : undefined
@@ -120,15 +112,8 @@ export const Google=async (req,res,next)=>{
         const validUser=await User.findOne({email})
         if (validUser){
             const token=jwt.sign({id:validUser._id},process.env.JWT_TOKEN)
-            let maxAge;
-            if (validUser.role === 'admin' || validUser.role === 'rootadmin') {
-                maxAge = 30 * 60 * 1000; // 30 minutes
-            } else {
-                maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days
-            }
             res.cookie('access_token',token,{
                 httpOnly:true,
-                maxAge,
                 sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
                 secure: process.env.NODE_ENV === 'production',
                 domain: process.env.NODE_ENV === 'production' ? process.env.COOKIE_DOMAIN : undefined
@@ -146,10 +131,8 @@ export const Google=async (req,res,next)=>{
             })
             await newUser.save()
             const token=jwt.sign({id:newUser._id},process.env.JWT_TOKEN)
-            let maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days for new users
             res.cookie('access_token',token,{
                 httpOnly:true,
-                maxAge,
                 sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
                 secure: process.env.NODE_ENV === 'production',
                 domain: process.env.NODE_ENV === 'production' ? process.env.COOKIE_DOMAIN : undefined
@@ -193,16 +176,8 @@ export const verifyAuth = async (req, res, next) => {
         if (!user) {
             return next(errorHandler(404, "User not found"));
         }
-        // Refresh cookie expiry based on role
-        let maxAge;
-        if (user.role === 'admin' || user.role === 'rootadmin') {
-            maxAge = 30 * 60 * 1000; // 30 minutes
-        } else {
-            maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days
-        }
         res.cookie('access_token', token, {
             httpOnly: true,
-            maxAge,
             sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
             secure: process.env.NODE_ENV === 'production',
             domain: process.env.NODE_ENV === 'production' ? process.env.COOKIE_DOMAIN : undefined

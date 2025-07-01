@@ -85,9 +85,7 @@ router.post("/signin", async (req, res, next) => {
 
     res
       .status(200)
-      .cookie("access_token", token, {
-        httpOnly: true,
-      })
+      .cookie("access_token", token)
       .json(rest);
   } catch (error) {
     next(error);
@@ -106,9 +104,7 @@ router.post("/google", async (req, res, next) => {
       const { password, ...rest } = user._doc;
       res
         .status(200)
-        .cookie("access_token", token, {
-          httpOnly: true,
-        })
+        .cookie("access_token", token)
         .json(rest);
     } else {
       const generatedPassword =
@@ -131,9 +127,7 @@ router.post("/google", async (req, res, next) => {
       const { password, ...rest } = newUser._doc;
       res
         .status(200)
-        .cookie("access_token", token, {
-          httpOnly: true,
-        })
+        .cookie("access_token", token)
         .json(rest);
     }
   } catch (error) {
@@ -144,11 +138,7 @@ router.post("/google", async (req, res, next) => {
 router.get("/signout", (req, res, next) => {
   try {
     res
-      .clearCookie("access_token", {
-        httpOnly: true,
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        secure: process.env.NODE_ENV === 'production'
-      })
+      .clearCookie("access_token")
       .status(200)
       .json("User has been logged out!");
   } catch (error) {
