@@ -114,7 +114,7 @@ export default function MyAppointments() {
         );
         const statusText = status === "accepted" ? "accepted" : "rejected";
         toast.success(`Appointment ${statusText} successfully! ${status === "accepted" ? "Contact information is now visible to both parties." : ""}`);
-        navigate("/user/appointments");
+        navigate("/user/my-appointments");
       } else {
         toast.error(data.message || "Failed to update appointment status.");
       }
@@ -148,7 +148,7 @@ export default function MyAppointments() {
           prev.map((appt) => (appt._id === id ? { ...appt, status: "deletedByAdmin", adminComment: reason } : appt))
         );
         toast.success("Appointment deleted successfully. Both buyer and seller have been notified.");
-        navigate("/user/appointments");
+        navigate("/user/my-appointments");
       } else {
         toast.error(data.message || "Failed to delete appointment.");
       }
@@ -285,7 +285,7 @@ export default function MyAppointments() {
         setShowReinitiateModal(false);
         setReinitiateData(null);
         // Redirect to appointments list
-        navigate("/user/appointments");
+        navigate("/user/my-appointments");
         // Update the appointment in-place
         setAppointments((prev) => prev.map(appt => appt._id === data.appointment._id ? { ...appt, ...data.appointment } : appt));
       } else {
@@ -680,7 +680,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       }
       if (res.ok) {
         alert('Appointment cancelled by admin.');
-        navigate('/user/appointments');
+        navigate('/user/my-appointments');
       } else {
         alert(data.message || 'Failed to cancel appointment.');
       }
