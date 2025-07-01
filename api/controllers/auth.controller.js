@@ -86,9 +86,8 @@ export const SignIn=async(req,res,next)=>{
         const token=jwt.sign({id:validUser._id},process.env.JWT_TOKEN)
         res.cookie('access_token',token,{
             httpOnly:true,
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-            secure: process.env.NODE_ENV === 'production',
-            domain: process.env.NODE_ENV === 'production' ? process.env.COOKIE_DOMAIN : undefined
+            sameSite: 'none',
+            secure: true
         }).status(200).json({
             _id: validUser._id,
             username: validUser.username,
@@ -114,9 +113,8 @@ export const Google=async (req,res,next)=>{
             const token=jwt.sign({id:validUser._id},process.env.JWT_TOKEN)
             res.cookie('access_token',token,{
                 httpOnly:true,
-                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-                secure: process.env.NODE_ENV === 'production',
-                domain: process.env.NODE_ENV === 'production' ? process.env.COOKIE_DOMAIN : undefined
+                sameSite: 'none',
+                secure: true
             }).status(200).json(validUser)
         }
         else{
@@ -133,9 +131,8 @@ export const Google=async (req,res,next)=>{
             const token=jwt.sign({id:newUser._id},process.env.JWT_TOKEN)
             res.cookie('access_token',token,{
                 httpOnly:true,
-                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-                secure: process.env.NODE_ENV === 'production',
-                domain: process.env.NODE_ENV === 'production' ? process.env.COOKIE_DOMAIN : undefined
+                sameSite: 'none',
+                secure: true
             }).status(200).json(newUser)
         }
 
@@ -151,10 +148,9 @@ export const Signout = async (req, res, next) => {
     try {
       res.clearCookie('access_token', {
         httpOnly: true,
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        secure: process.env.NODE_ENV === 'production',
-        path: '/',
-        domain: process.env.NODE_ENV === 'production' ? process.env.COOKIE_DOMAIN : undefined
+        sameSite: 'none',
+        secure: true,
+        path: '/'
       });
       res.status(200).json('User has been logged out!');
     } catch (error) {
@@ -178,9 +174,8 @@ export const verifyAuth = async (req, res, next) => {
         }
         res.cookie('access_token', token, {
             httpOnly: true,
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-            secure: process.env.NODE_ENV === 'production',
-            domain: process.env.NODE_ENV === 'production' ? process.env.COOKIE_DOMAIN : undefined
+            sameSite: 'none',
+            secure: true
         });
         res.status(200).json(user);
     } catch (error) {
