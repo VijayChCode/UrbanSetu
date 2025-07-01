@@ -43,8 +43,8 @@ export default function ListingItem({ listing, onDelete }) {
     }
     
     const appointmentUrl = isAdminContext 
-      ? `/admin/appointmentlisting?listingId=${listing._id}&propertyName=${encodeURIComponent(listing.name)}&propertyDescription=${encodeURIComponent(listing.description)}`
-      : `/user/appointment?listingId=${listing._id}&propertyName=${encodeURIComponent(listing.name)}&propertyDescription=${encodeURIComponent(listing.description)}`;
+      ? `/admin/appointmentlisting?listingId=${listing._id}&listingType=${listing.type}&propertyName=${encodeURIComponent(listing.name)}&propertyDescription=${encodeURIComponent(listing.description)}`
+      : `/user/appointment?listingId=${listing._id}&listingType=${listing.type}&propertyName=${encodeURIComponent(listing.name)}&propertyDescription=${encodeURIComponent(listing.description)}`;
     navigate(appointmentUrl);
   };
 
