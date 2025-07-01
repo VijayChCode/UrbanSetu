@@ -432,6 +432,7 @@ export default function MyAppointments() {
                       handleArchiveAppointment={handleArchiveAppointment}
                       handleUnarchiveAppointment={handleUnarchiveAppointment}
                       isArchived={true}
+                      onCancelRefresh={() => window.location.reload()}
                     />
                   ))}
                 </tbody>
@@ -471,6 +472,7 @@ export default function MyAppointments() {
                       handleArchiveAppointment={handleArchiveAppointment}
                       handleUnarchiveAppointment={handleUnarchiveAppointment}
                       isArchived={false}
+                      onCancelRefresh={() => window.location.reload()}
                   />
                 ))}
               </tbody>
@@ -537,7 +539,7 @@ export default function MyAppointments() {
   );
 }
 
-function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDelete, actionLoading, onShowOtherParty, onOpenReinitiate, handleArchiveAppointment, handleUnarchiveAppointment, isArchived }) {
+function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDelete, actionLoading, onShowOtherParty, onOpenReinitiate, handleArchiveAppointment, handleUnarchiveAppointment, isArchived, onCancelRefresh }) {
   const [comment, setComment] = useLocalState("");
   const [comments, setComments] = useLocalState(appt.comments || []);
   const [sending, setSending] = useLocalState(false);
@@ -646,8 +648,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       }
       if (res.ok) {
         alert('Appointment cancelled successfully.');
-        // Update status in parent state if possible
-        if (typeof handleStatusUpdate === 'function') handleStatusUpdate(appt._id, isSeller ? 'cancelledBySeller' : 'cancelledByBuyer');
+        // Option 1: Refetch appointments by calling a prop function (onCancelRefresh)
+        if (typeof onCancelRefresh === 'function') onCancelRefresh();
+        // Option 2: Or simply reload the page
+        // window.location.reload();
       } else {
         alert(data.message || 'Failed to cancel appointment.');
       }
