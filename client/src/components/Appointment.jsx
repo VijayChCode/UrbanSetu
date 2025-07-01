@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
+import ContactSupportWrapper from './ContactSupportWrapper';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -218,6 +219,7 @@ export default function Appointment() {
           </form>
         )}
       </div>
+      <ContactSupportWrapper />
     </div>
   );
 }
