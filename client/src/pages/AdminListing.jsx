@@ -100,19 +100,19 @@ export default function AdminListing() {
           <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 w-full">
             <Link 
               to="/admin"
-              className="bg-blue-500 text-white w-full sm:w-auto px-2 py-1 text-xs sm:px-6 sm:py-2 sm:text-base rounded-lg hover:bg-blue-600 transition-colors text-center sm:min-w-[110px]"
+              className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2 w-full sm:w-auto text-center"
             >
               Back to Dashboard
             </Link>
             <Link
               to={`/admin/update-listing/${listing._id}`}
-              className="flex items-center justify-center w-full sm:w-auto gap-1 bg-blue-500 text-white px-2 py-1 text-xs sm:px-4 sm:py-2 sm:text-base rounded-lg hover:bg-blue-600 transition-colors text-center sm:min-w-[110px]"
+              className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2 w-full sm:w-auto text-center justify-center"
             >
               <FaEdit /> Edit Property
             </Link>
             <button
               onClick={handleDelete}
-              className="flex items-center justify-center w-full sm:w-auto gap-1 bg-red-500 text-white px-2 py-1 text-xs sm:px-4 sm:py-2 sm:text-base rounded-lg hover:bg-red-600 transition-colors text-center sm:min-w-[110px]"
+              className="bg-gradient-to-r from-red-500 to-pink-500 text-white px-6 py-3 rounded-lg hover:from-red-600 hover:to-pink-600 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2 w-full sm:w-auto text-center justify-center"
             >
               <FaTrash /> Delete Property
             </button>
