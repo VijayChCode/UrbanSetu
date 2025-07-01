@@ -4,6 +4,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { signoutUserSuccess } from "../redux/user/userSlice.js";
 import NotificationBell from "./NotificationBell.jsx";
+import { persistor } from '../redux/store';
 
 export default function Header() {
   const { currentUser } = useSelector((state) => state.user);
@@ -218,11 +219,13 @@ function UserNavLinks({ mobile = false, onNavigate }) {
         return;
       }
       dispatch(signoutUserSuccess());
+      await persistor.purge();
       alert("You have been signed out.");
       navigate("/sign-in");
     } catch (error) {
       console.log(error.message);
       dispatch(signoutUserSuccess());
+      await persistor.purge();
       alert("You have been signed out.");
       navigate("/sign-in");
     }

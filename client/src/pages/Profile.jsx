@@ -16,6 +16,7 @@ import {
 import ContactSupportWrapper from "../components/ContactSupportWrapper";
 import { useWishlist } from "../WishlistContext";
 import { toast } from 'react-toastify';
+import { persistor } from '../redux/store';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -614,10 +615,9 @@ export default function Profile() {
         dispatch(signoutUserFailure(data.message));
       } else {
         dispatch(signoutUserSuccess(data));
+        await persistor.purge();
         alert("You have been signed out.");
-        
         await new Promise(resolve => setTimeout(resolve, 50));
-        
         navigate("/sign-in");
       }
     } catch (error) {
