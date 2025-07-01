@@ -646,7 +646,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       }
       if (res.ok) {
         alert('Appointment cancelled successfully.');
-        navigate('/user/appointments');
+        // Update status in parent state if possible
+        if (typeof handleStatusUpdate === 'function') handleStatusUpdate(appt._id, isSeller ? 'cancelledBySeller' : 'cancelledByBuyer');
       } else {
         alert(data.message || 'Failed to cancel appointment.');
       }
