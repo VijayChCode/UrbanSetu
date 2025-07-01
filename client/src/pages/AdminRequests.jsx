@@ -233,17 +233,17 @@ const AdminRequests = () => {
                         </div>
                       </div>
                       
-                      <div className="flex space-x-3">
+                      <div className="flex flex-col sm:flex-row gap-2 sm:space-x-3 w-full sm:w-auto mt-4 sm:mt-0">
                         <button
                           onClick={() => handleApprove(request._id)}
-                          className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2"
+                          className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2 w-full sm:w-auto justify-center"
                         >
                           <span>✓</span>
                           <span>Approve</span>
                         </button>
                         <button
                           onClick={() => handleReject(request._id)}
-                          className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2"
+                          className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2 w-full sm:w-auto justify-center"
                         >
                           <span>✕</span>
                           <span>Reject</span>
