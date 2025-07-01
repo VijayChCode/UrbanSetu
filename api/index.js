@@ -154,7 +154,7 @@ app.use((err, req, res, next) => {
   if (err.status && err.status >= 400 && err.status < 500) {
     console.warn(`[${err.status}] ${err.message}`);
   } else {
-    console.error(err.stack);
+  console.error(err.stack);
   }
   res.status(err.status || 500).json({ success: false, message: err.message || 'Internal Server Error' });
 });

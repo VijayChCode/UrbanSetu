@@ -100,7 +100,7 @@ export default function AdminListing() {
           <div className="flex items-center gap-4">
             <Link 
               to="/admin"
-              className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+              className="bg-blue-500 text-white px-4 py-1 text-sm sm:px-6 sm:py-2 sm:text-base rounded-lg hover:bg-blue-600 transition-colors"
             >
               Back to Dashboard
             </Link>
@@ -108,13 +108,13 @@ export default function AdminListing() {
           <div className="flex items-center gap-3">
             <Link
               to={`/admin/update-listing/${listing._id}`}
-              className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+              className="flex items-center gap-2 bg-blue-500 text-white px-3 py-1 text-sm sm:px-4 sm:py-2 sm:text-base rounded-lg hover:bg-blue-600 transition-colors"
             >
               <FaEdit /> Edit Property
             </Link>
             <button
               onClick={handleDelete}
-              className="flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
+              className="flex items-center gap-2 bg-red-500 text-white px-3 py-1 text-sm sm:px-4 sm:py-2 sm:text-base rounded-lg hover:bg-red-600 transition-colors"
             >
               <FaTrash /> Delete Property
             </button>
