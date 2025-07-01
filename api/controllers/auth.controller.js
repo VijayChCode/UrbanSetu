@@ -87,7 +87,8 @@ export const SignIn=async(req,res,next)=>{
         res.cookie('access_token',token,{
             httpOnly:true,
             sameSite: 'none',
-            secure: true
+            secure: true,
+            path: '/'
         }).status(200).json({
             _id: validUser._id,
             username: validUser.username,
@@ -114,7 +115,8 @@ export const Google=async (req,res,next)=>{
             res.cookie('access_token',token,{
                 httpOnly:true,
                 sameSite: 'none',
-                secure: true
+                secure: true,
+                path: '/'
             }).status(200).json(validUser)
         }
         else{
@@ -132,7 +134,8 @@ export const Google=async (req,res,next)=>{
             res.cookie('access_token',token,{
                 httpOnly:true,
                 sameSite: 'none',
-                secure: true
+                secure: true,
+                path: '/'
             }).status(200).json(newUser)
         }
 
@@ -175,7 +178,8 @@ export const verifyAuth = async (req, res, next) => {
         res.cookie('access_token', token, {
             httpOnly: true,
             sameSite: 'none',
-            secure: true
+            secure: true,
+            path: '/'
         });
         res.status(200).json(user);
     } catch (error) {
