@@ -296,6 +296,10 @@ export default function MyAppointments() {
     }
   }
 
+  const handleCancelRefresh = (cancelledId, cancelledStatus) => {
+    setAppointments((prev) => prev.map(appt => appt._id === cancelledId ? { ...appt, status: cancelledStatus } : appt));
+  };
+
   if (loading) return <p className="text-center mt-8 text-lg font-semibold text-blue-600 animate-pulse">Loading appointments...</p>;
 
   if (error) {
@@ -432,7 +436,7 @@ export default function MyAppointments() {
                       handleArchiveAppointment={handleArchiveAppointment}
                       handleUnarchiveAppointment={handleUnarchiveAppointment}
                       isArchived={true}
-                      onCancelRefresh={() => window.location.reload()}
+                      onCancelRefresh={handleCancelRefresh}
                     />
                   ))}
                 </tbody>
@@ -472,7 +476,7 @@ export default function MyAppointments() {
                       handleArchiveAppointment={handleArchiveAppointment}
                       handleUnarchiveAppointment={handleUnarchiveAppointment}
                       isArchived={false}
-                      onCancelRefresh={() => window.location.reload()}
+                      onCancelRefresh={handleCancelRefresh}
                   />
                 ))}
               </tbody>
@@ -648,10 +652,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       }
       if (res.ok) {
         alert('Appointment cancelled successfully.');
-        // Option 1: Refetch appointments by calling a prop function (onCancelRefresh)
-        if (typeof onCancelRefresh === 'function') onCancelRefresh();
-        // Option 2: Or simply reload the page
-        // window.location.reload();
+        if (typeof onCancelRefresh === 'function') onCancelRefresh(appt._id, isSeller ? 'cancelledBySeller' : 'cancelledByBuyer');
       } else {
         alert(data.message || 'Failed to cancel appointment.');
       }
