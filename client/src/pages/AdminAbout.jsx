@@ -112,6 +112,7 @@ export default function AdminAbout() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editData),
+        credentials: 'include'
       });
       if (res.ok) {
         setAboutData(editData);
