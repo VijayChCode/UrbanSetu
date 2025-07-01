@@ -7,7 +7,7 @@ import ContactSupportWrapper from "../components/ContactSupportWrapper.jsx";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-export default function SignIn() {
+export default function SignIn({ bootstrapped, sessionChecked }) {
     const [formData, setFormData] = useState({
         email: "",
         password: ""
@@ -33,9 +33,8 @@ export default function SignIn() {
 
     // Block access if already signed in
     useEffect(() => {
-        if (currentUser) {
+        if (bootstrapped && sessionChecked && currentUser) {
             if (currentUser.role === 'admin' || currentUser.role === 'rootadmin') {
-                // Special handling for root admin
                 if (currentUser.isDefaultAdmin) {
                     navigate('/admin', { replace: true });
                 } else {
@@ -45,7 +44,7 @@ export default function SignIn() {
                 navigate('/user', { replace: true });
             }
         }
-    }, [currentUser, navigate]);
+    }, [bootstrapped, sessionChecked, currentUser, navigate]);
 
     const handleChange = (e) => {
         setFormData({

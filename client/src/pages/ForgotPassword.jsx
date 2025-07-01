@@ -7,7 +7,7 @@ import NotFound from "./NotFound";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-export default function ForgotPassword() {
+export default function ForgotPassword({ bootstrapped, sessionChecked }) {
   const [step, setStep] = useState(1); // 1: verification, 2: reset password
   const [formData, setFormData] = useState({
     email: "",
@@ -98,14 +98,14 @@ export default function ForgotPassword() {
 
   // Block access if already signed in
   useEffect(() => {
-    if (currentUser) {
+    if (bootstrapped && sessionChecked && currentUser) {
       if (currentUser.role === 'admin' || currentUser.role === 'rootadmin') {
         navigate('/admin', { replace: true });
       } else {
         navigate('/user', { replace: true });
       }
     }
-  }, [currentUser, navigate]);
+  }, [bootstrapped, sessionChecked, currentUser, navigate]);
 
   const checkPasswordStrength = (password) => {
     const validity = {

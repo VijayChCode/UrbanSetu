@@ -136,17 +136,17 @@ function AppRoutes({ bootstrapped }) {
       <Suspense fallback={<LoadingSpinner />}>
         <Routes>
           {/* Public Routes */}
-          <Route path="/" element={currentUser ? <NotFound /> : <PublicHome />} />
-          <Route path="/home" element={currentUser ? <NotFound /> : <PublicHome />} />
-          <Route path="/about" element={currentUser ? <Navigate to="/user/about" /> : <PublicAbout />} />
-          <Route path="/search" element={currentUser ? <Navigate to="/user/search" /> : <PublicSearch />} />
+          <Route path="/" element={currentUser ? <NotFound /> : <PublicHome bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
+          <Route path="/home" element={currentUser ? <NotFound /> : <PublicHome bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
+          <Route path="/about" element={currentUser ? <Navigate to="/user/about" /> : <PublicAbout bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
+          <Route path="/search" element={currentUser ? <Navigate to="/user/search" /> : <PublicSearch bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
           <Route path="/listing/:listingId" element={currentUser ? <NotFound /> : <Listing />} />
-          <Route path="/sign-in" element={<SignIn />} />
-          <Route path="/sign-up" element={<SignUp />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/oauth" element={<Oauth />} />
-          <Route path="/terms" element={currentUser ? <NotFound /> : <Terms />} />
-          <Route path="/privacy" element={currentUser ? <NotFound /> : <Privacy />} />
+          <Route path="/sign-in" element={<SignIn bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
+          <Route path="/sign-up" element={<SignUp bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
+          <Route path="/forgot-password" element={<ForgotPassword bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
+          <Route path="/oauth" element={<Oauth bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
+          <Route path="/terms" element={currentUser ? <NotFound /> : <Terms bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
+          <Route path="/privacy" element={currentUser ? <NotFound /> : <Privacy bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
 
           {/* User Routes (Protected) */}
           <Route element={<Private bootstrapped={bootstrapped} />}>

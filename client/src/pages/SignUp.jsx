@@ -7,7 +7,7 @@ import { useSelector } from "react-redux";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-export default function SignUp() {
+export default function SignUp({ bootstrapped, sessionChecked }) {
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -140,14 +140,14 @@ export default function SignUp() {
   };
 
   useEffect(() => {
-    if (currentUser) {
+    if (bootstrapped && sessionChecked && currentUser) {
       if (currentUser.role === 'admin' || currentUser.role === 'rootadmin') {
         navigate('/admin', { replace: true });
       } else {
         navigate('/user', { replace: true });
       }
     }
-  }, [currentUser, navigate]);
+  }, [bootstrapped, sessionChecked, currentUser, navigate]);
 
   return (
     <div className="min-h-screen flex">
