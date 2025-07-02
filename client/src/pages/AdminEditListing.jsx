@@ -42,7 +42,7 @@ export default function AdminEditListing() {
     if (from) return from;
     
     // Default paths for admin
-    return "/admin/my-listings";
+    return "/admin/listings";
   };
 
   useEffect(() => {
