@@ -172,12 +172,18 @@ export default function ListingItem({ listing, onDelete }) {
       </Link>
 
       <div className="mt-2 sm:mt-4">
-        <button
-          onClick={onHandleAppointment}
-          className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center justify-center gap-2 text-sm sm:text-base"
-        >
-          📅 Book Appointment
-        </button>
+        {currentUser && currentUser._id === listing.userRef ? (
+          <div className="w-full text-red-500 font-semibold text-center py-2 sm:py-3 rounded-lg bg-red-50 border border-red-200">
+            You cannot book an appointment for your own property.
+          </div>
+        ) : (
+          <button
+            onClick={onHandleAppointment}
+            className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center justify-center gap-2 text-sm sm:text-base"
+          >
+            📅 Book Appointment
+          </button>
+        )}
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 
@@ -26,6 +26,8 @@ export default function AdminAppointmentListing() {
   });
   const [booked, setBooked] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [listing, setListing] = useState(null);
+  const [ownerCheckLoading, setOwnerCheckLoading] = useState(true);
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -92,12 +94,53 @@ export default function AdminAppointmentListing() {
     }
   };
 
+  useEffect(() => {
+    const fetchListing = async () => {
+      if (!listingId) return;
+      setOwnerCheckLoading(true);
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/listing/get/${listingId}`);
+        const data = await res.json();
+        setListing(data);
+      } catch (error) {
+        setListing(null);
+      } finally {
+        setOwnerCheckLoading(false);
+      }
+    };
+    fetchListing();
+  }, [listingId]);
+
   if (!currentUser) {
     return (
       <div className="bg-gradient-to-br from-blue-50 to-purple-100 min-h-screen py-10 px-2 md:px-8">
         <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-6 relative">
           <div className="text-center text-red-600 text-xl font-semibold py-10">
             Please sign in as admin to book an appointment.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (ownerCheckLoading) {
+    return (
+      <div className="bg-gradient-to-br from-blue-50 to-purple-100 min-h-screen py-10 px-2 md:px-8">
+        <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-6 relative">
+          <div className="text-center text-blue-600 text-xl font-semibold py-10">
+            Loading property information...
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (listing && currentUser && currentUser._id === listing.userRef) {
+    return (
+      <div className="bg-gradient-to-br from-blue-50 to-purple-100 min-h-screen py-10 px-2 md:px-8">
+        <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-6 relative">
+          <div className="text-center text-red-600 text-xl font-semibold py-10">
+            You cannot book an appointment for your own property.
           </div>
         </div>
       </div>
