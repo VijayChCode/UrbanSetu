@@ -48,7 +48,7 @@ export default function AdminAppointments() {
     const interval = setInterval(() => {
       fetchAppointments();
       fetchArchivedAppointments();
-    }, 1000);
+    }, 5000);
     return () => clearInterval(interval);
   }, []);
 

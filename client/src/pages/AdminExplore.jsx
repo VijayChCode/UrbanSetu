@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import ListingItem from "../components/ListingItem";
 import ContactSupportWrapper from "../components/ContactSupportWrapper";
 import LocationSelector from "../components/LocationSelector";
-import duckImg from "../assets/duck-404.png";
+import duckImg from "../assets/duck-go-final.gif";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -264,7 +264,7 @@ export default function AdminExplore() {
             {loading && <p className="text-center text-lg font-semibold text-blue-600 animate-pulse">Loading...</p>}
             {!loading && listings.length === 0 && (
               <div className="text-center py-8">
-                <img src={duckImg} alt="No properties found" className="w-32 h-32 object-contain mx-auto mb-4 animate-float" />
+                <img src={duckImg} alt="No properties found" className="w-32 h-32 object-contain mx-auto mb-4" />
                 <h3 className="text-xl font-bold text-gray-700 mb-2">No Properties Found</h3>
                 <p className="text-gray-500 mb-4">Try adjusting your search criteria or filters</p>
               </div>

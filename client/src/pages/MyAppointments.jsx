@@ -72,7 +72,7 @@ export default function MyAppointments() {
     const interval = setInterval(() => {
       fetchAppointments();
       fetchArchivedAppointments();
-    }, 1000);
+    }, 5000);
     return () => clearInterval(interval);
   }, [currentUser]);
 
