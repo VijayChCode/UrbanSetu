@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken'
 
 export const SignUp=async (req,res,next)=>{
     const {username,email,password,role,mobileNumber}=req.body;
+    const emailLower = email.toLowerCase();
     
     // Validate mobile number
     if (!mobileNumber || !/^[0-9]{10}$/.test(mobileNumber)) {
@@ -13,7 +14,7 @@ export const SignUp=async (req,res,next)=>{
     
     try {
         // Check if email already exists
-        const existingEmail = await User.findOne({ email });
+        const existingEmail = await User.findOne({ email: emailLower });
         if (existingEmail) {
             return next(errorHandler(400, "An account with this email already exists. Please sign in instead!"));
         }
@@ -31,7 +32,7 @@ export const SignUp=async (req,res,next)=>{
         
         const newUser=new User({
             username,
-            email,
+            email: emailLower,
             password:hashedPassword,
             mobileNumber,
             role,
@@ -60,8 +61,9 @@ export const SignUp=async (req,res,next)=>{
 
 export const SignIn=async(req,res,next)=>{
     const {email,password}=req.body 
+    const emailLower = email.toLowerCase();
     try{
-        const validUser=await User.findOne({email})
+        const validUser=await User.findOne({email: emailLower})
         if (!validUser){
             return next(errorHandler(404,"user not found"))
         }
