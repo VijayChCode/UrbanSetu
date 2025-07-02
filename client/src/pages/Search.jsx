@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import ListingItem from "../components/ListingItem";
 import LocationSelector from "../components/LocationSelector";
-import duckImg from "../assets/duck-404.png";
+import duckImg from "../assets/duck-go-final.gif";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 

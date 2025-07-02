@@ -32,10 +32,6 @@ export default function AdminAppointments() {
         setLoading(false);
       }
     };
-    fetchAppointments();
-  }, []);
-
-  useEffect(() => {
     const fetchArchivedAppointments = async () => {
       try {
         const res = await fetch(`${API_BASE_URL}/api/bookings/archived`, {
@@ -47,7 +43,13 @@ export default function AdminAppointments() {
         console.error("Failed to fetch archived appointments", err);
       }
     };
+    fetchAppointments();
     fetchArchivedAppointments();
+    const interval = setInterval(() => {
+      fetchAppointments();
+      fetchArchivedAppointments();
+    }, 1000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleAdminCancel = async (id) => {

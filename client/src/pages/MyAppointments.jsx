@@ -34,15 +34,12 @@ export default function MyAppointments() {
         setLoading(false);
         return;
       }
-
       try {
         setLoading(true);
         setError(null);
-        
         const res = await fetch(`${API_BASE_URL}/api/bookings/my`, {
           credentials: 'include'
         });
-        
         if (res.ok) {
           const data = await res.json();
           setAppointments(data);
@@ -55,25 +52,6 @@ export default function MyAppointments() {
         setLoading(false);
       }
     };
-
-    fetchAppointments();
-
-    // Listen for permanent delete events
-    const removeHandler = (e) => {
-      setAppointments((prev) => prev.filter((appt) => appt._id !== e.detail));
-    };
-    window.addEventListener('removeAppointmentRow', removeHandler);
-    return () => {
-      window.removeEventListener('removeAppointmentRow', removeHandler);
-    };
-  }, [currentUser]);
-
-  useEffect(() => {
-    // Only fetch archived appointments if user is admin/rootadmin
-    if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'rootadmin')) {
-      setArchivedAppointments([]);
-      return;
-    }
     const fetchArchivedAppointments = async () => {
       try {
         const res = await fetch(`${API_BASE_URL}/api/bookings/archived`, {
@@ -83,14 +61,30 @@ export default function MyAppointments() {
         const data = await res.json();
         setArchivedAppointments(Array.isArray(data) ? data : []);
       } catch (err) {
-        setArchivedAppointments([]); // Defensive: always set to array
-        // Only show error toast for admins
+        setArchivedAppointments([]);
         if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) {
           toast.error("Failed to fetch archived appointments");
         }
       }
     };
+    fetchAppointments();
     fetchArchivedAppointments();
+    const interval = setInterval(() => {
+      fetchAppointments();
+      fetchArchivedAppointments();
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [currentUser]);
+
+  useEffect(() => {
+    // Listen for permanent delete events
+    const removeHandler = (e) => {
+      setAppointments((prev) => prev.filter((appt) => appt._id !== e.detail));
+    };
+    window.addEventListener('removeAppointmentRow', removeHandler);
+    return () => {
+      window.removeEventListener('removeAppointmentRow', removeHandler);
+    };
   }, [currentUser]);
 
   const handleStatusUpdate = async (id, status) => {
