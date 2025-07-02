@@ -39,6 +39,12 @@ const aboutSchema = new mongoose.Schema({
     required: true,
     default: "Have questions or feedback?\n📧 Email us at: support@urbansetu.com\n🧑‍💻 Or visit our Help Center"
   },
+  customFields: [
+    {
+      key: { type: String, required: true },
+      value: { type: String, required: true }
+    }
+  ],
   lastUpdated: {
     type: Date,
     default: Date.now

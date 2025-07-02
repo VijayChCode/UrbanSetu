@@ -45,6 +45,7 @@ export default function AdminAbout() {
       trust: aboutData.trust || '',
       team: aboutData.team || '',
       contact: aboutData.contact || '',
+      customFields: aboutData.customFields ? [...aboutData.customFields] : [],
     });
     setEditMode(true);
     setSuccess(false);
@@ -134,6 +135,26 @@ export default function AdminAbout() {
     setEditData(null);
     setError('');
     setSuccess(false);
+  };
+
+  // Custom fields handlers
+  const handleCustomFieldChange = (idx, field, value) => {
+    setEditData((prev) => ({
+      ...prev,
+      customFields: prev.customFields.map((item, i) => i === idx ? { ...item, [field]: value } : item)
+    }));
+  };
+  const handleAddCustomField = () => {
+    setEditData((prev) => ({
+      ...prev,
+      customFields: [...prev.customFields, { key: '', value: '' }]
+    }));
+  };
+  const handleRemoveCustomField = (idx) => {
+    setEditData((prev) => ({
+      ...prev,
+      customFields: prev.customFields.filter((_, i) => i !== idx)
+    }));
   };
 
   if (loading || !aboutData) {
@@ -239,6 +260,19 @@ export default function AdminAbout() {
                 {aboutData.contact || ''}
               </p>
             </div>
+            {/* 8. Additional Information (Custom Fields) */}
+            {aboutData.customFields && aboutData.customFields.length > 0 && (
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-blue-700 flex items-center gap-2 mb-2">
+                  <FaGlobe className="text-blue-400" /> Additional Information
+                </h2>
+                <ul className="list-disc pl-6 space-y-2 text-slate-700 text-lg">
+                  {aboutData.customFields.map((item, idx) => (
+                    <li key={idx}><span className="font-semibold">{item.key}:</span> {item.value}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </>
         )}
         {/* EDIT MODE */}
@@ -296,6 +330,28 @@ export default function AdminAbout() {
             <div className="mb-6">
               <label className="block font-semibold mb-1 flex items-center gap-2"><FaEnvelope className="text-green-500" /> Contact & Support</label>
               <textarea name="contact" value={editData.contact} onChange={handleChange} className="w-full border rounded p-2" rows={2} />
+            </div>
+            {/* Additional Information (Custom Fields) */}
+            <div className="mb-6">
+              <label className="block font-semibold mb-1 flex items-center gap-2"><FaGlobe className="text-blue-400" /> Additional Information</label>
+              {(editData.customFields || []).map((item, idx) => (
+                <div key={idx} className="flex gap-2 mb-2">
+                  <input
+                    placeholder="Field Name"
+                    value={item.key}
+                    onChange={e => handleCustomFieldChange(idx, 'key', e.target.value)}
+                    className="w-1/3 border rounded p-2"
+                  />
+                  <input
+                    placeholder="Field Value"
+                    value={item.value}
+                    onChange={e => handleCustomFieldChange(idx, 'value', e.target.value)}
+                    className="w-2/3 border rounded p-2"
+                  />
+                  <button type="button" onClick={() => handleRemoveCustomField(idx)} className="text-red-500 font-bold">&times;</button>
+                </div>
+              ))}
+              <button type="button" onClick={handleAddCustomField} className="text-blue-600 underline">+ Add Field</button>
             </div>
             <div className="flex gap-4 mt-4">
               <button onClick={handleSave} disabled={saving} className="bg-blue-700 text-white px-6 py-2 rounded font-bold hover:bg-blue-800 disabled:opacity-50">

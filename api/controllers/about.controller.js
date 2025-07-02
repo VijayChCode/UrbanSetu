@@ -41,7 +41,7 @@ export const getAbout = async (req, res, next) => {
 // Update About content (Admin only)
 export const updateAbout = async (req, res, next) => {
   try {
-    const { heroTitle, heroText, mission, features, whoWeServe, trust, team, contact } = req.body;
+    const { heroTitle, heroText, mission, features, whoWeServe, trust, team, contact, customFields } = req.body;
     const { username } = req.user; // From verifyToken middleware
     
     let about = await About.findOne();
@@ -57,6 +57,7 @@ export const updateAbout = async (req, res, next) => {
         trust,
         team,
         contact,
+        customFields: customFields || [],
         updatedBy: username
       });
     } else {
@@ -72,6 +73,7 @@ export const updateAbout = async (req, res, next) => {
           trust,
           team,
           contact,
+          customFields: customFields || [],
           lastUpdated: Date.now(),
           updatedBy: username
         },
