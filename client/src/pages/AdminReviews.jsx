@@ -244,151 +244,131 @@ export default function AdminReviews() {
         )}
 
         <div className="overflow-x-auto">
-          <table className="min-w-[600px] w-full text-xs sm:text-sm divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  User & Property
-                </th>
-                <th className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Rating & Comment
-                </th>
-                <th className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status & Date
-                </th>
-                <th className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {reviews.map((review) => (
-                <tr key={review._id} className="hover:bg-gray-50">
-                  <td className="px-2 sm:px-4 md:px-6 py-2 sm:py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <img
-                        src={review.userAvatar}
-                        alt={review.userName}
-                        className="w-10 h-10 rounded-full object-cover"
-                      />
-                      <div className="ml-4">
-                        <div className="flex items-center gap-2">
-                          <div className="text-sm font-medium text-gray-900">
-                            {review.userName}
-                          </div>
-                          {review.isVerified && (
-                            <FaCheckCircle className="text-green-600 text-sm" title="Verified user" />
-                          )}
+          {/* Responsive review cards for mobile, table for desktop */}
+          <div className="space-y-4 sm:space-y-0 sm:table w-full">
+            {reviews.map((review) => (
+              <div key={review._id} className="block sm:table-row bg-white rounded-lg shadow-sm sm:shadow-none p-3 sm:p-0 border sm:border-0">
+                <div className="flex flex-col sm:table-cell sm:align-top sm:w-1/4 mb-2 sm:mb-0">
+                  <div className="flex items-center">
+                    <img
+                      src={review.userAvatar}
+                      alt={review.userName}
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
+                    <div className="ml-4">
+                      <div className="flex items-center gap-2">
+                        <div className="text-sm font-medium text-gray-900">
+                          {review.userName}
                         </div>
-                        <div className="text-sm text-gray-500">
-                          {review.listingId?.name || 'Property not found'}
-                        </div>
-                        <div className="text-xs text-gray-400">
-                          {review.listingId?.city}, {review.listingId?.state}
-                        </div>
+                        {review.isVerified && (
+                          <FaCheckCircle className="text-green-600 text-sm" title="Verified user" />
+                        )}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {review.listingId?.name || 'Property not found'}
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        {review.listingId?.city}, {review.listingId?.state}
                       </div>
                     </div>
-                  </td>
-                  <td className="px-2 sm:px-4 md:px-6 py-2 sm:py-4">
-                    <div className="flex items-center mb-2">
-                      {renderStars(review.rating)}
-                      <span className="ml-2 text-sm text-gray-600">
-                        {review.rating} star{review.rating > 1 ? 's' : ''}
-                      </span>
-                      {review.helpfulCount > 0 && (
-                        <div className="flex items-center ml-4 text-sm text-gray-500">
-                          <FaThumbsUp className="mr-1" />
-                          {review.helpfulCount}
-                        </div>
-                      )}
-                    </div>
-                    <p className="text-sm text-gray-900 line-clamp-2">
-                      {review.comment}
-                    </p>
-                    {review.verifiedByBooking && (
-                      <span className="inline-block mt-1 text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
-                        Booked this property
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-2 sm:px-4 md:px-6 py-2 sm:py-4 whitespace-nowrap">
-                    <div className="mb-2">
-                      {getStatusBadge(review.status)}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {formatDate(review.createdAt)}
-                    </div>
-                    {review.adminNote && (
-                      <div className="text-xs text-gray-400 mt-1">
-                        Note: {review.adminNote}
+                  </div>
+                </div>
+                <div className="flex flex-col sm:table-cell sm:align-top sm:w-1/4 mb-2 sm:mb-0">
+                  <div className="flex items-center mb-2">
+                    {renderStars(review.rating)}
+                    <span className="ml-2 text-sm text-gray-600">
+                      {review.rating} star{review.rating > 1 ? 's' : ''}
+                    </span>
+                    {review.helpfulCount > 0 && (
+                      <div className="flex items-center ml-4 text-sm text-gray-500">
+                        <FaThumbsUp className="mr-1" />
+                        {review.helpfulCount}
                       </div>
                     )}
-                    {review.removalReason && (
-                      <div className="text-xs text-red-600 mt-1">
-                        Removed: {review.removalReason}
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-2 sm:px-4 md:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium">
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
-                      {review.status === 'pending' && (
-                        <>
-                          <button
-                            onClick={() => handleStatusChange(review._id, 'approved')}
-                            className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow font-semibold flex items-center gap-2"
-                            title="Approve review"
-                          >
-                            <FaCheck /> Approve
-                          </button>
-                          <button
-                            onClick={() => handleStatusChange(review._id, 'rejected')}
-                            className="bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-lg hover:from-red-600 hover:to-red-700 transition-all transform hover:scale-105 shadow font-semibold flex items-center gap-2"
-                            title="Reject review"
-                          >
-                            <FaTimes /> Reject
-                          </button>
-                        </>
-                      )}
-                      
-                      {review.status === 'approved' && (
+                  </div>
+                  <p className="text-sm text-gray-900 line-clamp-2">
+                    {review.comment}
+                  </p>
+                  {review.verifiedByBooking && (
+                    <span className="inline-block mt-1 text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
+                      Booked this property
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-col sm:table-cell sm:align-top sm:w-1/4 mb-2 sm:mb-0">
+                  <div className="mb-2">
+                    {getStatusBadge(review.status)}
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    {formatDate(review.createdAt)}
+                  </div>
+                  {review.adminNote && (
+                    <div className="text-xs text-gray-400 mt-1">
+                      Note: {review.adminNote}
+                    </div>
+                  )}
+                  {review.removalReason && (
+                    <div className="text-xs text-red-600 mt-1">
+                      Removed: {review.removalReason}
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-col gap-2 sm:table-cell sm:align-top sm:w-1/4 mb-2 sm:mb-0">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
+                    {review.status === 'pending' && (
+                      <>
                         <button
-                          onClick={e => {
-                            e.stopPropagation();
-                            setReviewToRemove(review);
-                            setShowRemovalModal(true);
-                          }}
-                          className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white px-4 py-2 rounded-lg hover:from-yellow-600 hover:to-yellow-700 transition-all transform hover:scale-105 shadow font-semibold flex items-center gap-2"
-                          title="Remove review"
+                          onClick={() => handleStatusChange(review._id, 'approved')}
+                          className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow font-semibold flex items-center gap-2"
+                          title="Approve review"
                         >
-                          <FaBan /> Remove
+                          <FaCheck /> Approve
                         </button>
-                      )}
-                      
+                        <button
+                          onClick={() => handleStatusChange(review._id, 'rejected')}
+                          className="bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-lg hover:from-red-600 hover:to-red-700 transition-all transform hover:scale-105 shadow font-semibold flex items-center gap-2"
+                          title="Reject review"
+                        >
+                          <FaTimes /> Reject
+                        </button>
+                      </>
+                    )}
+                    {review.status === 'approved' && (
                       <button
-                        onClick={() => setSelectedReview(review)}
-                        className="bg-gradient-to-r from-blue-400 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all transform hover:scale-105 shadow font-semibold flex items-center gap-2"
-                        title="View details"
-                      >
-                        <FaEye /> View
-                      </button>
-                      
-                      <button
-                        onClick={() => {
-                          if (window.confirm('Are you sure you want to delete this review from the table?')) {
-                            setReviews(reviews.filter(r => r._id !== review._id));
-                          }
+                        onClick={e => {
+                          e.stopPropagation();
+                          setReviewToRemove(review);
+                          setShowRemovalModal(true);
                         }}
-                        className="bg-gradient-to-r from-gray-500 to-gray-600 text-white px-4 py-2 rounded-lg hover:from-gray-600 hover:to-gray-700 transition-all transform hover:scale-105 shadow font-semibold flex items-center gap-2"
-                        title="Delete from table"
+                        className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white px-4 py-2 rounded-lg hover:from-yellow-600 hover:to-yellow-700 transition-all transform hover:scale-105 shadow font-semibold flex items-center gap-2"
+                        title="Remove review"
                       >
-                        <FaTrash /> Delete
+                        <FaBan /> Remove
                       </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    )}
+                    <button
+                      onClick={() => setSelectedReview(review)}
+                      className="bg-gradient-to-r from-blue-400 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all transform hover:scale-105 shadow font-semibold flex items-center gap-2"
+                      title="View details"
+                    >
+                      <FaEye /> View
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (window.confirm('Are you sure you want to delete this review from the table?')) {
+                          setReviews(reviews.filter(r => r._id !== review._id));
+                        }
+                      }}
+                      className="bg-gradient-to-r from-gray-500 to-gray-600 text-white px-4 py-2 rounded-lg hover:from-gray-600 hover:to-gray-700 transition-all transform hover:scale-105 shadow font-semibold flex items-center gap-2"
+                      title="Delete from table"
+                    >
+                      <FaTrash /> Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Pagination */}
@@ -420,7 +400,7 @@ export default function AdminReviews() {
       {/* Review Detail Modal */}
       {selectedReview && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
-          <div className="bg-white rounded-lg max-w-xs sm:max-w-2xl w-full mx-2 sm:mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-lg max-w-xs sm:max-w-2xl w-full mx-2 sm:mx-4 max-h-[90vh] overflow-y-auto p-3 sm:p-6">
             <div className="flex flex-col sm:flex-row items-center sm:justify-between mb-2 sm:mb-4 gap-2 sm:gap-0">
               <h2 className="text-lg sm:text-xl font-semibold">Review Details</h2>
               <button
@@ -432,7 +412,7 @@ export default function AdminReviews() {
             </div>
             
             <div className="space-y-4">
-              <div className="flex items-center space-x-3">
+              <div className="flex flex-col sm:flex-row items-center sm:space-x-3 space-y-2 sm:space-y-0">
                 <img
                   src={selectedReview.userAvatar}
                   alt={selectedReview.userName}
@@ -466,11 +446,12 @@ export default function AdminReviews() {
               </div>
               
               <div className="grid grid-cols-2 gap-4">
-                <div>
+                {/* On mobile, stack status/date vertically */}
+                <div className="col-span-2 sm:col-span-1">
                   <h4 className="font-medium mb-2">Status</h4>
                   {getStatusBadge(selectedReview.status)}
                 </div>
-                <div>
+                <div className="col-span-2 sm:col-span-1">
                   <h4 className="font-medium mb-2">Date</h4>
                   <p className="text-gray-700">{formatDate(selectedReview.createdAt)}</p>
                 </div>
