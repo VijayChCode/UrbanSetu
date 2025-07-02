@@ -106,7 +106,7 @@ export default function AdminAppointments() {
       const res = await fetch(`${API_BASE_URL}/api/bookings/${id}/reinitiate`, { 
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        credentials: 'include',
+        credentials: '',
       });
       
       console.log('Response status:', res.status);
