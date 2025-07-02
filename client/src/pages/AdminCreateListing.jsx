@@ -54,7 +54,7 @@ export default function AdminCreateListing() {
   const getPreviousPath = () => {
     const from = location.state?.from;
     if (from) return from;
-    return "/admin/my-listings";
+    return "/admin/listings";
   };
 
   // Fetch all users for autocomplete
