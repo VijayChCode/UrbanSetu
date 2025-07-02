@@ -110,7 +110,7 @@ export default function Listing() {
       if (res.ok) {
         alert('Property deleted successfully!');
         setShowPasswordModal(false);
-        navigate('/admin/my-listings');
+        navigate('/admin/listings');
       } else {
         const data = await res.json();
         setDeleteError(data.message || 'Failed to delete property.');
