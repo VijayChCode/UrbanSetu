@@ -204,8 +204,9 @@ export const forgotPassword = async (req, res, next) => {
             return next(errorHandler(400, "Both email and mobile number are required"));
         }
         
+        const emailLower = email.toLowerCase();
         // Find user with matching email and mobile number
-        const user = await User.findOne({ email, mobileNumber });
+        const user = await User.findOne({ email: emailLower, mobileNumber });
         
         if (!user) {
             return next(errorHandler(404, "No account found with that email and mobile number."));
