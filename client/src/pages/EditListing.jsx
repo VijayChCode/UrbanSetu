@@ -160,6 +160,7 @@ export default function EditListing() {
       const options = {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include',
         body: JSON.stringify(requestBody),
       };
       const res = await fetch(apiUrl, options);
