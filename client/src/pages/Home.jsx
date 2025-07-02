@@ -70,11 +70,13 @@ export default function Home() {
             loop={true}
             className="rounded-lg shadow-lg"
           >
-            {offerListings.map((listing) => (
-              <SwiperSlide key={listing._id} className="flex justify-center">
-                <img src={listing.imageUrls[0]} className="h-56 w-full object-cover rounded-lg transition-transform duration-500 hover:scale-105 hover:shadow-2xl" alt="Listing" />
-              </SwiperSlide>
-            ))}
+            {offerListings.flatMap(listing =>
+              (listing.imageUrls || []).map((img, idx) => (
+                <SwiperSlide key={listing._id + '-' + idx} className="flex justify-center">
+                  <img src={img} className="h-56 w-full object-cover rounded-lg transition-transform duration-500 hover:scale-105 hover:shadow-2xl" alt="Listing" />
+                </SwiperSlide>
+              ))
+            )}
           </Swiper>
         </div>
       )}
