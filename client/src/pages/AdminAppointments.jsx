@@ -459,36 +459,10 @@ export default function AdminAppointments() {
 
 function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReinitiateAppointment, handleArchiveAppointment, handleUnarchiveAppointment, onUserClick, isArchived }) {
   const [localComments, setLocalComments] = useLocalState(appt.comments || []);
-  const [status, setStatus] = useLocalState(appt.status);
   const [newComment, setNewComment] = useLocalState("");
   const [sending, setSending] = useLocalState(false);
   const [editingComment, setEditingComment] = useLocalState(null);
   const [editText, setEditText] = useLocalState("");
-
-  useEffect(() => {
-    let isMounted = true;
-    const fetchRowData = async () => {
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}`);
-        if (res.ok) {
-          const data = await res.json();
-          if (isMounted) {
-            setLocalComments(data.comments || []);
-            setStatus(data.status);
-          }
-        }
-      } catch (err) {}
-    };
-    const interval = setInterval(fetchRowData, 5000);
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
-    };
-  }, [appt._id]);
-
-  // Debug: Log the appointment data to see the structure
-  console.log('Admin Appointment data:', appt);
-  console.log('Admin listingId:', appt.listingId);
 
   const handleCommentSend = async () => {
     if (!newComment.trim()) return;
