@@ -535,10 +535,32 @@ export default function MyAppointments() {
 function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDelete, actionLoading, onShowOtherParty, onOpenReinitiate, handleArchiveAppointment, handleUnarchiveAppointment, isArchived, onCancelRefresh }) {
   const [comment, setComment] = useLocalState("");
   const [comments, setComments] = useLocalState(appt.comments || []);
+  const [status, setStatus] = useLocalState(appt.status);
   const [sending, setSending] = useLocalState(false);
   const [editingComment, setEditingComment] = useLocalState(null);
   const [editText, setEditText] = useLocalState("");
   const location = useLocation();
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchRowData = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted) {
+            setComments(data.comments || []);
+            setStatus(data.status);
+          }
+        }
+      } catch (err) {}
+    };
+    const interval = setInterval(fetchRowData, 5000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [appt._id]);
 
   // Debug: Log the appointment data to see the structure
   console.log('Appointment data:', appt);
@@ -763,20 +785,20 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       <td className="border p-2 capitalize">{appt.purpose}</td>
       <td className="border p-2 max-w-xs truncate">{appt.message}</td>
       <td className="border p-2 text-center">
-        <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(appt.status)}`}>
-          {appt.status === "cancelledByBuyer"
+        <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(status)}`}>
+          {status === "cancelledByBuyer"
             ? "Cancelled by Buyer"
-            : appt.status === "cancelledBySeller"
+            : status === "cancelledBySeller"
             ? "Cancelled by Seller"
-            : appt.status === "cancelledByAdmin"
+            : status === "cancelledByAdmin"
             ? "Cancelled by Admin"
-            : appt.status.charAt(0).toUpperCase() + appt.status.slice(1)}
+            : status.charAt(0).toUpperCase() + status.slice(1)}
         </span>
       </td>
       <td className="border p-2 text-center">
         <div className="flex flex-col gap-2">
           {/* Seller approve/deny buttons for pending, upcoming appointments */}
-          {isSeller && isUpcoming && appt.status === "pending" && (
+          {isSeller && isUpcoming && status === "pending" && (
             <>
               <button
                 className="text-green-500 hover:text-green-700 text-xl disabled:opacity-50"
@@ -797,7 +819,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
             </>
           )}
           {/* Seller cancel button after approval */}
-          {isSeller && appt.status === "accepted" && (
+          {isSeller && status === "accepted" && (
             <button
               className="text-red-500 hover:text-red-700 text-xl"
               onClick={handleUserCancel}
@@ -807,7 +829,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
             </button>
           )}
           {/* Seller faded delete after cancellation, rejection, admin deletion, or deletedByAdmin */}
-          {isSeller && (appt.status === 'cancelledBySeller' || appt.status === 'cancelledByBuyer' || appt.status === 'cancelledByAdmin' || appt.status === 'rejected' || appt.status === 'deletedByAdmin') && (
+          {isSeller && (status === 'cancelledBySeller' || status === 'cancelledByBuyer' || status === 'cancelledByAdmin' || status === 'rejected' || status === 'deletedByAdmin') && (
             <button
               className="text-gray-400 hover:text-red-700 text-xl"
               onClick={handlePermanentDelete}
@@ -818,7 +840,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
             </button>
           )}
           {/* Buyer cancel button: allow for both pending and accepted (approved) */}
-          {isBuyer && isUpcoming && (appt.status === "pending" || appt.status === "accepted") && (
+          {isBuyer && isUpcoming && (status === "pending" || status === "accepted") && (
             <button
               className="text-red-500 hover:text-red-700 text-xl"
               onClick={handleUserCancel}
@@ -828,7 +850,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
             </button>
           )}
           {/* Buyer faded delete after cancellation, seller cancellation, admin deletion, rejected, or deletedByAdmin */}
-          {isBuyer && (appt.status === 'cancelledByBuyer' || appt.status === 'cancelledBySeller' || appt.status === 'cancelledByAdmin' || appt.status === 'deletedByAdmin' || appt.status === 'rejected') && (
+          {isBuyer && (status === 'cancelledByBuyer' || status === 'cancelledBySeller' || status === 'cancelledByAdmin' || status === 'deletedByAdmin' || status === 'rejected') && (
             <button
               className="text-gray-400 hover:text-red-700 text-xl"
               onClick={handlePermanentDelete}
@@ -849,12 +871,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
             </button>
           )}
           {/* Reinitiate button: only show to the cancelling party */}
-          {((appt.status === 'cancelledByBuyer' && isBuyer) || (appt.status === 'cancelledBySeller' && isSeller)) && (
+          {((status === 'cancelledByBuyer' && isBuyer) || (status === 'cancelledBySeller' && isSeller)) && (
             <div className="flex flex-col items-center">
               <button
                 className="text-blue-500 hover:text-blue-700 text-xs border border-blue-500 rounded px-2 py-1 mt-1"
                 onClick={() => onOpenReinitiate(appt)}
-                disabled={appt.reinitiationCount >= 2 || !appt.buyerId || !appt.sellerId}
+                disabled={status === 'cancelledByBuyer' && isBuyer ? appt.reinitiationCount >= 2 || !appt.buyerId || !appt.sellerId : false}
                 title="Reinitiate or Reschedule Appointment"
               >
                 Reinitiate
@@ -865,7 +887,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         </div>
       </td>
       <td className="border p-2">
-        {appt.status === "cancelledByAdmin" ? (
+        {status === "cancelledByAdmin" ? (
           <div className="text-center text-red-500 text-sm">
             <div className="mb-2">This appointment has been cancelled by admin.</div>
             {appt.cancelReason && (
@@ -948,7 +970,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
             ))}
           </div>
         )}
-        {appt.status !== "cancelledByAdmin" && (
+        {status !== "cancelledByAdmin" && (
           <div className="flex gap-2 mt-2">
             <input
               type="text"
