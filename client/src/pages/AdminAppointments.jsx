@@ -246,6 +246,27 @@ export default function AdminAppointments() {
     return matchesSearch && matchesDate;
   });
 
+  // Add this function to fetch latest data on demand
+  const handleManualRefresh = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/bookings`, { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        setAppointments(data);
+      }
+      const resArchived = await fetch(`${API_BASE_URL}/api/bookings/archived`, { credentials: 'include' });
+      if (resArchived.ok) {
+        const dataArchived = await resArchived.json();
+        setArchivedAppointments(Array.isArray(dataArchived) ? dataArchived : []);
+      }
+    } catch (err) {
+      // Optionally handle error
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading) return <p className="text-center mt-8 text-lg font-semibold text-blue-600 animate-pulse">Loading appointments...</p>;
 
   if (!Array.isArray(appointments)) {
@@ -267,6 +288,13 @@ export default function AdminAppointments() {
           <h3 className="text-2xl sm:text-3xl font-extrabold text-blue-700 drop-shadow">
             {showArchived ? "Archived Appointments" : "All Appointments (Admin View)"}
           </h3>
+          <button
+            onClick={handleManualRefresh}
+            className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all font-semibold shadow-md ml-4"
+            title="Refresh appointments"
+          >
+            Refresh
+          </button>
           <button
             onClick={() => setShowArchived(!showArchived)}
             className={`bg-gradient-to-r text-white px-3 sm:px-6 py-2 sm:py-3 rounded-lg transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-1 sm:gap-2 text-sm sm:text-base w-full sm:w-auto justify-center ${

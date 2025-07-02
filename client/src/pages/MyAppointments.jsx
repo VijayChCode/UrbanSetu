@@ -289,6 +289,30 @@ export default function MyAppointments() {
     setAppointments((prev) => prev.map(appt => appt._id === cancelledId ? { ...appt, status: cancelledStatus } : appt));
   };
 
+  // Add this function to fetch latest data on demand
+  const handleManualRefresh = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/my`, { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        setAppointments(data);
+      } else {
+        throw new Error('Failed to fetch appointments');
+      }
+      const resArchived = await fetch(`${API_BASE_URL}/api/bookings/archived`, { credentials: 'include' });
+      if (resArchived.ok) {
+        const dataArchived = await resArchived.json();
+        setArchivedAppointments(Array.isArray(dataArchived) ? dataArchived : []);
+      }
+    } catch (err) {
+      setError('Failed to refresh appointments. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading) return <p className="text-center mt-8 text-lg font-semibold text-blue-600 animate-pulse">Loading appointments...</p>;
 
   if (error) {
@@ -308,6 +332,13 @@ export default function MyAppointments() {
           <h3 className="text-3xl font-extrabold text-blue-700 drop-shadow">
             {showArchived ? "Archived Appointments" : "My Appointments"}
           </h3>
+          <button
+            onClick={handleManualRefresh}
+            className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all font-semibold shadow-md ml-4"
+            title="Refresh appointments"
+          >
+            Refresh
+          </button>
           {/* Only show archived toggle for admin/rootadmin */}
           {currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin') && (
             <button
