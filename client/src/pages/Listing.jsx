@@ -254,16 +254,17 @@ export default function Listing() {
           {/* Details Card */}
           <div className="p-3 sm:p-6 bg-gray-50 shadow-md rounded-lg mb-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
-              <h2 className="text-lg sm:text-2xl md:text-3xl font-bold text-gray-800 break-words">{listing.name}</h2>
-              {/* Offer Badge */}
-              {listing.offer && getDiscountPercentage() > 0 && (
-                <span 
-                  className="bg-yellow-400 text-gray-900 text-sm font-semibold px-3 py-1 rounded-full shadow-md animate-pulse"
-                  title="Limited-time offer!"
-                >
-                  {getDiscountPercentage()}% OFF
-                </span>
-              )}
+              <div className="flex flex-col gap-2 w-full sm:w-auto">
+                <h2 className="text-lg sm:text-2xl md:text-3xl font-bold text-gray-800 break-words">{listing.name}</h2>
+                {listing.offer && getDiscountPercentage() > 0 && (
+                  <span
+                    className="bg-yellow-400 text-gray-900 text-xs sm:text-sm font-semibold px-2 sm:px-3 py-1 rounded-full shadow-md animate-pulse w-max"
+                    title="Limited-time offer!"
+                  >
+                    {getDiscountPercentage()}% OFF
+                  </span>
+                )}
+              </div>
             </div>
             
             {/* Price Display */}
