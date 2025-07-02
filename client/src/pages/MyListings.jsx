@@ -59,7 +59,7 @@ export default function MyListings() {
       if (res.ok) {
         setListings((prev) => prev.filter((listing) => listing._id !== id));
         alert("Listing deleted successfully!");
-        navigate("/user/listings");
+        navigate("/user/my-listings");
       } else {
         const data = await res.json();
         alert(data.message || "Failed to delete listing.");
