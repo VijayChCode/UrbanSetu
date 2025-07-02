@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { FaExclamationTriangle } from "react-icons/fa";
 import { useSelector } from "react-redux";
-import duckImg from "../assets/duck-go.webm";
+import duckImg from "../assets/duck-go.gif";
 
 export default function NotFound() {
   const { currentUser } = useSelector((state) => state.user);
