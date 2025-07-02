@@ -72,9 +72,9 @@ export default function ListingItem({ listing, onDelete }) {
     <div className="relative bg-white shadow-md rounded-lg overflow-hidden p-2 sm:p-4">
       {/* Offer Badge */}
       {listing.offer && getDiscountPercentage() > 0 && (
-        <div className="flex justify-end sm:absolute sm:top-4 sm:left-4 z-20 mb-2 sm:mb-0">
+        <div className="absolute top-2 sm:top-4 left-2 sm:left-4 z-20">
           <span
-            className="bg-yellow-400 text-gray-900 text-[10px] sm:text-xs font-semibold px-2 py-1 rounded-full shadow-md animate-pulse block sm:inline"
+            className="bg-yellow-400 text-gray-900 text-xs font-semibold px-2 py-1 rounded-full shadow-md animate-pulse"
             title="Limited-time offer!"
           >
             {getDiscountPercentage()}% OFF
