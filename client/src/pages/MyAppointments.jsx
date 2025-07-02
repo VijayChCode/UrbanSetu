@@ -69,11 +69,6 @@ export default function MyAppointments() {
     };
     fetchAppointments();
     fetchArchivedAppointments();
-    const interval = setInterval(() => {
-      fetchAppointments();
-      fetchArchivedAppointments();
-    }, 5000);
-    return () => clearInterval(interval);
   }, [currentUser]);
 
   useEffect(() => {
