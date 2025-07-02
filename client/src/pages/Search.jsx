@@ -278,7 +278,7 @@ export default function Search() {
                     {error && <p className="text-center text-red-600 text-lg mb-4">{error}</p>}
                     {!loading && !error && listings.length === 0 && (
                       <div className="text-center py-8">
-                        <img src={duckImg} alt="No listings found" className="w-32 h-32 object-contain mx-auto mb-4" />
+                        <img src={duckImg} alt="No listings found" className="w-72 h-72 object-contain mx-auto mb-0" />
                         <h3 className="text-xl font-bold text-gray-700 mb-2">No Listings Found</h3>
                         <p className="text-gray-500 mb-4">Try adjusting your search criteria or filters</p>
                       </div>

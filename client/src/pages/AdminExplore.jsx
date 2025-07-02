@@ -264,7 +264,7 @@ export default function AdminExplore() {
             {loading && <p className="text-center text-lg font-semibold text-blue-600 animate-pulse">Loading...</p>}
             {!loading && listings.length === 0 && (
               <div className="text-center py-8">
-                <img src={duckImg} alt="No properties found" className="w-32 h-32 object-contain mx-auto mb-4" />
+                <img src={duckImg} alt="No properties found" className="w-72 h-72 object-contain mx-auto mb-0" />
                 <h3 className="text-xl font-bold text-gray-700 mb-2">No Properties Found</h3>
                 <p className="text-gray-500 mb-4">Try adjusting your search criteria or filters</p>
               </div>
