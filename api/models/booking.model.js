@@ -71,7 +71,8 @@ const bookingSchema = new mongoose.Schema({
       message: String,
       timestamp: { type: Date, default: Date.now },
       status: { type: String, default: "sent" },
-      readBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
+      readBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+      deleted: { type: Boolean, default: false }
     }
   ],
   chat: [

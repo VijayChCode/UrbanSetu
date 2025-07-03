@@ -240,22 +240,27 @@ router.delete('/:id/comment/:commentId', verifyToken, async (req, res) => {
     if (!isBuyer && !isSeller && !isAdmin) {
       return res.status(403).json({ message: "You can only delete comments on your own appointments unless you are an admin or root admin." });
     }
-    
-    const updated = await booking.findByIdAndUpdate(
-      id,
-      { $pull: { comments: { _id: commentId } } },
-      { new: true }
-    ).populate('buyerId', 'username email mobileNumber')
-     .populate('sellerId', 'username email mobileNumber')
-     .populate('listingId', '_id name address');
-    
-    res.status(200).json(updated);
+    // Find the comment and mark as deleted
+    const comment = bookingToUpdate.comments.id(commentId);
+    if (!comment) {
+      return res.status(404).json({ message: 'Comment not found.' });
+    }
+    comment.deleted = true;
+    comment.message = '';
+    await bookingToUpdate.save();
+    // Emit socket event for real-time update
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('commentUpdate', { appointmentId: id, comment });
+    }
+    // Return updated comments array
+    res.status(200).json({ comments: bookingToUpdate.comments });
   } catch (err) {
     res.status(500).json({ message: 'Failed to delete comment.' });
   }
 });
 
-// PATCH: Edit a comment in an appointment
+// PATCH: Edit a comment in an appointment (update in place)
 router.patch('/:id/comment/:commentId', verifyToken, async (req, res) => {
   try {
     const { id, commentId } = req.params;
@@ -283,21 +288,20 @@ router.patch('/:id/comment/:commentId', verifyToken, async (req, res) => {
     if (!comment) {
       return res.status(404).json({ message: 'Comment not found.' });
     }
-    
     // Only allow editing own comments (unless admin)
     if (comment.sender.toString() !== userId && !isAdmin) {
       return res.status(403).json({ message: "You can only edit your own comments." });
     }
-
+    // Update the message in place
     comment.message = message;
     await appointment.save();
-    
-    const updated = await booking.findById(id)
-      .populate('buyerId', 'username email mobileNumber')
-      .populate('sellerId', 'username email mobileNumber')
-      .populate('listingId', '_id name address');
-    
-    res.status(200).json(updated);
+    // Emit socket event for real-time update
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('commentUpdate', { appointmentId: id, comment });
+    }
+    // Return updated comments array
+    res.status(200).json({ comments: appointment.comments });
   } catch (err) {
     res.status(500).json({ message: 'Failed to edit comment.' });
   }

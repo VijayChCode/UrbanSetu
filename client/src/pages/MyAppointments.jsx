@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo, FaCommentDots, FaCheckDouble } from "react-icons/fa";
+import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo, FaCommentDots, FaCheckDouble, FaBan } from "react-icons/fa";
 import { useSelector } from "react-redux";
 import { useState as useLocalState } from "react";
 import { Link, useLocation, useNavigate, useNavigation } from "react-router-dom";
@@ -1054,8 +1054,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           <span className="text-gray-400 ml-2 text-[10px]">{new Date(c.timestamp).toLocaleString()}</span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <div>{c.message}</div>
-                          {c.senderEmail === currentUser.email && (
+                          {c.deleted ? (
+                            <span className="flex items-center text-gray-400"><FaBan className="mr-1" /> This message has been deleted</span>
+                          ) : (
+                            <div>{c.message}</div>
+                          )}
+                          {c.senderEmail === currentUser.email && !c.deleted && (
                             <span className="ml-1">
                               {c.status === "read" ? <FaCheckDouble className="text-blue-500 inline" /> :
                                 c.status === "delivered" ? <FaCheckDouble className="text-gray-500 inline" /> :
