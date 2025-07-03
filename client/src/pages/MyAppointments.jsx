@@ -870,7 +870,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       document.body.style.overflow = '';
     };
   }, [showChatModal]);
-
+;
   // Get clear time from localStorage
   const clearTimeKey = `chatClearTime_${appt._id}`;
   const clearTime = Number(localStorage.getItem(clearTimeKey)) || 0;

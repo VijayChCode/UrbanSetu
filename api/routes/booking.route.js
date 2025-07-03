@@ -719,7 +719,11 @@ router.post('/reinitiate', verifyToken, async (req, res) => {
     original.visibleToBuyer = true;
     original.visibleToSeller = true;
     await original.save();
-    // TODO: Optionally notify the other party
+    // Emit socket.io event for real-time update
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('appointmentUpdate', { appointmentId: original._id, updatedAppointment: original });
+    }
     res.status(200).json({ message: 'Appointment reinitiated successfully!', reinitiationLeft: 2 - original.reinitiationCount, appointment: original });
   } catch (err) {
     console.error('Error in user reinitiate:', err);
