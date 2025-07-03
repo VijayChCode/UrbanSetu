@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
-import { useEffect, Suspense, lazy, useState } from "react";
+import { useEffect, Suspense, lazy, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { verifyAuthStart, verifyAuthSuccess, verifyAuthFailure, signoutUserSuccess } from "./redux/user/userSlice.js";
 import Header from './components/Header';
@@ -83,6 +83,87 @@ const LoadingSpinner = () => (
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+// Utility function to normalize route based on role
+function normalizeRoute(path, role) {
+  // Remove trailing slash for consistency
+  if (path.length > 1 && path.endsWith('/')) path = path.slice(0, -1);
+
+  // List of shared base routes (add more as needed)
+  const sharedBases = ["about", "search", "terms", "privacy", "listing", "home", "reviews", "wishlist", "profile", "appointment", "explore"];
+
+  // Helper to extract base and subpath
+  function extractBaseAndRest(p) {
+    const match = p.match(/^\/(user|admin)?\/?([^\/]+)?(\/.*)?$/);
+    return {
+      prefix: match && match[1] ? match[1] : null,
+      base: match && match[2] ? match[2] : null,
+      rest: match && match[3] ? match[3] : ""
+    };
+  }
+  const { prefix, base, rest } = extractBaseAndRest(path);
+
+  if (role === "public") {
+    // If public tries to access /user/* or /admin/* shared, redirect to public
+    if ((prefix === "user" || prefix === "admin") && sharedBases.includes(base)) {
+      return `/${base}${rest}`;
+    }
+    // If public tries to access deep user/admin-only, show 404 (no redirect)
+    if ((prefix === "user" && !sharedBases.includes(base)) || (prefix === "admin" && !sharedBases.includes(base))) {
+      return null;
+    }
+    // Otherwise, stay on public
+    return path;
+  }
+  if (role === "user") {
+    // If user tries to access /about, /search, etc., redirect to /user/*
+    if (!path.startsWith("/user") && sharedBases.includes(base)) {
+      return `/user/${base}${rest}`;
+    }
+    // If user tries to access /admin/*, redirect to /user/* if shared, else 404
+    if (prefix === "admin") {
+      if (sharedBases.includes(base)) return `/user/${base}${rest}`;
+      return null;
+    }
+    // If user tries to access /user/*, allow
+    if (prefix === "user") return path;
+    // Otherwise, stay
+    return path;
+  }
+  if (role === "admin") {
+    // If admin tries to access /about, /search, etc., redirect to /admin/*
+    if (!path.startsWith("/admin") && sharedBases.includes(base)) {
+      return `/admin/${base}${rest}`;
+    }
+    // If admin tries to access /user/*, redirect to /admin/* if shared, else 404
+    if (prefix === "user") {
+      if (sharedBases.includes(base)) return `/admin/${base}${rest}`;
+      return null;
+    }
+    // If admin tries to access /admin/*, allow
+    if (prefix === "admin") return path;
+    // Otherwise, stay
+    return path;
+  }
+  return path;
+}
+
+function NormalizeRoute({ children }) {
+  const location = useLocation();
+  const { currentUser } = useSelector((state) => state.user);
+  const role = currentUser ? ((currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? 'admin' : 'user') : 'public';
+  const normalized = useMemo(() => normalizeRoute(location.pathname, role), [location.pathname, role]);
+
+  if (normalized === null) {
+    // Show 404
+    return <NotFound />;
+  }
+  if (normalized !== location.pathname) {
+    // Redirect to normalized route
+    return <Navigate to={normalized} replace />;
+  }
+  return children;
+}
+
 function AppRoutes({ bootstrapped }) {
   const location = useLocation();
   const dispatch = useDispatch();
@@ -134,64 +215,66 @@ function AppRoutes({ bootstrapped }) {
       )}
 
       <Suspense fallback={<LoadingSpinner />}>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={currentUser ? <NotFound /> : <PublicHome bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
-          <Route path="/home" element={currentUser ? <NotFound /> : <PublicHome bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
-          <Route path="/about" element={currentUser ? <Navigate to="/user/about" /> : <PublicAbout bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
-          <Route path="/search" element={currentUser ? <Navigate to="/user/search" /> : <PublicSearch bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
-          <Route path="/listing/:listingId" element={currentUser ? <NotFound /> : <Listing />} />
-          <Route path="/sign-in" element={<SignIn bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
-          <Route path="/sign-up" element={<SignUp bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
-          <Route path="/forgot-password" element={<ForgotPassword bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
-          <Route path="/oauth" element={<Oauth bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
-          <Route path="/terms" element={currentUser ? <NotFound /> : <Terms bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
-          <Route path="/privacy" element={currentUser ? <NotFound /> : <Privacy bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
+        <NormalizeRoute>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={currentUser ? <NotFound /> : <PublicHome bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
+            <Route path="/home" element={currentUser ? <NotFound /> : <PublicHome bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
+            <Route path="/about" element={currentUser ? <Navigate to="/user/about" /> : <PublicAbout bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
+            <Route path="/search" element={currentUser ? <Navigate to="/user/search" /> : <PublicSearch bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
+            <Route path="/listing/:listingId" element={currentUser ? <NotFound /> : <Listing />} />
+            <Route path="/sign-in" element={<SignIn bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
+            <Route path="/sign-up" element={<SignUp bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
+            <Route path="/forgot-password" element={<ForgotPassword bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
+            <Route path="/oauth" element={<Oauth bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
+            <Route path="/terms" element={currentUser ? <NotFound /> : <Terms bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
+            <Route path="/privacy" element={currentUser ? <NotFound /> : <Privacy bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
 
-          {/* User Routes (Protected) */}
-          <Route element={<Private bootstrapped={bootstrapped} />}>
-            <Route path="/user" element={<Home />} />
-            <Route path="/user/home" element={<Home />} />
-            <Route path="/user/about" element={<About />} />
-            <Route path="/user/search" element={<Search />} />
-            <Route path="/user/profile" element={<Profile />} />
-            <Route path="/user/create-listing" element={<CreateListing />} />
-            <Route path='/user/update-listing/:listingId' element={<EditListing />} />
-            <Route path="/user/listing/:listingId" element={<Listing />} />
-            <Route path="/user/wishlist" element={<WishList />} />
-            <Route path="/user/appointment" element={<Appointment />} />
-            <Route path="/user/my-appointments" element={<MyAppointments />} />
-            <Route path="/user/my-listings" element={<MyListings />} />
-            <Route path="/user/change-password" element={<UserChangePassword />} />
-            <Route path="/user/terms" element={<UserTerms />} />
-            <Route path="/user/privacy" element={<UserPrivacy />} />
-            <Route path="/user/reviews" element={<UserReviews />} />
-          </Route>
+            {/* User Routes (Protected) */}
+            <Route element={<Private bootstrapped={bootstrapped} />}>
+              <Route path="/user" element={<Home />} />
+              <Route path="/user/home" element={<Home />} />
+              <Route path="/user/about" element={<About />} />
+              <Route path="/user/search" element={<Search />} />
+              <Route path="/user/profile" element={<Profile />} />
+              <Route path="/user/create-listing" element={<CreateListing />} />
+              <Route path='/user/update-listing/:listingId' element={<EditListing />} />
+              <Route path="/user/listing/:listingId" element={<Listing />} />
+              <Route path="/user/wishlist" element={<WishList />} />
+              <Route path="/user/appointment" element={<Appointment />} />
+              <Route path="/user/my-appointments" element={<MyAppointments />} />
+              <Route path="/user/my-listings" element={<MyListings />} />
+              <Route path="/user/change-password" element={<UserChangePassword />} />
+              <Route path="/user/terms" element={<UserTerms />} />
+              <Route path="/user/privacy" element={<UserPrivacy />} />
+              <Route path="/user/reviews" element={<UserReviews />} />
+            </Route>
 
-          {/* Admin Routes */}
-          <Route element={<AdminRoute bootstrapped={bootstrapped} />}>
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin/appointments" element={<AdminAppointments />} />
-            <Route path="/admin/about" element={<AdminAbout />} />
-            <Route path="/admin/explore" element={<AdminExplore />} />
-            <Route path="/admin/create-listing" element={<AdminCreateListing />} />
-            <Route path="/admin/listings" element={<AdminListings />} />
-            <Route path="/admin/my-listings" element={<AdminMyListings />} />
-            <Route path="/admin/update-listing/:listingId" element={<AdminEditListing />} />
-            <Route path="/admin/wishlist" element={<AdminWishlist />} />
-            <Route path="/admin/profile" element={<AdminProfile />} />
-            <Route path="/admin/change-password" element={<AdminChangePassword />} />
-            <Route path="/admin/requests" element={<AdminRequests />} />
-            <Route path="/admin/listing/:listingId" element={<Listing />} />
-            <Route path="/admin/appointmentlisting" element={<AdminAppointmentListing />} />
-            <Route path="/admin/terms" element={<AdminTerms />} />
-            <Route path="/admin/privacy" element={<AdminPrivacy />} />
-            <Route path="/admin/management" element={<AdminManagement />} />
-            <Route path="/admin/reviews" element={<AdminReviews />} />
-          </Route>
+            {/* Admin Routes */}
+            <Route element={<AdminRoute bootstrapped={bootstrapped} />}>
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin/appointments" element={<AdminAppointments />} />
+              <Route path="/admin/about" element={<AdminAbout />} />
+              <Route path="/admin/explore" element={<AdminExplore />} />
+              <Route path="/admin/create-listing" element={<AdminCreateListing />} />
+              <Route path="/admin/listings" element={<AdminListings />} />
+              <Route path="/admin/my-listings" element={<AdminMyListings />} />
+              <Route path="/admin/update-listing/:listingId" element={<AdminEditListing />} />
+              <Route path="/admin/wishlist" element={<AdminWishlist />} />
+              <Route path="/admin/profile" element={<AdminProfile />} />
+              <Route path="/admin/change-password" element={<AdminChangePassword />} />
+              <Route path="/admin/requests" element={<AdminRequests />} />
+              <Route path="/admin/listing/:listingId" element={<Listing />} />
+              <Route path="/admin/appointmentlisting" element={<AdminAppointmentListing />} />
+              <Route path="/admin/terms" element={<AdminTerms />} />
+              <Route path="/admin/privacy" element={<AdminPrivacy />} />
+              <Route path="/admin/management" element={<AdminManagement />} />
+              <Route path="/admin/reviews" element={<AdminReviews />} />
+            </Route>
 
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </NormalizeRoute>
       </Suspense>
       <ToastContainer position="top-center" autoClose={3000} hideProgressBar newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover />
     </>
