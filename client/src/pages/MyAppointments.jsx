@@ -790,7 +790,18 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   React.useEffect(() => {
     function handleCommentUpdate(data) {
       if (data.appointmentId === appt._id) {
-        setComments((prev) => [...prev, data.comment]);
+        setComments((prev) => {
+          const idx = prev.findIndex(c => c._id === data.comment._id);
+          if (idx !== -1) {
+            // Update the existing comment in place
+            const updated = [...prev];
+            updated[idx] = data.comment;
+            return updated;
+          } else {
+            // Only add if not present (for new messages)
+            return [...prev, data.comment];
+          }
+        });
         // If chat is open and the new comment is not from the current user, mark as read
         if (showChatModal && data.comment.senderEmail !== currentUser.email) {
           fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/read`, {
