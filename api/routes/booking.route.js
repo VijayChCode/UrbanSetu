@@ -819,4 +819,75 @@ router.patch('/:id/comments/read', verifyToken, async (req, res) => {
   }
 });
 
+// POST: Admin books appointment for a user
+router.post("/admin", verifyToken, async (req, res) => {
+  try {
+    const { buyerEmail, buyerId: buyerIdFromBody, listingId, date, time, message, purpose, propertyName, propertyDescription } = req.body;
+    const adminId = req.user.id;
+    const isRootAdmin = req.user.role === 'rootadmin';
+    const isAdmin = req.user.role === 'admin' && req.user.adminApprovalStatus === 'approved';
+    if (!isAdmin && !isRootAdmin) {
+      return res.status(403).json({ message: "Only admins can book appointments for users." });
+    }
+    // Find the buyer by email or ID
+    let buyer = null;
+    if (buyerIdFromBody) {
+      buyer = await User.findById(buyerIdFromBody);
+    } else if (buyerEmail) {
+      buyer = await User.findOne({ email: buyerEmail });
+    }
+    if (!buyer) {
+      return res.status(404).json({ message: "Buyer not found." });
+    }
+    // Find the listing to get seller information
+    const listing = await Listing.findById(listingId);
+    if (!listing) {
+      return res.status(404).json({ message: "Listing not found." });
+    }
+    const seller = await User.findById(listing.userRef);
+    if (!seller) {
+      return res.status(404).json({ message: "Property owner not found. Please contact support." });
+    }
+    // Prevent duplicate active appointments for this buyer
+    const orConditions = [
+      { status: { $in: ["pending", "accepted"] } }
+    ];
+    let visibilityCondition = { visibleToBuyer: { $ne: false } };
+    const existing = await booking.findOne({
+      listingId,
+      buyerId: buyer._id,
+      $or: orConditions,
+      ...visibilityCondition
+    });
+    if (existing) {
+      return res.status(400).json({ message: "This user already has an active appointment for this property." });
+    }
+    // Create the appointment
+    const newBooking = new booking({
+      name: buyer.username,
+      email: buyer.email,
+      phone: buyer.phone || "",
+      date,
+      time,
+      message,
+      listingId,
+      buyerId: buyer._id,
+      sellerId: seller._id,
+      purpose,
+      propertyName,
+      propertyDescription,
+    });
+    await newBooking.save();
+    // Emit socket.io event for real-time new appointment
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('appointmentCreated', { appointment: newBooking });
+    }
+    res.status(201).json({ message: "Appointment booked successfully!", appointment: newBooking });
+  } catch (err) {
+    console.error("Error creating admin booking:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 export default router;
