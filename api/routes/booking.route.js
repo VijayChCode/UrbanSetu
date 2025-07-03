@@ -36,9 +36,20 @@ router.post("/", verifyToken, async (req, res) => {
     const orConditions = [
       { status: { $in: ["pending", "accepted"] } }
     ];
+    // Determine if current user is buyer or seller
+    let visibilityCondition = {};
+    if (buyerId.toString() === seller._id.toString()) {
+      // Edge case: user is both buyer and seller (shouldn't happen, but just in case)
+      visibilityCondition = { $or: [ { visibleToBuyer: { $ne: false } }, { visibleToSeller: { $ne: false } } ] };
+    } else if (buyerId.toString() === buyer._id.toString()) {
+      visibilityCondition = { visibleToBuyer: { $ne: false } };
+    } else if (buyerId.toString() === seller._id.toString()) {
+      visibilityCondition = { visibleToSeller: { $ne: false } };
+    }
     const existing = await booking.findOne({
       listingId,
-      $or: orConditions
+      $or: orConditions,
+      ...visibilityCondition
     });
     if (existing) {
       return res.status(400).json({ message: "You already have an active appointment for this property. Please complete, cancel, or wait for the other party to respond before booking again." });
