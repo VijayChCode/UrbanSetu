@@ -389,7 +389,7 @@ export default function AdminAppointments() {
                       <th className="border p-2">Message</th>
                       <th className="border p-2">Status</th>
                       <th className="border p-2">Actions</th>
-                      <th className="border p-2">Comments</th>
+                      <th className="border p-2">Connect</th>
                     </tr>
                   </thead>
                   <tbody>
