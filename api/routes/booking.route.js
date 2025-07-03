@@ -31,6 +31,23 @@ router.post("/", verifyToken, async (req, res) => {
       return res.status(404).json({ message: "Buyer not found." });
     }
 
+    // --- Prevent duplicate active appointments ---
+    // Active statuses: pending, accepted, cancelledByBuyer (if reinitiationCount < 2), cancelledBySeller (if reinitiationCount < 2)
+    const activeStatuses = ["pending", "accepted", "cancelledByBuyer", "cancelledBySeller"];
+    const existing = await booking.findOne({
+      listingId,
+      buyerId,
+      status: { $in: activeStatuses },
+      $or: [
+        { status: { $in: ["pending", "accepted"] } },
+        { status: "cancelledByBuyer", reinitiationCount: { $lt: 2 } },
+        { status: "cancelledBySeller", reinitiationCount: { $lt: 2 } }
+      ]
+    });
+    if (existing) {
+      return res.status(400).json({ message: "You already have an active appointment for this property. Please complete, cancel, or wait for the other party to respond before booking again." });
+    }
+
     // Create the appointment
     const newBooking = new booking({
       name: buyer.username,

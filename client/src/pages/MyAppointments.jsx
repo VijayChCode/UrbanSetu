@@ -871,6 +871,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     };
   }, [showChatModal]);
 
+  // Get clear time from localStorage
+  const clearTimeKey = `chatClearTime_${appt._id}`;
+  const clearTime = Number(localStorage.getItem(clearTimeKey)) || 0;
+  const filteredComments = comments.filter(c => new Date(c.timestamp).getTime() > clearTime);
+
   return (
     <>
       <tr className="hover:bg-blue-50 transition align-top">
@@ -1062,13 +1067,16 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
             </h3>
             <button
               className="mb-2 ml-auto text-xs text-red-600 hover:underline"
-              onClick={() => setComments([])}
+              onClick={() => {
+                localStorage.setItem(clearTimeKey, Date.now());
+                setComments([]);
+              }}
               title="Clear chat locally"
             >
               Clear Chat
             </button>
             <div className="flex-1 max-h-60 overflow-y-auto space-y-2 mb-4 pr-2">
-              {comments.map((c, index) => {
+              {filteredComments.map((c, index) => {
                 const isMe = c.senderEmail === currentUser.email;
                 const isEditing = editingComment === c._id;
                 return (

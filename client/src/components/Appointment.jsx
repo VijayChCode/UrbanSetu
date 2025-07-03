@@ -28,6 +28,8 @@ export default function Appointment() {
   const [booked, setBooked] = useState(false);
   const [loading, setLoading] = useState(false);
   const [agreed, setAgreed] = useState(false);
+  const [hasActiveAppointment, setHasActiveAppointment] = useState(false);
+  const [checkingActive, setCheckingActive] = useState(true);
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -36,8 +38,47 @@ export default function Appointment() {
     }));
   };
 
+  useEffect(() => {
+    async function checkActiveAppointment() {
+      if (!currentUser || !listingId) {
+        setHasActiveAppointment(false);
+        setCheckingActive(false);
+        return;
+      }
+      setCheckingActive(true);
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/bookings/my`, { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          // Find active appointment for this property
+          const activeStatuses = ["pending", "accepted", "cancelledByBuyer", "cancelledBySeller"];
+          const found = data.find(appt =>
+            appt.listingId && (appt.listingId._id === listingId || appt.listingId === listingId) &&
+            activeStatuses.includes(appt.status) &&
+            (
+              ["pending", "accepted"].includes(appt.status) ||
+              ((appt.status === "cancelledByBuyer" || appt.status === "cancelledBySeller") && (appt.reinitiationCount || 0) < 2)
+            )
+          );
+          setHasActiveAppointment(!!found);
+        } else {
+          setHasActiveAppointment(false);
+        }
+      } catch (err) {
+        setHasActiveAppointment(false);
+      } finally {
+        setCheckingActive(false);
+      }
+    }
+    checkActiveAppointment();
+  }, [currentUser, listingId]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (hasActiveAppointment) {
+      alert("You already have an active appointment for this property. Please complete, cancel, or wait for the other party to respond before booking again.");
+      return;
+    }
 
     if (!agreed) {
       alert("You must agree to share your contact information with the seller to book an appointment.");
@@ -210,12 +251,17 @@ export default function Appointment() {
             <div className="flex justify-center mt-6">
               <button
                 type="submit"
-                disabled={loading}
-                className="bg-gradient-to-r from-blue-500 to-purple-500 text-white py-3 px-8 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={loading || !agreed || hasActiveAppointment || checkingActive}
               >
-                {loading ? "Booking..." : "Book Appointment"}
+                {checkingActive ? "Checking..." : loading ? "Booking..." : hasActiveAppointment ? "Already Booked" : "Book Appointment"}
               </button>
             </div>
+            {hasActiveAppointment && (
+              <div className="text-red-600 text-sm mt-2 text-center font-semibold">
+                You already have an active appointment for this property. Please complete, cancel, or wait for the other party to respond before booking again.
+              </div>
+            )}
           </form>
         )}
       </div>

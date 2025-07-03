@@ -798,13 +798,6 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
               <h3 className="text-xl font-bold mb-4 text-blue-700 flex items-center gap-2">
                 <FaCommentDots /> Chat
               </h3>
-              <button
-                className="mb-2 ml-auto text-xs text-red-600 hover:underline"
-                onClick={() => setLocalComments([])}
-                title="Clear chat locally"
-              >
-                Clear Chat
-              </button>
               <div className="flex-1 max-h-60 overflow-y-auto space-y-2 mb-4 pr-2">
                 {localComments.map((c, index) => {
                   const isMe = c.senderEmail === currentUser.email;
