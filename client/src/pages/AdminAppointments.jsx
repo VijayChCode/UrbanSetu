@@ -493,66 +493,10 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
   const [editingComment, setEditingComment] = useLocalState(null);
   const [editText, setEditText] = useLocalState("");
   const [showChatModal, setShowChatModal] = useLocalState(false);
+  const [showPasswordModal, setShowPasswordModal] = useLocalState(false);
+  const [adminPassword, setAdminPassword] = useLocalState("");
+  const [passwordLoading, setPasswordLoading] = useLocalState(false);
   const chatEndRef = React.useRef(null);
-
-  // Mark all comments as read when chat modal opens
-  React.useEffect(() => {
-    if (showChatModal) {
-      fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/read`, {
-        method: 'PATCH',
-        credentials: 'include'
-      });
-    }
-  }, [showChatModal, appt._id]);
-
-  // Listen for commentUpdate, commentDelivered, and commentRead events
-  React.useEffect(() => {
-    function handleCommentUpdate(data) {
-      if (data.appointmentId === appt._id) {
-        setLocalComments((prev) => [...prev, data.comment]);
-      }
-    }
-    function handleCommentDelivered(data) {
-      if (data.appointmentId === appt._id) {
-        setLocalComments(prev =>
-          prev.map(c =>
-            c._id === data.commentId ? { ...c, status: "delivered" } : c
-          )
-        );
-      }
-    }
-    function handleCommentRead(data) {
-      if (data.appointmentId === appt._id) {
-        setLocalComments(prev =>
-          prev.map(c =>
-            !c.readBy?.includes(data.userId)
-              ? { ...c, status: "read", readBy: [...(c.readBy || []), data.userId] }
-              : c
-          )
-        );
-      }
-    }
-    function handleCommentUpdateNotify(data) {
-      if (data.appointmentId === appt._id && !showChatModal) {
-        toast.custom((t) => (
-          <div className="bg-blue-600 text-white px-4 py-2 rounded shadow-lg flex items-center gap-2">
-            <FaCommentDots /> New message on appointment: {appt.propertyName}
-            <button onClick={() => { setShowChatModal(true); toast.dismiss(t.id); }} className="ml-4 bg-white text-blue-700 px-2 py-1 rounded">Open Chat</button>
-          </div>
-        ));
-      }
-    }
-    socket.on('commentUpdate', handleCommentUpdate);
-    socket.on('commentDelivered', handleCommentDelivered);
-    socket.on('commentRead', handleCommentRead);
-    socket.on('commentUpdate', handleCommentUpdateNotify);
-    return () => {
-      socket.off('commentUpdate', handleCommentUpdate);
-      socket.off('commentDelivered', handleCommentDelivered);
-      socket.off('commentRead', handleCommentRead);
-      socket.off('commentUpdate', handleCommentUpdateNotify);
-    };
-  }, [appt._id, setLocalComments, showChatModal, appt.propertyName]);
 
   // Auto-scroll to bottom when chat modal opens or comments change
   React.useEffect(() => {
@@ -560,6 +504,18 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [showChatModal, localComments]);
+
+  // Lock background scroll when chat modal is open
+  React.useEffect(() => {
+    if (showChatModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showChatModal]);
 
   const handleCommentSend = async () => {
     if (!newComment.trim()) return;
@@ -629,8 +585,35 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
     }
   };
 
-  // Calculate unread messages for the current user
-  const unreadCount = localComments.filter(c => !c.readBy?.includes(currentUser._id) && c.senderEmail !== currentUser.email).length;
+  // Password check before opening chat
+  const handleChatButtonClick = () => {
+    setShowPasswordModal(true);
+    setAdminPassword("");
+  };
+
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+    setPasswordLoading(true);
+    try {
+      // Call backend to verify admin password
+      const res = await fetch(`${API_BASE_URL}/api/auth/verify-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ password: adminPassword })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setShowPasswordModal(false);
+        setShowChatModal(true);
+      } else {
+        toast.error("Incorrect password. Please try again.");
+      }
+    } catch (err) {
+      toast.error("Failed to verify password. Please try again.");
+    }
+    setPasswordLoading(false);
+  };
 
   return (
     <tr className={`hover:bg-blue-50 transition align-top ${isArchived ? 'bg-gray-50' : ''}`}>
@@ -743,15 +726,44 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
         <button
           className="flex items-center justify-center bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-full p-2 shadow-md mx-auto relative"
           title="Open Chat"
-          onClick={() => setShowChatModal(true)}
+          onClick={handleChatButtonClick}
         >
           <FaCommentDots size={20} />
-          {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-bold border-2 border-white">
-              {unreadCount}
-            </span>
-          )}
         </button>
+        {showPasswordModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-xs relative flex flex-col items-center">
+              <button
+                className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-2xl"
+                onClick={() => setShowPasswordModal(false)}
+                title="Close"
+              >
+                &times;
+              </button>
+              <h3 className="text-lg font-bold mb-4 text-blue-700 flex items-center gap-2">
+                <FaUserShield /> Admin Password Required
+              </h3>
+              <form onSubmit={handlePasswordSubmit} className="w-full flex flex-col gap-3">
+                <input
+                  type="password"
+                  className="border rounded px-3 py-2 w-full focus:ring-2 focus:ring-blue-200"
+                  placeholder="Enter your password"
+                  value={adminPassword}
+                  onChange={e => setAdminPassword(e.target.value)}
+                  required
+                  autoFocus
+                />
+                <button
+                  type="submit"
+                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 w-full font-semibold"
+                  disabled={passwordLoading}
+                >
+                  {passwordLoading ? "Verifying..." : "Unlock Chat"}
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
         {showChatModal && (
           <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative flex flex-col">
@@ -777,13 +789,6 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                         </div>
                         <div className="flex items-center gap-1">
                           <div>{c.message}</div>
-                          {c.senderEmail === currentUser.email && (
-                            <span className="ml-1">
-                              {c.status === "read" ? <FaCheckDouble className="text-blue-500 inline" /> :
-                                c.status === "delivered" ? <FaCheckDouble className="text-gray-500 inline" /> :
-                                <FaCheck className="text-gray-500 inline" />}
-                            </span>
-                          )}
                         </div>
                         {(c.senderEmail === currentUser.email) && (
                           <div className="flex items-center gap-2 mt-1">

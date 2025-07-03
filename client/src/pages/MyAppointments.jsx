@@ -789,13 +789,20 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     function handleCommentUpdate(data) {
       if (data.appointmentId === appt._id) {
         setComments((prev) => [...prev, data.comment]);
+        // If chat is open and the new comment is not from the current user, mark as read
+        if (showChatModal && data.comment.senderEmail !== currentUser.email) {
+          fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/read`, {
+            method: 'PATCH',
+            credentials: 'include'
+          });
+        }
       }
     }
     socket.on('commentUpdate', handleCommentUpdate);
     return () => {
       socket.off('commentUpdate', handleCommentUpdate);
     };
-  }, [appt._id, setComments]);
+  }, [appt._id, setComments, showChatModal, currentUser.email]);
 
   // Mark all comments as read when chat modal opens
   React.useEffect(() => {
@@ -839,6 +846,17 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
 
   // Calculate unread messages for the current user
   const unreadCount = comments.filter(c => !c.readBy?.includes(currentUser._id) && c.senderEmail !== currentUser.email).length;
+
+  React.useEffect(() => {
+    if (showChatModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showChatModal]);
 
   return (
     <tr className="hover:bg-blue-50 transition align-top">
