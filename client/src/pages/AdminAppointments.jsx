@@ -21,22 +21,6 @@ export default function AdminAppointments() {
   const [showArchived, setShowArchived] = useState(false);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [showBookModal, setShowBookModal] = useState(false);
-  const [bookForm, setBookForm] = useState({
-    buyerEmail: "",
-    buyerId: "",
-    date: "",
-    time: "",
-    message: "",
-    purpose: "",
-    propertyName: "",
-    propertyDescription: "",
-    listingId: ""
-  });
-  const [allUsers, setAllUsers] = useState([]);
-  const [emailSuggestions, setEmailSuggestions] = useState([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [bookingLoading, setBookingLoading] = useState(false);
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -285,76 +269,6 @@ export default function AdminAppointments() {
     }
   };
 
-  // Fetch all users for autocomplete
-  useEffect(() => {
-    if (showBookModal) {
-      fetchAllUsers();
-    }
-  }, [showBookModal]);
-
-  const fetchAllUsers = async () => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/user/all-users-autocomplete`, { credentials: 'include' });
-      if (res.ok) {
-        const users = await res.json();
-        setAllUsers(users);
-      }
-    } catch {}
-  };
-
-  // Filter email suggestions
-  useEffect(() => {
-    if (bookForm.buyerEmail.trim()) {
-      const filtered = allUsers.filter(user => user.email.toLowerCase().includes(bookForm.buyerEmail.toLowerCase()));
-      setEmailSuggestions(filtered);
-      setShowSuggestions(filtered.length > 0);
-    } else {
-      setEmailSuggestions([]);
-      setShowSuggestions(false);
-    }
-  }, [bookForm.buyerEmail, allUsers]);
-
-  const handleBookFormChange = (e) => {
-    const { name, value } = e.target;
-    setBookForm(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleEmailSuggestionClick = (user) => {
-    setBookForm(prev => ({ ...prev, buyerEmail: user.email, buyerId: user._id }));
-    setShowSuggestions(false);
-  };
-
-  const handleBookAppointment = async (e) => {
-    e.preventDefault();
-    setBookingLoading(true);
-    try {
-      const payload = { ...bookForm };
-      if (!payload.buyerEmail && !payload.buyerId) {
-        toast.error("Please select a user by email or enter their email.");
-        setBookingLoading(false);
-        return;
-      }
-      // Add required fields validation as needed
-      const res = await fetch(`${API_BASE_URL}/api/bookings/admin`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: 'include',
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json();
-      if (res.ok) {
-        toast.success("Appointment booked successfully!");
-        setShowBookModal(false);
-        setBookForm({ buyerEmail: "", buyerId: "", date: "", time: "", message: "", purpose: "", propertyName: "", propertyDescription: "", listingId: "" });
-      } else {
-        toast.error(data.message || "Failed to book appointment.");
-      }
-    } catch {
-      toast.error("An error occurred. Please try again.");
-    }
-    setBookingLoading(false);
-  };
-
   if (loading) return <p className="text-center mt-8 text-lg font-semibold text-blue-600 animate-pulse">Loading appointments...</p>;
 
   if (!Array.isArray(appointments)) {
@@ -539,11 +453,6 @@ export default function AdminAppointments() {
             </div>
           )
         )}
-
-        {/* Add a button to open the modal */}
-        <div className="mb-4 flex justify-end">
-          <button onClick={() => setShowBookModal(true)} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold shadow hover:bg-blue-700 transition">Book Appointment (Admin)</button>
-        </div>
       </div>
 
       {/* User Modal */}
@@ -571,62 +480,6 @@ export default function AdminAppointments() {
             >
               Close
             </button>
-          </div>
-        </div>
-      )}
-
-      {/* Admin Book Appointment Modal */}
-      {showBookModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
-            <button className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-2xl" onClick={() => setShowBookModal(false)} title="Close">&times;</button>
-            <h3 className="text-xl font-bold mb-4 text-blue-700">Book Appointment for User</h3>
-            <form onSubmit={handleBookAppointment} className="space-y-4">
-              <div>
-                <label className="block font-semibold mb-1">User Email (optional)</label>
-                <input type="email" name="buyerEmail" value={bookForm.buyerEmail} onChange={handleBookFormChange} className="border rounded px-2 py-1 w-full" autoComplete="off" />
-                {showSuggestions && (
-                  <div className="border rounded bg-white shadow absolute z-10 w-full max-h-40 overflow-y-auto">
-                    {emailSuggestions.map(user => (
-                      <div key={user._id} className="px-3 py-2 hover:bg-blue-100 cursor-pointer" onClick={() => handleEmailSuggestionClick(user)}>{user.email} ({user.username})</div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <div>
-                <label className="block font-semibold mb-1">Property Name</label>
-                <input type="text" name="propertyName" value={bookForm.propertyName} onChange={handleBookFormChange} className="border rounded px-2 py-1 w-full" required />
-              </div>
-              <div>
-                <label className="block font-semibold mb-1">Property Description</label>
-                <textarea name="propertyDescription" value={bookForm.propertyDescription} onChange={handleBookFormChange} className="border rounded px-2 py-1 w-full" required />
-              </div>
-              <div>
-                <label className="block font-semibold mb-1">Listing ID</label>
-                <input type="text" name="listingId" value={bookForm.listingId} onChange={handleBookFormChange} className="border rounded px-2 py-1 w-full" required />
-              </div>
-              <div>
-                <label className="block font-semibold mb-1">Date</label>
-                <input type="date" name="date" value={bookForm.date} onChange={handleBookFormChange} className="border rounded px-2 py-1 w-full" required />
-              </div>
-              <div>
-                <label className="block font-semibold mb-1">Time</label>
-                <input type="time" name="time" value={bookForm.time} onChange={handleBookFormChange} className="border rounded px-2 py-1 w-full" required />
-              </div>
-              <div>
-                <label className="block font-semibold mb-1">Purpose</label>
-                <select name="purpose" value={bookForm.purpose} onChange={handleBookFormChange} className="border rounded px-2 py-1 w-full" required>
-                  <option value="">Select Purpose</option>
-                  <option value="buy">Buy</option>
-                  <option value="rent">Rent</option>
-                </select>
-              </div>
-              <div>
-                <label className="block font-semibold mb-1">Message</label>
-                <textarea name="message" value={bookForm.message} onChange={handleBookFormChange} className="border rounded px-2 py-1 w-full" required />
-              </div>
-              <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold w-full hover:bg-blue-700 transition" disabled={bookingLoading}>{bookingLoading ? "Booking..." : "Book Appointment"}</button>
-            </form>
           </div>
         </div>
       )}
