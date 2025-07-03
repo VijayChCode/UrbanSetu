@@ -26,6 +26,18 @@ export default function AdminReviews() {
     }
   }, [currentUser, currentPage, selectedStatus, sortBy, sortOrder]);
 
+  // Scroll lock for modals
+  useEffect(() => {
+    if (selectedReview || (showRemovalModal && reviewToRemove)) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [selectedReview, showRemovalModal, reviewToRemove]);
+
   const fetchReviews = async () => {
     try {
       const params = new URLSearchParams({
@@ -246,8 +258,14 @@ export default function AdminReviews() {
         <div className="overflow-x-auto">
           {/* Responsive review cards for mobile, table for desktop */}
           <div className="space-y-4 sm:space-y-0 sm:table w-full">
-            {reviews.map((review) => (
-              <div key={review._id} className="block sm:table-row bg-white rounded-lg shadow-sm sm:shadow-none p-3 sm:p-0 border sm:border-0">
+            {reviews.map((review, idx) => (
+              <div
+                key={review._id}
+                className={
+                  `block sm:table-row bg-white rounded-lg shadow-sm sm:shadow-none p-3 sm:p-0 border sm:border-0` +
+                  (idx !== reviews.length - 1 ? ' sm:border-b sm:border-gray-200' : '')
+                }
+              >
                 <div className="flex flex-col sm:table-cell sm:align-top sm:w-1/4 mb-2 sm:mb-0">
                   <div className="flex items-center">
                     <img
