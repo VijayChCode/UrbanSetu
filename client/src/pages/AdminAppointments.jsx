@@ -548,12 +548,11 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
       if (res.ok) {
         setLocalComments(data.comments);
         setNewComment("");
-        toast.success("Message sent!");
       } else {
-        toast.error(data.message || "Failed to send comment.");
+        alert(data.message || "Failed to send comment.");
       }
     } catch (err) {
-      toast.error("An error occurred. Please try again.");
+      alert("An error occurred. Please try again.");
     }
     setSending(false);
   };
@@ -572,12 +571,11 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
         setLocalComments(data.comments);
         setEditingComment(null);
         setEditText("");
-        toast.success("Message edited!");
       } else {
-        toast.error(data.message || "Failed to edit comment.");
+        alert(data.message || "Failed to edit comment.");
       }
     } catch (err) {
-      toast.error("An error occurred. Please try again.");
+      alert("An error occurred. Please try again.");
     }
   };
 
@@ -626,10 +624,10 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
         setShowPasswordModal(false);
         setShowChatModal(true);
       } else {
-        toast.error("Incorrect password. Please try again.");
+        alert("Incorrect password. Please try again.");
       }
     } catch (err) {
-      toast.error("Failed to verify password. Please try again.");
+      alert("Failed to verify password. Please try again.");
     }
     setPasswordLoading(false);
   };
@@ -830,12 +828,11 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                                   const data = await res.json();
                                   if (res.ok) {
                                     setLocalComments(data.comments);
-                                    toast("Message deleted", { icon: "🗑️" });
                                   } else {
-                                    toast.error(data.message || 'Failed to delete comment.');
+                                    alert(data.message || 'Failed to delete comment.');
                                   }
                                 } catch (err) {
-                                  toast.error('An error occurred. Please try again.');
+                                  alert("An error occurred. Please try again.");
                                 }
                               }}
                             >

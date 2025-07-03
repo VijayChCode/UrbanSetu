@@ -622,12 +622,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       if (res.ok) {
         setComments(data.comments);
         setComment("");
-        toast.success("Message sent!");
       } else {
-        toast.error(data.message || "Failed to send comment.");
+        alert(data.message || "Failed to send comment.");
       }
     } catch (err) {
-      toast.error("An error occurred. Please try again.");
+      alert('An error occurred. Please try again.');
     }
     setSending(false);
   };
@@ -646,12 +645,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         setComments(data.comments);
         setEditingComment(null);
         setEditText("");
-        toast.success("Message edited!");
       } else {
-        toast.error(data.message || "Failed to edit comment.");
+        alert(data.message || "Failed to edit comment.");
       }
     } catch (err) {
-      toast.error("An error occurred. Please try again.");
+      alert('An error occurred. Please try again.');
     }
   };
 
@@ -1090,12 +1088,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                   const data = await res.json();
                                   if (res.ok) {
                                     setComments(data.comments);
-                                    toast("Message deleted", { icon: "🗑️" });
                                   } else {
-                                    toast.error(data.message || 'Failed to delete comment.');
+                                    alert(data.message || 'Failed to delete comment.');
                                   }
                                 } catch (err) {
-                                  toast.error('An error occurred. Please try again.');
+                                  alert('An error occurred. Please try again.');
                                 }
                               }}
                             >
