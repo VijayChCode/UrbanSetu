@@ -2,6 +2,7 @@ import express from 'express'
 import { SignUp,SignIn,Google,Signout,verifyAuth,forgotPassword,resetPassword} from '../controllers/auth.controller.js'
 import bcryptjs from 'bcryptjs';
 import User from '../models/user.model.js';
+import { verifyToken } from '../utils/verify.js';
 const router=express.Router()
 
 router.post("/signup",SignUp)
@@ -13,13 +14,13 @@ router.post("/forgot-password",forgotPassword)
 router.post("/reset-password",resetPassword)
 
 // POST /api/auth/verify-password
-router.post('/verify-password', async (req, res) => {
+router.post('/verify-password', verifyToken, async (req, res) => {
   try {
     const { password } = req.body;
-    if (!req.user || !req.user.id) {
+    if (!req.user || !req.user._id) {
       return res.status(401).json({ success: false, message: 'Not authenticated' });
     }
-    const user = await User.findById(req.user.id).select('+password');
+    const user = await User.findById(req.user._id).select('+password');
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
