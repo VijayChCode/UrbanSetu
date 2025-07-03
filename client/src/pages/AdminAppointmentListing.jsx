@@ -28,6 +28,11 @@ export default function AdminAppointmentListing() {
   const [loading, setLoading] = useState(false);
   const [listing, setListing] = useState(null);
   const [ownerCheckLoading, setOwnerCheckLoading] = useState(true);
+  const [allUsers, setAllUsers] = useState([]);
+  const [emailSuggestions, setEmailSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [buyerEmail, setBuyerEmail] = useState("");
+  const [buyerId, setBuyerId] = useState("");
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -65,24 +70,39 @@ export default function AdminAppointmentListing() {
 
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          ...formData,
-          listingId,
-        }),
-      });
-
-      const data = await res.json();
+      let res, data;
+      if (buyerEmail || buyerId) {
+        // Use admin booking endpoint
+        res = await fetch(`${API_BASE_URL}/api/bookings/admin`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: 'include',
+          body: JSON.stringify({
+            ...formData,
+            listingId,
+            buyerEmail,
+            buyerId
+          })
+        });
+        data = await res.json();
+      } else {
+        // Fallback to normal booking endpoint (admin books for self)
+        res = await fetch(`${API_BASE_URL}/api/bookings`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: 'include',
+          body: JSON.stringify({
+            ...formData,
+            listingId
+          })
+        });
+        data = await res.json();
+      }
       if (res.ok) {
         setBooked(true);
         setTimeout(() => {
           navigate("/admin/appointments");
-        }, 2000); // 2 seconds delay
+        }, 2000);
       } else {
         alert(data.message || "Failed to book appointment.");
       }
@@ -110,6 +130,39 @@ export default function AdminAppointmentListing() {
     };
     fetchListing();
   }, [listingId]);
+
+  // Fetch all users for autocomplete
+  useEffect(() => {
+    fetchAllUsers();
+  }, []);
+
+  const fetchAllUsers = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/user/all-users-autocomplete`, { credentials: 'include' });
+      if (res.ok) {
+        const users = await res.json();
+        setAllUsers(users);
+      }
+    } catch {}
+  };
+
+  // Filter email suggestions
+  useEffect(() => {
+    if (buyerEmail.trim()) {
+      const filtered = allUsers.filter(user => user.email.toLowerCase().includes(buyerEmail.toLowerCase()));
+      setEmailSuggestions(filtered);
+      setShowSuggestions(filtered.length > 0);
+    } else {
+      setEmailSuggestions([]);
+      setShowSuggestions(false);
+    }
+  }, [buyerEmail, allUsers]);
+
+  const handleEmailSuggestionClick = (user) => {
+    setBuyerEmail(user.email);
+    setBuyerId(user._id);
+    setShowSuggestions(false);
+  };
 
   if (!currentUser) {
     return (
@@ -161,6 +214,28 @@ export default function AdminAppointmentListing() {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Email input for user selection (optional) */}
+            <div className="relative">
+              <label className="block font-semibold mb-1">User Email (optional)</label>
+              <input
+                type="email"
+                name="buyerEmail"
+                value={buyerEmail}
+                onChange={e => { setBuyerEmail(e.target.value); setBuyerId(""); }}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                autoComplete="off"
+                placeholder="Type to search users by email..."
+              />
+              {showSuggestions && (
+                <div className="absolute z-10 bg-white border rounded w-full max-h-40 overflow-y-auto shadow">
+                  {emailSuggestions.map(user => (
+                    <div key={user._id} className="px-3 py-2 hover:bg-blue-100 cursor-pointer" onClick={() => handleEmailSuggestionClick(user)}>
+                      {user.email} ({user.username})
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <input
                 type="date"
