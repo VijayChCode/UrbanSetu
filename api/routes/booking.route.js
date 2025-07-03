@@ -31,6 +31,11 @@ router.post("/", verifyToken, async (req, res) => {
       return res.status(404).json({ message: "Buyer not found." });
     }
 
+    // Prevent admin from booking for the property owner
+    if (buyer._id.toString() === seller._id.toString()) {
+      return res.status(400).json({ message: "Cannot book an appointment for the property owner themselves." });
+    }
+
     // --- Prevent duplicate active appointments ---
     // Only block: pending, accepted
     const orConditions = [
