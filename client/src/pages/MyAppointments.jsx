@@ -861,178 +861,297 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   }, [showChatModal]);
 
   return (
-    <tr className="hover:bg-blue-50 transition align-top">
-      <td className="border p-2">
-        <div>
-          <div>{new Date(appt.date).toLocaleDateString('en-GB')}</div>
-          <div className="text-sm text-gray-600">{appt.time}</div>
-        </div>
-      </td>
-      <td className="border p-2">
-        <div>
-          {appt.listingId ? (
-            <Link 
-              to={isAdminContext ? `/admin/listing/${appt.listingId._id}` : `/user/listing/${appt.listingId._id}`}
-              className="font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
-            >
-              {appt.propertyName}
-            </Link>
-          ) : (
-            <div className="font-semibold">{appt.propertyName}</div>
-          )}
-        </div>
-      </td>
-      <td className="border p-2 text-center">
-        <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-          isSeller ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"
-        }`}>
-          {isSeller ? "Seller" : "Buyer"}
-        </span>
-      </td>
-      <td className="border p-2">
-        <div>
-          {canSeeContactInfo ? (
+    <>
+      <tr className="hover:bg-blue-50 transition align-top">
+        <td className="border p-2">
+          <div>
+            <div>{new Date(appt.date).toLocaleDateString('en-GB')}</div>
+            <div className="text-sm text-gray-600">{appt.time}</div>
+          </div>
+        </td>
+        <td className="border p-2">
+          <div>
+            {appt.listingId ? (
+              <Link 
+                to={isAdminContext ? `/admin/listing/${appt.listingId._id}` : `/user/listing/${appt.listingId._id}`}
+                className="font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+              >
+                {appt.propertyName}
+              </Link>
+            ) : (
+              <div className="font-semibold">{appt.propertyName}</div>
+            )}
+          </div>
+        </td>
+        <td className="border p-2 text-center">
+          <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+            isSeller ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"
+          }`}>
+            {isSeller ? "Seller" : "Buyer"}
+          </span>
+        </td>
+        <td className="border p-2">
+          <div>
+            {canSeeContactInfo ? (
+              <button
+                className="font-semibold text-blue-700 hover:underline text-left"
+                style={{ cursor: 'pointer' }}
+                onClick={() => onShowOtherParty(otherParty)}
+                title="Click to view details"
+              >
+                {otherParty?.username || 'Unknown'}
+              </button>
+            ) : (
+              <span className="font-semibold">{otherParty?.username || 'Unknown'}</span>
+            )}
+            {canSeeContactInfo ? (
+              <>
+                <div className="text-sm text-gray-600">{otherParty?.email}</div>
+                <div className="text-sm text-gray-600">{otherParty?.mobileNumber && otherParty?.mobileNumber !== '' ? otherParty.mobileNumber : 'No phone'}</div>
+              </>
+            ) : (
+              <div className="text-sm text-gray-500 italic">
+                {isAdmin ? "Contact info available" : "Contact info hidden until accepted"}
+              </div>
+            )}
+          </div>
+        </td>
+        <td className="border p-2 capitalize">{appt.purpose}</td>
+        <td className="border p-2 max-w-xs truncate">{appt.message}</td>
+        <td className="border p-2 text-center">
+          <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(appt.status)}`}>
+            {appt.status === "cancelledByBuyer"
+              ? "Cancelled by Buyer"
+              : appt.status === "cancelledBySeller"
+              ? "Cancelled by Seller"
+              : appt.status === "cancelledByAdmin"
+              ? "Cancelled by Admin"
+              : appt.status.charAt(0).toUpperCase() + appt.status.slice(1)}
+          </span>
+        </td>
+        <td className="border p-2 text-center">
+          <div className="flex flex-col gap-2">
+            {/* Seller approve/deny buttons for pending, upcoming appointments */}
+            {isSeller && isUpcoming && appt.status === "pending" && (
+              <>
+                <button
+                  className="text-green-500 hover:text-green-700 text-xl disabled:opacity-50"
+                  onClick={() => handleStatusUpdate(appt._id, "accepted")}
+                  disabled={actionLoading === appt._id + "accepted"}
+                  title="Accept Appointment"
+                >
+                  <FaCheck />
+                </button>
+                <button
+                  className="text-red-500 hover:text-red-700 text-xl disabled:opacity-50"
+                  onClick={() => handleStatusUpdate(appt._id, "rejected")}
+                  disabled={actionLoading === appt._id + "rejected"}
+                  title="Reject Appointment"
+                >
+                  <FaTimes />
+                </button>
+              </>
+            )}
+            {/* Seller cancel button after approval */}
+            {isSeller && appt.status === "accepted" && (
+              <button
+                className="text-red-500 hover:text-red-700 text-xl"
+                onClick={handleUserCancel}
+                title="Cancel Appointment (Seller)"
+              >
+                <FaTrash />
+              </button>
+            )}
+            {/* Seller faded delete after cancellation, rejection, admin deletion, or deletedByAdmin */}
+            {isSeller && (appt.status === 'cancelledBySeller' || appt.status === 'cancelledByBuyer' || appt.status === 'cancelledByAdmin' || appt.status === 'rejected' || appt.status === 'deletedByAdmin') && (
+              <button
+                className="text-gray-400 hover:text-red-700 text-xl"
+                onClick={handlePermanentDelete}
+                title="Remove from table"
+                style={{ opacity: 0.5 }}
+              >
+                <FaTrash className="group-hover:text-red-900 group-hover:scale-125 group-hover:animate-shake transition-all duration-200" />
+              </button>
+            )}
+            {/* Buyer cancel button: allow for both pending and accepted (approved) */}
+            {isBuyer && isUpcoming && (appt.status === "pending" || appt.status === "accepted") && (
+              <button
+                className="text-red-500 hover:text-red-700 text-xl"
+                onClick={handleUserCancel}
+                title="Cancel Appointment (Buyer)"
+              >
+                <FaTrash />
+              </button>
+            )}
+            {/* Buyer faded delete after cancellation, seller cancellation, admin deletion, rejected, or deletedByAdmin */}
+            {isBuyer && (appt.status === 'cancelledByBuyer' || appt.status === 'cancelledBySeller' || appt.status === 'cancelledByAdmin' || appt.status === 'deletedByAdmin' || appt.status === 'rejected') && (
+              <button
+                className="text-gray-400 hover:text-red-700 text-xl"
+                onClick={handlePermanentDelete}
+                title="Remove from table"
+                style={{ opacity: 0.5 }}
+              >
+                <FaTrash className="group-hover:text-red-900 group-hover:scale-125 group-hover:animate-shake transition-all duration-200" />
+              </button>
+            )}
+            {/* Admin cancel button */}
+            {isAdmin && (
+              <button
+                className="text-red-500 hover:text-red-700 text-xl"
+                onClick={handleAdminCancel}
+                title="Cancel Appointment (Admin)"
+              >
+                <FaUserShield />
+              </button>
+            )}
+            {/* Reinitiate button: only show to the cancelling party */}
+            {((appt.status === 'cancelledByBuyer' && isBuyer) || (appt.status === 'cancelledBySeller' && isSeller)) && (
+              <div className="flex flex-col items-center">
+                <button
+                  className="text-blue-500 hover:text-blue-700 text-xs border border-blue-500 rounded px-2 py-1 mt-1"
+                  onClick={() => onOpenReinitiate(appt)}
+                  disabled={appt.status === 'cancelledByBuyer' && isBuyer ? appt.reinitiationCount >= 2 || !appt.buyerId || !appt.sellerId : false}
+                  title="Reinitiate or Reschedule Appointment"
+                >
+                  Reinitiate
+                </button>
+                <span className="text-xs text-gray-500 mt-1">{2 - (appt.reinitiationCount || 0)} left</span>
+              </div>
+            )}
+          </div>
+        </td>
+        <td className="border p-2 text-center relative">
+          <button
+            className="flex items-center justify-center bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-full p-2 shadow-md mx-auto relative"
+            title="Open Chat"
+            onClick={() => setShowChatModal(true)}
+          >
+            <FaCommentDots size={20} />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-bold border-2 border-white">
+                {unreadCount}
+              </span>
+            )}
+          </button>
+        </td>
+      </tr>
+      {showChatModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative flex flex-col">
+            <Toaster position="bottom-center" containerClassName="!z-[100]" toastOptions={{ duration: 2000, style: { fontSize: '0.9rem', borderRadius: '8px', boxShadow: '0 2px 8px #0001' } }} />
             <button
-              className="font-semibold text-blue-700 hover:underline text-left"
-              style={{ cursor: 'pointer' }}
-              onClick={() => onShowOtherParty(otherParty)}
-              title="Click to view details"
+              className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-2xl"
+              onClick={() => setShowChatModal(false)}
+              title="Close"
             >
-              {otherParty?.username || 'Unknown'}
+              &times;
             </button>
-          ) : (
-            <span className="font-semibold">{otherParty?.username || 'Unknown'}</span>
-          )}
-          {canSeeContactInfo ? (
-            <>
-              <div className="text-sm text-gray-600">{otherParty?.email}</div>
-              <div className="text-sm text-gray-600">{otherParty?.mobileNumber && otherParty?.mobileNumber !== '' ? otherParty.mobileNumber : 'No phone'}</div>
-            </>
-          ) : (
-            <div className="text-sm text-gray-500 italic">
-              {isAdmin ? "Contact info available" : "Contact info hidden until accepted"}
+            <h3 className="text-xl font-bold mb-4 text-blue-700 flex items-center gap-2">
+              <FaCommentDots /> Chat
+            </h3>
+            <button
+              className="mb-2 ml-auto text-xs text-red-600 hover:underline"
+              onClick={() => setComments([])}
+              title="Clear chat locally"
+            >
+              Clear Chat
+            </button>
+            <div className="flex-1 max-h-60 overflow-y-auto space-y-2 mb-4 pr-2">
+              {comments.map((c, index) => {
+                const isMe = c.senderEmail === currentUser.email;
+                const isEditing = editingComment === c._id;
+                return (
+                  <div key={c._id || index} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`rounded-lg px-3 py-2 text-xs shadow ${isMe ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'} max-w-[80%]`}>
+                      <div className="font-semibold mb-1">
+                        {isMe ? "You" : c.senderEmail}
+                        <span className="text-gray-400 ml-2 text-[10px]">{new Date(c.timestamp).toLocaleString()}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {isEditing ? (
+                          <>
+                            <input
+                              type="text"
+                              className="border rounded px-2 py-1 text-xs w-40"
+                              value={editText}
+                              onChange={e => setEditText(e.target.value)}
+                              onKeyDown={e => { if (e.key === 'Enter') handleEditComment(c._id); }}
+                              autoFocus
+                            />
+                            <button onClick={() => handleEditComment(c._id)} className="text-green-600 hover:text-green-800 font-bold ml-1">Save</button>
+                            <button onClick={() => { setEditingComment(null); setEditText(""); }} className="text-gray-500 hover:text-gray-700 font-bold ml-1">Cancel</button>
+                          </>
+                        ) : (
+                          <div>{c.message}</div>
+                        )}
+                        {c.senderEmail === currentUser.email && !c.deleted && !isEditing && (
+                          <span className="ml-1">
+                            {c.status === "read" ? <FaCheckDouble className="text-blue-500 inline" /> :
+                              c.status === "delivered" ? <FaCheckDouble className="text-gray-500 inline" /> :
+                              <FaCheck className="text-gray-500 inline" />}
+                          </span>
+                        )}
+                      </div>
+                      {(c.senderEmail === currentUser.email) && !isEditing && (
+                        <div className="flex items-center gap-2 mt-1">
+                          <button
+                            onClick={() => startEditing(c)}
+                            className="text-blue-600 hover:text-blue-800"
+                            title="Edit comment"
+                          >
+                            <FaPen size={12} />
+                          </button>
+                          <button
+                            className="text-red-500 hover:text-red-700"
+                            onClick={async () => {
+                              if (!window.confirm('Are you sure you want to delete this comment?')) return;
+                              try {
+                                const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${c._id}`, {
+                                  method: 'DELETE',
+                                  credentials: 'include'
+                                });
+                                const data = await res.json();
+                                if (res.ok) {
+                                  setComments(data.comments);
+                                  toast.success("Comment deleted successfully!");
+                                } else {
+                                  alert(data.message || 'Failed to delete comment.');
+                                }
+                              } catch (err) {
+                                alert('An error occurred. Please try again.');
+                              }
+                            }}
+                          >
+                            <FaTrash className="group-hover:text-red-900 group-hover:scale-125 group-hover:animate-shake transition-all duration-200" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+              <div ref={chatEndRef} />
             </div>
-          )}
-        </div>
-      </td>
-      <td className="border p-2 capitalize">{appt.purpose}</td>
-      <td className="border p-2 max-w-xs truncate">{appt.message}</td>
-      <td className="border p-2 text-center">
-        <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(appt.status)}`}>
-          {appt.status === "cancelledByBuyer"
-            ? "Cancelled by Buyer"
-            : appt.status === "cancelledBySeller"
-            ? "Cancelled by Seller"
-            : appt.status === "cancelledByAdmin"
-            ? "Cancelled by Admin"
-            : appt.status.charAt(0).toUpperCase() + appt.status.slice(1)}
-        </span>
-      </td>
-      <td className="border p-2 text-center">
-        <div className="flex flex-col gap-2">
-          {/* Seller approve/deny buttons for pending, upcoming appointments */}
-          {isSeller && isUpcoming && appt.status === "pending" && (
-            <>
+            <div className="flex gap-2 mt-2">
+              <input
+                type="text"
+                className="flex-1 px-2 py-1 border rounded text-xs focus:ring-2 focus:ring-blue-200"
+                placeholder="Type a message..."
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handleCommentSend(); }}
+              />
               <button
-                className="text-green-500 hover:text-green-700 text-xl disabled:opacity-50"
-                onClick={() => handleStatusUpdate(appt._id, "accepted")}
-                disabled={actionLoading === appt._id + "accepted"}
-                title="Accept Appointment"
+                onClick={handleCommentSend}
+                disabled={sending || !comment.trim()}
+                className="bg-blue-500 text-white px-3 py-1 rounded text-xs hover:bg-blue-600 transition disabled:opacity-50"
               >
-                <FaCheck />
+                Send
               </button>
-              <button
-                className="text-red-500 hover:text-red-700 text-xl disabled:opacity-50"
-                onClick={() => handleStatusUpdate(appt._id, "rejected")}
-                disabled={actionLoading === appt._id + "rejected"}
-                title="Reject Appointment"
-              >
-                <FaTimes />
-              </button>
-            </>
-          )}
-          {/* Seller cancel button after approval */}
-          {isSeller && appt.status === "accepted" && (
-            <button
-              className="text-red-500 hover:text-red-700 text-xl"
-              onClick={handleUserCancel}
-              title="Cancel Appointment (Seller)"
-            >
-              <FaTrash />
-            </button>
-          )}
-          {/* Seller faded delete after cancellation, rejection, admin deletion, or deletedByAdmin */}
-          {isSeller && (appt.status === 'cancelledBySeller' || appt.status === 'cancelledByBuyer' || appt.status === 'cancelledByAdmin' || appt.status === 'rejected' || appt.status === 'deletedByAdmin') && (
-            <button
-              className="text-gray-400 hover:text-red-700 text-xl"
-              onClick={handlePermanentDelete}
-              title="Remove from table"
-              style={{ opacity: 0.5 }}
-            >
-              <FaTrash className="group-hover:text-red-900 group-hover:scale-125 group-hover:animate-shake transition-all duration-200" />
-            </button>
-          )}
-          {/* Buyer cancel button: allow for both pending and accepted (approved) */}
-          {isBuyer && isUpcoming && (appt.status === "pending" || appt.status === "accepted") && (
-            <button
-              className="text-red-500 hover:text-red-700 text-xl"
-              onClick={handleUserCancel}
-              title="Cancel Appointment (Buyer)"
-            >
-              <FaTrash />
-            </button>
-          )}
-          {/* Buyer faded delete after cancellation, seller cancellation, admin deletion, rejected, or deletedByAdmin */}
-          {isBuyer && (appt.status === 'cancelledByBuyer' || appt.status === 'cancelledBySeller' || appt.status === 'cancelledByAdmin' || appt.status === 'deletedByAdmin' || appt.status === 'rejected') && (
-            <button
-              className="text-gray-400 hover:text-red-700 text-xl"
-              onClick={handlePermanentDelete}
-              title="Remove from table"
-              style={{ opacity: 0.5 }}
-            >
-              <FaTrash className="group-hover:text-red-900 group-hover:scale-125 group-hover:animate-shake transition-all duration-200" />
-            </button>
-          )}
-          {/* Admin cancel button */}
-          {isAdmin && (
-            <button
-              className="text-red-500 hover:text-red-700 text-xl"
-              onClick={handleAdminCancel}
-              title="Cancel Appointment (Admin)"
-            >
-              <FaUserShield />
-            </button>
-          )}
-          {/* Reinitiate button: only show to the cancelling party */}
-          {((appt.status === 'cancelledByBuyer' && isBuyer) || (appt.status === 'cancelledBySeller' && isSeller)) && (
-            <div className="flex flex-col items-center">
-              <button
-                className="text-blue-500 hover:text-blue-700 text-xs border border-blue-500 rounded px-2 py-1 mt-1"
-                onClick={() => onOpenReinitiate(appt)}
-                disabled={appt.status === 'cancelledByBuyer' && isBuyer ? appt.reinitiationCount >= 2 || !appt.buyerId || !appt.sellerId : false}
-                title="Reinitiate or Reschedule Appointment"
-              >
-                Reinitiate
-              </button>
-              <span className="text-xs text-gray-500 mt-1">{2 - (appt.reinitiationCount || 0)} left</span>
             </div>
-          )}
+          </div>
         </div>
-      </td>
-      <td className="border p-2 text-center relative">
-        <button
-          className="flex items-center justify-center bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-full p-2 shadow-md mx-auto relative"
-          title="Open Chat"
-          onClick={() => setShowChatModal(true)}
-        >
-          <FaCommentDots size={20} />
-          {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-bold border-2 border-white">
-              {unreadCount}
-            </span>
-          )}
-        </button>
-      </td>
-    </tr>
+      )}
+    </>
   );
 } 
