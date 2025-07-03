@@ -154,6 +154,12 @@ router.patch('/:id/status', verifyToken, async (req, res) => {
     }
     // --- END NEW LOGIC ---
 
+    // Emit socket.io event for real-time appointment update
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('appointmentUpdate', { appointmentId: id, updatedAppointment: updated });
+    }
+
     res.status(200).json(updated);
   } catch (err) {
     res.status(500).json({ message: 'Failed to update appointment status.' });
@@ -191,6 +197,14 @@ router.post('/:id/comment', verifyToken, async (req, res) => {
     ).populate('buyerId', 'username email mobileNumber')
      .populate('sellerId', 'username email mobileNumber')
      .populate('listingId', '_id name address');
+    
+    // Emit socket.io event for real-time comment update
+    const io = req.app.get('io');
+    if (io) {
+      // Send only the new comment (last in array)
+      const newComment = updated.comments[updated.comments.length - 1];
+      io.emit('commentUpdate', { appointmentId: id, comment: newComment });
+    }
     
     res.status(200).json(updated);
   } catch (err) {

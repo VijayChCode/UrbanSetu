@@ -5,6 +5,7 @@ import { useState as useLocalState } from "react";
 import { Link, useLocation, useNavigate, useNavigation } from "react-router-dom";
 import Appointment from "../components/Appointment";
 import toast from "react-hot-toast";
+import { socket } from "../utils/socket";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -81,6 +82,20 @@ export default function MyAppointments() {
       window.removeEventListener('removeAppointmentRow', removeHandler);
     };
   }, [currentUser]);
+
+  useEffect(() => {
+    function handleAppointmentUpdate(data) {
+      setAppointments((prev) =>
+        prev.map(appt =>
+          appt._id === data.appointmentId ? { ...appt, ...data.updatedAppointment } : appt
+        )
+      );
+    }
+    socket.on('appointmentUpdate', handleAppointmentUpdate);
+    return () => {
+      socket.off('appointmentUpdate', handleAppointmentUpdate);
+    };
+  }, []);
 
   const handleStatusUpdate = async (id, status) => {
     setActionLoading(id + status);
@@ -731,6 +746,19 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       alert('An error occurred. Please try again.');
     }
   };
+
+  // Real-time comment updates via socket.io
+  useEffect(() => {
+    function handleCommentUpdate(data) {
+      if (data.appointmentId === appt._id) {
+        setComments((prev) => [...prev, data.comment]);
+      }
+    }
+    socket.on('commentUpdate', handleCommentUpdate);
+    return () => {
+      socket.off('commentUpdate', handleCommentUpdate);
+    };
+  }, [appt._id, setComments]);
 
   return (
     <tr className="hover:bg-blue-50 transition align-top">

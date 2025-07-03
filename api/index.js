@@ -13,6 +13,8 @@ import notificationRouter from "./routes/notification.route.js";
 import reviewRouter from "./routes/review.route.js";
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import http from 'http';
+import { Server as SocketIOServer } from 'socket.io';
 
 import path from 'path'
 import User from './models/user.model.js';
@@ -115,8 +117,33 @@ app.get('/', (req, res) => {
   });
 });
 
+const server = http.createServer(app);
+
+const io = new SocketIOServer(server, {
+  cors: {
+    origin: allowedOrigins,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    credentials: true
+  }
+});
+
+app.set('io', io);
+
+io.on('connection', (socket) => {
+  console.log('A user connected:', socket.id);
+
+  // Example: Listen for a new comment event from client (optional)
+  socket.on('newComment', (data) => {
+    io.emit('commentUpdate', data);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('User disconnected:', socket.id);
+  });
+});
+
 const startServer = () => {
-  app.listen(PORT, () => {
+  server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}!!!`);
   }).on('error', (err) => {
     if (err.code === 'EADDRINUSE') {

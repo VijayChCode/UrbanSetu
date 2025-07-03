@@ -21,6 +21,7 @@
     "react-router-dom": "^7.3.0",
     "react-toastify": "^11.0.5",
     "redux-persist": "^6.0.0",
+    "socket.io-client": "^4.8.1",
     "swiper": "^11.2.5",
     "UrbanSetu": "file:.."
   },
