@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo } from "react-icons/fa";
+import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo, FaCommentDots } from "react-icons/fa";
 import { useSelector } from "react-redux";
 import { useState as useLocalState } from "react";
 import { Link, useLocation, useNavigate, useNavigation } from "react-router-dom";
@@ -94,6 +94,16 @@ export default function MyAppointments() {
     socket.on('appointmentUpdate', handleAppointmentUpdate);
     return () => {
       socket.off('appointmentUpdate', handleAppointmentUpdate);
+    };
+  }, []);
+
+  useEffect(() => {
+    function handleAppointmentCreated(data) {
+      setAppointments((prev) => [data.appointment, ...prev]);
+    }
+    socket.on('appointmentCreated', handleAppointmentCreated);
+    return () => {
+      socket.off('appointmentCreated', handleAppointmentCreated);
     };
   }, []);
 
@@ -585,6 +595,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const [editingComment, setEditingComment] = useLocalState(null);
   const [editText, setEditText] = useLocalState("");
   const location = useLocation();
+  const [showChatModal, setShowChatModal] = useLocalState(false);
+  const chatEndRef = React.useRef(null);
 
   const isAdmin = (currentUser.role === 'admin' || currentUser.role === 'rootadmin') && currentUser.adminApprovalStatus === 'approved';
   const isAdminContext = location.pathname.includes('/admin');
@@ -747,18 +759,30 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     }
   };
 
-  // Real-time comment updates via socket.io
-  useEffect(() => {
-    function handleCommentUpdate(data) {
-      if (data.appointmentId === appt._id) {
-        setComments((prev) => [...prev, data.comment]);
+  // Auto-scroll to bottom when chat modal opens or comments change
+  React.useEffect(() => {
+    if (showChatModal && chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [showChatModal, comments]);
+
+  // Toast notification for new messages when chat is closed
+  React.useEffect(() => {
+    function handleCommentUpdateNotify(data) {
+      if (data.appointmentId === appt._id && !showChatModal) {
+        toast.custom((t) => (
+          <div className="bg-blue-600 text-white px-4 py-2 rounded shadow-lg flex items-center gap-2">
+            <FaCommentDots /> New message on appointment: {appt.propertyName}
+            <button onClick={() => { setShowChatModal(true); toast.dismiss(t.id); }} className="ml-4 bg-white text-blue-700 px-2 py-1 rounded">Open Chat</button>
+          </div>
+        ));
       }
     }
-    socket.on('commentUpdate', handleCommentUpdate);
+    socket.on('commentUpdate', handleCommentUpdateNotify);
     return () => {
-      socket.off('commentUpdate', handleCommentUpdate);
+      socket.off('commentUpdate', handleCommentUpdateNotify);
     };
-  }, [appt._id, setComments]);
+  }, [appt._id, showChatModal, appt.propertyName]);
 
   return (
     <tr className="hover:bg-blue-50 transition align-top">
@@ -919,106 +943,95 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
           )}
         </div>
       </td>
-      <td className="border p-2">
-        {appt.status === "cancelledByAdmin" ? (
-          <div className="text-center text-red-500 text-sm">
-            <div className="mb-2">This appointment has been cancelled by admin.</div>
-            {appt.cancelReason && (
-              <div className="text-xs bg-red-100 p-2 rounded border border-red-200">
-                <strong>Cancellation Reason:</strong> "{appt.cancelReason}"
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="max-h-32 overflow-y-auto space-y-2">
-            {comments.map((c, index) => (
-              <div key={c._id || index} className="text-xs border-b pb-1">
-                {editingComment === c._id ? (
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      className="flex-1 px-1 py-1 border rounded text-xs"
-                      value={editText}
-                      onChange={(e) => setEditText(e.target.value)}
-                    />
-                    <button
-                      onClick={() => handleEditComment(c._id)}
-                      className="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600"
-                    >
-                      Save
-                    </button>
-                    <button
-                      onClick={() => setEditingComment(null)}
-                      className="bg-gray-500 text-white px-2 py-1 rounded text-xs hover:bg-gray-600"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="font-semibold text-blue-700">
-                        {c.senderEmail === currentUser.email ? "You" : 
-                         isAdmin ? "Admin" : 
-                         c.senderEmail === otherParty?.email ? (isSeller ? "Buyer" : "Seller") : "Unknown"}:
-                      </span> {c.message}
-                      <span className="text-gray-400 ml-2">{new Date(c.timestamp).toLocaleString()}</span>
-                    </div>
-                    {(c.senderEmail === currentUser.email || isAdmin) && (
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => startEditing(c)}
-                          className="text-blue-600 hover:text-blue-800"
-                          title="Edit comment"
-                        >
-                          <FaPen size={12} />
-                        </button>
-                        <button
-                          className="text-red-500 hover:text-red-700"
-                          onClick={async () => {
-                            if (!window.confirm('Are you sure you want to delete this comment?')) return;
-                            try {
-                              const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${c._id}`, {
-                                method: 'DELETE',
-                                credentials: 'include'
-                              });
-                              const data = await res.json();
-                              if (res.ok) {
-                                setComments(data.comments);
-                              } else {
-                                alert(data.message || 'Failed to delete comment.');
-                              }
-                            } catch (err) {
-                              alert('An error occurred. Please try again.');
-                            }
-                          }}
-                        >
-                          <FaTrash className="group-hover:text-red-900 group-hover:scale-125 group-hover:animate-shake transition-all duration-200" />
-                        </button>
+      <td className="border p-2 text-center">
+        <button
+          className="flex items-center justify-center bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-full p-2 shadow-md mx-auto"
+          title="Open Chat"
+          onClick={() => setShowChatModal(true)}
+        >
+          <FaCommentDots size={20} />
+        </button>
+        {showChatModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative flex flex-col">
+              <button
+                className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-2xl"
+                onClick={() => setShowChatModal(false)}
+                title="Close"
+              >
+                &times;
+              </button>
+              <h3 className="text-xl font-bold mb-4 text-blue-700 flex items-center gap-2">
+                <FaCommentDots /> Chat
+              </h3>
+              <div className="flex-1 max-h-60 overflow-y-auto space-y-2 mb-4 pr-2">
+                {comments.map((c, index) => {
+                  const isMe = c.senderEmail === currentUser.email;
+                  return (
+                    <div key={c._id || index} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`rounded-lg px-3 py-2 text-xs shadow ${isMe ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'} max-w-[80%]`}>
+                        <div className="font-semibold mb-1">
+                          {isMe ? "You" : c.senderEmail}
+                          <span className="text-gray-400 ml-2 text-[10px]">{new Date(c.timestamp).toLocaleString()}</span>
+                        </div>
+                        <div>{c.message}</div>
+                        {(c.senderEmail === currentUser.email || isAdmin) && (
+                          <div className="flex items-center gap-2 mt-1">
+                            <button
+                              onClick={() => startEditing(c)}
+                              className="text-blue-600 hover:text-blue-800"
+                              title="Edit comment"
+                            >
+                              <FaPen size={12} />
+                            </button>
+                            <button
+                              className="text-red-500 hover:text-red-700"
+                              onClick={async () => {
+                                if (!window.confirm('Are you sure you want to delete this comment?')) return;
+                                try {
+                                  const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${c._id}`, {
+                                    method: 'DELETE',
+                                    credentials: 'include'
+                                  });
+                                  const data = await res.json();
+                                  if (res.ok) {
+                                    setComments(data.comments);
+                                  } else {
+                                    alert(data.message || 'Failed to delete comment.');
+                                  }
+                                } catch (err) {
+                                  alert('An error occurred. Please try again.');
+                                }
+                              }}
+                            >
+                              <FaTrash className="group-hover:text-red-900 group-hover:scale-125 group-hover:animate-shake transition-all duration-200" />
+                            </button>
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                )}
+                    </div>
+                  );
+                })}
+                <div ref={chatEndRef} />
               </div>
-            ))}
-          </div>
-        )}
-        {appt.status !== "cancelledByAdmin" && (
-          <div className="flex gap-2 mt-2">
-            <input
-              type="text"
-              className="flex-1 px-2 py-1 border rounded text-xs"
-              placeholder="Add a comment..."
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-            />
-            <button
-              onClick={handleCommentSend}
-              disabled={sending || !comment.trim()}
-              className="bg-blue-500 text-white px-3 py-1 rounded text-xs hover:bg-blue-600 transition disabled:opacity-50"
-            >
-              Send
-            </button>
+              <div className="flex gap-2 mt-2">
+                <input
+                  type="text"
+                  className="flex-1 px-2 py-1 border rounded text-xs focus:ring-2 focus:ring-blue-200"
+                  placeholder="Type a message..."
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') handleCommentSend(); }}
+                />
+                <button
+                  onClick={handleCommentSend}
+                  disabled={sending || !comment.trim()}
+                  className="bg-blue-500 text-white px-3 py-1 rounded text-xs hover:bg-blue-600 transition disabled:opacity-50"
+                >
+                  Send
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </td>

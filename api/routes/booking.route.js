@@ -48,7 +48,12 @@ router.post("/", verifyToken, async (req, res) => {
     });
     
     await newBooking.save();
-    res.status(201).json({ message: "Appointment booked successfully!" });
+    // Emit socket.io event for real-time new appointment
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('appointmentCreated', { appointment: newBooking });
+    }
+    res.status(201).json({ message: "Appointment booked successfully!", appointment: newBooking });
   } catch (err) {
     console.error("Error creating booking:", err);
     res.status(500).json({ message: "Server error" });
@@ -387,6 +392,11 @@ router.patch('/:id/cancel', verifyToken, async (req, res) => {
       bookingToCancel.cancelReason = reason || '';
       bookingToCancel.cancelledBy = 'buyer';
       await bookingToCancel.save();
+      // Emit socket.io event
+      const io = req.app.get('io');
+      if (io) {
+        io.emit('appointmentUpdate', { appointmentId: id, updatedAppointment: bookingToCancel });
+      }
       return res.status(200).json(bookingToCancel);
     }
 
@@ -402,6 +412,11 @@ router.patch('/:id/cancel', verifyToken, async (req, res) => {
       bookingToCancel.cancelReason = reason;
       bookingToCancel.cancelledBy = 'seller';
       await bookingToCancel.save();
+      // Emit socket.io event
+      const io = req.app.get('io');
+      if (io) {
+        io.emit('appointmentUpdate', { appointmentId: id, updatedAppointment: bookingToCancel });
+      }
       return res.status(200).json(bookingToCancel);
     }
 
@@ -414,6 +429,11 @@ router.patch('/:id/cancel', verifyToken, async (req, res) => {
       bookingToCancel.cancelReason = reason;
       bookingToCancel.cancelledBy = isRootAdmin ? 'rootadmin' : 'admin';
       await bookingToCancel.save();
+      // Emit socket.io event
+      const io = req.app.get('io');
+      if (io) {
+        io.emit('appointmentUpdate', { appointmentId: id, updatedAppointment: bookingToCancel });
+      }
       return res.status(200).json(bookingToCancel);
     }
 
@@ -460,7 +480,11 @@ router.patch('/:id/reinitiate', verifyToken, async (req, res) => {
       .populate('buyerId', 'username email mobileNumber')
       .populate('sellerId', 'username email mobileNumber')
       .populate('listingId', '_id name address');
-
+    // Emit socket.io event
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('appointmentUpdate', { appointmentId: id, updatedAppointment: updated });
+    }
     res.status(200).json({
       message: 'Appointment reinitiated successfully.',
       appointment: updated
@@ -545,7 +569,11 @@ router.patch('/:id/archive', verifyToken, async (req, res) => {
       .populate('buyerId', 'username email mobileNumber')
       .populate('sellerId', 'username email mobileNumber')
       .populate('listingId', '_id name address');
-
+    // Emit socket.io event
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('appointmentUpdate', { appointmentId: id, updatedAppointment: updated });
+    }
     res.status(200).json({
       message: 'Appointment archived successfully.',
       appointment: updated
@@ -585,7 +613,11 @@ router.patch('/:id/unarchive', verifyToken, async (req, res) => {
       .populate('buyerId', 'username email mobileNumber')
       .populate('sellerId', 'username email mobileNumber')
       .populate('listingId', '_id name address');
-
+    // Emit socket.io event
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('appointmentUpdate', { appointmentId: id, updatedAppointment: updated });
+    }
     res.status(200).json({
       message: 'Appointment unarchived successfully.',
       appointment: updated
