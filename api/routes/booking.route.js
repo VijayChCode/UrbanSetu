@@ -32,15 +32,10 @@ router.post("/", verifyToken, async (req, res) => {
     }
 
     // --- Prevent duplicate active appointments ---
-    // Active statuses: pending, accepted, cancelledByBuyer (if reinitiationCount < 2 and user is buyer), cancelledBySeller (if reinitiationCount < 2 and user is seller)
-    const activeStatuses = ["pending", "accepted"];
+    // Only block: pending, accepted
     const orConditions = [
       { status: { $in: ["pending", "accepted"] } }
     ];
-    // Only block cancelledByBuyer if current user is the buyer and can reinitiate
-    orConditions.push({ status: "cancelledByBuyer", buyerId, reinitiationCount: { $lt: 2 } });
-    // Only block cancelledBySeller if current user is the seller and can reinitiate
-    orConditions.push({ status: "cancelledBySeller", sellerId: buyerId, reinitiationCount: { $lt: 2 } });
     const existing = await booking.findOne({
       listingId,
       $or: orConditions
