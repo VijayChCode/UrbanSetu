@@ -51,15 +51,14 @@ export default function Appointment() {
         if (res.ok) {
           const data = await res.json();
           // Find active appointment for this property
-          const activeStatuses = ["pending", "accepted", "cancelledByBuyer", "cancelledBySeller"];
-          const found = data.find(appt =>
-            appt.listingId && (appt.listingId._id === listingId || appt.listingId === listingId) &&
-            activeStatuses.includes(appt.status) &&
-            (
-              ["pending", "accepted"].includes(appt.status) ||
-              ((appt.status === "cancelledByBuyer" || appt.status === "cancelledBySeller") && (appt.reinitiationCount || 0) < 2)
-            )
-          );
+          const activeStatuses = ["pending", "accepted"];
+          const found = data.find(appt => {
+            if (!appt.listingId || (appt.listingId._id !== listingId && appt.listingId !== listingId)) return false;
+            if (activeStatuses.includes(appt.status)) return true;
+            if (appt.status === "cancelledByBuyer" && appt.buyerId && (appt.buyerId._id === currentUser._id || appt.buyerId === currentUser._id) && (appt.reinitiationCount || 0) < 2) return true;
+            if (appt.status === "cancelledBySeller" && appt.sellerId && (appt.sellerId._id === currentUser._id || appt.sellerId === currentUser._id) && (appt.reinitiationCount || 0) < 2) return true;
+            return false;
+          });
           setHasActiveAppointment(!!found);
         } else {
           setHasActiveAppointment(false);

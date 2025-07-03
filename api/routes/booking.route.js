@@ -32,17 +32,18 @@ router.post("/", verifyToken, async (req, res) => {
     }
 
     // --- Prevent duplicate active appointments ---
-    // Active statuses: pending, accepted, cancelledByBuyer (if reinitiationCount < 2), cancelledBySeller (if reinitiationCount < 2)
-    const activeStatuses = ["pending", "accepted", "cancelledByBuyer", "cancelledBySeller"];
+    // Active statuses: pending, accepted, cancelledByBuyer (if reinitiationCount < 2 and user is buyer), cancelledBySeller (if reinitiationCount < 2 and user is seller)
+    const activeStatuses = ["pending", "accepted"];
+    const orConditions = [
+      { status: { $in: ["pending", "accepted"] } }
+    ];
+    // Only block cancelledByBuyer if current user is the buyer and can reinitiate
+    orConditions.push({ status: "cancelledByBuyer", buyerId, reinitiationCount: { $lt: 2 } });
+    // Only block cancelledBySeller if current user is the seller and can reinitiate
+    orConditions.push({ status: "cancelledBySeller", sellerId: buyerId, reinitiationCount: { $lt: 2 } });
     const existing = await booking.findOne({
       listingId,
-      buyerId,
-      status: { $in: activeStatuses },
-      $or: [
-        { status: { $in: ["pending", "accepted"] } },
-        { status: "cancelledByBuyer", reinitiationCount: { $lt: 2 } },
-        { status: "cancelledBySeller", reinitiationCount: { $lt: 2 } }
-      ]
+      $or: orConditions
     });
     if (existing) {
       return res.status(400).json({ message: "You already have an active appointment for this property. Please complete, cancel, or wait for the other party to respond before booking again." });
