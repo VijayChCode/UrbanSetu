@@ -622,11 +622,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       if (res.ok) {
         setComments(data.comments);
         setComment("");
+        toast.success("Message sent!");
       } else {
-        alert(data.message || "Failed to send comment.");
+        toast.error(data.message || "Failed to send comment.");
       }
     } catch (err) {
-      alert("An error occurred. Please try again.");
+      toast.error("An error occurred. Please try again.");
     }
     setSending(false);
   };
@@ -645,11 +646,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         setComments(data.comments);
         setEditingComment(null);
         setEditText("");
+        toast.success("Message edited!");
       } else {
-        alert(data.message || "Failed to edit comment.");
+        toast.error(data.message || "Failed to edit comment.");
       }
     } catch (err) {
-      alert("An error occurred. Please try again.");
+      toast.error("An error occurred. Please try again.");
     }
   };
 
@@ -771,8 +773,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     function handleCommentUpdateNotify(data) {
       if (data.appointmentId === appt._id && !showChatModal) {
         toast.custom((t) => (
-          <div className="bg-blue-600 text-white px-4 py-2 rounded shadow-lg flex items-center gap-2">
-            <FaCommentDots /> New message on appointment: {appt.propertyName}
+          <div className="bg-blue-600 text-white px-4 py-2 rounded shadow-lg flex items-center gap-2 animate-bounce-in">
+            <FaCommentDots /> New message from {data.comment.senderEmail || 'User'}
             <button onClick={() => { setShowChatModal(true); toast.dismiss(t.id); }} className="ml-4 bg-white text-blue-700 px-2 py-1 rounded">Open Chat</button>
           </div>
         ));
@@ -782,7 +784,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     return () => {
       socket.off('commentUpdate', handleCommentUpdateNotify);
     };
-  }, [appt._id, showChatModal, appt.propertyName]);
+  }, [appt._id, showChatModal]);
 
   // Real-time comment updates via socket.io (for chat sync)
   React.useEffect(() => {
@@ -1088,11 +1090,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                   const data = await res.json();
                                   if (res.ok) {
                                     setComments(data.comments);
+                                    toast("Message deleted", { icon: "🗑️" });
                                   } else {
-                                    alert(data.message || 'Failed to delete comment.');
+                                    toast.error(data.message || 'Failed to delete comment.');
                                   }
                                 } catch (err) {
-                                  alert('An error occurred. Please try again.');
+                                  toast.error('An error occurred. Please try again.');
                                 }
                               }}
                             >

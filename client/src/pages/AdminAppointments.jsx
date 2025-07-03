@@ -517,6 +517,23 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
     };
   }, [showChatModal]);
 
+  React.useEffect(() => {
+    function handleCommentUpdateNotify(data) {
+      if (data.appointmentId === appt._id && !showChatModal) {
+        toast.custom((t) => (
+          <div className="bg-blue-600 text-white px-4 py-2 rounded shadow-lg flex items-center gap-2 animate-bounce-in">
+            <FaCommentDots /> New message from {data.comment.senderEmail || 'User'}
+            <button onClick={() => { setShowChatModal(true); toast.dismiss(t.id); }} className="ml-4 bg-white text-blue-700 px-2 py-1 rounded">Open Chat</button>
+          </div>
+        ));
+      }
+    }
+    socket.on('commentUpdate', handleCommentUpdateNotify);
+    return () => {
+      socket.off('commentUpdate', handleCommentUpdateNotify);
+    };
+  }, [appt._id, showChatModal]);
+
   const handleCommentSend = async () => {
     if (!newComment.trim()) return;
     setSending(true);
@@ -531,11 +548,12 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
       if (res.ok) {
         setLocalComments(data.comments);
         setNewComment("");
+        toast.success("Message sent!");
       } else {
-        alert(data.message || "Failed to send comment.");
+        toast.error(data.message || "Failed to send comment.");
       }
     } catch (err) {
-      alert("An error occurred. Please try again.");
+      toast.error("An error occurred. Please try again.");
     }
     setSending(false);
   };
@@ -554,11 +572,12 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
         setLocalComments(data.comments);
         setEditingComment(null);
         setEditText("");
+        toast.success("Message edited!");
       } else {
-        alert(data.message || "Failed to edit comment.");
+        toast.error(data.message || "Failed to edit comment.");
       }
     } catch (err) {
-      alert("An error occurred. Please try again.");
+      toast.error("An error occurred. Please try again.");
     }
   };
 
@@ -811,11 +830,12 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                                   const data = await res.json();
                                   if (res.ok) {
                                     setLocalComments(data.comments);
+                                    toast("Message deleted", { icon: "🗑️" });
                                   } else {
-                                    alert(data.message || 'Failed to delete comment.');
+                                    toast.error(data.message || 'Failed to delete comment.');
                                   }
                                 } catch (err) {
-                                  alert('An error occurred. Please try again.');
+                                  toast.error('An error occurred. Please try again.');
                                 }
                               }}
                             >
