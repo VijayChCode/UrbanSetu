@@ -395,7 +395,11 @@ router.patch('/:id/cancel', verifyToken, async (req, res) => {
     }
 
     // Only allow cancellation if not already cancelled/completed
-    if (["cancelledByBuyer", "cancelledBySeller", "cancelledByAdmin", "completed", "noShow", "deletedByAdmin"].includes(bookingToCancel.status)) {
+    // Admin can cancel even if already cancelled by buyer or seller
+    if ((isAdmin || isRootAdmin) && ["cancelledByAdmin", "completed", "noShow", "deletedByAdmin"].includes(bookingToCancel.status)) {
+      return res.status(400).json({ message: 'Appointment cannot be cancelled in its current state.' });
+    }
+    if (!(isAdmin || isRootAdmin) && ["cancelledByBuyer", "cancelledBySeller", "cancelledByAdmin", "completed", "noShow", "deletedByAdmin"].includes(bookingToCancel.status)) {
       return res.status(400).json({ message: 'Appointment cannot be cancelled in its current state.' });
     }
 
