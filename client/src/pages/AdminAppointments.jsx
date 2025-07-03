@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { FaTrash, FaSearch, FaPen, FaUser, FaEnvelope, FaCalendar, FaPhone, FaUserShield, FaArchive, FaUndo, FaCommentDots, FaCheck, FaCheckDouble } from "react-icons/fa";
+import { FaTrash, FaSearch, FaPen, FaUser, FaEnvelope, FaCalendar, FaPhone, FaUserShield, FaArchive, FaUndo, FaCommentDots, FaCheck, FaCheckDouble, FaBan } from "react-icons/fa";
 import { useSelector } from "react-redux";
 import { useState as useLocalState } from "react";
 import { Link } from "react-router-dom";
@@ -830,8 +830,17 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                               <button onClick={() => handleEditComment(c._id)} className="text-green-600 hover:text-green-800 font-bold ml-1">Save</button>
                               <button onClick={() => { setEditingComment(null); setEditText(""); }} className="text-gray-500 hover:text-gray-700 font-bold ml-1">Cancel</button>
                             </>
+                          ) : c.deleted ? (
+                            <span className="flex items-center gap-1 text-gray-400 italic">
+                              <FaBan className="inline-block text-lg" /> This message has been deleted.
+                            </span>
                           ) : (
-                            <div>{c.message}</div>
+                            <div>
+                              {c.message}
+                              {c.edited && (
+                                <span className="ml-2 text-[10px] italic text-gray-400">(Edited)</span>
+                              )}
+                            </div>
                           )}
                         </div>
                         {(c.senderEmail === currentUser.email) && !isEditing && (

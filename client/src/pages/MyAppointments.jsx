@@ -1097,7 +1097,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             <button onClick={() => { setEditingComment(null); setEditText(""); }} className="text-gray-500 hover:text-gray-700 font-bold ml-1">Cancel</button>
                           </>
                         ) : (
-                          <div>{c.message}</div>
+                          <div>
+                            {c.message}
+                            {c.edited && (
+                              <span className="ml-2 text-[10px] italic text-gray-400">(Edited)</span>
+                            )}
+                          </div>
                         )}
                         {c.senderEmail === currentUser.email && !c.deleted && !isEditing && (
                           <span className="ml-1">

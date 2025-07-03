@@ -294,6 +294,8 @@ router.patch('/:id/comment/:commentId', verifyToken, async (req, res) => {
     }
     // Update the message in place
     comment.message = message;
+    comment.edited = true;
+    comment.editedAt = new Date();
     await appointment.save();
     // Emit socket event for real-time update
     const io = req.app.get('io');
