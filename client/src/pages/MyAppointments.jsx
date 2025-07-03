@@ -1068,7 +1068,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                         <span className="text-gray-400 ml-2 text-[10px]">{new Date(c.timestamp).toLocaleString()}</span>
                       </div>
                       <div className="flex items-center gap-1">
-                        {isEditing ? (
+                        {c.deleted ? (
+                          <span className="flex items-center gap-1 text-gray-400 italic">
+                            <FaBan className="inline-block text-lg" /> This message has been deleted.
+                          </span>
+                        ) : isEditing ? (
                           <>
                             <input
                               type="text"
@@ -1092,7 +1096,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           </span>
                         )}
                       </div>
-                      {(c.senderEmail === currentUser.email) && !isEditing && (
+                      {(c.senderEmail === currentUser.email) && !isEditing && !c.deleted && (
                         <div className="flex items-center gap-2 mt-1">
                           <button
                             onClick={() => startEditing(c)}
