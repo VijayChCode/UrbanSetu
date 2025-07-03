@@ -214,6 +214,13 @@ export default function AdminAppointmentListing() {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* User Assignment Info */}
+            <div className="mb-2">
+              <div className="font-bold text-base">User Assignment</div>
+              <div className="text-sm font-semibold">Assign to (User Email - optional)</div>
+              <div className="text-xs text-gray-600">Enter user email to assign booking (leave empty for admin booking)</div>
+              <div className="text-xs text-blue-500 mt-1">💡 Tip: Start typing to see email suggestions. If left empty, the booking will be owned by the admin.</div>
+            </div>
             {/* Email input for user selection (optional) */}
             <div className="relative">
               <label className="block font-semibold mb-1">User Email (optional)</label>
