@@ -4,6 +4,7 @@ import { useSelector } from "react-redux";
 import { useState as useLocalState } from "react";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
+import { socket } from "../utils/socket";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
