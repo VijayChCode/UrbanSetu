@@ -43,13 +43,11 @@ export default function AdminAppointmentListing() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!currentUser) {
       alert("Please sign in as admin to book an appointment.");
       navigate("/admin/profile");
       return;
     }
-
     // Simple manual validation
     if (
       !formData.date ||
@@ -62,42 +60,26 @@ export default function AdminAppointmentListing() {
       alert("Please fill out all fields before booking the appointment.");
       return;
     }
-
     if (!listingId) {
       alert("Listing information is missing. Please try again.");
       return;
     }
-
     setLoading(true);
     try {
-      let res, data;
-      if (buyerEmail || buyerId) {
-        // Use admin booking endpoint
-        res = await fetch(`${API_BASE_URL}/api/bookings/admin`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: 'include',
-          body: JSON.stringify({
-            ...formData,
-            listingId,
-            buyerEmail,
-            buyerId
-          })
-        });
-        data = await res.json();
-      } else {
-        // Fallback to normal booking endpoint (admin books for self)
-        res = await fetch(`${API_BASE_URL}/api/bookings`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: 'include',
-          body: JSON.stringify({
-            ...formData,
-            listingId
-          })
-        });
-        data = await res.json();
-      }
+      // Always use admin booking endpoint
+      let payload = {
+        ...formData,
+        listingId,
+        buyerEmail: buyerEmail || currentUser.email,
+        buyerId: buyerId || currentUser._id
+      };
+      const res = await fetch(`${API_BASE_URL}/api/bookings/admin`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: 'include',
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
       if (res.ok) {
         setBooked(true);
         setTimeout(() => {

@@ -853,6 +853,10 @@ router.post("/admin", verifyToken, async (req, res) => {
     if (!seller) {
       return res.status(404).json({ message: "Property owner not found. Please contact support." });
     }
+    // Prevent admin from booking for the property owner
+    if (buyer._id.toString() === seller._id.toString()) {
+      return res.status(400).json({ message: "Cannot book an appointment for the property owner themselves." });
+    }
     // Prevent duplicate active appointments for this buyer
     const orConditions = [
       { status: { $in: ["pending", "accepted"] } }
