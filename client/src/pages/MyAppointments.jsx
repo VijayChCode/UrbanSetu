@@ -99,13 +99,20 @@ export default function MyAppointments() {
 
   useEffect(() => {
     function handleAppointmentCreated(data) {
-      setAppointments((prev) => [data.appointment, ...prev]);
+      const appt = data.appointment;
+      // Set role for the current user
+      if (appt.buyerId && currentUser && (appt.buyerId._id === currentUser._id || appt.buyerId === currentUser._id)) {
+        appt.role = 'buyer';
+      } else if (appt.sellerId && currentUser && (appt.sellerId._id === currentUser._id || appt.sellerId === currentUser._id)) {
+        appt.role = 'seller';
+      }
+      setAppointments((prev) => [appt, ...prev]);
     }
     socket.on('appointmentCreated', handleAppointmentCreated);
     return () => {
       socket.off('appointmentCreated', handleAppointmentCreated);
     };
-  }, []);
+  }, [currentUser]);
 
   const handleStatusUpdate = async (id, status) => {
     setActionLoading(id + status);
