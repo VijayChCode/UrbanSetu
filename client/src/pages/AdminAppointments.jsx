@@ -3,7 +3,7 @@ import { FaTrash, FaSearch, FaPen, FaUser, FaEnvelope, FaCalendar, FaPhone, FaUs
 import { useSelector } from "react-redux";
 import { useState as useLocalState } from "react";
 import { Link } from "react-router-dom";
-import toast from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 import { socket } from "../utils/socket";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -549,6 +549,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
       if (res.ok) {
         setLocalComments(data.comments);
         setNewComment("");
+        toast.success("Comment sent successfully!");
       } else {
         alert(data.message || "Failed to send comment.");
       }
@@ -572,6 +573,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
         setLocalComments(data.comments);
         setEditingComment(null);
         setEditText("");
+        toast.success("Comment edited successfully!");
       } else {
         alert(data.message || "Failed to edit comment.");
       }
@@ -785,6 +787,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
         {showChatModal && (
           <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative flex flex-col">
+              <Toaster position="bottom-center" containerClassName="!z-[100]" toastOptions={{ duration: 2000, style: { fontSize: '0.9rem', borderRadius: '8px', boxShadow: '0 2px 8px #0001' } }} />
               <button
                 className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-2xl"
                 onClick={() => setShowChatModal(false)}
@@ -795,9 +798,17 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
               <h3 className="text-xl font-bold mb-4 text-blue-700 flex items-center gap-2">
                 <FaCommentDots /> Chat
               </h3>
+              <button
+                className="mb-2 ml-auto text-xs text-red-600 hover:underline"
+                onClick={() => setLocalComments([])}
+                title="Clear chat locally"
+              >
+                Clear Chat
+              </button>
               <div className="flex-1 max-h-60 overflow-y-auto space-y-2 mb-4 pr-2">
                 {localComments.map((c, index) => {
                   const isMe = c.senderEmail === currentUser.email;
+                  const isEditing = editingComment === c._id;
                   return (
                     <div key={c._id || index} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                       <div className={`rounded-lg px-3 py-2 text-xs shadow ${isMe ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'} max-w-[80%]`}>
@@ -806,9 +817,24 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                           <span className="text-gray-400 ml-2 text-[10px]">{new Date(c.timestamp).toLocaleString()}</span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <div>{c.message}</div>
+                          {isEditing ? (
+                            <>
+                              <input
+                                type="text"
+                                className="border rounded px-2 py-1 text-xs w-40"
+                                value={editText}
+                                onChange={e => setEditText(e.target.value)}
+                                onKeyDown={e => { if (e.key === 'Enter') handleEditComment(c._id); }}
+                                autoFocus
+                              />
+                              <button onClick={() => handleEditComment(c._id)} className="text-green-600 hover:text-green-800 font-bold ml-1">Save</button>
+                              <button onClick={() => { setEditingComment(null); setEditText(""); }} className="text-gray-500 hover:text-gray-700 font-bold ml-1">Cancel</button>
+                            </>
+                          ) : (
+                            <div>{c.message}</div>
+                          )}
                         </div>
-                        {(c.senderEmail === currentUser.email) && (
+                        {(c.senderEmail === currentUser.email) && !isEditing && (
                           <div className="flex items-center gap-2 mt-1">
                             <button
                               onClick={() => startEditing(c)}
@@ -829,6 +855,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                                   const data = await res.json();
                                   if (res.ok) {
                                     setLocalComments(data.comments);
+                                    toast.success("Comment deleted successfully!");
                                   } else {
                                     alert(data.message || 'Failed to delete comment.');
                                   }
