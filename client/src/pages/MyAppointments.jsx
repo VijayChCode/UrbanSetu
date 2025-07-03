@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo, FaCommentDots } from "react-icons/fa";
+import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo, FaCommentDots, FaCheckDouble } from "react-icons/fa";
 import { useSelector } from "react-redux";
 import { useState as useLocalState } from "react";
 import { Link, useLocation, useNavigate, useNavigation } from "react-router-dom";
@@ -784,6 +784,62 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     };
   }, [appt._id, showChatModal, appt.propertyName]);
 
+  // Real-time comment updates via socket.io (for chat sync)
+  React.useEffect(() => {
+    function handleCommentUpdate(data) {
+      if (data.appointmentId === appt._id) {
+        setComments((prev) => [...prev, data.comment]);
+      }
+    }
+    socket.on('commentUpdate', handleCommentUpdate);
+    return () => {
+      socket.off('commentUpdate', handleCommentUpdate);
+    };
+  }, [appt._id, setComments]);
+
+  // Mark all comments as read when chat modal opens
+  React.useEffect(() => {
+    if (showChatModal) {
+      fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/read`, {
+        method: 'PATCH',
+        credentials: 'include'
+      });
+    }
+  }, [showChatModal, appt._id]);
+
+  // Listen for commentDelivered and commentRead events
+  React.useEffect(() => {
+    function handleCommentDelivered(data) {
+      if (data.appointmentId === appt._id) {
+        setComments(prev =>
+          prev.map(c =>
+            c._id === data.commentId ? { ...c, status: "delivered" } : c
+          )
+        );
+      }
+    }
+    function handleCommentRead(data) {
+      if (data.appointmentId === appt._id) {
+        setComments(prev =>
+          prev.map(c =>
+            !c.readBy?.includes(data.userId)
+              ? { ...c, status: "read", readBy: [...(c.readBy || []), data.userId] }
+              : c
+          )
+        );
+      }
+    }
+    socket.on('commentDelivered', handleCommentDelivered);
+    socket.on('commentRead', handleCommentRead);
+    return () => {
+      socket.off('commentDelivered', handleCommentDelivered);
+      socket.off('commentRead', handleCommentRead);
+    };
+  }, [appt._id, setComments]);
+
+  // Calculate unread messages for the current user
+  const unreadCount = comments.filter(c => !c.readBy?.includes(currentUser._id) && c.senderEmail !== currentUser.email).length;
+
   return (
     <tr className="hover:bg-blue-50 transition align-top">
       <td className="border p-2">
@@ -943,13 +999,18 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
           )}
         </div>
       </td>
-      <td className="border p-2 text-center">
+      <td className="border p-2 text-center relative">
         <button
-          className="flex items-center justify-center bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-full p-2 shadow-md mx-auto"
+          className="flex items-center justify-center bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-full p-2 shadow-md mx-auto relative"
           title="Open Chat"
           onClick={() => setShowChatModal(true)}
         >
           <FaCommentDots size={20} />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-bold border-2 border-white">
+              {unreadCount}
+            </span>
+          )}
         </button>
         {showChatModal && (
           <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
@@ -974,7 +1035,16 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           {isMe ? "You" : c.senderEmail}
                           <span className="text-gray-400 ml-2 text-[10px]">{new Date(c.timestamp).toLocaleString()}</span>
                         </div>
-                        <div>{c.message}</div>
+                        <div className="flex items-center gap-1">
+                          <div>{c.message}</div>
+                          {c.senderEmail === currentUser.email && (
+                            <span className="ml-1">
+                              {c.status === "read" ? <FaCheckDouble className="text-blue-500 inline" /> :
+                                c.status === "delivered" ? <FaCheckDouble className="text-gray-500 inline" /> :
+                                <FaCheck className="text-gray-500 inline" />}
+                            </span>
+                          )}
+                        </div>
                         {(c.senderEmail === currentUser.email || isAdmin) && (
                           <div className="flex items-center gap-2 mt-1">
                             <button

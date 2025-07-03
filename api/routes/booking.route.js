@@ -197,7 +197,7 @@ router.post('/:id/comment', verifyToken, async (req, res) => {
     
     const updated = await booking.findByIdAndUpdate(
       id,
-      { $push: { comments: { sender: userId, senderEmail: req.user.email, message } } },
+      { $push: { comments: { sender: userId, senderEmail: req.user.email, message, status: "sent", readBy: [userId] } } },
       { new: true }
     ).populate('buyerId', 'username email mobileNumber')
      .populate('sellerId', 'username email mobileNumber')
@@ -209,6 +209,7 @@ router.post('/:id/comment', verifyToken, async (req, res) => {
       // Send only the new comment (last in array)
       const newComment = updated.comments[updated.comments.length - 1];
       io.emit('commentUpdate', { appointmentId: id, comment: newComment });
+      io.emit('commentDelivered', { appointmentId: id, commentId: newComment._id });
     }
     
     res.status(200).json(updated);
@@ -747,6 +748,36 @@ router.get('/stats', verifyToken, async (req, res) => {
   } catch (err) {
     console.error('Error fetching booking stats:', err);
     res.status(500).json({ message: 'Failed to fetch booking statistics.' });
+  }
+});
+
+// PATCH: Mark all comments as read for a user
+router.patch('/:id/comments/read', verifyToken, async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user.id;
+  try {
+    const bookingDoc = await booking.findById(id);
+    if (!bookingDoc) return res.status(404).json({ message: 'Appointment not found.' });
+
+    let updated = false;
+    bookingDoc.comments.forEach(comment => {
+      if (!comment.readBy.map(String).includes(userId)) {
+        comment.readBy.push(userId);
+        comment.status = "read";
+        updated = true;
+      }
+    });
+    if (updated) await bookingDoc.save();
+
+    // Emit read event for all comments
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('commentRead', { appointmentId: id, userId });
+    }
+
+    res.status(200).json({ success: true });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to mark comments as read.' });
   }
 });
 

@@ -69,7 +69,9 @@ const bookingSchema = new mongoose.Schema({
       },
       senderEmail: String,
       message: String,
-      timestamp: { type: Date, default: Date.now }
+      timestamp: { type: Date, default: Date.now },
+      status: { type: String, default: "sent" },
+      readBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
     }
   ],
   chat: [
