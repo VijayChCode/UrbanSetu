@@ -119,7 +119,7 @@ const reviewSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Compound index to ensure a user can only review a listing once
-reviewSchema.index({ userId: 1, listingId: 1 }, { unique: true });
+// reviewSchema.index({ userId: 1, listingId: 1 }, { unique: true });
 
 // Index for efficient queries
 reviewSchema.index({ listingId: 1, status: 1, createdAt: -1 });

@@ -42,8 +42,10 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
     };
     socket.on('reviewUpdated', handleSocketReviewUpdate);
     // Listen for real-time reply updates
-    const handleSocketReplyUpdate = ({ action, reply }) => {
-      if (reply && reply.reviewId) {
+    const handleSocketReplyUpdate = ({ action, reply, replyId, reviewId }) => {
+      if (action === 'deleted' && reviewId) {
+        fetchReplies(reviewId);
+      } else if (reply && reply.reviewId) {
         fetchReplies(reply.reviewId);
       }
     };
@@ -578,10 +580,17 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
                     <span className="font-medium text-gray-800 text-xs">{reply.userName}</span>
                   )}
                   <span className="text-xs text-gray-500">{new Date(reply.createdAt).toLocaleString()}</span>
-                  {currentUser && (reply.userId === currentUser._id || isAdminUser(currentUser)) && (
+                  {currentUser && (
                     <span className="flex gap-2 ml-2">
-                      <FaPen className="cursor-pointer text-blue-600" title="Edit" onClick={() => handleEditReply(reply)} />
-                      <FaTrash className="cursor-pointer text-red-600" title="Delete" onClick={() => handleDeleteReply(reply._id)} />
+                      {(
+                        reply.userId === currentUser._id ||
+                        (isAdminUser(currentUser) && isAdminUser(reply))
+                      ) && (
+                        <FaPen className="cursor-pointer text-blue-600" title="Edit" onClick={() => handleEditReply(reply)} />
+                      )}
+                      {(reply.userId === currentUser._id || isAdminUser(currentUser)) && (
+                        <FaTrash className="cursor-pointer text-red-600" title="Delete" onClick={() => handleDeleteReply(reply._id)} />
+                      )}
                     </span>
                   )}
                 </div>

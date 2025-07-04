@@ -349,6 +349,9 @@ router.put('/admin/status/:reviewId', verifyToken, async (req, res, next) => {
       }
     }
     
+    // Emit socket event for real-time review update
+    const io = req.app.get('io');
+    if (io) io.emit('reviewUpdated', review);
     res.status(200).json({
       success: true,
       message: `Review ${status} successfully`,
@@ -409,6 +412,22 @@ router.put('/admin/remove/:reviewId', verifyToken, async (req, res, next) => {
       }
     }
     
+    // Emit socket event for real-time review removal
+    const io = req.app.get('io');
+    if (io) io.emit('reviewUpdated', review);
+    // Send notification to review author
+    try {
+      await Notification.create({
+        userId: review.userId,
+        type: 'review_blocked',
+        title: 'Review Blocked by Admin',
+        message: 'Your review was blocked by admin and is no longer visible on the property.',
+        listingId: review.listingId,
+        adminId: req.user.id
+      });
+    } catch (notificationError) {
+      console.error('Failed to send notification:', notificationError);
+    }
     res.status(200).json({
       success: true,
       message: 'Review removed successfully',
@@ -629,13 +648,15 @@ router.delete('/reply/:replyId', verifyToken, async (req, res, next) => {
     if (!reply) {
       return next(errorHandler(404, 'Reply not found'));
     }
-    if (reply.userId.toString() !== req.user.id) {
-      return next(errorHandler(403, 'You can only delete your own replies'));
+    // Allow author or admin to delete
+    const user = await User.findById(req.user.id);
+    if (reply.userId.toString() !== req.user.id && !(user && (user.role === 'admin' || user.role === 'rootadmin'))) {
+      return next(errorHandler(403, 'You can only delete your own replies unless you are an admin'));
     }
     await reply.deleteOne();
     // Emit socket event for real-time reply deletion
     const io = req.app.get('io');
-    if (io) io.emit('reviewReplyUpdated', { action: 'deleted', replyId });
+    if (io) io.emit('reviewReplyUpdated', { action: 'deleted', replyId, reviewId: reply.reviewId });
     res.status(200).json({ success: true, message: 'Reply deleted successfully' });
   } catch (error) {
     next(error);
