@@ -10,7 +10,7 @@ const notificationSchema = new mongoose.Schema(
     type: {
       type: String,
       required: true,
-      enum: ['property_edited', 'property_deleted', 'appointment_updated', 'admin_message', 'new_review'],
+      enum: ['property_edited', 'property_deleted', 'appointment_updated', 'admin_message', 'new_review', 'review_reported', 'review_rejected'],
     },
     title: {
       type: String,
