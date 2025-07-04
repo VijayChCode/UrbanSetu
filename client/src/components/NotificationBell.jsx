@@ -322,6 +322,8 @@ export default function NotificationBell({ mobile = false }) {
         return <FaCalendarAlt className="w-4 h-4 text-green-500" />;
       case 'admin_message':
         return <FaEnvelope className="w-4 h-4 text-purple-500" />;
+      case 'admin_booked_appointment':
+        return <FaCalendarAlt className="w-4 h-4 text-orange-500" />;
       default:
         return <FaBell className="w-4 h-4 text-gray-500" />;
     }
