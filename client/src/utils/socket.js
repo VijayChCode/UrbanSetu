@@ -4,7 +4,9 @@ const SOCKET_URL = "https://urbansetu.onrender.com"; // backend URL
 
 // Helper to get token from localStorage (or cookies if you use them)
 function getToken() {
-  return localStorage.getItem('accessToken');
+  const token = localStorage.getItem('accessToken');
+  console.log('[Socket] getToken:', token);
+  return token;
 }
 
 // Create a socket instance with auth
@@ -21,6 +23,7 @@ export function reconnectSocket() {
   if (socket && socket.connected) {
     socket.disconnect();
   }
+  console.log('[Socket] reconnecting with token:', getToken());
   socket = io(SOCKET_URL, {
     auth: {
       token: getToken(),

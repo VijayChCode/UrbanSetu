@@ -133,6 +133,7 @@ app.set('io', io);
 io.use(async (socket, next) => {
   try {
     const token = socket.handshake.auth && socket.handshake.auth.token;
+    console.log('[Socket.io Auth] Received token:', token);
     if (!token) {
       console.log('[401] Access token not found (socket.io)');
       return next(new Error('Access token not found'));

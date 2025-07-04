@@ -79,6 +79,12 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
                 return;
             }
             
+            if (data.token) {
+                localStorage.setItem('accessToken', data.token);
+                console.log('Saved accessToken to localStorage:', data.token);
+            } else {
+                console.warn('No token found in login response!');
+            }
             // Dispatch success and wait for state update
             dispatch(signInSuccess(data));
             
@@ -86,6 +92,7 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
             await new Promise(resolve => setTimeout(resolve, 50));
             
             // Reconnect socket with new token
+            console.log('Reconnecting socket after login with token:', localStorage.getItem('accessToken'));
             reconnectSocket();
             
             if (data.role === "admin" || data.role === "rootadmin") {
