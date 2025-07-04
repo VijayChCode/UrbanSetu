@@ -93,7 +93,11 @@ router.post("/", verifyToken, async (req, res) => {
         listingId: listing._id,
         adminId: req.user.id
       });
-      if (io) io.emit('notificationCreated', notification);
+      console.log('Created admin_booked_appointment notification:', notification);
+      if (io) {
+        io.emit('notificationCreated', notification);
+        console.log('Emitted notificationCreated for admin_booked_appointment');
+      }
     } catch (notificationError) {
       console.error('Failed to create notification:', notificationError);
     }
