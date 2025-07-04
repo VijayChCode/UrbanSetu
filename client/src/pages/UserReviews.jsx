@@ -11,6 +11,8 @@ export default function UserReviews() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [editingReview, setEditingReview] = useState(null);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
 
   useEffect(() => {
     fetchUserReviews();
@@ -130,6 +132,31 @@ export default function UserReviews() {
     );
   };
 
+  // Enhanced filtered reviews based on search and status
+  const filteredReviews = reviews.filter((review) => {
+    // Status filter
+    if (statusFilter && review.status !== statusFilter) return false;
+    // Enhanced search
+    const propertyName = review.listingId?.name?.toLowerCase() || '';
+    const propertyCity = review.listingId?.city?.toLowerCase() || '';
+    const propertyState = review.listingId?.state?.toLowerCase() || '';
+    const stars = String(review.rating);
+    const comment = review.comment?.toLowerCase() || '';
+    const adminNote = review.adminNote?.toLowerCase() || '';
+    const date = formatDate(review.createdAt).toLowerCase();
+    const q = search.toLowerCase();
+    return (
+      propertyName.includes(q) ||
+      propertyCity.includes(q) ||
+      propertyState.includes(q) ||
+      stars === q ||
+      comment.includes(q) ||
+      adminNote.includes(q) ||
+      date.includes(q) ||
+      q === ''
+    );
+  });
+
   if (loading) {
     return (
       <div className="text-center mt-8">
@@ -143,6 +170,27 @@ export default function UserReviews() {
     <div className="max-w-full sm:max-w-2xl md:max-w-4xl mx-auto px-2 sm:px-4 py-4 sm:py-8">
       <div className="bg-white rounded-xl shadow-lg p-3 sm:p-6">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-4 sm:mb-6">My Reviews</h1>
+        {/* Search and Status Filter */}
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mb-6">
+          <input
+            type="text"
+            placeholder="Search by property name, city, state, review comment, admin note, or review date..."
+            className="border border-gray-300 rounded-lg px-3 py-2 w-full sm:w-1/2"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+          <select
+            className="border border-gray-300 rounded-lg px-3 py-2 w-full sm:w-1/4"
+            value={statusFilter}
+            onChange={e => setStatusFilter(e.target.value)}
+          >
+            <option value="">All Statuses</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="removed">Removed</option>
+          </select>
+        </div>
 
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
@@ -150,15 +198,15 @@ export default function UserReviews() {
           </div>
         )}
 
-        {reviews.length === 0 ? (
+        {filteredReviews.length === 0 ? (
           <div className="text-center py-8">
             <div className="text-6xl mb-4">⭐</div>
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">No Reviews Yet</h3>
-            <p className="text-gray-600">You haven't written any reviews yet. Start reviewing properties you've visited!</p>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">No Reviews Found</h3>
+            <p className="text-gray-600">Try adjusting your search or filters.</p>
           </div>
         ) : (
           <div className="space-y-4 sm:space-y-6">
-            {reviews.map((review) => (
+            {filteredReviews.map((review) => (
               <div key={review._id} className="border border-gray-200 rounded-lg p-3 sm:p-6 hover:shadow-md transition-shadow overflow-x-auto">
                 <div className="flex flex-col gap-2 sm:gap-4 lg:flex-row lg:items-start lg:justify-between">
                   {/* Review Content */}

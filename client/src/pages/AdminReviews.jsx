@@ -23,6 +23,7 @@ export default function AdminReviews() {
   const [responseEdit, setResponseEdit] = useState({});
   const [responseLoading, setResponseLoading] = useState({});
   const [responseError, setResponseError] = useState({});
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) {
@@ -31,6 +32,11 @@ export default function AdminReviews() {
     // Listen for real-time review updates
     const handleSocketReviewUpdate = (updatedReview) => {
       setReviews(prev => {
+        // If the review is removed or deleted, remove it from the list
+        if (updatedReview.status === 'removed' || updatedReview.deleted) {
+          return prev.filter(r => r._id !== updatedReview._id);
+        }
+        // Otherwise, update the review in place
         const exists = prev.some(r => r._id === updatedReview._id);
         if (exists) {
           return prev.map(r => r._id === updatedReview._id ? { ...r, ...updatedReview } : r);
@@ -232,6 +238,32 @@ export default function AdminReviews() {
     }
   };
 
+  // Enhanced filtered reviews based on search
+  const filteredReviews = reviews.filter((review) => {
+    const userName = review.userName?.toLowerCase() || '';
+    const userEmail = review.userEmail?.toLowerCase() || '';
+    const propertyName = review.listingId?.name?.toLowerCase() || '';
+    const propertyCity = review.listingId?.city?.toLowerCase() || '';
+    const propertyState = review.listingId?.state?.toLowerCase() || '';
+    const stars = String(review.rating);
+    const comment = review.comment?.toLowerCase() || '';
+    const adminNote = review.adminNote?.toLowerCase() || '';
+    const date = formatDate(review.createdAt).toLowerCase();
+    const q = search.toLowerCase();
+    return (
+      userName.includes(q) ||
+      userEmail.includes(q) ||
+      propertyName.includes(q) ||
+      propertyCity.includes(q) ||
+      propertyState.includes(q) ||
+      stars === q ||
+      comment.includes(q) ||
+      adminNote.includes(q) ||
+      date.includes(q) ||
+      q === ''
+    );
+  });
+
   if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'rootadmin')) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -258,6 +290,16 @@ export default function AdminReviews() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-100 py-4 sm:py-10 px-1 sm:px-2 md:px-8 animate-fadeIn">
       <div className="max-w-full sm:max-w-3xl md:max-w-6xl mx-auto bg-white rounded-2xl shadow-2xl p-2 sm:p-4 md:p-8 animate-slideUp">
         <h1 className="text-2xl sm:text-4xl font-extrabold text-blue-700 mb-4 sm:mb-8 drop-shadow animate-fade-in">Review Management</h1>
+        {/* Search Box */}
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mb-4">
+          <input
+            type="text"
+            placeholder="Search by user email, name, property name, city, state, stars, comment, admin note, or review date..."
+            className="border border-gray-300 rounded-lg px-3 py-2 w-full sm:w-1/2"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+        </div>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-2 sm:gap-0">
           <div className="flex items-center gap-4">
             <select
@@ -305,12 +347,12 @@ export default function AdminReviews() {
         <div className="overflow-x-auto">
           {/* Responsive review cards for mobile, table for desktop */}
           <div className="space-y-4 sm:space-y-0 sm:table w-full">
-            {reviews.map((review, idx) => (
+            {filteredReviews.map((review, idx) => (
               <div
                 key={review._id}
                 className={
                   `block sm:table-row bg-white rounded-lg shadow-sm sm:shadow-none p-3 sm:p-0 border sm:border-0` +
-                  (idx !== reviews.length - 1 ? ' sm:border-b sm:border-gray-200' : '')
+                  (idx !== filteredReviews.length - 1 ? ' sm:border-b sm:border-gray-200' : '')
                 }
               >
                 <div className="flex flex-col sm:table-cell sm:align-top sm:w-1/4 mb-2 sm:mb-0">
