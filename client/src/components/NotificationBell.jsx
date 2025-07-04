@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { FaBell, FaTimes, FaCheck, FaTrash, FaEye, FaCalendarAlt, FaEdit, FaEnvelope, FaPaperPlane, FaUsers, FaUser } from 'react-icons/fa';
 import { toast } from 'react-toastify';
+import { socket } from '../utils/socket.js';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -371,6 +372,16 @@ export default function NotificationBell({ mobile = false }) {
            currentUser.isDefaultAdmin ||
            currentUser.isAdmin;
   };
+
+  useEffect(() => {
+    const handleNewNotification = (notification) => {
+      if (!currentUser || notification.userId !== currentUser._id) return;
+      setNotifications((prev) => [notification, ...prev]);
+      setUnreadCount((count) => count + 1);
+    };
+    socket.on('notificationCreated', handleNewNotification);
+    return () => socket.off('notificationCreated', handleNewNotification);
+  }, [currentUser]);
 
   return (
     <div className="relative">
