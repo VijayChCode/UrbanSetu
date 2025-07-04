@@ -334,6 +334,12 @@ export default function NotificationBell({ mobile = false }) {
         return <FaTimes className="w-4 h-4 text-pink-500" />;
       case 'appointment_reinitiated_by_admin':
         return <FaRedo className="w-4 h-4 text-green-500" />;
+      case 'appointment_accepted_by_seller':
+        return <FaCheck className="w-4 h-4 text-green-500" />;
+      case 'appointment_rejected_by_seller':
+        return <FaTimes className="w-4 h-4 text-red-500" />;
+      case 'appointment_reinitiated_by_user':
+        return <FaRedo className="w-4 h-4 text-green-500" />;
       default:
         return <FaBell className="w-4 h-4 text-gray-500" />;
     }
@@ -505,7 +511,7 @@ export default function NotificationBell({ mobile = false }) {
                                         {notification.title}
                                       </h4>
                                       <p className="text-sm text-gray-600 mt-1 whitespace-pre-line break-words max-w-xs md:max-w-md lg:max-w-lg">
-                                        {['admin_created_listing', 'admin_booked_appointment', 'appointment_booked', 'appointment_cancelled_by_seller', 'appointment_cancelled_by_buyer', 'appointment_cancelled_by_admin', 'appointment_reinitiated_by_admin'].includes(notification.type) && notification.listingId ? (
+                                        {['admin_created_listing', 'admin_booked_appointment', 'appointment_booked', 'appointment_cancelled_by_seller', 'appointment_cancelled_by_buyer', 'appointment_cancelled_by_admin', 'appointment_reinitiated_by_admin', 'appointment_accepted_by_seller', 'appointment_rejected_by_seller', 'appointment_reinitiated_by_user'].includes(notification.type) && notification.listingId ? (
                                           <a
                                             href="/user/my-appointments"
                                             className="text-blue-600 hover:underline"
@@ -840,7 +846,7 @@ export default function NotificationBell({ mobile = false }) {
                                   {notification.title}
                                 </h4>
                                 <p className="text-sm text-gray-600 mt-1 whitespace-pre-line break-words max-w-xs md:max-w-md lg:max-w-lg">
-                                  {['admin_created_listing', 'admin_booked_appointment', 'appointment_booked', 'appointment_cancelled_by_seller', 'appointment_cancelled_by_buyer', 'appointment_cancelled_by_admin', 'appointment_reinitiated_by_admin'].includes(notification.type) && notification.listingId ? (
+                                  {['admin_created_listing', 'admin_booked_appointment', 'appointment_booked', 'appointment_cancelled_by_seller', 'appointment_cancelled_by_buyer', 'appointment_cancelled_by_admin', 'appointment_reinitiated_by_admin', 'appointment_accepted_by_seller', 'appointment_rejected_by_seller', 'appointment_reinitiated_by_user'].includes(notification.type) && notification.listingId ? (
                                     <a
                                       href="/user/my-appointments"
                                       className="text-blue-600 hover:underline"
