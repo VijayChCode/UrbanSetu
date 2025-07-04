@@ -16,7 +16,7 @@ export default function Oauth({ pageType }) {
             const provider = new GoogleAuthProvider();
             const auth = getAuth();
             const result = await signInWithPopup(auth, provider);
-            const apiUrl = pageType === "signIn" ? "/api/auth/google" : "/api/auth/google/signup";
+            const apiUrl = "/api/auth/google";
             const options = {
                 method: "POST",
                 headers: {
