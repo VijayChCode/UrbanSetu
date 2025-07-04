@@ -107,7 +107,15 @@ const reviewSchema = new mongoose.Schema({
     type: String,
     trim: true,
     maxlength: 1000
-  }
+  },
+  ownerResponseLikes: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  ownerResponseDislikes: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
 }, { timestamps: true });
 
 // Compound index to ensure a user can only review a listing once

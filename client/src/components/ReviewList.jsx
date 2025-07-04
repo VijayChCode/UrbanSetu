@@ -315,6 +315,20 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
     setEditingOwnerResponse(false);
   };
 
+  const handleLikeDislikeOwnerResponse = async (reviewId, action) => {
+    try {
+      await fetch(`${API_BASE_URL}/api/review/respond/like/${reviewId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ action }),
+      });
+    } catch {}
+  };
+
+  // Helper to check if a user is admin
+  const isAdminUser = (user) => user && (user.role === 'admin' || user.role === 'rootadmin');
+
   if (loading) {
     return (
       <div className="text-center py-8">
@@ -375,15 +389,23 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
         <div key={review._id} className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
           <div className="flex items-start justify-between">
             <div className="flex items-center space-x-3 mb-3">
-              <img
-                src={review.userAvatar}
-                alt={review.userName}
-                className="w-10 h-10 rounded-full object-cover"
-              />
+              {review.userAvatar && !isAdminUser(review) && (
+                <img
+                  src={review.userAvatar}
+                  alt={review.userName}
+                  className="w-10 h-10 rounded-full object-cover"
+                />
+              )}
               <div>
                 <div className="flex items-center gap-2">
-                  <h4 className="font-semibold text-gray-800">{review.userName}</h4>
-                  {(review.isVerified || review.verifiedByBooking) && (
+                  {isAdminUser(review) ? (
+                    <span className="font-semibold text-blue-700 flex items-center gap-1">
+                      From organization <FaCheckCircle className="text-green-500" />
+                    </span>
+                  ) : (
+                    <h4 className="font-semibold text-gray-800">{review.userName}</h4>
+                  )}
+                  {(review.isVerified || review.verifiedByBooking) && !isAdminUser(review) && (
                     <span className="flex items-center text-green-600 text-sm">
                       <FaCheckCircle className="mr-1" />
                       Verified
@@ -400,7 +422,7 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
             </div>
             
             {/* Action buttons for user's own reviews */}
-            {currentUser && currentUser._id === review.userId && review.status !== 'approved' && (
+            {(currentUser && (currentUser._id === review.userId || isAdminUser(currentUser)) && review.status !== 'approved') && (
               <div className="flex space-x-2">
                 <button
                   onClick={() => handleEditReview(review)}
@@ -426,7 +448,21 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
             <span>{formatDate(review.createdAt)}</span>
             
             {/* Helpful Vote Button */}
-            {review.status === 'approved' && (
+            <div className="flex items-center gap-2 mt-2">
+              <button
+                onClick={() => handleDislikeReview(review._id)}
+                className={`flex items-center gap-1 px-3 py-1 rounded-lg transition-colors ${
+                  review.dislikes?.some(d => d.userId === currentUser?._id)
+                    ? 'bg-red-100 text-red-700'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                <span role="img" aria-label="dislike">👎</span>
+                <span>Dislike</span>
+                {review.dislikeCount > 0 && (
+                  <span className="ml-1">({review.dislikeCount})</span>
+                )}
+              </button>
               <button
                 onClick={() => handleHelpfulVote(review._id)}
                 className={`flex items-center gap-1 px-3 py-1 rounded-lg transition-colors ${
@@ -434,6 +470,7 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
                     ? 'bg-blue-100 text-blue-700'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
+                disabled={review.status !== 'approved'}
               >
                 <FaThumbsUp className={hasUserVoted(review) ? 'text-blue-600' : ''} />
                 <span>Helpful</span>
@@ -441,7 +478,7 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
                   <span className="ml-1">({review.helpfulCount})</span>
                 )}
               </button>
-            )}
+            </div>
           </div>
           
           {/* Status indicator */}
@@ -466,40 +503,60 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
           {/* Owner response (if any) */}
           {review.ownerResponse && (
             <div className="mt-3 p-3 bg-blue-50 rounded-md border border-blue-200 flex justify-between items-center">
-              {editingOwnerResponse === review._id ? (
-                <>
-                  <textarea
-                    className="w-full border border-blue-300 rounded-md p-2 text-sm mb-2"
-                    rows="2"
-                    value={ownerResponseEdit}
-                    onChange={e => setOwnerResponseEdit(e.target.value)}
-                  />
+              <div className="flex-1">
+                {editingOwnerResponse === review._id ? (
+                  <>
+                    <textarea
+                      className="w-full border border-blue-300 rounded-md p-2 text-sm mb-2"
+                      rows="2"
+                      value={ownerResponseEdit}
+                      onChange={e => setOwnerResponseEdit(e.target.value)}
+                    />
+                    <button
+                      className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm ml-2"
+                      onClick={() => handleUpdateOwnerResponse(review._id)}
+                    >
+                      Save
+                    </button>
+                    <button
+                      className="bg-gray-400 text-white px-3 py-1 rounded hover:bg-gray-600 text-sm ml-2"
+                      onClick={() => setEditingOwnerResponse(false)}
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm text-blue-800 flex items-center gap-2">
+                      <FaReply className="inline-block text-blue-500" />
+                      <strong>Owner Response:</strong> {review.ownerResponse}
+                    </p>
+                  </>
+                )}
+              </div>
+              {/* Like/dislike for owner response (not owner) */}
+              {currentUser && listingOwnerId && currentUser._id !== listingOwnerId && !editingOwnerResponse && (
+                <div className="flex gap-2 ml-4 items-center">
                   <button
-                    className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm ml-2"
-                    onClick={() => handleUpdateOwnerResponse(review._id)}
+                    onClick={() => handleLikeDislikeOwnerResponse(review._id, 'like')}
+                    className={`flex items-center gap-1 ${review.ownerResponseLikes?.includes(currentUser._id) ? 'text-blue-600' : 'text-gray-500'}`}
                   >
-                    Save
+                    👍 Like {review.ownerResponseLikes?.length > 0 && `(${review.ownerResponseLikes.length})`}
                   </button>
                   <button
-                    className="bg-gray-400 text-white px-3 py-1 rounded hover:bg-gray-600 text-sm ml-2"
-                    onClick={() => setEditingOwnerResponse(false)}
+                    onClick={() => handleLikeDislikeOwnerResponse(review._id, 'dislike')}
+                    className={`flex items-center gap-1 ${review.ownerResponseDislikes?.includes(currentUser._id) ? 'text-red-600' : 'text-gray-500'}`}
                   >
-                    Cancel
+                    👎 Dislike {review.ownerResponseDislikes?.length > 0 && `(${review.ownerResponseDislikes.length})`}
                   </button>
-                </>
-              ) : (
-                <>
-                  <p className="text-sm text-blue-800 flex items-center gap-2">
-                    <FaReply className="inline-block text-blue-500" />
-                    <strong>Owner Response:</strong> {review.ownerResponse}
-                  </p>
-                  {currentUser && listingOwnerId && currentUser._id === listingOwnerId && (
-                    <span className="flex gap-2 ml-2">
-                      <FaPen className="cursor-pointer text-blue-600" title="Edit" onClick={() => handleEditOwnerResponse(review)} />
-                      <FaTrash className="cursor-pointer text-red-600" title="Delete" onClick={() => handleDeleteOwnerResponse(review._id)} />
-                    </span>
-                  )}
-                </>
+                </div>
+              )}
+              {/* Edit/delete for owner */}
+              {currentUser && listingOwnerId && currentUser._id === listingOwnerId && !editingOwnerResponse && (
+                <span className="flex gap-2 ml-2">
+                  <FaPen className="cursor-pointer text-blue-600" title="Edit" onClick={() => handleEditOwnerResponse(review)} />
+                  <FaTrash className="cursor-pointer text-red-600" title="Delete" onClick={() => handleDeleteOwnerResponse(review._id)} />
+                </span>
               )}
             </div>
           )}
@@ -510,10 +567,18 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
             {replies[review._id]?.map(reply => (
               <div key={reply._id} className="bg-gray-50 rounded p-2 mb-2 flex flex-col">
                 <div className="flex items-center gap-2 mb-1">
-                  <img src={reply.userAvatar} alt={reply.userName} className="w-6 h-6 rounded-full object-cover" />
-                  <span className="font-medium text-gray-800 text-xs">{reply.userName}</span>
+                  {reply.userAvatar && !isAdminUser(reply) && (
+                    <img src={reply.userAvatar} alt={reply.userName} className="w-6 h-6 rounded-full object-cover" />
+                  )}
+                  {isAdminUser(reply) ? (
+                    <span className="font-semibold text-blue-700 flex items-center gap-1 text-xs">
+                      From organization <FaCheckCircle className="text-green-500" />
+                    </span>
+                  ) : (
+                    <span className="font-medium text-gray-800 text-xs">{reply.userName}</span>
+                  )}
                   <span className="text-xs text-gray-500">{new Date(reply.createdAt).toLocaleString()}</span>
-                  {currentUser && reply.userId === currentUser._id && (
+                  {currentUser && (reply.userId === currentUser._id || isAdminUser(currentUser)) && (
                     <span className="flex gap-2 ml-2">
                       <FaPen className="cursor-pointer text-blue-600" title="Edit" onClick={() => handleEditReply(reply)} />
                       <FaTrash className="cursor-pointer text-red-600" title="Delete" onClick={() => handleDeleteReply(reply._id)} />

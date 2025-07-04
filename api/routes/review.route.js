@@ -35,11 +35,6 @@ router.post('/create', verifyToken, async (req, res, next) => {
       return next(errorHandler(404, 'User not found'));
     }
     
-    // Check if user is admin - admins cannot post reviews
-    if (user.role === 'admin' || user.role === 'rootadmin') {
-      return next(errorHandler(403, 'Admins cannot post reviews. You can only manage reviews.'));
-    }
-    
     // Check if user is the property owner - property owners cannot review their own properties
     if (listing.userRef && listing.userRef.toString() === req.user.id) {
       return next(errorHandler(403, 'Property owners cannot review their own properties.'));
@@ -668,6 +663,41 @@ router.delete('/respond/:reviewId', verifyToken, async (req, res, next) => {
     const io = req.app.get('io');
     if (io) io.emit('reviewUpdated', review);
     res.status(200).json({ success: true, message: 'Owner response deleted successfully', review });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Like/dislike owner response
+router.post('/respond/like/:reviewId', verifyToken, async (req, res, next) => {
+  try {
+    const { reviewId } = req.params;
+    const { action } = req.body; // 'like' or 'dislike'
+    const review = await Review.findById(reviewId);
+    if (!review) {
+      return next(errorHandler(404, 'Review not found'));
+    }
+    if (!review.ownerResponse) {
+      return next(errorHandler(400, 'No owner response to like/dislike'));
+    }
+    // Owner cannot like/dislike their own response
+    const listing = await Listing.findById(review.listingId);
+    if (listing && listing.userRef.toString() === req.user.id) {
+      return next(errorHandler(403, 'Owner cannot like/dislike their own response'));
+    }
+    // Remove user from both arrays first
+    review.ownerResponseLikes = review.ownerResponseLikes.filter(id => id.toString() !== req.user.id);
+    review.ownerResponseDislikes = review.ownerResponseDislikes.filter(id => id.toString() !== req.user.id);
+    if (action === 'like') {
+      review.ownerResponseLikes.push(req.user.id);
+    } else if (action === 'dislike') {
+      review.ownerResponseDislikes.push(req.user.id);
+    }
+    await review.save();
+    // Emit socket event for real-time owner response like/dislike
+    const io = req.app.get('io');
+    if (io) io.emit('reviewUpdated', review);
+    res.status(200).json({ success: true, ownerResponseLikes: review.ownerResponseLikes, ownerResponseDislikes: review.ownerResponseDislikes });
   } catch (error) {
     next(error);
   }
