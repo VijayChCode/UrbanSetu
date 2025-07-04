@@ -203,6 +203,31 @@ router.patch('/:id/status', verifyToken, async (req, res) => {
     }
     // --- END NEW LOGIC ---
 
+    // --- Notify buyer if seller accepted or rejected the appointment ---
+    try {
+      if (status === 'accepted' || status === 'rejected') {
+        const notificationType = status === 'accepted' ? 'appointment_accepted_by_seller' : 'appointment_rejected_by_seller';
+        const notificationTitle = status === 'accepted' ? 'Appointment Accepted' : 'Appointment Rejected';
+        const notificationMessage = status === 'accepted'
+          ? `Your appointment for "${updated.listingId.name}" was accepted by the seller.`
+          : `Your appointment for "${updated.listingId.name}" was rejected by the seller.`;
+
+        const notification = await Notification.create({
+          userId: updated.buyerId._id || updated.buyerId,
+          type: notificationType,
+          title: notificationTitle,
+          message: notificationMessage,
+          listingId: updated.listingId._id || updated.listingId,
+          adminId: null
+        });
+
+        if (io) io.to((updated.buyerId._id || updated.buyerId).toString()).emit('notificationCreated', notification);
+      }
+    } catch (notificationError) {
+      console.error('Failed to create notification for buyer:', notificationError);
+    }
+    // --- END Notify buyer logic ---
+
     // Emit socket.io event for real-time appointment update
     const io = req.app.get('io');
     if (io) {
@@ -624,6 +649,30 @@ router.patch('/:id/reinitiate', verifyToken, async (req, res) => {
         console.error('Failed to create notification for seller:', notificationError);
       }
     }
+    // Notify the opposite party when appointment is reinitiated by buyer or seller
+    try {
+      let notifyUserId, notifyRole;
+      if (userId === updated.buyerId.toString()) {
+        notifyUserId = updated.sellerId;
+        notifyRole = 'seller';
+      } else if (userId === updated.sellerId.toString()) {
+        notifyUserId = updated.buyerId;
+        notifyRole = 'buyer';
+      }
+      if (notifyUserId) {
+        const notification = await Notification.create({
+          userId: notifyUserId,
+          type: 'appointment_reinitiated_by_user',
+          title: 'Appointment Reinitiated',
+          message: `The appointment for "${updated.propertyName}" was reinitiated by the ${notifyRole === 'seller' ? 'buyer' : 'seller'}. Please review the details.`,
+          listingId: updated.listingId,
+          adminId: null
+        });
+        if (io) io.to(notifyUserId.toString()).emit('notificationCreated', notification);
+      }
+    } catch (notificationError) {
+      console.error('Failed to create notification for opposite party:', notificationError);
+    }
     res.status(200).json({
       message: 'Appointment reinitiated successfully.',
       appointment: updated
@@ -834,6 +883,30 @@ router.post('/reinitiate', verifyToken, async (req, res) => {
     original.visibleToBuyer = true;
     original.visibleToSeller = true;
     await original.save();
+    // Notify the opposite party when appointment is reinitiated by buyer or seller
+    try {
+      let notifyUserId, notifyRole;
+      if (userId === original.buyerId.toString()) {
+        notifyUserId = original.sellerId;
+        notifyRole = 'seller';
+      } else if (userId === original.sellerId.toString()) {
+        notifyUserId = original.buyerId;
+        notifyRole = 'buyer';
+      }
+      if (notifyUserId) {
+        const notification = await Notification.create({
+          userId: notifyUserId,
+          type: 'appointment_reinitiated_by_user',
+          title: 'Appointment Reinitiated',
+          message: `The appointment for "${original.propertyName}" was reinitiated by the ${notifyRole === 'seller' ? 'buyer' : 'seller'}. Please review the details.`,
+          listingId: original.listingId,
+          adminId: null
+        });
+        if (io) io.to(notifyUserId.toString()).emit('notificationCreated', notification);
+      }
+    } catch (notificationError) {
+      console.error('Failed to create notification for opposite party:', notificationError);
+    }
     // Emit socket.io event for real-time update
     const io = req.app.get('io');
     if (io) {

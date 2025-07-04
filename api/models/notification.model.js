@@ -25,7 +25,10 @@ const notificationSchema = new mongoose.Schema(
         'appointment_cancelled_by_buyer',
         'appointment_cancelled_by_seller',
         'appointment_cancelled_by_admin',
-        'appointment_reinitiated_by_admin'
+        'appointment_reinitiated_by_admin',
+        'appointment_accepted_by_seller',
+        'appointment_rejected_by_seller',
+        'appointment_reinitiated_by_user'
       ],
     },
     title: {
