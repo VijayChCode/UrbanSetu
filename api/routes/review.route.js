@@ -377,7 +377,7 @@ router.put('/admin/status/:reviewId', verifyToken, async (req, res, next) => {
           userId: review.userId,
           type: 'review_rejected',
           title: 'Review Rejected',
-          message: `Your review for "${listing?.name || 'the property'}" was rejected by admin.`,
+          message: `Your review for "${listing?.name || 'the property'}" was rejected by admin, Please check the reason and update your review.`,
           listingId: review.listingId,
           adminId: req.user.id
         });
@@ -453,16 +453,14 @@ router.put('/admin/remove/:reviewId', verifyToken, async (req, res, next) => {
       // Fetch listing for property name
       const listing = await Listing.findById(review.listingId);
       const propertyName = listing?.name || 'the property';
-      let notificationMessage = `Your review was blocked by admin and is no longer visible on the property.\n`;
-      notificationMessage += `Property: "${propertyName}"\n`;
-      notificationMessage += `Reason: ${reason}`;
+      let notificationMessage = `Your review was removed by admin for "${reason}" on property "${propertyName}" and is no longer visible.`;
       if (note) {
         notificationMessage += `\nAdmin Note: ${note}`;
       }
       await Notification.create({
         userId: review.userId,
         type: 'review_blocked',
-        title: 'Review Blocked by Admin',
+        title: 'Review Removed by Admin',
         message: notificationMessage,
         listingId: review.listingId,
         adminId: req.user.id
