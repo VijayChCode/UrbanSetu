@@ -18,6 +18,16 @@ export default function UserReviews() {
     fetchUserReviews();
   }, []);
 
+  useEffect(() => {
+    const handleSocketReviewUpdate = () => {
+      fetchUserReviews();
+    };
+    socket.on('reviewUpdated', handleSocketReviewUpdate);
+    return () => {
+      socket.off('reviewUpdated', handleSocketReviewUpdate);
+    };
+  }, []);
+
   const fetchUserReviews = async () => {
     try {
       setLoading(true);

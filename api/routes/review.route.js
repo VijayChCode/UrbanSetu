@@ -377,7 +377,7 @@ router.put('/admin/status/:reviewId', verifyToken, async (req, res, next) => {
           userId: review.userId,
           type: 'review_rejected',
           title: 'Review Rejected',
-          message: `Your review for "${listing?.name || 'the property'}" was rejected by admin.${adminNote ? ' Reason: ' + adminNote : ''}`,
+          message: `Your review for "${listing?.name || 'the property'}" was rejected by admin.`,
           listingId: review.listingId,
           adminId: req.user.id
         });

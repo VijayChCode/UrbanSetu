@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import { FaStar, FaTrash, FaEdit, FaCheck, FaTimes, FaThumbsUp, FaCheckCircle, FaSort, FaSortUp, FaSortDown, FaReply, FaPen, FaExclamationTriangle } from 'react-icons/fa';
+import { FaStar, FaTrash, FaEdit, FaCheck, FaTimes, FaThumbsUp, FaCheckCircle, FaSort, FaSortUp, FaSortDown, FaReply, FaPen, FaExclamationTriangle, FaBan } from 'react-icons/fa';
 import ReviewForm from './ReviewForm.jsx';
 import ReplyForm from './ReplyForm.jsx';
 import { socket } from '../utils/socket';
@@ -201,12 +201,18 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
     const statusConfig = {
       pending: { color: 'bg-yellow-100 text-yellow-800', icon: FaCheck },
       approved: { color: 'bg-green-100 text-green-800', icon: FaCheck },
-      rejected: { color: 'bg-red-100 text-red-800', icon: FaTimes }
+      rejected: { color: 'bg-red-100 text-red-800', icon: FaTimes },
+      removed: { color: 'bg-gray-100 text-gray-800', icon: FaBan }
     };
-
     const config = statusConfig[status];
+    if (!config) {
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+          {status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Unknown'}
+        </span>
+      );
+    }
     const Icon = config.icon;
-
     return (
       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.color}`}>
         <Icon className="mr-1" />
