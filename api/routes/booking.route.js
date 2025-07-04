@@ -83,23 +83,19 @@ router.post("/", verifyToken, async (req, res) => {
     if (io) {
       io.emit('appointmentCreated', { appointment: newBooking });
     }
-    // Send notification to the user
+    // Notify seller
     try {
       const notification = await Notification.create({
-        userId: buyer._id,
-        type: 'admin_booked_appointment',
-        title: 'Appointment Booked by Admin',
-        message: `A new appointment for "${listing.name}" has been booked on behalf of you by admin.`,
+        userId: seller._id,
+        type: 'appointment_booked',
+        title: 'New Appointment Booked',
+        message: `A new appointment for "${listing.name}" has been booked by ${buyer.username}.`,
         listingId: listing._id,
-        adminId: req.user.id
+        adminId: null
       });
-      console.log('Created admin_booked_appointment notification:', notification);
-      if (io) {
-        io.to(buyer._id.toString()).emit('notificationCreated', notification);
-        console.log('Emitted notificationCreated for admin_booked_appointment to user room', buyer._id.toString());
-      }
+      if (io) io.to(seller._id.toString()).emit('notificationCreated', notification);
     } catch (notificationError) {
-      console.error('Failed to create notification:', notificationError);
+      console.error('Failed to create notification for seller:', notificationError);
     }
     res.status(201).json({ message: "Appointment booked successfully!", appointment: newBooking });
   } catch (err) {
@@ -455,6 +451,20 @@ router.patch('/:id/cancel', verifyToken, async (req, res) => {
       const io = req.app.get('io');
       if (io) {
         io.emit('appointmentUpdate', { appointmentId: id, updatedAppointment: bookingToCancel });
+        // Notify seller
+        try {
+          const notification = await Notification.create({
+            userId: bookingToCancel.sellerId,
+            type: 'appointment_cancelled_by_buyer',
+            title: 'Appointment Cancelled by Buyer',
+            message: `The appointment for "${bookingToCancel.propertyName}" was cancelled by the buyer. Reason: ${reason}`,
+            listingId: bookingToCancel.listingId,
+            adminId: null
+          });
+          io.to(bookingToCancel.sellerId.toString()).emit('notificationCreated', notification);
+        } catch (notificationError) {
+          console.error('Failed to create notification for seller:', notificationError);
+        }
       }
       return res.status(200).json(bookingToCancel);
     }
@@ -475,6 +485,20 @@ router.patch('/:id/cancel', verifyToken, async (req, res) => {
       const io = req.app.get('io');
       if (io) {
         io.emit('appointmentUpdate', { appointmentId: id, updatedAppointment: bookingToCancel });
+        // Notify buyer
+        try {
+          const notification = await Notification.create({
+            userId: bookingToCancel.buyerId,
+            type: 'appointment_cancelled_by_seller',
+            title: 'Appointment Cancelled by Seller',
+            message: `The appointment for "${bookingToCancel.propertyName}" was cancelled by the seller. Reason: ${reason}`,
+            listingId: bookingToCancel.listingId,
+            adminId: null
+          });
+          io.to(bookingToCancel.buyerId.toString()).emit('notificationCreated', notification);
+        } catch (notificationError) {
+          console.error('Failed to create notification for buyer:', notificationError);
+        }
       }
       return res.status(200).json(bookingToCancel);
     }
@@ -492,6 +516,34 @@ router.patch('/:id/cancel', verifyToken, async (req, res) => {
       const io = req.app.get('io');
       if (io) {
         io.emit('appointmentUpdate', { appointmentId: id, updatedAppointment: bookingToCancel });
+        // Notify buyer
+        try {
+          const notification = await Notification.create({
+            userId: bookingToCancel.buyerId,
+            type: 'appointment_cancelled_by_admin',
+            title: 'Appointment Cancelled by Admin',
+            message: `The appointment for "${bookingToCancel.propertyName}" was cancelled by admin. Reason: ${reason}`,
+            listingId: bookingToCancel.listingId,
+            adminId: req.user.id
+          });
+          io.to(bookingToCancel.buyerId.toString()).emit('notificationCreated', notification);
+        } catch (notificationError) {
+          console.error('Failed to create notification for buyer:', notificationError);
+        }
+        // Notify seller
+        try {
+          const notification = await Notification.create({
+            userId: bookingToCancel.sellerId,
+            type: 'appointment_cancelled_by_admin',
+            title: 'Appointment Cancelled by Admin',
+            message: `The appointment for "${bookingToCancel.propertyName}" was cancelled by admin. Reason: ${reason}`,
+            listingId: bookingToCancel.listingId,
+            adminId: req.user.id
+          });
+          io.to(bookingToCancel.sellerId.toString()).emit('notificationCreated', notification);
+        } catch (notificationError) {
+          console.error('Failed to create notification for seller:', notificationError);
+        }
       }
       return res.status(200).json(bookingToCancel);
     }
@@ -543,6 +595,34 @@ router.patch('/:id/reinitiate', verifyToken, async (req, res) => {
     const io = req.app.get('io');
     if (io) {
       io.emit('appointmentUpdate', { appointmentId: id, updatedAppointment: updated });
+      // Notify buyer
+      try {
+        const notification = await Notification.create({
+          userId: updated.buyerId._id,
+          type: 'appointment_reinitiated_by_admin',
+          title: 'Appointment Reinitiated by Admin',
+          message: `The appointment for "${updated.propertyName}" was reinitiated by admin. Please review the details.`,
+          listingId: updated.listingId._id,
+          adminId: req.user.id
+        });
+        io.to(updated.buyerId._id.toString()).emit('notificationCreated', notification);
+      } catch (notificationError) {
+        console.error('Failed to create notification for buyer:', notificationError);
+      }
+      // Notify seller
+      try {
+        const notification = await Notification.create({
+          userId: updated.sellerId._id,
+          type: 'appointment_reinitiated_by_admin',
+          title: 'Appointment Reinitiated by Admin',
+          message: `The appointment for "${updated.propertyName}" was reinitiated by admin. Please review the details.`,
+          listingId: updated.listingId._id,
+          adminId: req.user.id
+        });
+        io.to(updated.sellerId._id.toString()).emit('notificationCreated', notification);
+      } catch (notificationError) {
+        console.error('Failed to create notification for seller:', notificationError);
+      }
     }
     res.status(200).json({
       message: 'Appointment reinitiated successfully.',
@@ -910,6 +990,34 @@ router.post("/admin", verifyToken, async (req, res) => {
     const io = req.app.get('io');
     if (io) {
       io.emit('appointmentCreated', { appointment: newBooking });
+    }
+    // Notify buyer
+    try {
+      const notification = await Notification.create({
+        userId: buyer._id,
+        type: 'admin_booked_appointment',
+        title: 'Appointment Booked by Admin',
+        message: `A new appointment for "${listing.name}" has been booked on behalf of you by admin.`,
+        listingId: listing._id,
+        adminId: req.user.id
+      });
+      if (io) io.to(buyer._id.toString()).emit('notificationCreated', notification);
+    } catch (notificationError) {
+      console.error('Failed to create notification for buyer:', notificationError);
+    }
+    // Notify seller
+    try {
+      const notification = await Notification.create({
+        userId: seller._id,
+        type: 'appointment_booked',
+        title: 'New Appointment Booked',
+        message: `A new appointment for "${listing.name}" has been booked by admin on behalf of ${buyer.username}`,
+        listingId: listing._id,
+        adminId: req.user.id
+      });
+      if (io) io.to(seller._id.toString()).emit('notificationCreated', notification);
+    } catch (notificationError) {
+      console.error('Failed to create notification for seller:', notificationError);
     }
     res.status(201).json({ message: "Appointment booked successfully!", appointment: newBooking });
   } catch (err) {

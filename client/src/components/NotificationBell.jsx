@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
-import { FaBell, FaTimes, FaCheck, FaTrash, FaEye, FaCalendarAlt, FaEdit, FaEnvelope, FaPaperPlane, FaUsers, FaUser } from 'react-icons/fa';
+import { FaBell, FaTimes, FaCheck, FaTrash, FaEye, FaCalendarAlt, FaEdit, FaEnvelope, FaPaperPlane, FaUsers, FaUser, FaRedo } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { socket } from '../utils/socket.js';
 
@@ -324,6 +324,16 @@ export default function NotificationBell({ mobile = false }) {
         return <FaEnvelope className="w-4 h-4 text-purple-500" />;
       case 'admin_booked_appointment':
         return <FaCalendarAlt className="w-4 h-4 text-orange-500" />;
+      case 'appointment_booked':
+        return <FaCalendarAlt className="w-4 h-4 text-blue-500" />;
+      case 'appointment_cancelled_by_seller':
+        return <FaTimes className="w-4 h-4 text-red-500" />;
+      case 'appointment_cancelled_by_buyer':
+        return <FaTimes className="w-4 h-4 text-yellow-500" />;
+      case 'appointment_cancelled_by_admin':
+        return <FaTimes className="w-4 h-4 text-pink-500" />;
+      case 'appointment_reinitiated_by_admin':
+        return <FaRedo className="w-4 h-4 text-green-500" />;
       default:
         return <FaBell className="w-4 h-4 text-gray-500" />;
     }
@@ -494,16 +504,7 @@ export default function NotificationBell({ mobile = false }) {
                                         {notification.title}
                                       </h4>
                                       <p className="text-sm text-gray-600 mt-1 whitespace-pre-line break-words max-w-xs md:max-w-md lg:max-w-lg">
-                                        {notification.type === 'admin_created_listing' && notification.listingId ? (
-                                          <a
-                                            href={`/user/listing/${notification.listingId}`}
-                                            className="text-blue-600 hover:underline"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                          >
-                                            {notification.message}
-                                          </a>
-                                        ) : notification.type === 'admin_booked_appointment' && notification.listingId ? (
+                                        {['admin_created_listing', 'admin_booked_appointment', 'appointment_booked', 'appointment_cancelled_by_seller', 'appointment_cancelled_by_buyer', 'appointment_cancelled_by_admin', 'appointment_reinitiated_by_admin'].includes(notification.type) && notification.listingId ? (
                                           <a
                                             href="/user/my-appointments"
                                             className="text-blue-600 hover:underline"
@@ -838,16 +839,7 @@ export default function NotificationBell({ mobile = false }) {
                                   {notification.title}
                                 </h4>
                                 <p className="text-sm text-gray-600 mt-1 whitespace-pre-line break-words max-w-xs md:max-w-md lg:max-w-lg">
-                                  {notification.type === 'admin_created_listing' && notification.listingId ? (
-                                    <a
-                                      href={`/user/listing/${notification.listingId}`}
-                                      className="text-blue-600 hover:underline"
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                    >
-                                      {notification.message}
-                                    </a>
-                                  ) : notification.type === 'admin_booked_appointment' && notification.listingId ? (
+                                  {['admin_created_listing', 'admin_booked_appointment', 'appointment_booked', 'appointment_cancelled_by_seller', 'appointment_cancelled_by_buyer', 'appointment_cancelled_by_admin', 'appointment_reinitiated_by_admin'].includes(notification.type) && notification.listingId ? (
                                     <a
                                       href="/user/my-appointments"
                                       className="text-blue-600 hover:underline"
