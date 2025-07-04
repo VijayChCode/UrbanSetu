@@ -436,7 +436,7 @@ export default function NotificationBell({ mobile = false }) {
                     </div>
 
                     {/* Notifications List */}
-                    <div className="max-h-[32rem] overflow-y-auto scrollbar-thin scrollbar-thumb-blue-400 scrollbar-track-blue-100 scrollbar-thumb-rounded min-w-0" style={{ scrollbarColor: '#60a5fa #e0e7ff', scrollbarWidth: 'thin' }}>
+                    <div className="max-h-full overflow-y-auto">
                       {notifications.length === 0 ? (
                         <div className="p-6 text-center text-gray-500">
                           <FaBell className="w-8 h-8 mx-auto mb-2 text-gray-300" />
@@ -760,7 +760,7 @@ export default function NotificationBell({ mobile = false }) {
               </div>
 
               {/* Notifications List */}
-              <div className="max-h-[32rem] overflow-y-auto scrollbar-thin scrollbar-thumb-blue-400 scrollbar-track-blue-100 scrollbar-thumb-rounded min-w-0" style={{ scrollbarColor: '#60a5fa #e0e7ff', scrollbarWidth: 'thin' }}>
+              <div className="max-h-full overflow-y-auto">
                 {notifications.length === 0 ? (
                   <div className="p-6 text-center text-gray-500">
                     <FaBell className="w-8 h-8 mx-auto mb-2 text-gray-300" />
@@ -1024,20 +1024,4 @@ export default function NotificationBell({ mobile = false }) {
       )}
     </div>
   );
-}
-
-<style>{`
-  .scrollbar-thin::-webkit-scrollbar {
-    width: 8px;
-    min-width: 8px;
-  }
-  .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: #60a5fa;
-    border-radius: 8px;
-    min-height: 40px;
-  }
-  .scrollbar-thin::-webkit-scrollbar-track {
-    background: #e0e7ff;
-    border-radius: 8px;
-  }
-`}</style> 
+} 
