@@ -6,6 +6,7 @@ import User from '../models/user.model.js';
 import Notification from '../models/notification.model.js';
 import booking from '../models/booking.model.js';
 import { errorHandler } from '../utils/error.js';
+import ReviewReply from '../models/reviewReply.model.js';
 
 const router = express.Router();
 
@@ -42,12 +43,6 @@ router.post('/create', verifyToken, async (req, res, next) => {
     // Check if user is the property owner - property owners cannot review their own properties
     if (listing.userRef && listing.userRef.toString() === req.user.id) {
       return next(errorHandler(403, 'Property owners cannot review their own properties.'));
-    }
-    
-    // Check if user has already reviewed this listing
-    const existingReview = await Review.findOne({ userId: req.user.id, listingId });
-    if (existingReview) {
-      return next(errorHandler(400, 'You have already reviewed this property'));
     }
     
     // Check if user has booked or visited this property for verification
@@ -489,6 +484,7 @@ router.put('/respond/:reviewId', verifyToken, async (req, res, next) => {
     if (listing.userRef.toString() !== req.user.id) {
       return next(errorHandler(403, 'Only the listing owner can respond to this review'));
     }
+    const isUpdate = !!review.ownerResponse;
     review.ownerResponse = ownerResponse;
     await review.save();
     // Emit socket event for real-time owner response
@@ -496,9 +492,109 @@ router.put('/respond/:reviewId', verifyToken, async (req, res, next) => {
     if (io) io.emit('reviewUpdated', review);
     res.status(200).json({
       success: true,
-      message: 'Response added successfully',
+      message: isUpdate ? 'Response updated successfully' : 'Response added successfully',
       review
     });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Create a reply to a review
+router.post('/reply/:reviewId', verifyToken, async (req, res, next) => {
+  try {
+    const { reviewId } = req.params;
+    const { comment } = req.body;
+    if (!comment || comment.trim().length === 0) {
+      return next(errorHandler(400, 'Reply cannot be empty'));
+    }
+    const review = await Review.findById(reviewId);
+    if (!review) {
+      return next(errorHandler(404, 'Review not found'));
+    }
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return next(errorHandler(404, 'User not found'));
+    }
+    const reply = new ReviewReply({
+      reviewId,
+      userId: req.user.id,
+      userName: user.username,
+      userAvatar: user.avatar,
+      comment: comment.trim(),
+      likes: [],
+      dislikes: []
+    });
+    await reply.save();
+    // Emit socket event for real-time reply creation
+    const io = req.app.get('io');
+    if (io) io.emit('reviewReplyUpdated', { action: 'created', reply });
+    res.status(201).json({ success: true, message: 'Reply added successfully', reply });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Fetch replies for a review
+router.get('/reply/:reviewId', async (req, res, next) => {
+  try {
+    const { reviewId } = req.params;
+    const replies = await ReviewReply.find({ reviewId }).sort({ createdAt: 1 });
+    res.status(200).json(replies);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Like/dislike a reply
+router.post('/reply/like/:replyId', verifyToken, async (req, res, next) => {
+  try {
+    const { replyId } = req.params;
+    const { action } = req.body; // 'like' or 'dislike'
+    const reply = await ReviewReply.findById(replyId);
+    if (!reply) {
+      return next(errorHandler(404, 'Reply not found'));
+    }
+    // Remove user from both arrays first
+    reply.likes = reply.likes.filter(id => id.toString() !== req.user.id);
+    reply.dislikes = reply.dislikes.filter(id => id.toString() !== req.user.id);
+    if (action === 'like') {
+      reply.likes.push(req.user.id);
+    } else if (action === 'dislike') {
+      reply.dislikes.push(req.user.id);
+    }
+    await reply.save();
+    // Emit socket event for real-time reply like/dislike
+    const io = req.app.get('io');
+    if (io) io.emit('reviewReplyUpdated', { action: 'liked', reply });
+    res.status(200).json({ success: true, reply });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Dislike a main review
+router.post('/dislike/:reviewId', verifyToken, async (req, res, next) => {
+  try {
+    const { reviewId } = req.params;
+    const review = await Review.findById(reviewId);
+    if (!review) {
+      return next(errorHandler(404, 'Review not found'));
+    }
+    // Remove user from dislikes if already present, else add
+    const alreadyDisliked = review.dislikes.some(d => d.userId.toString() === req.user.id);
+    if (alreadyDisliked) {
+      review.dislikes = review.dislikes.filter(d => d.userId.toString() !== req.user.id);
+      review.dislikeCount = Math.max(0, review.dislikeCount - 1);
+    } else {
+      review.dislikes.push({ userId: req.user.id, dislikedAt: new Date() });
+      review.dislikeCount += 1;
+    }
+    await review.save();
+    // Emit socket event for real-time review dislike
+    const io = req.app.get('io');
+    if (io) io.emit('reviewUpdated', review);
+    res.status(200).json({ success: true, dislikeCount: review.dislikeCount, dislikes: review.dislikes });
   } catch (error) {
     next(error);
   }

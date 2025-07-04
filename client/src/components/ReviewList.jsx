@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { FaStar, FaTrash, FaEdit, FaCheck, FaTimes, FaThumbsUp, FaCheckCircle, FaSort, FaSortUp, FaSortDown, FaReply } from 'react-icons/fa';
 import ReviewForm from './ReviewForm.jsx';
+import ReplyForm from './ReplyForm.jsx';
 import { socket } from '../utils/socket';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -17,6 +18,7 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
   const [responseEdit, setResponseEdit] = useState({});
   const [responseLoading, setResponseLoading] = useState({});
   const [responseError, setResponseError] = useState({});
+  const [replies, setReplies] = useState({});
 
   useEffect(() => {
     fetchReviews();
@@ -31,11 +33,21 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
             return [updatedReview, ...prev];
           }
         });
+        // Fetch replies for this review if needed
+        fetchReplies(updatedReview._id);
       }
     };
     socket.on('reviewUpdated', handleSocketReviewUpdate);
+    // Listen for real-time reply updates
+    const handleSocketReplyUpdate = ({ action, reply }) => {
+      if (reply && reply.reviewId) {
+        fetchReplies(reply.reviewId);
+      }
+    };
+    socket.on('reviewReplyUpdated', handleSocketReplyUpdate);
     return () => {
       socket.off('reviewUpdated', handleSocketReviewUpdate);
+      socket.off('reviewReplyUpdated', handleSocketReplyUpdate);
     };
   }, [listingId]);
 
@@ -211,6 +223,50 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
     } else {
       setSortBy(field);
       setSortOrder('desc');
+    }
+  };
+
+  const fetchReplies = async (reviewId) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/review/reply/${reviewId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setReplies(prev => ({ ...prev, [reviewId]: data }));
+      }
+    } catch {}
+  };
+
+  useEffect(() => {
+    reviews.forEach(r => fetchReplies(r._id));
+  }, [reviews]);
+
+  const handleLikeDislikeReply = async (replyId, action) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/review/reply/like/${replyId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ action }),
+      });
+      if (res.ok) {
+        fetchReplies(replyId);
+      }
+    } catch (error) {
+      alert('Network error. Please try again.');
+    }
+  };
+
+  const handleDislikeReview = async (reviewId) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/review/dislike/${reviewId}`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (res.ok) {
+        fetchReplies(reviewId);
+      }
+    } catch (error) {
+      alert('Network error. Please try again.');
     }
   };
 
@@ -398,6 +454,22 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
               )}
             </div>
           )}
+
+          {/* Dislike button for main review */}
+          <button
+            onClick={() => handleDislikeReview(review._id)}
+            className={`flex items-center gap-1 px-3 py-1 rounded-lg transition-colors ${
+              review.dislikes?.some(d => d.userId === currentUser?._id)
+                ? 'bg-red-100 text-red-700'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            <span role="img" aria-label="dislike">👎</span>
+            <span>Dislike</span>
+            {review.dislikeCount > 0 && (
+              <span className="ml-1">({review.dislikeCount})</span>
+            )}
+          </button>
         </div>
       ))}
       
@@ -420,6 +492,37 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
           </div>
         </div>
       )}
+
+      {/* Replies section */}
+      <div className="mt-4 ml-8">
+        <h5 className="text-sm font-semibold text-gray-700 mb-2">Replies</h5>
+        {replies[review._id]?.map(reply => (
+          <div key={reply._id} className="bg-gray-50 rounded p-2 mb-2 flex flex-col">
+            <div className="flex items-center gap-2 mb-1">
+              <img src={reply.userAvatar} alt={reply.userName} className="w-6 h-6 rounded-full object-cover" />
+              <span className="font-medium text-gray-800 text-xs">{reply.userName}</span>
+              <span className="text-xs text-gray-500">{new Date(reply.createdAt).toLocaleString()}</span>
+            </div>
+            <div className="text-gray-700 text-sm mb-1">{reply.comment}</div>
+            <div className="flex gap-2 text-xs">
+              <button
+                onClick={() => handleLikeDislikeReply(reply._id, 'like')}
+                className={`flex items-center gap-1 ${reply.likes?.includes(currentUser?._id) ? 'text-blue-600' : 'text-gray-500'}`}
+              >
+                👍 Like {reply.likes?.length > 0 && `(${reply.likes.length})`}
+              </button>
+              <button
+                onClick={() => handleLikeDislikeReply(reply._id, 'dislike')}
+                className={`flex items-center gap-1 ${reply.dislikes?.includes(currentUser?._id) ? 'text-red-600' : 'text-gray-500'}`}
+              >
+                �� Dislike {reply.dislikes?.length > 0 && `(${reply.dislikes.length})`}
+              </button>
+            </div>
+          </div>
+        ))}
+        {/* Reply form */}
+        <ReplyForm reviewId={review._id} onReplyAdded={() => fetchReplies(review._id)} />
+      </div>
     </div>
   );
 } 

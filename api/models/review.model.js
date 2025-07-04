@@ -59,6 +59,21 @@ const reviewSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  // Dislike support for main reviews
+  dislikes: [{
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    dislikedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  dislikeCount: {
+    type: Number,
+    default: 0
+  },
   removedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
