@@ -15,6 +15,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
+import jwt from 'jsonwebtoken';
 
 import path from 'path'
 import User from './models/user.model.js';
@@ -129,8 +130,30 @@ const io = new SocketIOServer(server, {
 
 app.set('io', io);
 
+io.use(async (socket, next) => {
+  try {
+    const token = socket.handshake.auth && socket.handshake.auth.token;
+    if (!token) {
+      console.log('[401] Access token not found (socket.io)');
+      return next(new Error('Access token not found'));
+    }
+    const decoded = jwt.verify(token, process.env.JWT_TOKEN);
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return next(new Error('User not found'));
+    }
+    socket.user = user;
+    // Join user-specific room
+    socket.join(user._id.toString());
+    next();
+  } catch (error) {
+    console.log('[401] Socket auth error:', error.message);
+    return next(new Error('Invalid or expired token'));
+  }
+});
+
 io.on('connection', (socket) => {
-  console.log('A user connected:', socket.id);
+  console.log('A user connected:', socket.id, 'UserID:', socket.user?._id?.toString());
 
   // Example: Listen for a new comment event from client (optional)
   socket.on('newComment', (data) => {
@@ -138,7 +161,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
+    console.log('User disconnected:', socket.id, 'UserID:', socket.user?._id?.toString());
   });
 });
 

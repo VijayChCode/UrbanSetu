@@ -95,8 +95,8 @@ router.post("/", verifyToken, async (req, res) => {
       });
       console.log('Created admin_booked_appointment notification:', notification);
       if (io) {
-        io.emit('notificationCreated', notification);
-        console.log('Emitted notificationCreated for admin_booked_appointment');
+        io.to(buyer._id.toString()).emit('notificationCreated', notification);
+        console.log('Emitted notificationCreated for admin_booked_appointment to user room', buyer._id.toString());
       }
     } catch (notificationError) {
       console.error('Failed to create notification:', notificationError);
