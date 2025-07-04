@@ -470,6 +470,37 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
               <span className="ml-1">({review.dislikeCount})</span>
             )}
           </button>
+
+          {/* Replies section */}
+          <div className="mt-4 ml-8">
+            <h5 className="text-sm font-semibold text-gray-700 mb-2">Replies</h5>
+            {replies[review._id]?.map(reply => (
+              <div key={reply._id} className="bg-gray-50 rounded p-2 mb-2 flex flex-col">
+                <div className="flex items-center gap-2 mb-1">
+                  <img src={reply.userAvatar} alt={reply.userName} className="w-6 h-6 rounded-full object-cover" />
+                  <span className="font-medium text-gray-800 text-xs">{reply.userName}</span>
+                  <span className="text-xs text-gray-500">{new Date(reply.createdAt).toLocaleString()}</span>
+                </div>
+                <div className="text-gray-700 text-sm mb-1">{reply.comment}</div>
+                <div className="flex gap-2 text-xs">
+                  <button
+                    onClick={() => handleLikeDislikeReply(reply._id, 'like')}
+                    className={`flex items-center gap-1 ${reply.likes?.includes(currentUser?._id) ? 'text-blue-600' : 'text-gray-500'}`}
+                  >
+                    👍 Like {reply.likes?.length > 0 && `(${reply.likes.length})`}
+                  </button>
+                  <button
+                    onClick={() => handleLikeDislikeReply(reply._id, 'dislike')}
+                    className={`flex items-center gap-1 ${reply.dislikes?.includes(currentUser?._id) ? 'text-red-600' : 'text-gray-500'}`}
+                  >
+                    👎 Dislike {reply.dislikes?.length > 0 && `(${reply.dislikes.length})`}
+                  </button>
+                </div>
+              </div>
+            ))}
+            {/* Reply form */}
+            <ReplyForm reviewId={review._id} onReplyAdded={() => fetchReplies(review._id)} />
+          </div>
         </div>
       ))}
       
@@ -492,37 +523,6 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
           </div>
         </div>
       )}
-
-      {/* Replies section */}
-      <div className="mt-4 ml-8">
-        <h5 className="text-sm font-semibold text-gray-700 mb-2">Replies</h5>
-        {replies[review._id]?.map(reply => (
-          <div key={reply._id} className="bg-gray-50 rounded p-2 mb-2 flex flex-col">
-            <div className="flex items-center gap-2 mb-1">
-              <img src={reply.userAvatar} alt={reply.userName} className="w-6 h-6 rounded-full object-cover" />
-              <span className="font-medium text-gray-800 text-xs">{reply.userName}</span>
-              <span className="text-xs text-gray-500">{new Date(reply.createdAt).toLocaleString()}</span>
-            </div>
-            <div className="text-gray-700 text-sm mb-1">{reply.comment}</div>
-            <div className="flex gap-2 text-xs">
-              <button
-                onClick={() => handleLikeDislikeReply(reply._id, 'like')}
-                className={`flex items-center gap-1 ${reply.likes?.includes(currentUser?._id) ? 'text-blue-600' : 'text-gray-500'}`}
-              >
-                👍 Like {reply.likes?.length > 0 && `(${reply.likes.length})`}
-              </button>
-              <button
-                onClick={() => handleLikeDislikeReply(reply._id, 'dislike')}
-                className={`flex items-center gap-1 ${reply.dislikes?.includes(currentUser?._id) ? 'text-red-600' : 'text-gray-500'}`}
-              >
-                �� Dislike {reply.dislikes?.length > 0 && `(${reply.dislikes.length})`}
-              </button>
-            </div>
-          </div>
-        ))}
-        {/* Reply form */}
-        <ReplyForm reviewId={review._id} onReplyAdded={() => fetchReplies(review._id)} />
-      </div>
     </div>
   );
 } 
