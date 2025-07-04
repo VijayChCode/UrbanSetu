@@ -26,6 +26,25 @@ export default function NotificationBell({ mobile = false }) {
   const [allUsersMessage, setAllUsersMessage] = useState('');
   const bellRef = useRef(null);
 
+  // Scroll lock effect: prevent background scroll when notification dropdown/modal is open
+  useEffect(() => {
+    if (isOpen) {
+      // Save previous overflow style
+      const prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      // Clean up: restore previous overflow
+      return () => {
+        document.body.style.overflow = prevOverflow;
+      };
+    } else {
+      document.body.style.overflow = '';
+    }
+    // Clean up on unmount
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
   // Fetch notifications
   const fetchNotifications = async () => {
     if (!currentUser) return;
