@@ -465,6 +465,7 @@ router.put('/admin/remove/:reviewId', verifyToken, async (req, res, next) => {
         listingId: review.listingId,
         adminId: req.user.id
       });
+      console.log('Emitting notificationCreated:', notification);
       if (io) io.emit('notificationCreated', notification);
     } catch (notificationError) {
       console.error('Failed to send notification:', notificationError);
