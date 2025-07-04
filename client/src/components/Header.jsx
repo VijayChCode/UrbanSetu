@@ -5,6 +5,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { signoutUserSuccess } from "../redux/user/userSlice.js";
 import NotificationBell from "./NotificationBell.jsx";
 import { persistor } from '../redux/store';
+import { reconnectSocket } from "../utils/socket";
 
 export default function Header() {
   const { currentUser } = useSelector((state) => state.user);
@@ -222,12 +223,14 @@ function UserNavLinks({ mobile = false, onNavigate }) {
       await persistor.purge();
       alert("You have been signed out.");
       navigate("/sign-in");
+      reconnectSocket();
     } catch (error) {
       console.log(error.message);
       dispatch(signoutUserSuccess());
       await persistor.purge();
       alert("You have been signed out.");
       navigate("/sign-in");
+      reconnectSocket();
     }
   };
 

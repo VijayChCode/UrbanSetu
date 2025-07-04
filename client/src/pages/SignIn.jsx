@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { signInFailure, signInStart, signInSuccess } from "../redux/user/userSlice.js";
 import Oauth from "../components/Oauth.jsx";
 import ContactSupportWrapper from "../components/ContactSupportWrapper.jsx";
+import { reconnectSocket } from "../utils/socket";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -83,6 +84,9 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
             
             // Use a small delay to ensure state is updated
             await new Promise(resolve => setTimeout(resolve, 50));
+            
+            // Reconnect socket with new token
+            reconnectSocket();
             
             if (data.role === "admin" || data.role === "rootadmin") {
                 // Special handling for root admin
