@@ -91,6 +91,13 @@ router.post('/create', verifyToken, async (req, res, next) => {
       review: newReview
     });
   } catch (error) {
+    // Handle duplicate key error for unique userId+listingId
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: 'You have already reviewed this property.'
+      });
+    }
     next(error);
   }
 });

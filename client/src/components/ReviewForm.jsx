@@ -119,6 +119,10 @@ export default function ReviewForm({ listingId, existingReview, onReviewSubmitte
         alert(data.message || 'Review submitted successfully!');
         navigate(0);
       } else {
+        // Show alert for duplicate review error
+        if (data.message && data.message.includes('already reviewed')) {
+          alert(data.message);
+        }
         setError(data.message || 'Failed to submit review');
       }
     } catch (error) {
