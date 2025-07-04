@@ -71,7 +71,6 @@ app.use(cookieParser());
 
 const allowedOrigins = [
     'https://urbansetu.vercel.app',
-    'https://urbansetu-vijaychcode.vercel.app',
     'http://localhost:5173', // for local development
 ];
 
