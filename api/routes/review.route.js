@@ -450,11 +450,20 @@ router.put('/admin/remove/:reviewId', verifyToken, async (req, res, next) => {
     if (io) io.emit('reviewUpdated', review);
     // Send notification to review author
     try {
+      // Fetch listing for property name
+      const listing = await Listing.findById(review.listingId);
+      const propertyName = listing?.name || 'the property';
+      let notificationMessage = `Your review was blocked by admin and is no longer visible on the property.\n`;
+      notificationMessage += `Property: "${propertyName}"\n`;
+      notificationMessage += `Reason: ${reason}`;
+      if (note) {
+        notificationMessage += `\nAdmin Note: ${note}`;
+      }
       await Notification.create({
         userId: review.userId,
         type: 'review_blocked',
         title: 'Review Blocked by Admin',
-        message: 'Your review was blocked by admin and is no longer visible on the property.',
+        message: notificationMessage,
         listingId: review.listingId,
         adminId: req.user.id
       });
