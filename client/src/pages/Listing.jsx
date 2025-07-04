@@ -437,6 +437,7 @@ export default function Listing() {
                   // Refresh the listing data to update rating
                   window.location.reload();
                 }}
+                listingOwnerId={listing.userRef}
               />
             </div>
           </div>

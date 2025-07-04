@@ -91,6 +91,10 @@ router.post('/create', verifyToken, async (req, res, next) => {
       console.error('Failed to send notification:', notificationError);
     }
     
+    // Emit socket event for real-time review creation
+    const io = req.app.get('io');
+    if (io) io.emit('reviewUpdated', newReview);
+    
     res.status(201).json({
       success: true,
       message: 'Review submitted successfully and pending approval',
@@ -168,6 +172,10 @@ router.put('/update/:reviewId', verifyToken, async (req, res, next) => {
       },
       { new: true }
     );
+    
+    // Emit socket event for real-time review update
+    const io = req.app.get('io');
+    if (io) io.emit('reviewUpdated', updatedReview);
     
     res.status(200).json({
       success: true,
@@ -455,6 +463,41 @@ router.get('/admin/stats', verifyToken, async (req, res, next) => {
       removedReviews,
       verifiedReviews,
       averageRating: averageRating.length > 0 ? Math.round(averageRating[0].avgRating * 10) / 10 : 0
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Owner responds to a review
+router.put('/respond/:reviewId', verifyToken, async (req, res, next) => {
+  try {
+    const { reviewId } = req.params;
+    const { ownerResponse } = req.body;
+    if (!ownerResponse || ownerResponse.trim().length === 0) {
+      return next(errorHandler(400, 'Response cannot be empty'));
+    }
+    const review = await Review.findById(reviewId);
+    if (!review) {
+      return next(errorHandler(404, 'Review not found'));
+    }
+    const listing = await Listing.findById(review.listingId);
+    if (!listing) {
+      return next(errorHandler(404, 'Listing not found'));
+    }
+    // Only the owner of the listing can respond
+    if (listing.userRef.toString() !== req.user.id) {
+      return next(errorHandler(403, 'Only the listing owner can respond to this review'));
+    }
+    review.ownerResponse = ownerResponse;
+    await review.save();
+    // Emit socket event for real-time owner response
+    const io = req.app.get('io');
+    if (io) io.emit('reviewUpdated', review);
+    res.status(200).json({
+      success: true,
+      message: 'Response added successfully',
+      review
     });
   } catch (error) {
     next(error);

@@ -86,6 +86,12 @@ const reviewSchema = new mongoose.Schema({
   },
   verificationDate: {
     type: Date
+  },
+  // Owner response to review
+  ownerResponse: {
+    type: String,
+    trim: true,
+    maxlength: 1000
   }
 }, { timestamps: true });
 

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import { FaStar, FaTrash, FaEdit, FaCheck, FaTimes, FaThumbsUp, FaCheckCircle, FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
+import { FaStar, FaTrash, FaEdit, FaCheck, FaTimes, FaThumbsUp, FaCheckCircle, FaSort, FaSortUp, FaSortDown, FaReply } from 'react-icons/fa';
 import ReviewForm from './ReviewForm.jsx';
+import { socket } from '../utils/socket';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-export default function ReviewList({ listingId, onReviewDeleted }) {
+export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId }) {
   const { currentUser } = useSelector((state) => state.user);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -13,10 +14,30 @@ export default function ReviewList({ listingId, onReviewDeleted }) {
   const [editingReview, setEditingReview] = useState(null);
   const [sortBy, setSortBy] = useState('date');
   const [sortOrder, setSortOrder] = useState('desc');
+  const [responseEdit, setResponseEdit] = useState({});
+  const [responseLoading, setResponseLoading] = useState({});
+  const [responseError, setResponseError] = useState({});
 
   useEffect(() => {
     fetchReviews();
-  }, [listingId, sortBy, sortOrder]);
+    // Listen for real-time review updates
+    const handleSocketReviewUpdate = (updatedReview) => {
+      if (updatedReview.listingId === listingId || (updatedReview.listingId && updatedReview.listingId._id === listingId)) {
+        setReviews(prev => {
+          const exists = prev.some(r => r._id === updatedReview._id);
+          if (exists) {
+            return prev.map(r => r._id === updatedReview._id ? { ...r, ...updatedReview } : r);
+          } else {
+            return [updatedReview, ...prev];
+          }
+        });
+      }
+    };
+    socket.on('reviewUpdated', handleSocketReviewUpdate);
+    return () => {
+      socket.off('reviewUpdated', handleSocketReviewUpdate);
+    };
+  }, [listingId]);
 
   const fetchReviews = async () => {
     try {
@@ -106,6 +127,34 @@ export default function ReviewList({ listingId, onReviewDeleted }) {
       }
     } catch (error) {
       alert('Network error. Please try again.');
+    }
+  };
+
+  const handleOwnerResponseChange = (reviewId, value) => {
+    setResponseEdit((prev) => ({ ...prev, [reviewId]: value }));
+  };
+
+  const handleOwnerResponseSubmit = async (reviewId) => {
+    setResponseLoading((prev) => ({ ...prev, [reviewId]: true }));
+    setResponseError((prev) => ({ ...prev, [reviewId]: '' }));
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/review/respond/${reviewId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ ownerResponse: responseEdit[reviewId] }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setReviews((prev) => prev.map(r => r._id === reviewId ? { ...r, ownerResponse: responseEdit[reviewId] } : r));
+        setResponseEdit((prev) => ({ ...prev, [reviewId]: '' }));
+      } else {
+        setResponseError((prev) => ({ ...prev, [reviewId]: data.message || 'Failed to submit response' }));
+      }
+    } catch (error) {
+      setResponseError((prev) => ({ ...prev, [reviewId]: 'Network error. Please try again.' }));
+    } finally {
+      setResponseLoading((prev) => ({ ...prev, [reviewId]: false }));
     }
   };
 
@@ -310,6 +359,43 @@ export default function ReviewList({ listingId, onReviewDeleted }) {
               <p className="text-sm text-gray-600">
                 <strong>Admin Note:</strong> {review.adminNote}
               </p>
+            </div>
+          )}
+
+          {/* Owner response (if any) */}
+          {review.ownerResponse && (
+            <div className="mt-3 p-3 bg-blue-50 rounded-md border border-blue-200">
+              <p className="text-sm text-blue-800 flex items-center gap-2">
+                <FaReply className="inline-block text-blue-500" />
+                <strong>Owner Response:</strong> {review.ownerResponse}
+              </p>
+            </div>
+          )}
+
+          {/* Owner response form (only for owner) */}
+          {currentUser && listingOwnerId && currentUser._id === listingOwnerId && (
+            <div className="mt-3">
+              <label className="block text-sm font-medium text-blue-700 mb-1 flex items-center gap-1">
+                <FaReply /> Respond as Owner
+              </label>
+              <textarea
+                className="w-full border border-blue-300 rounded-md p-2 text-sm mb-2"
+                rows="2"
+                placeholder="Write a response to this review..."
+                value={responseEdit[review._id] !== undefined ? responseEdit[review._id] : (review.ownerResponse || '')}
+                onChange={e => handleOwnerResponseChange(review._id, e.target.value)}
+                disabled={responseLoading[review._id]}
+              />
+              <button
+                className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm"
+                onClick={() => handleOwnerResponseSubmit(review._id)}
+                disabled={responseLoading[review._id] || !responseEdit[review._id] || responseEdit[review._id].trim() === (review.ownerResponse || '').trim()}
+              >
+                {responseLoading[review._id] ? 'Saving...' : (review.ownerResponse ? 'Update Response' : 'Add Response')}
+              </button>
+              {responseError[review._id] && (
+                <div className="text-red-600 text-xs mt-1">{responseError[review._id]}</div>
+              )}
             </div>
           )}
         </div>
