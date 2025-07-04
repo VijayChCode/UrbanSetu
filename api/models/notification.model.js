@@ -20,7 +20,12 @@ const notificationSchema = new mongoose.Schema(
         'review_rejected',
         'review_blocked',
         'admin_created_listing',
-        'admin_booked_appointment'
+        'admin_booked_appointment',
+        'appointment_booked',
+        'appointment_cancelled_by_buyer',
+        'appointment_cancelled_by_seller',
+        'appointment_cancelled_by_admin',
+        'appointment_reinitiated_by_admin'
       ],
     },
     title: {
