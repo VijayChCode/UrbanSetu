@@ -372,7 +372,11 @@ export default function AdminReviews() {
                         )}
                       </div>
                       <div className="text-sm text-gray-500">
-                        {review.listingId?.name || 'Property not found'}
+                        {review.listingId?.name ? (
+                          <a href={`/admin/listing/${typeof review.listingId === 'object' ? review.listingId._id : review.listingId}`} className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">
+                            {review.listingId.name}
+                          </a>
+                        ) : 'Property not found'}
                       </div>
                       <div className="text-xs text-gray-400">
                         {review.listingId?.city}, {review.listingId?.state}

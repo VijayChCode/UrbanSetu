@@ -20,14 +20,31 @@ export default function UserReviews() {
   }, []);
 
   useEffect(() => {
-    const handleSocketReviewUpdate = () => {
-      fetchUserReviews();
+    const handleSocketReviewUpdate = (updatedReview) => {
+      // Only update if the review belongs to the current user
+      if (!currentUser || updatedReview.userId !== currentUser._id) return;
+      setReviews((prevReviews) => {
+        // If the review is removed (status 'removed'), update it in the list
+        if (updatedReview.status === 'removed') {
+          return prevReviews.map((r) =>
+            r._id === updatedReview._id ? { ...r, ...updatedReview } : r
+          );
+        }
+        // If the review is deleted (not present), remove it from the list
+        if (updatedReview._deleted) {
+          return prevReviews.filter((r) => r._id !== updatedReview._id);
+        }
+        // Otherwise, update the review in the list
+        return prevReviews.map((r) =>
+          r._id === updatedReview._id ? { ...r, ...updatedReview } : r
+        );
+      });
     };
     socket.on('reviewUpdated', handleSocketReviewUpdate);
     return () => {
       socket.off('reviewUpdated', handleSocketReviewUpdate);
     };
-  }, []);
+  }, [currentUser]);
 
   const fetchUserReviews = async () => {
     try {
@@ -241,7 +258,11 @@ export default function UserReviews() {
                     {/* Property Info */}
                     {review.listingId && (
                       <div className="bg-gray-50 rounded-lg p-3">
-                        <h4 className="font-semibold text-gray-800">{review.listingId.name}</h4>
+                        <h4 className="font-semibold text-gray-800">
+                          <a href={`/user/listing/${typeof review.listingId === 'object' ? review.listingId._id : review.listingId}`} className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">
+                            {review.listingId.name}
+                          </a>
+                        </h4>
                         <p className="text-sm text-gray-600">
                           {review.listingId.city}, {review.listingId.state}
                         </p>
