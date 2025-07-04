@@ -354,6 +354,7 @@ export default function AdminReviews() {
                   `block sm:table-row bg-white rounded-lg shadow-sm sm:shadow-none p-3 sm:p-0 border sm:border-0` +
                   (idx !== filteredReviews.length - 1 ? ' sm:border-b sm:border-gray-200' : '')
                 }
+                style={{ marginBottom: '1.5rem', border: '1px solid #e5e7eb', borderRadius: '0.75rem', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
               >
                 <div className="flex flex-col sm:table-cell sm:align-top sm:w-1/4 mb-2 sm:mb-0">
                   <div className="flex items-center">

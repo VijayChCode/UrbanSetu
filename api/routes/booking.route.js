@@ -4,6 +4,7 @@ import Listing from "../models/listing.model.js";
 import User from "../models/user.model.js";
 import { verifyToken } from '../utils/verify.js';
 import Review from '../models/review.model.js';
+import Notification from '../models/notification.model.js';
 
 const router = express.Router();
 
@@ -81,6 +82,20 @@ router.post("/", verifyToken, async (req, res) => {
     const io = req.app.get('io');
     if (io) {
       io.emit('appointmentCreated', { appointment: newBooking });
+    }
+    // Send notification to the user
+    try {
+      const notification = await Notification.create({
+        userId: buyer._id,
+        type: 'admin_booked_appointment',
+        title: 'Appointment Booked by Admin',
+        message: `A new appointment for "${listing.name}" has been booked on behalf of you by admin.`,
+        listingId: listing._id,
+        adminId: req.user.id
+      });
+      if (io) io.emit('notificationCreated', notification);
+    } catch (notificationError) {
+      console.error('Failed to create notification:', notificationError);
     }
     res.status(201).json({ message: "Appointment booked successfully!", appointment: newBooking });
   } catch (err) {

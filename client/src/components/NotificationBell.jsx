@@ -492,7 +492,27 @@ export default function NotificationBell({ mobile = false }) {
                                         {notification.title}
                                       </h4>
                                       <p className="text-sm text-gray-600 mt-1 whitespace-pre-line break-words max-w-xs md:max-w-md lg:max-w-lg">
-                                        {notification.message}
+                                        {notification.type === 'admin_created_listing' && notification.listingId ? (
+                                          <a
+                                            href={`/user/listing/${notification.listingId}`}
+                                            className="text-blue-600 hover:underline"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                          >
+                                            {notification.message}
+                                          </a>
+                                        ) : notification.type === 'admin_booked_appointment' && notification.listingId ? (
+                                          <a
+                                            href="/user/my-appointments"
+                                            className="text-blue-600 hover:underline"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                          >
+                                            {notification.message}
+                                          </a>
+                                        ) : (
+                                          notification.message
+                                        )}
                                       </p>
                                       <div className="flex items-center gap-2 mt-2">
                                         <span className="text-xs text-gray-500">
@@ -816,7 +836,27 @@ export default function NotificationBell({ mobile = false }) {
                                   {notification.title}
                                 </h4>
                                 <p className="text-sm text-gray-600 mt-1 whitespace-pre-line break-words max-w-xs md:max-w-md lg:max-w-lg">
-                                  {notification.message}
+                                  {notification.type === 'admin_created_listing' && notification.listingId ? (
+                                    <a
+                                      href={`/user/listing/${notification.listingId}`}
+                                      className="text-blue-600 hover:underline"
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                    >
+                                      {notification.message}
+                                    </a>
+                                  ) : notification.type === 'admin_booked_appointment' && notification.listingId ? (
+                                    <a
+                                      href="/user/my-appointments"
+                                      className="text-blue-600 hover:underline"
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                    >
+                                      {notification.message}
+                                    </a>
+                                  ) : (
+                                    notification.message
+                                  )}
                                 </p>
                                 <div className="flex items-center gap-2 mt-2">
                                   <span className="text-xs text-gray-500">

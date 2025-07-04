@@ -40,6 +40,21 @@ export const createListing=async (req,res,next)=>{
         let successMessage = "Property Added Successfully";
         if (assignToEmail && assignToEmail.trim()) {
             successMessage = `Listing assigned to ${assignToEmail}`;
+            // Send notification to the user
+            try {
+                const notification = await Notification.create({
+                    userId: userRef,
+                    type: 'admin_created_listing',
+                    title: 'Property Added by Admin',
+                    message: `A new property "${listing.name}" is added on behalf of you by admin.`,
+                    listingId: listing._id,
+                    adminId: req.user.id
+                });
+                const io = req.app.get('io');
+                if (io) io.emit('notificationCreated', notification);
+            } catch (notificationError) {
+                console.error('Failed to create notification:', notificationError);
+            }
         } else {
             successMessage = "Listing created under admin ownership";
         }

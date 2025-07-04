@@ -18,7 +18,9 @@ const notificationSchema = new mongoose.Schema(
         'new_review',
         'review_reported',
         'review_rejected',
-        'review_blocked'
+        'review_blocked',
+        'admin_created_listing',
+        'admin_booked_appointment'
       ],
     },
     title: {
