@@ -600,4 +600,77 @@ router.post('/dislike/:reviewId', verifyToken, async (req, res, next) => {
   }
 });
 
+// Update a reply
+router.put('/reply/:replyId', verifyToken, async (req, res, next) => {
+  try {
+    const { replyId } = req.params;
+    const { comment } = req.body;
+    if (!comment || comment.trim().length === 0) {
+      return next(errorHandler(400, 'Reply cannot be empty'));
+    }
+    const reply = await ReviewReply.findById(replyId);
+    if (!reply) {
+      return next(errorHandler(404, 'Reply not found'));
+    }
+    if (reply.userId.toString() !== req.user.id) {
+      return next(errorHandler(403, 'You can only edit your own replies'));
+    }
+    reply.comment = comment.trim();
+    await reply.save();
+    // Emit socket event for real-time reply update
+    const io = req.app.get('io');
+    if (io) io.emit('reviewReplyUpdated', { action: 'updated', reply });
+    res.status(200).json({ success: true, message: 'Reply updated successfully', reply });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Delete a reply
+router.delete('/reply/:replyId', verifyToken, async (req, res, next) => {
+  try {
+    const { replyId } = req.params;
+    const reply = await ReviewReply.findById(replyId);
+    if (!reply) {
+      return next(errorHandler(404, 'Reply not found'));
+    }
+    if (reply.userId.toString() !== req.user.id) {
+      return next(errorHandler(403, 'You can only delete your own replies'));
+    }
+    await reply.deleteOne();
+    // Emit socket event for real-time reply deletion
+    const io = req.app.get('io');
+    if (io) io.emit('reviewReplyUpdated', { action: 'deleted', replyId });
+    res.status(200).json({ success: true, message: 'Reply deleted successfully' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Delete owner response
+router.delete('/respond/:reviewId', verifyToken, async (req, res, next) => {
+  try {
+    const { reviewId } = req.params;
+    const review = await Review.findById(reviewId);
+    if (!review) {
+      return next(errorHandler(404, 'Review not found'));
+    }
+    const listing = await Listing.findById(review.listingId);
+    if (!listing) {
+      return next(errorHandler(404, 'Listing not found'));
+    }
+    if (listing.userRef.toString() !== req.user.id) {
+      return next(errorHandler(403, 'Only the listing owner can delete this response'));
+    }
+    review.ownerResponse = '';
+    await review.save();
+    // Emit socket event for real-time owner response deletion
+    const io = req.app.get('io');
+    if (io) io.emit('reviewUpdated', review);
+    res.status(200).json({ success: true, message: 'Owner response deleted successfully', review });
+  } catch (error) {
+    next(error);
+  }
+});
+
 export default router; 

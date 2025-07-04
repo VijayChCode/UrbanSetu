@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import { FaStar, FaTrash, FaEdit, FaCheck, FaTimes, FaThumbsUp, FaCheckCircle, FaSort, FaSortUp, FaSortDown, FaReply } from 'react-icons/fa';
+import { FaStar, FaTrash, FaEdit, FaCheck, FaTimes, FaThumbsUp, FaCheckCircle, FaSort, FaSortUp, FaSortDown, FaReply, FaPen } from 'react-icons/fa';
 import ReviewForm from './ReviewForm.jsx';
 import ReplyForm from './ReplyForm.jsx';
 import { socket } from '../utils/socket';
@@ -19,6 +19,9 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
   const [responseLoading, setResponseLoading] = useState({});
   const [responseError, setResponseError] = useState({});
   const [replies, setReplies] = useState({});
+  const [editingReply, setEditingReply] = useState(null);
+  const [editingOwnerResponse, setEditingOwnerResponse] = useState(false);
+  const [ownerResponseEdit, setOwnerResponseEdit] = useState('');
 
   useEffect(() => {
     fetchReviews();
@@ -270,6 +273,48 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
     }
   };
 
+  const handleEditReply = (reply) => {
+    setEditingReply(reply);
+  };
+
+  const handleUpdateReply = async () => {
+    if (!editingReply || !editingReply.comment.trim()) return;
+    await fetch(`${API_BASE_URL}/api/review/reply/${editingReply._id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ comment: editingReply.comment }),
+    });
+    setEditingReply(null);
+  };
+
+  const handleDeleteReply = async (replyId) => {
+    if (!window.confirm('Delete this reply?')) return;
+    await fetch(`${API_BASE_URL}/api/review/reply/${replyId}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+  };
+
+  const handleEditOwnerResponse = (review) => {
+    setEditingOwnerResponse(review._id);
+    setOwnerResponseEdit(review.ownerResponse || '');
+  };
+
+  const handleUpdateOwnerResponse = async (reviewId) => {
+    await handleOwnerResponseSubmit(reviewId, ownerResponseEdit);
+    setEditingOwnerResponse(false);
+  };
+
+  const handleDeleteOwnerResponse = async (reviewId) => {
+    if (!window.confirm('Delete owner response?')) return;
+    await fetch(`${API_BASE_URL}/api/review/respond/${reviewId}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+    setEditingOwnerResponse(false);
+  };
+
   if (loading) {
     return (
       <div className="text-center py-8">
@@ -420,56 +465,44 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
 
           {/* Owner response (if any) */}
           {review.ownerResponse && (
-            <div className="mt-3 p-3 bg-blue-50 rounded-md border border-blue-200">
-              <p className="text-sm text-blue-800 flex items-center gap-2">
-                <FaReply className="inline-block text-blue-500" />
-                <strong>Owner Response:</strong> {review.ownerResponse}
-              </p>
-            </div>
-          )}
-
-          {/* Owner response form (only for owner) */}
-          {currentUser && listingOwnerId && currentUser._id === listingOwnerId && (
-            <div className="mt-3">
-              <label className="block text-sm font-medium text-blue-700 mb-1 flex items-center gap-1">
-                <FaReply /> Respond as Owner
-              </label>
-              <textarea
-                className="w-full border border-blue-300 rounded-md p-2 text-sm mb-2"
-                rows="2"
-                placeholder="Write a response to this review..."
-                value={responseEdit[review._id] !== undefined ? responseEdit[review._id] : (review.ownerResponse || '')}
-                onChange={e => handleOwnerResponseChange(review._id, e.target.value)}
-                disabled={responseLoading[review._id]}
-              />
-              <button
-                className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm"
-                onClick={() => handleOwnerResponseSubmit(review._id)}
-                disabled={responseLoading[review._id] || !responseEdit[review._id] || responseEdit[review._id].trim() === (review.ownerResponse || '').trim()}
-              >
-                {responseLoading[review._id] ? 'Saving...' : (review.ownerResponse ? 'Update Response' : 'Add Response')}
-              </button>
-              {responseError[review._id] && (
-                <div className="text-red-600 text-xs mt-1">{responseError[review._id]}</div>
+            <div className="mt-3 p-3 bg-blue-50 rounded-md border border-blue-200 flex justify-between items-center">
+              {editingOwnerResponse === review._id ? (
+                <>
+                  <textarea
+                    className="w-full border border-blue-300 rounded-md p-2 text-sm mb-2"
+                    rows="2"
+                    value={ownerResponseEdit}
+                    onChange={e => setOwnerResponseEdit(e.target.value)}
+                  />
+                  <button
+                    className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm ml-2"
+                    onClick={() => handleUpdateOwnerResponse(review._id)}
+                  >
+                    Save
+                  </button>
+                  <button
+                    className="bg-gray-400 text-white px-3 py-1 rounded hover:bg-gray-600 text-sm ml-2"
+                    onClick={() => setEditingOwnerResponse(false)}
+                  >
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-blue-800 flex items-center gap-2">
+                    <FaReply className="inline-block text-blue-500" />
+                    <strong>Owner Response:</strong> {review.ownerResponse}
+                  </p>
+                  {currentUser && listingOwnerId && currentUser._id === listingOwnerId && (
+                    <span className="flex gap-2 ml-2">
+                      <FaPen className="cursor-pointer text-blue-600" title="Edit" onClick={() => handleEditOwnerResponse(review)} />
+                      <FaTrash className="cursor-pointer text-red-600" title="Delete" onClick={() => handleDeleteOwnerResponse(review._id)} />
+                    </span>
+                  )}
+                </>
               )}
             </div>
           )}
-
-          {/* Dislike button for main review */}
-          <button
-            onClick={() => handleDislikeReview(review._id)}
-            className={`flex items-center gap-1 px-3 py-1 rounded-lg transition-colors ${
-              review.dislikes?.some(d => d.userId === currentUser?._id)
-                ? 'bg-red-100 text-red-700'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            <span role="img" aria-label="dislike">👎</span>
-            <span>Dislike</span>
-            {review.dislikeCount > 0 && (
-              <span className="ml-1">({review.dislikeCount})</span>
-            )}
-          </button>
 
           {/* Replies section */}
           <div className="mt-4 ml-8">
@@ -480,8 +513,28 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
                   <img src={reply.userAvatar} alt={reply.userName} className="w-6 h-6 rounded-full object-cover" />
                   <span className="font-medium text-gray-800 text-xs">{reply.userName}</span>
                   <span className="text-xs text-gray-500">{new Date(reply.createdAt).toLocaleString()}</span>
+                  {currentUser && reply.userId === currentUser._id && (
+                    <span className="flex gap-2 ml-2">
+                      <FaPen className="cursor-pointer text-blue-600" title="Edit" onClick={() => handleEditReply(reply)} />
+                      <FaTrash className="cursor-pointer text-red-600" title="Delete" onClick={() => handleDeleteReply(reply._id)} />
+                    </span>
+                  )}
                 </div>
-                <div className="text-gray-700 text-sm mb-1">{reply.comment}</div>
+                {editingReply && editingReply._id === reply._id ? (
+                  <>
+                    <textarea
+                      className="w-full border border-blue-300 rounded p-2 text-sm mb-1"
+                      value={editingReply.comment}
+                      onChange={e => setEditingReply({ ...editingReply, comment: e.target.value })}
+                    />
+                    <div className="flex gap-2">
+                      <button className="bg-blue-600 text-white px-2 py-1 rounded text-xs" onClick={handleUpdateReply}>Save</button>
+                      <button className="bg-gray-400 text-white px-2 py-1 rounded text-xs" onClick={() => setEditingReply(null)}>Cancel</button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-gray-700 text-sm mb-1">{reply.comment}</div>
+                )}
                 <div className="flex gap-2 text-xs">
                   <button
                     onClick={() => handleLikeDislikeReply(reply._id, 'like')}
