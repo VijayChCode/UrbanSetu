@@ -100,6 +100,7 @@ export const SignIn=async(req,res,next)=>{
             adminApprovalStatus: validUser.adminApprovalStatus,
             status: validUser.status,
             avatar: validUser.avatar,
+            token,
         });
     }
     catch(error){
