@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { FaStar, FaEdit, FaTrash, FaCheck, FaTimes } from 'react-icons/fa';
 import ReviewForm from '../components/ReviewForm.jsx';
+import { socket } from '../utils/socket.js';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
