@@ -51,7 +51,7 @@ export const createListing=async (req,res,next)=>{
                     adminId: req.user.id
                 });
                 const io = req.app.get('io');
-                if (io) io.emit('notificationCreated', notification);
+                if (io) io.to(userRef.toString()).emit('notificationCreated', notification);
             } catch (notificationError) {
                 console.error('Failed to create notification:', notificationError);
             }
