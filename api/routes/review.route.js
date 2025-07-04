@@ -457,7 +457,7 @@ router.put('/admin/remove/:reviewId', verifyToken, async (req, res, next) => {
       if (note) {
         notificationMessage += `\nAdmin Note: ${note}`;
       }
-      await Notification.create({
+      const notification = await Notification.create({
         userId: review.userId,
         type: 'review_blocked',
         title: 'Review Removed by Admin',
@@ -465,6 +465,7 @@ router.put('/admin/remove/:reviewId', verifyToken, async (req, res, next) => {
         listingId: review.listingId,
         adminId: req.user.id
       });
+      if (io) io.emit('notificationCreated', notification);
     } catch (notificationError) {
       console.error('Failed to send notification:', notificationError);
     }
