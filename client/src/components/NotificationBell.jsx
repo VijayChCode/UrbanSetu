@@ -375,7 +375,6 @@ export default function NotificationBell({ mobile = false }) {
 
   useEffect(() => {
     const handleNewNotification = (notification) => {
-      console.log('Received notificationCreated:', notification);
       if (!currentUser || notification.userId !== currentUser._id) return;
       setNotifications((prev) => [notification, ...prev]);
       setUnreadCount((count) => count + 1);
