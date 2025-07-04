@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import { FaStar, FaTrash, FaEdit, FaCheck, FaTimes, FaThumbsUp, FaCheckCircle, FaSort, FaSortUp, FaSortDown, FaReply, FaPen } from 'react-icons/fa';
+import { FaStar, FaTrash, FaEdit, FaCheck, FaTimes, FaThumbsUp, FaCheckCircle, FaSort, FaSortUp, FaSortDown, FaReply, FaPen, FaExclamationTriangle } from 'react-icons/fa';
 import ReviewForm from './ReviewForm.jsx';
 import ReplyForm from './ReplyForm.jsx';
 import { socket } from '../utils/socket';
@@ -22,6 +22,9 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
   const [editingReply, setEditingReply] = useState(null);
   const [editingOwnerResponse, setEditingOwnerResponse] = useState(false);
   const [ownerResponseEdit, setOwnerResponseEdit] = useState('');
+  const [reportingReview, setReportingReview] = useState(null);
+  const [reportReason, setReportReason] = useState('');
+  const [reportLoading, setReportLoading] = useState(false);
 
   useEffect(() => {
     fetchReviews();
@@ -331,6 +334,39 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
   // Helper to check if a user is admin
   const isAdminUser = (user) => user && (user.role === 'admin' || user.role === 'rootadmin');
 
+  const handleReportReview = (review) => {
+    setReportingReview(review);
+    setReportReason('');
+  };
+
+  const handleSubmitReport = async () => {
+    if (!reportReason.trim()) {
+      alert('Please provide a reason for reporting.');
+      return;
+    }
+    setReportLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/review/report/${reportingReview._id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ reason: reportReason }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert('Thank you for reporting. Our team will review this issue.');
+        setReportingReview(null);
+        setReportReason('');
+      } else {
+        alert(data.message || 'Failed to report issue.');
+      }
+    } catch (error) {
+      alert('Network error. Please try again.');
+    } finally {
+      setReportLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="text-center py-8">
@@ -628,6 +664,18 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
             {/* Reply form */}
             <ReplyForm reviewId={review._id} onReplyAdded={() => fetchReplies(review._id)} />
           </div>
+
+          {/* Report button */}
+          {currentUser && !isAdminUser(currentUser) && (
+            <button
+              className="flex items-center gap-1 text-yellow-600 hover:text-yellow-800 text-xs mt-2"
+              title="Report an issue with this review"
+              onClick={() => handleReportReview(review)}
+            >
+              <FaExclamationTriangle className="inline-block" />
+              Report an Issue
+            </button>
+          )}
         </div>
       ))}
       
@@ -647,6 +695,41 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
             >
               Cancel
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Report Modal */}
+      {reportingReview && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-yellow-700">
+              <FaExclamationTriangle /> Report an Issue
+            </h3>
+            <p className="mb-2 text-gray-700">Please describe the issue with this review:</p>
+            <textarea
+              className="w-full border border-yellow-300 rounded-md p-2 text-sm mb-2"
+              rows="3"
+              value={reportReason}
+              onChange={e => setReportReason(e.target.value)}
+              placeholder="Enter reason (required)"
+            />
+            <div className="flex justify-end gap-2 mt-2">
+              <button
+                className="bg-gray-400 text-white px-3 py-1 rounded hover:bg-gray-600 text-sm"
+                onClick={() => setReportingReview(null)}
+                disabled={reportLoading}
+              >
+                Cancel
+              </button>
+              <button
+                className="bg-yellow-600 text-white px-3 py-1 rounded hover:bg-yellow-700 text-sm"
+                onClick={handleSubmitReport}
+                disabled={reportLoading}
+              >
+                {reportLoading ? 'Reporting...' : 'Submit Report'}
+              </button>
+            </div>
           </div>
         </div>
       )}

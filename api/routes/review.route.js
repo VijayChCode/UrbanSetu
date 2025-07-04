@@ -359,6 +359,32 @@ router.put('/admin/status/:reviewId', verifyToken, async (req, res, next) => {
     // Emit socket event for real-time review update
     const io = req.app.get('io');
     if (io) io.emit('reviewUpdated', review);
+    // Send notification on approval or rejection
+    try {
+      const listing = await Listing.findById(review.listingId);
+      const propertyOwner = listing ? await User.findById(listing.userRef) : null;
+      if (status === 'approved' && propertyOwner && propertyOwner._id.toString() !== review.userId.toString()) {
+        await Notification.create({
+          userId: propertyOwner._id,
+          type: 'new_review',
+          title: 'New Review Received',
+          message: `Your property "${listing.name}" received a new review from ${review.userName}`,
+          listingId: review.listingId,
+          adminId: req.user.id
+        });
+      } else if (status === 'rejected') {
+        await Notification.create({
+          userId: review.userId,
+          type: 'review_rejected',
+          title: 'Review Rejected',
+          message: `Your review for "${listing?.name || 'the property'}" was rejected by admin.${adminNote ? ' Reason: ' + adminNote : ''}`,
+          listingId: review.listingId,
+          adminId: req.user.id
+        });
+      }
+    } catch (notificationError) {
+      console.error('Failed to send notification:', notificationError);
+    }
     res.status(200).json({
       success: true,
       message: `Review ${status} successfully`,
@@ -726,6 +752,46 @@ router.post('/respond/like/:reviewId', verifyToken, async (req, res, next) => {
     const io = req.app.get('io');
     if (io) io.emit('reviewUpdated', review);
     res.status(200).json({ success: true, ownerResponseLikes: review.ownerResponseLikes, ownerResponseDislikes: review.ownerResponseDislikes });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Report a review (user -> admin notification)
+router.post('/report/:reviewId', verifyToken, async (req, res, next) => {
+  try {
+    const { reviewId } = req.params;
+    const { reason } = req.body;
+    if (!reason || !reason.trim()) {
+      return res.status(400).json({ message: 'Reason is required.' });
+    }
+    const review = await Review.findById(reviewId);
+    if (!review) {
+      return res.status(404).json({ message: 'Review not found.' });
+    }
+    const listing = await Listing.findById(review.listingId);
+    const reporter = await User.findById(req.user.id);
+    // Find all admins
+    const admins = await User.find({ role: { $in: ['admin', 'rootadmin'] } });
+    const notifications = await Promise.all(admins.map(async (admin) => {
+      return Notification.create({
+        userId: admin._id,
+        type: 'review_reported',
+        title: 'Review Reported',
+        message: `A review for property "${listing?.name || 'Unknown'}" was reported by ${reporter?.username || 'a user'}: ${reason}`,
+        listingId: review.listingId,
+        adminId: req.user.id,
+        meta: { reviewId: review._id, reporterId: reporter?._id }
+      });
+    }));
+    // Emit socket event for real-time admin notification
+    const io = req.app.get('io');
+    if (io) {
+      notifications.forEach(notification => {
+        io.emit('notificationCreated', notification);
+      });
+    }
+    res.status(200).json({ message: 'Report submitted successfully.' });
   } catch (error) {
     next(error);
   }

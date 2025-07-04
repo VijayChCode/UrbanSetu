@@ -436,7 +436,7 @@ export default function NotificationBell({ mobile = false }) {
                     </div>
 
                     {/* Notifications List */}
-                    <div className="max-h-80 overflow-y-auto">
+                    <div className="max-h-[32rem] overflow-y-auto">
                       {notifications.length === 0 ? (
                         <div className="p-6 text-center text-gray-500">
                           <FaBell className="w-8 h-8 mx-auto mb-2 text-gray-300" />
@@ -461,7 +461,7 @@ export default function NotificationBell({ mobile = false }) {
                                       <h4 className="text-sm font-medium text-gray-900">
                                         {notification.title}
                                       </h4>
-                                      <p className="text-sm text-gray-600 mt-1">
+                                      <p className="text-sm text-gray-600 mt-1 whitespace-pre-line break-words max-w-xs md:max-w-md lg:max-w-lg">
                                         {notification.message}
                                       </p>
                                       <div className="flex items-center gap-2 mt-2">
@@ -760,7 +760,7 @@ export default function NotificationBell({ mobile = false }) {
               </div>
 
               {/* Notifications List */}
-              <div className="max-h-80 overflow-y-auto">
+              <div className="max-h-[32rem] overflow-y-auto">
                 {notifications.length === 0 ? (
                   <div className="p-6 text-center text-gray-500">
                     <FaBell className="w-8 h-8 mx-auto mb-2 text-gray-300" />
@@ -785,7 +785,7 @@ export default function NotificationBell({ mobile = false }) {
                                 <h4 className="text-sm font-medium text-gray-900">
                                   {notification.title}
                                 </h4>
-                                <p className="text-sm text-gray-600 mt-1">
+                                <p className="text-sm text-gray-600 mt-1 whitespace-pre-line break-words max-w-xs md:max-w-md lg:max-w-lg">
                                   {notification.message}
                                 </p>
                                 <div className="flex items-center gap-2 mt-2">
