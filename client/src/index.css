@@ -95,15 +95,17 @@
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: #a0aec0 #f7fafc; /* thumb and track colors for Firefox */
+  box-sizing: border-box;
 }
 
 .notification-scroll-area::-webkit-scrollbar {
-  width: 10px;
+  width: 12px;
 }
 .notification-scroll-area::-webkit-scrollbar-thumb {
   background: #a0aec0;
   border-radius: 8px;
   border: 2px solid #f7fafc;
+  box-shadow: 0 0 4px rgba(0,0,0,0.08);
 }
 .notification-scroll-area::-webkit-scrollbar-track {
   background: #f7fafc;
@@ -111,14 +113,14 @@
 }
 .notification-scroll-area::-webkit-scrollbar-button:single-button:vertical:decrement {
   display: block;
-  height: 12px;
-  background: #e2e8f0;
+  height: 16px;
+  background: #e2e8f0 url('data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\'><polygon points=\'6,2 10,8 2,8\' fill=\'%239ca3af\'/></svg>') no-repeat center center;
   border-radius: 8px 8px 0 0;
 }
 .notification-scroll-area::-webkit-scrollbar-button:single-button:vertical:increment {
   display: block;
-  height: 12px;
-  background: #e2e8f0;
+  height: 16px;
+  background: #e2e8f0 url('data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\'><polygon points=\'2,4 10,4 6,10\' fill=\'%239ca3af\'/></svg>') no-repeat center center;
   border-radius: 0 0 8px 8px;
 }
 
@@ -128,4 +130,5 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
 }

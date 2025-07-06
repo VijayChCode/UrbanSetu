@@ -426,7 +426,7 @@ export default function NotificationBell({ mobile = false }) {
         mobile ? (
           // Mobile: Fullscreen Modal
           <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-60">
-            <div className="w-full max-w-md mx-auto bg-white rounded-lg shadow-2xl border border-gray-200 max-h-[90vh] overflow-y-auto relative animate-fade-in">
+            <div className="w-full max-w-md mx-auto bg-white rounded-lg shadow-2xl border border-gray-200 max-h-[90vh] overflow-hidden relative animate-fade-in notification-popup">
               {/* Close Button */}
               <button
                 onClick={() => setIsOpen(false)}
@@ -760,7 +760,7 @@ export default function NotificationBell({ mobile = false }) {
           </div>
         ) : (
           // Desktop: Dropdown
-          <div className="absolute left-1/2 -translate-x-1/2 right-auto mt-2 w-full max-w-xs sm:w-96 sm:left-auto sm:right-0 sm:-translate-x-0 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-96 overflow-hidden">
+          <div className="absolute left-1/2 -translate-x-1/2 right-auto mt-2 w-full max-w-xs sm:w-96 sm:left-auto sm:right-0 sm:-translate-x-0 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-96 overflow-hidden notification-popup">
           {/* Header with Tabs */}
           <div className="border-b border-gray-100">
             <div className="flex items-center justify-between p-4">
