@@ -88,3 +88,44 @@
   90% { transform: rotate(1deg); }
   100% { transform: rotate(0deg); }
 }
+
+/* Custom scrollbar for notification popup */
+.notification-scroll-area {
+  max-height: 24rem; /* same as max-h-96 */
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #a0aec0 #f7fafc; /* thumb and track colors for Firefox */
+}
+
+.notification-scroll-area::-webkit-scrollbar {
+  width: 10px;
+}
+.notification-scroll-area::-webkit-scrollbar-thumb {
+  background: #a0aec0;
+  border-radius: 8px;
+  border: 2px solid #f7fafc;
+}
+.notification-scroll-area::-webkit-scrollbar-track {
+  background: #f7fafc;
+  border-radius: 8px;
+}
+.notification-scroll-area::-webkit-scrollbar-button:single-button:vertical:decrement {
+  display: block;
+  height: 12px;
+  background: #e2e8f0;
+  border-radius: 8px 8px 0 0;
+}
+.notification-scroll-area::-webkit-scrollbar-button:single-button:vertical:increment {
+  display: block;
+  height: 12px;
+  background: #e2e8f0;
+  border-radius: 0 0 8px 8px;
+}
+
+/* Ensure popup contains scroll area */
+.notification-popup {
+  max-height: 32rem;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
