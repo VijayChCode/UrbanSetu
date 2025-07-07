@@ -25,6 +25,7 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
   const [reportingReview, setReportingReview] = useState(null);
   const [reportReason, setReportReason] = useState('');
   const [reportLoading, setReportLoading] = useState(false);
+  const [replyLikeLoading, setReplyLikeLoading] = useState({});
 
   useEffect(() => {
     fetchReviews();
@@ -258,6 +259,7 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
   }, [reviews]);
 
   const handleLikeDislikeReply = async (replyId, action, parentReviewId) => {
+    setReplyLikeLoading(prev => ({ ...prev, [replyId]: true }));
     try {
       const res = await fetch(`${API_BASE_URL}/api/review/reply/like/${replyId}`, {
         method: 'POST',
@@ -268,6 +270,8 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
       // No need to call fetchReplies here; socket will update UI
     } catch (error) {
       alert('Network error. Please try again.');
+    } finally {
+      setReplyLikeLoading(prev => ({ ...prev, [replyId]: false }));
     }
   };
 
@@ -680,12 +684,14 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
                   <button
                     onClick={() => handleLikeDislikeReply(reply._id, 'like', review._id)}
                     className={`flex items-center gap-1 ${reply.likes?.includes(currentUser?._id) ? 'text-blue-600' : 'text-gray-500'}`}
+                    disabled={replyLikeLoading[reply._id]}
                   >
                     👍 Like {reply.likes?.length > 0 && `(${reply.likes.length})`}
                   </button>
                   <button
                     onClick={() => handleLikeDislikeReply(reply._id, 'dislike', review._id)}
                     className={`flex items-center gap-1 ${reply.dislikes?.includes(currentUser?._id) ? 'text-red-600' : 'text-gray-500'}`}
+                    disabled={replyLikeLoading[reply._id]}
                   >
                     👎 Dislike {reply.dislikes?.length > 0 && `(${reply.dislikes.length})`}
                   </button>

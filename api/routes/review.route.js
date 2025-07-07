@@ -81,6 +81,31 @@ router.post('/create', verifyToken, async (req, res, next) => {
       console.error('Failed to send notification:', notificationError);
     }
     
+    // Notify all admins about new review pending approval
+    try {
+      const admins = await User.find({ role: { $in: ['admin', 'rootadmin'] } });
+      const notifications = await Promise.all(admins.map(async (admin) => {
+        return Notification.create({
+          userId: admin._id,
+          type: 'review_pending_approval',
+          title: 'New Review Pending Approval',
+          message: `A new review by ${user.username} on ${listing.name}`,
+          link: '/admin/reviews',
+          listingId: listingId,
+          meta: { reviewId: newReview._id, reviewerId: user._id }
+        });
+      }));
+      // Emit socket event for real-time admin notification
+      const io = req.app.get('io');
+      if (io) {
+        notifications.forEach(notification => {
+          io.emit('notificationCreated', notification);
+        });
+      }
+    } catch (adminNotificationError) {
+      console.error('Failed to send admin notifications:', adminNotificationError);
+    }
+    
     // Emit socket event for real-time review creation
     const io = req.app.get('io');
     if (io) io.emit('reviewUpdated', newReview);

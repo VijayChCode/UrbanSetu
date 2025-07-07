@@ -511,9 +511,9 @@ export default function NotificationBell({ mobile = false }) {
                                         {notification.title}
                                       </h4>
                                       <p className="text-sm text-gray-600 mt-1 whitespace-pre-line break-words max-w-xs md:max-w-md lg:max-w-lg">
-                                        {['admin_created_listing', 'admin_booked_appointment', 'appointment_booked', 'appointment_cancelled_by_seller', 'appointment_cancelled_by_buyer', 'appointment_cancelled_by_admin', 'appointment_reinitiated_by_admin', 'appointment_accepted_by_seller', 'appointment_rejected_by_seller', 'appointment_reinitiated_by_user'].includes(notification.type) && notification.listingId ? (
+                                        {notification.link ? (
                                           <a
-                                            href="/user/my-appointments"
+                                            href={notification.link}
                                             className="text-blue-600 hover:underline"
                                             target="_blank"
                                             rel="noopener noreferrer"
@@ -846,9 +846,9 @@ export default function NotificationBell({ mobile = false }) {
                                   {notification.title}
                                 </h4>
                                 <p className="text-sm text-gray-600 mt-1 whitespace-pre-line break-words max-w-xs md:max-w-md lg:max-w-lg">
-                                  {['admin_created_listing', 'admin_booked_appointment', 'appointment_booked', 'appointment_cancelled_by_seller', 'appointment_cancelled_by_buyer', 'appointment_cancelled_by_admin', 'appointment_reinitiated_by_admin', 'appointment_accepted_by_seller', 'appointment_rejected_by_seller', 'appointment_reinitiated_by_user'].includes(notification.type) && notification.listingId ? (
+                                  {notification.link ? (
                                     <a
-                                      href="/user/my-appointments"
+                                      href={notification.link}
                                       className="text-blue-600 hover:underline"
                                       target="_blank"
                                       rel="noopener noreferrer"
