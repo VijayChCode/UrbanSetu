@@ -277,7 +277,31 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
         credentials: 'include',
       });
       if (res.ok) {
-        fetchReplies(reviewId);
+        // Optimistically update the review's dislike count in the local state
+        setReviews((prevReviews) =>
+          prevReviews.map((review) => {
+            if (review._id === reviewId) {
+              // If the user already disliked, remove their dislike; otherwise, add it
+              const alreadyDisliked = review.dislikes?.some(d => d.userId === currentUser?._id);
+              let newDislikes;
+              let newDislikeCount = review.dislikeCount || 0;
+              if (alreadyDisliked) {
+                newDislikes = review.dislikes.filter(d => d.userId !== currentUser._id);
+                newDislikeCount = Math.max(0, newDislikeCount - 1);
+              } else {
+                newDislikes = [...(review.dislikes || []), { userId: currentUser._id }];
+                newDislikeCount = newDislikeCount + 1;
+              }
+              return {
+                ...review,
+                dislikes: newDislikes,
+                dislikeCount: newDislikeCount,
+              };
+            }
+            return review;
+          })
+        );
+        // Optionally, fetchReplies(reviewId); // Only needed if replies are affected
       }
     } catch (error) {
       alert('Network error. Please try again.');
