@@ -255,7 +255,7 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
     reviews.forEach(r => fetchReplies(r._id));
   }, [reviews]);
 
-  const handleLikeDislikeReply = async (replyId, action) => {
+  const handleLikeDislikeReply = async (replyId, action, parentReviewId) => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/review/reply/like/${replyId}`, {
         method: 'POST',
@@ -264,7 +264,8 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
         body: JSON.stringify({ action }),
       });
       if (res.ok) {
-        fetchReplies(replyId);
+        // Refresh all replies for the parent review to update UI
+        fetchReplies(parentReviewId);
       }
     } catch (error) {
       alert('Network error. Please try again.');
@@ -678,13 +679,13 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
                 )}
                 <div className="flex gap-2 text-xs">
                   <button
-                    onClick={() => handleLikeDislikeReply(reply._id, 'like')}
+                    onClick={() => handleLikeDislikeReply(reply._id, 'like', review._id)}
                     className={`flex items-center gap-1 ${reply.likes?.includes(currentUser?._id) ? 'text-blue-600' : 'text-gray-500'}`}
                   >
                     👍 Like {reply.likes?.length > 0 && `(${reply.likes.length})`}
                   </button>
                   <button
-                    onClick={() => handleLikeDislikeReply(reply._id, 'dislike')}
+                    onClick={() => handleLikeDislikeReply(reply._id, 'dislike', review._id)}
                     className={`flex items-center gap-1 ${reply.dislikes?.includes(currentUser?._id) ? 'text-red-600' : 'text-gray-500'}`}
                   >
                     👎 Dislike {reply.dislikes?.length > 0 && `(${reply.dislikes.length})`}
