@@ -123,32 +123,35 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
       alert('Please sign in to vote on reviews');
       return;
     }
-
+    // Optimistically update the review's helpful count in the local state
+    setReviews((prevReviews) =>
+      prevReviews.map((review) => {
+        if (review._id === reviewId) {
+          const hasVoted = review.helpfulVotes?.some(vote => vote.userId === currentUser._id);
+          let newHelpfulVotes;
+          let newHelpfulCount = review.helpfulCount || 0;
+          if (hasVoted) {
+            newHelpfulVotes = review.helpfulVotes.filter(vote => vote.userId !== currentUser._id);
+            newHelpfulCount = Math.max(0, newHelpfulCount - 1);
+          } else {
+            newHelpfulVotes = [...(review.helpfulVotes || []), { userId: currentUser._id }];
+            newHelpfulCount = newHelpfulCount + 1;
+          }
+          return {
+            ...review,
+            helpfulVotes: newHelpfulVotes,
+            helpfulCount: newHelpfulCount,
+          };
+        }
+        return review;
+      })
+    );
     try {
       const res = await fetch(`${API_BASE_URL}/api/review/helpful/${reviewId}`, {
         method: 'POST',
         credentials: 'include',
       });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        // Update the review in the list
-        setReviews(reviews.map(review => {
-          if (review._id === reviewId) {
-            return {
-              ...review,
-              helpfulCount: data.helpfulCount,
-              helpfulVotes: data.hasVoted 
-                ? [...review.helpfulVotes, { userId: currentUser._id }]
-                : review.helpfulVotes.filter(vote => vote.userId !== currentUser._id)
-            };
-          }
-          return review;
-        }));
-      } else {
-        alert(data.message || 'Failed to vote');
-      }
+      // No need to update state here; socket event will sync final state
     } catch (error) {
       alert('Network error. Please try again.');
     }
@@ -264,11 +267,62 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
       // Determine if we need to remove like/dislike
       const reply = replies[parentReviewId]?.find(r => r._id === replyId);
       let actualAction = action;
+      // Optimistically update the reply's like/dislike state
       if (reply) {
-        if (action === 'like' && reply.likes?.includes(currentUser?._id)) {
-          actualAction = 'remove_like';
-        } else if (action === 'dislike' && reply.dislikes?.includes(currentUser?._id)) {
-          actualAction = 'remove_dislike';
+        if (action === 'like') {
+          if (reply.likes?.includes(currentUser?._id)) {
+            actualAction = 'remove_like';
+            // Remove like
+            setReplies(prev => ({
+              ...prev,
+              [parentReviewId]: prev[parentReviewId].map(r =>
+                r._id === replyId
+                  ? { ...r, likes: r.likes.filter(id => id !== currentUser._id) }
+                  : r
+              ),
+            }));
+          } else {
+            // Add like, remove dislike if present
+            setReplies(prev => ({
+              ...prev,
+              [parentReviewId]: prev[parentReviewId].map(r =>
+                r._id === replyId
+                  ? {
+                      ...r,
+                      likes: [...(r.likes || []), currentUser._id],
+                      dislikes: r.dislikes?.filter(id => id !== currentUser._id),
+                    }
+                  : r
+              ),
+            }));
+          }
+        } else if (action === 'dislike') {
+          if (reply.dislikes?.includes(currentUser?._id)) {
+            actualAction = 'remove_dislike';
+            // Remove dislike
+            setReplies(prev => ({
+              ...prev,
+              [parentReviewId]: prev[parentReviewId].map(r =>
+                r._id === replyId
+                  ? { ...r, dislikes: r.dislikes.filter(id => id !== currentUser._id) }
+                  : r
+              ),
+            }));
+          } else {
+            // Add dislike, remove like if present
+            setReplies(prev => ({
+              ...prev,
+              [parentReviewId]: prev[parentReviewId].map(r =>
+                r._id === replyId
+                  ? {
+                      ...r,
+                      dislikes: [...(r.dislikes || []), currentUser._id],
+                      likes: r.likes?.filter(id => id !== currentUser._id),
+                    }
+                  : r
+              ),
+            }));
+          }
         }
       }
       const res = await fetch(`${API_BASE_URL}/api/review/reply/like/${replyId}`, {
