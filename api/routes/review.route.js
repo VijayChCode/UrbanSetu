@@ -629,7 +629,7 @@ router.get('/reply/:reviewId', async (req, res, next) => {
 router.post('/reply/like/:replyId', verifyToken, async (req, res, next) => {
   try {
     const { replyId } = req.params;
-    const { action } = req.body; // 'like' or 'dislike'
+    const { action } = req.body; // 'like' or 'dislike' or 'remove_like' or 'remove_dislike'
     const reply = await ReviewReply.findById(replyId);
     if (!reply) {
       return next(errorHandler(404, 'Reply not found'));
@@ -641,6 +641,12 @@ router.post('/reply/like/:replyId', verifyToken, async (req, res, next) => {
       reply.likes.push(req.user.id);
     } else if (action === 'dislike') {
       reply.dislikes.push(req.user.id);
+    } else if (action === 'remove_like') {
+      // Only remove like, do not add
+      // Already removed above
+    } else if (action === 'remove_dislike') {
+      // Only remove dislike, do not add
+      // Already removed above
     }
     await reply.save();
     // Emit socket event for real-time reply like/dislike with all replies for the parent review

@@ -261,11 +261,21 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
   const handleLikeDislikeReply = async (replyId, action, parentReviewId) => {
     setReplyLikeLoading(prev => ({ ...prev, [replyId]: true }));
     try {
+      // Determine if we need to remove like/dislike
+      const reply = replies[parentReviewId]?.find(r => r._id === replyId);
+      let actualAction = action;
+      if (reply) {
+        if (action === 'like' && reply.likes?.includes(currentUser?._id)) {
+          actualAction = 'remove_like';
+        } else if (action === 'dislike' && reply.dislikes?.includes(currentUser?._id)) {
+          actualAction = 'remove_dislike';
+        }
+      }
       const res = await fetch(`${API_BASE_URL}/api/review/reply/like/${replyId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ action }),
+        body: JSON.stringify({ action: actualAction }),
       });
       // No need to call fetchReplies here; socket will update UI
     } catch (error) {
