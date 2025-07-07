@@ -213,38 +213,37 @@ router.delete('/delete/:reviewId', verifyToken, async (req, res, next) => {
 router.post('/helpful/:reviewId', verifyToken, async (req, res, next) => {
   try {
     const { reviewId } = req.params;
-    
     const review = await Review.findById(reviewId);
     if (!review) {
       return next(errorHandler(404, 'Review not found'));
     }
-    
     if (review.status !== 'approved') {
       return next(errorHandler(400, 'Can only vote on approved reviews'));
     }
-    
-    // Check if user already voted
-    const existingVote = review.helpfulVotes.find(vote => 
-      vote.userId.toString() === req.user.id
-    );
-    
+    // Check if user already voted helpful
+    const existingVote = review.helpfulVotes.find(vote => vote.userId.toString() === req.user.id);
     if (existingVote) {
       // Remove vote
-      review.helpfulVotes = review.helpfulVotes.filter(vote => 
-        vote.userId.toString() !== req.user.id
-      );
+      review.helpfulVotes = review.helpfulVotes.filter(vote => vote.userId.toString() !== req.user.id);
       review.helpfulCount = Math.max(0, review.helpfulCount - 1);
     } else {
-      // Add vote
+      // Remove user's dislike if present
+      const alreadyDisliked = review.dislikes.some(d => d.userId.toString() === req.user.id);
+      if (alreadyDisliked) {
+        review.dislikes = review.dislikes.filter(d => d.userId.toString() !== req.user.id);
+        review.dislikeCount = Math.max(0, review.dislikeCount - 1);
+      }
+      // Add helpful vote
       review.helpfulVotes.push({
         userId: req.user.id,
         votedAt: new Date()
       });
       review.helpfulCount += 1;
     }
-    
     await review.save();
-    
+    // Emit socket event for real-time review helpful/like update
+    const io = req.app.get('io');
+    if (io) io.emit('reviewUpdated', review);
     res.status(200).json({
       success: true,
       message: existingVote ? 'Vote removed' : 'Vote added',
@@ -642,6 +641,12 @@ router.post('/dislike/:reviewId', verifyToken, async (req, res, next) => {
       review.dislikes = review.dislikes.filter(d => d.userId.toString() !== req.user.id);
       review.dislikeCount = Math.max(0, review.dislikeCount - 1);
     } else {
+      // Remove user's helpful vote if present
+      const existingVote = review.helpfulVotes.find(vote => vote.userId.toString() === req.user.id);
+      if (existingVote) {
+        review.helpfulVotes = review.helpfulVotes.filter(vote => vote.userId.toString() !== req.user.id);
+        review.helpfulCount = Math.max(0, review.helpfulCount - 1);
+      }
       review.dislikes.push({ userId: req.user.id, dislikedAt: new Date() });
       review.dislikeCount += 1;
     }
