@@ -46,8 +46,10 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
     };
     socket.on('reviewUpdated', handleSocketReviewUpdate);
     // Listen for real-time reply updates
-    const handleSocketReplyUpdate = ({ action, reply, replyId, reviewId }) => {
-      if (action === 'deleted' && reviewId) {
+    const handleSocketReplyUpdate = ({ action, replies, reviewId, reply, replyId }) => {
+      if (action === 'updatedAll' && reviewId && replies) {
+        setReplies(prev => ({ ...prev, [reviewId]: replies }));
+      } else if (action === 'deleted' && reviewId) {
         fetchReplies(reviewId);
       } else if (reply && reply.reviewId) {
         fetchReplies(reply.reviewId);
@@ -263,10 +265,7 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
         credentials: 'include',
         body: JSON.stringify({ action }),
       });
-      if (res.ok) {
-        // Refresh all replies for the parent review to update UI
-        fetchReplies(parentReviewId);
-      }
+      // No need to call fetchReplies here; socket will update UI
     } catch (error) {
       alert('Network error. Please try again.');
     }

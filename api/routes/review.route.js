@@ -618,9 +618,12 @@ router.post('/reply/like/:replyId', verifyToken, async (req, res, next) => {
       reply.dislikes.push(req.user.id);
     }
     await reply.save();
-    // Emit socket event for real-time reply like/dislike
+    // Emit socket event for real-time reply like/dislike with all replies for the parent review
     const io = req.app.get('io');
-    if (io) io.emit('reviewReplyUpdated', { action: 'liked', reply });
+    if (io) {
+      const allReplies = await ReviewReply.find({ reviewId: reply.reviewId });
+      io.emit('reviewReplyUpdated', { action: 'updatedAll', replies: allReplies, reviewId: reply.reviewId });
+    }
     res.status(200).json({ success: true, reply });
   } catch (error) {
     next(error);
