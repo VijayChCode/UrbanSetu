@@ -221,16 +221,20 @@ function UserNavLinks({ mobile = false, onNavigate }) {
       }
       dispatch(signoutUserSuccess());
       await persistor.purge();
+      reconnectSocket();
+      localStorage.removeItem('accessToken');
+      document.cookie = 'access_token=; Max-Age=0; path=/; domain=' + window.location.hostname + '; secure; samesite=None';
       alert("You have been signed out.");
       navigate("/sign-in");
-      reconnectSocket();
     } catch (error) {
       console.log(error.message);
       dispatch(signoutUserSuccess());
       await persistor.purge();
+      reconnectSocket();
+      localStorage.removeItem('accessToken');
+      document.cookie = 'access_token=; Max-Age=0; path=/; domain=' + window.location.hostname + '; secure; samesite=None';
       alert("You have been signed out.");
       navigate("/sign-in");
-      reconnectSocket();
     }
   };
 

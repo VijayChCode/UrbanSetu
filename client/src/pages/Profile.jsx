@@ -17,6 +17,7 @@ import ContactSupportWrapper from "../components/ContactSupportWrapper";
 import { useWishlist } from "../WishlistContext";
 import { toast } from 'react-toastify';
 import { persistor } from '../redux/store';
+import { reconnectSocket } from '../utils/socket';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -615,7 +616,14 @@ export default function Profile() {
         dispatch(signoutUserFailure(data.message));
       } else {
         dispatch(signoutUserSuccess(data));
+        // Clear persisted state
         await persistor.purge();
+        // Disconnect and reconnect socket to clear auth
+        reconnectSocket();
+        // Extra: Clear localStorage token if used
+        localStorage.removeItem('accessToken');
+        // Extra: Expire the access_token cookie on client side
+        document.cookie = 'access_token=; Max-Age=0; path=/; domain=' + window.location.hostname + '; secure; samesite=None';
         alert("You have been signed out.");
         await new Promise(resolve => setTimeout(resolve, 50));
         navigate("/sign-in");

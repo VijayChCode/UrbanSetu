@@ -128,11 +128,13 @@ export default function AdminHeader() {
       if (data.success === false) {
         dispatch(signoutUserFailure(data.message));
       } else {
-        dispatch(signoutUserSuccess(data));
+        dispatch(signoutUserSuccess());
         await persistor.purge();
+        reconnectSocket();
+        localStorage.removeItem('accessToken');
+        document.cookie = 'access_token=; Max-Age=0; path=/; domain=' + window.location.hostname + '; secure; samesite=None';
         alert("You have been signed out.");
         navigate("/sign-in");
-        reconnectSocket();
       }
     } catch (error) {
       dispatch(signoutUserFailure(error.message));
