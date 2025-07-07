@@ -32,9 +32,10 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
     const handleSocketReviewUpdate = (updatedReview) => {
       if (updatedReview.listingId === listingId || (updatedReview.listingId && updatedReview.listingId._id === listingId)) {
         setReviews(prev => {
+          // Replace the review object entirely with the updated one from the server
           const exists = prev.some(r => r._id === updatedReview._id);
           if (exists) {
-            return prev.map(r => r._id === updatedReview._id ? { ...r, ...updatedReview } : r);
+            return prev.map(r => r._id === updatedReview._id ? updatedReview : r);
           } else {
             return [updatedReview, ...prev];
           }

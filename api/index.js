@@ -133,26 +133,21 @@ const io = new SocketIOServer(server, {
 app.set('io', io);
 
 io.use(async (socket, next) => {
-  try {
-    const token = socket.handshake.auth && socket.handshake.auth.token;
-    console.log('[Socket.io Auth] Received token:', token);
-    if (!token) {
-      console.log('[401] Access token not found (socket.io)');
-      return next(new Error('Access token not found'));
+  const token = socket.handshake.auth && socket.handshake.auth.token;
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_TOKEN);
+      const user = await User.findById(decoded.id);
+      if (user) {
+        socket.user = user;
+        socket.join(user._id.toString());
+      }
+    } catch (error) {
+      // Invalid token, treat as public user
     }
-    const decoded = jwt.verify(token, process.env.JWT_TOKEN);
-    const user = await User.findById(decoded.id);
-    if (!user) {
-      return next(new Error('User not found'));
-    }
-    socket.user = user;
-    // Join user-specific room
-    socket.join(user._id.toString());
-    next();
-  } catch (error) {
-    console.log('[401] Socket auth error:', error.message);
-    return next(new Error('Invalid or expired token'));
   }
+  // Allow connection for both public and authenticated users
+  next();
 });
 
 io.on('connection', (socket) => {
