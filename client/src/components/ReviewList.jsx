@@ -262,6 +262,10 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
   }, [reviews]);
 
   const handleLikeDislikeReply = async (replyId, action, parentReviewId) => {
+    if (!currentUser) {
+      alert('Please sign in to vote on reviews');
+      return;
+    }
     setReplyLikeLoading(prev => ({ ...prev, [replyId]: true }));
     try {
       // Determine if we need to remove like/dislike
@@ -340,6 +344,10 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
   };
 
   const handleDislikeReview = async (reviewId) => {
+    if (!currentUser) {
+      alert('Please sign in to vote on reviews');
+      return;
+    }
     try {
       // Optimistically update the review's dislike count in the local state
       setReviews((prevReviews) =>
@@ -417,6 +425,10 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
   };
 
   const handleLikeDislikeOwnerResponse = async (reviewId, action) => {
+    if (!currentUser) {
+      alert('Please sign in to vote on reviews');
+      return;
+    }
     // Optimistically update the owner response like/dislike in the local state
     setReviews((prevReviews) =>
       prevReviews.map((review) => {
