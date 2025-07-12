@@ -114,6 +114,10 @@ export const Google=async (req,res,next)=>{
         const {name,email,photo}=req.body 
         const validUser=await User.findOne({email})
         if (validUser){
+            // Suspension check
+            if (validUser.status === 'suspended') {
+                return next(errorHandler(403, "Your account is suspended. Please contact support."));
+            }
             const token=jwt.sign({id:validUser._id},process.env.JWT_TOKEN)
             res.cookie('access_token',token,{
                 httpOnly:true,

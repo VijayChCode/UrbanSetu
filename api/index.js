@@ -133,16 +133,16 @@ const io = new SocketIOServer(server, {
 app.set('io', io);
 
 io.use(async (socket, next) => {
-  const token = socket.handshake.auth && socket.handshake.auth.token;
+    const token = socket.handshake.auth && socket.handshake.auth.token;
   if (token) {
     try {
-      const decoded = jwt.verify(token, process.env.JWT_TOKEN);
-      const user = await User.findById(decoded.id);
+    const decoded = jwt.verify(token, process.env.JWT_TOKEN);
+    const user = await User.findById(decoded.id);
       if (user) {
-        socket.user = user;
-        socket.join(user._id.toString());
+    socket.user = user;
+    socket.join(user._id.toString());
       }
-    } catch (error) {
+  } catch (error) {
       // Invalid token, treat as public user
     }
   }
