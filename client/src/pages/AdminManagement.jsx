@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { FaUser, FaUserShield, FaEnvelope, FaCalendarAlt, FaCheckCircle, FaBan, FaTrash, FaUserLock, FaPhone, FaList, FaCalendar, FaArrowDown, FaSearch } from "react-icons/fa";
+import { socket } from "../utils/socket";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -25,6 +26,32 @@ export default function AdminManagement() {
     if (!currentUser) return;
     fetchData();
   }, [currentUser]);
+
+  // Add useEffect to listen for socket events and update users/admins state
+  useEffect(() => {
+    function handleUserUpdate({ type, user }) {
+      setUsers(prev => {
+        if (type === 'delete') return prev.filter(u => u._id !== user._id);
+        if (type === 'update') return prev.map(u => u._id === user._id ? user : u);
+        if (type === 'add') return [user, ...prev];
+        return prev;
+      });
+    }
+    function handleAdminUpdate({ type, admin }) {
+      setAdmins(prev => {
+        if (type === 'delete') return prev.filter(a => a._id !== admin._id);
+        if (type === 'update') return prev.map(a => a._id === admin._id ? admin : a);
+        if (type === 'add') return [admin, ...prev];
+        return prev;
+      });
+    }
+    socket.on('user_update', handleUserUpdate);
+    socket.on('admin_update', handleAdminUpdate);
+    return () => {
+      socket.off('user_update', handleUserUpdate);
+      socket.off('admin_update', handleAdminUpdate);
+    };
+  }, []);
 
   // Keyboard shortcut for search (Ctrl+F)
   useEffect(() => {
@@ -62,7 +89,14 @@ export default function AdminManagement() {
     }
   };
 
+  // Optimistic UI for suspend
   const handleSuspend = async (id, type) => {
+    // Optimistically update UI
+    if (type === 'user') {
+      setUsers(prev => prev.map(u => u._id === id ? { ...u, status: u.status === 'active' ? 'suspended' : 'active' } : u));
+    } else {
+      setAdmins(prev => prev.map(a => a._id === id ? { ...a, status: a.status === 'active' ? 'suspended' : 'active' } : a));
+    }
     try {
       const res = await fetch(`${API_BASE_URL}/api/admin/management/suspend/${type}/${id}`, {
         method: "PATCH",
@@ -72,21 +106,32 @@ export default function AdminManagement() {
       if (res.ok) {
         toast.success(`${type === "user" ? "User" : "Admin"} status updated`);
         setSuspendError((prev) => ({ ...prev, [id]: undefined }));
-        fetchData();
+        // Emit socket event
+        socket.emit(type === 'user' ? 'user_update' : 'admin_update', { type: 'update', [type]: data });
       } else {
+        // Rollback
+        fetchData();
         toast.error(data.message || "Failed to update status");
         setSuspendError((prev) => ({ ...prev, [id]: "Can't able to suspend account, may be deleted or moved" }));
         setTimeout(() => setSuspendError((prev) => ({ ...prev, [id]: undefined })), 4000);
       }
     } catch (err) {
+      fetchData();
       toast.error("Failed to update status");
       setSuspendError((prev) => ({ ...prev, [id]: "Can't able to suspend account, may be deleted or moved" }));
       setTimeout(() => setSuspendError((prev) => ({ ...prev, [id]: undefined })), 4000);
     }
   };
 
+  // Optimistic UI for delete
   const handleDelete = async (id, type) => {
     if (!window.confirm(`Are you sure you want to delete this ${type}?`)) return;
+    // Optimistically update UI
+    if (type === 'user') {
+      setUsers(prev => prev.filter(u => u._id !== id));
+    } else {
+      setAdmins(prev => prev.filter(a => a._id !== id));
+    }
     try {
       const res = await fetch(`${API_BASE_URL}/api/admin/management/delete/${type}/${id}`, {
         method: "DELETE",
@@ -95,11 +140,14 @@ export default function AdminManagement() {
       const data = await res.json();
       if (res.ok) {
         toast.success(`${type === "user" ? "User" : "Admin"} deleted`);
-        fetchData();
+        // Emit socket event
+        socket.emit(type === 'user' ? 'user_update' : 'admin_update', { type: 'delete', [type]: { _id: id } });
       } else {
+        fetchData();
         toast.error(data.message || "Failed to delete");
       }
     } catch (err) {
+      fetchData();
       toast.error("Failed to delete");
     }
   };
@@ -155,27 +203,18 @@ export default function AdminManagement() {
     setAccountLoading(false);
   };
 
-  const handleDemote = async (id) => {
-    if (!window.confirm("Are you sure you want to demote this admin to a user?")) return;
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/management/demote/${id}`, {
-        method: "PATCH",
-        credentials: "include",
-      });
-      const data = await res.json();
-      if (res.ok) {
-        toast.success("Admin demoted to user successfully");
-        fetchData();
-      } else {
-        toast.error(data.message || "Failed to demote admin");
-      }
-    } catch (err) {
-      toast.error("Failed to demote admin");
-    }
-  };
-
+  // Optimistic UI for promote
   const handlePromote = async (id) => {
     if (!window.confirm("Are you sure you want to promote this user to admin?")) return;
+    // Optimistically move user to admins
+    const user = users.find(u => u._id === id);
+    if (user) {
+      setUsers(prev => prev.filter(u => u._id !== id));
+      setAdmins(prev => [
+        { ...user, role: 'admin', adminApprovalStatus: 'approved' },
+        ...admins
+      ]);
+    }
     try {
       const res = await fetch(`${API_BASE_URL}/api/admin/management/promote/${id}`, {
         method: "PATCH",
@@ -184,12 +223,49 @@ export default function AdminManagement() {
       const data = await res.json();
       if (res.ok) {
         toast.success("User promoted to admin successfully");
-        fetchData();
+        // Emit socket event
+        socket.emit('admin_update', { type: 'add', admin: { ...user, ...data } });
+        socket.emit('user_update', { type: 'delete', user: { _id: id } });
       } else {
+        fetchData();
         toast.error(data.message || "Failed to promote user");
       }
     } catch (err) {
+      fetchData();
       toast.error("Failed to promote user");
+    }
+  };
+
+  // Optimistic UI for demote
+  const handleDemote = async (id) => {
+    if (!window.confirm("Are you sure you want to demote this admin to a user?")) return;
+    // Optimistically move admin to users
+    const admin = admins.find(a => a._id === id);
+    if (admin) {
+      setAdmins(prev => prev.filter(a => a._id !== id));
+      setUsers(prev => [
+        { ...admin, role: 'user', adminApprovalStatus: undefined },
+        ...users
+      ]);
+    }
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/admin/management/demote/${id}`, {
+        method: "PATCH",
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success("Admin demoted to user successfully");
+        // Emit socket event
+        socket.emit('user_update', { type: 'add', user: { ...admin, ...data } });
+        socket.emit('admin_update', { type: 'delete', admin: { _id: id } });
+      } else {
+        fetchData();
+        toast.error(data.message || "Failed to demote admin");
+      }
+    } catch (err) {
+      fetchData();
+      toast.error("Failed to demote admin");
     }
   };
 

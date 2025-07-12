@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useSelector } from 'react-redux';
+import { socket } from './utils/socket';
 
 const WishlistContext = createContext();
 
@@ -50,13 +51,39 @@ const WishlistProvider = ({ children }) => {
     }
   };
 
-  // Add item to wishlist via API
+  // Listen for wishlist socket events
+  useEffect(() => {
+    function handleWishlistUpdate({ type, listing }) {
+      setWishlist(prev => {
+        if (type === 'add') {
+          if (prev.find(item => item._id === listing._id)) return prev;
+          return [...prev, listing];
+        }
+        if (type === 'remove') {
+          return prev.filter(item => item._id !== listing._id);
+        }
+        return prev;
+      });
+    }
+    socket.on('wishlist_update', handleWishlistUpdate);
+    return () => {
+      socket.off('wishlist_update', handleWishlistUpdate);
+    };
+  }, []);
+
+  // Add item to wishlist via API (optimistic)
   const addToWishlist = async (product) => {
     if (!currentUser) {
       console.error('User must be logged in to add to wishlist');
       return;
     }
-
+    // Optimistically update UI
+    setWishlist(prev => {
+      if (prev.find(item => item._id === product._id)) return prev;
+      return [...prev, product];
+    });
+    // Emit socket event
+    socket.emit('wishlist_update', { type: 'add', listing: product });
     try {
       const response = await fetch(`${API_BASE_URL}/api/wishlist/add`, {
         method: 'POST',
@@ -66,46 +93,44 @@ const WishlistProvider = ({ children }) => {
         credentials: 'include',
         body: JSON.stringify({ listingId: product._id }),
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        setWishlist(prev => {
-          if (prev.find(item => item._id === product._id)) {
-            return prev; // Avoid duplicates
-          }
-          return [...prev, product];
-        });
-      } else {
+      if (!response.ok) {
+        // Rollback
+        setWishlist(prev => prev.filter(item => item._id !== product._id));
         const errorData = await response.json();
         console.error('Failed to add to wishlist:', errorData.message);
       }
     } catch (error) {
+      setWishlist(prev => prev.filter(item => item._id !== product._id));
       console.error('Error adding to wishlist:', error);
     }
   };
 
-  // Remove item from wishlist via API
+  // Remove item from wishlist via API (optimistic)
   const removeFromWishlist = async (id) => {
     if (!currentUser) {
       console.error('User must be logged in to remove from wishlist');
       return { success: false, message: 'User must be logged in to remove from wishlist' };
     }
-
+    // Optimistically update UI
+    setWishlist(prev => prev.filter(item => item._id !== id));
+    // Emit socket event
+    socket.emit('wishlist_update', { type: 'remove', listing: { _id: id } });
     try {
       const response = await fetch(`${API_BASE_URL}/api/wishlist/remove/${id}`, {
         method: 'DELETE',
         credentials: 'include',
       });
-
-      if (response.ok) {
-        setWishlist(prev => prev.filter(item => item._id !== id));
-        return { success: true, message: 'Item removed from your wishlist.' };
-      } else {
+      if (!response.ok) {
+        // Rollback
+        // Refetch wishlist to restore correct state
+        fetchWishlist();
         const errorData = await response.json();
         console.error('Failed to remove from wishlist:', errorData.message);
         return { success: false, message: 'Failed to remove item. Please try again.' };
       }
+      return { success: true, message: 'Item removed from your wishlist.' };
     } catch (error) {
+      fetchWishlist();
       console.error('Error removing from wishlist:', error);
       return { success: false, message: 'Failed to remove item. Please try again.' };
     }
