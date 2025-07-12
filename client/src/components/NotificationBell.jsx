@@ -481,6 +481,14 @@ export default function NotificationBell({ mobile = false }) {
                             Mark all read
                           </button>
                         )}
+                        <button
+                          onClick={fetchNotifications}
+                          className="ml-2 text-sm text-gray-500 hover:text-blue-600 flex items-center gap-1"
+                          title="Refresh notifications"
+                        >
+                          <FaRedo className="w-4 h-4" />
+                          Refresh
+                        </button>
                       </div>
                     </div>
 
@@ -816,6 +824,14 @@ export default function NotificationBell({ mobile = false }) {
                       Mark all read
                     </button>
                   )}
+                  <button
+                    onClick={fetchNotifications}
+                    className="ml-2 text-sm text-gray-500 hover:text-blue-600 flex items-center gap-1"
+                    title="Refresh notifications"
+                  >
+                    <FaRedo className="w-4 h-4" />
+                    Refresh
+                  </button>
                 </div>
               </div>
 
