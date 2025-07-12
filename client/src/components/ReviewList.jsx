@@ -417,6 +417,36 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
   };
 
   const handleLikeDislikeOwnerResponse = async (reviewId, action) => {
+    // Optimistically update the owner response like/dislike in the local state
+    setReviews((prevReviews) =>
+      prevReviews.map((review) => {
+        if (review._id === reviewId) {
+          let newLikes = review.ownerResponseLikes || [];
+          let newDislikes = review.ownerResponseDislikes || [];
+          if (action === 'like') {
+            if (newLikes.includes(currentUser._id)) {
+              newLikes = newLikes.filter(id => id !== currentUser._id);
+            } else {
+              newLikes = [...newLikes, currentUser._id];
+              newDislikes = newDislikes.filter(id => id !== currentUser._id);
+            }
+          } else if (action === 'dislike') {
+            if (newDislikes.includes(currentUser._id)) {
+              newDislikes = newDislikes.filter(id => id !== currentUser._id);
+            } else {
+              newDislikes = [...newDislikes, currentUser._id];
+              newLikes = newLikes.filter(id => id !== currentUser._id);
+            }
+          }
+          return {
+            ...review,
+            ownerResponseLikes: newLikes,
+            ownerResponseDislikes: newDislikes,
+          };
+        }
+        return review;
+      })
+    );
     try {
       await fetch(`${API_BASE_URL}/api/review/respond/like/${reviewId}`, {
         method: 'POST',
