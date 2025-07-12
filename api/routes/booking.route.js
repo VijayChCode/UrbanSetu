@@ -860,9 +860,19 @@ router.post('/reinitiate', verifyToken, async (req, res) => {
     ) {
       return res.status(403).json({ message: 'Only the party who cancelled can reinitiate.' });
     }
-    // Limit reinitiation
-    if ((original.reinitiationCount || 0) >= 2) {
-      return res.status(400).json({ message: 'Maximum number of reinitiations reached.' });
+    // Limit reinitiation per party
+    let role, count, countField;
+    if (original.buyerId.toString() === userId) {
+      role = 'buyer';
+      count = original.buyerReinitiationCount || 0;
+      countField = 'buyerReinitiationCount';
+    } else {
+      role = 'seller';
+      count = original.sellerReinitiationCount || 0;
+      countField = 'sellerReinitiationCount';
+    }
+    if (count >= 2) {
+      return res.status(400).json({ message: 'Maximum number of reinitiations reached for your role.' });
     }
     // Check both parties still exist
     const buyer = await User.findById(original.buyerId);
@@ -870,14 +880,14 @@ router.post('/reinitiate', verifyToken, async (req, res) => {
     if (!buyer || !seller) {
       return res.status(400).json({ message: 'Cannot reinitiate: one of the parties no longer exists.' });
     }
-    // Update the same booking: set new date/time/message, status to pending, increment reinitiationCount, add to history
+    // Update the same booking: set new date/time/message, status to pending, increment correct count, add to history
     original.date = date;
     original.time = time;
     original.message = message;
     original.status = 'pending';
     original.cancelReason = '';
     original.cancelledBy = undefined;
-    original.reinitiationCount = (original.reinitiationCount || 0) + 1;
+    original[countField] = count + 1;
     original.reinitiationHistory = original.reinitiationHistory || [];
     original.reinitiationHistory.push({ date, time, message, userId });
     original.visibleToBuyer = true;
@@ -902,6 +912,7 @@ router.post('/reinitiate', verifyToken, async (req, res) => {
           listingId: original.listingId,
           adminId: null
         });
+        const io = req.app.get('io');
         if (io) io.to(notifyUserId.toString()).emit('notificationCreated', notification);
       }
     } catch (notificationError) {
@@ -912,7 +923,7 @@ router.post('/reinitiate', verifyToken, async (req, res) => {
     if (io) {
       io.emit('appointmentUpdate', { appointmentId: original._id, updatedAppointment: original });
     }
-    res.status(200).json({ message: 'Appointment reinitiated successfully!', reinitiationLeft: 2 - original.reinitiationCount, appointment: original });
+    res.status(200).json({ message: 'Appointment reinitiated successfully!', reinitiationLeft: 2 - (count + 1), appointment: original });
   } catch (err) {
     console.error('Error in user reinitiate:', err);
     res.status(500).json({ message: 'Server error' });

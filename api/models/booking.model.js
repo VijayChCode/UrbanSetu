@@ -91,6 +91,8 @@ const bookingSchema = new mongoose.Schema({
     type: Date
   },
   reinitiationCount: { type: Number, default: 0 },
+  buyerReinitiationCount: { type: Number, default: 0 },
+  sellerReinitiationCount: { type: Number, default: 0 },
   reinitiationHistory: [
     {
       date: Date,

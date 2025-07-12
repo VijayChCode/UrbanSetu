@@ -270,7 +270,8 @@ export default function MyAppointments() {
       date: appt.date ? new Date(appt.date).toISOString().split('T')[0] : '',
       time: appt.time || '',
       message: appt.message || '',
-      reinitiationCount: appt.reinitiationCount || 0,
+      buyerReinitiationCount: appt.buyerReinitiationCount || 0,
+      sellerReinitiationCount: appt.sellerReinitiationCount || 0,
     });
     setShowReinitiateModal(true);
   }
@@ -278,20 +279,20 @@ export default function MyAppointments() {
   async function handleReinitiateSubmit(e) {
     e.preventDefault();
     if (!reinitiateData) return;
-    if (reinitiateData.reinitiationCount >= 2) {
-      alert('You have reached the maximum number of reinitiations for this appointment.');
+    const isBuyer = currentUser && (reinitiateData.buyerId?._id === currentUser._id || reinitiateData.buyerId === currentUser._id);
+    const isSeller = currentUser && (reinitiateData.sellerId?._id === currentUser._id || reinitiateData.sellerId === currentUser._id);
+    const count = isBuyer ? (reinitiateData.buyerReinitiationCount || 0) : (reinitiateData.sellerReinitiationCount || 0);
+    if (count >= 2) {
+      alert('You have reached the maximum number of reinitiations for your role.');
       return;
     }
     if (!reinitiateData.buyerId || !reinitiateData.sellerId) {
       alert('Cannot reinitiate: one of the parties no longer exists.');
       return;
     }
-    // TODO: Optionally notify the other party, record history, etc.
-    // For now, create a new booking with the same details but new date/time/message
     const payload = {
       ...reinitiateData,
       status: 'pending',
-      reinitiationCount: (reinitiateData.reinitiationCount || 0) + 1,
     };
     try {
       const res = await fetch(`${API_BASE_URL}/api/bookings/reinitiate`, {
@@ -305,9 +306,7 @@ export default function MyAppointments() {
         alert('Appointment reinitiated successfully!');
         setShowReinitiateModal(false);
         setReinitiateData(null);
-        // Redirect to appointments list
         navigate("/user/my-appointments");
-        // Update the appointment in-place
         setAppointments((prev) => prev.map(appt => appt._id === data.appointment._id ? { ...appt, ...data.appointment } : appt));
       } else {
         alert(data.message || 'Failed to reinitiate appointment.');
@@ -1033,12 +1032,22 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 <button
                   className="text-blue-500 hover:text-blue-700 text-xs border border-blue-500 rounded px-2 py-1 mt-1"
                   onClick={() => onOpenReinitiate(appt)}
-                  disabled={appt.status === 'cancelledByBuyer' && isBuyer ? appt.reinitiationCount >= 2 || !appt.buyerId || !appt.sellerId : false}
+                  disabled={
+                    (appt.status === 'cancelledByBuyer' && isBuyer && (appt.buyerReinitiationCount || 0) >= 2) ||
+                    (appt.status === 'cancelledBySeller' && isSeller && (appt.sellerReinitiationCount || 0) >= 2) ||
+                    !appt.buyerId || !appt.sellerId
+                  }
                   title="Reinitiate or Reschedule Appointment"
                 >
                   Reinitiate
                 </button>
-                <span className="text-xs text-gray-500 mt-1">{2 - (appt.reinitiationCount || 0)} left</span>
+                <span className="text-xs text-gray-500 mt-1">
+                  {isBuyer && appt.status === 'cancelledByBuyer'
+                    ? `${2 - (appt.buyerReinitiationCount || 0)} left`
+                    : isSeller && appt.status === 'cancelledBySeller'
+                    ? `${2 - (appt.sellerReinitiationCount || 0)} left`
+                    : ''}
+                </span>
               </div>
             )}
           </div>
