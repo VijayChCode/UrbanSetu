@@ -535,6 +535,29 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
     };
   }, [appt._id, showChatModal]);
 
+  React.useEffect(() => {
+    function handleCommentUpdate(data) {
+      if (data.appointmentId === appt._id) {
+        setLocalComments((prev) => {
+          const idx = prev.findIndex(c => c._id === data.comment._id);
+          if (idx !== -1) {
+            // Update the existing comment in place
+            const updated = [...prev];
+            updated[idx] = data.comment;
+            return updated;
+          } else {
+            // Only add if not present (for new messages)
+            return [...prev, data.comment];
+          }
+        });
+      }
+    }
+    socket.on('commentUpdate', handleCommentUpdate);
+    return () => {
+      socket.off('commentUpdate', handleCommentUpdate);
+    };
+  }, [appt._id, setLocalComments]);
+
   const handleCommentSend = async () => {
     if (!newComment.trim()) return;
     setSending(true);
