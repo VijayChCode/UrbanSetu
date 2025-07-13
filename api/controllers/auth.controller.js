@@ -138,15 +138,13 @@ export const Google=async (req,res,next)=>{
             });
         }
         else{
-            const generatedPassword=Math.random().toString(36).slice(-8)
-            const hashedPassword=await bcryptjs.hashSync(generatedPassword,10);
-            
+            const generatedPassword = Math.random().toString(36).slice(-8);
+            const hashedPassword = await bcryptjs.hashSync(generatedPassword,10);
             // Generate a random unique mobile number for Google signup
             let mobileNumber;
             let isUnique = false;
             let attempts = 0;
             const maxAttempts = 10; // Prevent infinite loop
-            
             while (!isUnique && attempts < maxAttempts) {
                 // Generate a random 10-digit number starting with 9 (to avoid conflicts with real numbers)
                 mobileNumber = "9" + Math.random().toString().slice(2, 11);
@@ -157,13 +155,11 @@ export const Google=async (req,res,next)=>{
                 }
                 attempts++;
             }
-            
             // If we couldn't find a unique number after max attempts, use timestamp-based number
             if (!isUnique) {
                 const timestamp = Date.now().toString();
                 mobileNumber = "9" + timestamp.slice(-9);
             }
-            
             const newUser=new User({
                 username:name.split(" ").join("").toLowerCase()+Math.random().toString(36).slice(-8),
                 email,
@@ -191,7 +187,6 @@ export const Google=async (req,res,next)=>{
                 token,
             });
         }
-
     }
     catch(error){
         console.error(error);
