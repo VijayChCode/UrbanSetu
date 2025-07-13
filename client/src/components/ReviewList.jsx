@@ -61,7 +61,7 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
       socket.off('reviewUpdated', handleSocketReviewUpdate);
       socket.off('reviewReplyUpdated', handleSocketReplyUpdate);
     };
-  }, [listingId]);
+  }, [listingId, sortBy, sortOrder]);
 
   const fetchReviews = async () => {
     try {
