@@ -129,12 +129,36 @@ export const Google=async (req,res,next)=>{
         else{
             const generatedPassword=Math.random().toString(36).slice(-8)
             const hashedPassword=await bcryptjs.hashSync(generatedPassword,10);
+            
+            // Generate a random unique mobile number for Google signup
+            let mobileNumber;
+            let isUnique = false;
+            let attempts = 0;
+            const maxAttempts = 10; // Prevent infinite loop
+            
+            while (!isUnique && attempts < maxAttempts) {
+                // Generate a random 10-digit number starting with 9 (to avoid conflicts with real numbers)
+                mobileNumber = "9" + Math.random().toString().slice(2, 11);
+                // Check if this mobile number already exists
+                const existingUser = await User.findOne({ mobileNumber });
+                if (!existingUser) {
+                    isUnique = true;
+                }
+                attempts++;
+            }
+            
+            // If we couldn't find a unique number after max attempts, use timestamp-based number
+            if (!isUnique) {
+                const timestamp = Date.now().toString();
+                mobileNumber = "9" + timestamp.slice(-9);
+            }
+            
             const newUser=new User({
                 username:name.split(" ").join("").toLowerCase()+Math.random().toString(36).slice(-8),
                 email,
                 password:hashedPassword,
                 avatar:photo,
-                mobileNumber: "0000000000" // Default mobile number for Google signup
+                mobileNumber: mobileNumber
             })
             await newUser.save()
             const token=jwt.sign({id:newUser._id},process.env.JWT_TOKEN)
