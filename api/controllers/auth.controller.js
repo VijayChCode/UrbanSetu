@@ -124,7 +124,18 @@ export const Google=async (req,res,next)=>{
                 sameSite: 'none',
                 secure: true,
                 path: '/'
-            }).status(200).json(validUser)
+            }).status(200).json({
+                _id: validUser._id,
+                username: validUser.username,
+                email: validUser.email,
+                role: validUser.role,
+                isDefaultAdmin: validUser.isDefaultAdmin,
+                adminApprovalStatus: validUser.adminApprovalStatus,
+                status: validUser.status,
+                avatar: validUser.avatar,
+                mobileNumber: validUser.mobileNumber,
+                token,
+            });
         }
         else{
             const generatedPassword=Math.random().toString(36).slice(-8)
@@ -167,7 +178,18 @@ export const Google=async (req,res,next)=>{
                 sameSite: 'none',
                 secure: true,
                 path: '/'
-            }).status(200).json(newUser)
+            }).status(200).json({
+                _id: newUser._id,
+                username: newUser.username,
+                email: newUser.email,
+                role: newUser.role,
+                isDefaultAdmin: newUser.isDefaultAdmin,
+                adminApprovalStatus: newUser.adminApprovalStatus,
+                status: newUser.status,
+                avatar: newUser.avatar,
+                mobileNumber: newUser.mobileNumber,
+                token,
+            });
         }
 
     }
