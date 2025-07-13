@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, Navigate, useNavigate } from "react-router-dom";
 import { useEffect, Suspense, lazy, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { verifyAuthStart, verifyAuthSuccess, verifyAuthFailure, signoutUserSuccess } from "./redux/user/userSlice.js";
@@ -162,6 +162,33 @@ function NormalizeRoute({ children }) {
     return <Navigate to={normalized} replace />;
   }
   return children;
+}
+
+// Global fetch wrapper to handle suspension
+function useSuspensionFetch() {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  useEffect(() => {
+    const origFetch = window.fetch;
+    window.fetch = async (...args) => {
+      const response = await origFetch(...args);
+      if (response.status === 403) {
+        try {
+          const data = await response.clone().json();
+          if (data.message && data.message.toLowerCase().includes("suspended")) {
+            dispatch(signoutUserSuccess());
+            alert("Your account has been suspended. You have been signed out.");
+            navigate("/sign-in");
+            return response;
+          }
+        } catch (e) {}
+      }
+      return response;
+    };
+    return () => {
+      window.fetch = origFetch;
+    };
+  }, [dispatch, navigate]);
 }
 
 function AppRoutes({ bootstrapped }) {
