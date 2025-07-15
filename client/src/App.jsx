@@ -226,6 +226,26 @@ function AppRoutes({ bootstrapped }) {
     }
   }, [bootstrapped, dispatch]);
 
+  // Periodic session check (every 30 seconds)
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/auth/verify`, { credentials: 'include' });
+        if (res.status === 403) {
+          try {
+            const data = await res.clone().json();
+            if (data.message && data.message.toLowerCase().includes("suspended")) {
+              dispatch(signoutUserSuccess());
+              toast.error(data.message || "Your account has been suspended. You have been signed out.");
+              navigate("/sign-in");
+            }
+          } catch (e) {}
+        }
+      } catch (e) {}
+    }, 30000); // 30 seconds
+    return () => clearInterval(interval);
+  }, [dispatch, navigate]);
+
   // Show loader while checking session
   if (!bootstrapped || !sessionChecked) {
     return <LoadingSpinner />;
