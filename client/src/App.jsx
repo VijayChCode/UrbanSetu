@@ -179,7 +179,9 @@ function useSuspensionFetch() {
           if (data.message && data.message.toLowerCase().includes("suspended")) {
             dispatch(signoutUserSuccess());
             toast.info(data.message || "Your account has been suspended. You have been signed out.");
-            navigate("/sign-in");
+            setTimeout(() => {
+              navigate("/sign-in");
+            }, 1800); // Delay navigation so toast is visible
             return response;
           }
         } catch (e) {}
@@ -238,7 +240,7 @@ function AppRoutes({ bootstrapped }) {
             const data = await res.clone().json();
             if (data.message && data.message.toLowerCase().includes("suspended")) {
               dispatch(signoutUserSuccess());
-              toast.info(data.message || "Your account has been suspended. You have been signed out.");
+              toast.error(data.message || "Your account has been suspended. You have been signed out.");
               navigate("/sign-in");
             }
           } catch (e) {}
