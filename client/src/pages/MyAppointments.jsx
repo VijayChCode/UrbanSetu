@@ -4,9 +4,8 @@ import { useSelector } from "react-redux";
 import { useState as useLocalState } from "react";
 import { Link, useLocation, useNavigate, useNavigation } from "react-router-dom";
 import Appointment from "../components/Appointment";
-import toast, { Toaster } from "react-hot-toast";
+import { toast, ToastContainer } from 'react-toastify';
 import { socket } from "../utils/socket";
-import { toast } from 'react-toastify';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -1071,7 +1070,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       {showChatModal && (
         <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative flex flex-col">
-            <Toaster position="bottom-center" containerClassName="!z-[100]" toastOptions={{ duration: 2000, style: { fontSize: '0.9rem', borderRadius: '8px', boxShadow: '0 2px 8px #0001' } }} />
+            <ToastContainer position="bottom-center" containerClassName="!z-[100]" toastOptions={{ duration: 2000, style: { fontSize: '0.9rem', borderRadius: '8px', boxShadow: '0 2px 8px #0001' } }} />
             <button
               className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-2xl"
               onClick={() => setShowChatModal(false)}
