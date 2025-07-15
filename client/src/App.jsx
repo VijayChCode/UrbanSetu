@@ -173,7 +173,7 @@ function useSuspensionFetch() {
     const origFetch = window.fetch;
     window.fetch = async (...args) => {
       const response = await origFetch(...args);
-      if (response.status === 403) {
+      if (response.status === 401) {
         try {
           const data = await response.clone().json();
           if (data.message && data.message.toLowerCase().includes("suspended")) {
