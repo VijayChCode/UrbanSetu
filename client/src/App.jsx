@@ -181,7 +181,7 @@ function useSuspensionFetch() {
             toast.info(data.message || "Your account has been suspended. You have been signed out.");
             setTimeout(() => {
               navigate("/sign-in");
-            }, 3000); // Delay navigation so toast is visible
+            }, 1800); // Delay navigation so toast is visible
             return response;
           }
         } catch (e) {}
