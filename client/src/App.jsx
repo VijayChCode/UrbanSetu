@@ -197,6 +197,7 @@ function AppRoutes({ bootstrapped }) {
   const dispatch = useDispatch();
   const { currentUser, loading } = useSelector((state) => state.user);
   const [sessionChecked, setSessionChecked] = useState(false);
+  const navigate = useNavigate(); // Fix: ensure navigate is defined
 
   // Persistent session check on app load
   useEffect(() => {
