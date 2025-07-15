@@ -237,7 +237,7 @@ function AppRoutes({ bootstrapped }) {
             const data = await res.clone().json();
             if (data.message && data.message.toLowerCase().includes("suspended")) {
               dispatch(signoutUserSuccess());
-              toast.error(data.message || "Your account has been suspended. You have been signed out.");
+              alert("Your account has been suspended. You have been signed out.");
               navigate("/sign-in");
             }
           } catch (e) {}
