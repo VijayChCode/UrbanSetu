@@ -229,6 +229,7 @@ function AppRoutes({ bootstrapped }) {
 
   // Periodic session check (every 30 seconds)
   useEffect(() => {
+    if (!currentUser) return; // Only run if user is logged in
     const interval = setInterval(async () => {
       try {
         const res = await fetch(`${API_BASE_URL}/api/auth/verify`, { credentials: 'include' });
@@ -237,7 +238,7 @@ function AppRoutes({ bootstrapped }) {
             const data = await res.clone().json();
             if (data.message && data.message.toLowerCase().includes("suspended")) {
               dispatch(signoutUserSuccess());
-              alert("Your account has been suspended. You have been signed out.");
+              toast.error(data.message || "Your account has been suspended. You have been signed out.");
               navigate("/sign-in");
             }
           } catch (e) {}
@@ -245,7 +246,7 @@ function AppRoutes({ bootstrapped }) {
       } catch (e) {}
     }, 30000); // 30 seconds
     return () => clearInterval(interval);
-  }, [dispatch, navigate]);
+  }, [dispatch, navigate, currentUser]);
 
   // Show loader while checking session
   if (!bootstrapped || !sessionChecked) {
