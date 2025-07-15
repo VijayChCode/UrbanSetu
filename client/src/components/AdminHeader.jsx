@@ -6,6 +6,7 @@ import { FaHome, FaCalendarAlt, FaPlus, FaSignOutAlt, FaSearch, FaUserCheck, FaL
 import NotificationBell from "./NotificationBell.jsx";
 import { persistor } from '../redux/store';
 import { reconnectSocket } from "../utils/socket";
+import { toast } from 'react-toastify';
 
 export default function AdminHeader() {
   const { currentUser } = useSelector((state) => state.user);
@@ -133,7 +134,7 @@ export default function AdminHeader() {
         reconnectSocket();
         localStorage.removeItem('accessToken');
         document.cookie = 'access_token=; Max-Age=0; path=/; domain=' + window.location.hostname + '; secure; samesite=None';
-        alert("You have been signed out.");
+        toast.success("You have been signed out.");
         navigate("/sign-in");
       }
     } catch (error) {

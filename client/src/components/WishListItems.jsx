@@ -5,6 +5,7 @@ import { useWishlist } from '../WishlistContext'
 import { FaTrash } from 'react-icons/fa'
 import { useSelector } from 'react-redux'
 import { maskAddress } from '../utils/addressMasking'
+import { toast } from 'react-toastify';
 
 export default function WishListItem ({ listing }) {
   const { removeFromWishlist } = useWishlist();
@@ -25,9 +26,9 @@ export default function WishListItem ({ listing }) {
   const handleRemoveFromWishlist = async () => {
     const result = await removeFromWishlist(listing._id);
     if (result.success) {
-      alert(result.message);
+      toast.success(result.message);
     } else {
-      alert(result.message);
+      toast.error(result.message);
     }
   };
 

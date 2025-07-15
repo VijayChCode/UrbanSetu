@@ -5,6 +5,7 @@ import { useState as useLocalState } from "react";
 import { Link } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 import { socket } from "../utils/socket";
+import { toast } from 'react-toastify';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -89,13 +90,13 @@ export default function AdminAppointments() {
         setAppointments((prev) =>
           prev.map((appt) => (appt._id === id ? { ...appt, status: "cancelledByAdmin", cancelReason: reason } : appt))
         );
-        alert("Appointment cancelled successfully. Both buyer and seller have been notified of the cancellation.");
+        toast.success("Appointment cancelled successfully. Both buyer and seller have been notified of the cancellation.");
       } else {
-        alert(data.message || "Failed to cancel appointment.");
+        toast.error(data.message || "Failed to cancel appointment.");
       }
     } catch (err) {
       console.error('Error in handleAdminCancel:', err);
-      alert("An error occurred. Please try again.");
+      toast.error("An error occurred. Please try again.");
     }
   };
 
@@ -119,13 +120,13 @@ export default function AdminAppointments() {
         setAppointments((prev) =>
           prev.map((appt) => (appt._id === id ? { ...appt, status: "pending", cancelReason: "" } : appt))
         );
-        alert("Appointment reinitiated successfully. Both buyer and seller have been notified.");
+        toast.success("Appointment reinitiated successfully. Both buyer and seller have been notified.");
       } else {
-        alert(data.message || "Failed to reinitiate appointment.");
+        toast.error(data.message || "Failed to reinitiate appointment.");
       }
     } catch (err) {
       console.error('Error in handleReinitiateAppointment:', err);
-      alert("An error occurred. Please try again.");
+      toast.error("An error occurred. Please try again.");
     }
   };
 
@@ -148,13 +149,13 @@ export default function AdminAppointments() {
           setAppointments((prev) => prev.filter((appt) => appt._id !== id));
           setArchivedAppointments((prev) => [{ ...archivedAppt, archivedByAdmin: true, archivedAt: new Date() }, ...prev]);
         }
-        alert("Appointment archived successfully.");
+        toast.success("Appointment archived successfully.");
       } else {
-        alert(data.message || "Failed to archive appointment.");
+        toast.error(data.message || "Failed to archive appointment.");
       }
     } catch (err) {
       console.error('Error in handleArchiveAppointment:', err);
-      alert("An error occurred. Please try again.");
+      toast.error("An error occurred. Please try again.");
     }
   };
 
@@ -177,19 +178,19 @@ export default function AdminAppointments() {
           setArchivedAppointments((prev) => prev.filter((appt) => appt._id !== id));
           setAppointments((prev) => [{ ...unarchivedAppt, archivedByAdmin: false, archivedAt: undefined }, ...prev]);
         }
-        alert("Appointment unarchived successfully.");
+        toast.success("Appointment unarchived successfully.");
       } else {
-        alert(data.message || "Failed to unarchive appointment.");
+        toast.error(data.message || "Failed to unarchive appointment.");
       }
     } catch (err) {
       console.error('Error in handleUnarchiveAppointment:', err);
-      alert("An error occurred. Please try again.");
+      toast.error("An error occurred. Please try again.");
     }
   };
 
   const handleUserClick = async (userId) => {
     if (!userId) {
-      alert("User ID not available");
+      toast.error("User ID not available");
       return;
     }
     
@@ -201,11 +202,11 @@ export default function AdminAppointments() {
       if (res.ok) {
         setSelectedUser(data);
       } else {
-        alert("Failed to fetch user details.");
+        toast.error("Failed to fetch user details.");
         setShowUserModal(false);
       }
     } catch (err) {
-      alert("An error occurred while fetching user details.");
+      toast.error("An error occurred while fetching user details.");
       setShowUserModal(false);
     }
     setUserLoading(false);
@@ -574,10 +575,10 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
         setNewComment("");
         toast.success("Comment sent successfully!");
       } else {
-        alert(data.message || "Failed to send comment.");
+        toast.error(data.message || "Failed to send comment.");
       }
     } catch (err) {
-      alert("An error occurred. Please try again.");
+      toast.error("An error occurred. Please try again.");
     }
     setSending(false);
   };
@@ -598,10 +599,10 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
         setEditText("");
         toast.success("Comment edited successfully!");
       } else {
-        alert(data.message || "Failed to edit comment.");
+        toast.error(data.message || "Failed to edit comment.");
       }
     } catch (err) {
-      alert("An error occurred. Please try again.");
+      toast.error("An error occurred. Please try again.");
     }
   };
 
@@ -650,10 +651,10 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
         setShowPasswordModal(false);
         setShowChatModal(true);
       } else {
-        alert("Incorrect password. Please try again.");
+        toast.error("Incorrect password. Please try again.");
       }
     } catch (err) {
-      alert("Failed to verify password. Please try again.");
+      toast.error("Failed to verify password. Please try again.");
     }
     setPasswordLoading(false);
   };
@@ -882,10 +883,10 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                                     setLocalComments(data.comments);
                                     toast.success("Comment deleted successfully!");
                                   } else {
-                                    alert(data.message || 'Failed to delete comment.');
+                                    toast.error(data.message || 'Failed to delete comment.');
                                   }
                                 } catch (err) {
-                                  alert("An error occurred. Please try again.");
+                                  toast.error("An error occurred. Please try again.");
                                 }
                               }}
                             >

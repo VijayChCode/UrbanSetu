@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import { useNavigate, useLocation } from "react-router-dom";
 import LocationSelector from "../components/LocationSelector";
 import toast from "react-hot-toast";
+import { toast } from 'react-toastify';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -164,7 +165,7 @@ export default function CreateListing() {
       setLoading(false);
       
       if (res.ok) {
-        alert("Property Added Successfully!!");
+        toast.success("Property Added Successfully!!");
         navigate(getPreviousPath());
       } else {
         const errorMessage = data.message || "Failed to create listing";

@@ -18,6 +18,7 @@ import {
   FaLock
 } from "react-icons/fa";
 import ContactSupportWrapper from "../components/ContactSupportWrapper";
+import { toast } from 'react-toastify';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -251,7 +252,7 @@ export default function AdminDashboard() {
         setRentListings((prev) => prev.filter((l) => l._id !== pendingDelete.id));
         setSaleListings((prev) => prev.filter((l) => l._id !== pendingDelete.id));
         setShowPasswordModal(false);
-        alert(data.message || 'Listing deleted successfully.');
+        toast.success(data.message || 'Listing deleted successfully.');
         fetchAnalytics();
       } else {
         setDeleteError(data.message || 'Failed to delete listing.');

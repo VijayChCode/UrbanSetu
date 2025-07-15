@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { FaStar, FaCheck, FaTimes, FaTrash, FaEye, FaBan, FaSort, FaSortUp, FaSortDown, FaCheckCircle, FaThumbsUp, FaReply } from 'react-icons/fa';
 import { socket } from '../utils/socket';
+import { toast } from 'react-toastify';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -112,18 +113,18 @@ export default function AdminReviews() {
         setReviews(reviews.map(review => 
           review._id === reviewId ? { ...review, status: newStatus, adminNote } : review
         ));
-        alert(`Review ${newStatus} successfully`);
+        toast.success(`Review ${newStatus} successfully`);
       } else {
-        alert(data.message || 'Failed to update review status');
+        toast.error(data.message || 'Failed to update review status');
       }
     } catch (error) {
-      alert('Network error. Please try again.');
+      toast.error('Network error. Please try again.');
     }
   };
 
   const handleRemoveReview = async () => {
     if (!removalReason) {
-      alert('Please select a removal reason');
+      toast.error('Please select a removal reason');
       return;
     }
     try {
@@ -149,12 +150,12 @@ export default function AdminReviews() {
         setReviewToRemove(null);
         setRemovalReason('');
         setRemovalNote('');
-        alert('Review removed successfully');
+        toast.success('Review removed successfully');
       } else {
-        alert(data.message || 'Failed to remove review');
+        toast.error(data.message || 'Failed to remove review');
       }
     } catch (error) {
-      alert('Network error. Please try again.');
+      toast.error('Network error. Please try again.');
     }
   };
 

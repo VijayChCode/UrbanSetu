@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import { useNavigate, useLocation } from "react-router-dom";
 import LocationSelector from "../components/LocationSelector";
 import toast from "react-hot-toast";
+import { toast } from 'react-toastify';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -247,9 +248,9 @@ export default function AdminCreateListing() {
       if (res.ok) {
         // Show appropriate success message
         if (formData.assignToEmail.trim()) {
-          alert(`Property added successfully to ${formData.assignToEmail}`);
+          toast.success(`Property added successfully to ${formData.assignToEmail}`);
         } else {
-          alert("Listing created under admin ownership");
+          toast.success("Listing created under admin ownership");
         }
         
         navigate(getPreviousPath());

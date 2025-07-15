@@ -6,6 +6,7 @@ import { signoutUserSuccess } from "../redux/user/userSlice.js";
 import NotificationBell from "./NotificationBell.jsx";
 import { persistor } from '../redux/store';
 import { reconnectSocket } from "../utils/socket";
+import { toast } from 'react-toastify';
 
 export default function Header() {
   const { currentUser } = useSelector((state) => state.user);
@@ -224,7 +225,7 @@ function UserNavLinks({ mobile = false, onNavigate }) {
       reconnectSocket();
       localStorage.removeItem('accessToken');
       document.cookie = 'access_token=; Max-Age=0; path=/; domain=' + window.location.hostname + '; secure; samesite=None';
-      alert("You have been signed out.");
+      toast.success("You have been signed out.");
       navigate("/sign-in");
     } catch (error) {
       console.log(error.message);
@@ -233,7 +234,7 @@ function UserNavLinks({ mobile = false, onNavigate }) {
       reconnectSocket();
       localStorage.removeItem('accessToken');
       document.cookie = 'access_token=; Max-Age=0; path=/; domain=' + window.location.hostname + '; secure; samesite=None';
-      alert("You have been signed out.");
+      toast.success("You have been signed out.");
       navigate("/sign-in");
     }
   };

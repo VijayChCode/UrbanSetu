@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { FaStar, FaEdit, FaTimes } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -116,12 +117,12 @@ export default function ReviewForm({ listingId, existingReview, onReviewSubmitte
           setComment('');
         }
         setIsEditing(false);
-        alert(data.message || 'Review submitted successfully!');
+        toast.success(data.message || 'Review submitted successfully!');
         navigate(0);
       } else {
         // Show alert for duplicate review error
         if (data.message && data.message.includes('already reviewed')) {
-          alert(data.message);
+          toast.error(data.message);
         }
         setError(data.message || 'Failed to submit review');
       }

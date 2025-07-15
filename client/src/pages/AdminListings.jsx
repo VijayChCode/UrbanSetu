@@ -4,6 +4,7 @@ import { FaEdit, FaTrash, FaEye, FaPlus, FaLock } from "react-icons/fa";
 import ContactSupportWrapper from "../components/ContactSupportWrapper";
 import { maskAddress } from '../utils/addressMasking';
 import { useSelector } from "react-redux";
+import { toast } from 'react-toastify';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -91,7 +92,7 @@ export default function AdminListings() {
         setListings((prev) => prev.filter((listing) => listing._id !== pendingDeleteId));
         setShowPasswordModal(false);
         const data = await res.json();
-        alert(data.message || "Listing deleted successfully!");
+        toast.success(data.message || "Listing deleted successfully!");
       } else {
         const data = await res.json();
         setDeleteError(data.message || "Failed to delete listing.");

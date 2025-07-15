@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { FaHeadset, FaTimes, FaPaperPlane, FaEnvelope, FaUser, FaFileAlt, FaClock, FaTrash } from 'react-icons/fa';
 import { useSelector } from 'react-redux';
+import { toast } from 'react-toastify';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -115,14 +116,14 @@ export default function ContactSupport() {
         const unreadCount = updatedMessages.filter(msg => msg.adminReply && msg.status === 'unread').length;
         setUnreadReplies(unreadCount);
         
-        alert('Message deleted successfully!');
+        toast.success('Message deleted successfully!');
       } else {
         const errorData = await response.json();
-        alert(errorData.message || 'Failed to delete message. Please try again.');
+        toast.error(errorData.message || 'Failed to delete message. Please try again.');
       }
     } catch (error) {
       console.error('Error deleting message:', error);
-      alert('Failed to delete message. Please try again.');
+      toast.error('Failed to delete message. Please try again.');
     }
   };
 
@@ -175,15 +176,18 @@ export default function ContactSupport() {
       if (data.success) {
         setSubmitStatus('success');
         setFormData({ subject: '', message: '', email: '', name: '' });
+        toast.success('Message sent successfully!');
         setTimeout(() => {
           setIsModalOpen(false);
           setSubmitStatus('');
         }, 3000);
       } else {
         setSubmitStatus('error');
+        toast.error('Failed to send message. Please try again or contact us directly.');
       }
     } catch (error) {
       setSubmitStatus('error');
+      toast.error('Failed to send message. Please try again or contact us directly.');
     } finally {
       setIsSubmitting(false);
     }

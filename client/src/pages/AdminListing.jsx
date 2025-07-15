@@ -6,6 +6,7 @@ import "swiper/css/navigation";
 import { Navigation } from "swiper/modules";
 import { FaBath, FaBed, FaChair, FaMapMarkerAlt, FaParking, FaShare, FaEdit, FaTrash, FaArrowLeft } from "react-icons/fa";
 import { maskAddress, shouldShowLocationLink, getLocationLinkText } from "../utils/addressMasking";
+import { toast } from 'react-toastify';
 
 export default function AdminListing() {
   const params = useParams();
@@ -28,15 +29,15 @@ export default function AdminListing() {
       });
       
       if (res.ok) {
-        alert('Property deleted successfully!');
+        toast.success('Property deleted successfully!');
         navigate('/admin/listings');
       } else {
         const data = await res.json();
-        alert(data.message || 'Failed to delete property.');
+        toast.error(data.message || 'Failed to delete property.');
       }
     } catch (error) {
       console.error('Error deleting property:', error);
-      alert('An error occurred while deleting the property.');
+      toast.error('An error occurred while deleting the property.');
     }
   };
 

@@ -21,6 +21,7 @@ import { FaHome } from "react-icons/fa";
 import AdminManagement from './pages/AdminManagement';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'react-toastify';
 
 // Lazy load all pages
 const PublicHome = lazy(() => import('./pages/PublicHome'));
@@ -177,7 +178,7 @@ function useSuspensionFetch() {
           const data = await response.clone().json();
           if (data.message && data.message.toLowerCase().includes("suspended")) {
             dispatch(signoutUserSuccess());
-            alert("Your account has been suspended. You have been signed out.");
+            toast.error("Your account has been suspended. You have been signed out.");
             navigate("/sign-in");
             return response;
           }

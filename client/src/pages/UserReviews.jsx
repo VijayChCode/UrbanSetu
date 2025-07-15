@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import { FaStar, FaEdit, FaTrash, FaCheck, FaTimes } from 'react-icons/fa';
 import ReviewForm from '../components/ReviewForm.jsx';
 import { socket } from '../utils/socket.js';
+import { toast } from 'react-toastify';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -85,12 +86,12 @@ export default function UserReviews() {
 
       if (res.ok) {
         setReviews(reviews.filter(review => review._id !== reviewId));
-        alert('Review deleted successfully');
+        toast.success('Review deleted successfully');
       } else {
-        alert(data.message || 'Failed to delete review');
+        toast.error(data.message || 'Failed to delete review');
       }
     } catch (error) {
-      alert('Network error. Please try again.');
+      toast.error('Network error. Please try again.');
     }
   };
 

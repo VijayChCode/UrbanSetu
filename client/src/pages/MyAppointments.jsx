@@ -6,6 +6,7 @@ import { Link, useLocation, useNavigate, useNavigation } from "react-router-dom"
 import Appointment from "../components/Appointment";
 import toast, { Toaster } from "react-hot-toast";
 import { socket } from "../utils/socket";
+import { toast } from 'react-toastify';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -283,11 +284,11 @@ export default function MyAppointments() {
     const isSeller = currentUser && (reinitiateData.sellerId?._id === currentUser._id || reinitiateData.sellerId === currentUser._id);
     const count = isBuyer ? (reinitiateData.buyerReinitiationCount || 0) : (reinitiateData.sellerReinitiationCount || 0);
     if (count >= 2) {
-      alert('You have reached the maximum number of reinitiations for your role.');
+      toast.error('You have reached the maximum number of reinitiations for your role.');
       return;
     }
     if (!reinitiateData.buyerId || !reinitiateData.sellerId) {
-      alert('Cannot reinitiate: one of the parties no longer exists.');
+      toast.error('Cannot reinitiate: one of the parties no longer exists.');
       return;
     }
     const payload = {
@@ -303,16 +304,16 @@ export default function MyAppointments() {
       });
       const data = await res.json();
       if (res.ok) {
-        alert('Appointment reinitiated successfully!');
+        toast.success('Appointment reinitiated successfully!');
         setShowReinitiateModal(false);
         setReinitiateData(null);
         navigate("/user/my-appointments");
         setAppointments((prev) => prev.map(appt => appt._id === data.appointment._id ? { ...appt, ...data.appointment } : appt));
       } else {
-        alert(data.message || 'Failed to reinitiate appointment.');
+        toast.error(data.message || 'Failed to reinitiate appointment.');
       }
     } catch (err) {
-      alert('An error occurred. Please try again.');
+      toast.error('An error occurred. Please try again.');
     }
   }
 
@@ -630,10 +631,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         setComment("");
         toast.success("Comment sent successfully!");
       } else {
-        alert(data.message || "Failed to send comment.");
+        toast.error(data.message || "Failed to send comment.");
       }
     } catch (err) {
-      alert('An error occurred. Please try again.');
+      toast.error('An error occurred. Please try again.');
     }
     setSending(false);
   };
@@ -654,10 +655,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         setEditText("");
         toast.success("Comment edited successfully!");
       } else {
-        alert(data.message || "Failed to edit comment.");
+        toast.error(data.message || "Failed to edit comment.");
       }
     } catch (err) {
-      alert('An error occurred. Please try again.');
+      toast.error('An error occurred. Please try again.');
     }
   };
 
@@ -683,7 +684,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     let reason = '';
     if (isSeller) {
       reason = prompt('Please provide a reason for cancelling this appointment (required):');
-      if (!reason) return alert('Reason is required for seller cancellation.');
+      if (!reason) return toast.error('Reason is required for seller cancellation.');
     } else {
       reason = prompt('Please provide a reason for cancelling this appointment (optional):') || '';
     }
@@ -697,25 +698,25 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       });
       const data = await res.json();
       if (res.status === 401) {
-        alert('Session expired or unauthorized. Please sign in again.');
+        toast.error('Session expired or unauthorized. Please sign in again.');
         navigate('/sign-in');
         return;
       }
       if (res.ok) {
-        alert('Appointment cancelled successfully.');
+        toast.success('Appointment cancelled successfully.');
         if (typeof onCancelRefresh === 'function') onCancelRefresh(appt._id, isSeller ? 'cancelledBySeller' : 'cancelledByBuyer');
       } else {
-        alert(data.message || 'Failed to cancel appointment.');
+        toast.error(data.message || 'Failed to cancel appointment.');
       }
     } catch (err) {
-      alert('An error occurred. Please try again.');
+      toast.error('An error occurred. Please try again.');
     }
   };
 
   // Admin-side cancel handler
   const handleAdminCancel = async () => {
     const reason = prompt('Please provide a reason for admin cancellation (required):');
-    if (!reason) return alert('Reason is required for admin cancellation.');
+    if (!reason) return toast.error('Reason is required for admin cancellation.');
     if (!window.confirm('Are you sure you want to cancel this appointment as admin?')) return;
     try {
       const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/cancel`, {
@@ -726,18 +727,18 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       });
       const data = await res.json();
       if (res.status === 401) {
-        alert('Session expired or unauthorized. Please sign in again.');
+        toast.error('Session expired or unauthorized. Please sign in again.');
         navigate('/sign-in');
         return;
       }
       if (res.ok) {
-        alert('Appointment cancelled by admin.');
+        toast.success('Appointment cancelled by admin.');
         navigate('/user/my-appointments');
       } else {
-        alert(data.message || 'Failed to cancel appointment.');
+        toast.error(data.message || 'Failed to cancel appointment.');
       }
     } catch (err) {
-      alert('An error occurred. Please try again.');
+      toast.error('An error occurred. Please try again.');
     }
   };
 
@@ -760,10 +761,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
           window.dispatchEvent(event);
         }
       } else {
-        alert('Failed to remove appointment from table.');
+        toast.error('Failed to remove appointment from table.');
       }
     } catch (err) {
-      alert('An error occurred. Please try again.');
+      toast.error('An error occurred. Please try again.');
     }
   };
 
@@ -1159,10 +1160,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                   setComments(data.comments);
                                   toast.success("Comment deleted successfully!");
                                 } else {
-                                  alert(data.message || 'Failed to delete comment.');
+                                  toast.error(data.message || 'Failed to delete comment.');
                                 }
                               } catch (err) {
-                                alert('An error occurred. Please try again.');
+                                toast.error('An error occurred. Please try again.');
                               }
                             }}
                           >

@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { socket } from './utils/socket';
+import { toast } from 'react-toastify';
 
 const WishlistContext = createContext();
 
@@ -28,7 +29,7 @@ const WishlistProvider = ({ children }) => {
         const data = await response.json();
         if (!Array.isArray(data)) {
           setWishlist([]);
-          window.alert('Session expired or unauthorized. Please sign in again.');
+          toast.error('Session expired or unauthorized. Please sign in again.');
           window.location.href = '/sign-in';
           return;
         }
@@ -37,7 +38,7 @@ const WishlistProvider = ({ children }) => {
         setWishlist(listings);
       } else if (response.status === 401) {
         setWishlist([]);
-        window.alert('Session expired or unauthorized. Please sign in again.');
+        toast.error('Session expired or unauthorized. Please sign in again.');
         window.location.href = '/sign-in';
       } else {
         console.error('Failed to fetch wishlist');

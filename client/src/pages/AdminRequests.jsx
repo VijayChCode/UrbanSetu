@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import ContactSupportWrapper from "../components/ContactSupportWrapper";
+import { toast } from 'react-toastify';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -84,12 +85,12 @@ const AdminRequests = () => {
       setPendingRequests(prev => prev.filter(request => request._id !== userId));
       
       // Show success message
-      alert('Admin request approved successfully!');
+      toast.success('Admin request approved successfully!');
       
       // Refresh the page to update header count
       window.location.reload();
     } catch (error) {
-      alert(error.message);
+      toast.error(error.message);
     }
   };
 
@@ -117,12 +118,12 @@ const AdminRequests = () => {
       setPendingRequests(prev => prev.filter(request => request._id !== userId));
       
       // Show success message
-      alert('Admin request rejected successfully!');
+      toast.success('Admin request rejected successfully!');
       
       // Refresh the page to update header count
       window.location.reload();
     } catch (error) {
-      alert(error.message);
+      toast.error(error.message);
     }
   };
 

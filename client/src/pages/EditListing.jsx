@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import LocationSelector from "../components/LocationSelector";
 import toast from "react-hot-toast";
+import { toast } from 'react-toastify';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -167,7 +168,7 @@ export default function EditListing() {
       const data = await res.json();
       
       if (res.ok) {
-        alert(data.message || "Property Details Updated Successfully!!");
+        toast.success(data.message || "Property Details Updated Successfully!!");
         navigate(getPreviousPath());
       } else {
         const errorMessage = data.message || "Failed to update listing";

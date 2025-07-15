@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import ContactSupportWrapper from './ContactSupportWrapper';
+import { toast } from 'react-toastify';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -75,17 +76,17 @@ export default function Appointment() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (hasActiveAppointment) {
-      alert("You already have an active appointment for this property. Please complete, cancel, or wait for the other party to respond before booking again.");
+      toast.info("You already have an active appointment for this property. Please complete, cancel, or wait for the other party to respond before booking again.");
       return;
     }
 
     if (!agreed) {
-      alert("You must agree to share your contact information with the seller to book an appointment.");
+      toast.warning("You must agree to share your contact information with the seller to book an appointment.");
       return;
     }
 
     if (!currentUser) {
-      alert("Please sign in to book an appointment.");
+      toast.info("Please sign in to book an appointment.");
       navigate("/sign-in");
       return;
     }
@@ -99,12 +100,12 @@ export default function Appointment() {
       !formData.propertyName ||
       !formData.propertyDescription
     ) {
-      alert("Please fill out all fields before booking the appointment.");
+      toast.warning("Please fill out all fields before booking the appointment.");
       return;
     }
 
     if (!listingId) {
-      alert("Listing information is missing. Please try again.");
+      toast.warning("Listing information is missing. Please try again.");
       return;
     }
 
@@ -133,11 +134,11 @@ export default function Appointment() {
           }
         }, 2000); // 2 seconds delay
       } else {
-        alert(data.message || "Failed to book appointment.");
+        toast.error(data.message || "Failed to book appointment.");
       }
     } catch (error) {
       console.error("Error booking appointment:", error);
-      alert("An error occurred. Please try again.");
+      toast.error("An error occurred. Please try again.");
     } finally {
       setLoading(false);
     }

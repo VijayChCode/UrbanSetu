@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { FaHeadset, FaTimes, FaCheck, FaReply, FaEnvelope, FaClock, FaUser, FaEye, FaTrash, FaPaperPlane } from 'react-icons/fa';
+import { toast } from 'react-toastify';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -133,7 +134,7 @@ export default function AdminContactSupport() {
 
   const sendReply = async (messageId) => {
     if (!replyMessage.trim()) {
-      alert('Please enter a reply message');
+      toast.error('Please enter a reply message');
       return;
     }
 
@@ -155,13 +156,13 @@ export default function AdminContactSupport() {
         setReplyingTo(null);
         fetchMessages();
         fetchUnreadCount();
-        alert('Reply sent successfully!');
+        toast.success('Reply sent successfully!');
       } else {
-        alert('Failed to send reply. Please try again.');
+        toast.error('Failed to send reply. Please try again.');
       }
     } catch (error) {
       console.error('Error sending reply:', error);
-      alert('Failed to send reply. Please try again.');
+      toast.error('Failed to send reply. Please try again.');
     } finally {
       setReplyLoading(false);
     }

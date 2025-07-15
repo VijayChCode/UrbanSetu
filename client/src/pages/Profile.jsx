@@ -335,7 +335,7 @@ export default function Profile() {
       console.log('Profile update response:', data); // Debug log
       // Handle new backend validation responses
       if (data.status === "email_exists") {
-        alert("Email already registered. Please use a different one.");
+        toast.error("Email already registered. Please use a different one.");
         setEmailError("Email already registered. Please use a different one.");
         dispatch(updateUserFailure("Email already registered. Please use a different one."));
         setLoading(false);
@@ -344,7 +344,7 @@ export default function Profile() {
         return;
       }
       if (data.status === "mobile_exists") {
-        alert("Mobile number already in use. Please choose another one.");
+        toast.error("Mobile number already in use. Please choose another one.");
         setMobileError("Mobile number already in use. Please choose another one.");
         dispatch(updateUserFailure("Mobile number already in use. Please choose another one."));
         setLoading(false);
@@ -373,7 +373,7 @@ export default function Profile() {
         setLoading(false);
         setShowUpdatePasswordModal(false);
         setUpdatePassword("");
-        alert("Profile Updated Successfully!!");
+        toast.success("Profile Updated Successfully!!");
         setTimeout(() => {
           setUpdateSuccess(false);
         }, 3000);
@@ -437,7 +437,7 @@ export default function Profile() {
       }
       if (res.status === 401) {
         setShowPasswordModal(false);
-        alert("For your security, you've been signed out automatically.");
+        toast.info("For your security, you've been signed out automatically.");
         // Signout and redirect
         dispatch(signoutUserStart());
         const signoutRes = await fetch(`${API_BASE_URL}/api/auth/signout`);
@@ -452,7 +452,7 @@ export default function Profile() {
       }
       if (data.message && data.message.toLowerCase().includes('password')) {
         setShowPasswordModal(false);
-        alert("For your security, you've been signed out automatically.");
+        toast.info("For your security, you've been signed out automatically.");
         // Signout and redirect
         dispatch(signoutUserStart());
         const signoutRes = await fetch(`${API_BASE_URL}/api/auth/signout`);
@@ -472,7 +472,7 @@ export default function Profile() {
       }
       dispatch(deleteUserSuccess(data));
       setShowPasswordModal(false);
-      alert("Account deleted successfully. Thank you for being with us — we hope to serve you again in the future!");
+      toast.success("Account deleted successfully. Thank you for being with us — we hope to serve you again in the future!");
       navigate('/');
     } catch (error) {
       setDeleteError("Account deletion failed");
@@ -491,10 +491,10 @@ export default function Profile() {
       if (res.ok) {
         setAdmins(data);
       } else {
-        alert(data.message || 'Failed to fetch admins');
+        toast.error(data.message || 'Failed to fetch admins');
       }
     } catch (error) {
-      alert('Error fetching admins');
+      toast.error('Error fetching admins');
     } finally {
       setLoadingAdmins(false);
     }
@@ -502,7 +502,7 @@ export default function Profile() {
 
   const handleTransferAndDelete = async () => {
     if (!selectedAdmin) {
-      alert('Please select an admin to transfer default admin rights to');
+      toast.error('Please select an admin to transfer default admin rights to');
       return;
     }
     setShowTransferPasswordModal(true);
@@ -533,7 +533,7 @@ export default function Profile() {
       
       if (verifyRes.status === 401) {
         setShowTransferPasswordModal(false);
-        alert("Your session has expired. Please sign in again. No admin rights are Transferred");
+        toast.info("Your session has expired. Please sign in again. No admin rights are Transferred");
         // Signout and redirect
         dispatch(signoutUserStart());
         const signoutRes = await fetch(`${API_BASE_URL}/api/auth/signout`);
@@ -550,7 +550,7 @@ export default function Profile() {
       // Check if password verification failed
       if (!verifyRes.ok || verifyData.success === false) {
         setShowTransferPasswordModal(false);
-        alert("For your security, you've been signed out automatically.");
+        toast.info("For your security, you've been signed out automatically.");
         // Signout and redirect
         dispatch(signoutUserStart());
         const signoutRes = await fetch(`${API_BASE_URL}/api/auth/signout`);
@@ -576,7 +576,7 @@ export default function Profile() {
       });
       const transferData = await transferRes.json();
       if (!transferRes.ok) {
-        alert(transferData.message || 'Failed to transfer default admin rights');
+        toast.error(transferData.message || 'Failed to transfer default admin rights');
         return;
       }
 
@@ -589,7 +589,7 @@ export default function Profile() {
       });
       const deleteData = await deleteRes.json();
       if (!deleteRes.ok) {
-        alert(deleteData.message || 'Failed to delete account after transfer');
+        toast.error(deleteData.message || 'Failed to delete account after transfer');
         return;
       }
       
@@ -597,7 +597,7 @@ export default function Profile() {
       dispatch(deleteUserSuccess(deleteData));
       setShowAdminModal(false);
       setShowTransferPasswordModal(false);
-      alert("Admin rights are transferred and account deleted successfully!");
+      toast.success("Admin rights are transferred and account deleted successfully!");
       navigate('/');
     } catch (error) {
       setTransferDeleteError("Account deletion failed");
@@ -624,7 +624,7 @@ export default function Profile() {
         localStorage.removeItem('accessToken');
         // Extra: Expire the access_token cookie on client side
         document.cookie = 'access_token=; Max-Age=0; path=/; domain=' + window.location.hostname + '; secure; samesite=None';
-        alert("You have been signed out.");
+        toast.info("You have been signed out.");
         await new Promise(resolve => setTimeout(resolve, 50));
         navigate("/sign-in");
       }
@@ -706,7 +706,7 @@ export default function Profile() {
       const data = await res.json();
       if (res.status === 401 && data.error === 'invalidPassword') {
         setShowTransferModal(false);
-        alert("For your security, you've been signed out automatically.");
+        toast.info("For your security, you've been signed out automatically.");
         dispatch(signoutUserStart());
         const signoutRes = await fetch(`${API_BASE_URL}/api/auth/signout`);
         const signoutData = await signoutRes.json();

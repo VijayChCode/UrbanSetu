@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { toast } from 'react-toastify';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -44,7 +45,7 @@ export default function AdminAppointmentListing() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!currentUser) {
-      alert("Please sign in as admin to book an appointment.");
+      toast.error("Please sign in as admin to book an appointment.");
       navigate("/admin/profile");
       return;
     }
@@ -57,11 +58,11 @@ export default function AdminAppointmentListing() {
       !formData.propertyName ||
       !formData.propertyDescription
     ) {
-      alert("Please fill out all fields before booking the appointment.");
+      toast.error("Please fill out all fields before booking the appointment.");
       return;
     }
     if (!listingId) {
-      alert("Listing information is missing. Please try again.");
+      toast.error("Listing information is missing. Please try again.");
       return;
     }
     setLoading(true);
@@ -82,15 +83,16 @@ export default function AdminAppointmentListing() {
       const data = await res.json();
       if (res.ok) {
         setBooked(true);
+        toast.success("Appointment booked successfully!");
         setTimeout(() => {
           navigate("/admin/appointments");
         }, 2000);
       } else {
-        alert(data.message || "Failed to book appointment.");
+        toast.error(data.message || "Failed to book appointment.");
       }
     } catch (error) {
       console.error("Error booking appointment:", error);
-      alert("An error occurred. Please try again.");
+      toast.error("An error occurred. Please try again.");
     } finally {
       setLoading(false);
     }

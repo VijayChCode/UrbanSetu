@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { FaEdit, FaTrash, FaEye, FaPlus } from "react-icons/fa";
 import ContactSupportWrapper from '../components/ContactSupportWrapper';
 import { maskAddress } from '../utils/addressMasking';
+import { toast } from 'react-toastify';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -58,14 +59,14 @@ export default function MyListings() {
       
       if (res.ok) {
         setListings((prev) => prev.filter((listing) => listing._id !== id));
-        alert("Listing deleted successfully!");
+        toast.success("Listing deleted successfully!");
         navigate("/user/my-listings");
       } else {
         const data = await res.json();
-        alert(data.message || "Failed to delete listing.");
+        toast.error(data.message || "Failed to delete listing.");
       }
     } catch (err) {
-      alert("An error occurred. Please try again.");
+      toast.error("An error occurred. Please try again.");
     }
   };
 

@@ -10,6 +10,7 @@ import ContactSupportWrapper from "../components/ContactSupportWrapper";
 import ReviewForm from "../components/ReviewForm.jsx";
 import ReviewList from "../components/ReviewList.jsx";
 import { maskAddress, shouldShowLocationLink, getLocationLinkText } from "../utils/addressMasking";
+import { toast } from 'react-toastify';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -108,7 +109,7 @@ export default function Listing() {
         body: JSON.stringify({ reason: deleteReason }),
       });
       if (res.ok) {
-        alert('Property deleted successfully!');
+        toast.success('Property deleted successfully!');
         setShowPasswordModal(false);
         navigate('/admin/listings');
       } else {

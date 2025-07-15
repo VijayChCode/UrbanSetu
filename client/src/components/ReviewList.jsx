@@ -4,6 +4,7 @@ import { FaStar, FaTrash, FaEdit, FaCheck, FaTimes, FaThumbsUp, FaCheckCircle, F
 import ReviewForm from './ReviewForm.jsx';
 import ReplyForm from './ReplyForm.jsx';
 import { socket } from '../utils/socket';
+import { toast } from 'react-toastify';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -100,12 +101,12 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
         if (onReviewDeleted) {
           onReviewDeleted();
         }
-        alert('Review deleted successfully');
+        toast.success('Review deleted successfully');
       } else {
-        alert(data.message || 'Failed to delete review');
+        toast.error(data.message || 'Failed to delete review');
       }
     } catch (error) {
-      alert('Network error. Please try again.');
+      toast.error('Network error. Please try again.');
     }
   };
 
@@ -120,7 +121,7 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
 
   const handleHelpfulVote = async (reviewId) => {
     if (!currentUser) {
-      alert('Please sign in to vote on reviews');
+      toast.info('Please sign in to vote on reviews');
       return;
     }
     // Optimistically update the review's helpful count in the local state
@@ -153,7 +154,7 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
       });
       // No need to update state here; socket event will sync final state
     } catch (error) {
-      alert('Network error. Please try again.');
+      toast.error('Network error. Please try again.');
     }
   };
 
@@ -263,7 +264,7 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
 
   const handleLikeDislikeReply = async (replyId, action, parentReviewId) => {
     if (!currentUser) {
-      alert('Please sign in to vote on reviews');
+      toast.info('Please sign in to vote on reviews');
       return;
     }
     setReplyLikeLoading(prev => ({ ...prev, [replyId]: true }));
@@ -337,7 +338,7 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
       });
       // No need to call fetchReplies here; socket will update UI
     } catch (error) {
-      alert('Network error. Please try again.');
+      toast.error('Network error. Please try again.');
     } finally {
       setReplyLikeLoading(prev => ({ ...prev, [replyId]: false }));
     }
@@ -345,7 +346,7 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
 
   const handleDislikeReview = async (reviewId) => {
     if (!currentUser) {
-      alert('Please sign in to vote on reviews');
+      toast.info('Please sign in to vote on reviews');
       return;
     }
     try {
@@ -378,7 +379,7 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
       });
       // No need to update state here; socket event will sync final state
     } catch (error) {
-      alert('Network error. Please try again.');
+      toast.error('Network error. Please try again.');
     }
   };
 
@@ -426,7 +427,7 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
 
   const handleLikeDislikeOwnerResponse = async (reviewId, action) => {
     if (!currentUser) {
-      alert('Please sign in to vote on reviews');
+      toast.info('Please sign in to vote on reviews');
       return;
     }
     // Optimistically update the owner response like/dislike in the local state
@@ -479,7 +480,7 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
 
   const handleSubmitReport = async () => {
     if (!reportReason.trim()) {
-      alert('Please provide a reason for reporting.');
+      toast.info('Please provide a reason for reporting.');
       return;
     }
     setReportLoading(true);
@@ -492,14 +493,14 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
       });
       const data = await res.json();
       if (res.ok) {
-        alert('Thank you for reporting. Our team will review this issue.');
+        toast.success('Thank you for reporting. Our team will review this issue.');
         setReportingReview(null);
         setReportReason('');
       } else {
-        alert(data.message || 'Failed to report issue.');
+        toast.error(data.message || 'Failed to report issue.');
       }
     } catch (error) {
-      alert('Network error. Please try again.');
+      toast.error('Network error. Please try again.');
     } finally {
       setReportLoading(false);
     }
