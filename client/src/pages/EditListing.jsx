@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import LocationSelector from "../components/LocationSelector";
-import toast from "react-hot-toast";
+//import toast from "react-hot-toast";
 import { toast } from 'react-toastify';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
