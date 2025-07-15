@@ -178,7 +178,7 @@ function useSuspensionFetch() {
           const data = await response.clone().json();
           if (data.message && data.message.toLowerCase().includes("suspended")) {
             dispatch(signoutUserSuccess());
-            toast.error(data.message || "Your account has been suspended. You have been signed out.");
+            toast.info(data.message || "Your account has been suspended. You have been signed out.");
             navigate("/sign-in");
             return response;
           }
@@ -237,8 +237,8 @@ function AppRoutes({ bootstrapped }) {
           try {
             const data = await res.clone().json();
             if (data.message && data.message.toLowerCase().includes("suspended")) {
-              toast.error(data.message || "Your account has been suspended. You have been signed out.");
               dispatch(signoutUserSuccess());
+              toast.info(data.message || "Your account has been suspended. You have been signed out.");
               navigate("/sign-in");
             }
           } catch (e) {}
