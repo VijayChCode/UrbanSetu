@@ -304,7 +304,16 @@ function AppRoutes({ bootstrapped }) {
         </Routes>
         </NormalizeRoute>
       </Suspense>
-      <ToastContainer position="top-center" autoClose={3000} hideProgressBar newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover />
+      <ToastContainer 
+        position="top-center" 
+        autoClose={3000} 
+        hideProgressBar={false} // Always show the progress bar
+        newestOnTop 
+        closeOnClick 
+        pauseOnFocusLoss 
+        draggable 
+        pauseOnHover 
+      />
     </>
   );
 }
