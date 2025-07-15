@@ -178,7 +178,7 @@ function useSuspensionFetch() {
           const data = await response.clone().json();
           if (data.message && data.message.toLowerCase().includes("suspended")) {
             dispatch(signoutUserSuccess());
-            toast.error("Your account has been suspended. You have been signed out.");
+            toast.error(data.message || "Your account has been suspended. You have been signed out.");
             navigate("/sign-in");
             return response;
           }
