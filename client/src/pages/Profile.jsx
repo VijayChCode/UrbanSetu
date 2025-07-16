@@ -361,10 +361,10 @@ export default function Profile() {
         return;
       }
       if (data.status === "invalid_password") {
-        //setShowUpdatePasswordModal(false);
+        setShowUpdatePasswordModal(false);
         setUpdatePassword("");
         setLoading(false);
-        setIsEditing(true);
+        //setIsEditing(true);
         setUpdateSuccess(false);
         setUpdateError("");
         setFormData({
