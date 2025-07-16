@@ -144,4 +144,26 @@ export const promoteUserToAdmin = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+};
+
+// Re-approve a rejected admin (default admin only)
+export const reapproveRejectedAdmin = async (req, res, next) => {
+  try {
+    const { adminId } = req.params;
+    const currentUser = await User.findById(req.user.id);
+    if (!currentUser || !currentUser.isDefaultAdmin) {
+      return next(errorHandler(403, 'Access denied. Only the current default admin can re-approve admins.'));
+    }
+    const admin = await User.findById(adminId);
+    if (!admin || admin.role !== 'admin') return next(errorHandler(404, 'Admin not found'));
+    if (admin.adminApprovalStatus !== 'rejected') return next(errorHandler(400, 'Only rejected admins can be re-approved.'));
+    admin.adminApprovalStatus = 'approved';
+    admin.status = 'active';
+    admin.adminApprovalDate = new Date();
+    admin.approvedBy = currentUser._id;
+    await admin.save();
+    res.status(200).json(admin);
+  } catch (err) {
+    next(err);
+  }
 }; 
