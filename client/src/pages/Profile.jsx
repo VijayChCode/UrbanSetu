@@ -937,12 +937,18 @@ export default function Profile() {
             </h2>
             <form onSubmit={onSubmitForm} className="space-y-6">
               <div className="flex flex-col items-center mb-6">
-                <img
-                  src={formData.avatar || defaultAvatars[0]}
-                  alt="Avatar"
-                  className="w-24 h-24 rounded-full border-4 border-blue-200 shadow-lg object-cover mb-2"
-                  onError={e => { e.target.onerror = null; e.target.src = defaultAvatars[0]; }}
-                />
+                {formData.avatar ? (
+                  <img
+                    src={formData.avatar}
+                    alt="Avatar"
+                    className="w-24 h-24 rounded-full border-4 border-blue-200 shadow-lg object-cover mb-2"
+                    onError={e => { e.target.onerror = null; e.target.src = ''; }}
+                  />
+                ) : (
+                  <div className="w-24 h-24 rounded-full border-4 border-blue-200 shadow-lg bg-gray-100 flex items-center justify-center mb-2">
+                    <FaUser className="text-gray-400 text-6xl" />
+                  </div>
+                )}
                 {isEditing && (
                   <div className="flex flex-wrap gap-2 justify-center mt-2">
                     {defaultAvatars.map((url, idx) => (
