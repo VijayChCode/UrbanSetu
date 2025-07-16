@@ -52,7 +52,7 @@ export const updateUser=async (req,res,next)=>{
         const updateFields = {};
         if (req.body.username) updateFields.username = req.body.username;
         if (req.body.email) updateFields.email = req.body.email;
-        if (req.body.avatar) updateFields.avatar = req.body.avatar;
+        if ('avatar' in req.body) updateFields.avatar = req.body.avatar || null;
         if (req.body.mobileNumber) updateFields.mobileNumber = req.body.mobileNumber;
         
         const updatedUser = await User.findByIdAndUpdate(req.params.id, {
