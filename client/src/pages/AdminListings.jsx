@@ -15,10 +15,6 @@ export default function AdminListings() {
   const { currentUser } = useSelector((state) => state.user);
   const [showReasonModal, setShowReasonModal] = useState(false);
   const [deleteReason, setDeleteReason] = useState("");
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [deletePassword, setDeletePassword] = useState("");
-  const [deleteLoading, setDeleteLoading] = useState(false);
-  const [deleteError, setDeleteError] = useState("");
   const [pendingDeleteId, setPendingDeleteId] = useState(null);
 
   useEffect(() => {
@@ -45,43 +41,17 @@ export default function AdminListings() {
   const handleDelete = (id) => {
     setPendingDeleteId(id);
     setDeleteReason("");
-    setDeleteError("");
     setShowReasonModal(true);
   };
 
-  const handleReasonSubmit = (e) => {
+  const handleReasonSubmit = async (e) => {
     e.preventDefault();
     if (!deleteReason.trim()) {
-      setDeleteError("Reason is required");
+      toast.error("Reason is required for deletion.");
       return;
     }
     setShowReasonModal(false);
-    setDeleteError("");
-    setShowPasswordModal(true);
-  };
-
-  const handlePasswordSubmit = async (e) => {
-    e.preventDefault();
-    if (!deletePassword) {
-      setDeleteError("Password is required");
-      return;
-    }
-    setDeleteLoading(true);
-    setDeleteError("");
     try {
-      // Verify password
-      const verifyRes = await fetch(`${API_BASE_URL}/api/user/verify-password/${currentUser._id}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ password: deletePassword }),
-      });
-      if (!verifyRes.ok) {
-        setDeleteError("Incorrect password. Property not deleted.");
-        setDeleteLoading(false);
-        return;
-      }
-      // Proceed to delete
       const res = await fetch(`${API_BASE_URL}/api/listing/delete/${pendingDeleteId}`, {
         method: 'DELETE',
         credentials: 'include',
@@ -90,17 +60,16 @@ export default function AdminListings() {
       });
       if (res.ok) {
         setListings((prev) => prev.filter((listing) => listing._id !== pendingDeleteId));
-        setShowPasswordModal(false);
         const data = await res.json();
         toast.success(data.message || "Listing deleted successfully!");
       } else {
         const data = await res.json();
-        setDeleteError(data.message || "Failed to delete listing.");
+        toast.error(data.message || "Failed to delete listing.");
       }
     } catch (err) {
-      setDeleteError("An error occurred. Please try again.");
+      toast.error("An error occurred. Please try again.");
     } finally {
-      setDeleteLoading(false);
+      setPendingDeleteId(null); // Clear pending delete ID after deletion attempt
     }
   };
 
@@ -303,31 +272,9 @@ export default function AdminListings() {
               rows={3}
               autoFocus
             />
-            {deleteError && <div className="text-red-600 text-sm">{deleteError}</div>}
             <div className="flex gap-2 justify-end">
               <button type="button" onClick={() => setShowReasonModal(false)} className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold">Cancel</button>
-              <button type="submit" className="px-4 py-2 rounded bg-red-600 text-white font-semibold">Next</button>
-            </div>
-          </form>
-        </div>
-      )}
-      {/* Password Modal */}
-      {showPasswordModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-          <form onSubmit={handlePasswordSubmit} className="bg-white rounded-lg shadow-lg p-6 w-full max-w-xs flex flex-col gap-4">
-            <h3 className="text-lg font-bold text-blue-700 flex items-center gap-2"><FaLock /> Confirm Password</h3>
-            <input
-              type="password"
-              className="border rounded p-2 w-full"
-              placeholder="Enter your password"
-              value={deletePassword}
-              onChange={e => setDeletePassword(e.target.value)}
-              autoFocus
-            />
-            {deleteError && <div className="text-red-600 text-sm">{deleteError}</div>}
-            <div className="flex gap-2 justify-end">
-              <button type="button" onClick={() => setShowPasswordModal(false)} className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold">Cancel</button>
-              <button type="submit" className="px-4 py-2 rounded bg-blue-700 text-white font-semibold" disabled={deleteLoading}>{deleteLoading ? 'Deleting...' : 'Confirm & Delete'}</button>
+              <button type="submit" className="px-4 py-2 rounded bg-red-600 text-white font-semibold">Confirm & Delete</button>
             </div>
           </form>
         </div>
