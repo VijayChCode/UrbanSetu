@@ -513,7 +513,7 @@ export default function AdminManagement() {
                           <div>
                             <div className="flex items-center gap-2">
                               <span className="text-lg font-semibold text-gray-800">{highlightMatch(admin.username)}</span>
-                              <span className={`text-xs px-2 py-1 rounded-full font-bold ${admin.status === "active" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>{admin.status}</span>
+                              <span className={`text-xs px-2 py-1 rounded-full font-bold ${admin.adminApprovalStatus === 'rejected' ? 'bg-gray-300 text-gray-700' : admin.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{admin.adminApprovalStatus === 'rejected' ? 'rejected' : admin.status}</span>
                             </div>
                             <div className="flex items-center gap-2 text-gray-500 text-sm mt-1">
                               <FaEnvelope /> {highlightMatch(admin.email)}
