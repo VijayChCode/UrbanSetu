@@ -365,19 +365,27 @@ export default function Profile() {
         setShowUpdatePasswordModal(false);
         setUpdatePassword("");
         setLoading(false);
-        setIsEditing(true);
-        setUpdateSuccess(false);
-        setUpdateError("");
-        setFormData({
-          username: currentUser.username || '',
-          email: currentUser.email || '',
-          mobileNumber: currentUser.mobileNumber ? String(currentUser.mobileNumber) : '',
-          avatar: currentUser.avatar || '',
-        });
-        toast.error("Incorrect password. Profile details unchanged.");
-        // Force a re-render
-        setTimeout(() => setIsEditing(true), 0);
-        setLoading(false); // ensure loading is always false
+        // Forced sign out for security
+        toast.error("You have been signed out for security reasons. No changes were made to your profile.");
+        dispatch(signoutUserStart());
+        try {
+          const signoutRes = await fetch(`${API_BASE_URL}/api/auth/signout`);
+          const signoutData = await signoutRes.json();
+          if (signoutData.success === false) {
+            dispatch(signoutUserFailure(signoutData.message));
+          } else {
+            dispatch(signoutUserSuccess(signoutData));
+            if (persistor && persistor.purge) await persistor.purge();
+            reconnectSocket();
+            localStorage.removeItem('accessToken');
+            document.cookie = 'access_token=; Max-Age=0; path=/; domain=' + window.location.hostname + '; secure; samesite=None';
+          }
+        } catch (err) {
+          dispatch(signoutUserFailure(err.message));
+        }
+        setTimeout(() => {
+          navigate("/sign-in");
+        }, 800);
         return;
       }
       if (data.status === "success") {
