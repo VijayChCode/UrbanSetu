@@ -365,6 +365,7 @@ export default function Profile() {
         setShowUpdatePasswordModal(false);
         setUpdatePassword("");
         setLoading(false);
+        setIsEditing(true);
         toast.error("Incorrect password. Profile details unchanged.");
         return;
       }
