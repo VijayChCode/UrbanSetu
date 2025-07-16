@@ -1,15 +1,17 @@
-import React, { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
+import React, { useEffect, useState, useRef } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { toast } from 'react-toastify';
-import { FaUser, FaUserShield, FaEnvelope, FaCalendarAlt, FaCheckCircle, FaBan, FaTrash, FaUserLock, FaPhone, FaList, FaCalendar, FaArrowDown, FaSearch } from "react-icons/fa";
+import { FaUser, FaUserShield, FaEnvelope, FaCalendarAlt, FaCheckCircle, FaBan, FaTrash, FaUserLock, FaPhone, FaList, FaCalendar, FaArrowDown, FaSearch, FaLock } from "react-icons/fa";
 import { socket } from "../utils/socket";
+import { signoutUserStart, signoutUserSuccess, signoutUserFailure } from "../redux/user/userSlice";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function AdminManagement() {
   const { currentUser } = useSelector((state) => state.user);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [users, setUsers] = useState([]);
   const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,6 +23,12 @@ export default function AdminManagement() {
   const [accountLoading, setAccountLoading] = useState(false);
   const [accountStats, setAccountStats] = useState({ listings: 0, appointments: 0 });
   const [searchTerm, setSearchTerm] = useState("");
+  const [showPasswordModal, setShowPasswordModal] = useState(true);
+  const [managementPassword, setManagementPassword] = useState("");
+  const [managementPasswordError, setManagementPasswordError] = useState("");
+  const [managementPasswordLoading, setManagementPasswordLoading] = useState(false);
+  const lockoutTimerRef = useRef(null);
+  const warningTimerRef = useRef(null);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -320,6 +328,37 @@ export default function AdminManagement() {
     );
   };
 
+  // Helper to start lockout timer
+  const startLockoutTimer = () => {
+    // Clear any existing timers
+    if (lockoutTimerRef.current) clearTimeout(lockoutTimerRef.current);
+    if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
+    // Show warning at 4 minutes
+    warningTimerRef.current = setTimeout(() => {
+      toast.info("For your security, you will be asked to re-enter your password in 1 minute.");
+    }, 4 * 60 * 1000);
+    // Lock at 5 minutes
+    lockoutTimerRef.current = setTimeout(() => {
+      setShowPasswordModal(true);
+      toast.info("Session expired for security. Please re-enter your password.");
+    }, 5 * 60 * 1000);
+  };
+
+  // Start timer on successful password entry
+  useEffect(() => {
+    if (!showPasswordModal) {
+      startLockoutTimer();
+    } else {
+      if (lockoutTimerRef.current) clearTimeout(lockoutTimerRef.current);
+      if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
+    }
+    // Clean up on unmount
+    return () => {
+      if (lockoutTimerRef.current) clearTimeout(lockoutTimerRef.current);
+      if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
+    };
+  }, [showPasswordModal]);
+
   // Guard: If users/admins are not arrays, show session expired/unauthorized message
   if (!Array.isArray(users) || (tab === 'admins' && !Array.isArray(admins) && currentUser.isDefaultAdmin)) {
     return (
@@ -334,6 +373,73 @@ export default function AdminManagement() {
   }
 
   if (!currentUser) return null;
+
+  // Password modal handler
+  const handleManagementPasswordSubmit = async (e) => {
+    e.preventDefault();
+    setManagementPasswordLoading(true);
+    setManagementPasswordError("");
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/admin/management/verify-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ password: managementPassword })
+      });
+      if (res.ok) {
+        setShowPasswordModal(false);
+        setManagementPassword("");
+        setManagementPasswordError("");
+        startLockoutTimer(); // Reset timer on every successful entry
+      } else {
+        const data = await res.json();
+        // Sign out and redirect on wrong password
+        toast.error("For security reasons, you have been signed out. Please sign in again.");
+        dispatch(signoutUserStart());
+        try {
+          const signoutRes = await fetch(`${API_BASE_URL}/api/auth/signout`);
+          const signoutData = await signoutRes.json();
+          if (signoutData.success === false) {
+            dispatch(signoutUserFailure(signoutData.message));
+          } else {
+            dispatch(signoutUserSuccess(signoutData));
+          }
+        } catch (err) {
+          dispatch(signoutUserFailure(err.message));
+        }
+        setTimeout(() => {
+          navigate('/sign-in');
+        }, 800);
+        return;
+      }
+    } catch (err) {
+      setManagementPasswordError('Network error');
+    } finally {
+      setManagementPasswordLoading(false);
+    }
+  };
+
+  if (showPasswordModal) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+        <form className="bg-white rounded-lg shadow-lg p-6 w-full max-w-xs flex flex-col gap-4" onSubmit={handleManagementPasswordSubmit}>
+          <h3 className="text-lg font-bold text-blue-700 flex items-center gap-2"><FaLock /> Confirm Password</h3>
+          <input
+            type="password"
+            className="border rounded p-2 w-full"
+            placeholder="Enter your password"
+            value={managementPassword}
+            onChange={e => setManagementPassword(e.target.value)}
+            autoFocus
+          />
+          {managementPasswordError && <div className="text-red-600 text-sm">{managementPasswordError}</div>}
+          <div className="flex gap-2 justify-end">
+            <button type="submit" className="px-4 py-2 rounded bg-blue-700 text-white font-semibold" disabled={managementPasswordLoading}>{managementPasswordLoading ? 'Verifying...' : 'Confirm'}</button>
+          </div>
+        </form>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-100 py-10 px-2 md:px-8 animate-fadeIn">
