@@ -361,16 +361,12 @@ export default function Profile() {
         return;
       }
       if (data.status === "invalid_password") {
-        console.log('Invalid password detected'); // Debug log
         setShowUpdatePasswordModal(false);
         setUpdatePassword("");
-        setUpdateSuccess(true);
         setLoading(false);
         setIsEditing(true);
+        setUpdateSuccess(false);
         toast.error("Incorrect password. Profile details unchanged.");
-        setTimeout(() => {
-          setUpdateSuccess(false);
-        }, 3000);
         return;
       }
       if (data.status === "success") {
