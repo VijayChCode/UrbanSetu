@@ -18,6 +18,7 @@ import { useWishlist } from "../WishlistContext";
 import { toast } from 'react-toastify';
 import { persistor } from '../redux/store';
 import { reconnectSocket } from '../utils/socket';
+import defaultAvatars from '../assets/avatars'; // Assume this is an array of avatar image URLs
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -25,7 +26,7 @@ export default function Profile() {
   const { currentUser, error } = useSelector((state) => state.user);
   const { wishlist } = useWishlist();
   const dispatch = useDispatch();
-  const [formData, setFormData] = useState({});
+  const [formData, setFormData] = useState({ avatar: currentUser?.avatar || defaultAvatars[0] });
   const [updateSuccess, setUpdateSuccess] = useState(false);
   const [updateError, setUpdateError] = useState("");
   const [isEditing, setIsEditing] = useState(false);
@@ -761,7 +762,7 @@ export default function Profile() {
         username: currentUser.username || '',
         email: currentUser.email || '',
         mobileNumber: currentUser.mobileNumber ? String(currentUser.mobileNumber) : '',
-        avatar: currentUser.avatar || '',
+        avatar: currentUser.avatar || defaultAvatars[0],
       });
       
       // Trigger validation for current values
@@ -821,6 +822,16 @@ export default function Profile() {
     }
   }, [isEditing, loading]);
 
+  const handleAvatarUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setFormData(prev => ({ ...prev, avatar: ev.target.result }));
+    };
+    reader.readAsDataURL(file);
+  };
+
   return (
     <div className="bg-gradient-to-br from-blue-50 to-purple-100 min-h-screen py-10 px-2 md:px-8">
       <div className="max-w-6xl mx-auto">
@@ -831,7 +842,7 @@ export default function Profile() {
               <div className="relative flex-shrink-0 mx-auto sm:mx-0">
                 <img
                   alt="avatar"
-                  src={currentUser.avatar}
+                  src={formData.avatar}
                   className="h-24 w-24 rounded-full border-4 border-blue-200 object-cover shadow-lg aspect-square"
                   style={{ aspectRatio: '1/1' }}
                 />
@@ -924,6 +935,22 @@ export default function Profile() {
               Edit Profile Information
             </h2>
             <form onSubmit={onSubmitForm} className="space-y-6">
+              <div className="flex flex-col items-center mb-6">
+                <img src={formData.avatar} alt="Avatar" className="w-24 h-24 rounded-full border-4 border-blue-200 shadow-lg object-cover mb-2" />
+                {isEditing && (
+                  <div className="flex flex-wrap gap-2 justify-center mt-2">
+                    {defaultAvatars.map((url, idx) => (
+                      <button key={url} type="button" onClick={() => setFormData({ ...formData, avatar: url })} className={`w-12 h-12 rounded-full border-2 ${formData.avatar === url ? 'border-blue-500' : 'border-gray-300'} focus:outline-none focus:ring-2 focus:ring-blue-400`}>
+                        <img src={url} alt={`Avatar ${idx+1}`} className="w-full h-full rounded-full object-cover" />
+                      </button>
+                    ))}
+                    <label className="w-12 h-12 rounded-full border-2 border-gray-300 flex items-center justify-center cursor-pointer bg-gray-100 hover:bg-gray-200">
+                      <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+                      <FaEdit className="text-gray-500" />
+                    </label>
+                  </div>
+                )}
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
