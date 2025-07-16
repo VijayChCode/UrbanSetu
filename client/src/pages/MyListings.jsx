@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
-import { FaEdit, FaTrash, FaEye, FaPlus } from "react-icons/fa";
+import { FaEdit, FaTrash, FaEye, FaPlus, FaLock } from "react-icons/fa";
 import ContactSupportWrapper from '../components/ContactSupportWrapper';
 import { maskAddress } from '../utils/addressMasking';
 import { toast } from 'react-toastify';
+import { useDispatch } from "react-redux";
+import { signoutUserStart, signoutUserSuccess, signoutUserFailure } from "../redux/user/userSlice";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -14,6 +16,12 @@ export default function MyListings() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+  const [pendingDeleteId, setPendingDeleteId] = useState(null);
 
   useEffect(() => {
     const fetchUserListings = async () => {
@@ -48,25 +56,49 @@ export default function MyListings() {
     fetchUserListings();
   }, [currentUser]);
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this listing?")) return;
-    
+  const handleDelete = (id) => {
+    setPendingDeleteId(id);
+    setShowPasswordModal(true);
+    setDeletePassword("");
+    setDeleteError("");
+  };
+
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+    setDeleteLoading(true);
+    setDeleteError("");
     try {
-      const res = await fetch(`${API_BASE_URL}/api/listing/delete/${id}`, {
+      // Verify password
+      const verifyRes = await fetch(`${API_BASE_URL}/api/user/verify-password/${currentUser._id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ password: deletePassword }),
+      });
+      if (!verifyRes.ok) {
+        setDeleteError("Incorrect password. Listing not deleted.");
+        setDeleteLoading(false);
+        return;
+      }
+      // Proceed to delete
+      const res = await fetch(`${API_BASE_URL}/api/listing/delete/${pendingDeleteId}`, {
         method: "DELETE",
         credentials: 'include'
       });
-      
       if (res.ok) {
-        setListings((prev) => prev.filter((listing) => listing._id !== id));
+        setListings((prev) => prev.filter((listing) => listing._id !== pendingDeleteId));
         toast.success("Listing deleted successfully!");
+        setShowPasswordModal(false);
+        setPendingDeleteId(null);
         navigate("/user/my-listings");
       } else {
         const data = await res.json();
-        toast.error(data.message || "Failed to delete listing.");
+        setDeleteError(data.message || "Failed to delete listing.");
       }
     } catch (err) {
-      toast.error("An error occurred. Please try again.");
+      setDeleteError("An error occurred. Please try again.");
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -219,6 +251,26 @@ export default function MyListings() {
           )}
         </div>
       </div>
+      {showPasswordModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+          <form onSubmit={handlePasswordSubmit} className="bg-white rounded-lg shadow-lg p-6 w-full max-w-xs flex flex-col gap-4">
+            <h3 className="text-lg font-bold text-blue-700 flex items-center gap-2"><FaLock /> Confirm Password</h3>
+            <input
+              type="password"
+              className="border rounded p-2 w-full"
+              placeholder="Enter your password"
+              value={deletePassword}
+              onChange={e => setDeletePassword(e.target.value)}
+              autoFocus
+            />
+            {deleteError && <div className="text-red-600 text-sm">{deleteError}</div>}
+            <div className="flex gap-2 justify-end">
+              <button type="button" onClick={() => setShowPasswordModal(false)} className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold">Cancel</button>
+              <button type="submit" className="px-4 py-2 rounded bg-red-600 text-white font-semibold" disabled={deleteLoading}>{deleteLoading ? 'Deleting...' : 'Confirm & Delete'}</button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 } 
