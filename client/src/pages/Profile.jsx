@@ -362,8 +362,10 @@ export default function Profile() {
       }
       if (data.status === "invalid_password") {
         console.log('Invalid password detected'); // Debug log
-        setUpdatePasswordError("Incorrect password. Profile details unchanged.");
+        setShowUpdatePasswordModal(false);
+        setUpdatePassword("");
         setLoading(false);
+        toast.error("Incorrect password. Profile details unchanged.");
         return;
       }
       if (data.status === "success") {
