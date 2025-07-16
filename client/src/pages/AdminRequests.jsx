@@ -86,9 +86,7 @@ const AdminRequests = () => {
       
       // Show success message
       toast.success('Admin request approved successfully!');
-      
-      // Refresh the page to update header count
-      window.location.reload();
+      // window.location.reload(); // Removed to allow toast to show and UI to update via state
     } catch (error) {
       toast.error(error.message);
     }
@@ -119,9 +117,7 @@ const AdminRequests = () => {
       
       // Show success message
       toast.success('Admin request rejected successfully!');
-      
-      // Refresh the page to update header count
-      window.location.reload();
+      // window.location.reload(); // Removed to allow toast to show and UI to update via state
     } catch (error) {
       toast.error(error.message);
     }
