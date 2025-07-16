@@ -366,7 +366,7 @@ export default function Profile() {
         setLoading(false);
         setIsEditing(true);
         setUpdateSuccess(false);
-        setUpdateError("");
+        //setUpdateError("");
         setFormData({
           username: currentUser.username || '',
           email: currentUser.email || '',
