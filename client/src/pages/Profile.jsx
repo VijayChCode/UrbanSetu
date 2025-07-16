@@ -624,7 +624,7 @@ export default function Profile() {
         localStorage.removeItem('accessToken');
         // Extra: Expire the access_token cookie on client side
         document.cookie = 'access_token=; Max-Age=0; path=/; domain=' + window.location.hostname + '; secure; samesite=None';
-        toast.success("You have been signed out.");
+        toast.info("You have been signed out.");
         await new Promise(resolve => setTimeout(resolve, 50));
         navigate("/sign-in");
       }

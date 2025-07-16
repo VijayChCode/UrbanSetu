@@ -225,7 +225,7 @@ function UserNavLinks({ mobile = false, onNavigate }) {
       reconnectSocket();
       localStorage.removeItem('accessToken');
       document.cookie = 'access_token=; Max-Age=0; path=/; domain=' + window.location.hostname + '; secure; samesite=None';
-      toast.success("You have been signed out.");
+      toast.info("You have been signed out.");
       navigate("/sign-in");
     } catch (error) {
       console.log(error.message);
@@ -234,7 +234,7 @@ function UserNavLinks({ mobile = false, onNavigate }) {
       reconnectSocket();
       localStorage.removeItem('accessToken');
       document.cookie = 'access_token=; Max-Age=0; path=/; domain=' + window.location.hostname + '; secure; samesite=None';
-      toast.success("You have been signed out.");
+      toast.info("You have been signed out.");
       navigate("/sign-in");
     }
   };
