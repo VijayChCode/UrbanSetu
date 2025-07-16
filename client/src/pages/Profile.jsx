@@ -936,7 +936,7 @@ export default function Profile() {
             </h2>
             <form onSubmit={onSubmitForm} className="space-y-6">
               <div className="flex flex-col items-center mb-6">
-                <img src={formData.avatar} alt="Avatar" className="w-24 h-24 rounded-full border-4 border-blue-200 shadow-lg object-cover mb-2" />
+                <img src={formData.avatar || defaultAvatars[0]} alt="Avatar" className="w-24 h-24 rounded-full border-4 border-blue-200 shadow-lg object-cover mb-2" />
                 {isEditing && (
                   <div className="flex flex-wrap gap-2 justify-center mt-2">
                     {defaultAvatars.map((url, idx) => (
@@ -948,6 +948,9 @@ export default function Profile() {
                       <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
                       <FaEdit className="text-gray-500" />
                     </label>
+                    <button type="button" onClick={() => setFormData({ ...formData, avatar: "" })} className="w-12 h-12 rounded-full border-2 border-red-400 flex items-center justify-center bg-red-50 hover:bg-red-100">
+                      <FaTrash className="text-red-500" />
+                    </button>
                   </div>
                 )}
               </div>
