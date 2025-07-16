@@ -367,6 +367,9 @@ export default function Profile() {
         setLoading(false);
         setIsEditing(true);
         toast.error("Incorrect password. Profile details unchanged.");
+        setTimeout(() => {
+          setUpdateSuccess(false);
+        }, 3000);
         return;
       }
       if (data.status === "success") {
