@@ -110,6 +110,7 @@ export default function Profile() {
 
   const fetchUserStats = async () => {
     try {
+      console.log("[fetchUserStats] Fetching stats for:", currentUser);
       if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) {
         // Fetch admin-specific stats
         const [listingsRes, appointmentsRes] = await Promise.all([
@@ -144,7 +145,7 @@ export default function Profile() {
         }));
       }
     } catch (error) {
-      console.error('Error fetching user stats:', error);
+      console.error('[fetchUserStats] Error fetching user stats:', error);
       // Set default values if API calls fail
       setUserStats(prev => ({
         listings: 0,
@@ -364,7 +365,7 @@ export default function Profile() {
         setShowUpdatePasswordModal(false);
         setUpdatePassword("");
         setLoading(false);
-        //setIsEditing(true);
+        setIsEditing(true);
         setUpdateSuccess(false);
         setUpdateError("");
         setFormData({
@@ -770,13 +771,17 @@ export default function Profile() {
     async function fetchLatestUser() {
       if (currentUser && currentUser._id) {
         try {
+          console.log("[fetchLatestUser] Fetching user data for:", currentUser._id);
           const res = await fetch(`${API_BASE_URL}/api/user/id/${currentUser._id}`);
           if (res.ok) {
             const user = await res.json();
+            console.log("[fetchLatestUser] Got user:", user);
             dispatch({ type: 'user/signInSuccess', payload: user });
+          } else {
+            console.error("[fetchLatestUser] Failed to fetch user");
           }
         } catch (err) {
-          // ignore
+          console.error("[fetchLatestUser] Error:", err);
         }
       }
     }
@@ -791,9 +796,9 @@ export default function Profile() {
   // Add debug log at the top of the component
   console.log("currentUser:", currentUser, "loading:", loading, "isEditing:", isEditing, "updateSuccess:", updateSuccess);
 
-  // Fallback render if currentUser is missing
-  if (!currentUser) {
-    return <div className="text-center text-red-600 mt-10">User session lost. Please sign in again.</div>;
+  // Fallback render if profile data is missing or incomplete
+  if (!currentUser || !currentUser.username || !currentUser.email) {
+    return <div className="text-center text-red-600 mt-10">Profile data is missing or could not be loaded. Please refresh or sign in again.</div>;
   }
   // Loader: Only show full-page spinner if not editing
   if (loading && !isEditing) {
