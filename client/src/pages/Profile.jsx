@@ -785,8 +785,13 @@ export default function Profile() {
   const [managementPasswordError, setManagementPasswordError] = useState("");
   const [managementPasswordLoading, setManagementPasswordLoading] = useState(false);
 
-  // Add debug log before loader
-  console.log("loading:", loading, "isEditing:", isEditing, "updateSuccess:", updateSuccess);
+  // Add debug log at the top of the component
+  console.log("currentUser:", currentUser, "loading:", loading, "isEditing:", isEditing, "updateSuccess:", updateSuccess);
+
+  // Fallback render if currentUser is missing
+  if (!currentUser) {
+    return <div className="text-center text-red-600 mt-10">User session lost. Please sign in again.</div>;
+  }
   // Loader: Only show full-page spinner if not editing
   if (loading && !isEditing) {
     return (
