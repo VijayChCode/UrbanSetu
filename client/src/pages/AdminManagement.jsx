@@ -434,6 +434,7 @@ export default function AdminManagement() {
           />
           {managementPasswordError && <div className="text-red-600 text-sm">{managementPasswordError}</div>}
           <div className="flex gap-2 justify-end">
+            <button type="button" className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold" onClick={() => navigate('/admin')}>Cancel</button>
             <button type="submit" className="px-4 py-2 rounded bg-blue-700 text-white font-semibold" disabled={managementPasswordLoading}>{managementPasswordLoading ? 'Verifying...' : 'Confirm'}</button>
           </div>
         </form>
