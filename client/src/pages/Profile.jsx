@@ -361,12 +361,12 @@ export default function Profile() {
         return;
       }
       if (data.status === "invalid_password") {
-        setShowUpdatePasswordModal(false);
+        //setShowUpdatePasswordModal(false);
         setUpdatePassword("");
         setLoading(false);
         setIsEditing(true);
         setUpdateSuccess(false);
-        //setUpdateError("");
+        setUpdateError("");
         setFormData({
           username: currentUser.username || '',
           email: currentUser.email || '',
