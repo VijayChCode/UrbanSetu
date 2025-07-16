@@ -842,9 +842,10 @@ export default function Profile() {
               <div className="relative flex-shrink-0 mx-auto sm:mx-0">
                 <img
                   alt="avatar"
-                  src={formData.avatar}
+                  src={formData.avatar || defaultAvatars[0]}
                   className="h-24 w-24 rounded-full border-4 border-blue-200 object-cover shadow-lg aspect-square"
                   style={{ aspectRatio: '1/1' }}
+                  onError={e => { e.target.onerror = null; e.target.src = defaultAvatars[0]; }}
                 />
                 {currentUser.role === 'admin' && (
                   <div className="absolute -top-2 -right-2 bg-purple-500 text-white rounded-full p-2">
@@ -936,7 +937,12 @@ export default function Profile() {
             </h2>
             <form onSubmit={onSubmitForm} className="space-y-6">
               <div className="flex flex-col items-center mb-6">
-                <img src={formData.avatar || defaultAvatars[0]} alt="Avatar" className="w-24 h-24 rounded-full border-4 border-blue-200 shadow-lg object-cover mb-2" />
+                <img
+                  src={formData.avatar || defaultAvatars[0]}
+                  alt="Avatar"
+                  className="w-24 h-24 rounded-full border-4 border-blue-200 shadow-lg object-cover mb-2"
+                  onError={e => { e.target.onerror = null; e.target.src = defaultAvatars[0]; }}
+                />
                 {isEditing && (
                   <div className="flex flex-wrap gap-2 justify-center mt-2">
                     {defaultAvatars.map((url, idx) => (
