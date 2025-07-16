@@ -364,6 +364,7 @@ export default function Profile() {
         console.log('Invalid password detected'); // Debug log
         setShowUpdatePasswordModal(false);
         setUpdatePassword("");
+        setUpdateSuccess(true);
         setLoading(false);
         setIsEditing(true);
         toast.error("Incorrect password. Profile details unchanged.");
