@@ -269,6 +269,26 @@ export default function AdminManagement() {
     }
   };
 
+  // Add this handler at the top-level of the component
+  const handleReapprove = async (adminId) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/admin/management/reapprove/${adminId}`, {
+        method: "PATCH",
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setAdmins(prev => prev.map(a => a._id === adminId ? { ...a, adminApprovalStatus: 'approved', status: 'active' } : a));
+        toast.success("Admin re-approved successfully!");
+        socket.emit('admin_update', { type: 'update', admin: { ...data } });
+      } else {
+        toast.error(data.message || "Failed to re-approve admin");
+      }
+    } catch (err) {
+      toast.error("Failed to re-approve admin");
+    }
+  };
+
   // Filter accounts based on search term
   const filterAccounts = (accounts) => {
     if (!searchTerm.trim()) return accounts;
@@ -548,6 +568,14 @@ export default function AdminManagement() {
                           >
                             <FaArrowDown /> Demote to User
                           </button>
+                          {currentUser.isDefaultAdmin && admin.adminApprovalStatus === 'rejected' && (
+                            <button
+                              className="flex-1 px-2 py-1 rounded-lg font-semibold text-sm bg-green-600 text-white hover:bg-green-700 transition-all duration-200 flex items-center justify-center gap-2"
+                              onClick={e => { e.stopPropagation(); handleReapprove(admin._id); }}
+                            >
+                              <FaCheckCircle /> Re-Approve
+                            </button>
+                          )}
                         </div>
                         {suspendError[admin._id] && (
                           <div className="text-red-500 text-xs mt-2 animate-fadeIn">{suspendError[admin._id]}</div>
