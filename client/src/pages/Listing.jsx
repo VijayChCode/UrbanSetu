@@ -184,22 +184,22 @@ export default function Listing() {
             <div className="flex items-center gap-4">
               <button
                 onClick={() => navigate(backButtonInfo.path)}
-                className="bg-gradient-to-r from-gray-500 to-gray-600 text-white px-6 py-3 rounded-lg hover:from-gray-600 hover:to-gray-700 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2"
+                className="bg-gradient-to-r from-gray-500 to-gray-600 text-white px-3 py-2 text-sm sm:px-6 sm:py-3 sm:text-base rounded-lg hover:from-gray-600 hover:to-gray-700 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2"
               >
                 <FaArrowLeft /> {backButtonInfo.text}
               </button>
             </div>
             {isAdmin && isAdminContext && (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
                 <Link
                   to={`/admin/update-listing/${listing._id}`}
-                  className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2"
+                  className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-3 py-2 text-sm sm:px-6 sm:py-3 sm:text-base rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2"
                 >
                   <FaEdit /> Edit Property
                 </Link>
                 <button
                   onClick={handleDelete}
-                  className="bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-3 rounded-lg hover:from-red-600 hover:to-red-700 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2"
+                  className="bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-2 text-sm sm:px-6 sm:py-3 sm:text-base rounded-lg hover:from-red-600 hover:to-red-700 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2"
                 >
                   <FaTrash /> Delete Property
                 </button>
