@@ -366,6 +366,13 @@ export default function Profile() {
         setLoading(false);
         setIsEditing(true);
         setUpdateSuccess(false);
+        setUpdateError("");
+        setFormData({
+          username: currentUser.username || '',
+          email: currentUser.email || '',
+          mobileNumber: currentUser.mobileNumber ? String(currentUser.mobileNumber) : '',
+          avatar: currentUser.avatar || '',
+        });
         toast.error("Incorrect password. Profile details unchanged.");
         return;
       }
@@ -778,6 +785,8 @@ export default function Profile() {
   const [managementPasswordError, setManagementPasswordError] = useState("");
   const [managementPasswordLoading, setManagementPasswordLoading] = useState(false);
 
+  // Add debug log before loader
+  console.log("loading:", loading, "isEditing:", isEditing, "updateSuccess:", updateSuccess);
   // Loader: Only show full-page spinner if not editing
   if (loading && !isEditing) {
     return (
