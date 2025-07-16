@@ -376,6 +376,7 @@ export default function Profile() {
         toast.error("Incorrect password. Profile details unchanged.");
         // Force a re-render
         setTimeout(() => setIsEditing(true), 0);
+        setLoading(false); // ensure loading is always false
         return;
       }
       if (data.status === "success") {
@@ -795,7 +796,6 @@ export default function Profile() {
     return <div className="text-center text-red-600 mt-10">User session lost. Please sign in again.</div>;
   }
   // Loader: Only show full-page spinner if not editing
-  console.log("Loader check: loading:", loading, "isEditing:", isEditing);
   if (loading && !isEditing) {
     return (
       <div className="bg-gradient-to-br from-blue-50 to-purple-100 min-h-screen py-10 px-2 md:px-8">
@@ -808,6 +808,13 @@ export default function Profile() {
       </div>
     );
   }
+
+  // Failsafe: if in edit mode and loading, reset loading
+  useEffect(() => {
+    if (isEditing && loading) {
+      setLoading(false);
+    }
+  }, [isEditing, loading]);
 
   return (
     <div className="bg-gradient-to-br from-blue-50 to-purple-100 min-h-screen py-10 px-2 md:px-8">
