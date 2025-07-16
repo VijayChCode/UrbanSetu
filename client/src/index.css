@@ -132,3 +132,17 @@
   flex-direction: column;
   box-sizing: border-box;
 }
+
+/* Responsive Toastify width for mobile */
+@media (max-width: 600px) {
+  .Toastify__toast {
+    max-width: 90vw !important;
+    min-width: unset !important;
+    width: auto !important;
+    word-break: break-word;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+  }
+}
