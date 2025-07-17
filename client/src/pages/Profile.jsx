@@ -460,7 +460,7 @@ export default function Profile() {
       }
       if (res.status === 401) {
         setShowPasswordModal(false);
-        toast.info("For your security, you've been signed out automatically.");
+        toast.error("For your security, you've been signed out automatically.");
         // Signout and redirect
         dispatch(signoutUserStart());
         const signoutRes = await fetch(`${API_BASE_URL}/api/auth/signout`);
@@ -475,7 +475,7 @@ export default function Profile() {
       }
       if (data.message && data.message.toLowerCase().includes('password')) {
         setShowPasswordModal(false);
-        toast.info("For your security, you've been signed out automatically.");
+        toast.error("For your security, you've been signed out automatically.");
         // Signout and redirect
         dispatch(signoutUserStart());
         const signoutRes = await fetch(`${API_BASE_URL}/api/auth/signout`);
@@ -556,7 +556,7 @@ export default function Profile() {
       
       if (verifyRes.status === 401) {
         setShowTransferPasswordModal(false);
-        toast.info("Your session has expired. Please sign in again. No admin rights are Transferred");
+        toast.error("Your session has expired. Please sign in again. No admin rights are Transferred");
         // Signout and redirect
         dispatch(signoutUserStart());
         const signoutRes = await fetch(`${API_BASE_URL}/api/auth/signout`);
@@ -573,7 +573,7 @@ export default function Profile() {
       // Check if password verification failed
       if (!verifyRes.ok || verifyData.success === false) {
         setShowTransferPasswordModal(false);
-        toast.info("For your security, you've been signed out automatically.");
+        toast.error("For your security, you've been signed out automatically.");
         // Signout and redirect
         dispatch(signoutUserStart());
         const signoutRes = await fetch(`${API_BASE_URL}/api/auth/signout`);
