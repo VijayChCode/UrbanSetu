@@ -729,7 +729,7 @@ export default function Profile() {
       const data = await res.json();
       if (res.status === 401 && data.error === 'invalidPassword') {
         setShowTransferModal(false);
-        toast.info("For your security, you've been signed out automatically.");
+        toast.error("For your security, you've been signed out automatically.");
         dispatch(signoutUserStart());
         const signoutRes = await fetch(`${API_BASE_URL}/api/auth/signout`);
         const signoutData = await signoutRes.json();
