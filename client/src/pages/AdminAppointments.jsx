@@ -285,6 +285,14 @@ export default function AdminAppointments() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-100 py-10 px-2 md:px-8">
+      <ToastContainer
+        position="bottom-center"
+        containerClassName="!z-[100]"
+        toastOptions={{
+          duration: 2000,
+          style: { fontSize: '0.9rem', borderRadius: '8px', boxShadow: '0 2px 8px #0001' }
+        }}
+      />
       <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-6">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-6">
           <h3 className="text-2xl sm:text-3xl font-extrabold text-blue-700 drop-shadow">
@@ -810,7 +818,6 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
         {showChatModal && (
           <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative flex flex-col">
-              <ToastContainer position="bottom-center" containerClassName="!z-[100]" toastOptions={{ duration: 2000, style: { fontSize: '0.9rem', borderRadius: '8px', boxShadow: '0 2px 8px #0001' } }} />
               <button
                 className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-2xl"
                 onClick={() => setShowChatModal(false)}
