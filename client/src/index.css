@@ -157,3 +157,6 @@
     box-sizing: border-box;
   }
 }
+.Toastify__close-button {
+  pointer-events: auto !important;
+}
