@@ -286,7 +286,7 @@ export default function AdminAppointments() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-100 py-10 px-2 md:px-8">
       <ToastContainer
-        position="bottom-center"
+        position="top-center"
         containerClassName="!z-[100]"
         toastOptions={{
           duration: 2000,
