@@ -315,7 +315,7 @@ export default function MyAppointments() {
       toast.error('An error occurred. Please try again.');
     }
   }
-
+//next
   const handleCancelRefresh = (cancelledId, cancelledStatus) => {
     setAppointments((prev) => prev.map(appt => appt._id === cancelledId ? { ...appt, status: cancelledStatus } : appt));
   };
