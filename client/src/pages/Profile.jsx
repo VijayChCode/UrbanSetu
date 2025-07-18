@@ -104,22 +104,6 @@ const allowedFilters = [
   'seed',
   'flip',
   'rotate',
-  'backgroundColor',
-  'backgroundType',
-  'clothesColor',
-  'clothing',
-  'clothingGraphic',
-  'eyebrows',
-  'eyes',
-  'nose',
-  'mouth',
-  'skinColor',
-  'hairColor',
-  'top',
-  'topProbability',
-  'facialHair',
-  'facialHairColor',
-  'facialHairProbability',
 ];
 
 // Helper for color swatch option (improved for dropdowns)
@@ -1104,6 +1088,8 @@ export default function Profile() {
                         {allowedFilters.map(key => {
                           const prop = avataaarsSchema.properties[key];
                           if (!prop) return null;
+                          // Style (dropdown, but handled separately at the top)
+                          if (key === 'style') return null;
                           // Seed (free text)
                           if (key === 'seed') {
                             return (
@@ -1119,8 +1105,8 @@ export default function Profile() {
                               </div>
                             );
                           }
-                          // Boolean
-                          if (prop.type === 'boolean') {
+                          // Boolean (flip)
+                          if (key === 'flip' && prop.type === 'boolean') {
                             return (
                               <div key={key} className="flex items-center gap-2 mb-2">
                                 <label className="text-xs font-medium">{key}</label>
@@ -1132,8 +1118,8 @@ export default function Profile() {
                               </div>
                             );
                           }
-                          // Number
-                          if (prop.type === 'integer' || prop.type === 'number') {
+                          // Number (rotate)
+                          if (key === 'rotate' && (prop.type === 'integer' || prop.type === 'number')) {
                             return (
                               <div key={key} className="flex flex-col mb-2">
                                 <label className="text-xs font-medium mb-1">{key}</label>
@@ -1148,139 +1134,7 @@ export default function Profile() {
                               </div>
                             );
                           }
-                          // Array of enums (multi-select)
-                          if (prop.type === 'array' && prop.items && prop.items.enum) {
-                            // Color multi-select
-                            if (key.toLowerCase().includes('color')) {
-                              return (
-                                <div key={key} className="flex flex-col mb-2">
-                                  <label className="text-xs font-medium mb-1">{key}</label>
-                                  <select
-                                    multiple
-                                    className="border p-2 rounded-lg min-w-[180px] max-w-full"
-                                    value={dicebearAvatar.filters[key] || []}
-                                    onChange={e => {
-                                      const options = Array.from(e.target.selectedOptions).map(o => o.value);
-                                      setDicebearAvatar(prev => ({ ...prev, filters: { ...prev.filters, [key]: options } }));
-                                    }}
-                                  >
-                                    {prop.items.enum.map(color => renderColorOption(color))}
-                                  </select>
-                                  <div className="flex flex-wrap gap-1 mt-1">
-                                    {(dicebearAvatar.filters[key] || []).map(color => (
-                                      <span key={color} className="inline-block w-6 h-6 rounded border border-gray-300" style={{ backgroundColor: `#${color}` }} title={color}></span>
-                                    ))}
-                                  </div>
-                                </div>
-                              );
-                            }
-                            // Normal multi-select
-                            return (
-                              <div key={key} className="flex flex-col mb-2">
-                                <label className="text-xs font-medium mb-1">{key}</label>
-                                <select
-                                  multiple
-                                  className="border p-2 rounded-lg min-w-[180px] max-w-full"
-                                  value={dicebearAvatar.filters[key] || []}
-                                  onChange={e => {
-                                    const options = Array.from(e.target.selectedOptions).map(o => o.value);
-                                    setDicebearAvatar(prev => ({ ...prev, filters: { ...prev.filters, [key]: options } }));
-                                  }}
-                                >
-                                  {prop.items.enum.map(opt => (
-                                    <option key={opt} value={opt}>{opt}</option>
-                                  ))}
-                                </select>
-                              </div>
-                            );
-                          }
-                          // Array of color or pattern (multi-select for color, fallback to text for pattern)
-                          if (prop.type === 'array' && prop.items && prop.items.pattern) {
-                            // If default is array of hex, show as multi-select
-                            if (Array.isArray(prop.default) && prop.default.every(v => /^[a-fA-F0-9]{6}$/.test(v))) {
-                              return (
-                                <div key={key} className="flex flex-col mb-2">
-                                  <label className="text-xs font-medium mb-1">{key}</label>
-                                  <select
-                                    multiple
-                                    className="border p-2 rounded-lg min-w-[180px] max-w-full"
-                                    value={dicebearAvatar.filters[key] || []}
-                                    onChange={e => {
-                                      const options = Array.from(e.target.selectedOptions).map(o => o.value);
-                                      setDicebearAvatar(prev => ({ ...prev, filters: { ...prev.filters, [key]: options } }));
-                                    }}
-                                  >
-                                    {prop.default.map(color => renderColorOption(color))}
-                                  </select>
-                                  <div className="flex flex-wrap gap-1 mt-1">
-                                    {(dicebearAvatar.filters[key] || []).map(color => (
-                                      <span key={color} className="inline-block w-6 h-6 rounded border border-gray-300" style={{ backgroundColor: `#${color}` }} title={color}></span>
-                                    ))}
-                                  </div>
-                                </div>
-                              );
-                            }
-                            // Fallback: text input
-                            return (
-                              <div key={key} className="flex flex-col mb-2">
-                                <label className="text-xs font-medium mb-1">{key} (comma separated)</label>
-                                <input
-                                  type="text"
-                                  className="border p-2 rounded-lg"
-                                  value={(dicebearAvatar.filters[key] || []).join(',')}
-                                  onChange={e => setDicebearAvatar(prev => ({ ...prev, filters: { ...prev.filters, [key]: e.target.value.split(',').map(s => s.trim()).filter(Boolean) } }))}
-                                  placeholder={prop.default ? prop.default.join(',') : ''}
-                                />
-                              </div>
-                            );
-                          }
-                          // Single enum (dropdown)
-                          if (prop.type === 'string' && prop.enum) {
-                            // Color dropdown
-                            if (key.toLowerCase().includes('color')) {
-                              return (
-                                <div key={key} className="flex flex-col mb-2">
-                                  <label className="text-xs font-medium mb-1">{key}</label>
-                                  <select
-                                    className="border p-2 rounded-lg min-w-[180px] max-w-full"
-                                    value={dicebearAvatar.filters[key] || prop.default?.[0] || ''}
-                                    onChange={e => setDicebearAvatar(prev => ({ ...prev, filters: { ...prev.filters, [key]: e.target.value } }))}
-                                  >
-                                    {prop.enum.map(color => renderColorOption(color))}
-                                  </select>
-                                  <span className="inline-block w-6 h-6 rounded border border-gray-300 mt-1" style={{ backgroundColor: `#${dicebearAvatar.filters[key]}` }} title={dicebearAvatar.filters[key]}></span>
-                                </div>
-                              );
-                            }
-                            // Normal dropdown
-                            return (
-                              <div key={key} className="flex flex-col mb-2">
-                                <label className="text-xs font-medium mb-1">{key}</label>
-                                <select
-                                  className="border p-2 rounded-lg min-w-[180px] max-w-full"
-                                  value={dicebearAvatar.filters[key] || prop.default?.[0] || ''}
-                                  onChange={e => setDicebearAvatar(prev => ({ ...prev, filters: { ...prev.filters, [key]: e.target.value } }))}
-                                >
-                                  {prop.enum.map(opt => (
-                                    <option key={opt} value={opt}>{opt}</option>
-                                  ))}
-                                </select>
-                              </div>
-                            );
-                          }
-                          // Fallback: text input
-                          return (
-                            <div key={key} className="flex flex-col mb-2">
-                              <label className="text-xs font-medium mb-1">{key}</label>
-                              <input
-                                type="text"
-                                className="border p-2 rounded-lg"
-                                value={dicebearAvatar.filters[key] || ''}
-                                onChange={e => setDicebearAvatar(prev => ({ ...prev, filters: { ...prev.filters, [key]: e.target.value } }))}
-                                placeholder={prop.default || ''}
-                              />
-                            </div>
-                          );
+                          return null;
                         })}
                       </div>
                       <div className="mt-4 flex flex-col items-center">
@@ -1305,9 +1159,10 @@ export default function Profile() {
                               const data = await res.json();
                               if (data.status === 'success') {
                                 toast.success('Avatar updated!');
-                              } else {
+                              } else if (data.status === 'error') {
                                 toast.error(data.message || 'Failed to update avatar.');
                               }
+                              // Do not show error for other status values
                             } catch (err) {
                               toast.error('Failed to update avatar.');
                             }
