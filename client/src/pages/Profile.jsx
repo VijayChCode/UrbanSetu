@@ -26,7 +26,7 @@ export default function Profile() {
   const { currentUser, error } = useSelector((state) => state.user);
   const { wishlist } = useWishlist();
   const dispatch = useDispatch();
-  const [formData, setFormData] = useState({ avatar: currentUser?.avatar || defaultAvatars[0] });
+  const [formData, setFormData] = useState({ avatar: currentUser?.avatar || "" });
   const [updateSuccess, setUpdateSuccess] = useState(false);
   const [updateError, setUpdateError] = useState("");
   const [isEditing, setIsEditing] = useState(false);
@@ -765,7 +765,7 @@ export default function Profile() {
         username: currentUser.username || '',
         email: currentUser.email || '',
         mobileNumber: currentUser.mobileNumber ? String(currentUser.mobileNumber) : '',
-        avatar: typeof currentUser.avatar === 'string' ? currentUser.avatar : '',
+        avatar: currentUser.avatar || "",
       });
       
       // Trigger validation for current values
