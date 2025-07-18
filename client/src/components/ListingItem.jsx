@@ -5,6 +5,7 @@ import { useWishlist } from '../WishlistContext';
 import { FaHeart, FaTrash } from 'react-icons/fa';
 import { useSelector } from 'react-redux';
 import { maskAddress } from '../utils/addressMasking';
+import { toast } from 'react-toastify';
 
 export default function ListingItem({ listing, onDelete }) {
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
@@ -23,6 +24,7 @@ export default function ListingItem({ listing, onDelete }) {
 
   const handleWishList = async () => {
     if (!currentUser) {
+      toast.info('Please sign in to add properties to your wishlist.');
       navigate('/sign-in');
       return;
     }
