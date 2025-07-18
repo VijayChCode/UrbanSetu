@@ -920,7 +920,7 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* Edit Profile Form - move here, right after profile card */}
+        {/* Edit Profile Form - show below profile card, above stats section */}
         {isEditing && (
           <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
             <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
