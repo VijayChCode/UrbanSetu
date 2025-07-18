@@ -36,7 +36,7 @@ export default function ListingItem({ listing, onDelete }) {
     } else {
       await addToWishlist(listing);
       setIsInWishlistState(true);
-      toast.success('Property added to your wishlist.');
+      //toast.success('Property added to your wishlist.');
     }
   };
 
