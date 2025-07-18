@@ -840,13 +840,19 @@ export default function Profile() {
           <div className="flex flex-col md:flex-row items-center justify-between">
             <div className="flex flex-col sm:flex-row items-center sm:space-x-6 w-full text-center sm:text-left mb-4 md:mb-0">
               <div className="relative flex-shrink-0 mx-auto sm:mx-0">
-                <img
-                  alt="avatar"
-                  src={formData.avatar || defaultAvatars[0]}
-                  className="h-24 w-24 rounded-full border-4 border-blue-200 object-cover shadow-lg aspect-square"
-                  style={{ aspectRatio: '1/1' }}
-                  onError={e => { e.target.onerror = null; e.target.src = defaultAvatars[0]; }}
-                />
+                {formData.avatar ? (
+                  <img
+                    alt="avatar"
+                    src={formData.avatar}
+                    className="h-24 w-24 rounded-full border-4 border-blue-200 object-cover shadow-lg aspect-square"
+                    style={{ aspectRatio: '1/1' }}
+                    onError={e => { e.target.onerror = null; e.target.src = ''; }}
+                  />
+                ) : (
+                  <div className="h-24 w-24 rounded-full border-4 border-blue-200 object-cover shadow-lg aspect-square bg-gray-100 flex items-center justify-center">
+                    <FaUser className="text-gray-400 text-6xl" />
+                  </div>
+                )}
                 {currentUser.role === 'admin' && (
                   <div className="absolute -top-2 -right-2 bg-purple-500 text-white rounded-full p-2">
                     <FaCrown className="w-4 h-4" />
@@ -1150,7 +1156,7 @@ export default function Profile() {
               className="bg-green-500 text-white p-3 rounded-lg hover:bg-green-600 transition-colors flex flex-col items-center"
             >
               <FaCalendarAlt className="w-5 h-5 mb-1" />
-              <span className="font-medium text-sm">My Appointments</span>
+              <span className="font-medium text-sm">{(currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? 'Appointments' : 'My Appointments'}</span>
             </Link>
             
             <Link
@@ -1166,7 +1172,7 @@ export default function Profile() {
               className="bg-yellow-500 text-white p-3 rounded-lg hover:bg-yellow-600 transition-colors flex flex-col items-center"
             >
               <FaStar className="w-5 h-5 mb-1" />
-              <span className="font-medium text-sm">My Reviews</span>
+              <span className="font-medium text-sm">{(currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? 'Reviews' : 'My Reviews'}</span>
             </Link>
             
             <button
