@@ -891,7 +891,7 @@ export default function Profile() {
                     ? `+91 ${currentUser.mobileNumber.slice(0, 5)} ${currentUser.mobileNumber.slice(5)}`
                     : "Mobile number not provided"
                   }
-                  {currentUser.mobileNumber && currentUser.mobileNumber.startsWith("9") && currentUser.mobileNumber !== "0000000000" && (
+                  {currentUser.mobileNumber && currentUser.mobileNumber.startsWith("9") && currentUser.mobileNumber !== "0000000000" && currentUser.mobileNumber === originalMobile && (
                     <span className="text-xs text-gray-400 ml-2">(Generated for Google signup)</span>
                   )}
                 </p>
