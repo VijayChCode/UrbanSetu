@@ -5,12 +5,13 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/navigation";
 import { Navigation } from "swiper/modules";
-import { FaBath, FaBed, FaChair, FaMapMarkerAlt, FaParking, FaShare, FaEdit, FaTrash, FaArrowLeft, FaStar, FaLock } from "react-icons/fa";
+import { FaBath, FaBed, FaChair, FaMapMarkerAlt, FaParking, FaShare, FaEdit, FaTrash, FaArrowLeft, FaStar, FaLock, FaHeart } from "react-icons/fa";
 import ContactSupportWrapper from "../components/ContactSupportWrapper";
 import ReviewForm from "../components/ReviewForm.jsx";
 import ReviewList from "../components/ReviewList.jsx";
 import { maskAddress, shouldShowLocationLink, getLocationLinkText } from "../utils/addressMasking";
 import { toast } from 'react-toastify';
+import { useWishlist } from '../WishlistContext';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -28,6 +29,7 @@ export default function Listing() {
   const [deletePassword, setDeletePassword] = useState("");
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
 
   // Check if user is admin
   const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'rootadmin';
@@ -255,7 +257,26 @@ export default function Listing() {
           {/* Details Card */}
           <div className="p-3 sm:p-6 bg-gray-50 shadow-md rounded-lg mb-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
-              <h2 className="text-lg sm:text-2xl md:text-3xl font-bold text-gray-800 break-words">{listing.name}</h2>
+              <h2 className="text-lg sm:text-2xl md:text-3xl font-bold text-gray-800 break-words flex items-center gap-2">
+                {listing.name}
+                {/* Wishlist Heart Icon */}
+                {currentUser && (
+                  <button
+                    aria-label={isInWishlist(listing._id) ? 'Remove from wishlist' : 'Add to wishlist'}
+                    onClick={() => {
+                      if (isInWishlist(listing._id)) {
+                        removeFromWishlist(listing._id);
+                      } else {
+                        addToWishlist(listing);
+                      }
+                    }}
+                    className={`ml-2 focus:outline-none transition-transform duration-150 ${isInWishlist(listing._id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'} text-xl`}
+                    title={isInWishlist(listing._id) ? 'Remove from wishlist' : 'Add to wishlist'}
+                  >
+                    <FaHeart fill={isInWishlist(listing._id) ? '#ef4444' : 'none'} stroke="#ef4444" strokeWidth={isInWishlist(listing._id) ? 0 : 2} />
+                  </button>
+                )}
+              </h2>
               {/* Offer Badge */}
               {listing.offer && getDiscountPercentage() > 0 && (
                 <span
