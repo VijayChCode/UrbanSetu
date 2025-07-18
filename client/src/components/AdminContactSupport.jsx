@@ -466,7 +466,7 @@ export default function AdminContactSupport() {
                                         sendReply(message._id);
                                       }}
                                       disabled={replyLoading}
-                                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 admin-contact-support-action-btn"
                                     >
                                       {replyLoading ? (
                                         <>
@@ -486,7 +486,7 @@ export default function AdminContactSupport() {
                                         setReplyingTo(null);
                                         setReplyMessage("");
                                       }}
-                                      className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+                                      className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 admin-contact-support-action-btn"
                                     >
                                       Cancel
                                     </button>
@@ -556,6 +556,14 @@ export default function AdminContactSupport() {
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
           overflow: hidden;
+        }
+        /* Mobile button size reduction for Send/Cancel in admin contact support */
+        @media (max-width: 640px) {
+          .admin-contact-support-action-btn {
+            padding: 0.5rem 0.75rem !important;
+            font-size: 0.95rem !important;
+            border-radius: 0.75rem !important;
+          }
         }
       `}</style>
     </>

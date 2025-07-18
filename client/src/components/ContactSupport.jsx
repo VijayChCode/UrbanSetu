@@ -404,14 +404,14 @@ export default function ContactSupport() {
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="flex-1 px-6 py-3 text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all duration-200 font-medium"
+                    className="flex-1 px-6 py-3 text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all duration-200 font-medium contact-support-action-btn"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex-1 px-6 py-3 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium flex items-center justify-center gap-2"
+                    className="flex-1 px-6 py-3 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium flex items-center justify-center gap-2 contact-support-action-btn"
                     style={{ 
                       backgroundColor: getIconColor(),
                       boxShadow: `0 4px 14px ${getIconColor()}40`
@@ -520,13 +520,12 @@ export default function ContactSupport() {
         </div>
       )}
 
-      {/* Custom CSS for animations */}
+      {/* Custom CSS for animations and mobile button sizing */}
       <style jsx>{`
         @keyframes fadeIn {
           from { opacity: 0; }
           to { opacity: 1; }
         }
-        
         @keyframes slideUp {
           from { 
             opacity: 0; 
@@ -537,17 +536,41 @@ export default function ContactSupport() {
             transform: translateY(0) scale(1);
           }
         }
-        
+        @keyframes slideDown {
+          from { 
+            opacity: 0; 
+            transform: translateY(-10px);
+          }
+          to { 
+            opacity: 1; 
+            transform: translateY(0);
+          }
+        }
         .animate-fadeIn {
           animation: fadeIn 0.3s ease-out;
         }
-        
         .animate-slideUp {
           animation: slideUp 0.3s ease-out;
         }
-        
+        .animate-slideDown {
+          animation: slideDown 0.2s ease-out;
+        }
         .shadow-3xl {
           box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        .line-clamp-2 {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+        /* Mobile button size reduction for Send Message and Cancel */
+        @media (max-width: 640px) {
+          .contact-support-action-btn {
+            padding: 0.5rem 0.75rem !important;
+            font-size: 0.95rem !important;
+            border-radius: 0.75rem !important;
+          }
         }
       `}</style>
     </>
