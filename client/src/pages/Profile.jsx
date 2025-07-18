@@ -329,6 +329,7 @@ export default function Profile() {
         credentials: 'include',
         body: JSON.stringify({
           ...formData,
+          avatar: formData.avatar === undefined ? "" : formData.avatar,
           password: updatePassword,
         }),
       };
@@ -390,7 +391,9 @@ export default function Profile() {
         return;
       }
       if (data.status === "success") {
-        dispatch(updateUserSuccess(data.updatedUser));
+        // Ensure avatar is always a string (empty if deleted)
+        const updatedUser = { ...data.updatedUser, avatar: data.updatedUser.avatar || "" };
+        dispatch(updateUserSuccess(updatedUser));
         setUpdateSuccess(true);
         setIsEditing(false);
         setLoading(false);
