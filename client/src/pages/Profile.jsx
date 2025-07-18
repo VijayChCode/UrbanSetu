@@ -1402,6 +1402,7 @@ export default function Profile() {
                 placeholder="Enter your password"
                 value={updatePassword}
                 onChange={e => setUpdatePassword(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleConfirmUpdate(); } }}
               />
               {updatePasswordError && <div className="text-red-600 text-sm mb-2">{updatePasswordError}</div>}
               <div className="flex justify-end space-x-3">
