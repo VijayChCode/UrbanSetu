@@ -4,9 +4,11 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/navigation";
 import { Navigation } from "swiper/modules";
-import { FaBath, FaBed, FaChair, FaMapMarkerAlt, FaParking, FaShare, FaEdit, FaTrash, FaArrowLeft } from "react-icons/fa";
+import { FaBath, FaBed, FaChair, FaMapMarkerAlt, FaParking, FaShare, FaEdit, FaTrash, FaArrowLeft, FaHeart } from "react-icons/fa";
 import { maskAddress, shouldShowLocationLink, getLocationLinkText } from "../utils/addressMasking";
 import { toast } from 'react-toastify';
+import { useWishlist } from '../WishlistContext';
+import { useSelector } from 'react-redux';
 
 export default function AdminListing() {
   const params = useParams();
@@ -93,6 +95,9 @@ export default function AdminListing() {
     );
   }
 
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  const { currentUser } = useSelector((state) => state.user);
+
   return (
     <div className="bg-gradient-to-br from-blue-50 to-purple-100 min-h-screen py-10 px-2 md:px-8">
       <div className="max-w-4xl w-full mx-auto bg-white rounded-xl shadow-lg p-3 sm:p-6 relative overflow-x-hidden">
@@ -163,7 +168,31 @@ export default function AdminListing() {
         {/* Details Card */}
         <div className="p-3 sm:p-6 bg-gray-50 shadow-md rounded-lg mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
-            <h2 className="text-lg sm:text-2xl md:text-3xl font-bold text-gray-800 break-words">{listing.name}</h2>
+            <h2 className="text-lg sm:text-2xl md:text-3xl font-bold text-gray-800 break-words flex items-center gap-2">
+              {listing.name}
+              {/* Wishlist Heart Icon - match ListingItem style */}
+              <button
+                onClick={() => {
+                  if (!currentUser) {
+                    toast.info('Please sign in to add properties to your wishlist.');
+                    navigate('/sign-in');
+                    return;
+                  }
+                  if (isInWishlist(listing._id)) {
+                    removeFromWishlist(listing._id);
+                    toast.success('Property removed from your wishlist.');
+                  } else {
+                    addToWishlist(listing);
+                    //toast.success('Property added to your wishlist.');
+                  }
+                }}
+                className={`ml-2 p-2 rounded-full transition z-20 ${isInWishlist(listing._id) ? 'bg-red-500 text-white' : 'bg-gray-200 text-red-500 hover:text-red-600'} focus:outline-none`}
+                title={isInWishlist(listing._id) ? 'Remove from wishlist' : 'Add to wishlist'}
+                style={{ lineHeight: 0 }}
+              >
+                <FaHeart className="text-base sm:text-lg" />
+              </button>
+            </h2>
             <div className="mb-4">
               {listing.offer && getDiscountPercentage() > 0 ? (
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
