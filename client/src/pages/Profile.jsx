@@ -856,10 +856,10 @@ export default function Profile() {
           <div className="flex flex-col md:flex-row items-center justify-between">
             <div className="flex flex-col sm:flex-row items-center sm:space-x-6 w-full text-center sm:text-left mb-4 md:mb-0">
               <div className="relative flex-shrink-0 mx-auto sm:mx-0">
-                {formData.avatar ? (
+                {currentUser.avatar ? (
                   <img
                     alt="avatar"
-                    src={formData.avatar}
+                    src={currentUser.avatar}
                     className="h-24 w-24 rounded-full border-4 border-blue-200 object-cover shadow-lg aspect-square"
                     style={{ aspectRatio: '1/1' }}
                     onError={e => { e.target.onerror = null; e.target.src = ''; }}
