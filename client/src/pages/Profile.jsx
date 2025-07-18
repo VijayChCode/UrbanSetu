@@ -392,9 +392,15 @@ export default function Profile() {
       }
       if (data.status === "success") {
         // Ensure avatar is always a string (empty if deleted)
-        const updatedUser = { ...data.updatedUser, avatar: data.updatedUser.avatar || "" };
+        // If mobile number changed, set isGeneratedMobile to false
+        const updatedUser = {
+          ...data.updatedUser,
+          avatar: data.updatedUser.avatar || "",
+          isGeneratedMobile: (data.updatedUser.mobileNumber && data.updatedUser.mobileNumber !== originalMobile)
+            ? false
+            : data.updatedUser.isGeneratedMobile
+        };
         dispatch(updateUserSuccess(updatedUser));
-        // If mobile number changed, update originalMobile so the Google signup comment is not shown
         if (data.updatedUser.mobileNumber && data.updatedUser.mobileNumber !== originalMobile) {
           setOriginalMobile(data.updatedUser.mobileNumber);
         }
@@ -895,7 +901,7 @@ export default function Profile() {
                     ? `+91 ${currentUser.mobileNumber.slice(0, 5)} ${currentUser.mobileNumber.slice(5)}`
                     : "Mobile number not provided"
                   }
-                  {currentUser.mobileNumber && currentUser.mobileNumber.startsWith("9") && currentUser.mobileNumber !== "0000000000" && currentUser.mobileNumber === originalMobile && (
+                  {currentUser.isGeneratedMobile && (
                     <span className="text-xs text-gray-400 ml-2">(Generated for Google signup)</span>
                   )}
                 </p>
