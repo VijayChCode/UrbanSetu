@@ -19,8 +19,84 @@ import { toast } from 'react-toastify';
 import { persistor } from '../redux/store';
 import { reconnectSocket } from '../utils/socket';
 import defaultAvatars from '../assets/avatars'; // Assume this is an array of avatar image URLs
+import avataaarsSchema from '../data/dicebear-avataaars-schema.json';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+// At the top, add the full list of DiceBear styles and a master filter list:
+const dicebearStyles = [
+  { key: 'adventurer', label: 'Adventurer' },
+  { key: 'adventurer-neutral', label: 'Adventurer Neutral' },
+  { key: 'avataaars', label: 'Avataaars' },
+  { key: 'avataaars-neutral', label: 'Avataaars Neutral' },
+  { key: 'big-ears', label: 'Big Ears' },
+  { key: 'big-ears-neutral', label: 'Big Ears Neutral' },
+  { key: 'big-smile', label: 'Big Smile' },
+  { key: 'bottts', label: 'Bottts' },
+  { key: 'bottts-neutral', label: 'Bottts Neutral' },
+  { key: 'croodles', label: 'Croodles' },
+  { key: 'croodles-neutral', label: 'Croodles Neutral' },
+  { key: 'dylan', label: 'Dylan' },
+  { key: 'fun-emoji', label: 'Fun Emoji' },
+  { key: 'glass', label: 'Glass' },
+  { key: 'icons', label: 'Icons' },
+  { key: 'identicon', label: 'Identicon' },
+  { key: 'initials', label: 'Initials' },
+  { key: 'lorelei', label: 'Lorelei' },
+  { key: 'lorelei-neutral', label: 'Lorelei Neutral' },
+  { key: 'micah', label: 'Micah' },
+  { key: 'miniavs', label: 'Miniavs' },
+  { key: 'notionists', label: 'Notionists' },
+  { key: 'notionists-neutral', label: 'Notionists Neutral' },
+  { key: 'open-peeps', label: 'Open Peeps' },
+  { key: 'personas', label: 'Personas' },
+  { key: 'pixel-art', label: 'Pixel Art' },
+  { key: 'pixel-art-neutral', label: 'Pixel Art Neutral' },
+  { key: 'rings', label: 'Rings' },
+  { key: 'shapes', label: 'Shapes' },
+  { key: 'thumbs', label: 'Thumbs' },
+];
+
+// Master filter list (union of all known DiceBear filters, including multi-selects)
+const dicebearMasterFilters = [
+  { key: 'seed', type: 'string', label: 'Seed' },
+  { key: 'flip', type: 'boolean', label: 'Flip' },
+  { key: 'rotate', type: 'number', label: 'Rotate', min: 0, max: 360 },
+  { key: 'scale', type: 'number', label: 'Scale', min: 0, max: 200 },
+  { key: 'radius', type: 'number', label: 'Radius', min: 0, max: 50 },
+  { key: 'backgroundColor', type: 'array', itemType: 'color', label: 'Background Color (comma separated hex)' },
+  { key: 'backgroundType', type: 'array', options: ['solid', 'gradientLinear'], label: 'Background Type (multi)' },
+  { key: 'backgroundRotation', type: 'array', itemType: 'number', label: 'Background Rotation (comma separated numbers)' },
+  { key: 'translateX', type: 'number', label: 'Translate X', min: -100, max: 100 },
+  { key: 'translateY', type: 'number', label: 'Translate Y', min: -100, max: 100 },
+  { key: 'clip', type: 'boolean', label: 'Clip' },
+  { key: 'randomizeIds', type: 'boolean', label: 'Randomize IDs' },
+  // Example multi-selects (add more as needed)
+  { key: 'accessories', type: 'array', label: 'Accessories (multi)' },
+  { key: 'hair', type: 'array', label: 'Hair (multi)' },
+  { key: 'eyes', type: 'array', label: 'Eyes (multi)' },
+  { key: 'mouth', type: 'array', label: 'Mouth (multi)' },
+  { key: 'nose', type: 'array', label: 'Nose (multi)' },
+  { key: 'beard', type: 'array', label: 'Beard (multi)' },
+  { key: 'mustache', type: 'array', label: 'Mustache (multi)' },
+  { key: 'top', type: 'array', label: 'Top (multi)' },
+  { key: 'skinColor', type: 'array', itemType: 'color', label: 'Skin Color (comma separated hex)' },
+  { key: 'facialHair', type: 'array', label: 'Facial Hair (multi)' },
+  { key: 'clothing', type: 'array', label: 'Clothing (multi)' },
+  { key: 'clothesColor', type: 'array', itemType: 'color', label: 'Clothes Color (comma separated hex)' },
+  { key: 'hatColor', type: 'array', itemType: 'color', label: 'Hat Color (comma separated hex)' },
+  { key: 'hairColor', type: 'array', itemType: 'color', label: 'Hair Color (comma separated hex)' },
+  { key: 'facialHairColor', type: 'array', itemType: 'color', label: 'Facial Hair Color (comma separated hex)' },
+  // Example single-value enums (add more as needed)
+  { key: 'style', type: 'string', label: 'Style (enum)' },
+  // Example probabilities
+  { key: 'beardProbability', type: 'number', label: 'Beard Probability', min: 0, max: 100 },
+  { key: 'mustacheProbability', type: 'number', label: 'Mustache Probability', min: 0, max: 100 },
+  { key: 'facialHairProbability', type: 'number', label: 'Facial Hair Probability', min: 0, max: 100 },
+  { key: 'accessoriesProbability', type: 'number', label: 'Accessories Probability', min: 0, max: 100 },
+  { key: 'topProbability', type: 'number', label: 'Top Probability', min: 0, max: 100 },
+  // Add more as needed from all schemas
+];
 
 export default function Profile() {
   const { currentUser, error } = useSelector((state) => state.user);
@@ -845,8 +921,23 @@ export default function Profile() {
     reader.readAsDataURL(file);
   };
 
-  const [customAvatarSeed, setCustomAvatarSeed] = useState("");
-  const [customAvatarHair, setCustomAvatarHair] = useState("short01");
+  const [dicebearAvatar, setDicebearAvatar] = useState({
+    style: 'avataaars',
+    filters: {},
+  });
+
+  const buildDicebearUrl = () => {
+    const base = `https://api.dicebear.com/9.x/${dicebearAvatar.style}/svg`;
+    const params = Object.entries(dicebearAvatar.filters)
+      .filter(([k, v]) => v !== undefined && v !== null && v !== '' && !(Array.isArray(v) && v.length === 0))
+      .map(([k, v]) => {
+        if (Array.isArray(v)) return `${k}=${v.join(',')}`;
+        if (typeof v === 'boolean') return `${k}=${v}`;
+        return `${k}=${encodeURIComponent(v)}`;
+      })
+      .join('&');
+    return params ? `${base}?${params}` : base;
+  };
 
   return (
     <div className="bg-gradient-to-br from-blue-50 to-purple-100 min-h-screen py-10 px-2 md:px-8">
@@ -960,32 +1051,148 @@ export default function Profile() {
                         <FaTrash className="text-red-500" />
                       </button>
                     </div>
-                    {/* Custom DiceBear Avatar Generator */}
+                    {/* DiceBear Avatar Customization */}
                     <div className="mt-4 w-full flex flex-col items-center">
-                      <div className="font-semibold text-gray-700 mb-2">Or create a custom avatar:</div>
-                      <div className="flex flex-col sm:flex-row gap-2 items-center">
-                        <input
-                          type="text"
-                          placeholder="Enter name/seed (e.g. robo)"
+                      <div className="font-semibold text-gray-700 mb-2">Or create a custom DiceBear avatar:</div>
+                      <div className="flex flex-col sm:flex-row gap-2 items-center w-full">
+                        <label className="font-medium text-sm">Style:</label>
+                        <select
                           className="border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-                          value={customAvatarSeed || ''}
-                          onChange={e => setCustomAvatarSeed(e.target.value)}
-                          style={{ minWidth: 120 }}
+                          value={dicebearAvatar.style}
+                          onChange={e => {
+                            setDicebearAvatar({ style: e.target.value, filters: {} });
+                          }}
+                        >
+                          {dicebearStyles.map(style => (
+                            <option key={style.key} value={style.key}>{style.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                      {/* Render all master filters dynamically */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 w-full max-w-2xl">
+                        {dicebearMasterFilters.map(filter => {
+                          // Multi-select array
+                          if (filter.type === 'array' && !filter.itemType) {
+                            return (
+                              <div key={filter.key} className="flex flex-col">
+                                <label className="text-xs font-medium mb-1">{filter.label || filter.key}</label>
+                                <input
+                                  type="text"
+                                  className="border p-2 rounded-lg"
+                                  value={(dicebearAvatar.filters[filter.key] || []).join(',')}
+                                  onChange={e => setDicebearAvatar(prev => ({ ...prev, filters: { ...prev.filters, [filter.key]: e.target.value.split(',').map(s => s.trim()).filter(Boolean) } }))}
+                                  placeholder="comma,separated,values"
+                                />
+                              </div>
+                            );
+                          }
+                          // Multi-select array of color
+                          if (filter.type === 'array' && filter.itemType === 'color') {
+                            return (
+                              <div key={filter.key} className="flex flex-col">
+                                <label className="text-xs font-medium mb-1">{filter.label || filter.key}</label>
+                                <input
+                                  type="text"
+                                  className="border p-2 rounded-lg"
+                                  value={(dicebearAvatar.filters[filter.key] || []).join(',')}
+                                  onChange={e => setDicebearAvatar(prev => ({ ...prev, filters: { ...prev.filters, [filter.key]: e.target.value.split(',').map(s => s.trim()).filter(Boolean) } }))}
+                                  placeholder="#hex1,#hex2"
+                                />
+                              </div>
+                            );
+                          }
+                          // Multi-select array of number
+                          if (filter.type === 'array' && filter.itemType === 'number') {
+                            return (
+                              <div key={filter.key} className="flex flex-col">
+                                <label className="text-xs font-medium mb-1">{filter.label || filter.key}</label>
+                                <input
+                                  type="text"
+                                  className="border p-2 rounded-lg"
+                                  value={(dicebearAvatar.filters[filter.key] || []).join(',')}
+                                  onChange={e => setDicebearAvatar(prev => ({ ...prev, filters: { ...prev.filters, [filter.key]: e.target.value.split(',').map(s => s.trim()).filter(Boolean) } }))}
+                                  placeholder="comma,separated,numbers"
+                                />
+                              </div>
+                            );
+                          }
+                          // Boolean
+                          if (filter.type === 'boolean') {
+                            return (
+                              <div key={filter.key} className="flex items-center gap-2">
+                                <label className="text-xs font-medium">{filter.label || filter.key}</label>
+                                <input
+                                  type="checkbox"
+                                  checked={!!dicebearAvatar.filters[filter.key]}
+                                  onChange={e => setDicebearAvatar(prev => ({ ...prev, filters: { ...prev.filters, [filter.key]: e.target.checked } }))}
+                                />
+                              </div>
+                            );
+                          }
+                          // Number
+                          if (filter.type === 'number') {
+                            return (
+                              <div key={filter.key} className="flex flex-col">
+                                <label className="text-xs font-medium mb-1">{filter.label || filter.key}</label>
+                                <input
+                                  type="number"
+                                  className="border p-2 rounded-lg"
+                                  value={dicebearAvatar.filters[filter.key] ?? ''}
+                                  min={filter.min}
+                                  max={filter.max}
+                                  onChange={e => setDicebearAvatar(prev => ({ ...prev, filters: { ...prev.filters, [filter.key]: e.target.value === '' ? undefined : Number(e.target.value) } }))}
+                                />
+                              </div>
+                            );
+                          }
+                          // String
+                          return (
+                            <div key={filter.key} className="flex flex-col">
+                              <label className="text-xs font-medium mb-1">{filter.label || filter.key}</label>
+                              <input
+                                type="text"
+                                className="border p-2 rounded-lg"
+                                value={dicebearAvatar.filters[filter.key] || ''}
+                                onChange={e => setDicebearAvatar(prev => ({ ...prev, filters: { ...prev.filters, [filter.key]: e.target.value } }))}
+                                placeholder={filter.label || filter.key}
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div className="mt-4 flex flex-col items-center">
+                        <img
+                          src={buildDicebearUrl()}
+                          alt="DiceBear Avatar Preview"
+                          className="w-24 h-24 rounded-full border-2 border-blue-300 shadow"
                         />
                         <button
                           type="button"
-                          className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all font-semibold"
-                          onClick={() => setFormData({ ...formData, avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(customAvatarSeed || 'robo')}` })}
+                          className="mt-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all font-semibold"
+                          onClick={async () => {
+                            const url = buildDicebearUrl();
+                            setFormData({ ...formData, avatar: url });
+                            // Save to backend immediately
+                            try {
+                              const res = await fetch(`${API_BASE_URL}/api/user/${currentUser._id}`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                credentials: 'include',
+                                body: JSON.stringify({ avatar: url }),
+                              });
+                              const data = await res.json();
+                              if (data.status === 'success') {
+                                toast.success('Avatar updated!');
+                              } else {
+                                toast.error('Failed to update avatar.');
+                              }
+                            } catch (err) {
+                              toast.error('Failed to update avatar.');
+                            }
+                          }}
                         >
                           Use this avatar
                         </button>
-                      </div>
-                      <div className="mt-2">
-                        <img
-                          src={`https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(customAvatarSeed || 'robo')}`}
-                          alt="Custom Avatar Preview"
-                          className="w-16 h-16 rounded-full border-2 border-blue-300 shadow"
-                        />
                       </div>
                     </div>
                   </>

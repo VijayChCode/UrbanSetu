@@ -1,0 +1,212 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "seed": {
+      "type": "string"
+    },
+    "flip": {
+      "type": "boolean",
+      "default": false
+    },
+    "rotate": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 360,
+      "default": 0
+    },
+    "scale": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 200,
+      "default": 100
+    },
+    "radius": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 50,
+      "default": 0
+    },
+    "size": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "backgroundColor": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(transparent|[a-fA-F0-9]{6})$"
+      },
+      "default": [
+        "614335",
+        "d08b5b",
+        "ae5d29",
+        "edb98a",
+        "ffdbb4",
+        "fd9841",
+        "f8d25c"
+      ]
+    },
+    "backgroundType": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "solid",
+          "gradientLinear"
+        ]
+      },
+      "default": [
+        "solid"
+      ]
+    },
+    "backgroundRotation": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "minimum": -360,
+        "maximum": 360
+      },
+      "default": [
+        0,
+        360
+      ]
+    },
+    "translateX": {
+      "type": "integer",
+      "minimum": -100,
+      "maximum": 100,
+      "default": 0
+    },
+    "translateY": {
+      "type": "integer",
+      "minimum": -100,
+      "maximum": 100,
+      "default": 0
+    },
+    "clip": {
+      "type": "boolean",
+      "default": true
+    },
+    "randomizeIds": {
+      "type": "boolean",
+      "default": false
+    },
+    "eyebrows": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "angryNatural",
+          "defaultNatural",
+          "flatNatural",
+          "frownNatural",
+          "raisedExcitedNatural",
+          "sadConcernedNatural",
+          "unibrowNatural",
+          "upDownNatural",
+          "angry",
+          "default",
+          "raisedExcited",
+          "sadConcerned",
+          "upDown"
+        ]
+      },
+      "default": [
+        "angryNatural",
+        "defaultNatural",
+        "flatNatural",
+        "frownNatural",
+        "raisedExcitedNatural",
+        "sadConcernedNatural",
+        "unibrowNatural",
+        "upDownNatural",
+        "angry",
+        "default",
+        "raisedExcited",
+        "sadConcerned",
+        "upDown"
+      ]
+    },
+    "eyes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "closed",
+          "cry",
+          "default",
+          "eyeRoll",
+          "happy",
+          "hearts",
+          "side",
+          "squint",
+          "surprised",
+          "winkWacky",
+          "wink",
+          "xDizzy"
+        ]
+      },
+      "default": [
+        "closed",
+        "cry",
+        "default",
+        "eyeRoll",
+        "happy",
+        "hearts",
+        "side",
+        "squint",
+        "surprised",
+        "winkWacky",
+        "wink",
+        "xDizzy"
+      ]
+    },
+    "mouth": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "concerned",
+          "default",
+          "disbelief",
+          "eating",
+          "grimace",
+          "sad",
+          "screamOpen",
+          "serious",
+          "smile",
+          "tongue",
+          "twinkle",
+          "vomit"
+        ]
+      },
+      "default": [
+        "concerned",
+        "default",
+        "disbelief",
+        "eating",
+        "grimace",
+        "sad",
+        "screamOpen",
+        "serious",
+        "smile",
+        "tongue",
+        "twinkle",
+        "vomit"
+      ]
+    },
+    "nose": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "default"
+        ]
+      },
+      "default": [
+        "default"
+      ]
+    }
+  }
+}
