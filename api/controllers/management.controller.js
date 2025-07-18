@@ -144,7 +144,7 @@ export const promoteUserToAdmin = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
-};
+}; 
 
 // Re-approve a rejected admin (default admin only)
 export const reapproveRejectedAdmin = async (req, res, next) => {
