@@ -24,7 +24,7 @@ export default function ListingItem({ listing, onDelete }) {
   const handleWishList = async () => {
     if (!currentUser) {
       // Show a toast or alert prompting login
-      window.alert('Please sign in to add properties to your wishlist.');
+      toast.info('Please sign in to add properties to your wishlist.');
       navigate('/sign-in');
       return;
     }
