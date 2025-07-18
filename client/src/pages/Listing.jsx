@@ -259,7 +259,8 @@ export default function Listing() {
               {/* Offer Badge */}
               {listing.offer && getDiscountPercentage() > 0 && (
                 <span
-                  className="bg-yellow-400 text-gray-900 text-sm font-semibold px-3 py-1 rounded-full shadow-md animate-pulse"
+                  className="bg-yellow-400 text-gray-900 text-sm font-semibold px-4 py-1 rounded-full shadow-md animate-pulse w-max sm:w-auto ml-0 sm:ml-2 mt-2 sm:mt-0"
+                  style={{ alignSelf: 'flex-start' }}
                   title="Limited-time offer!"
                 >
                   {getDiscountPercentage()}% OFF
