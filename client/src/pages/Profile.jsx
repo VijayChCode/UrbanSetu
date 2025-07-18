@@ -98,6 +98,38 @@ const dicebearMasterFilters = [
   // Add more as needed from all schemas
 ];
 
+// Only show these filters in this order:
+const allowedFilters = [
+  'style',
+  'seed',
+  'flip',
+  'rotate',
+  'backgroundColor',
+  'backgroundType',
+  'clothesColor',
+  'clothing',
+  'clothingGraphic',
+  'eyebrows',
+  'eyes',
+  'nose',
+  'mouth',
+  'skinColor',
+  'hairColor',
+  'top',
+  'topProbability',
+  'facialHair',
+  'facialHairColor',
+  'facialHairProbability',
+];
+
+// Helper for color swatch option
+const renderColorOption = (color) => (
+  <option key={color} value={color} style={{ backgroundColor: `#${color}`, color: '#000' }}>
+    <span style={{ backgroundColor: `#${color}`, display: 'inline-block', width: 16, height: 16, marginRight: 4, border: '1px solid #ccc', verticalAlign: 'middle' }}></span>
+    {color}
+  </option>
+);
+
 export default function Profile() {
   const { currentUser, error } = useSelector((state) => state.user);
   const { wishlist } = useWishlist();
@@ -1070,7 +1102,24 @@ export default function Profile() {
                       </div>
                       {/* Render all filters from Avataaars schema as dropdowns/multiselects/inputs */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 w-full max-w-2xl">
-                        {Object.entries(avataaarsSchema.properties).map(([key, prop]) => {
+                        {allowedFilters.map(key => {
+                          const prop = avataaarsSchema.properties[key];
+                          if (!prop) return null;
+                          // Seed (free text)
+                          if (key === 'seed') {
+                            return (
+                              <div key={key} className="flex flex-col">
+                                <label className="text-xs font-medium mb-1">{key}</label>
+                                <input
+                                  type="text"
+                                  className="border p-2 rounded-lg"
+                                  value={dicebearAvatar.filters[key] || ''}
+                                  onChange={e => setDicebearAvatar(prev => ({ ...prev, filters: { ...prev.filters, [key]: e.target.value } }))}
+                                  placeholder={prop.default || ''}
+                                />
+                              </div>
+                            );
+                          }
                           // Boolean
                           if (prop.type === 'boolean') {
                             return (
@@ -1102,6 +1151,26 @@ export default function Profile() {
                           }
                           // Array of enums (multi-select)
                           if (prop.type === 'array' && prop.items && prop.items.enum) {
+                            // Color multi-select
+                            if (key.toLowerCase().includes('color')) {
+                              return (
+                                <div key={key} className="flex flex-col">
+                                  <label className="text-xs font-medium mb-1">{key}</label>
+                                  <select
+                                    multiple
+                                    className="border p-2 rounded-lg"
+                                    value={dicebearAvatar.filters[key] || []}
+                                    onChange={e => {
+                                      const options = Array.from(e.target.selectedOptions).map(o => o.value);
+                                      setDicebearAvatar(prev => ({ ...prev, filters: { ...prev.filters, [key]: options } }));
+                                    }}
+                                  >
+                                    {prop.items.enum.map(color => renderColorOption(color))}
+                                  </select>
+                                </div>
+                              );
+                            }
+                            // Normal multi-select
                             return (
                               <div key={key} className="flex flex-col">
                                 <label className="text-xs font-medium mb-1">{key}</label>
@@ -1121,8 +1190,28 @@ export default function Profile() {
                               </div>
                             );
                           }
-                          // Array of color or pattern (comma separated input)
+                          // Array of color or pattern (multi-select for color, fallback to text for pattern)
                           if (prop.type === 'array' && prop.items && prop.items.pattern) {
+                            // If default is array of hex, show as multi-select
+                            if (Array.isArray(prop.default) && prop.default.every(v => /^[a-fA-F0-9]{6}$/.test(v))) {
+                              return (
+                                <div key={key} className="flex flex-col">
+                                  <label className="text-xs font-medium mb-1">{key}</label>
+                                  <select
+                                    multiple
+                                    className="border p-2 rounded-lg"
+                                    value={dicebearAvatar.filters[key] || []}
+                                    onChange={e => {
+                                      const options = Array.from(e.target.selectedOptions).map(o => o.value);
+                                      setDicebearAvatar(prev => ({ ...prev, filters: { ...prev.filters, [key]: options } }));
+                                    }}
+                                  >
+                                    {prop.default.map(color => renderColorOption(color))}
+                                  </select>
+                                </div>
+                              );
+                            }
+                            // Fallback: text input
                             return (
                               <div key={key} className="flex flex-col">
                                 <label className="text-xs font-medium mb-1">{key} (comma separated)</label>
@@ -1138,6 +1227,22 @@ export default function Profile() {
                           }
                           // Single enum (dropdown)
                           if (prop.type === 'string' && prop.enum) {
+                            // Color dropdown
+                            if (key.toLowerCase().includes('color')) {
+                              return (
+                                <div key={key} className="flex flex-col">
+                                  <label className="text-xs font-medium mb-1">{key}</label>
+                                  <select
+                                    className="border p-2 rounded-lg"
+                                    value={dicebearAvatar.filters[key] || prop.default?.[0] || ''}
+                                    onChange={e => setDicebearAvatar(prev => ({ ...prev, filters: { ...prev.filters, [key]: e.target.value } }))}
+                                  >
+                                    {prop.enum.map(color => renderColorOption(color))}
+                                  </select>
+                                </div>
+                              );
+                            }
+                            // Normal dropdown
                             return (
                               <div key={key} className="flex flex-col">
                                 <label className="text-xs font-medium mb-1">{key}</label>
