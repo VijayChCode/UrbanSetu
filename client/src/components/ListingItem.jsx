@@ -23,8 +23,6 @@ export default function ListingItem({ listing, onDelete }) {
 
   const handleWishList = async () => {
     if (!currentUser) {
-      // Show a toast or alert prompting login
-      toast.info('Please sign in to add properties to your wishlist.');
       navigate('/sign-in');
       return;
     }
@@ -84,7 +82,7 @@ export default function ListingItem({ listing, onDelete }) {
         </div>
       )}
 
-      {/* Wishlist Icon - always visible, prompt login if not signed in */}
+      {/* Wishlist Icon */}
       <button
         onClick={handleWishList}
         className={`absolute top-2 sm:top-4 right-2 sm:right-4 p-2 rounded-full transition z-20 ${
