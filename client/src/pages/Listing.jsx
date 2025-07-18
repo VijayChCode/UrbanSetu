@@ -414,6 +414,7 @@ export default function Listing() {
               <button
                 onClick={() => {
                   if (!currentUser) {
+                    toast.info('Please sign in to book appointments.');
                     navigate('/sign-in');
                     return;
                   }
