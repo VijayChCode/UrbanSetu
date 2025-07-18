@@ -32,7 +32,7 @@ export default function ListingItem({ listing, onDelete }) {
     if (isInWishlistState) {
       await removeFromWishlist(listing._id);
       setIsInWishlistState(false);
-      //toast.success('Property removed from your wishlist.');
+      toast.success('Property removed from your wishlist.');
     } else {
       await addToWishlist(listing);
       setIsInWishlistState(true);

@@ -131,7 +131,7 @@ const WishlistProvider = ({ children }) => {
         return { success: false, message: 'Failed to remove item. Please try again.' };
       }
       //toast.success('Property removed from your wishlist.');
-      return { success: true, message: 'Item removed from your wishlist.' };
+      return { success: true, message: 'Property removed from your wishlist.' };
     } catch (error) {
       fetchWishlist();
       console.error('Error removing from wishlist:', error);
