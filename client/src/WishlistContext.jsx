@@ -128,14 +128,14 @@ const WishlistProvider = ({ children }) => {
         fetchWishlist();
         const errorData = await response.json();
         console.error('Failed to remove from wishlist:', errorData.message);
-        return { success: false, message: 'Failed to remove item. Please try again.' };
+        return { success: false, message: 'Failed to remove property. Please try again.' };
       }
       toast.success('Property removed from your wishlist.');
-      return { success: true, message: 'Property removed from your wishlist.' };
+      return { success: true };
     } catch (error) {
       fetchWishlist();
       console.error('Error removing from wishlist:', error);
-      return { success: false, message: 'Failed to remove item. Please try again.' };
+      return { success: false, message: 'Failed to remove property. Please try again.' };
     }
   };
 
