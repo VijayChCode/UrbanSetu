@@ -957,6 +957,7 @@ export default function Profile() {
                     </button>
                   </div>
                 )}
+                <div className="text-xs text-gray-500 mt-2 text-center">Note: Please upload a profile image below 75KB only for best performance.</div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
