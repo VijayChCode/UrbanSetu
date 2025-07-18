@@ -1068,93 +1068,101 @@ export default function Profile() {
                           ))}
                         </select>
                       </div>
-                      {/* Render all master filters dynamically */}
+                      {/* Render all filters from Avataaars schema as dropdowns/multiselects/inputs */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 w-full max-w-2xl">
-                        {dicebearMasterFilters.map(filter => {
-                          // Multi-select array
-                          if (filter.type === 'array' && !filter.itemType) {
-                            return (
-                              <div key={filter.key} className="flex flex-col">
-                                <label className="text-xs font-medium mb-1">{filter.label || filter.key}</label>
-                                <input
-                                  type="text"
-                                  className="border p-2 rounded-lg"
-                                  value={(dicebearAvatar.filters[filter.key] || []).join(',')}
-                                  onChange={e => setDicebearAvatar(prev => ({ ...prev, filters: { ...prev.filters, [filter.key]: e.target.value.split(',').map(s => s.trim()).filter(Boolean) } }))}
-                                  placeholder="comma,separated,values"
-                                />
-                              </div>
-                            );
-                          }
-                          // Multi-select array of color
-                          if (filter.type === 'array' && filter.itemType === 'color') {
-                            return (
-                              <div key={filter.key} className="flex flex-col">
-                                <label className="text-xs font-medium mb-1">{filter.label || filter.key}</label>
-                                <input
-                                  type="text"
-                                  className="border p-2 rounded-lg"
-                                  value={(dicebearAvatar.filters[filter.key] || []).join(',')}
-                                  onChange={e => setDicebearAvatar(prev => ({ ...prev, filters: { ...prev.filters, [filter.key]: e.target.value.split(',').map(s => s.trim()).filter(Boolean) } }))}
-                                  placeholder="#hex1,#hex2"
-                                />
-                              </div>
-                            );
-                          }
-                          // Multi-select array of number
-                          if (filter.type === 'array' && filter.itemType === 'number') {
-                            return (
-                              <div key={filter.key} className="flex flex-col">
-                                <label className="text-xs font-medium mb-1">{filter.label || filter.key}</label>
-                                <input
-                                  type="text"
-                                  className="border p-2 rounded-lg"
-                                  value={(dicebearAvatar.filters[filter.key] || []).join(',')}
-                                  onChange={e => setDicebearAvatar(prev => ({ ...prev, filters: { ...prev.filters, [filter.key]: e.target.value.split(',').map(s => s.trim()).filter(Boolean) } }))}
-                                  placeholder="comma,separated,numbers"
-                                />
-                              </div>
-                            );
-                          }
+                        {Object.entries(avataaarsSchema.properties).map(([key, prop]) => {
                           // Boolean
-                          if (filter.type === 'boolean') {
+                          if (prop.type === 'boolean') {
                             return (
-                              <div key={filter.key} className="flex items-center gap-2">
-                                <label className="text-xs font-medium">{filter.label || filter.key}</label>
+                              <div key={key} className="flex items-center gap-2">
+                                <label className="text-xs font-medium">{key}</label>
                                 <input
                                   type="checkbox"
-                                  checked={!!dicebearAvatar.filters[filter.key]}
-                                  onChange={e => setDicebearAvatar(prev => ({ ...prev, filters: { ...prev.filters, [filter.key]: e.target.checked } }))}
+                                  checked={!!dicebearAvatar.filters[key]}
+                                  onChange={e => setDicebearAvatar(prev => ({ ...prev, filters: { ...prev.filters, [key]: e.target.checked } }))}
                                 />
                               </div>
                             );
                           }
                           // Number
-                          if (filter.type === 'number') {
+                          if (prop.type === 'integer' || prop.type === 'number') {
                             return (
-                              <div key={filter.key} className="flex flex-col">
-                                <label className="text-xs font-medium mb-1">{filter.label || filter.key}</label>
+                              <div key={key} className="flex flex-col">
+                                <label className="text-xs font-medium mb-1">{key}</label>
                                 <input
                                   type="number"
                                   className="border p-2 rounded-lg"
-                                  value={dicebearAvatar.filters[filter.key] ?? ''}
-                                  min={filter.min}
-                                  max={filter.max}
-                                  onChange={e => setDicebearAvatar(prev => ({ ...prev, filters: { ...prev.filters, [filter.key]: e.target.value === '' ? undefined : Number(e.target.value) } }))}
+                                  value={dicebearAvatar.filters[key] ?? prop.default ?? ''}
+                                  min={prop.minimum}
+                                  max={prop.maximum}
+                                  onChange={e => setDicebearAvatar(prev => ({ ...prev, filters: { ...prev.filters, [key]: e.target.value === '' ? undefined : Number(e.target.value) } }))}
                                 />
                               </div>
                             );
                           }
-                          // String
+                          // Array of enums (multi-select)
+                          if (prop.type === 'array' && prop.items && prop.items.enum) {
+                            return (
+                              <div key={key} className="flex flex-col">
+                                <label className="text-xs font-medium mb-1">{key}</label>
+                                <select
+                                  multiple
+                                  className="border p-2 rounded-lg"
+                                  value={dicebearAvatar.filters[key] || []}
+                                  onChange={e => {
+                                    const options = Array.from(e.target.selectedOptions).map(o => o.value);
+                                    setDicebearAvatar(prev => ({ ...prev, filters: { ...prev.filters, [key]: options } }));
+                                  }}
+                                >
+                                  {prop.items.enum.map(opt => (
+                                    <option key={opt} value={opt}>{opt}</option>
+                                  ))}
+                                </select>
+                              </div>
+                            );
+                          }
+                          // Array of color or pattern (comma separated input)
+                          if (prop.type === 'array' && prop.items && prop.items.pattern) {
+                            return (
+                              <div key={key} className="flex flex-col">
+                                <label className="text-xs font-medium mb-1">{key} (comma separated)</label>
+                                <input
+                                  type="text"
+                                  className="border p-2 rounded-lg"
+                                  value={(dicebearAvatar.filters[key] || []).join(',')}
+                                  onChange={e => setDicebearAvatar(prev => ({ ...prev, filters: { ...prev.filters, [key]: e.target.value.split(',').map(s => s.trim()).filter(Boolean) } }))}
+                                  placeholder={prop.default ? prop.default.join(',') : ''}
+                                />
+                              </div>
+                            );
+                          }
+                          // Single enum (dropdown)
+                          if (prop.type === 'string' && prop.enum) {
+                            return (
+                              <div key={key} className="flex flex-col">
+                                <label className="text-xs font-medium mb-1">{key}</label>
+                                <select
+                                  className="border p-2 rounded-lg"
+                                  value={dicebearAvatar.filters[key] || prop.default?.[0] || ''}
+                                  onChange={e => setDicebearAvatar(prev => ({ ...prev, filters: { ...prev.filters, [key]: e.target.value } }))}
+                                >
+                                  {prop.enum.map(opt => (
+                                    <option key={opt} value={opt}>{opt}</option>
+                                  ))}
+                                </select>
+                              </div>
+                            );
+                          }
+                          // Fallback: text input
                           return (
-                            <div key={filter.key} className="flex flex-col">
-                              <label className="text-xs font-medium mb-1">{filter.label || filter.key}</label>
+                            <div key={key} className="flex flex-col">
+                              <label className="text-xs font-medium mb-1">{key}</label>
                               <input
                                 type="text"
                                 className="border p-2 rounded-lg"
-                                value={dicebearAvatar.filters[filter.key] || ''}
-                                onChange={e => setDicebearAvatar(prev => ({ ...prev, filters: { ...prev.filters, [filter.key]: e.target.value } }))}
-                                placeholder={filter.label || filter.key}
+                                value={dicebearAvatar.filters[key] || ''}
+                                onChange={e => setDicebearAvatar(prev => ({ ...prev, filters: { ...prev.filters, [key]: e.target.value } }))}
+                                placeholder={prop.default || ''}
                               />
                             </div>
                           );
