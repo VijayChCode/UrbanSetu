@@ -169,12 +169,14 @@ const AdminRequests = () => {
               <h3 className="text-xl font-semibold text-gray-900 mb-2">Access Denied</h3>
               <p className="text-gray-600">Only the default admin or root admin can approve new admin requests.</p>
               <p className="text-sm text-gray-500 mt-2">Current user: {currentUser.email}</p>
-              <button 
-                onClick={() => navigate('/admin')}
-                className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2 text-base"
-              >
-                Back to Dashboard
-              </button>
+              <div className="flex justify-center mt-6">
+                <button 
+                  onClick={() => navigate('/admin')}
+                  className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2 text-base mx-auto"
+                >
+                  Back to Dashboard
+                </button>
+              </div>
             </div>
           </div>
         </div>
