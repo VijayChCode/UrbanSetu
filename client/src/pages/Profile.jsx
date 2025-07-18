@@ -845,6 +845,9 @@ export default function Profile() {
     reader.readAsDataURL(file);
   };
 
+  const [customAvatarSeed, setCustomAvatarSeed] = useState("");
+  const [customAvatarHair, setCustomAvatarHair] = useState("short01");
+
   return (
     <div className="bg-gradient-to-br from-blue-50 to-purple-100 min-h-screen py-10 px-2 md:px-8">
       <div className="max-w-6xl mx-auto">
@@ -942,20 +945,67 @@ export default function Profile() {
                   </div>
                 )}
                 {isEditing && (
-                  <div className="flex flex-wrap gap-2 justify-center mt-2">
-                    {defaultAvatars.map((url, idx) => (
-                      <button key={url} type="button" onClick={() => setFormData({ ...formData, avatar: url })} className={`w-12 h-12 rounded-full border-2 ${formData.avatar === url ? 'border-blue-500' : 'border-gray-300'} focus:outline-none focus:ring-2 focus:ring-blue-400`}>
-                        <img src={url} alt={`Avatar ${idx+1}`} className="w-full h-full rounded-full object-cover" />
+                  <>
+                    <div className="flex flex-wrap gap-2 justify-center mt-2">
+                      {defaultAvatars.map((url, idx) => (
+                        <button key={url} type="button" onClick={() => setFormData({ ...formData, avatar: url })} className={`w-12 h-12 rounded-full border-2 ${formData.avatar === url ? 'border-blue-500' : 'border-gray-300'} focus:outline-none focus:ring-2 focus:ring-blue-400`}>
+                          <img src={url} alt={`Avatar ${idx+1}`} className="w-full h-full rounded-full object-cover" />
+                        </button>
+                      ))}
+                      <label className="w-12 h-12 rounded-full border-2 border-gray-300 flex items-center justify-center cursor-pointer bg-gray-100 hover:bg-gray-200">
+                        <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+                        <FaEdit className="text-gray-500" />
+                      </label>
+                      <button type="button" onClick={() => setFormData({ ...formData, avatar: "" })} className="w-12 h-12 rounded-full border-2 border-red-400 flex items-center justify-center bg-red-50 hover:bg-red-100">
+                        <FaTrash className="text-red-500" />
                       </button>
-                    ))}
-                    <label className="w-12 h-12 rounded-full border-2 border-gray-300 flex items-center justify-center cursor-pointer bg-gray-100 hover:bg-gray-200">
-                      <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
-                      <FaEdit className="text-gray-500" />
-                    </label>
-                    <button type="button" onClick={() => setFormData({ ...formData, avatar: "" })} className="w-12 h-12 rounded-full border-2 border-red-400 flex items-center justify-center bg-red-50 hover:bg-red-100">
-                      <FaTrash className="text-red-500" />
-                    </button>
-                  </div>
+                    </div>
+                    {/* Custom DiceBear Avatar Generator */}
+                    <div className="mt-4 w-full flex flex-col items-center">
+                      <div className="font-semibold text-gray-700 mb-2">Or create a custom avatar:</div>
+                      <div className="flex flex-col sm:flex-row gap-2 items-center">
+                        <input
+                          type="text"
+                          placeholder="Enter name/seed (e.g. John)"
+                          className="border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                          value={customAvatarSeed || ''}
+                          onChange={e => setCustomAvatarSeed(e.target.value)}
+                          style={{ minWidth: 120 }}
+                        />
+                        <select
+                          className="border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                          value={customAvatarHair || 'short01'}
+                          onChange={e => setCustomAvatarHair(e.target.value)}
+                        >
+                          {[
+                            'short01','short02','short03','short04','short05',
+                            'long01','long02','long03','long04','long05',
+                            'bun01','bun02','bun03','bun04','bun05',
+                            'buzz','afro','mohawk','bald',
+                            'bob','bobLong','bobShort','curly','curlyShort','curlyLong',
+                            'fringe','fringeShort','fringeLong','spiky','spikyShort','spikyLong',
+                            'straight','straightShort','straightLong','undercut','undercutLong','undercutShort'
+                          ].map(hair => (
+                            <option key={hair} value={hair}>{hair}</option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all font-semibold"
+                          onClick={() => setFormData({ ...formData, avatar: `https://api.dicebear.com/9.x/pixel-art/svg?seed=${encodeURIComponent(customAvatarSeed || 'User')}&hair=${customAvatarHair || 'short01'}` })}
+                        >
+                          Use this avatar
+                        </button>
+                      </div>
+                      <div className="mt-2">
+                        <img
+                          src={`https://api.dicebear.com/9.x/pixel-art/svg?seed=${encodeURIComponent(customAvatarSeed || 'User')}&hair=${customAvatarHair || 'short01'}`}
+                          alt="Custom Avatar Preview"
+                          className="w-16 h-16 rounded-full border-2 border-blue-300 shadow"
+                        />
+                      </div>
+                    </div>
+                  </>
                 )}
                 <div className="text-xs text-gray-500 mt-2 text-center">Note: Please upload a profile image below 75KB only for best performance.</div>
               </div>

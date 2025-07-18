@@ -1,7 +1,7 @@
 // Cartoon and illustrated avatar image URLs (replace with your own images if desired)
 const defaultAvatars = [
-  // Alphabet avatars (A-Z)
-  ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(letter => `https://api.dicebear.com/6.x/initials/svg?seed=${letter}&backgroundColor=lightblue&fontSize=40`),
+  // Example DiceBear Pixel Art avatar with a single hair type
+  'https://api.dicebear.com/9.x/pixel-art/svg?seed=${name}&hair=${type}',
   'https://randomuser.me/api/portraits/men/1.jpg',
   'https://randomuser.me/api/portraits/women/1.jpg',
   'https://randomuser.me/api/portraits/men/2.jpg',
