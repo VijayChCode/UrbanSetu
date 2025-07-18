@@ -40,6 +40,7 @@ export default function ListingItem({ listing, onDelete }) {
 
   const onHandleAppointment = () => {
     if (!currentUser) {
+      toast.info('Please sign in to book appointments.');
       navigate('/sign-in');
       return;
     }
