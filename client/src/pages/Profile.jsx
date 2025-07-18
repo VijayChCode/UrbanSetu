@@ -920,7 +920,7 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* Edit Profile Form - show below profile card, above stats section */}
+        {/* Edit Profile Form - show below profile card, push stats down when editing */}
         {isEditing && (
           <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
             <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
@@ -1124,6 +1124,31 @@ export default function Profile() {
         {!isEditing && updateSuccess && (
           <div className="text-green-600 text-sm mb-6">Profile updated successfully!</div>
         )}
+
+        {/* Stats Section - show below profile card if not editing, below edit form if editing */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div className="bg-white rounded-xl shadow-lg p-6 text-center">
+            <div className="bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
+              <FaHome className="w-6 h-6 text-blue-600" />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-800">{userStats.listings}</h3>
+            <p className="text-gray-600">My Listings</p>
+          </div>
+          <div className="bg-white rounded-xl shadow-lg p-6 text-center">
+            <div className="bg-green-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
+              <FaCalendarAlt className="w-6 h-6 text-green-600" />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-800">{userStats.appointments}</h3>
+            <p className="text-gray-600">Appointments</p>
+          </div>
+          <div className="bg-white rounded-xl shadow-lg p-6 text-center">
+            <div className="bg-red-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
+              <FaHeart className="w-6 h-6 text-red-600" />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-800">{userStats.wishlist}</h3>
+            <p className="text-gray-600">Wishlist Items</p>
+          </div>
+        </div>
 
         {/* Quick Actions Section */}
         <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
