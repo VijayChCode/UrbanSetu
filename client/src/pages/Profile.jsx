@@ -762,7 +762,7 @@ export default function Profile() {
         username: currentUser.username || '',
         email: currentUser.email || '',
         mobileNumber: currentUser.mobileNumber ? String(currentUser.mobileNumber) : '',
-        avatar: currentUser.avatar || defaultAvatars[0],
+        avatar: typeof currentUser.avatar === 'string' ? currentUser.avatar : '',
       });
       
       // Trigger validation for current values
