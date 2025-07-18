@@ -81,7 +81,7 @@ const WishlistProvider = ({ children }) => {
     // Optimistically update UI
     setWishlist(prev => {
       if (prev.find(item => item._id === product._id)) return prev;
-      toast.success('Property added to your wishlist!');
+      //toast.success('Property added to your wishlist!');
       return [...prev, product];
     });
     // Emit socket event
