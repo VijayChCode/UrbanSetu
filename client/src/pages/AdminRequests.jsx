@@ -171,7 +171,7 @@ const AdminRequests = () => {
               <p className="text-sm text-gray-500 mt-2">Current user: {currentUser.email}</p>
               <button 
                 onClick={() => navigate('/admin')}
-                className="mt-4 bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
+                className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2 text-base"
               >
                 Back to Dashboard
               </button>

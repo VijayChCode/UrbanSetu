@@ -38,7 +38,6 @@ export default function AdminWishlist() {
           <div className="flex flex-col items-center justify-center py-8">
             <div className="text-gray-500 text-lg mb-4">Your wishlist is empty. Add some properties.</div>
             <button
-              type="button"
               onClick={() => navigate('/admin/search')}
               className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2 text-base"
             >
