@@ -269,7 +269,6 @@ export default function Listing() {
                     }
                     if (isInWishlist(listing._id)) {
                       removeFromWishlist(listing._id);
-                      toast.success('Property removed from your wishlist.');
                     } else {
                       addToWishlist(listing);
                       //toast.success('Property added to your wishlist.');
