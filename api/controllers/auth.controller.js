@@ -165,7 +165,8 @@ export const Google=async (req,res,next)=>{
                 email,
                 password:hashedPassword,
                 avatar:photo,
-                mobileNumber: mobileNumber
+                mobileNumber: mobileNumber,
+                isGeneratedMobile: true
             })
             await newUser.save()
             const token=jwt.sign({id:newUser._id},process.env.JWT_TOKEN)
@@ -184,6 +185,7 @@ export const Google=async (req,res,next)=>{
                 status: newUser.status,
                 avatar: newUser.avatar,
                 mobileNumber: newUser.mobileNumber,
+                isGeneratedMobile: newUser.isGeneratedMobile,
                 token,
             });
         }
