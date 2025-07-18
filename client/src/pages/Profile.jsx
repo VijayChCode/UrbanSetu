@@ -966,40 +966,23 @@ export default function Profile() {
                       <div className="flex flex-col sm:flex-row gap-2 items-center">
                         <input
                           type="text"
-                          placeholder="Enter name/seed (e.g. John)"
+                          placeholder="Enter name/seed (e.g. robo)"
                           className="border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
                           value={customAvatarSeed || ''}
                           onChange={e => setCustomAvatarSeed(e.target.value)}
                           style={{ minWidth: 120 }}
                         />
-                        <select
-                          className="border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-                          value={customAvatarHair || 'short01'}
-                          onChange={e => setCustomAvatarHair(e.target.value)}
-                        >
-                          {[
-                            'short01','short02','short03','short04','short05',
-                            'long01','long02','long03','long04','long05',
-                            'bun01','bun02','bun03','bun04','bun05',
-                            'buzz','afro','mohawk','bald',
-                            'bob','bobLong','bobShort','curly','curlyShort','curlyLong',
-                            'fringe','fringeShort','fringeLong','spiky','spikyShort','spikyLong',
-                            'straight','straightShort','straightLong','undercut','undercutLong','undercutShort'
-                          ].map(hair => (
-                            <option key={hair} value={hair}>{hair}</option>
-                          ))}
-                        </select>
                         <button
                           type="button"
                           className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all font-semibold"
-                          onClick={() => setFormData({ ...formData, avatar: `https://api.dicebear.com/9.x/pixel-art/svg?seed=${encodeURIComponent(customAvatarSeed || 'User')}&hair=${customAvatarHair || 'short01'}` })}
+                          onClick={() => setFormData({ ...formData, avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(customAvatarSeed || 'robo')}` })}
                         >
                           Use this avatar
                         </button>
                       </div>
                       <div className="mt-2">
                         <img
-                          src={`https://api.dicebear.com/9.x/pixel-art/svg?seed=${encodeURIComponent(customAvatarSeed || 'User')}&hair=${customAvatarHair || 'short01'}`}
+                          src={`https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(customAvatarSeed || 'robo')}`}
                           alt="Custom Avatar Preview"
                           className="w-16 h-16 rounded-full border-2 border-blue-300 shadow"
                         />
