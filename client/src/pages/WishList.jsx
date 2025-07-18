@@ -1,6 +1,7 @@
 import React from "react";
 import { useWishlist } from "../WishlistContext";
 import WishListItem from "../components/WishListItems";
+import { useNavigate } from "react-router-dom";
 
 const WishList = () => {
   const { wishlist, loading } = useWishlist();
@@ -18,6 +19,7 @@ const WishList = () => {
     );
   }
 
+  const navigate = useNavigate();
   return (
     <div className="bg-gradient-to-br from-blue-50 to-purple-100 min-h-screen py-10 px-2 md:px-8">
       <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-lg p-6 relative">
@@ -35,13 +37,14 @@ const WishList = () => {
         ) : (
           <div className="flex flex-col items-center justify-center py-8">
             <div className="text-gray-500 text-lg mb-4">Your wishlist is empty. Add some properties.</div>
-            <a
-              href="/user/search"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition-colors text-base font-semibold"
+            <button
+              type="button"
+              onClick={() => navigate('/user/search')}
+              className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2 text-base"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
               Add Properties
-            </a>
+            </button>
           </div>
         )}
       </div>
