@@ -1085,12 +1085,11 @@ export default function Profile() {
                       </div>
                       {/* Render all filters from Avataaars schema as dropdowns/multiselects/inputs */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2 w-full max-w-2xl">
+                        {/* Style and Seed as before */}
                         {allowedFilters.map(key => {
                           const prop = avataaarsSchema.properties[key];
                           if (!prop) return null;
-                          // Style (dropdown, but handled separately at the top)
                           if (key === 'style') return null;
-                          // Seed (free text)
                           if (key === 'seed') {
                             return (
                               <div key={key} className="flex flex-col mb-2">
@@ -1100,42 +1099,35 @@ export default function Profile() {
                                   className="border p-2 rounded-lg"
                                   value={dicebearAvatar.filters[key] || ''}
                                   onChange={e => setDicebearAvatar(prev => ({ ...prev, filters: { ...prev.filters, [key]: e.target.value } }))}
-                                  placeholder={prop.default || ''}
-                                />
-                              </div>
-                            );
-                          }
-                          // Boolean (flip)
-                          if (key === 'flip' && prop.type === 'boolean') {
-                            return (
-                              <div key={key} className="flex items-center gap-2 mb-2">
-                                <label className="text-xs font-medium">{key}</label>
-                                <input
-                                  type="checkbox"
-                                  checked={!!dicebearAvatar.filters[key]}
-                                  onChange={e => setDicebearAvatar(prev => ({ ...prev, filters: { ...prev.filters, [key]: e.target.checked } }))}
-                                />
-                              </div>
-                            );
-                          }
-                          // Number (rotate)
-                          if (key === 'rotate' && (prop.type === 'integer' || prop.type === 'number')) {
-                            return (
-                              <div key={key} className="flex flex-col mb-2">
-                                <label className="text-xs font-medium mb-1">{key}</label>
-                                <input
-                                  type="number"
-                                  className="border p-2 rounded-lg"
-                                  value={dicebearAvatar.filters[key] ?? prop.default ?? ''}
-                                  min={prop.minimum}
-                                  max={prop.maximum}
-                                  onChange={e => setDicebearAvatar(prev => ({ ...prev, filters: { ...prev.filters, [key]: e.target.value === '' ? undefined : Number(e.target.value) } }))}
+                                  placeholder="Enter a name or keyword (e.g. John, robot, flower...)"
                                 />
                               </div>
                             );
                           }
                           return null;
                         })}
+                        {/* Flip and Rotate side by side */}
+                        <div className="flex items-end gap-6 mb-2">
+                          <div className="flex items-center gap-2">
+                            <label className="text-xs font-medium">flip</label>
+                            <input
+                              type="checkbox"
+                              checked={!!dicebearAvatar.filters.flip}
+                              onChange={e => setDicebearAvatar(prev => ({ ...prev, filters: { ...prev.filters, flip: e.target.checked } }))}
+                            />
+                          </div>
+                          <div className="flex flex-col">
+                            <label className="text-xs font-medium mb-1">rotate</label>
+                            <input
+                              type="number"
+                              className="border p-2 rounded-lg w-24"
+                              value={dicebearAvatar.filters.rotate ?? avataaarsSchema.properties.rotate.default ?? ''}
+                              min={avataaarsSchema.properties.rotate.minimum}
+                              max={avataaarsSchema.properties.rotate.maximum}
+                              onChange={e => setDicebearAvatar(prev => ({ ...prev, filters: { ...prev.filters, rotate: e.target.value === '' ? undefined : Number(e.target.value) } }))}
+                            />
+                          </div>
+                        </div>
                       </div>
                       <div className="mt-4 flex flex-col items-center">
                         <img
