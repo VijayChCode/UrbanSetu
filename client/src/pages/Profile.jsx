@@ -394,6 +394,10 @@ export default function Profile() {
         // Ensure avatar is always a string (empty if deleted)
         const updatedUser = { ...data.updatedUser, avatar: data.updatedUser.avatar || "" };
         dispatch(updateUserSuccess(updatedUser));
+        // If mobile number changed, update originalMobile so the Google signup comment is not shown
+        if (data.updatedUser.mobileNumber && data.updatedUser.mobileNumber !== originalMobile) {
+          setOriginalMobile(data.updatedUser.mobileNumber);
+        }
         setUpdateSuccess(true);
         setIsEditing(false);
         setLoading(false);
