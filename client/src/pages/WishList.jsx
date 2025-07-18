@@ -33,7 +33,16 @@ const WishList = () => {
             </div>
           </div>
         ) : (
-          <div className="text-center text-gray-500 text-lg">Your wishlist is empty.</div>
+          <div className="flex flex-col items-center justify-center py-8">
+            <div className="text-gray-500 text-lg mb-4">Your wishlist is empty. Add some properties.</div>
+            <a
+              href="/explore"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition-colors text-base font-semibold"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+              Add Properties
+            </a>
+          </div>
         )}
       </div>
     </div>
