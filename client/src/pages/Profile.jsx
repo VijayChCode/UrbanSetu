@@ -1118,17 +1118,7 @@ export default function Profile() {
               <div className="flex justify-end space-x-4">
                 <button
                   type="button"
-                  onClick={() => {
-                    setFormData({
-                      ...formData,
-                      avatar: currentUser.avatar || "",
-                      username: currentUser.username || '',
-                      email: currentUser.email || '',
-                      mobileNumber: currentUser.mobileNumber || '',
-                      gender: currentUser.gender || '',
-                    });
-                    setIsEditing(false);
-                  }}
+                  onClick={() => setIsEditing(false)}
                   className="bg-gradient-to-r from-gray-500 to-gray-600 text-white px-6 py-3 rounded-lg hover:from-gray-600 hover:to-gray-700 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2"
                 >
                   Cancel
