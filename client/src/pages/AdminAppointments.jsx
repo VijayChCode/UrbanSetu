@@ -295,7 +295,7 @@ export default function AdminAppointments() {
         }}
       />
       <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-6">
-        {/* Responsive button group: compact on mobile, spaced on desktop */}
+        {/* Responsive button group: compact on mobile, original on desktop */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-6">
           <h3 className="text-2xl sm:text-3xl font-extrabold text-blue-700 drop-shadow">
             {showArchived ? "Archived Appointments" : "All Appointments (Admin View)"}
@@ -303,14 +303,14 @@ export default function AdminAppointments() {
           <div className="flex flex-row w-full sm:w-auto gap-2 sm:gap-4 justify-center sm:justify-end mt-2 sm:mt-0">
             <button
               onClick={handleManualRefresh}
-              className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-3 py-1.5 rounded-md hover:from-blue-600 hover:to-purple-600 transition-all font-semibold shadow-md text-sm sm:text-base w-1/2 sm:w-auto"
+              className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-2.5 py-1.5 rounded-md hover:from-blue-600 hover:to-purple-600 transition-all font-semibold shadow-md text-xs sm:text-base sm:px-4 sm:py-2 sm:rounded-lg w-1/2 sm:w-auto"
               title="Refresh appointments"
             >
               Refresh
             </button>
             <button
               onClick={() => setShowArchived(!showArchived)}
-              className={`bg-gradient-to-r text-white px-3 py-1.5 rounded-md transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-1 sm:gap-2 text-sm sm:text-base w-1/2 sm:w-auto justify-center ${
+              className={`bg-gradient-to-r text-white px-2.5 py-1.5 rounded-md transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-1 sm:gap-2 text-xs sm:text-base w-1/2 sm:w-auto sm:px-6 sm:py-3 sm:rounded-lg justify-center ${
                 showArchived 
                   ? 'from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600' 
                   : 'from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700'
