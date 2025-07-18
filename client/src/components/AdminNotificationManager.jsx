@@ -126,7 +126,7 @@ export default function AdminNotificationManager() {
                 <select
                   value={selectedUser}
                   onChange={(e) => setSelectedUser(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent notification-scroll-area"
                   required
                   disabled={fetchingUsers}
                 >
@@ -171,7 +171,7 @@ export default function AdminNotificationManager() {
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Enter your message..."
                 rows={4}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none notification-scroll-area"
                 required
                 maxLength={500}
               />
