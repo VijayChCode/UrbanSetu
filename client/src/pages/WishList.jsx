@@ -2,6 +2,7 @@ import React from "react";
 import { useWishlist } from "../WishlistContext";
 import WishListItem from "../components/WishListItems";
 import { useNavigate } from "react-router-dom";
+import { FaPlus } from 'react-icons/fa';
 
 const WishList = () => {
   const { wishlist, loading } = useWishlist();
@@ -47,6 +48,15 @@ const WishList = () => {
           </div>
         )}
       </div>
+      {/* Floating Plus Icon */}
+      <button
+        onClick={() => navigate('/user/search')}
+        className="fixed bottom-8 right-8 z-50 bg-gradient-to-r from-green-400 to-blue-500 text-white rounded-full shadow-lg p-4 hover:from-green-500 hover:to-blue-600 transition-all flex items-center justify-center text-2xl"
+        title="Explore Properties"
+        style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.15)' }}
+      >
+        <FaPlus />
+      </button>
     </div>
   );
 };
