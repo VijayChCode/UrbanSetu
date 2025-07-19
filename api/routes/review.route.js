@@ -223,11 +223,38 @@ router.delete('/delete/:reviewId', verifyToken, async (req, res, next) => {
       return next(errorHandler(403, 'You can only delete your own reviews'));
     }
     
-    await Review.findByIdAndDelete(reviewId);
-    
+    // If already removed, just return success
+    if (review.status === 'removed_by_user') {
+      return res.status(200).json({
+        success: true,
+        message: 'Review already removed',
+      });
+    }
+
+    const wasApproved = review.status === 'approved';
+    const oldRating = review.rating;
+
+    review.status = 'removed_by_user';
+    review.removedBy = req.user.id;
+    review.removedAt = new Date();
+    await review.save();
+
+    // Update listing stats if review was approved
+    if (wasApproved) {
+      const listing = await Listing.findById(review.listingId);
+      if (listing) {
+        // Recalculate stats using only approved reviews
+        const approvedReviews = await Review.find({ listingId: listing._id, status: 'approved' });
+        listing.reviewCount = approvedReviews.length;
+        listing.totalRating = approvedReviews.reduce((sum, r) => sum + r.rating, 0);
+        listing.averageRating = listing.reviewCount > 0 ? listing.totalRating / listing.reviewCount : 0;
+        await listing.save();
+      }
+    }
+
     res.status(200).json({
       success: true,
-      message: 'Review deleted successfully'
+      message: 'Review removed successfully'
     });
   } catch (error) {
     next(error);
@@ -496,6 +523,64 @@ router.put('/admin/remove/:reviewId', verifyToken, async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: 'Review removed successfully',
+      review
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Restore a removed review (admin only)
+router.put('/admin/restore/:reviewId', verifyToken, async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user || (user.role !== 'admin' && user.role !== 'rootadmin')) {
+      return next(errorHandler(403, 'Admin access required'));
+    }
+    const { reviewId } = req.params;
+    const review = await Review.findById(reviewId);
+    if (!review) {
+      return next(errorHandler(404, 'Review not found'));
+    }
+    if (review.status !== 'removed' && review.status !== 'removed_by_user') {
+      return next(errorHandler(400, 'Only removed reviews can be restored'));
+    }
+    review.status = 'approved';
+    review.removedBy = undefined;
+    review.removedAt = undefined;
+    await review.save();
+    // Update listing stats
+    const listing = await Listing.findById(review.listingId);
+    if (listing) {
+      const approvedReviews = await Review.find({ listingId: listing._id, status: 'approved' });
+      listing.reviewCount = approvedReviews.length;
+      listing.totalRating = approvedReviews.reduce((sum, r) => sum + r.rating, 0);
+      listing.averageRating = listing.reviewCount > 0 ? listing.totalRating / listing.reviewCount : 0;
+      await listing.save();
+    }
+    // Send notification to the review's user
+    try {
+      const reviewUser = await User.findById(review.userId);
+      if (reviewUser) {
+        await Notification.create({
+          userId: reviewUser._id,
+          type: 'review_restored',
+          title: 'Review Restored',
+          message: `Your review for property "${listing ? listing.name : ''}" has been restored and approved by an admin.`,
+          listingId: review.listingId,
+          adminId: req.user.id,
+          link: `/listing/${listing ? listing._id : review.listingId}`
+        });
+      }
+    } catch (notificationError) {
+      console.error('Failed to send review restored notification:', notificationError);
+    }
+    // Emit socket event for real-time review update
+    const io = req.app.get('io');
+    if (io) io.emit('reviewUpdated', review);
+    res.status(200).json({
+      success: true,
+      message: 'Review restored and approved',
       review
     });
   } catch (error) {

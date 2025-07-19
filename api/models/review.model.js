@@ -37,7 +37,7 @@ const reviewSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'approved', 'rejected', 'removed'],
+    enum: ['pending', 'approved', 'rejected', 'removed', 'removed_by_user'],
     default: 'pending'
   },
   adminNote: {

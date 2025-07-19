@@ -176,6 +176,24 @@ export default function AdminReviews() {
     }
   };
 
+  const handleRestoreReview = async (reviewId) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/review/admin/restore/${reviewId}`, {
+        method: 'PUT',
+        credentials: 'include',
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setReviews(reviews.map(r => r._id === reviewId ? { ...r, ...data.review } : r));
+        toast.success('Review restored and approved');
+      } else {
+        toast.error(data.message || 'Failed to restore review');
+      }
+    } catch (error) {
+      toast.error('Network error. Please try again.');
+    }
+  };
+
   const handleOwnerResponseChange = (reviewId, value) => {
     setResponseEdit((prev) => ({ ...prev, [reviewId]: value }));
   };
@@ -230,7 +248,8 @@ export default function AdminReviews() {
       pending: { color: 'bg-yellow-100 text-yellow-800', icon: FaCheck },
       approved: { color: 'bg-green-100 text-green-800', icon: FaCheck },
       rejected: { color: 'bg-red-100 text-red-800', icon: FaTimes },
-      removed: { color: 'bg-gray-100 text-gray-800', icon: FaBan }
+      removed: { color: 'bg-gray-100 text-gray-800', icon: FaBan },
+      removed_by_user: { color: 'bg-orange-100 text-orange-800', icon: FaBan },
     };
 
     const config = statusConfig[status];
@@ -239,7 +258,7 @@ export default function AdminReviews() {
     return (
       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.color}`}>
         <Icon className="mr-1" />
-        {status.charAt(0).toUpperCase() + status.slice(1)}
+        {status === 'removed_by_user' ? 'Removed by User' : status.charAt(0).toUpperCase() + status.slice(1)}
       </span>
     );
   };
@@ -519,6 +538,15 @@ export default function AdminReviews() {
                         title="Remove review"
                       >
                         <FaBan /> Remove
+                      </button>
+                    )}
+                    {(review.status === 'removed' || review.status === 'removed_by_user') && (
+                      <button
+                        onClick={() => handleRestoreReview(review._id)}
+                        className="bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-2 rounded-lg hover:from-green-600 hover:to-green-700 transition-all transform hover:scale-105 shadow font-semibold flex items-center gap-2"
+                        title="Restore review"
+                      >
+                        <FaCheck /> Restore
                       </button>
                     )}
                     <button

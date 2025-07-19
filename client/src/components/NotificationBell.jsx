@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import { FaBell, FaTimes, FaCheck, FaTrash, FaEye, FaCalendarAlt, FaEdit, FaEnvelope, FaPaperPlane, FaUsers, FaUser, FaRedo } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { socket } from '../utils/socket.js';
+import { useNavigate } from 'react-router-dom';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -520,14 +521,20 @@ export default function NotificationBell({ mobile = false }) {
                                       </h4>
                                       <p className="text-sm text-gray-600 mt-1 whitespace-pre-line break-words max-w-xs md:max-w-md lg:max-w-lg">
                                         {notification.link ? (
-                                          <a
-                                            href={notification.link}
-                                            className="text-blue-600 hover:underline"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
+                                          <span
+                                            className="text-blue-600 hover:underline cursor-pointer"
+                                            onClick={() => {
+                                              markAsRead(notification._id);
+                                              if (notification.link.startsWith('http')) {
+                                                window.open(notification.link, '_blank');
+                                              } else {
+                                                setIsOpen(false);
+                                                navigate(notification.link);
+                                              }
+                                            }}
                                           >
                                             {notification.message}
-                                          </a>
+                                          </span>
                                         ) : (
                                           notification.message
                                         )}
@@ -863,14 +870,20 @@ export default function NotificationBell({ mobile = false }) {
                                 </h4>
                                 <p className="text-sm text-gray-600 mt-1 whitespace-pre-line break-words max-w-xs md:max-w-md lg:max-w-lg">
                                   {notification.link ? (
-                                    <a
-                                      href={notification.link}
-                                      className="text-blue-600 hover:underline"
-                                      target="_blank"
-                                      rel="noopener noreferrer"
+                                    <span
+                                      className="text-blue-600 hover:underline cursor-pointer"
+                                      onClick={() => {
+                                        markAsRead(notification._id);
+                                        if (notification.link.startsWith('http')) {
+                                          window.open(notification.link, '_blank');
+                                        } else {
+                                          setIsOpen(false);
+                                          navigate(notification.link);
+                                        }
+                                      }}
                                     >
                                       {notification.message}
-                                    </a>
+                                    </span>
                                   ) : (
                                     notification.message
                                   )}
