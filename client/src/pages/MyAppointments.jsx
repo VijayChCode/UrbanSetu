@@ -1060,6 +1060,17 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 </span>
               </div>
             )}
+            {/* Outdated appointment delete button (always visible for past appointments) */}
+            {!isUpcoming && (
+              <button
+                className="text-gray-400 hover:text-red-700 text-xl"
+                onClick={handlePermanentDelete}
+                title="Delete outdated appointment from table"
+                style={{ opacity: 0.7 }}
+              >
+                <FaTrash size={18} />
+              </button>
+            )}
           </div>
         </td>
         <td className="border p-2 text-center relative">
