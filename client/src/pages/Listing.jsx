@@ -30,6 +30,9 @@ export default function Listing() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  const [ownerDetails, setOwnerDetails] = useState(null);
+  const [ownerLoading, setOwnerLoading] = useState(false);
+  const [ownerError, setOwnerError] = useState("");
 
   // Check if user is admin
   const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'rootadmin';
@@ -144,6 +147,30 @@ export default function Listing() {
     };
     fetchListing();
   }, [params.listingId]);
+
+  // Fetch owner details after listing is loaded
+  useEffect(() => {
+    const fetchOwnerDetails = async () => {
+      if (listing && listing.userRef) {
+        setOwnerLoading(true);
+        setOwnerError("");
+        try {
+          const res = await fetch(`${API_BASE_URL}/api/user/id/${listing.userRef}`);
+          if (!res.ok) throw new Error("Failed to fetch owner details");
+          const data = await res.json();
+          setOwnerDetails(data);
+        } catch (err) {
+          setOwnerError("Could not load owner details");
+          setOwnerDetails(null);
+        } finally {
+          setOwnerLoading(false);
+        }
+      } else {
+        setOwnerDetails(null);
+      }
+    };
+    fetchOwnerDetails();
+  }, [listing]);
 
   if (loading) {
     return (
@@ -383,31 +410,63 @@ export default function Listing() {
 
           {/* Admin Information - Only show for admins */}
           {isAdmin && isAdminContext && (
-            <div className="p-6 bg-blue-50 shadow-md rounded-lg mb-6">
-              <h4 className="text-xl font-bold text-blue-800 mb-4">Admin Information</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-600">Property ID</p>
-                  <p className="font-semibold text-gray-800">{listing._id}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Created Date</p>
-                  <p className="font-semibold text-gray-800">
-                    {new Date(listing.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Last Updated</p>
-                  <p className="font-semibold text-gray-800">
-                    {new Date(listing.updatedAt).toLocaleDateString()}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Created By</p>
-                  <p className="font-semibold text-gray-800">{listing.userRef || 'Unknown'}</p>
+            <>
+              <div className="p-6 bg-blue-50 shadow-md rounded-lg mb-6">
+                <h4 className="text-xl font-bold text-blue-800 mb-4">Admin Information</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Property ID</p>
+                    <p className="font-semibold text-gray-800">{listing._id}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Created Date</p>
+                    <p className="font-semibold text-gray-800">
+                      {new Date(listing.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Last Updated</p>
+                    <p className="font-semibold text-gray-800">
+                      {new Date(listing.updatedAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Created By</p>
+                    <p className="font-semibold text-gray-800">{listing.userRef || 'Unknown'}</p>
+                  </div>
                 </div>
               </div>
-            </div>
+              {/* Property Owner Details Section */}
+              <div className="p-6 bg-green-50 shadow-md rounded-lg mb-6">
+                <h4 className="text-xl font-bold text-green-800 mb-4">Property Owner Details</h4>
+                {ownerLoading ? (
+                  <p className="text-gray-500">Loading owner details...</p>
+                ) : ownerError ? (
+                  <p className="text-red-500">{ownerError}</p>
+                ) : ownerDetails ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-600">Owner Name</p>
+                      <p className="font-semibold text-gray-800">{ownerDetails.username}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Owner Email</p>
+                      <p className="font-semibold text-gray-800">{ownerDetails.email}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Mobile Number</p>
+                      <p className="font-semibold text-gray-800">{ownerDetails.mobileNumber}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Owner ID</p>
+                      <p className="font-semibold text-gray-800">{ownerDetails._id}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-gray-500">No owner details found.</p>
+                )}
+              </div>
+            </>
           )}
 
           {/* Book Appointment Button */}
