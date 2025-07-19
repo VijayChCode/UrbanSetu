@@ -873,7 +873,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                             </div>
                           )}
                         </div>
-                        {(c.senderEmail === currentUser.email) && !isEditing && (
+                        {(c.senderEmail === currentUser.email) && !isEditing && !c.deleted && (
                           <div className="flex items-center gap-2 mt-1">
                             <button
                               onClick={() => startEditing(c)}
