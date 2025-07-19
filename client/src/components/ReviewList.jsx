@@ -62,22 +62,31 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
     
     // Listen for profile updates to update user info in reviews and replies
     const handleProfileUpdate = (profileData) => {
-      setReviews(prevReviews => prevReviews.map(review => {
-        if (review.userId === profileData.userId) {
-          return {
-            ...review,
-            userName: profileData.username,
-            userAvatar: profileData.avatar
-          };
-        }
-        return review;
-      }));
+      console.log('[ReviewList] Received profileUpdated socket event:', profileData);
+      console.log('[ReviewList] Current reviews:', reviews.length);
+      
+      setReviews(prevReviews => {
+        const updated = prevReviews.map(review => {
+          if (review.userId === profileData.userId) {
+            console.log('[ReviewList] Updating review:', review._id, 'for user:', profileData.userId);
+            return {
+              ...review,
+              userName: profileData.username,
+              userAvatar: profileData.avatar
+            };
+          }
+          return review;
+        });
+        console.log('[ReviewList] Updated reviews:', updated.length);
+        return updated;
+      });
       
       setReplies(prevReplies => {
         const updated = { ...prevReplies };
         Object.keys(updated).forEach(reviewId => {
           updated[reviewId] = updated[reviewId]?.map(reply => {
             if (reply.userId === profileData.userId) {
+              console.log('[ReviewList] Updating reply:', reply._id, 'for user:', profileData.userId);
               return {
                 ...reply,
                 userName: profileData.username,
@@ -91,11 +100,13 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
       });
     };
     socket.on('profileUpdated', handleProfileUpdate);
+    console.log('[ReviewList] Socket listeners set up for profileUpdated');
     
     return () => {
       socket.off('reviewUpdated', handleSocketReviewUpdate);
       socket.off('reviewReplyUpdated', handleSocketReplyUpdate);
       socket.off('profileUpdated', handleProfileUpdate);
+      console.log('[ReviewList] Socket listeners cleaned up');
     };
   }, [listingId, sortBy, sortOrder]);
 

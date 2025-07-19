@@ -32,6 +32,19 @@ export let socket = io(SOCKET_URL, {
   transports: ['websocket'],
 });
 
+// Add socket event listeners for debugging
+socket.on('connect', () => {
+  console.log('[Socket] Connected to server');
+});
+
+socket.on('disconnect', () => {
+  console.log('[Socket] Disconnected from server');
+});
+
+socket.on('connect_error', (error) => {
+  console.log('[Socket] Connection error:', error);
+});
+
 // Function to reconnect socket with new token (call after login/logout)
 export function reconnectSocket() {
   if (socket && socket.connected) {
@@ -44,5 +57,18 @@ export function reconnectSocket() {
     },
     withCredentials: true,
     transports: ['websocket'],
+  });
+  
+  // Add socket event listeners for debugging
+  socket.on('connect', () => {
+    console.log('[Socket] Reconnected to server');
+  });
+
+  socket.on('disconnect', () => {
+    console.log('[Socket] Disconnected from server');
+  });
+
+  socket.on('connect_error', (error) => {
+    console.log('[Socket] Connection error:', error);
   });
 } 

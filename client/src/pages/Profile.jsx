@@ -498,6 +498,14 @@ export default function Profile() {
         }
         
         // Emit socket event to notify other users about profile update
+        console.log('[Profile] Emitting profileUpdated socket event:', {
+          userId: updatedUser._id,
+          username: updatedUser.username,
+          avatar: updatedUser.avatar,
+          mobileNumber: updatedUser.mobileNumber,
+          email: updatedUser.email
+        });
+        console.log('[Profile] Socket connected:', socket.connected);
         socket.emit('profileUpdated', {
           userId: updatedUser._id,
           username: updatedUser.username,

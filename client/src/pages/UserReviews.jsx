@@ -45,22 +45,32 @@ export default function UserReviews() {
     
     // Listen for profile updates to update user info in reviews
     const handleProfileUpdate = (profileData) => {
-      setReviews(prevReviews => prevReviews.map(review => {
-        if (review.userId === profileData.userId) {
-          return {
-            ...review,
-            userName: profileData.username,
-            userAvatar: profileData.avatar
-          };
-        }
-        return review;
-      }));
+      console.log('[UserReviews] Received profileUpdated socket event:', profileData);
+      console.log('[UserReviews] Current reviews:', reviews.length);
+      
+      setReviews(prevReviews => {
+        const updated = prevReviews.map(review => {
+          if (review.userId === profileData.userId) {
+            console.log('[UserReviews] Updating review:', review._id, 'for user:', profileData.userId);
+            return {
+              ...review,
+              userName: profileData.username,
+              userAvatar: profileData.avatar
+            };
+          }
+          return review;
+        });
+        console.log('[UserReviews] Updated reviews:', updated.length);
+        return updated;
+      });
     };
     socket.on('profileUpdated', handleProfileUpdate);
+    console.log('[UserReviews] Socket listeners set up for profileUpdated');
     
     return () => {
       socket.off('reviewUpdated', handleSocketReviewUpdate);
       socket.off('profileUpdated', handleProfileUpdate);
+      console.log('[UserReviews] Socket listeners cleaned up');
     };
   }, [currentUser]);
 
