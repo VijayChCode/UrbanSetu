@@ -291,7 +291,7 @@ function AppRoutes({ bootstrapped }) {
             <Route path="/user/profile" element={<Profile />} />
             <Route path="/user/create-listing" element={<CreateListing />} />
             <Route path='/user/update-listing/:listingId' element={<EditListing />} />
-            <Route path="/user/listing/:listingId" element={<Listing />} />
+            <Route path="/user/listing/:listingId" element={<Listing key={location.pathname} />} />
             <Route path="/user/wishlist" element={<WishList />} />
             <Route path="/user/appointment" element={<Appointment />} />
             <Route path="/user/my-appointments" element={<MyAppointments />} />
@@ -316,7 +316,7 @@ function AppRoutes({ bootstrapped }) {
             <Route path="/admin/profile" element={<AdminProfile />} />
             <Route path="/admin/change-password" element={<AdminChangePassword />} />
             <Route path="/admin/requests" element={<AdminRequests />} />
-            <Route path="/admin/listing/:listingId" element={<Listing />} />
+            <Route path="/admin/listing/:listingId" element={<Listing key={location.pathname} />} />
             <Route path="/admin/appointmentlisting" element={<AdminAppointmentListing />} />
             <Route path="/admin/terms" element={<AdminTerms />} />
             <Route path="/admin/privacy" element={<AdminPrivacy />} />
