@@ -59,9 +59,43 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
       }
     };
     socket.on('reviewReplyUpdated', handleSocketReplyUpdate);
+    
+    // Listen for profile updates to update user info in reviews and replies
+    const handleProfileUpdate = (profileData) => {
+      setReviews(prevReviews => prevReviews.map(review => {
+        if (review.userId === profileData.userId) {
+          return {
+            ...review,
+            userName: profileData.username,
+            userAvatar: profileData.avatar
+          };
+        }
+        return review;
+      }));
+      
+      setReplies(prevReplies => {
+        const updated = { ...prevReplies };
+        Object.keys(updated).forEach(reviewId => {
+          updated[reviewId] = updated[reviewId]?.map(reply => {
+            if (reply.userId === profileData.userId) {
+              return {
+                ...reply,
+                userName: profileData.username,
+                userAvatar: profileData.avatar
+              };
+            }
+            return reply;
+          });
+        });
+        return updated;
+      });
+    };
+    socket.on('profileUpdated', handleProfileUpdate);
+    
     return () => {
       socket.off('reviewUpdated', handleSocketReviewUpdate);
       socket.off('reviewReplyUpdated', handleSocketReplyUpdate);
+      socket.off('profileUpdated', handleProfileUpdate);
     };
   }, [listingId, sortBy, sortOrder]);
 

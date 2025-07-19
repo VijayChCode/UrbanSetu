@@ -42,8 +42,25 @@ export default function UserReviews() {
       });
     };
     socket.on('reviewUpdated', handleSocketReviewUpdate);
+    
+    // Listen for profile updates to update user info in reviews
+    const handleProfileUpdate = (profileData) => {
+      setReviews(prevReviews => prevReviews.map(review => {
+        if (review.userId === profileData.userId) {
+          return {
+            ...review,
+            userName: profileData.username,
+            userAvatar: profileData.avatar
+          };
+        }
+        return review;
+      }));
+    };
+    socket.on('profileUpdated', handleProfileUpdate);
+    
     return () => {
       socket.off('reviewUpdated', handleSocketReviewUpdate);
+      socket.off('profileUpdated', handleProfileUpdate);
     };
   }, [currentUser]);
 

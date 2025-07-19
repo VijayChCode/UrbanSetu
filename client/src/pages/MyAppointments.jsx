@@ -141,8 +141,42 @@ export default function MyAppointments() {
       setAppointments((prev) => [appt, ...prev]);
     }
     socket.on('appointmentCreated', handleAppointmentCreated);
+    
+    // Listen for profile updates to update user info in appointments
+    const handleProfileUpdate = (profileData) => {
+      setAppointments(prevAppointments => prevAppointments.map(appt => {
+        const updated = { ...appt };
+        
+        // Update buyer info if the updated user is the buyer
+        if (appt.buyerId && (appt.buyerId._id === profileData.userId || appt.buyerId === profileData.userId)) {
+          updated.buyerId = {
+            ...updated.buyerId,
+            username: profileData.username,
+            email: profileData.email,
+            mobileNumber: profileData.mobileNumber,
+            avatar: profileData.avatar
+          };
+        }
+        
+        // Update seller info if the updated user is the seller
+        if (appt.sellerId && (appt.sellerId._id === profileData.userId || appt.sellerId === profileData.userId)) {
+          updated.sellerId = {
+            ...updated.sellerId,
+            username: profileData.username,
+            email: profileData.email,
+            mobileNumber: profileData.mobileNumber,
+            avatar: profileData.avatar
+          };
+        }
+        
+        return updated;
+      }));
+    };
+    socket.on('profileUpdated', handleProfileUpdate);
+    
     return () => {
       socket.off('appointmentCreated', handleAppointmentCreated);
+      socket.off('profileUpdated', handleProfileUpdate);
     };
   }, [currentUser]);
 

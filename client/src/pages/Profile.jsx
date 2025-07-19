@@ -18,6 +18,7 @@ import { useWishlist } from "../WishlistContext";
 import { toast } from 'react-toastify';
 import { persistor } from '../redux/store';
 import { reconnectSocket } from '../utils/socket';
+import { socket } from '../utils/socket';
 import defaultAvatars from '../assets/avatars'; // Assume this is an array of avatar image URLs
 import avataaarsSchema from '../data/dicebear-avataaars-schema.json';
 
@@ -495,6 +496,16 @@ export default function Profile() {
         if (data.updatedUser.mobileNumber && data.updatedUser.mobileNumber !== originalMobile) {
           setOriginalMobile(data.updatedUser.mobileNumber);
         }
+        
+        // Emit socket event to notify other users about profile update
+        socket.emit('profileUpdated', {
+          userId: updatedUser._id,
+          username: updatedUser.username,
+          avatar: updatedUser.avatar,
+          mobileNumber: updatedUser.mobileNumber,
+          email: updatedUser.email
+        });
+        
         setUpdateSuccess(true);
         setIsEditing(false);
         setLoading(false);
