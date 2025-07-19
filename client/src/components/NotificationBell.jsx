@@ -525,6 +525,7 @@ export default function NotificationBell({ mobile = false }) {
                                             className="text-blue-600 hover:underline cursor-pointer"
                                             onClick={() => {
                                               markAsRead(notification._id);
+                                              console.log('Notification link clicked:', notification.link);
                                               if (notification.link.startsWith('http')) {
                                                 window.open(notification.link, '_blank');
                                               } else {
@@ -882,6 +883,7 @@ export default function NotificationBell({ mobile = false }) {
                                       className="text-blue-600 hover:underline cursor-pointer"
                                       onClick={() => {
                                         markAsRead(notification._id);
+                                        console.log('Notification link clicked:', notification.link);
                                         if (notification.link.startsWith('http')) {
                                           window.open(notification.link, '_blank');
                                         } else {

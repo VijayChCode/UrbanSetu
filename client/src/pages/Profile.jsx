@@ -1578,24 +1578,27 @@ export default function Profile() {
             <div className="p-6">
               <h3 className="text-xl font-bold text-gray-800 mb-4">Confirm Account Deletion</h3>
               <p className="mb-4 text-gray-600">Please enter your password to confirm account deletion. This action cannot be undone.</p>
-              <input
-                type="password"
-                className="w-full p-3 border border-gray-300 rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-red-500"
-                placeholder="Enter your password"
-                value={deletePassword}
-                onChange={e => setDeletePassword(e.target.value)}
-              />
-              {deleteError && <div className="text-red-600 text-sm mb-2">{deleteError}</div>}
-              <div className="flex justify-end space-x-3">
-                <button
-                  onClick={() => { setShowPasswordModal(false); setDeletePassword(""); setDeleteError(""); }}
-                  className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
-                >Cancel</button>
-                <button
-                  onClick={handleConfirmDelete}
-                  className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
-                >Delete</button>
-              </div>
+              <form onSubmit={e => { e.preventDefault(); handleConfirmDelete(); }}>
+                <input
+                  type="password"
+                  className="w-full p-3 border border-gray-300 rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-red-500"
+                  placeholder="Enter your password"
+                  value={deletePassword}
+                  onChange={e => setDeletePassword(e.target.value)}
+                />
+                {deleteError && <div className="text-red-600 text-sm mb-2">{deleteError}</div>}
+                <div className="flex justify-end space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => { setShowPasswordModal(false); setDeletePassword(""); setDeleteError(""); }}
+                    className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+                  >Cancel</button>
+                  <button
+                    type="submit"
+                    className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
+                  >Delete</button>
+                </div>
+              </form>
             </div>
           </div>
         </div>
@@ -1607,25 +1610,28 @@ export default function Profile() {
             <div className="p-6">
               <h3 className="text-xl font-bold text-gray-800 mb-4">Confirm Account Deletion</h3>
               <p className="mb-4 text-gray-600">Please enter your password to confirm account deletion after transferring default admin rights. This action cannot be undone.</p>
-              <input
-                type="password"
-                className="w-full p-3 border border-gray-300 rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-red-500"
-                placeholder="Enter your password"
-                value={transferDeletePassword}
-                onChange={e => setTransferDeletePassword(e.target.value)}
-              />
-              {transferDeleteError && <div className="text-red-600 text-sm mb-2">{transferDeleteError}</div>}
-              <div className="flex justify-end space-x-3">
-                <button
-                  onClick={() => { setShowTransferPasswordModal(false); setTransferDeletePassword(""); setTransferDeleteError(""); }}
-                  className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
-                >Cancel</button>
-                <button
-                  onClick={handleConfirmTransferAndDelete}
-                  className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
-                  disabled={transferLoading}
-                >{transferLoading ? 'Processing...' : 'Transfer & Delete'}</button>
-              </div>
+              <form onSubmit={e => { e.preventDefault(); handleConfirmTransferAndDelete(); }}>
+                <input
+                  type="password"
+                  className="w-full p-3 border border-gray-300 rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-red-500"
+                  placeholder="Enter your password"
+                  value={transferDeletePassword}
+                  onChange={e => setTransferDeletePassword(e.target.value)}
+                />
+                {transferDeleteError && <div className="text-red-600 text-sm mb-2">{transferDeleteError}</div>}
+                <div className="flex justify-end space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => { setShowTransferPasswordModal(false); setTransferDeletePassword(""); setTransferDeleteError(""); }}
+                    className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+                  >Cancel</button>
+                  <button
+                    type="submit"
+                    className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
+                    disabled={transferLoading}
+                  >{transferLoading ? 'Processing...' : 'Transfer & Delete'}</button>
+                </div>
+              </form>
             </div>
           </div>
         </div>
