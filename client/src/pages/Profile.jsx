@@ -478,7 +478,7 @@ export default function Profile() {
           dispatch(signoutUserFailure(err.message));
         }
         setTimeout(() => {
-          navigate("/sign-in");
+          navigate("/sign-in", { replace: true });
         }, 800);
         return;
       }
@@ -598,7 +598,7 @@ export default function Profile() {
         } else {
           dispatch(signoutUserSuccess(signoutData));
         }
-        navigate('/sign-in');
+        navigate('/sign-in', { replace: true });
         return;
       }
       if (data.message && data.message.toLowerCase().includes('password')) {
@@ -613,7 +613,7 @@ export default function Profile() {
         } else {
           dispatch(signoutUserSuccess(signoutData));
         }
-        navigate('/sign-in');
+        navigate('/sign-in', { replace: true });
         return;
       }
       if (data.success === false || res.status !== 200) {
@@ -694,7 +694,7 @@ export default function Profile() {
         } else {
           dispatch(signoutUserSuccess(signoutData));
         }
-        navigate('/sign-in');
+        navigate('/sign-in', { replace: true });
         return;
       }
       
@@ -711,7 +711,7 @@ export default function Profile() {
         } else {
           dispatch(signoutUserSuccess(signoutData));
         }
-        navigate('/sign-in');
+        navigate('/sign-in', { replace: true });
         return;
       }
       
@@ -777,7 +777,7 @@ export default function Profile() {
         document.cookie = 'access_token=; Max-Age=0; path=/; domain=' + window.location.hostname + '; secure; samesite=None';
         toast.info("You have been signed out.");
         await new Promise(resolve => setTimeout(resolve, 50));
-        navigate("/sign-in");
+        navigate("/sign-in", { replace: true });
       }
     } catch (error) {
       dispatch(signoutUserFailure(error.message));
@@ -866,7 +866,7 @@ export default function Profile() {
         } else {
           dispatch(signoutUserSuccess(signoutData));
         }
-        navigate('/sign-in');
+        navigate('/sign-in', { replace: true });
         return;
       }
       if (!res.ok) {
@@ -875,7 +875,7 @@ export default function Profile() {
       }
       toast.success(data.message || 'Admin rights transferred successfully!');
       setShowTransferModal(false);
-      navigate('/sign-in');
+      navigate('/sign-in', { replace: true });
     } catch (e) {
       setTransferError('Failed to transfer rights.');
     } finally {
