@@ -27,6 +27,7 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
   const [reportReason, setReportReason] = useState('');
   const [reportLoading, setReportLoading] = useState(false);
   const [replyLikeLoading, setReplyLikeLoading] = useState({});
+  const [expandedReplies, setExpandedReplies] = useState({});
 
   useEffect(() => {
     fetchReviews();
@@ -740,70 +741,135 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
 
           {/* Replies section */}
           <div className="mt-4 ml-8">
-            <h5 className="text-sm font-semibold text-gray-700 mb-2">Replies</h5>
-            {replies[review._id]?.map(reply => (
-              <div key={reply._id} className="bg-gray-50 rounded p-2 mb-2 flex flex-col">
-                <div className="flex items-center gap-2 mb-1">
-                  {reply.userAvatar && !isAdminUser(reply) && (
-                    <img src={reply.userAvatar} alt={reply.userName} className="w-6 h-6 rounded-full object-cover" />
-                  )}
-                  {isAdminUser(reply) ? (
-                    <span className="font-semibold text-blue-700 flex items-center gap-1 text-xs">
-                      From organization <FaCheckCircle className="text-green-500" />
-                    </span>
-                  ) : (
-                    <span className="font-medium text-gray-800 text-xs">{reply.userName}</span>
-                  )}
-                  <span className="text-xs text-gray-500">{new Date(reply.createdAt).toLocaleString()}</span>
-                  {currentUser && (
-                    <span className="flex gap-2 ml-2">
-                      {(
-                        reply.userId === currentUser._id ||
-                        (isAdminUser(currentUser) && isAdminUser(reply))
-                      ) && (
-                        <FaPen className="cursor-pointer text-blue-600" title="Edit" onClick={() => handleEditReply(reply)} />
+            <div className="flex items-center justify-between mb-2">
+              <h5 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <FaReply className="text-blue-500" />
+                Replies ({replies[review._id]?.length || 0})
+              </h5>
+              {replies[review._id]?.length > 0 && (
+                <button
+                  onClick={() => setExpandedReplies(prev => ({ ...prev, [review._id]: !prev[review._id] }))}
+                  className="text-blue-600 hover:text-blue-800 text-xs font-medium flex items-center gap-1 transition-colors"
+                >
+                  {expandedReplies[review._id] ? 'Hide' : 'Show'} Replies
+                  <span className={`transform transition-transform duration-200 ${expandedReplies[review._id] ? 'rotate-180' : ''}`}>
+                    ▼
+                  </span>
+                </button>
+              )}
+            </div>
+            
+            {/* Collapsible Replies Content */}
+            {expandedReplies[review._id] && (
+              <div className="space-y-3 animate-slideDown">
+                {replies[review._id]?.map(reply => (
+                  <div key={reply._id} className="bg-gradient-to-r from-gray-50 to-white rounded-lg p-3 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      {reply.userAvatar && !isAdminUser(reply) && (
+                        <img src={reply.userAvatar} alt={reply.userName} className="w-6 h-6 rounded-full object-cover" />
                       )}
-                      {(reply.userId === currentUser._id || isAdminUser(currentUser)) && (
-                        <FaTrash className="cursor-pointer text-red-600" title="Delete" onClick={() => handleDeleteReply(reply._id)} />
+                      {isAdminUser(reply) ? (
+                        <span className="font-semibold text-blue-700 flex items-center gap-1 text-xs">
+                          From organization <FaCheckCircle className="text-green-500" />
+                        </span>
+                      ) : (
+                        <span className="font-medium text-gray-800 text-xs">{reply.userName}</span>
                       )}
-                    </span>
-                  )}
-                </div>
-                {editingReply && editingReply._id === reply._id ? (
-                  <>
-                    <textarea
-                      className="w-full border border-blue-300 rounded p-2 text-sm mb-1"
-                      value={editingReply.comment}
-                      onChange={e => setEditingReply({ ...editingReply, comment: e.target.value })}
-                    />
-                    <div className="flex gap-2">
-                      <button className="bg-blue-600 text-white px-2 py-1 rounded text-xs" onClick={handleUpdateReply}>Save</button>
-                      <button className="bg-gray-400 text-white px-2 py-1 rounded text-xs" onClick={() => setEditingReply(null)}>Cancel</button>
+                      <span className="text-xs text-gray-500">{new Date(reply.createdAt).toLocaleString()}</span>
+                      {currentUser && (
+                        <div className="flex gap-2 ml-auto">
+                          {(
+                            reply.userId === currentUser._id ||
+                            (isAdminUser(currentUser) && isAdminUser(reply))
+                          ) && (
+                            <button
+                              onClick={() => handleEditReply(reply)}
+                              className="text-blue-600 hover:text-blue-800 transition-colors"
+                              title="Edit reply"
+                            >
+                              <FaPen size={10} />
+                            </button>
+                          )}
+                          {(reply.userId === currentUser._id || isAdminUser(currentUser)) && (
+                            <button
+                              onClick={() => handleDeleteReply(reply._id)}
+                              className="text-red-600 hover:text-red-800 transition-colors"
+                              title="Delete reply"
+                            >
+                              <FaTrash size={10} />
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
-                  </>
-                ) : (
-                  <div className="text-gray-700 text-sm mb-1">{reply.comment}</div>
-                )}
-                <div className="flex gap-2 text-xs">
-                  <button
-                    onClick={() => handleLikeDislikeReply(reply._id, 'like', review._id)}
-                    className={`flex items-center gap-1 ${reply.likes?.includes(currentUser?._id) ? 'text-blue-600' : 'text-gray-500'}`}
-                    disabled={replyLikeLoading[reply._id]}
-                  >
-                    👍 Like {reply.likes?.length > 0 && `(${reply.likes.length})`}
-                  </button>
-                  <button
-                    onClick={() => handleLikeDislikeReply(reply._id, 'dislike', review._id)}
-                    className={`flex items-center gap-1 ${reply.dislikes?.includes(currentUser?._id) ? 'text-red-600' : 'text-gray-500'}`}
-                    disabled={replyLikeLoading[reply._id]}
-                  >
-                    👎 Dislike {reply.dislikes?.length > 0 && `(${reply.dislikes.length})`}
-                  </button>
+                    
+                    {editingReply && editingReply._id === reply._id ? (
+                      <div className="space-y-2">
+                        <textarea
+                          className="w-full border border-blue-300 rounded p-2 text-sm"
+                          value={editingReply.comment}
+                          onChange={e => setEditingReply({ ...editingReply, comment: e.target.value })}
+                          rows={2}
+                        />
+                        <div className="flex gap-2">
+                          <button 
+                            className="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700 transition-colors" 
+                            onClick={handleUpdateReply}
+                          >
+                            Save
+                          </button>
+                          <button 
+                            className="bg-gray-400 text-white px-2 py-1 rounded text-xs hover:bg-gray-600 transition-colors" 
+                            onClick={() => setEditingReply(null)}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-gray-700 text-sm leading-relaxed">{reply.comment}</div>
+                    )}
+                    
+                    <div className="flex gap-3 mt-2 text-xs">
+                      <button
+                        onClick={() => handleLikeDislikeReply(reply._id, 'like', review._id)}
+                        className={`flex items-center gap-1 px-2 py-1 rounded transition-colors ${
+                          reply.likes?.includes(currentUser?._id) 
+                            ? 'bg-blue-100 text-blue-700' 
+                            : 'text-gray-500 hover:bg-gray-100'
+                        }`}
+                        disabled={replyLikeLoading[reply._id]}
+                      >
+                        👍 Like {reply.likes?.length > 0 && `(${reply.likes.length})`}
+                      </button>
+                      <button
+                        onClick={() => handleLikeDislikeReply(reply._id, 'dislike', review._id)}
+                        className={`flex items-center gap-1 px-2 py-1 rounded transition-colors ${
+                          reply.dislikes?.includes(currentUser?._id) 
+                            ? 'bg-red-100 text-red-700' 
+                            : 'text-gray-500 hover:bg-gray-100'
+                        }`}
+                        disabled={replyLikeLoading[reply._id]}
+                      >
+                        👎 Dislike {reply.dislikes?.length > 0 && `(${reply.dislikes.length})`}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                
+                {/* Reply form */}
+                <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                  <ReplyForm reviewId={review._id} onReplyAdded={() => fetchReplies(review._id)} />
                 </div>
               </div>
-            ))}
-            {/* Reply form */}
-            <ReplyForm reviewId={review._id} onReplyAdded={() => fetchReplies(review._id)} />
+            )}
+            
+            {/* Show reply form if no replies exist */}
+            {(!replies[review._id] || replies[review._id].length === 0) && (
+              <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                <ReplyForm reviewId={review._id} onReplyAdded={() => fetchReplies(review._id)} />
+              </div>
+            )}
           </div>
 
           {/* Report button */}
@@ -876,4 +942,28 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
       )}
     </div>
   );
+}
+
+// Add CSS animations
+const styles = `
+  @keyframes slideDown {
+    from { 
+      opacity: 0; 
+      transform: translateY(-10px);
+    }
+    to { 
+      opacity: 1; 
+      transform: translateY(0);
+    }
+  }
+  .animate-slideDown {
+    animation: slideDown 0.3s ease-out;
+  }
+`;
+
+// Inject styles
+if (typeof document !== 'undefined') {
+  const styleSheet = document.createElement('style');
+  styleSheet.textContent = styles;
+  document.head.appendChild(styleSheet);
 } 
