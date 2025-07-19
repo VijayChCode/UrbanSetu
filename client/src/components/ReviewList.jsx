@@ -352,9 +352,11 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
   const handleSort = (field) => {
     if (sortBy === field) {
       setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc');
+      toast.info(`Sorted by ${field} (${sortOrder === 'desc' ? 'ascending' : 'descending'})`);
     } else {
       setSortBy(field);
       setSortOrder('desc');
+      toast.info(`Sorted by ${field} (descending)`);
     }
   };
 

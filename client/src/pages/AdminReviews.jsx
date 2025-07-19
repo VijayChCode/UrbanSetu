@@ -368,9 +368,7 @@ export default function AdminReviews() {
             value={search}
             onChange={e => {
               setSearch(e.target.value);
-              if (e.target.value.trim()) {
-                toast.info(`Searching for: "${e.target.value}"`);
-              }
+              // Removed toast.info for search typing
             }}
           />
         </div>
