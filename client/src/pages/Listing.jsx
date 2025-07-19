@@ -145,6 +145,28 @@ export default function Listing() {
     fetchListing();
   }, [params.listingId]);
 
+  // Dynamically update user info in listing when currentUser changes
+  useEffect(() => {
+    if (!currentUser || !listing) return;
+    setListing(prevListing => {
+      if (!prevListing) return prevListing;
+      const updated = { ...prevListing };
+      
+      // Update userRef info if current user is the property owner
+      if (updated.userRef && (updated.userRef._id === currentUser._id || updated.userRef === currentUser._id)) {
+        updated.userRef = {
+          ...updated.userRef,
+          username: currentUser.username,
+          email: currentUser.email,
+          mobileNumber: currentUser.mobileNumber,
+          avatar: currentUser.avatar
+        };
+      }
+      
+      return updated;
+    });
+  }, [currentUser, listing]);
+
   if (loading) {
     return (
       <div className="bg-gradient-to-br from-blue-50 to-purple-100 min-h-screen py-10 px-2 md:px-8">
