@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import { FaStar, FaCheck, FaTimes, FaTrash, FaEye, FaBan, FaSort, FaSortUp, FaSortDown, FaCheckCircle, FaThumbsUp, FaReply, FaSync } from 'react-icons/fa';
+import { FaStar, FaCheck, FaTimes, FaTrash, FaEye, FaBan, FaSort, FaSortUp, FaSortDown, FaCheckCircle, FaThumbsUp, FaReply, FaSync, FaHome } from 'react-icons/fa';
 import { socket } from '../utils/socket';
 import { toast } from 'react-toastify';
 
@@ -642,103 +642,110 @@ export default function AdminReviews() {
       {/* Review Detail Modal */}
       {selectedReview && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
-          <div className="bg-white rounded-lg w-full max-w-xs sm:max-w-2xl mx-2 sm:mx-4 max-h-[90vh] overflow-y-auto p-3 sm:p-6">
-            <div className="flex flex-col sm:flex-row items-center sm:justify-between mb-2 sm:mb-4 gap-2 sm:gap-0">
-              <h2 className="text-lg sm:text-xl font-semibold">Review Details</h2>
-              <button
-                onClick={() => setSelectedReview(null)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <FaTimes />
-              </button>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row items-center sm:space-x-3 space-y-2 sm:space-y-0">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xs sm:max-w-2xl mx-2 sm:mx-4 max-h-[90vh] overflow-y-auto p-0 sm:p-0 relative animate-fadeIn">
+            {/* Close button top right */}
+            <button
+              onClick={() => setSelectedReview(null)}
+              className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors z-10 shadow"
+              aria-label="Close"
+            >
+              <FaTimes className="w-5 h-5" />
+            </button>
+            {/* Header */}
+            <div className="flex flex-col items-center justify-center bg-gradient-to-r from-blue-100 to-purple-100 rounded-t-2xl px-6 py-5 border-b border-gray-200">
+              <div className="flex items-center gap-3">
                 <img
                   src={selectedReview.userAvatar}
                   alt={selectedReview.userName}
-                  className="w-12 h-12 rounded-full object-cover"
+                  className="w-14 h-14 rounded-full object-cover border-4 border-white shadow-lg"
                 />
                 <div>
-                  <h3 className="font-semibold">{selectedReview.userName}</h3>
-                  <p className="text-sm text-gray-600">{selectedReview.userId?.email}</p>
+                  <h2 className="text-xl font-bold text-blue-800 flex items-center gap-2">
+                    {selectedReview.userName}
+                    {selectedReview.isVerified && (
+                      <FaCheckCircle className="text-green-600 text-base" title="Verified user" />
+                    )}
+                  </h2>
+                  <p className="text-xs text-gray-500">{selectedReview.userId?.email}</p>
                 </div>
               </div>
-              
-              <div>
-                <h4 className="font-medium mb-2">Property</h4>
-                <p className="text-gray-700">{selectedReview.listingId?.name}</p>
-                <p className="text-sm text-gray-600">
+              <div className="mt-2 flex flex-col items-center">
+                <span className="inline-flex items-center gap-1 text-sm text-purple-700 font-semibold">
+                  <FaStar className="text-yellow-400" />
+                  {selectedReview.rating} / 5
+                </span>
+                <div className="flex gap-1 mt-1">{renderStars(selectedReview.rating)}</div>
+              </div>
+            </div>
+            {/* Body */}
+            <div className="px-4 sm:px-8 py-4 space-y-4">
+              {/* Property Info */}
+              <div className="bg-blue-50 rounded-lg p-3 flex flex-col gap-1 border border-blue-100">
+                <div className="font-semibold text-blue-700 flex items-center gap-2">
+                  <FaHome className="text-blue-400" />
+                  {selectedReview.listingId?.name || 'Property not found'}
+                </div>
+                <div className="text-xs text-gray-500">
                   {selectedReview.listingId?.city}, {selectedReview.listingId?.state}
-                </p>
-              </div>
-              
-              <div>
-                <h4 className="font-medium mb-2">Rating</h4>
-                <div className="flex items-center">
-                  {renderStars(selectedReview.rating)}
-                  <span className="ml-2">{selectedReview.rating} stars</span>
                 </div>
               </div>
-              
-              <div>
-                <h4 className="font-medium mb-2">Comment</h4>
-                <p className="text-gray-700">{selectedReview.comment}</p>
-              </div>
-              
+              {/* Status & Date */}
               <div className="grid grid-cols-2 gap-4">
-                {/* On mobile, stack status/date vertically */}
                 <div className="col-span-2 sm:col-span-1">
-                  <h4 className="font-medium mb-2">Status</h4>
+                  <h4 className="font-medium mb-1 text-gray-700">Status</h4>
                   {getStatusBadge(selectedReview.status)}
                 </div>
                 <div className="col-span-2 sm:col-span-1">
-                  <h4 className="font-medium mb-2">Date</h4>
+                  <h4 className="font-medium mb-1 text-gray-700">Date</h4>
                   <p className="text-gray-700">{formatDate(selectedReview.createdAt)}</p>
                 </div>
               </div>
-              
-              {selectedReview.isVerified && (
-                <div className="bg-green-50 p-3 rounded-md">
-                  <div className="flex items-center text-green-800">
-                    <FaCheckCircle className="mr-2" />
-                    <span>Verified user</span>
-                  </div>
-                  {selectedReview.verifiedByBooking && (
-                    <p className="text-sm text-green-700 mt-1">Has booked this property</p>
-                  )}
-                </div>
-              )}
-              
+              {/* Comment */}
+              <div>
+                <h4 className="font-medium mb-1 text-gray-700">Comment</h4>
+                <p className="text-gray-800 bg-gray-50 rounded-md p-3 border border-gray-100 shadow-inner">{selectedReview.comment}</p>
+              </div>
+              {/* Helpful Votes */}
               {selectedReview.helpfulCount > 0 && (
                 <div>
-                  <h4 className="font-medium mb-2">Helpful Votes</h4>
+                  <h4 className="font-medium mb-1 text-gray-700">Helpful Votes</h4>
                   <div className="flex items-center text-gray-700">
-                    <FaThumbsUp className="mr-2" />
+                    <FaThumbsUp className="mr-2 text-blue-500" />
                     {selectedReview.helpfulCount} people found this helpful
                   </div>
                 </div>
               )}
-              
-              {selectedReview.adminNote && (
-                <div>
-                  <h4 className="font-medium mb-2">Admin Note</h4>
-                  <p className="text-gray-700 bg-gray-50 p-3 rounded-md">{selectedReview.adminNote}</p>
+              {/* Verified/Booking */}
+              {selectedReview.isVerified && (
+                <div className="bg-green-50 p-3 rounded-md flex items-center gap-2 border border-green-100">
+                  <FaCheckCircle className="text-green-600" />
+                  <span className="text-green-800 font-medium">Verified user</span>
+                  {selectedReview.verifiedByBooking && (
+                    <span className="ml-2 text-xs text-green-700">Booked this property</span>
+                  )}
                 </div>
               )}
-              
-              {selectedReview.removalReason && (
+              {/* Admin Note */}
+              {selectedReview.adminNote && (
                 <div>
-                  <h4 className="font-medium mb-2">Removal Details</h4>
-                  <div className="bg-red-50 p-3 rounded-md">
+                  <h4 className="font-medium mb-1 text-gray-700">Admin Note</h4>
+                  <p className="text-gray-700 bg-yellow-50 p-3 rounded-md border border-yellow-100 shadow-inner">{selectedReview.adminNote}</p>
+                </div>
+              )}
+              {/* Removal Details: only show if status is removed or removed_by_user */}
+              {(selectedReview.status === 'removed' || selectedReview.status === 'removed_by_user') && selectedReview.removalReason && (
+                <div>
+                  <h4 className="font-medium mb-1 text-gray-700">Removal Details</h4>
+                  <div className="bg-red-50 p-3 rounded-md border border-red-200">
                     <p className="text-red-800"><strong>Reason:</strong> {selectedReview.removalReason}</p>
                     {selectedReview.removalNote && (
                       <p className="text-red-700 mt-1"><strong>Note:</strong> {selectedReview.removalNote}</p>
                     )}
-                    <p className="text-red-600 text-sm mt-1">
-                      Removed on {formatDate(selectedReview.removedAt)}
-                    </p>
+                    {selectedReview.removedAt && (
+                      <p className="text-red-600 text-sm mt-1">
+                        Removed on {formatDate(selectedReview.removedAt)}
+                      </p>
+                    )}
                   </div>
                 </div>
               )}
