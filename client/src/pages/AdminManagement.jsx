@@ -359,6 +359,24 @@ export default function AdminManagement() {
     };
   }, [showPasswordModal]);
 
+  // Add scroll lock for modal
+  useEffect(() => {
+    if (showAccountModal) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+    } else {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+    };
+  }, [showAccountModal]);
+
   // Guard: If users/admins are not arrays, show session expired/unauthorized message
   if (!Array.isArray(users) || (tab === 'admins' && !Array.isArray(admins) && currentUser.isDefaultAdmin)) {
     return (
@@ -698,63 +716,101 @@ export default function AdminManagement() {
       </div>
       {/* Account Details Modal */}
       {showAccountModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6 relative">
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xs sm:max-w-md mx-2 sm:mx-4 max-h-[90vh] overflow-y-auto p-0 sm:p-0 relative animate-fadeIn">
+            {/* Close button top right */}
             <button
-              className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-2xl"
+              className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors z-10 shadow"
               onClick={() => setShowAccountModal(false)}
               title="Close"
+              aria-label="Close"
             >
               &times;
             </button>
-            <h3 className="text-2xl font-bold mb-4 flex items-center gap-2">
-              <span>{selectedAccount?.type === 'admin' ? <FaUserShield className="text-purple-500" /> : <FaUser className="text-blue-500" />}</span>
-              {selectedAccount?.username || 'User Details'}
-            </h3>
-            {accountLoading ? (
-              <div className="flex justify-center items-center h-32">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              </div>
-            ) : selectedAccount ? (
-              <div className="space-y-3">
-                <div className="flex items-center gap-4 mb-2">
-                  <img
-                    src={selectedAccount.avatar || 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png'}
-                    alt="avatar"
-                    className="w-16 h-16 rounded-full border shadow object-cover"
-                    onError={e => { e.target.onerror = null; e.target.src = 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png'; }}
-                  />
-                  <div>
-                    <div className="font-bold text-lg">{selectedAccount.username}</div>
-                    <div className="text-gray-500 text-sm">{selectedAccount.email}</div>
-                  </div>
+            {/* Header */}
+            <div className="flex flex-col items-center justify-center bg-gradient-to-r from-blue-100 to-purple-100 rounded-t-2xl px-6 py-5 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <img
+                  src={selectedAccount?.avatar || 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png'}
+                  alt="avatar"
+                  className="w-16 h-16 rounded-full object-cover border-4 border-white shadow-lg"
+                  onError={e => { e.target.onerror = null; e.target.src = 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png'; }}
+                />
+                <div>
+                  <h2 className="text-xl font-bold text-blue-800 flex items-center gap-2">
+                    {selectedAccount?.username}
+                  </h2>
+                  <p className="text-xs text-gray-500">{selectedAccount?.email}</p>
                 </div>
-                <p><strong>Mobile Number:</strong> {selectedAccount.mobileNumber || 'Not provided'}</p>
-                <p><strong>Role:</strong> {selectedAccount.role}</p>
-                <p><strong>Status:</strong> {selectedAccount.status || 'active'}</p>
-                {selectedAccount.type === 'admin' && (
-                  <>
-                    <p><strong>Admin Status:</strong> {selectedAccount.adminApprovalStatus}</p>
-                    <p><strong>Admin Approval Date:</strong> {selectedAccount.adminApprovalDate ? new Date(selectedAccount.adminApprovalDate).toLocaleDateString() : 'N/A'}</p>
-                    <p><strong>Approved By:</strong> {selectedAccount.approvedBy ? selectedAccount.approvedBy.username || selectedAccount.approvedBy.email || selectedAccount.approvedBy : 'N/A'}</p>
-                    <p><strong>Admin Request Date:</strong> {selectedAccount.adminRequestDate ? new Date(selectedAccount.adminRequestDate).toLocaleDateString() : 'N/A'}</p>
-                    <p><strong>Is Default Admin:</strong> {selectedAccount.isDefaultAdmin ? 'Yes' : 'No'}</p>
-                  </>
-                )}
-                <p><strong>Member Since:</strong> {selectedAccount.createdAt ? new Date(selectedAccount.createdAt).toLocaleDateString() : ''}</p>
-                <p><strong>Number of Listings:</strong> {accountStats.listings}</p>
-                <p><strong>Number of Appointments:</strong> {accountStats.appointments}</p>
-                {/* Add more crucial details as needed */}
               </div>
-            ) : (
-              <p className="text-red-500">Failed to load details.</p>
-            )}
-            <button
-              onClick={() => setShowAccountModal(false)}
-              className="mt-6 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 w-full"
-            >
-              Close
-            </button>
+              <div className="mt-2 flex flex-col items-center">
+                <span className="inline-flex items-center gap-1 text-sm text-purple-700 font-semibold">
+                  {selectedAccount?.type === 'admin' ? <FaUserShield className="text-purple-500" /> : <FaUser className="text-blue-500" />}
+                  {selectedAccount?.type === 'admin' ? 'Admin' : 'User'}
+                </span>
+              </div>
+            </div>
+            {/* Body */}
+            <div className="px-4 sm:px-8 py-4 space-y-4">
+              {accountLoading ? (
+                <div className="flex justify-center items-center h-32">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              ) : selectedAccount ? (
+                <>
+                  <div className="grid grid-cols-1 gap-2">
+                    <div className="flex items-center gap-2 text-gray-700 text-sm">
+                      <FaPhone className="text-blue-400" />
+                      <span><strong>Mobile:</strong> {selectedAccount.mobileNumber || 'Not provided'}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-700 text-sm">
+                      <FaCalendarAlt className="text-purple-400" />
+                      <span><strong>Member Since:</strong> {selectedAccount.createdAt ? new Date(selectedAccount.createdAt).toLocaleDateString() : ''}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-700 text-sm">
+                      <FaList className="text-green-400" />
+                      <span><strong>Listings:</strong> {accountStats.listings}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-700 text-sm">
+                      <FaCalendar className="text-pink-400" />
+                      <span><strong>Appointments:</strong> {accountStats.appointments}</span>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 gap-2 mt-2">
+                    <div className="flex items-center gap-2 text-gray-700 text-sm">
+                      <span><strong>Status:</strong> {selectedAccount.status || 'active'}</span>
+                    </div>
+                    {selectedAccount.type === 'admin' && (
+                      <>
+                        <div className="flex items-center gap-2 text-gray-700 text-sm">
+                          <span><strong>Admin Status:</strong> {selectedAccount.adminApprovalStatus}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-gray-700 text-sm">
+                          <span><strong>Admin Approval Date:</strong> {selectedAccount.adminApprovalDate ? new Date(selectedAccount.adminApprovalDate).toLocaleDateString() : 'N/A'}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-gray-700 text-sm">
+                          <span><strong>Approved By:</strong> {selectedAccount.approvedBy ? selectedAccount.approvedBy.username || selectedAccount.approvedBy.email || selectedAccount.approvedBy : 'N/A'}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-gray-700 text-sm">
+                          <span><strong>Admin Request Date:</strong> {selectedAccount.adminRequestDate ? new Date(selectedAccount.adminRequestDate).toLocaleDateString() : 'N/A'}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-gray-700 text-sm">
+                          <span><strong>Is Default Admin:</strong> {selectedAccount.isDefaultAdmin ? 'Yes' : 'No'}</span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <p className="text-red-500">Failed to load details.</p>
+              )}
+              <button
+                onClick={() => setShowAccountModal(false)}
+                className="mt-6 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 w-full"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
