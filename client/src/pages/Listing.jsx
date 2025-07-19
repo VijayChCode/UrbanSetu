@@ -30,8 +30,6 @@ export default function Listing() {
   const [deletePassword, setDeletePassword] = useState("");
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState("");
-  const [propertyOwner, setPropertyOwner] = useState(null);
-  const [ownerLoading, setOwnerLoading] = useState(false);
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
 
   // Check if user is admin
@@ -128,44 +126,23 @@ export default function Listing() {
     }
   };
 
-      const fetchListing = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/listing/get/${params.listingId}`);
-      const data = await res.json();
-      if (data.success === false) {
-        console.log(data.message);
-        return;
-      }
-      setListing(data);
-      
-      // Fetch property owner details if admin is viewing
-      if (isAdmin && isAdminContext && data.userRef) {
-        await fetchPropertyOwner(data.userRef);
-      }
-    } catch (error) {
-      console.error("Error fetching listing:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchPropertyOwner = async (userId) => {
-    try {
-      setOwnerLoading(true);
-      const res = await fetch(`${API_BASE_URL}/api/user/id/${userId}`);
-      if (res.ok) {
-        const ownerData = await res.json();
-        setPropertyOwner(ownerData);
-      }
-    } catch (error) {
-      console.error("Error fetching property owner:", error);
-    } finally {
-      setOwnerLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const fetchListing = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/listing/get/${params.listingId}`);
+        const data = await res.json();
+        if (data.success === false) {
+          console.log(data.message);
+          return;
+        }
+        setListing(data);
+      } catch (error) {
+        console.error("Error fetching listing:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchListing();
   }, [params.listingId]);
 
@@ -191,39 +168,37 @@ export default function Listing() {
     });
   }, [currentUser, listing]);
 
-  // Fallback: Poll for profile updates every 30 seconds
+  // Listen for profile updates to update property owner info
   useEffect(() => {
-    const pollInterval = setInterval(async () => {
-      if (!listing?.userRef) return;
+    const handleProfileUpdate = (profileData) => {
+      if (!listing) return;
       
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/user/id/${listing.userRef._id}`);
-        if (res.ok) {
-          const updatedUser = await res.json();
-          if (updatedUser.username !== listing.userRef.username || updatedUser.avatar !== listing.userRef.avatar) {
-            console.log('[Listing] Property owner profile updated via polling:', updatedUser);
-            setListing(prevListing => {
-              if (!prevListing) return prevListing;
-              
-              return {
-                ...prevListing,
-                userRef: {
-                  ...prevListing.userRef,
-                  username: updatedUser.username,
-                  email: updatedUser.email,
-                  mobileNumber: updatedUser.mobileNumber,
-                  avatar: updatedUser.avatar
-                }
-              };
-            });
-          }
+      setListing(prevListing => {
+        if (!prevListing) return prevListing;
+        
+        // Update userRef info if the updated user is the property owner
+        if (prevListing.userRef && (prevListing.userRef._id === profileData.userId || prevListing.userRef === profileData.userId)) {
+          return {
+            ...prevListing,
+            userRef: {
+              ...prevListing.userRef,
+              username: profileData.username,
+              email: profileData.email,
+              mobileNumber: profileData.mobileNumber,
+              avatar: profileData.avatar
+            }
+          };
         }
-      } catch (error) {
-        console.error('[Listing] Error polling for profile updates:', error);
-      }
-    }, 30000); // Poll every 30 seconds
-
-    return () => clearInterval(pollInterval);
+        
+        return prevListing;
+      });
+    };
+    
+    socket.on('profileUpdated', handleProfileUpdate);
+    
+    return () => {
+      socket.off('profileUpdated', handleProfileUpdate);
+    };
   }, [listing]);
 
   if (loading) {
@@ -488,40 +463,6 @@ export default function Listing() {
                   <p className="font-semibold text-gray-800">{listing.userRef || 'Unknown'}</p>
                 </div>
               </div>
-              
-              {/* Property Owner Information */}
-              <div className="mt-6 pt-6 border-t border-blue-200">
-                <h5 className="text-lg font-semibold text-blue-700 mb-3">Property Owner Details</h5>
-                {ownerLoading ? (
-                  <div className="flex items-center justify-center py-4">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                    <span className="ml-2 text-gray-600">Loading owner details...</span>
-                  </div>
-                ) : propertyOwner ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-600">Owner Name</p>
-                      <p className="font-semibold text-gray-800">{propertyOwner.username || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Owner Email</p>
-                      <p className="font-semibold text-gray-800">{propertyOwner.email || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Mobile Number</p>
-                      <p className="font-semibold text-gray-800">{propertyOwner.mobileNumber || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Owner ID</p>
-                      <p className="font-semibold text-gray-800">{propertyOwner._id || 'N/A'}</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-4">
-                    <p className="text-gray-500">Owner details not available</p>
-                  </div>
-                )}
-              </div>
             </div>
           )}
 
@@ -568,10 +509,8 @@ export default function Listing() {
               <ReviewForm 
                 listingId={listing._id} 
                 onReviewSubmitted={() => {
-                  // Show success notification
-                  toast.success('Review submitted successfully! Wait for admin approval.');
                   // Refresh the listing data to update rating
-                  fetchListing();
+                  window.location.reload();
                 }}
               />
 
@@ -580,7 +519,7 @@ export default function Listing() {
                 listingId={listing._id}
                 onReviewDeleted={() => {
                   // Refresh the listing data to update rating
-                  fetchListing();
+                  window.location.reload();
                 }}
                 listingOwnerId={listing.userRef}
               />
