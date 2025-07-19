@@ -679,6 +679,22 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const [showChatModal, setShowChatModal] = useLocalState(false);
   const chatEndRef = React.useRef(null);
 
+  // Store locally removed deleted message IDs per appointment (move inside AppointmentRow)
+  function getLocallyRemovedIds(apptId) {
+    try {
+      return JSON.parse(localStorage.getItem(`removedDeletedMsgs_${apptId}`)) || [];
+    } catch {
+      return [];
+    }
+  }
+  function addLocallyRemovedId(apptId, msgId) {
+    const ids = getLocallyRemovedIds(apptId);
+    if (!ids.includes(msgId)) {
+      const updated = [...ids, msgId];
+      localStorage.setItem(`removedDeletedMsgs_${apptId}`, JSON.stringify(updated));
+    }
+  }
+
   const isAdmin = (currentUser.role === 'admin' || currentUser.role === 'rootadmin') && currentUser.adminApprovalStatus === 'approved';
   const isAdminContext = location.pathname.includes('/admin');
   const isSeller = appt.role === 'seller';
