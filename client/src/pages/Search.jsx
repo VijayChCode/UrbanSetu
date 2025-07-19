@@ -112,6 +112,15 @@ export default function Search() {
         setFormData((prev) => ({ ...prev, state: loc.state, district: loc.district, city: loc.city }));
     };
 
+    if (loading) {
+        return (
+            <div className="text-center mt-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="mt-2 text-gray-600">Loading properties...</p>
+            </div>
+        );
+    }
+
     return (
         <div className="bg-gradient-to-br from-blue-50 to-purple-100 min-h-screen py-10 px-2 md:px-8">
             <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-lg p-6 relative">

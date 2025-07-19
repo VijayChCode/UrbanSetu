@@ -260,7 +260,14 @@ export default function AdminDashboard() {
     }
   };
 
-  if (loading) return <p className="text-center mt-8 text-lg font-semibold text-blue-600 animate-pulse animate-fade-in">Loading admin dashboard...</p>;
+  if (loading) {
+    return (
+      <div className="text-center mt-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+        <p className="mt-2 text-gray-600">Loading dashboard...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-gradient-to-br from-blue-50 to-purple-100 min-h-screen">

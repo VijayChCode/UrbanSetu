@@ -113,10 +113,9 @@ export default function MyListings() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-100 py-10 px-2 md:px-8">
-        <div className="max-w-6xl mx-auto">
-          <p className="text-center mt-8 text-lg font-semibold text-blue-600 animate-pulse">Loading your listings...</p>
-        </div>
+      <div className="text-center mt-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+        <p className="mt-2 text-gray-600">Loading your listings...</p>
       </div>
     );
   }
