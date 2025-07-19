@@ -427,7 +427,7 @@ export default function NotificationBell({ mobile = false }) {
         mobile ? (
           // Mobile: Fullscreen Modal
           <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-60">
-            <div className="w-full max-w-md mx-auto bg-white rounded-lg shadow-2xl border border-gray-200 max-h-[90vh] overflow-hidden relative animate-fade-in notification-popup">
+            <div className="w-full max-w-md mx-auto bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl shadow-2xl border border-gray-200 max-h-[90vh] overflow-hidden relative animate-fade-in notification-popup">
               {/* Close Button */}
               <button
                 onClick={() => setIsOpen(false)}
@@ -440,7 +440,7 @@ export default function NotificationBell({ mobile = false }) {
               <div className="pt-8 pb-4 px-4">
                 {/* Header with Tabs */}
                 <div className="border-b border-gray-100 mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900 text-center">Notifications</h3>
+                  <h3 className="text-xl font-extrabold text-blue-700 text-center tracking-wide drop-shadow animate-fade-in">Notifications</h3>
                   {isAdmin() && (
                     <div className="flex border-b border-gray-200 mt-2">
                       <button
@@ -505,9 +505,10 @@ export default function NotificationBell({ mobile = false }) {
                           {notifications.map((notification) => (
                             <div
                               key={notification._id}
-                              className={`p-4 hover:bg-gray-50 transition-colors ${
-                                !notification.isRead ? 'bg-blue-50' : ''
-                              }`}
+                              className={`relative group p-4 my-2 rounded-xl shadow-md bg-white border border-gray-100 transition-all duration-200 flex flex-col gap-1 animate-fadeInNotification
+                                ${!notification.isRead ? 'border-l-4 border-blue-500 bg-gradient-to-r from-blue-50 to-white' : 'border-l-4 border-transparent'}
+                                hover:shadow-lg hover:-translate-y-1 hover:bg-blue-50/60 active:scale-[0.98]`}
+                              style={{ animationDelay: `${0.03 * notifications.indexOf(notification)}s` }}
                             >
                               <div className="flex items-start gap-3">
                                 <div className="flex-shrink-0 mt-1">
@@ -515,17 +516,17 @@ export default function NotificationBell({ mobile = false }) {
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-start justify-between">
-                                    <div className="flex-1">
-                                      <h4 className="text-sm font-medium text-gray-900">
-                                        {notification.title}
+                                    <div className="flex-1 min-w-0">
+                                      <h4 className="text-base font-bold text-blue-800 flex items-center gap-2">
+                                        {getNotificationIcon(notification.type)}
+                                        <span className="truncate max-w-[180px] md:max-w-[260px]" title={notification.title}>{notification.title}</span>
                                       </h4>
-                                      <p className="text-sm text-gray-600 mt-1 whitespace-pre-line break-words max-w-xs md:max-w-md lg:max-w-lg">
+                                      <p className="text-sm text-gray-700 mt-1 whitespace-pre-line break-words max-w-xs md:max-w-md lg:max-w-lg font-medium">
                                         {notification.link ? (
                                           <span
-                                            className="text-blue-600 hover:underline cursor-pointer"
+                                            className="text-blue-600 hover:underline cursor-pointer font-semibold"
                                             onClick={() => {
                                               markAsRead(notification._id);
-                                              console.log('Notification link clicked:', notification.link);
                                               if (notification.link.startsWith('http')) {
                                                 window.open(notification.link, '_blank');
                                               } else {
@@ -538,7 +539,7 @@ export default function NotificationBell({ mobile = false }) {
                                           </span>
                                         ) : (
                                           <span
-                                            className="text-blue-600 hover:underline cursor-pointer"
+                                            className="text-blue-600 hover:underline cursor-pointer font-semibold"
                                             onClick={() => {
                                               markAsRead(notification._id);
                                               setIsOpen(false);
@@ -1140,6 +1141,16 @@ export default function NotificationBell({ mobile = false }) {
         </div>
         )
       )}
+      {/* Animations for notification entry */}
+      <style jsx>{`
+        @keyframes fadeInNotification {
+          from { opacity: 0; transform: translateY(10px) scale(0.98); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .animate-fadeInNotification {
+          animation: fadeInNotification 0.4s cubic-bezier(0.4,0,0.2,1) both;
+        }
+      `}</style>
     </div>
   );
 } 
