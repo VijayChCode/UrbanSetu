@@ -1008,7 +1008,12 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                                 className="border rounded px-2 py-1 text-xs w-40 text-gray-900 bg-white focus:bg-white"
                                 value={editText}
                                 onChange={e => setEditText(e.target.value)}
-                                onKeyDown={e => { if (e.key === 'Enter') handleEditComment(c._id); }}
+                                onKeyDown={e => {
+                                  if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault();
+                                    handleEditComment(c._id);
+                                  }
+                                }}
                                 autoFocus
                               />
                               <button onClick={() => handleEditComment(c._id)} className="text-green-600 hover:text-green-800 font-bold ml-1">Save</button>
