@@ -69,15 +69,22 @@ export default function AdminReviews() {
     };
   }, [currentUser, currentPage, selectedStatus, sortBy, sortOrder]);
 
-  // Scroll lock for modals
+  // Scroll lock for modals: lock body scroll when review details modal is open (mobile and desktop)
   useEffect(() => {
     if (selectedReview || (showRemovalModal && reviewToRemove)) {
+      // Prevent background scroll on all devices
       document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
     } else {
       document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
     }
     return () => {
       document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
     };
   }, [selectedReview, showRemovalModal, reviewToRemove]);
 
@@ -368,7 +375,7 @@ export default function AdminReviews() {
           />
         </div>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-2 sm:gap-0">
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4 w-full">
             <select
               value={selectedStatus}
               onChange={(e) => {
@@ -388,7 +395,7 @@ export default function AdminReviews() {
               <option value="removed">Removed</option>
             </select>
             
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 w-full">
               <span className="text-sm text-gray-600">Sort:</span>
               <button
                 onClick={() => handleSort('date')}
