@@ -11,7 +11,6 @@ import ReviewForm from "../components/ReviewForm.jsx";
 import ReviewList from "../components/ReviewList.jsx";
 import { maskAddress, shouldShowLocationLink, getLocationLinkText } from "../utils/addressMasking";
 import { toast } from 'react-toastify';
-//import { socket } from "../utils/socket";
 import { useWishlist } from '../WishlistContext';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -30,8 +29,6 @@ export default function Listing() {
   const [deletePassword, setDeletePassword] = useState("");
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState("");
-  const [propertyOwner, setPropertyOwner] = useState(null);
-  const [ownerLoading, setOwnerLoading] = useState(false);
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
 
   // Check if user is admin
@@ -128,103 +125,25 @@ export default function Listing() {
     }
   };
 
-      const fetchListing = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/listing/get/${params.listingId}`);
-      const data = await res.json();
-      if (data.success === false) {
-        console.log(data.message);
-        return;
-      }
-      setListing(data);
-      
-      // Fetch property owner details if admin is viewing
-      if (isAdmin && isAdminContext && data.userRef) {
-        await fetchPropertyOwner(data.userRef);
-      }
-    } catch (error) {
-      console.error("Error fetching listing:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchPropertyOwner = async (userId) => {
-    try {
-      setOwnerLoading(true);
-      const res = await fetch(`${API_BASE_URL}/api/user/id/${userId}`);
-      if (res.ok) {
-        const ownerData = await res.json();
-        setPropertyOwner(ownerData);
-      }
-    } catch (error) {
-      console.error("Error fetching property owner:", error);
-    } finally {
-      setOwnerLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const fetchListing = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/listing/get/${params.listingId}`);
+        const data = await res.json();
+        if (data.success === false) {
+          console.log(data.message);
+          return;
+        }
+        setListing(data);
+      } catch (error) {
+        console.error("Error fetching listing:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchListing();
   }, [params.listingId]);
-
-  // Dynamically update user info in listing when currentUser changes
-  useEffect(() => {
-    if (!currentUser || !listing) return;
-    setListing(prevListing => {
-      if (!prevListing) return prevListing;
-      const updated = { ...prevListing };
-      
-      // Update userRef info if current user is the property owner
-      if (updated.userRef && (updated.userRef._id === currentUser._id || updated.userRef === currentUser._id)) {
-        updated.userRef = {
-          ...updated.userRef,
-          username: currentUser.username,
-          email: currentUser.email,
-          mobileNumber: currentUser.mobileNumber,
-          avatar: currentUser.avatar
-        };
-      }
-      
-      return updated;
-    });
-  }, [currentUser, listing]);
-
-  // Fallback: Poll for profile updates every 30 seconds
-  useEffect(() => {
-    const pollInterval = setInterval(async () => {
-      if (!listing?.userRef) return;
-      
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/user/id/${listing.userRef._id}`);
-        if (res.ok) {
-          const updatedUser = await res.json();
-          if (updatedUser.username !== listing.userRef.username || updatedUser.avatar !== listing.userRef.avatar) {
-            console.log('[Listing] Property owner profile updated via polling:', updatedUser);
-            setListing(prevListing => {
-              if (!prevListing) return prevListing;
-              
-              return {
-                ...prevListing,
-                userRef: {
-                  ...prevListing.userRef,
-                  username: updatedUser.username,
-                  email: updatedUser.email,
-                  mobileNumber: updatedUser.mobileNumber,
-                  avatar: updatedUser.avatar
-                }
-              };
-            });
-          }
-        }
-      } catch (error) {
-        console.error('[Listing] Error polling for profile updates:', error);
-      }
-    }, 30000); // Poll every 30 seconds
-
-    return () => clearInterval(pollInterval);
-  }, [listing]);
 
   if (loading) {
     return (
@@ -488,40 +407,6 @@ export default function Listing() {
                   <p className="font-semibold text-gray-800">{listing.userRef || 'Unknown'}</p>
                 </div>
               </div>
-              
-              {/* Property Owner Information */}
-              <div className="mt-6 pt-6 border-t border-blue-200">
-                <h5 className="text-lg font-semibold text-blue-700 mb-3">Property Owner Details</h5>
-                {ownerLoading ? (
-                  <div className="flex items-center justify-center py-4">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                    <span className="ml-2 text-gray-600">Loading owner details...</span>
-                  </div>
-                ) : propertyOwner ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-600">Owner Name</p>
-                      <p className="font-semibold text-gray-800">{propertyOwner.username || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Owner Email</p>
-                      <p className="font-semibold text-gray-800">{propertyOwner.email || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Mobile Number</p>
-                      <p className="font-semibold text-gray-800">{propertyOwner.mobileNumber || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Owner ID</p>
-                      <p className="font-semibold text-gray-800">{propertyOwner._id || 'N/A'}</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-4">
-                    <p className="text-gray-500">Owner details not available</p>
-                  </div>
-                )}
-              </div>
             </div>
           )}
 
@@ -568,10 +453,8 @@ export default function Listing() {
               <ReviewForm 
                 listingId={listing._id} 
                 onReviewSubmitted={() => {
-                  // Show success notification
-                  toast.success('Review submitted successfully! Wait for admin approval.');
                   // Refresh the listing data to update rating
-                  fetchListing();
+                  window.location.reload();
                 }}
               />
 
@@ -580,7 +463,7 @@ export default function Listing() {
                 listingId={listing._id}
                 onReviewDeleted={() => {
                   // Refresh the listing data to update rating
-                  fetchListing();
+                  window.location.reload();
                 }}
                 listingOwnerId={listing.userRef}
               />
