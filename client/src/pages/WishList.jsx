@@ -3,9 +3,11 @@ import { useWishlist } from "../WishlistContext";
 import WishListItem from "../components/WishListItems";
 import { useNavigate } from "react-router-dom";
 import { FaPlus } from 'react-icons/fa';
+import { useState } from 'react';
 
 const WishList = () => {
   const { wishlist, loading } = useWishlist();
+  const [showTooltip, setShowTooltip] = useState(false);
 
   if (loading) {
     return (
@@ -48,15 +50,24 @@ const WishList = () => {
           </div>
         )}
       </div>
-      {/* Floating Plus Icon */}
-      <button
-        onClick={() => navigate('/user/search')}
-        className="fixed bottom-8 right-8 z-50 bg-gradient-to-r from-green-400 to-blue-500 text-white rounded-full shadow-lg p-4 hover:from-green-500 hover:to-blue-600 transition-all flex items-center justify-center text-2xl"
-        title="Explore Properties"
-        style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.15)' }}
-      >
-        <FaPlus />
-      </button>
+      {/* Floating Plus Icon with Tooltip */}
+      <div className="fixed bottom-8 right-8 z-50">
+        <button
+          onClick={() => navigate('/user/search')}
+          onMouseEnter={() => setShowTooltip(true)}
+          onMouseLeave={() => setShowTooltip(false)}
+          className="bg-gradient-to-r from-green-400 to-blue-500 text-white rounded-full shadow-lg p-4 hover:from-green-500 hover:to-blue-600 transition-all flex items-center justify-center text-2xl"
+          title="Explore Properties"
+          style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.15)' }}
+        >
+          <FaPlus />
+        </button>
+        {showTooltip && (
+          <div className="absolute right-16 bottom-1/2 transform translate-y-1/2 bg-gray-900 text-white text-xs rounded px-3 py-1 shadow-lg whitespace-nowrap" style={{ pointerEvents: 'none' }}>
+            Explore properties
+          </div>
+        )}
+      </div>
     </div>
   );
 };
