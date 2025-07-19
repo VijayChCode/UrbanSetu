@@ -1160,27 +1160,29 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       {showChatModal && (
         <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-gradient-to-br from-blue-50 to-purple-100 rounded-2xl shadow-2xl max-w-md w-full p-0 relative animate-fadeIn flex flex-col">
-            <button
-              className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors z-10 shadow"
-              onClick={() => setShowChatModal(false)}
-              title="Close"
-              aria-label="Close"
-            >
-              &times;
-            </button>
-            <div className="flex items-center gap-2 px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-200 to-purple-200 rounded-t-2xl">
+            <div className="flex items-center gap-2 px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-200 to-purple-200 rounded-t-2xl relative">
               <FaCommentDots className="text-blue-600 text-xl" />
               <h3 className="text-lg font-bold text-blue-800">Chat</h3>
-              <button
-                className="ml-auto text-xs text-red-600 hover:underline"
-                onClick={() => {
-                  localStorage.setItem(clearTimeKey, Date.now());
-                  setComments([]);
-                }}
-                title="Clear chat locally"
-              >
-                Clear Chat
-              </button>
+              <div className="flex items-center gap-3 ml-auto">
+                <button
+                  className="text-xs text-red-600 hover:underline"
+                  onClick={() => {
+                    localStorage.setItem(clearTimeKey, Date.now());
+                    setComments([]);
+                  }}
+                  title="Clear chat locally"
+                >
+                  Clear Chat
+                </button>
+                <button
+                  className="text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors z-10 shadow"
+                  onClick={() => setShowChatModal(false)}
+                  title="Close"
+                  aria-label="Close"
+                >
+                  &times;
+                </button>
+              </div>
             </div>
             <div className="flex-1 max-h-60 overflow-y-auto space-y-2 mb-4 px-4 pt-4 animate-fadeInChat">
               {filteredComments.map((c, index) => {
@@ -1202,7 +1204,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           <>
                             <input
                               type="text"
-                              className="border rounded px-2 py-1 text-xs w-40"
+                              className="border rounded px-2 py-1 text-xs w-40 text-gray-900 bg-white focus:bg-white"
                               value={editText}
                               onChange={e => setEditText(e.target.value)}
                               onKeyDown={e => { if (e.key === 'Enter') handleEditComment(c._id); }}
