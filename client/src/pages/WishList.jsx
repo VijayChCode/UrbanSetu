@@ -50,23 +50,25 @@ const WishList = () => {
           </div>
         )}
       </div>
-      {/* Floating Plus Icon with Tooltip */}
+      {/* Floating Plus Icon with Tooltip (ContactSupport style) */}
       <div className="fixed bottom-8 right-8 z-50">
         <button
           onClick={() => navigate('/user/search')}
-          onMouseEnter={() => setShowTooltip(true)}
-          onMouseLeave={() => setShowTooltip(false)}
-          className="bg-gradient-to-r from-green-400 to-blue-500 text-white rounded-full shadow-lg p-4 hover:from-green-500 hover:to-blue-600 transition-all flex items-center justify-center text-2xl"
-          title="Explore Properties"
+          className="relative group w-16 h-16 rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-110 hover:rotate-12 flex items-center justify-center bg-gradient-to-r from-green-400 to-blue-500"
           style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.15)' }}
+          title="Explore Properties"
         >
-          <FaPlus />
-        </button>
-        {showTooltip && (
-          <div className="absolute right-16 bottom-1/2 transform translate-y-1/2 bg-gray-900 text-white text-xs rounded px-3 py-1 shadow-lg whitespace-nowrap" style={{ pointerEvents: 'none' }}>
-            Explore properties
+          <FaPlus className="w-7 h-7 text-white drop-shadow-lg" />
+          {/* Tooltip */}
+          <div className="absolute bottom-full right-0 mb-3 bg-white text-gray-800 text-sm px-4 py-2 rounded-xl shadow-2xl hidden group-hover:block z-10 whitespace-nowrap border border-gray-100 transform -translate-y-1 transition-all duration-200">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">➕</span>
+              <span className="font-medium">Explore properties</span>
+            </div>
+            {/* Tooltip arrow */}
+            <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-white"></div>
           </div>
-        )}
+        </button>
       </div>
     </div>
   );
