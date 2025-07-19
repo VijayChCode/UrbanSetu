@@ -420,17 +420,17 @@ export default function AdminReviews() {
 
         <div className="overflow-x-auto">
           {/* Responsive review cards for mobile, table for desktop */}
-          <div className="space-y-4 sm:space-y-0 sm:table w-full">
+          <div className="flex flex-col gap-4 sm:table w-full">
             {filteredReviews.map((review, idx) => (
               <div
                 key={review._id}
                 className={
-                  `block sm:table-row bg-white rounded-lg shadow-sm sm:shadow-none p-3 sm:p-0 border sm:border-0` +
+                  `flex flex-col sm:table-row bg-white rounded-lg shadow-sm sm:shadow-none p-3 sm:p-0 border sm:border-0` +
                   (idx !== filteredReviews.length - 1 ? ' sm:border-b sm:border-gray-200' : '')
                 }
                 style={{ marginBottom: '1.5rem', border: '1px solid #e5e7eb', borderRadius: '0.75rem', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
               >
-                <div className="flex flex-col sm:table-cell sm:align-top sm:w-1/4 mb-2 sm:mb-0">
+                <div className="flex flex-row items-center gap-3 sm:table-cell sm:align-top sm:w-1/4 mb-2 sm:mb-0">
                   <div className="flex items-center">
                     <img
                       src={review.userAvatar}
@@ -481,7 +481,7 @@ export default function AdminReviews() {
                     </span>
                   )}
                 </div>
-                <div className="flex flex-col sm:table-cell sm:align-top sm:w-1/4 mb-2 sm:mb-0">
+                <div className="flex flex-col gap-1 sm:table-cell sm:align-top sm:w-1/4 mb-2 sm:mb-0">
                   <div className="mb-2">
                     {getStatusBadge(review.status)}
                   </div>
@@ -602,18 +602,18 @@ export default function AdminReviews() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between mt-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-2">
             <div className="text-sm text-gray-700">
               Page {currentPage} of {totalPages}
             </div>
-            <div className="flex space-x-2">
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <button
                 onClick={() => {
                   setCurrentPage(Math.max(1, currentPage - 1));
                   toast.info(`Navigated to page ${Math.max(1, currentPage - 1)}`);
                 }}
                 disabled={currentPage === 1}
-                className="px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
               >
                 Previous
               </button>
@@ -623,7 +623,7 @@ export default function AdminReviews() {
                   toast.info(`Navigated to page ${Math.min(totalPages, currentPage + 1)}`);
                 }}
                 disabled={currentPage === totalPages}
-                className="px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
               >
                 Next
               </button>
@@ -635,7 +635,7 @@ export default function AdminReviews() {
       {/* Review Detail Modal */}
       {selectedReview && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
-          <div className="bg-white rounded-lg max-w-xs sm:max-w-2xl w-full mx-2 sm:mx-4 max-h-[90vh] overflow-y-auto p-3 sm:p-6">
+          <div className="bg-white rounded-lg w-full max-w-xs sm:max-w-2xl mx-2 sm:mx-4 max-h-[90vh] overflow-y-auto p-3 sm:p-6">
             <div className="flex flex-col sm:flex-row items-center sm:justify-between mb-2 sm:mb-4 gap-2 sm:gap-0">
               <h2 className="text-lg sm:text-xl font-semibold">Review Details</h2>
               <button
@@ -742,8 +742,8 @@ export default function AdminReviews() {
 
       {/* Removal Modal */}
       {showRemovalModal && reviewToRemove && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2">
+          <div className="bg-white rounded-lg p-4 sm:p-6 max-w-xs sm:max-w-md w-full mx-2 sm:mx-4">
             <h2 className="text-xl font-semibold mb-4">Remove Review</h2>
             <p className="text-gray-600 mb-4">
               Are you sure you want to remove this review? This action cannot be undone.
