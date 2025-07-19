@@ -11,10 +11,6 @@ export default function ContactSupportWrapper() {
                   (currentUser.role === 'admin' || currentUser.role === 'rootadmin') && 
                   (currentUser.adminApprovalStatus === 'approved' || currentUser.isDefaultAdmin);
 
-  // Debug logging
-  console.log('ContactSupportWrapper - currentUser:', currentUser);
-  console.log('ContactSupportWrapper - isAdmin:', isAdmin);
-
   // Show admin contact support for approved admins or default admin, regular contact support for others
   return isAdmin ? <AdminContactSupport /> : <ContactSupport />;
 } 

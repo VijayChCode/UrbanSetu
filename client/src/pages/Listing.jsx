@@ -226,9 +226,18 @@ export default function Listing() {
     return () => clearInterval(pollInterval);
   }, [listing]);
 
+  // Throttle profileUpdated socket events to at most once per minute
+  const lastProfileUpdateRef = React.useRef(0);
+
   // Listen for profile updates to update property owner info
   useEffect(() => {
     const handleProfileUpdate = (profileData) => {
+      const now = Date.now();
+      if (now - lastProfileUpdateRef.current < 60000) {
+        // Ignore if less than 1 minute since last update
+        return;
+      }
+      lastProfileUpdateRef.current = now;
       setListing(prevListing => {
         if (!prevListing) return prevListing;
         // Update userRef info if the updated user is the property owner
