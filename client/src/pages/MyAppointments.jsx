@@ -1159,37 +1159,39 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       </tr>
       {showChatModal && (
         <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative flex flex-col">
+          <div className="bg-gradient-to-br from-blue-50 to-purple-100 rounded-2xl shadow-2xl max-w-md w-full p-0 relative animate-fadeIn flex flex-col">
             <button
-              className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-2xl"
+              className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors z-10 shadow"
               onClick={() => setShowChatModal(false)}
               title="Close"
+              aria-label="Close"
             >
               &times;
             </button>
-            <h3 className="text-xl font-bold mb-4 text-blue-700 flex items-center gap-2">
-              <FaCommentDots /> Chat
-            </h3>
-            <button
-              className="mb-2 ml-auto text-xs text-red-600 hover:underline"
-              onClick={() => {
-                localStorage.setItem(clearTimeKey, Date.now());
-                setComments([]);
-              }}
-              title="Clear chat locally"
-            >
-              Clear Chat
-            </button>
-            <div className="flex-1 max-h-60 overflow-y-auto space-y-2 mb-4 pr-2">
+            <div className="flex items-center gap-2 px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-200 to-purple-200 rounded-t-2xl">
+              <FaCommentDots className="text-blue-600 text-xl" />
+              <h3 className="text-lg font-bold text-blue-800">Chat</h3>
+              <button
+                className="ml-auto text-xs text-red-600 hover:underline"
+                onClick={() => {
+                  localStorage.setItem(clearTimeKey, Date.now());
+                  setComments([]);
+                }}
+                title="Clear chat locally"
+              >
+                Clear Chat
+              </button>
+            </div>
+            <div className="flex-1 max-h-60 overflow-y-auto space-y-2 mb-4 px-4 pt-4 animate-fadeInChat">
               {filteredComments.map((c, index) => {
                 const isMe = c.senderEmail === currentUser.email;
                 const isEditing = editingComment === c._id;
                 return (
-                  <div key={c._id || index} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`rounded-lg px-3 py-2 text-xs shadow ${isMe ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'} max-w-[80%]`}>
-                      <div className="font-semibold mb-1">
+                  <div key={c._id || index} className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-fadeInChatBubble`} style={{ animationDelay: `${0.03 * index}s` }}>
+                    <div className={`rounded-2xl px-4 py-2 text-sm shadow-lg max-w-[80%] break-words relative ${isMe ? 'bg-gradient-to-r from-blue-400 to-blue-600 text-white' : 'bg-white text-gray-800 border border-gray-200'}`}>
+                      <div className="font-semibold mb-1 flex items-center gap-2">
                         {isMe ? "You" : c.senderEmail}
-                        <span className="text-gray-400 ml-2 text-[10px]">{new Date(c.timestamp).toLocaleString()}</span>
+                        <span className="text-gray-300 ml-2 text-[10px]">{new Date(c.timestamp).toLocaleString()}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         {c.deleted ? (
@@ -1213,29 +1215,22 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           <div>
                             {c.message}
                             {c.edited && (
-                              <span className="ml-2 text-[10px] italic text-gray-400">(Edited)</span>
+                              <span className="ml-2 text-[10px] italic text-gray-300">(Edited)</span>
                             )}
                           </div>
-                        )}
-                        {c.senderEmail === currentUser.email && !c.deleted && !isEditing && (
-                          <span className="ml-1">
-                            {c.status === "read" ? <FaCheckDouble className="text-blue-500 inline" /> :
-                              c.status === "delivered" ? <FaCheckDouble className="text-gray-500 inline" /> :
-                              <FaCheck className="text-gray-500 inline" />}
-                          </span>
                         )}
                       </div>
                       {(c.senderEmail === currentUser.email) && !isEditing && !c.deleted && (
                         <div className="flex items-center gap-2 mt-1">
                           <button
                             onClick={() => startEditing(c)}
-                            className="text-blue-600 hover:text-blue-800"
+                            className="text-blue-200 hover:text-white"
                             title="Edit comment"
                           >
                             <FaPen size={12} />
                           </button>
                           <button
-                            className="text-red-500 hover:text-red-700"
+                            className="text-red-200 hover:text-white"
                             onClick={async () => {
                               if (!window.confirm('Are you sure you want to delete this comment?')) return;
                               try {
@@ -1265,10 +1260,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
               })}
               <div ref={chatEndRef} />
             </div>
-            <div className="flex gap-2 mt-2">
+            <div className="flex gap-2 mt-2 px-4 pb-4">
               <input
                 type="text"
-                className="flex-1 px-2 py-1 border rounded text-xs focus:ring-2 focus:ring-blue-200"
+                className="flex-1 px-3 py-2 border rounded-full text-sm focus:ring-2 focus:ring-blue-200 shadow"
                 placeholder="Type a message..."
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
@@ -1277,11 +1272,28 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
               <button
                 onClick={handleCommentSend}
                 disabled={sending || !comment.trim()}
-                className="bg-blue-500 text-white px-3 py-1 rounded text-xs hover:bg-blue-600 transition disabled:opacity-50"
+                className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-5 py-2 rounded-full text-sm font-semibold shadow hover:from-blue-600 hover:to-purple-600 transition disabled:opacity-50"
               >
                 Send
               </button>
             </div>
+            {/* Animations for chat bubbles */}
+            <style jsx>{`
+              @keyframes fadeInChatBubble {
+                from { opacity: 0; transform: translateY(10px) scale(0.98); }
+                to { opacity: 1; transform: translateY(0) scale(1); }
+              }
+              .animate-fadeInChatBubble {
+                animation: fadeInChatBubble 0.4s cubic-bezier(0.4,0,0.2,1) both;
+              }
+              @keyframes fadeInChat {
+                from { opacity: 0; }
+                to { opacity: 1; }
+              }
+              .animate-fadeInChat {
+                animation: fadeInChat 0.3s cubic-bezier(0.4,0,0.2,1) both;
+              }
+            `}</style>
           </div>
         </div>
       )}
