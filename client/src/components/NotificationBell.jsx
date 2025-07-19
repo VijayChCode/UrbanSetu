@@ -529,7 +529,7 @@ export default function NotificationBell({ mobile = false }) {
                                                 window.open(notification.link, '_blank');
                                               } else {
                                                 setIsOpen(false);
-                                                navigate(notification.link);
+                                                setTimeout(() => navigate(notification.link), 0);
                                               }
                                             }}
                                           >
@@ -886,7 +886,7 @@ export default function NotificationBell({ mobile = false }) {
                                           window.open(notification.link, '_blank');
                                         } else {
                                           setIsOpen(false);
-                                          navigate(notification.link);
+                                          setTimeout(() => navigate(notification.link), 0);
                                         }
                                       }}
                                     >
