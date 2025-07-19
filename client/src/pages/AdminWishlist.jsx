@@ -62,7 +62,7 @@ export default function AdminWishlist() {
           {/* Tooltip */}
           <div className="absolute bottom-full right-0 mb-3 bg-white text-gray-800 text-sm px-4 py-2 rounded-xl shadow-2xl hidden group-hover:block z-10 whitespace-nowrap border border-gray-100 transform -translate-y-1 transition-all duration-200">
             <div className="flex items-center gap-2">
-              <span className="text-lg">➕</span>
+              <span className="text-lg">🏠</span>
               <span className="font-medium">Explore properties</span>
             </div>
             {/* Tooltip arrow */}
