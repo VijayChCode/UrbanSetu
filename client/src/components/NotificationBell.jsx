@@ -427,7 +427,8 @@ export default function NotificationBell({ mobile = false }) {
         mobile ? (
           // Mobile: Fullscreen Modal
           <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-60">
-            <div className="w-full max-w-md mx-auto bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl shadow-2xl border border-gray-200 max-h-[90vh] overflow-hidden relative animate-fade-in notification-popup">
+            <div className="w-full max-w-md mx-auto bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl shadow-2xl border border-gray-200 max-h-[80vh] mt-8 mb-8 overflow-hidden relative animate-fade-in notification-popup"
+                 style={{ marginTop: '2rem', marginBottom: '2rem' }}>
               {/* Close Button */}
               <button
                 onClick={() => setIsOpen(false)}
