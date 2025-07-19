@@ -181,10 +181,6 @@ router.put('/update/:reviewId', verifyToken, async (req, res, next) => {
       return next(errorHandler(403, 'You can only update your own reviews'));
     }
     
-    if (review.status === 'approved') {
-      return next(errorHandler(400, 'Cannot update approved reviews'));
-    }
-    
     const updatedReview = await Review.findByIdAndUpdate(
       reviewId,
       {
