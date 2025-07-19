@@ -3,6 +3,8 @@ import User from "../models/user.model.js"
 import { errorHandler } from "../utils/error.js"
 import mongoose from "mongoose"
 import bcryptjs from "bcryptjs"
+import Review from "../models/review.model.js";
+import ReviewReply from "../models/reviewReply.model.js";
 
 export const test=(req,res)=>{
     res.send("Hello Api")
@@ -65,6 +67,16 @@ export const updateUser=async (req,res,next)=>{
         if (!updatedUser) {
             return next(errorHandler(404, "User not found"));
         }
+        // Update all reviews by this user
+        await Review.updateMany(
+          { userId: updatedUser._id },
+          { $set: { userName: updatedUser.username, userAvatar: updatedUser.avatar } }
+        );
+        // Update all replies by this user
+        await ReviewReply.updateMany(
+          { userId: updatedUser._id },
+          { $set: { userName: updatedUser.username, userAvatar: updatedUser.avatar } }
+        );
         // Return a plain object with all fields except password
         const { password, ...userObj } = updatedUser._doc;
         // Emit socket event for profile update
