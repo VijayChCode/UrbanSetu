@@ -549,9 +549,9 @@ export default function AdminManagement() {
                             <FaUser />
                           </div>
                           <div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-lg font-semibold text-gray-800">{highlightMatch(user.username)}</span>
-                              <span className={`text-xs px-2 py-1 rounded-full font-bold ${user.status === "active" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>{user.status}</span>
+                            <div className="flex flex-wrap items-center gap-2 min-w-0">
+                              <span className="text-lg font-semibold text-gray-800 truncate max-w-[120px] sm:max-w-[180px] md:max-w-[220px]" title={user.username}>{highlightMatch(user.username)}</span>
+                              <span className={`text-xs px-2 py-1 rounded-full font-bold break-words whitespace-nowrap mt-1 sm:mt-0 ${user.status === "active" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>{user.status}</span>
                             </div>
                             <div className="flex items-center gap-2 text-gray-500 text-sm mt-1">
                               <FaEnvelope /> {highlightMatch(user.email)}
@@ -638,9 +638,9 @@ export default function AdminManagement() {
                             <FaUserShield />
                           </div>
                           <div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-lg font-semibold text-gray-800">{highlightMatch(admin.username)}</span>
-                              <span className={`text-xs px-2 py-1 rounded-full font-bold ${admin.adminApprovalStatus === 'rejected' ? 'bg-gray-300 text-gray-700' : admin.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{admin.adminApprovalStatus === 'rejected' ? 'rejected' : admin.status}</span>
+                            <div className="flex flex-wrap items-center gap-2 min-w-0">
+                              <span className="text-lg font-semibold text-gray-800 truncate max-w-[120px] sm:max-w-[180px] md:max-w-[220px]" title={admin.username}>{highlightMatch(admin.username)}</span>
+                              <span className={`text-xs px-2 py-1 rounded-full font-bold break-words whitespace-nowrap mt-1 sm:mt-0 ${admin.adminApprovalStatus === 'rejected' ? 'bg-gray-300 text-gray-700' : admin.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{admin.adminApprovalStatus === 'rejected' ? 'rejected' : admin.status}</span>
                             </div>
                             <div className="flex items-center gap-2 text-gray-500 text-sm mt-1">
                               <FaEnvelope /> {highlightMatch(admin.email)}
