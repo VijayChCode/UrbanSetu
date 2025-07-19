@@ -237,18 +237,12 @@ export default function Listing() {
     socket.on('profileUpdated', handleProfileUpdate);
     console.log('[Listing] Socket listeners set up for profileUpdated');
     
-    // Listen for review updates to refresh listing data
-    const handleReviewUpdate = (updatedReview) => {
-      if (updatedReview.listingId === listing._id || (updatedReview.listingId && updatedReview.listingId._id === listing._id)) {
-        console.log('[Listing] Review updated, refreshing listing data');
-        fetchListing();
-      }
-    };
-    socket.on('reviewUpdated', handleReviewUpdate);
+    // Note: Review updates are handled by the ReviewList component itself
+    // No need to listen for reviewUpdated events here as they don't affect listing data
+    // Only review creation/deletion affects the listing's review count and rating
     
     return () => {
       socket.off('profileUpdated', handleProfileUpdate);
-      socket.off('reviewUpdated', handleReviewUpdate);
       console.log('[Listing] Socket listeners cleaned up');
     };
   }, [listing]);
