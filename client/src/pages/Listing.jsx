@@ -126,23 +126,24 @@ export default function Listing() {
     }
   };
 
-  useEffect(() => {
-    const fetchListing = async () => {
-      setLoading(true);
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/listing/get/${params.listingId}`);
-        const data = await res.json();
-        if (data.success === false) {
-          console.log(data.message);
-          return;
-        }
-        setListing(data);
-      } catch (error) {
-        console.error("Error fetching listing:", error);
-      } finally {
-        setLoading(false);
+  const fetchListing = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/listing/get/${params.listingId}`);
+      const data = await res.json();
+      if (data.success === false) {
+        console.log(data.message);
+        return;
       }
-    };
+      setListing(data);
+    } catch (error) {
+      console.error("Error fetching listing:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchListing();
   }, [params.listingId]);
 
@@ -236,8 +237,18 @@ export default function Listing() {
     socket.on('profileUpdated', handleProfileUpdate);
     console.log('[Listing] Socket listeners set up for profileUpdated');
     
+    // Listen for review updates to refresh listing data
+    const handleReviewUpdate = (updatedReview) => {
+      if (updatedReview.listingId === listing._id || (updatedReview.listingId && updatedReview.listingId._id === listing._id)) {
+        console.log('[Listing] Review updated, refreshing listing data');
+        fetchListing();
+      }
+    };
+    socket.on('reviewUpdated', handleReviewUpdate);
+    
     return () => {
       socket.off('profileUpdated', handleProfileUpdate);
+      socket.off('reviewUpdated', handleReviewUpdate);
       console.log('[Listing] Socket listeners cleaned up');
     };
   }, [listing]);
@@ -553,7 +564,7 @@ export default function Listing() {
                   // Show success notification
                   toast.success('Review submitted successfully! Wait for admin approval.');
                   // Refresh the listing data to update rating
-                  window.location.reload();
+                  fetchListing();
                 }}
               />
 
@@ -562,7 +573,7 @@ export default function Listing() {
                 listingId={listing._id}
                 onReviewDeleted={() => {
                   // Refresh the listing data to update rating
-                  window.location.reload();
+                  fetchListing();
                 }}
                 listingOwnerId={listing.userRef}
               />
