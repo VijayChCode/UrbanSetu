@@ -229,17 +229,10 @@ export default function Listing() {
   // Listen for profile updates to update property owner info
   useEffect(() => {
     const handleProfileUpdate = (profileData) => {
-      console.log('[Listing] Received profileUpdated socket event:', profileData);
-      console.log('[Listing] Current listing userRef:', listing?.userRef);
-      
-      if (!listing) return;
-      
       setListing(prevListing => {
         if (!prevListing) return prevListing;
-        
         // Update userRef info if the updated user is the property owner
         if (prevListing.userRef && (prevListing.userRef._id === profileData.userId || prevListing.userRef === profileData.userId)) {
-          console.log('[Listing] Updating property owner info for user:', profileData.userId);
           return {
             ...prevListing,
             userRef: {
@@ -251,23 +244,14 @@ export default function Listing() {
             }
           };
         }
-        
         return prevListing;
       });
     };
-    
     socket.on('profileUpdated', handleProfileUpdate);
-    console.log('[Listing] Socket listeners set up for profileUpdated');
-    
-    // Note: Review updates are handled by the ReviewList component itself
-    // No need to listen for reviewUpdated events here as they don't affect listing data
-    // Only review creation/deletion affects the listing's review count and rating
-    
     return () => {
       socket.off('profileUpdated', handleProfileUpdate);
-      console.log('[Listing] Socket listeners cleaned up');
     };
-  }, [listing]);
+  }, []);
 
   if (loading) {
     return (
