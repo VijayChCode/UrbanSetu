@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import { FaStar, FaEdit, FaTrash, FaCheck, FaTimes } from 'react-icons/fa';
+import { FaStar, FaEdit, FaTrash, FaCheck, FaTimes, FaSync } from 'react-icons/fa';
 import ReviewForm from '../components/ReviewForm.jsx';
 import { socket } from '../utils/socket.js';
 import { toast } from 'react-toastify';
@@ -160,6 +160,17 @@ export default function UserReviews() {
   const handleReviewUpdated = () => {
     setEditingReview(null);
     fetchUserReviews();
+    toast.success('Review updated successfully');
+  };
+
+  const handleRefresh = async () => {
+    try {
+      setLoading(true);
+      await fetchUserReviews();
+      toast.success('Reviews refreshed successfully');
+    } catch (error) {
+      toast.error('Failed to refresh reviews');
+    }
   };
 
   const renderStars = (rating) => {
@@ -256,7 +267,18 @@ export default function UserReviews() {
   return (
     <div className="max-w-full sm:max-w-2xl md:max-w-4xl mx-auto px-2 sm:px-4 py-4 sm:py-8">
       <div className="bg-white rounded-xl shadow-lg p-3 sm:p-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-4 sm:mb-6">My Reviews</h1>
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">My Reviews</h1>
+          <button
+            onClick={handleRefresh}
+            disabled={loading}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Refresh reviews"
+          >
+            <FaSync className={`${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+        </div>
         {/* Search and Status Filter */}
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mb-6">
           <input
@@ -264,12 +286,24 @@ export default function UserReviews() {
             placeholder="Search by property name, city, state, review comment, admin note, or review date..."
             className="border border-gray-300 rounded-lg px-3 py-2 w-full sm:w-1/2"
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={e => {
+              setSearch(e.target.value);
+              if (e.target.value.trim()) {
+                toast.info(`Searching for: "${e.target.value}"`);
+              }
+            }}
           />
           <select
             className="border border-gray-300 rounded-lg px-3 py-2 w-full sm:w-1/4"
             value={statusFilter}
-            onChange={e => setStatusFilter(e.target.value)}
+            onChange={e => {
+              setStatusFilter(e.target.value);
+              if (e.target.value) {
+                toast.info(`Filtered by status: ${e.target.value}`);
+              } else {
+                toast.info('Showing all reviews');
+              }
+            }}
           >
             <option value="">All Statuses</option>
             <option value="pending">Pending</option>

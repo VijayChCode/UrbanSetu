@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import { FaStar, FaCheck, FaTimes, FaTrash, FaEye, FaBan, FaSort, FaSortUp, FaSortDown, FaCheckCircle, FaThumbsUp, FaReply } from 'react-icons/fa';
+import { FaStar, FaCheck, FaTimes, FaTrash, FaEye, FaBan, FaSort, FaSortUp, FaSortDown, FaCheckCircle, FaThumbsUp, FaReply, FaSync } from 'react-icons/fa';
 import { socket } from '../utils/socket';
 import { toast } from 'react-toastify';
 
@@ -194,8 +194,10 @@ export default function AdminReviews() {
       if (res.ok) {
         setReviews((prev) => prev.map(r => r._id === reviewId ? { ...r, ownerResponse: responseEdit[reviewId] } : r));
         setResponseEdit((prev) => ({ ...prev, [reviewId]: '' }));
+        toast.success('Owner response submitted successfully');
       } else {
         setResponseError((prev) => ({ ...prev, [reviewId]: data.message || 'Failed to submit response' }));
+        toast.error(data.message || 'Failed to submit response');
       }
     } catch (error) {
       setResponseError((prev) => ({ ...prev, [reviewId]: 'Network error. Please try again.' }));
@@ -250,9 +252,21 @@ export default function AdminReviews() {
   const handleSort = (field) => {
     if (sortBy === field) {
       setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc');
+      toast.info(`Sorted by ${field} (${sortOrder === 'desc' ? 'ascending' : 'descending'})`);
     } else {
       setSortBy(field);
       setSortOrder('desc');
+      toast.info(`Sorted by ${field} (descending)`);
+    }
+  };
+
+  const handleRefresh = async () => {
+    try {
+      setLoading(true);
+      await fetchReviews();
+      toast.success('Reviews refreshed successfully');
+    } catch (error) {
+      toast.error('Failed to refresh reviews');
     }
   };
 
@@ -307,7 +321,18 @@ export default function AdminReviews() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-100 py-4 sm:py-10 px-1 sm:px-2 md:px-8 animate-fadeIn">
       <div className="max-w-full sm:max-w-3xl md:max-w-6xl mx-auto bg-white rounded-2xl shadow-2xl p-2 sm:p-4 md:p-8 animate-slideUp">
-        <h1 className="text-2xl sm:text-4xl font-extrabold text-blue-700 mb-4 sm:mb-8 drop-shadow animate-fade-in">Review Management</h1>
+        <div className="flex items-center justify-between mb-4 sm:mb-8">
+          <h1 className="text-2xl sm:text-4xl font-extrabold text-blue-700 drop-shadow animate-fade-in">Review Management</h1>
+          <button
+            onClick={handleRefresh}
+            disabled={loading}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+            title="Refresh reviews"
+          >
+            <FaSync className={`${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+        </div>
         {/* Search Box */}
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mb-4">
           <input
@@ -315,14 +340,26 @@ export default function AdminReviews() {
             placeholder="Search by user email, name, property name, city, state, stars, comment, admin note, or review date..."
             className="border border-gray-300 rounded-lg px-3 py-2 w-full sm:w-1/2"
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={e => {
+              setSearch(e.target.value);
+              if (e.target.value.trim()) {
+                toast.info(`Searching for: "${e.target.value}"`);
+              }
+            }}
           />
         </div>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-2 sm:gap-0">
           <div className="flex items-center gap-4">
             <select
               value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
+              onChange={(e) => {
+                setSelectedStatus(e.target.value);
+                if (e.target.value) {
+                  toast.info(`Filtered by status: ${e.target.value}`);
+                } else {
+                  toast.info('Showing all reviews');
+                }
+              }}
               className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">All Status</option>
@@ -495,6 +532,7 @@ export default function AdminReviews() {
                       onClick={() => {
                         if (window.confirm('Are you sure you want to delete this review from the table?')) {
                           setReviews(reviews.filter(r => r._id !== review._id));
+                          toast.success('Review deleted from table successfully');
                         }
                       }}
                       className="bg-gradient-to-r from-gray-500 to-gray-600 text-white px-4 py-2 rounded-lg hover:from-gray-600 hover:to-gray-700 transition-all transform hover:scale-105 shadow font-semibold flex items-center gap-2"
@@ -542,14 +580,20 @@ export default function AdminReviews() {
             </div>
             <div className="flex space-x-2">
               <button
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                onClick={() => {
+                  setCurrentPage(Math.max(1, currentPage - 1));
+                  toast.info(`Navigated to page ${Math.max(1, currentPage - 1)}`);
+                }}
                 disabled={currentPage === 1}
                 className="px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Previous
               </button>
               <button
-                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                onClick={() => {
+                  setCurrentPage(Math.min(totalPages, currentPage + 1));
+                  toast.info(`Navigated to page ${Math.min(totalPages, currentPage + 1)}`);
+                }}
                 disabled={currentPage === totalPages}
                 className="px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -683,7 +727,12 @@ export default function AdminReviews() {
                 </label>
                 <select
                   value={removalReason}
-                  onChange={(e) => setRemovalReason(e.target.value)}
+                  onChange={(e) => {
+                    setRemovalReason(e.target.value);
+                    if (e.target.value) {
+                      toast.info(`Selected removal reason: ${e.target.value}`);
+                    }
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">Select a reason</option>
@@ -719,6 +768,7 @@ export default function AdminReviews() {
                   setReviewToRemove(null);
                   setRemovalReason('');
                   setRemovalNote('');
+                  toast.info('Review removal cancelled');
                 }}
                 className="flex-1 bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
               >

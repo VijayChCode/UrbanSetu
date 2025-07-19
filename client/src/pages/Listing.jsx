@@ -147,7 +147,6 @@ export default function Listing() {
   }, [params.listingId]);
 
   // Dynamically update user info in listing when currentUser changes
-  
   useEffect(() => {
     if (!currentUser || !listing) return;
     setListing(prevListing => {
@@ -551,6 +550,8 @@ export default function Listing() {
               <ReviewForm 
                 listingId={listing._id} 
                 onReviewSubmitted={() => {
+                  // Show success notification
+                  toast.success('Review submitted successfully! Wait for admin approval.');
                   // Refresh the listing data to update rating
                   window.location.reload();
                 }}
