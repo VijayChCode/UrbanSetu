@@ -1180,6 +1180,7 @@ export default function Profile() {
                               }
                               // Do not show error for other status values
                             } catch (err) {
+                              // Only show error toast if avatar did not update
                               toast.error('Failed to update avatar.');
                             }
                           }}
