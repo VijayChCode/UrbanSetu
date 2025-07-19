@@ -797,6 +797,22 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
     setPasswordLoading(false);
   };
 
+  // Store locally removed deleted message IDs per appointment
+  function getLocallyRemovedIds(apptId) {
+    try {
+      return JSON.parse(localStorage.getItem(`removedDeletedMsgs_${apptId}`)) || [];
+    } catch {
+      return [];
+    }
+  }
+  function addLocallyRemovedId(apptId, msgId) {
+    const ids = getLocallyRemovedIds(apptId);
+    if (!ids.includes(msgId)) {
+      const updated = [...ids, msgId];
+      localStorage.setItem(`removedDeletedMsgs_${apptId}`, JSON.stringify(updated));
+    }
+  }
+
   return (
     <tr className={`hover:bg-blue-50 transition align-top ${isArchived ? 'bg-gray-50' : ''}`}>
       <td className="border p-2">
@@ -1005,6 +1021,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                                 className="ml-2 text-xs text-red-400 hover:text-red-700 underline"
                                 onClick={() => {
                                   setLocalComments(prev => prev.filter(msg => msg._id !== c._id));
+                                  addLocallyRemovedId(appt._id, c._id);
                                 }}
                                 title="Remove this deleted message from your chat view"
                               >

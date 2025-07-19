@@ -956,7 +956,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   // Get clear time from localStorage
   const clearTimeKey = `chatClearTime_${appt._id}`;
   const clearTime = Number(localStorage.getItem(clearTimeKey)) || 0;
-  const filteredComments = comments.filter(c => new Date(c.timestamp).getTime() > clearTime);
+  // Filter out locally removed deleted messages
+  const locallyRemovedIds = getLocallyRemovedIds(appt._id);
+  const filteredComments = comments.filter(c => new Date(c.timestamp).getTime() > clearTime && !locallyRemovedIds.includes(c._id));
 
   return (
     <>
@@ -1203,6 +1205,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               className="ml-2 text-xs text-red-400 hover:text-red-700 underline"
                               onClick={() => {
                                 setComments(prev => prev.filter(msg => msg._id !== c._id));
+                                addLocallyRemovedId(appt._id, c._id);
                               }}
                               title="Remove this deleted message from your chat view"
                             >
@@ -1263,6 +1266,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           >
                             <FaTrash className="group-hover:text-red-900 group-hover:scale-125 group-hover:animate-shake transition-all duration-200" />
                           </button>
+                          <span className="ml-1">
+                            {c.status === "read" ? <FaCheckDouble className="text-white inline" /> :
+                              c.status === "delivered" ? <FaCheckDouble className="text-white/70 inline" /> :
+                              <FaCheck className="text-white/70 inline" />}
+                          </span>
                         </div>
                       )}
                     </div>
