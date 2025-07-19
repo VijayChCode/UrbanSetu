@@ -374,15 +374,13 @@ export default function UserReviews() {
 
                   {/* Action Buttons */}
                   <div className="flex flex-col gap-2 lg:flex-shrink-0 w-full sm:w-auto">
-                    {review.status !== 'approved' && (
-                      <button
-                        onClick={() => handleEditReview(review)}
-                        className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                      >
-                        <FaEdit />
-                        Edit
-                      </button>
-                    )}
+                    <button
+                      onClick={() => handleEditReview(review)}
+                      className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      <FaEdit />
+                      Edit
+                    </button>
                     
                     <button
                       onClick={() => handleDeleteReview(review._id)}
