@@ -33,6 +33,7 @@ export default function Listing() {
   const [ownerDetails, setOwnerDetails] = useState(null);
   const [ownerLoading, setOwnerLoading] = useState(false);
   const [ownerError, setOwnerError] = useState("");
+  const [showReviews, setShowReviews] = useState(false);
 
   // Check if user is admin
   const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'rootadmin';
@@ -493,41 +494,55 @@ export default function Listing() {
             )}
           </div>
 
-          {/* Reviews Section */}
-          <div className="mt-8">
-            <div className="border-t border-gray-200 pt-8">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-2xl font-bold text-gray-800 flex items-center">
-                  <FaStar className="text-yellow-500 mr-2" />
-                  Reviews
-                  {listing.averageRating > 0 && (
-                    <span className="ml-2 text-lg text-gray-600">
-                      ({listing.averageRating.toFixed(1)} ⭐ • {listing.reviewCount} review{listing.reviewCount !== 1 ? 's' : ''})
-                    </span>
-                  )}
-                </h3>
-              </div>
-
-              {/* Review Form */}
-              <ReviewForm 
-                listingId={listing._id} 
-                onReviewSubmitted={() => {
-                  // Refresh the listing data to update rating
-                  window.location.reload();
-                }}
-              />
-
-              {/* Review List */}
-              <ReviewList 
-                listingId={listing._id}
-                onReviewDeleted={() => {
-                  // Refresh the listing data to update rating
-                  window.location.reload();
-                }}
-                listingOwnerId={listing.userRef}
-              />
-            </div>
+          {/* Reviews Section Toggle Button */}
+          <div className="flex justify-center mt-8">
+            <button
+              onClick={() => setShowReviews((prev) => !prev)}
+              className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-white px-6 py-2 rounded-lg shadow font-semibold flex items-center gap-2 hover:from-yellow-500 hover:to-yellow-700 transition-all"
+            >
+              {showReviews ? 'Hide Reviews' : 'Show Reviews'}
+              {listing.reviewCount > 0 && (
+                <span className="ml-2 bg-white text-yellow-700 rounded-full px-2 py-0.5 text-xs font-bold">
+                  {listing.reviewCount}
+                </span>
+              )}
+            </button>
           </div>
+          {/* Reviews Section (collapsible) */}
+          {showReviews && (
+            <div className="mt-8">
+              <div className="border-t border-gray-200 pt-8">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-2xl font-bold text-gray-800 flex items-center">
+                    <FaStar className="text-yellow-500 mr-2" />
+                    Reviews
+                    {listing.averageRating > 0 && (
+                      <span className="ml-2 text-lg text-gray-600">
+                        ({listing.averageRating.toFixed(1)} ⭐ • {listing.reviewCount} review{listing.reviewCount !== 1 ? 's' : ''})
+                      </span>
+                    )}
+                  </h3>
+                </div>
+                {/* Review Form */}
+                <ReviewForm 
+                  listingId={listing._id} 
+                  onReviewSubmitted={() => {
+                    // Refresh the listing data to update rating
+                    window.location.reload();
+                  }}
+                />
+                {/* Review List */}
+                <ReviewList 
+                  listingId={listing._id}
+                  onReviewDeleted={() => {
+                    // Refresh the listing data to update rating
+                    window.location.reload();
+                  }}
+                  listingOwnerId={listing.userRef}
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
       <ContactSupportWrapper />
