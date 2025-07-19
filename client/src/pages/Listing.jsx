@@ -11,7 +11,6 @@ import ReviewForm from "../components/ReviewForm.jsx";
 import ReviewList from "../components/ReviewList.jsx";
 import { maskAddress, shouldShowLocationLink, getLocationLinkText } from "../utils/addressMasking";
 import { toast } from 'react-toastify';
-import { socket } from "../utils/socket";
 import { useWishlist } from '../WishlistContext';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -145,61 +144,6 @@ export default function Listing() {
     };
     fetchListing();
   }, [params.listingId]);
-
-  // Dynamically update user info in listing when currentUser changes
-  useEffect(() => {
-    if (!currentUser || !listing) return;
-    setListing(prevListing => {
-      if (!prevListing) return prevListing;
-      const updated = { ...prevListing };
-      
-      // Update userRef info if current user is the property owner
-      if (updated.userRef && (updated.userRef._id === currentUser._id || updated.userRef === currentUser._id)) {
-        updated.userRef = {
-          ...updated.userRef,
-          username: currentUser.username,
-          email: currentUser.email,
-          mobileNumber: currentUser.mobileNumber,
-          avatar: currentUser.avatar
-        };
-      }
-      
-      return updated;
-    });
-  }, [currentUser, listing]);
-
-  // Listen for profile updates to update property owner info
-  useEffect(() => {
-    const handleProfileUpdate = (profileData) => {
-      if (!listing) return;
-      
-      setListing(prevListing => {
-        if (!prevListing) return prevListing;
-        
-        // Update userRef info if the updated user is the property owner
-        if (prevListing.userRef && (prevListing.userRef._id === profileData.userId || prevListing.userRef === profileData.userId)) {
-          return {
-            ...prevListing,
-            userRef: {
-              ...prevListing.userRef,
-              username: profileData.username,
-              email: profileData.email,
-              mobileNumber: profileData.mobileNumber,
-              avatar: profileData.avatar
-            }
-          };
-        }
-        
-        return prevListing;
-      });
-    };
-    
-    socket.on('profileUpdated', handleProfileUpdate);
-    
-    return () => {
-      socket.off('profileUpdated', handleProfileUpdate);
-    };
-  }, [listing]);
 
   if (loading) {
     return (
