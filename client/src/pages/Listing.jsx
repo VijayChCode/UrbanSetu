@@ -168,6 +168,41 @@ export default function Listing() {
     });
   }, [currentUser, listing]);
 
+  // Fallback: Poll for profile updates every 30 seconds
+  useEffect(() => {
+    const pollInterval = setInterval(async () => {
+      if (!listing?.userRef) return;
+      
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/user/id/${listing.userRef._id}`);
+        if (res.ok) {
+          const updatedUser = await res.json();
+          if (updatedUser.username !== listing.userRef.username || updatedUser.avatar !== listing.userRef.avatar) {
+            console.log('[Listing] Property owner profile updated via polling:', updatedUser);
+            setListing(prevListing => {
+              if (!prevListing) return prevListing;
+              
+              return {
+                ...prevListing,
+                userRef: {
+                  ...prevListing.userRef,
+                  username: updatedUser.username,
+                  email: updatedUser.email,
+                  mobileNumber: updatedUser.mobileNumber,
+                  avatar: updatedUser.avatar
+                }
+              };
+            });
+          }
+        }
+      } catch (error) {
+        console.error('[Listing] Error polling for profile updates:', error);
+      }
+    }, 30000); // Poll every 30 seconds
+
+    return () => clearInterval(pollInterval);
+  }, [listing]);
+
   // Listen for profile updates to update property owner info
   useEffect(() => {
     const handleProfileUpdate = (profileData) => {

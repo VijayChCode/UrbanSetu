@@ -74,6 +74,37 @@ export default function UserReviews() {
     };
   }, [currentUser]);
 
+  // Fallback: Poll for profile updates every 30 seconds
+  useEffect(() => {
+    const pollInterval = setInterval(async () => {
+      if (!currentUser) return;
+      
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/user/id/${currentUser._id}`);
+        if (res.ok) {
+          const updatedUser = await res.json();
+          if (updatedUser.username !== currentUser.username || updatedUser.avatar !== currentUser.avatar) {
+            console.log('[UserReviews] Profile updated via polling:', updatedUser);
+            setReviews(prevReviews => prevReviews.map(review => {
+              if (review.userId === updatedUser._id) {
+                return {
+                  ...review,
+                  userName: updatedUser.username,
+                  userAvatar: updatedUser.avatar
+                };
+              }
+              return review;
+            }));
+          }
+        }
+      } catch (error) {
+        console.error('[UserReviews] Error polling for profile updates:', error);
+      }
+    }, 30000); // Poll every 30 seconds
+
+    return () => clearInterval(pollInterval);
+  }, [currentUser]);
+
   const fetchUserReviews = async () => {
     try {
       setLoading(true);

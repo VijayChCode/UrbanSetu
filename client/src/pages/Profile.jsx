@@ -506,12 +506,17 @@ export default function Profile() {
           email: updatedUser.email
         });
         console.log('[Profile] Socket connected:', socket.connected);
+        console.log('[Profile] Socket ID:', socket.id);
+        
+        // Add acknowledgment callback to see if event is sent successfully
         socket.emit('profileUpdated', {
           userId: updatedUser._id,
           username: updatedUser.username,
           avatar: updatedUser.avatar,
           mobileNumber: updatedUser.mobileNumber,
           email: updatedUser.email
+        }, (acknowledgment) => {
+          console.log('[Profile] Socket event acknowledgment:', acknowledgment);
         });
         
         setUpdateSuccess(true);

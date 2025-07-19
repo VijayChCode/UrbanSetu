@@ -102,6 +102,11 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
     socket.on('profileUpdated', handleProfileUpdate);
     console.log('[ReviewList] Socket listeners set up for profileUpdated');
     
+    // Test socket connection with a simple event
+    socket.emit('testConnection', { message: 'ReviewList component connected' }, (response) => {
+      console.log('[ReviewList] Test socket response:', response);
+    });
+    
     return () => {
       socket.off('reviewUpdated', handleSocketReviewUpdate);
       socket.off('reviewReplyUpdated', handleSocketReplyUpdate);
@@ -129,6 +134,44 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
       });
       return updated;
     });
+  }, [currentUser]);
+
+  // Fallback: Poll for profile updates every 30 seconds
+  useEffect(() => {
+    const pollInterval = setInterval(async () => {
+      if (!currentUser) return;
+      
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/user/id/${currentUser._id}`);
+        if (res.ok) {
+          const updatedUser = await res.json();
+          if (updatedUser.username !== currentUser.username || updatedUser.avatar !== currentUser.avatar) {
+            console.log('[ReviewList] Profile updated via polling:', updatedUser);
+            // Update reviews and replies with new profile data
+            setReviews(prevReviews => prevReviews.map(r =>
+              r.userId === updatedUser._id
+                ? { ...r, userName: updatedUser.username, userAvatar: updatedUser.avatar }
+                : r
+            ));
+            setReplies(prevReplies => {
+              const updated = { ...prevReplies };
+              Object.keys(updated).forEach(reviewId => {
+                updated[reviewId] = updated[reviewId]?.map(reply =>
+                  reply.userId === updatedUser._id
+                    ? { ...reply, userName: updatedUser.username, userAvatar: updatedUser.avatar }
+                    : reply
+                );
+              });
+              return updated;
+            });
+          }
+        }
+      } catch (error) {
+        console.error('[ReviewList] Error polling for profile updates:', error);
+      }
+    }, 30000); // Poll every 30 seconds
+
+    return () => clearInterval(pollInterval);
   }, [currentUser]);
 
   const fetchReviews = async () => {
