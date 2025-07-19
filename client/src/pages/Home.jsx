@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Autoplay } from "swiper/modules";
 import "swiper/css/bundle";
@@ -12,6 +12,8 @@ export default function Home() {
   const [offerListings, setOfferListings] = useState([]);
   const [saleListings, setSaleListings] = useState([]);
   const [rentListings, setRentListings] = useState([]);
+  const navigate = useNavigate();
+  const isUser = window.location.pathname.startsWith('/user');
 
   useEffect(() => {
     const fetchOfferListings = async () => {
@@ -88,7 +90,7 @@ export default function Home() {
           <div className="mb-8 bg-white rounded-xl shadow-lg p-6">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold text-blue-700 animate-slide-in-left">🔥 Exclusive Offers</h2>
-              <Link to="/search?offer=true" className="text-blue-600 hover:underline">View All Offers</Link>
+              <Link to={isUser ? "/user/search?offer=true" : "/search?offer=true"} className="text-blue-600 hover:underline">View All Offers</Link>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
               {offerListings.map((listing) => (
@@ -105,7 +107,7 @@ export default function Home() {
           <div className="mb-8 bg-white rounded-xl shadow-lg p-6">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold text-blue-700 animate-slide-in-left delay-200">🏡 Homes for Rent</h2>
-              <Link to="/search?type=rent" className="text-blue-600 hover:underline">View All Rentals</Link>
+              <Link to={isUser ? "/user/search?type=rent" : "/search?type=rent"} className="text-blue-600 hover:underline">View All Rentals</Link>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
               {rentListings.map((listing) => (
@@ -122,7 +124,7 @@ export default function Home() {
           <div className="mb-8 bg-white rounded-xl shadow-lg p-6">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold text-blue-700 animate-slide-in-left delay-400">🏠 Homes for Sale</h2>
-              <Link to="/search?type=sale" className="text-blue-600 hover:underline">View All Sales</Link>
+              <Link to={isUser ? "/user/search?type=sale" : "/search?type=sale"} className="text-blue-600 hover:underline">View All Sales</Link>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
               {saleListings.map((listing) => (
