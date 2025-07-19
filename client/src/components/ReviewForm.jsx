@@ -118,7 +118,7 @@ export default function ReviewForm({ listingId, existingReview, onReviewSubmitte
         }
         setIsEditing(false);
         toast.success(data.message || 'Review submitted successfully!');
-        navigate(0);
+        // Removed navigate(0) - let the parent component handle data refresh
       } else {
         // Show alert for duplicate review error
         if (data.message && data.message.includes('already reviewed')) {
