@@ -596,6 +596,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
 
   const handleEditComment = async (commentId) => {
     if (!editText.trim()) return;
+    console.log('Admin editing comment:', commentId, 'with text:', editText);
     try {
       const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${commentId}`, {
         method: "PATCH",
@@ -604,6 +605,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
         body: JSON.stringify({ message: editText }),
       });
       const data = await res.json();
+      console.log('Edit response:', res.status, data);
       if (res.ok) {
         setLocalComments(data.comments);
         setEditingComment(null);
@@ -613,6 +615,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
         toast.error(data.message || "Failed to edit comment.");
       }
     } catch (err) {
+      console.error('Edit comment error:', err);
       toast.error("An error occurred. Please try again.");
     }
   };
@@ -883,12 +886,14 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                               className="text-red-500 hover:text-red-700"
                               onClick={async () => {
                                 if (!window.confirm('Are you sure you want to delete this comment?')) return;
+                                console.log('Admin deleting comment:', c._id);
                                 try {
                                   const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${c._id}`, {
                                     method: 'DELETE',
                                     credentials: 'include'
                                   });
                                   const data = await res.json();
+                                  console.log('Delete response:', res.status, data);
                                   if (res.ok) {
                                     setLocalComments(data.comments);
                                     toast.success("Comment deleted successfully!");
@@ -896,11 +901,13 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                                     toast.error(data.message || 'Failed to delete comment.');
                                   }
                                 } catch (err) {
+                                  console.error('Delete comment error:', err);
                                   toast.error("An error occurred. Please try again.");
                                 }
                               }}
+                              title="Delete comment"
                             >
-                              <FaTrash className="group-hover:text-red-900 group-hover:scale-125 group-hover:animate-shake transition-all duration-200" />
+                              <FaTrash size={12} />
                             </button>
                           </div>
                         )}
