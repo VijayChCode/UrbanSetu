@@ -16,7 +16,7 @@ export default function PublicHome() {
   useEffect(() => {
     const fetchOfferListings = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/listing/get?offer=true&limit=6`);
+        const res = await fetch(`${API_BASE_URL}/api/listing/get?offer=true`); // removed &limit=6
         const data = await res.json();
         setOfferListings(data);
       } catch (error) {
@@ -26,7 +26,7 @@ export default function PublicHome() {
 
     const fetchRentListings = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/listing/get?type=rent&limit=6`);
+        const res = await fetch(`${API_BASE_URL}/api/listing/get?type=rent`); // removed &limit=6
         const data = await res.json();
         setRentListings(data);
       } catch (error) {
@@ -36,7 +36,7 @@ export default function PublicHome() {
 
     const fetchSaleListings = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/listing/get?type=sale&limit=6`);
+        const res = await fetch(`${API_BASE_URL}/api/listing/get?type=sale`); // removed &limit=6
         const data = await res.json();
         setSaleListings(data);
       } catch (error) {
