@@ -65,6 +65,27 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
     };
   }, [listingId, sortBy, sortOrder]);
 
+  // Dynamically update user name and avatar in reviews and replies if currentUser changes
+  useEffect(() => {
+    if (!currentUser) return;
+    setReviews(prevReviews => prevReviews.map(r =>
+      r.userId === currentUser._id
+        ? { ...r, userName: currentUser.username, userAvatar: currentUser.avatar }
+        : r
+    ));
+    setReplies(prevReplies => {
+      const updated = { ...prevReplies };
+      Object.keys(updated).forEach(reviewId => {
+        updated[reviewId] = updated[reviewId]?.map(reply =>
+          reply.userId === currentUser._id
+            ? { ...reply, userName: currentUser.username, userAvatar: currentUser.avatar }
+            : reply
+        );
+      });
+      return updated;
+    });
+  }, [currentUser]);
+
   const fetchReviews = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/review/listing/${listingId}?sort=${sortBy}&order=${sortOrder}`, {

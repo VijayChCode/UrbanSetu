@@ -54,6 +54,66 @@ export default function AdminAppointments() {
     return () => clearInterval(interval);
   }, []);
 
+  // Dynamically update user info in appointments when currentUser changes
+  useEffect(() => {
+    if (!currentUser) return;
+    setAppointments(prevAppointments => prevAppointments.map(appt => {
+      const updated = { ...appt };
+      
+      // Update buyer info if current user is the buyer
+      if (appt.buyerId && (appt.buyerId._id === currentUser._id || appt.buyerId === currentUser._id)) {
+        updated.buyerId = {
+          ...updated.buyerId,
+          username: currentUser.username,
+          email: currentUser.email,
+          mobileNumber: currentUser.mobileNumber,
+          avatar: currentUser.avatar
+        };
+      }
+      
+      // Update seller info if current user is the seller
+      if (appt.sellerId && (appt.sellerId._id === currentUser._id || appt.sellerId === currentUser._id)) {
+        updated.sellerId = {
+          ...updated.sellerId,
+          username: currentUser.username,
+          email: currentUser.email,
+          mobileNumber: currentUser.mobileNumber,
+          avatar: currentUser.avatar
+        };
+      }
+      
+      return updated;
+    }));
+    
+    setArchivedAppointments(prevArchived => prevArchived.map(appt => {
+      const updated = { ...appt };
+      
+      // Update buyer info if current user is the buyer
+      if (appt.buyerId && (appt.buyerId._id === currentUser._id || appt.buyerId === currentUser._id)) {
+        updated.buyerId = {
+          ...updated.buyerId,
+          username: currentUser.username,
+          email: currentUser.email,
+          mobileNumber: currentUser.mobileNumber,
+          avatar: currentUser.avatar
+        };
+      }
+      
+      // Update seller info if current user is the seller
+      if (appt.sellerId && (appt.sellerId._id === currentUser._id || appt.sellerId === currentUser._id)) {
+        updated.sellerId = {
+          ...updated.sellerId,
+          username: currentUser.username,
+          email: currentUser.email,
+          mobileNumber: currentUser.mobileNumber,
+          avatar: currentUser.avatar
+        };
+      }
+      
+      return updated;
+    }));
+  }, [currentUser]);
+
   const handleAdminCancel = async (id) => {
     const reason = prompt("Please provide a reason for cancelling this appointment:");
     if (!reason) return;
