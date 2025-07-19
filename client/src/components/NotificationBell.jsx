@@ -536,7 +536,15 @@ export default function NotificationBell({ mobile = false }) {
                                             {notification.message}
                                           </span>
                                         ) : (
-                                          notification.message
+                                          <span
+                                            className="text-blue-600 hover:underline cursor-pointer"
+                                            onClick={() => {
+                                              markAsRead(notification._id);
+                                              setIsOpen(false);
+                                            }}
+                                          >
+                                            {notification.message}
+                                          </span>
                                         )}
                                       </p>
                                       <div className="flex items-center gap-2 mt-2">
@@ -885,7 +893,15 @@ export default function NotificationBell({ mobile = false }) {
                                       {notification.message}
                                     </span>
                                   ) : (
-                                    notification.message
+                                    <span
+                                      className="text-blue-600 hover:underline cursor-pointer"
+                                      onClick={() => {
+                                        markAsRead(notification._id);
+                                        setIsOpen(false);
+                                      }}
+                                    >
+                                      {notification.message}
+                                    </span>
                                   )}
                                 </p>
                                 <div className="flex items-center gap-2 mt-2">
