@@ -308,7 +308,7 @@ router.post('/helpful/:reviewId', verifyToken, async (req, res, next) => {
 router.get('/admin/all', verifyToken, async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id);
-    if (!user || (user.role !== 'admin' && user.role !== 'rootadmin')) {
+    if (!user || ((user.role !== 'admin' || user.adminApprovalStatus !== 'approved') && user.role !== 'rootadmin')) {
       return next(errorHandler(403, 'Admin access required'));
     }
     
@@ -356,7 +356,7 @@ router.put('/admin/status/:reviewId', verifyToken, async (req, res, next) => {
     const { status, adminNote } = req.body;
     
     const user = await User.findById(req.user.id);
-    if (!user || (user.role !== 'admin' && user.role !== 'rootadmin')) {
+    if (!user || ((user.role !== 'admin' || user.adminApprovalStatus !== 'approved') && user.role !== 'rootadmin')) {
       return next(errorHandler(403, 'Admin access required'));
     }
     
@@ -449,7 +449,7 @@ router.put('/admin/remove/:reviewId', verifyToken, async (req, res, next) => {
     const { reason, note } = req.body;
     
     const user = await User.findById(req.user.id);
-    if (!user || (user.role !== 'admin' && user.role !== 'rootadmin')) {
+    if (!user || ((user.role !== 'admin' || user.adminApprovalStatus !== 'approved') && user.role !== 'rootadmin')) {
       return next(errorHandler(403, 'Admin access required'));
     }
     
@@ -530,7 +530,7 @@ router.put('/admin/remove/:reviewId', verifyToken, async (req, res, next) => {
 router.put('/admin/restore/:reviewId', verifyToken, async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id);
-    if (!user || (user.role !== 'admin' && user.role !== 'rootadmin')) {
+    if (!user || ((user.role !== 'admin' || user.adminApprovalStatus !== 'approved') && user.role !== 'rootadmin')) {
       return next(errorHandler(403, 'Admin access required'));
     }
     const { reviewId } = req.params;
@@ -588,7 +588,7 @@ router.put('/admin/restore/:reviewId', verifyToken, async (req, res, next) => {
 router.get('/admin/stats', verifyToken, async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id);
-    if (!user || (user.role !== 'admin' && user.role !== 'rootadmin')) {
+    if (!user || ((user.role !== 'admin' || user.adminApprovalStatus !== 'approved') && user.role !== 'rootadmin')) {
       return next(errorHandler(403, 'Admin access required'));
     }
     
