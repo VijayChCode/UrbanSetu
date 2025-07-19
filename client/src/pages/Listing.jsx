@@ -11,7 +11,7 @@ import ReviewForm from "../components/ReviewForm.jsx";
 import ReviewList from "../components/ReviewList.jsx";
 import { maskAddress, shouldShowLocationLink, getLocationLinkText } from "../utils/addressMasking";
 import { toast } from 'react-toastify';
-import { socket } from "../utils/socket";
+//import { socket } from "../utils/socket";
 import { useWishlist } from '../WishlistContext';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
