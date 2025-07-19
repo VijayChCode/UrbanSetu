@@ -147,6 +147,7 @@ export default function Listing() {
   }, [params.listingId]);
 
   // Dynamically update user info in listing when currentUser changes
+  
   useEffect(() => {
     if (!currentUser || !listing) return;
     setListing(prevListing => {
