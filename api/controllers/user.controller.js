@@ -67,6 +67,17 @@ export const updateUser=async (req,res,next)=>{
         }
         // Return a plain object with all fields except password
         const { password, ...userObj } = updatedUser._doc;
+        // Emit socket event for profile update
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('profileUpdated', {
+                userId: updatedUser._id.toString(),
+                username: updatedUser.username,
+                avatar: updatedUser.avatar,
+                mobileNumber: updatedUser.mobileNumber,
+                email: updatedUser.email
+            });
+        }
         res.status(200).json({ status: "success", updatedUser: userObj });
     }
     catch (error){
