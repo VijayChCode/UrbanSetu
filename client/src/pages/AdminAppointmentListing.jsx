@@ -35,17 +35,6 @@ export default function AdminAppointmentListing() {
   const [buyerEmail, setBuyerEmail] = useState("");
   const [buyerId, setBuyerId] = useState("");
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Loading dashboard...</p>
-        </div>
-      </div>
-    );
-  }
-
   const handleChange = (e) => {
     setFormData((prev) => ({
       ...prev,
@@ -175,7 +164,6 @@ export default function AdminAppointmentListing() {
     return (
       <div className="bg-gradient-to-br from-blue-50 to-purple-100 min-h-screen py-10 px-2 md:px-8">
         <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-6 relative">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
           <div className="text-center text-blue-600 text-xl font-semibold py-10">
             Loading property information...
           </div>
