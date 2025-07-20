@@ -739,20 +739,6 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
             {/* Helpful Vote Button */}
             <div className="flex items-center gap-2 mt-2">
               <button
-                onClick={() => handleDislikeReview(review._id)}
-                className={`flex items-center gap-1 px-3 py-1 rounded-lg transition-colors ${
-                  review.dislikes?.some(d => d.userId === currentUser?._id)
-                    ? 'bg-red-100 text-red-700'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                <span role="img" aria-label="dislike">👎</span>
-                <span>Dislike</span>
-                {review.dislikeCount > 0 && (
-                  <span className="ml-1">({review.dislikeCount})</span>
-                )}
-              </button>
-              <button
                 onClick={() => handleHelpfulVote(review._id)}
                 className={`flex items-center gap-1 px-3 py-1 rounded-lg transition-colors ${
                   hasUserVoted(review)
@@ -765,6 +751,20 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
                 <span>Helpful</span>
                 {review.helpfulCount > 0 && (
                   <span className="ml-1">({review.helpfulCount})</span>
+                )}
+              </button>
+              <button
+                onClick={() => handleDislikeReview(review._id)}
+                className={`flex items-center gap-1 px-3 py-1 rounded-lg transition-colors ${
+                  review.dislikes?.some(d => d.userId === currentUser?._id)
+                    ? 'bg-red-100 text-red-700'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                <span role="img" aria-label="dislike">👎</span>
+                <span>Dislike</span>
+                {review.dislikeCount > 0 && (
+                  <span className="ml-1">({review.dislikeCount})</span>
                 )}
               </button>
             </div>
