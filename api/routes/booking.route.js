@@ -1155,3 +1155,31 @@ router.get('/:id', async (req, res) => {
 
 export default router;
 
+// --- SOCKET.IO: User Appointments Page Active (for delivered ticks) ---
+export function registerUserAppointmentsSocket(io) {
+  io.on('connection', (socket) => {
+    socket.on('userAppointmentsActive', async ({ userId }) => {
+      try {
+        // Find all bookings where this user is buyer or seller
+        const bookings = await booking.find({
+          $or: [ { buyerId: userId }, { sellerId: userId } ]
+        });
+        for (const appt of bookings) {
+          let updated = false;
+          for (const comment of appt.comments) {
+            // If comment is not from this user and not delivered to this user
+            if (comment.sender.toString() !== userId && comment.status !== 'delivered') {
+              comment.status = 'delivered';
+              updated = true;
+              io.emit('commentDelivered', { appointmentId: appt._id.toString(), commentId: comment._id.toString() });
+            }
+          }
+          if (updated) await appt.save();
+        }
+      } catch (err) {
+        console.error('Error marking comments as delivered:', err);
+      }
+    });
+  });
+}
+

@@ -179,6 +179,15 @@ export default function MyAppointments() {
     };
   }, [currentUser]);
 
+  useEffect(() => {
+    if (!currentUser) return;
+    // Emit userAppointmentsActive every 5 seconds
+    const interval = setInterval(() => {
+      socket.emit('userAppointmentsActive', { userId: currentUser._id });
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [currentUser]);
+
   const handleStatusUpdate = async (id, status) => {
     setActionLoading(id + status);
     try {

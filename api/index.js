@@ -5,6 +5,7 @@ import userRouter from './routes/user.route.js'
 import authRouter from './routes/auth.route.js'
 import listingRouter from './routes/listing.route.js'
 import bookingRouter from "./routes/booking.route.js";
+import { registerUserAppointmentsSocket } from './routes/booking.route.js';
 import aboutRouter from "./routes/about.route.js";
 import adminRouter from "./routes/admin.route.js";
 import contactRouter from "./routes/contact.route.js";
@@ -131,6 +132,9 @@ const io = new SocketIOServer(server, {
 });
 
 app.set('io', io);
+
+// Register user appointments socket logic for delivered ticks
+registerUserAppointmentsSocket(io);
 
 io.use(async (socket, next) => {
     const token = socket.handshake.auth && socket.handshake.auth.token;
