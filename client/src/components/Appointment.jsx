@@ -56,8 +56,9 @@ export default function Appointment() {
           const found = data.find(appt => {
             if (!appt.listingId || (appt.listingId._id !== listingId && appt.listingId !== listingId)) return false;
             if (activeStatuses.includes(appt.status)) return true;
-            if (appt.status === "cancelledByBuyer" && appt.buyerId && (appt.buyerId._id === currentUser._id || appt.buyerId === currentUser._id) && (appt.reinitiationCount || 0) < 2) return true;
-            if (appt.status === "cancelledBySeller" && appt.sellerId && (appt.sellerId._id === currentUser._id || appt.sellerId === currentUser._id) && (appt.reinitiationCount || 0) < 2) return true;
+            // Only block if reinitiation is still possible for the current user
+            if (appt.status === "cancelledByBuyer" && appt.buyerId && (appt.buyerId._id === currentUser._id || appt.buyerId === currentUser._id) && (appt.buyerReinitiationCount || 0) < 2) return true;
+            if (appt.status === "cancelledBySeller" && appt.sellerId && (appt.sellerId._id === currentUser._id || appt.sellerId === currentUser._id) && (appt.sellerReinitiationCount || 0) < 2) return true;
             return false;
           });
           setHasActiveAppointment(!!found);
