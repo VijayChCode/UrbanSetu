@@ -359,11 +359,13 @@ export default function AdminAppointments() {
   });
 
   const filteredArchivedAppointments = archivedAppointments.filter((appt) => {
-    const isOutdated = new Date(appt.date) < new Date() || (new Date(appt.date).toDateString() === new Date().toDateString() && appt.time && appt.time < new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-    const matchesStatus =
-      statusFilter === "all" ? true :
-      statusFilter === "outdated" ? isOutdated :
-      appt.status === statusFilter;
+    // Outdated filter
+    if (statusFilter === 'outdated') {
+      const appointmentDateTime = new Date(appt.date + 'T' + (appt.time || '00:00'));
+      const currentDateTime = new Date();
+      return appointmentDateTime < currentDateTime;
+    }
+    const matchesStatus = statusFilter === "all" ? true : appt.status === statusFilter;
     const matchesSearch =
       appt.buyerId?.email?.toLowerCase().includes(search.toLowerCase()) ||
       appt.sellerId?.email?.toLowerCase().includes(search.toLowerCase()) ||

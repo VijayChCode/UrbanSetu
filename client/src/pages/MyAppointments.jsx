@@ -1006,7 +1006,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
 
   return (
     <>
-      <tr className={`hover:bg-blue-50 transition align-top ${!isUpcoming ? 'bg-gray-100 opacity-75' : ''}`}>
+      <tr className={`hover:bg-blue-50 transition align-top ${!isUpcoming ? 'bg-gray-100' : ''}`}>
         <td className="border p-2">
           <div>
             <div>{new Date(appt.date).toLocaleDateString('en-GB')}</div>
