@@ -67,6 +67,29 @@ export default function AdminAppointmentListing() {
     }
     setLoading(true);
     try {
+      // --- Check for existing active appointments for this user and property ---
+      const userIdToCheck = buyerId || currentUser._id;
+      const resMy = await fetch(`${API_BASE_URL}/api/bookings/my`, { credentials: 'include' });
+      let blockBooking = false;
+      if (resMy.ok) {
+        const data = await resMy.json();
+        const activeStatuses = ["pending", "accepted"];
+        const found = data.find(appt => {
+          if (!appt.listingId || (appt.listingId._id !== listingId && appt.listingId !== listingId)) return false;
+          if (appt.buyerId && (appt.buyerId._id === userIdToCheck || appt.buyerId === userIdToCheck)) {
+            if (activeStatuses.includes(appt.status)) return true;
+            if (appt.status === "cancelledByBuyer" && (appt.buyerReinitiationCount || 0) < 2) return true;
+          }
+          return false;
+        });
+        blockBooking = !!found;
+      }
+      if (blockBooking) {
+        toast.error("This user already has an active appointment for this property or can still reinitiate. Booking Failed.");
+        setLoading(false);
+        return;
+      }
+      // --- End check ---
       // Always use admin booking endpoint
       let payload = {
         ...formData,
