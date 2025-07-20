@@ -57,7 +57,7 @@ export default function ReviewForm({ listingId, existingReview, onReviewSubmitte
         
         if (existingUserReview && !existingReview) {
           setUserCanReview(false);
-          setRestrictionReason('You have already reviewed this property.');
+          //setRestrictionReason('You have already reviewed this property.');
           return;
         }
       }
