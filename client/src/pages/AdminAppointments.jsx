@@ -337,8 +337,11 @@ export default function AdminAppointments() {
 
   // Filter and search logic
   const filteredAppointments = appointments.filter((appt) => {
+    const isOutdated = new Date(appt.date) < new Date() || (new Date(appt.date).toDateString() === new Date().toDateString() && appt.time && appt.time < new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
     const matchesStatus =
-      statusFilter === "all" ? true : appt.status === statusFilter;
+      statusFilter === "all" ? true :
+      statusFilter === "outdated" ? isOutdated :
+      appt.status === statusFilter;
     const matchesSearch =
       appt.buyerId?.email?.toLowerCase().includes(search.toLowerCase()) ||
       appt.sellerId?.email?.toLowerCase().includes(search.toLowerCase()) ||
@@ -356,6 +359,11 @@ export default function AdminAppointments() {
   });
 
   const filteredArchivedAppointments = archivedAppointments.filter((appt) => {
+    const isOutdated = new Date(appt.date) < new Date() || (new Date(appt.date).toDateString() === new Date().toDateString() && appt.time && appt.time < new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    const matchesStatus =
+      statusFilter === "all" ? true :
+      statusFilter === "outdated" ? isOutdated :
+      appt.status === statusFilter;
     const matchesSearch =
       appt.buyerId?.email?.toLowerCase().includes(search.toLowerCase()) ||
       appt.sellerId?.email?.toLowerCase().includes(search.toLowerCase()) ||
@@ -369,7 +377,7 @@ export default function AdminAppointments() {
     if (endDate) {
       matchesDate = matchesDate && new Date(appt.date) <= new Date(endDate);
     }
-    return matchesSearch && matchesDate;
+    return matchesStatus && matchesSearch && matchesDate;
   });
 
   // Add this function to fetch latest data on demand
@@ -485,6 +493,7 @@ export default function AdminAppointments() {
               <option value="deletedByAdmin">Deleted by Admin</option>
               <option value="completed">Completed</option>
               <option value="noShow">No Show</option>
+              <option value="outdated">Outdated</option>
             </select>
           </div>
           <div className="flex items-center gap-2">
@@ -824,7 +833,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
   }
 
   return (
-    <tr className={`hover:bg-blue-50 transition align-top ${isArchived ? 'bg-gray-50' : ''} ${!isUpcoming ? 'bg-gray-100 opacity-75' : ''}`}>
+          <tr className={`hover:bg-blue-50 transition align-top ${isArchived ? 'bg-gray-50' : ''} ${!isUpcoming ? 'bg-gray-100' : ''}`}>
       <td className="border p-2">
         <div>
           <div>{new Date(appt.date).toLocaleDateString('en-GB')}</div>
@@ -942,7 +951,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
           <FaCommentDots size={20} />
         </button>
         {showPasswordModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-lg flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-xs relative flex flex-col items-center">
               <button
                 className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-2xl"
@@ -976,7 +985,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
           </div>
         )}
         {showChatModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-lg flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-gradient-to-br from-blue-50 to-purple-100 rounded-2xl shadow-2xl max-w-md w-full p-0 relative animate-fadeIn flex flex-col">
               <div className="flex items-center gap-2 px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-200 to-purple-200 rounded-t-2xl relative">
                 <FaCommentDots className="text-blue-600 text-xl" />

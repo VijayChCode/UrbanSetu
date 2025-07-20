@@ -320,6 +320,13 @@ export default function MyAppointments() {
 
   // Defensive: ensure archivedAppointments is always an array
   const filteredArchivedAppointments = Array.isArray(archivedAppointments) ? archivedAppointments.filter((appt) => {
+    // Outdated filter
+    if (statusFilter === 'outdated') {
+      const appointmentDateTime = new Date(appt.date + 'T' + (appt.time || '00:00'));
+      const currentDateTime = new Date();
+      return appointmentDateTime < currentDateTime;
+    }
+    const matchesStatus = statusFilter === "all" ? true : appt.status === statusFilter;
     const matchesSearch =
       appt.propertyName?.toLowerCase().includes(search.toLowerCase()) ||
       appt.message?.toLowerCase().includes(search.toLowerCase()) ||
