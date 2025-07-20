@@ -417,28 +417,28 @@ router.get("/admin/:adminId", verifyToken, async (req, res) => {
   }
 });
 
-// GET: Fetch user-specific appointment count
+// GET: Fetch user-specific appointments (admin or user)
 router.get("/user/:userId", verifyToken, async (req, res) => {
   try {
     const { userId } = req.params;
-    
     // Check if user is admin or rootadmin
     const user = await User.findById(req.user.id);
     const isAdmin = (user && user.role === 'admin' && user.adminApprovalStatus === 'approved') || (user && user.role === 'rootadmin');
-    
-    // Allow admins to view any user's stats, or users to view their own stats
+    // Allow admins to view any user's appointments, or users to view their own
     if (!isAdmin && req.user.id !== userId) {
-      return res.status(403).json({ message: "You can only view your own stats" });
+      return res.status(403).json({ message: "You can only view your own appointments" });
     }
-    
-    // Count appointments where user is either buyer or seller
-    const count = await booking.countDocuments({
+    // Find all appointments where user is either buyer or seller
+    const bookings = await booking.find({
       $or: [{ buyerId: userId }, { sellerId: userId }]
-    });
-    
-    res.status(200).json({ count });
+    })
+    .populate('buyerId', 'username email mobileNumber')
+    .populate('sellerId', 'username email mobileNumber')
+    .populate('listingId', '_id name address')
+    .sort({ createdAt: -1 });
+    res.status(200).json(bookings);
   } catch (err) {
-    console.error("Error fetching user appointment count:", err);
+    console.error("Error fetching user appointments:", err);
     res.status(500).json({ message: "Server error" });
   }
 });

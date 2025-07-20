@@ -69,10 +69,10 @@ export default function AdminAppointmentListing() {
     try {
       // --- Check for existing active appointments for this user and property ---
       const userIdToCheck = buyerId || currentUser._id;
-      const resMy = await fetch(`${API_BASE_URL}/api/bookings/my`, { credentials: 'include' });
+      const resUser = await fetch(`${API_BASE_URL}/api/bookings/user/${userIdToCheck}`, { credentials: 'include' });
       let blockBooking = false;
-      if (resMy.ok) {
-        const data = await resMy.json();
+      if (resUser.ok) {
+        const data = await resUser.json();
         const activeStatuses = ["pending", "accepted"];
         const found = data.find(appt => {
           if (!appt.listingId || (appt.listingId._id !== listingId && appt.listingId !== listingId)) return false;
