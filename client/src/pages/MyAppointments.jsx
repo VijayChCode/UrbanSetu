@@ -320,9 +320,15 @@ export default function MyAppointments() {
 
   // Defensive: ensure archivedAppointments is always an array
   const filteredArchivedAppointments = Array.isArray(archivedAppointments) ? archivedAppointments.filter((appt) => {
-    // Outdated filter
     if (statusFilter === 'outdated') {
-      const appointmentDateTime = new Date(appt.date + 'T' + (appt.time || '00:00'));
+      let appointmentDateTime;
+      if (appt.time && /^\d{2}:\d{2}/.test(appt.time)) {
+        // If time is present and in HH:mm format
+        appointmentDateTime = new Date(appt.date + 'T' + appt.time);
+      } else {
+        // Fallback: just use the date
+        appointmentDateTime = new Date(appt.date);
+      }
       const currentDateTime = new Date();
       return appointmentDateTime < currentDateTime;
     }

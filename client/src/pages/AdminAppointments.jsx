@@ -530,7 +530,7 @@ export default function AdminAppointments() {
         
         {showArchived ? (
           // Archived Appointments Section
-            filteredArchivedAppointments.filter(appt => statusFilter === 'all' ? true : appt.status === statusFilter).length === 0 ? (
+            filteredArchivedAppointments.length === 0 ? (
               <div className="text-center text-gray-500 text-lg">No archived appointments found.</div>
             ) : (
               <div className="overflow-x-auto">
@@ -549,21 +549,19 @@ export default function AdminAppointments() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredArchivedAppointments
-                      .filter(appt => statusFilter === 'all' ? true : appt.status === statusFilter)
-                      .map((appt) => (
-                        <AdminAppointmentRow
-                          key={appt._id}
-                          appt={appt}
-                          currentUser={currentUser}
-                          handleAdminCancel={handleAdminCancel}
-                          handleReinitiateAppointment={handleReinitiateAppointment}
-                          handleArchiveAppointment={handleArchiveAppointment}
-                          handleUnarchiveAppointment={handleUnarchiveAppointment}
-                          onUserClick={handleUserClick}
-                          isArchived={true}
-                        />
-                      ))}
+                    {filteredArchivedAppointments.map((appt) => (
+                      <AdminAppointmentRow
+                        key={appt._id}
+                        appt={appt}
+                        currentUser={currentUser}
+                        handleAdminCancel={handleAdminCancel}
+                        handleReinitiateAppointment={handleReinitiateAppointment}
+                        handleArchiveAppointment={handleArchiveAppointment}
+                        handleUnarchiveAppointment={handleUnarchiveAppointment}
+                        onUserClick={handleUserClick}
+                        isArchived={true}
+                      />
+                    ))}
                   </tbody>
                 </table>
               </div>
