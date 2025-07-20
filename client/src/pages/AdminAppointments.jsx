@@ -337,8 +337,13 @@ export default function AdminAppointments() {
 
   // Filter and search logic
   const filteredAppointments = appointments.filter((appt) => {
-    const matchesStatus =
-      statusFilter === "all" ? true : appt.status === statusFilter;
+    // Outdated filter
+    if (statusFilter === 'outdated') {
+      const appointmentDateTime = new Date(appt.date + 'T' + (appt.time || '00:00'));
+      const currentDateTime = new Date();
+      return appointmentDateTime < currentDateTime;
+    }
+    const matchesStatus = statusFilter === "all" ? true : appt.status === statusFilter;
     const matchesSearch =
       appt.buyerId?.email?.toLowerCase().includes(search.toLowerCase()) ||
       appt.sellerId?.email?.toLowerCase().includes(search.toLowerCase()) ||
@@ -463,7 +468,7 @@ export default function AdminAppointments() {
         <p className="text-center text-gray-600 mb-6">
           {showArchived 
             ? "View and manage archived appointments. You can unarchive them to move them back to active appointments."
-            : "Monitor all appointments across the platform. Use the status filter to view pending appointments. 💡 Outdated appointments (past their scheduled date) are automatically ignored when booking new appointments."
+            : "Monitor all appointments across the platform. Use the status filter to view pending appointments 💡."
           }
         </p>
 
@@ -485,6 +490,7 @@ export default function AdminAppointments() {
               <option value="deletedByAdmin">Deleted by Admin</option>
               <option value="completed">Completed</option>
               <option value="noShow">No Show</option>
+              <option value="outdated">Outdated</option>
             </select>
           </div>
           <div className="flex items-center gap-2">

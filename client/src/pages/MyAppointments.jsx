@@ -296,6 +296,12 @@ export default function MyAppointments() {
   const filteredAppointments = appointments.filter((appt) => {
     if (currentUser._id === appt.buyerId?._id?.toString() && appt.visibleToBuyer === false) return false;
     if (currentUser._id === appt.sellerId?._id?.toString() && appt.visibleToSeller === false) return false;
+    // Outdated filter
+    if (statusFilter === 'outdated') {
+      const appointmentDateTime = new Date(appt.date + 'T' + (appt.time || '00:00'));
+      const currentDateTime = new Date();
+      return appointmentDateTime < currentDateTime;
+    }
     const matchesStatus = statusFilter === "all" ? true : appt.status === statusFilter;
     const matchesRole = roleFilter === "all" ? true : appt.role === roleFilter;
     const matchesSearch =
@@ -499,6 +505,7 @@ export default function MyAppointments() {
               <option value="deletedByAdmin">Deleted by Admin</option>
               <option value="completed">Completed</option>
               <option value="noShow">No Show</option>
+              <option value="outdated">Outdated</option>
             </select>
           </div>
           <div className="flex items-center gap-2">
@@ -713,7 +720,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const isAdminContext = location.pathname.includes('/admin');
   const isSeller = appt.role === 'seller';
   const isBuyer = appt.role === 'buyer';
-  const canSeeContactInfo = isAdmin || appt.status === 'accepted';
+  const canSeeContactInfo = (isAdmin || appt.status === 'accepted') && isUpcoming;
   const otherParty = isSeller ? appt.buyerId : appt.sellerId;
 
   // Add function to check if appointment is upcoming
@@ -1179,12 +1186,22 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         </td>
         <td className="border p-2 text-center relative">
           <button
-            className="flex items-center justify-center bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-full p-2 shadow-md mx-auto relative"
-            title="Open Chat"
-            onClick={() => setShowChatModal(true)}
+            className={`flex items-center justify-center rounded-full p-2 shadow-md mx-auto relative ${
+              !isUpcoming 
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-50' 
+                : 'bg-blue-100 hover:bg-blue-200 text-blue-700'
+            }`}
+            title={!isUpcoming ? "Chat not available for outdated appointments" : "Open Chat"}
+            onClick={!isUpcoming ? undefined : () => setShowChatModal(true)}
+            disabled={!isUpcoming}
           >
             <FaCommentDots size={20} />
-            {unreadCount > 0 && (
+            {unreadCount > 0 && !isUpcoming && (
+              <span className="absolute -top-1 -right-1 bg-gray-400 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-bold border-2 border-white">
+                {unreadCount}
+              </span>
+            )}
+            {unreadCount > 0 && isUpcoming && (
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-bold border-2 border-white">
                 {unreadCount}
               </span>
