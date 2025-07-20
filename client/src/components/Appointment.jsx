@@ -66,9 +66,16 @@ export default function Appointment() {
           const activeStatuses = ["pending", "accepted"];
           const found = data.find(appt => {
             if (!appt.listingId || (appt.listingId._id !== listingId && appt.listingId !== listingId)) return false;
-            if (activeStatuses.includes(appt.status)) return true;
-            if (appt.status === "cancelledByBuyer" && appt.buyerId && (appt.buyerId._id === currentUser._id || appt.buyerId === currentUser._id) && (appt.reinitiationCount || 0) < 2) return true;
-            if (appt.status === "cancelledBySeller" && appt.sellerId && (appt.sellerId._id === currentUser._id || appt.sellerId === currentUser._id) && (appt.reinitiationCount || 0) < 2) return true;
+            
+            // Check if appointment is outdated (past date and time)
+            const appointmentDateTime = new Date(appt.date + 'T' + (appt.time || '00:00'));
+            const currentDateTime = new Date();
+            const isOutdated = appointmentDateTime < currentDateTime;
+            
+            // Only consider appointments as active if they are not outdated
+            if (activeStatuses.includes(appt.status) && !isOutdated) return true;
+            if (appt.status === "cancelledByBuyer" && appt.buyerId && (appt.buyerId._id === currentUser._id || appt.buyerId === currentUser._id) && (appt.reinitiationCount || 0) < 2 && !isOutdated) return true;
+            if (appt.status === "cancelledBySeller" && appt.sellerId && (appt.sellerId._id === currentUser._id || appt.sellerId === currentUser._id) && (appt.reinitiationCount || 0) < 2 && !isOutdated) return true;
             return false;
           });
           setHasActiveAppointment(!!found);
@@ -87,7 +94,7 @@ export default function Appointment() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (hasActiveAppointment) {
-      toast.info("You already have an active appointment for this property. Please complete, cancel, or wait for the other party to respond before booking again.");
+      toast.info("You already have an active appointment for this property. Please complete, cancel, or wait for the other party to respond before booking again. Note: Outdated appointments (past their scheduled date) are automatically ignored.");
       return;
     }
 

@@ -38,9 +38,22 @@ router.post("/", verifyToken, async (req, res) => {
     }
 
     // --- Prevent duplicate active appointments ---
-    // Only block: pending, accepted
+    // Only block: pending, accepted appointments that are not outdated
+    const currentDate = new Date();
+    const currentDateString = currentDate.toISOString().split('T')[0];
+    const currentTimeString = currentDate.toTimeString().split(' ')[0];
+    
     const orConditions = [
-      { status: { $in: ["pending", "accepted"] } }
+      { 
+        status: { $in: ["pending", "accepted"] },
+        $or: [
+          { date: { $gt: currentDateString } },
+          { 
+            date: currentDateString,
+            time: { $gt: currentTimeString }
+          }
+        ]
+      }
     ];
     // Determine if current user is buyer or seller
     let visibilityCondition = {};
@@ -1040,9 +1053,22 @@ router.post("/admin", verifyToken, async (req, res) => {
     if (buyer._id.toString() === seller._id.toString()) {
       return res.status(400).json({ message: "Cannot book an appointment for the property owner themselves." });
     }
-    // Prevent duplicate active appointments for this buyer
+    // Prevent duplicate active appointments for this buyer (not outdated)
+    const currentDate = new Date();
+    const currentDateString = currentDate.toISOString().split('T')[0];
+    const currentTimeString = currentDate.toTimeString().split(' ')[0];
+    
     const orConditions = [
-      { status: { $in: ["pending", "accepted"] } }
+      { 
+        status: { $in: ["pending", "accepted"] },
+        $or: [
+          { date: { $gt: currentDateString } },
+          { 
+            date: currentDateString,
+            time: { $gt: currentTimeString }
+          }
+        ]
+      }
     ];
     let visibilityCondition = { visibleToBuyer: { $ne: false } };
     const existing = await booking.findOne({

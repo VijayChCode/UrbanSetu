@@ -463,7 +463,7 @@ export default function AdminAppointments() {
         <p className="text-center text-gray-600 mb-6">
           {showArchived 
             ? "View and manage archived appointments. You can unarchive them to move them back to active appointments."
-            : "Monitor all appointments across the platform. Use the status filter to view pending appointments."
+            : "Monitor all appointments across the platform. Use the status filter to view pending appointments. 💡 Outdated appointments (past their scheduled date) are automatically ignored when booking new appointments."
           }
         </p>
 
@@ -761,6 +761,9 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
     return comment.senderEmail === currentUser?.email;
   };
 
+  // Add function to check if appointment is upcoming
+  const isUpcoming = new Date(appt.date) > new Date() || (new Date(appt.date).toDateString() === new Date().toDateString() && (!appt.time || appt.time > new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })));
+
   const getStatusColor = (status) => {
     switch (status) {
       case "pending": return "bg-yellow-100 text-yellow-700";
@@ -821,11 +824,14 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
   }
 
   return (
-    <tr className={`hover:bg-blue-50 transition align-top ${isArchived ? 'bg-gray-50' : ''}`}>
+    <tr className={`hover:bg-blue-50 transition align-top ${isArchived ? 'bg-gray-50' : ''} ${!isUpcoming ? 'bg-gray-100 opacity-75' : ''}`}>
       <td className="border p-2">
         <div>
           <div>{new Date(appt.date).toLocaleDateString('en-GB')}</div>
           <div className="text-sm text-gray-600">{appt.time}</div>
+          {!isUpcoming && (
+            <div className="text-xs text-red-600 font-medium mt-1">Outdated</div>
+          )}
           {isArchived && appt.archivedAt && (
             <div className="text-xs text-gray-500 mt-1">
               Archived: {new Date(appt.archivedAt).toLocaleDateString('en-GB')}
