@@ -56,9 +56,9 @@ export default function ReviewForm({ listingId, existingReview, onReviewSubmitte
         const existingUserReview = userReviews.find(review => review.listingId === listingId);
         
         if (existingUserReview && !existingReview) {
-          setUserCanReview(false);
-          //setRestrictionReason('You have already reviewed this property.');
-          return;
+          setUserCanReview(true); // Allow backend to handle duplicate review error
+          setRestrictionReason('');
+          // Do not block or show restriction here
         }
       }
 
