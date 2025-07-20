@@ -295,11 +295,9 @@ export default function MyAppointments() {
   const filteredAppointments = appointments.filter((appt) => {
     if (currentUser._id === appt.buyerId?._id?.toString() && appt.visibleToBuyer === false) return false;
     if (currentUser._id === appt.sellerId?._id?.toString() && appt.visibleToSeller === false) return false;
-    // Outdated filter
+    const isOutdated = new Date(appt.date) < new Date() || (new Date(appt.date).toDateString() === new Date().toDateString() && appt.time && appt.time < new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
     if (statusFilter === 'outdated') {
-      const appointmentDateTime = new Date(appt.date + 'T' + (appt.time || '00:00'));
-      const currentDateTime = new Date();
-      return appointmentDateTime < currentDateTime;
+      return isOutdated;
     }
     const matchesStatus = statusFilter === "all" ? true : appt.status === statusFilter;
     const matchesRole = roleFilter === "all" ? true : appt.role === roleFilter;
@@ -320,17 +318,9 @@ export default function MyAppointments() {
 
   // Defensive: ensure archivedAppointments is always an array
   const filteredArchivedAppointments = Array.isArray(archivedAppointments) ? archivedAppointments.filter((appt) => {
+    const isOutdated = new Date(appt.date) < new Date() || (new Date(appt.date).toDateString() === new Date().toDateString() && appt.time && appt.time < new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
     if (statusFilter === 'outdated') {
-      let appointmentDateTime;
-      if (appt.time && /^\d{2}:\d{2}/.test(appt.time)) {
-        // If time is present and in HH:mm format
-        appointmentDateTime = new Date(appt.date + 'T' + appt.time);
-      } else {
-        // Fallback: just use the date
-        appointmentDateTime = new Date(appt.date);
-      }
-      const currentDateTime = new Date();
-      return appointmentDateTime < currentDateTime;
+      return isOutdated;
     }
     const matchesStatus = statusFilter === "all" ? true : appt.status === statusFilter;
     const matchesSearch =
