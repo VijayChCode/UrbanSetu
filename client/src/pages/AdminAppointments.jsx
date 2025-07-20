@@ -831,7 +831,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
   }
 
   return (
-          <tr className={`hover:bg-blue-50 transition align-top ${isArchived ? 'bg-gray-50' : ''} ${!isUpcoming ? (isArchived ? 'bg-gray-100 opacity-75' : 'bg-gray-100') : ''}`}>
+          <tr className={`hover:bg-blue-50 transition align-top ${(isArchived ? 'bg-gray-50' : '')} ${!isUpcoming ? 'bg-gray-100 opacity-75' : ''}`}>
       <td className="border p-2">
         <div>
           <div>{new Date(appt.date).toLocaleDateString('en-GB')}</div>
