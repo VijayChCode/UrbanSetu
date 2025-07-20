@@ -942,6 +942,14 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   // Mark all comments as read when chat modal opens
   React.useEffect(() => {
     if (showChatModal) {
+      // Fetch latest comments from backend when chatbox is opened
+      fetch(`${API_BASE_URL}/api/bookings/${appt._id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data && Array.isArray(data.comments)) {
+            setComments(data.comments);
+          }
+        });
       fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/read`, {
         method: 'PATCH',
         credentials: 'include'
