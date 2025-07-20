@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo, FaCommentDots, FaCheckDouble, FaBan, FaPaperPlane } from "react-icons/fa";
 import { useSelector } from "react-redux";
-import { useState as useLocalState } from "react";
-import { Link, useLocation, useNavigate, useNavigation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import Appointment from "../components/Appointment";
 import { toast, ToastContainer } from 'react-toastify';
 import { socket } from "../utils/socket";
@@ -691,13 +690,13 @@ export default function MyAppointments() {
 }
 
 function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDelete, actionLoading, onShowOtherParty, onOpenReinitiate, handleArchiveAppointment, handleUnarchiveAppointment, isArchived, onCancelRefresh }) {
-  const [comment, setComment] = useLocalState("");
-  const [comments, setComments] = useLocalState(appt.comments || []);
-  const [sending, setSending] = useLocalState(false);
-  const [editingComment, setEditingComment] = useLocalState(null);
-  const [editText, setEditText] = useLocalState("");
+  const [comment, setComment] = useState("");
+  const [comments, setComments] = useState(appt.comments || []);
+  const [sending, setSending] = useState(false);
+  const [editingComment, setEditingComment] = useState(null);
+  const [editText, setEditText] = useState("");
   const location = useLocation();
-  const [showChatModal, setShowChatModal] = useLocalState(false);
+  const [showChatModal, setShowChatModal] = useState(false);
   const chatEndRef = React.useRef(null);
 
   // Store locally removed deleted message IDs per appointment (move inside AppointmentRow)
@@ -989,7 +988,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       document.body.style.overflow = '';
     };
   }, [showChatModal]);
-;
+
   // Get clear time from localStorage
   const clearTimeKey = `chatClearTime_${appt._id}`;
   const clearTime = Number(localStorage.getItem(clearTimeKey)) || 0;
