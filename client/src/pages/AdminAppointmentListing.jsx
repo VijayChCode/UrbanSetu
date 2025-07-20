@@ -83,7 +83,7 @@ export default function AdminAppointmentListing() {
       const data = await res.json();
       if (res.ok) {
         setBooked(true);
-        toast.success("Appointment booked successfully!");
+        toast.success(`Property booked successfully on behalf of ${buyerEmail || currentUser.email}. Both seller and buyer are notified.`);
         setTimeout(() => {
           navigate("/admin/appointments");
         }, 2000);
