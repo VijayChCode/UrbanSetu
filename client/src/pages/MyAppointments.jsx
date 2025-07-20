@@ -1215,162 +1215,171 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       {showChatModal && (
         <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-gradient-to-br from-blue-50 to-purple-100 rounded-2xl shadow-2xl max-w-md w-full p-0 relative animate-fadeIn flex flex-col">
-            <div className="flex items-center gap-2 px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-200 to-purple-200 rounded-t-2xl relative">
-              <FaCommentDots className="text-blue-600 text-xl" />
-              <h3 className="text-lg font-bold text-blue-800">Chat</h3>
-              <div className="flex items-center gap-3 ml-auto">
-                <button
-                  className="text-xs text-red-600 hover:underline"
-                  onClick={() => {
-                    localStorage.setItem(clearTimeKey, Date.now());
-                    setComments([]);
-                  }}
-                  title="Clear chat locally"
-                >
-                  Clear Chat
-                </button>
-                <button
-                  className="text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors z-10 shadow"
-                  onClick={() => setShowChatModal(false)}
-                  title="Close"
-                  aria-label="Close"
-                >
-                  &times;
-                </button>
+            { !isUpcoming ? (
+              <div className="flex flex-col items-center justify-center h-60 p-8">
+                <FaCommentDots className="text-4xl text-gray-400 mb-4" />
+                <div className="text-lg font-semibold text-gray-500 text-center">Chat not available for outdated appointments</div>
               </div>
-            </div>
-            <div className="flex-1 max-h-60 overflow-y-auto space-y-2 mb-4 px-4 pt-4 animate-fadeInChat">
-              {filteredComments.map((c, index) => {
-                const isMe = c.senderEmail === currentUser.email;
-                const isEditing = editingComment === c._id;
-                return (
-                  <div key={c._id || index} className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-fadeInChatBubble`} style={{ animationDelay: `${0.03 * index}s` }}>
-                    <div className={`rounded-2xl px-4 py-2 text-sm shadow-lg max-w-[80%] break-words relative ${isMe ? 'bg-gradient-to-r from-blue-400 to-blue-600 text-white' : 'bg-white text-gray-800 border border-gray-200'}`}>
-                      <div className="font-semibold mb-1 flex items-center gap-2">
-                        {isMe ? "You" : c.senderEmail}
-                        <span className="text-gray-300 ml-2 text-[10px]">{new Date(c.timestamp).toLocaleString()}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        {c.deleted ? (
-                          <span className="flex items-center gap-1 text-gray-400 italic">
-                            <FaBan className="inline-block text-lg" /> This message has been deleted.
-                            <button
-                              className="ml-2 text-xs text-red-400 hover:text-red-700 underline"
-                              onClick={() => {
-                                setComments(prev => prev.filter(msg => msg._id !== c._id));
-                                addLocallyRemovedId(appt._id, c._id);
-                              }}
-                              title="Remove this deleted message from your chat view"
-                            >
-                              Remove
-                            </button>
-                          </span>
-                        ) : isEditing ? (
-                          <>
-                            <input
-                              type="text"
-                              className="border rounded px-2 py-1 text-xs w-40 text-gray-900 bg-white focus:bg-white"
-                              value={editText}
-                              onChange={e => setEditText(e.target.value)}
-                              onKeyDown={e => {
-                                if (e.key === 'Enter' && !e.shiftKey) {
-                                  e.preventDefault();
-                                  handleEditComment(c._id);
-                                }
-                              }}
-                              autoFocus
-                            />
-                            <button onClick={() => handleEditComment(c._id)} className="text-green-600 hover:text-green-800 font-bold ml-1">Save</button>
-                            <button onClick={() => { setEditingComment(null); setEditText(""); }} className="text-gray-500 hover:text-gray-700 font-bold ml-1">Cancel</button>
-                          </>
-                        ) : (
-                          <div>
-                            {c.message}
-                            {c.edited && (
-                              <span className="ml-2 text-[10px] italic text-gray-300">(Edited)</span>
+            ) : (
+              <>
+                <div className="flex items-center gap-2 px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-200 to-purple-200 rounded-t-2xl relative">
+                  <FaCommentDots className="text-blue-600 text-xl" />
+                  <h3 className="text-lg font-bold text-blue-800">Chat</h3>
+                  <div className="flex items-center gap-3 ml-auto">
+                    <button
+                      className="text-xs text-red-600 hover:underline"
+                      onClick={() => {
+                        localStorage.setItem(clearTimeKey, Date.now());
+                        setComments([]);
+                      }}
+                      title="Clear chat locally"
+                    >
+                      Clear Chat
+                    </button>
+                    <button
+                      className="text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors z-10 shadow"
+                      onClick={() => setShowChatModal(false)}
+                      title="Close"
+                      aria-label="Close"
+                    >
+                      &times;
+                    </button>
+                  </div>
+                </div>
+                <div className="flex-1 max-h-60 overflow-y-auto space-y-2 mb-4 px-4 pt-4 animate-fadeInChat">
+                  {filteredComments.map((c, index) => {
+                    const isMe = c.senderEmail === currentUser.email;
+                    const isEditing = editingComment === c._id;
+                    return (
+                      <div key={c._id || index} className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-fadeInChatBubble`} style={{ animationDelay: `${0.03 * index}s` }}>
+                        <div className={`rounded-2xl px-4 py-2 text-sm shadow-lg max-w-[80%] break-words relative ${isMe ? 'bg-gradient-to-r from-blue-400 to-blue-600 text-white' : 'bg-white text-gray-800 border border-gray-200'}`}>
+                          <div className="font-semibold mb-1 flex items-center gap-2">
+                            {isMe ? "You" : c.senderEmail}
+                            <span className="text-gray-300 ml-2 text-[10px]">{new Date(c.timestamp).toLocaleString()}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {c.deleted ? (
+                              <span className="flex items-center gap-1 text-gray-400 italic">
+                                <FaBan className="inline-block text-lg" /> This message has been deleted.
+                                <button
+                                  className="ml-2 text-xs text-red-400 hover:text-red-700 underline"
+                                  onClick={() => {
+                                    setComments(prev => prev.filter(msg => msg._id !== c._id));
+                                    addLocallyRemovedId(appt._id, c._id);
+                                  }}
+                                  title="Remove this deleted message from your chat view"
+                                >
+                                  Remove
+                                </button>
+                              </span>
+                            ) : isEditing ? (
+                              <>
+                                <input
+                                  type="text"
+                                  className="border rounded px-2 py-1 text-xs w-40 text-gray-900 bg-white focus:bg-white"
+                                  value={editText}
+                                  onChange={e => setEditText(e.target.value)}
+                                  onKeyDown={e => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                      e.preventDefault();
+                                      handleEditComment(c._id);
+                                    }
+                                  }}
+                                  autoFocus
+                                />
+                                <button onClick={() => handleEditComment(c._id)} className="text-green-600 hover:text-green-800 font-bold ml-1">Save</button>
+                                <button onClick={() => { setEditingComment(null); setEditText(""); }} className="text-gray-500 hover:text-gray-700 font-bold ml-1">Cancel</button>
+                              </>
+                            ) : (
+                              <div>
+                                {c.message}
+                                {c.edited && (
+                                  <span className="ml-2 text-[10px] italic text-gray-300">(Edited)</span>
+                                )}
+                              </div>
                             )}
                           </div>
-                        )}
-                      </div>
-                      {(c.senderEmail === currentUser.email) && !isEditing && !c.deleted && (
-                        <div className="flex items-center gap-2 mt-1">
-                          <button
-                            onClick={() => startEditing(c)}
-                            className="text-blue-200 hover:text-white"
-                            title="Edit comment"
-                          >
-                            <FaPen size={12} />
-                          </button>
-                          <button
-                            className="text-red-200 hover:text-white"
-                            onClick={async () => {
-                              if (!window.confirm('Are you sure you want to delete this comment?')) return;
-                              try {
-                                const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${c._id}`, {
-                                  method: 'DELETE',
-                                  credentials: 'include'
-                                });
-                                const data = await res.json();
-                                if (res.ok) {
-                                  setComments(data.comments);
-                                  toast.success("Comment deleted successfully!");
-                                } else {
-                                  toast.error(data.message || 'Failed to delete comment.');
-                                }
-                              } catch (err) {
-                                toast.error('An error occurred. Please try again.');
-                              }
-                            }}
-                          >
-                            <FaTrash className="group-hover:text-red-900 group-hover:scale-125 group-hover:animate-shake transition-all duration-200" />
-                          </button>
-                          <span className="ml-1">
-                            {c.status === "read" ? <FaCheckDouble className="text-white inline" /> :
-                              c.status === "delivered" ? <FaCheckDouble className="text-white/70 inline" /> :
-                              <FaCheck className="text-white/70 inline" />}
-                          </span>
+                          {(c.senderEmail === currentUser.email) && !isEditing && !c.deleted && (
+                            <div className="flex items-center gap-2 mt-1">
+                              <button
+                                onClick={() => startEditing(c)}
+                                className="text-blue-200 hover:text-white"
+                                title="Edit comment"
+                              >
+                                <FaPen size={12} />
+                              </button>
+                              <button
+                                className="text-red-200 hover:text-white"
+                                onClick={async () => {
+                                  if (!window.confirm('Are you sure you want to delete this comment?')) return;
+                                  try {
+                                    const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${c._id}`, {
+                                      method: 'DELETE',
+                                      credentials: 'include'
+                                    });
+                                    const data = await res.json();
+                                    if (res.ok) {
+                                      setComments(data.comments);
+                                      toast.success("Comment deleted successfully!");
+                                    } else {
+                                      toast.error(data.message || 'Failed to delete comment.');
+                                    }
+                                  } catch (err) {
+                                    toast.error('An error occurred. Please try again.');
+                                  }
+                                }}
+                              >
+                                <FaTrash className="group-hover:text-red-900 group-hover:scale-125 group-hover:animate-shake transition-all duration-200" />
+                              </button>
+                              <span className="ml-1">
+                                {c.status === "read" ? <FaCheckDouble className="text-white inline" /> :
+                                  c.status === "delivered" ? <FaCheckDouble className="text-white/70 inline" /> :
+                                  <FaCheck className="text-white/70 inline" />}
+                              </span>
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-              <div ref={chatEndRef} />
-            </div>
-            <div className="flex gap-2 mt-2 px-4 pb-4">
-              <input
-                type="text"
-                className="flex-1 px-3 py-2 border rounded-full text-sm focus:ring-2 focus:ring-blue-200 shadow"
-                placeholder="Type a message..."
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') handleCommentSend(); }}
-              />
-              <button
-                onClick={handleCommentSend}
-                disabled={sending || !comment.trim()}
-                className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-5 py-2 rounded-full text-sm font-semibold shadow hover:from-blue-600 hover:to-purple-600 transition disabled:opacity-50"
-              >
-                Send
-              </button>
-            </div>
-            {/* Animations for chat bubbles */}
-            <style jsx>{`
-              @keyframes fadeInChatBubble {
-                from { opacity: 0; transform: translateY(10px) scale(0.98); }
-                to { opacity: 1; transform: translateY(0) scale(1); }
-              }
-              .animate-fadeInChatBubble {
-                animation: fadeInChatBubble 0.4s cubic-bezier(0.4,0,0.2,1) both;
-              }
-              @keyframes fadeInChat {
-                from { opacity: 0; }
-                to { opacity: 1; }
-              }
-              .animate-fadeInChat {
-                animation: fadeInChat 0.3s cubic-bezier(0.4,0,0.2,1) both;
-              }
-            `}</style>
+                      </div>
+                    );
+                  })}
+                  <div ref={chatEndRef} />
+                </div>
+                <div className="flex gap-2 mt-2 px-4 pb-4">
+                  <input
+                    type="text"
+                    className="flex-1 px-3 py-2 border rounded-full text-sm focus:ring-2 focus:ring-blue-200 shadow"
+                    placeholder="Type a message..."
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') handleCommentSend(); }}
+                  />
+                  <button
+                    onClick={handleCommentSend}
+                    disabled={sending || !comment.trim()}
+                    className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-5 py-2 rounded-full text-sm font-semibold shadow hover:from-blue-600 hover:to-purple-600 transition disabled:opacity-50"
+                  >
+                    Send
+                  </button>
+                </div>
+                {/* Animations for chat bubbles */}
+                <style jsx>{`
+                  @keyframes fadeInChatBubble {
+                    from { opacity: 0; transform: translateY(10px) scale(0.98); }
+                    to { opacity: 1; transform: translateY(0) scale(1); }
+                  }
+                  .animate-fadeInChatBubble {
+                    animation: fadeInChatBubble 0.4s cubic-bezier(0.4,0,0.2,1) both;
+                  }
+                  @keyframes fadeInChat {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                  }
+                  .animate-fadeInChat {
+                    animation: fadeInChat 0.3s cubic-bezier(0.4,0,0.2,1) both;
+                  }
+                `}</style>
+              </>
+            )}
           </div>
         </div>
       )}
