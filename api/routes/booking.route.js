@@ -1136,4 +1136,21 @@ router.post("/admin", verifyToken, async (req, res) => {
   }
 });
 
+// GET: Fetch a single booking by ID (with comments)
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const bookingDoc = await booking.findById(id)
+      .populate('buyerId', 'username email mobileNumber')
+      .populate('sellerId', 'username email mobileNumber')
+      .populate('listingId', '_id name address');
+    if (!bookingDoc) {
+      return res.status(404).json({ message: 'Appointment not found.' });
+    }
+    res.status(200).json(bookingDoc);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch appointment.' });
+  }
+});
+
 export default router;
