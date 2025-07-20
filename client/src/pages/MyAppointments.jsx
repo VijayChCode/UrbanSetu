@@ -719,11 +719,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const isAdminContext = location.pathname.includes('/admin');
   const isSeller = appt.role === 'seller';
   const isBuyer = appt.role === 'buyer';
-  const canSeeContactInfo = (isAdmin || appt.status === 'accepted') && isUpcoming;
-  const otherParty = isSeller ? appt.buyerId : appt.sellerId;
-
+  
   // Add function to check if appointment is upcoming
   const isUpcoming = new Date(appt.date) > new Date() || (new Date(appt.date).toDateString() === new Date().toDateString() && (!appt.time || appt.time > new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })));
+  
+  const canSeeContactInfo = (isAdmin || appt.status === 'accepted') && isUpcoming;
+  const otherParty = isSeller ? appt.buyerId : appt.sellerId;
 
   const handleCommentSend = async () => {
     if (!comment.trim()) return;
