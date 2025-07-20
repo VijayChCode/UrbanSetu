@@ -894,12 +894,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   React.useEffect(() => {
     function handleCommentUpdateNotify(data) {
       if (data.appointmentId === appt._id && !showChatModal) {
-        toast.custom((t) => (
-          <div className="bg-blue-600 text-white px-4 py-2 rounded shadow-lg flex items-center gap-2 animate-bounce-in">
-            <FaCommentDots /> New message from {data.comment.senderEmail || 'User'}
-            <button onClick={() => { setShowChatModal(true); toast.dismiss(t.id); }} className="ml-4 bg-white text-blue-700 px-2 py-1 rounded">Open Chat</button>
-          </div>
-        ));
+        toast.info(`New message from ${data.comment.senderEmail || 'User'}`);
       }
     }
     socket.on('commentUpdate', handleCommentUpdateNotify);
