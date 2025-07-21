@@ -1110,15 +1110,35 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     };
   }, [otherParty?._id, appt._id]);
 
+  // Add this helper function near the top of AppointmentRow or before swipeHandlers
+  function getMsgIdFromEvent(event) {
+    let el = event.target;
+    while (el && !el.getAttribute('data-msgid')) {
+      el = el.parentElement;
+    }
+    return el ? el.getAttribute('data-msgid') : null;
+  }
+
   const swipeHandlers = useSwipeable({
     onSwipedRight: (eventData) => {
-      // Only allow reply on mobile, not for own or deleted messages
-      if (eventData && eventData.event && eventData.event.target) {
-        const msgId = eventData.event.target.getAttribute('data-msgid');
+      if (eventData && eventData.event) {
+        const msgId = getMsgIdFromEvent(eventData.event);
         const msg = comments.find(c => c._id === msgId);
         if (msg && !msg.deleted && window.innerWidth < 768) {
           setReplyTo(msg);
           setSwipedMsgId(msg._id);
+          setTimeout(() => setSwipedMsgId(null), 400);
+        }
+      }
+    },
+    onSwipedLeft: (eventData) => {
+      if (eventData && eventData.event) {
+        const msgId = getMsgIdFromEvent(eventData.event);
+        const msg = comments.find(c => c._id === msgId);
+        if (msg && !msg.deleted && window.innerWidth < 768) {
+          setReplyTo(msg);
+          setSwipedMsgId(msg._id);
+          setTimeout(() => setSwipedMsgId(null), 400);
         }
       }
     },
