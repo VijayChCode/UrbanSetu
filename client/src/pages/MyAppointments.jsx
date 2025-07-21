@@ -780,9 +780,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       const data = await res.json();
       if (res.ok) {
         setComments(prev => data.comments.map(newC => {
+          // For the edited message, always use the backend status (reset to 'sent' or 'delivered'), never preserve 'read'
+          if (newC._id === commentId) {
+            return newC;
+          }
           // Only preserve 'read' for messages that are not the edited one
           const localC = prev.find(lc => lc._id === newC._id);
-          if (localC && localC.status === 'read' && newC.status !== 'read' && newC._id !== commentId) {
+          if (localC && localC.status === 'read' && newC.status !== 'read') {
             return { ...newC, status: 'read' };
           }
           return newC;
