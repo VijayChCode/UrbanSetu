@@ -180,7 +180,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('typing', ({ toUserId, fromUserId, appointmentId }) => {
-    socket.to(toUserId).emit('typing', { fromUserId, appointmentId });
+    io.to(toUserId).emit('typing', { fromUserId, appointmentId });
   });
 
   socket.on('disconnect', () => {
