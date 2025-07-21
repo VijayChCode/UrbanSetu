@@ -1442,64 +1442,62 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               </div>
                             )}
                           </div>
-                          {(c.senderEmail === currentUser.email) && !isEditing && !c.deleted && (
-                            <div className="flex items-center gap-2 mt-1">
-                              <button
-                                onClick={() => startEditing(c)}
-                                className="text-green-700 hover:text-green-900"
-                                title="Edit comment"
-                              >
-                                <FaPen size={12} />
-                              </button>
-                              <button
-                                className="text-red-700 hover:text-red-900"
-                                onClick={async () => {
-                                  if (!window.confirm('Are you sure you want to delete this comment?')) return;
-                                  try {
-                                    const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${c._id}`, {
-                                      method: 'DELETE',
-                                      credentials: 'include'
-                                    });
-                                    const data = await res.json();
-                                    if (res.ok) {
-                                      setComments(prev => data.comments.map(newC => {
-                                        const localC = prev.find(lc => lc._id === newC._id);
-                                        if (localC && localC.status === 'read' && newC.status !== 'read') {
-                                          return { ...newC, status: 'read' };
-                                        }
-                                        return newC;
-                                      }));
-                                      toast.success("Comment deleted successfully!");
-                                    } else {
-                                      toast.error(data.message || 'Failed to delete comment.');
+                          <div className="flex items-center gap-2 justify-end mt-1">
+                            <button
+                              className={`hidden md:inline ${isMe ? 'text-yellow-500 hover:text-yellow-700' : 'text-blue-600 hover:text-blue-800'}`}
+                              onClick={() => { setReplyTo(c); inputRef.current?.focus(); }}
+                              title="Reply"
+                            >
+                              <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c4.28 0 6.92 1.45 8.84 4.55.23.36.76.09.65-.32C18.31 13.13 15.36 10.36 10 9z"/></svg>
+                            </button>
+                            {(c.senderEmail === currentUser.email) && !isEditing && !c.deleted && (
+                              <>
+                                <button
+                                  onClick={() => startEditing(c)}
+                                  className="text-green-700 hover:text-green-900"
+                                  title="Edit comment"
+                                >
+                                  <FaPen size={12} />
+                                </button>
+                                <button
+                                  className="text-red-700 hover:text-red-900"
+                                  onClick={async () => {
+                                    if (!window.confirm('Are you sure you want to delete this comment?')) return;
+                                    try {
+                                      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${c._id}`, {
+                                        method: 'DELETE',
+                                        credentials: 'include'
+                                      });
+                                      const data = await res.json();
+                                      if (res.ok) {
+                                        setComments(prev => data.comments.map(newC => {
+                                          const localC = prev.find(lc => lc._id === newC._id);
+                                          if (localC && localC.status === 'read' && newC.status !== 'read') {
+                                            return { ...newC, status: 'read' };
+                                          }
+                                          return newC;
+                                        }));
+                                        toast.success("Comment deleted successfully!");
+                                      } else {
+                                        toast.error(data.message || 'Failed to delete comment.');
+                                      }
+                                    } catch (err) {
+                                      toast.error('An error occurred. Please try again.');
                                     }
-                                  } catch (err) {
-                                    toast.error('An error occurred. Please try again.');
-                                  }
-                                }}
-                              >
-                                <FaTrash className="group-hover:text-red-900 group-hover:scale-125 group-hover:animate-shake transition-all duration-200" />
-                              </button>
-                              <span className="ml-1">
-                                {c.readBy?.includes(otherParty?._id)
-                                  ? <FaCheckDouble className="text-white inline" />
-                                  : c.status === "delivered"
-                                    ? <FaCheckDouble className="text-white/70 inline" />
-                                    : <FaCheck className="text-white/70 inline" />}
-                              </span>
-                            </div>
-                          )}
-                          {(!isEditing && !c.deleted) && (
-                            <div className="flex items-center gap-2 mt-1">
-                              <button
-                                className={`hidden md:inline ${isMe ? 'text-yellow-500 hover:text-yellow-700' : 'text-blue-600 hover:text-blue-800'}`}
-                                onClick={() => { setReplyTo(c); inputRef.current?.focus(); }}
-                                title="Reply"
-                              >
-                                <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c4.28 0 6.92 1.45 8.84 4.55.23.36.76.09.65-.32C18.31 13.13 15.36 10.36 10 9z"/></svg>
-                              </button>
-                            </div>
-                          )}
+                                  }}
+                                >
+                                  <FaTrash className="group-hover:text-red-900 group-hover:scale-125 group-hover:animate-shake transition-all duration-200" />
+                                </button>
+                                <span className="ml-1">
+                                  {c.readBy?.includes(otherParty?._id)
+                                    ? <FaCheckDouble className="text-white inline" />
+                                    : c.status === "delivered"
+                                      ? <FaCheckDouble className="text-white/70 inline" />
+                                      : <FaCheck className="text-white/70 inline" />}
+                                </span>
+                              </>
+                            )}
+                          </div>
                         </div>
                       </div>
                     );
