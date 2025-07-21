@@ -1425,7 +1425,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             )}
                             <div className="font-semibold mb-1 flex items-center gap-2 flex-wrap break-all">
                               <span className="truncate max-w-[60%] inline-block align-middle">{isMe ? "You" : (c.senderName || c.senderEmail)}</span>
-                              <span className="text-gray-300 ml-2 text-[10px]">{new Date(c.timestamp).toLocaleString()}</span>
                             </div>
                             <div className="flex items-center gap-1">
                               {c.deleted ? (
