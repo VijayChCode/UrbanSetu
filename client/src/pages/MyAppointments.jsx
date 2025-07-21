@@ -1415,14 +1415,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                     const formattedDate = currentDate.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric' });
 
                     return (
-                      <>
+                      <React.Fragment key={c._id || index}>
                         {isNewDay && (
                           <div className="w-full flex justify-center my-2">
                             <span className="bg-gray-200 text-gray-700 text-xs px-3 py-1 rounded-full shadow">{getDateLabel(currentDate)}</span>
                           </div>
                         )}
                         <div
-                          key={c._id || index}
                           {...swipeHandlers} data-msgid={c._id}
                           className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-fadeInChatBubble`} style={{ animationDelay: `${0.03 * index}s` }}
                         >
@@ -1571,7 +1570,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             </div>
                           </div>
                         </div>
-                      </>
+                      </React.Fragment>
                     );
                   })}
                   <div ref={chatEndRef} />
