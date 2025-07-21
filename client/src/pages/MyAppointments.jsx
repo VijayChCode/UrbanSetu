@@ -1531,35 +1531,14 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               )}
                               {!isMe && !isEditing && !c.deleted && (
                                 <button
-                                  className="text-red-700 hover:text-red-900"
-                                  onClick={async () => {
-                                    if (!window.confirm('Are you sure you want to delete this message?')) return;
-                                    try {
-                                      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${c._id}`, {
-                                        method: 'DELETE',
-                                        credentials: 'include'
-                                      });
-                                      const data = await res.json();
-                                      if (res.ok) {
-                                        setComments(prev => data.comments.map(newC => {
-                                          const localC = prev.find(lc => lc._id === newC._id);
-                                          if (localC && localC.status === 'read' && newC.status !== 'read') {
-                                            return { ...newC, status: 'read' };
-                                          }
-                                          return newC;
-                                        }));
-                                        addLocallyRemovedId(appt._id, c._id);
-                                        toast.success("Message deleted successfully!");
-                                      } else {
-                                        toast.error(data.message || 'Failed to delete message.');
-                                      }
-                                    } catch (err) {
-                                      toast.error('An error occurred. Please try again.');
-                                    }
+                                  className="text-red-500 hover:text-red-700 text-xs"
+                                  onClick={() => {
+                                    setComments(prev => prev.filter(msg => msg._id !== c._id));
+                                    addLocallyRemovedId(appt._id, c._id);
                                   }}
-                                  title="Delete message"
+                                  title="Delete message locally"
                                 >
-                                  <FaTrash className="group-hover:text-red-900 group-hover:scale-125 group-hover:animate-shake transition-all duration-200" />
+                                  <FaTrash size={14} />
                                 </button>
                               )}
                             </div>
