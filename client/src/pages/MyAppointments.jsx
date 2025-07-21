@@ -745,6 +745,20 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const handleCommentSend = async () => {
     if (!comment.trim()) return;
     setSending(true);
+
+    // Create a temporary message object
+    const tempId = `temp-${Date.now()}`;
+    const tempMessage = {
+      _id: tempId,
+      senderEmail: currentUser.email,
+      message: comment,
+      status: "sending",
+      timestamp: new Date().toISOString(),
+      readBy: [currentUser._id],
+    };
+    setComments(prev => [...prev, tempMessage]);
+    setComment("");
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment`, {
         method: "POST",
@@ -754,19 +768,19 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       });
       const data = await res.json();
       if (res.ok) {
-        setComments(prev => data.comments.map(newC => {
-          const localC = prev.find(lc => lc._id === newC._id);
-          if (localC && localC.status === 'read' && newC.status !== 'read') {
-            return { ...newC, status: 'read' };
-          }
-          return newC;
-        }));
-        setComment("");
+        // Replace the temp message with the real one from the backend
+        setComments(prev => [
+          ...prev.filter(msg => msg._id !== tempId),
+          ...data.comments.filter(newC => !prev.some(msg => msg._id === newC._id))
+        ]);
         toast.success("Comment sent successfully!");
       } else {
+        // Remove the temp message on error
+        setComments(prev => prev.filter(msg => msg._id !== tempId));
         toast.error(data.message || "Failed to send comment.");
       }
     } catch (err) {
+      setComments(prev => prev.filter(msg => msg._id !== tempId));
       toast.error('An error occurred. Please try again.');
     }
     setSending(false);
