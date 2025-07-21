@@ -919,9 +919,15 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         setComments((prev) => {
           const idx = prev.findIndex(c => c._id === data.comment._id);
           if (idx !== -1) {
-            // Update the existing comment in place
+            // Update the existing comment in place, but do not downgrade 'read' to 'delivered'
             const updated = [...prev];
-            updated[idx] = data.comment;
+            const localComment = prev[idx];
+            const incomingComment = data.comment;
+            let status = incomingComment.status;
+            if (localComment.status === 'read' && incomingComment.status !== 'read') {
+              status = 'read';
+            }
+            updated[idx] = { ...incomingComment, status };
             return updated;
           } else {
             // Only add if not present (for new messages)
