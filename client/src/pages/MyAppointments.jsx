@@ -5,6 +5,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import Appointment from "../components/Appointment";
 import { toast, ToastContainer } from 'react-toastify';
 import { socket } from "../utils/socket";
+import { useRef } from "react";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -711,6 +712,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const [showChatModal, setShowChatModal] = useState(false);
   const chatEndRef = React.useRef(null);
   const [isOtherPartyOnline, setIsOtherPartyOnline] = useState(false);
+  const [isOtherPartyTyping, setIsOtherPartyTyping] = useState(false);
+  const typingTimeoutRef = useRef(null);
 
   // Store locally removed deleted message IDs per appointment (move inside AppointmentRow)
   function getLocallyRemovedIds(apptId) {
@@ -1062,6 +1065,22 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     };
   }, [showChatModal, otherParty?._id]);
 
+  // Listen for typing events from the other party
+  useEffect(() => {
+    function handleTyping(data) {
+      if (data.fromUserId === otherParty?._id && data.appointmentId === appt._id) {
+        setIsOtherPartyTyping(true);
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = setTimeout(() => setIsOtherPartyTyping(false), 2000);
+      }
+    }
+    socket.on('typing', handleTyping);
+    return () => {
+      socket.off('typing', handleTyping);
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    };
+  }, [otherParty?._id, appt._id]);
+
   return (
     <>
       <tr className={`hover:bg-blue-50 transition align-top ${!isUpcoming ? 'bg-gray-100' : ''}`}>
@@ -1287,7 +1306,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 <div className="flex items-center gap-2 px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-200 to-purple-200 rounded-t-2xl relative">
                   <FaCommentDots className="text-blue-600 text-xl" />
                   <h3 className="text-lg font-bold text-blue-800">Chat</h3>
-                  {isOtherPartyOnline ? (
+                  {isOtherPartyTyping ? (
+                    <span className="ml-3 text-blue-600 font-semibold text-sm">Typing...</span>
+                  ) : isOtherPartyOnline ? (
                     <span className="ml-3 text-green-600 font-semibold text-sm">Online</span>
                   ) : (
                     <span className="ml-3 text-gray-600 font-semibold text-sm">Offline</span>
@@ -1425,7 +1446,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                     className="flex-1 px-3 py-2 border rounded-full text-sm focus:ring-2 focus:ring-blue-200 shadow"
                     placeholder="Type a message..."
                     value={comment}
-                    onChange={(e) => setComment(e.target.value)}
+                    onChange={e => {
+                      setComment(e.target.value);
+                      socket.emit('typing', { toUserId: otherParty._id, fromUserId: currentUser._id, appointmentId: appt._id });
+                    }}
                     onKeyDown={e => { if (e.key === 'Enter') handleCommentSend(); }}
                   />
                   <button
