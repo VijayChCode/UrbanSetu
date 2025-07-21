@@ -647,7 +647,7 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-xl font-semibold text-gray-800">
-          Reviews ({reviews.length})
+          Reviews ({reviews.filter(r => r.status === 'approved').length})
         </h3>
         
         {/* Sort Options */}
@@ -674,7 +674,7 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
         </div>
       </div>
       
-      {reviews.map((review) => (
+      {reviews.filter(r => r.status === 'approved').map((review) => (
         <div key={review._id} className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
           <div className="flex items-start justify-between">
             <div className="flex items-center space-x-3 mb-3">
