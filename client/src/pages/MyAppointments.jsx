@@ -1377,9 +1377,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                 <FaTrash className="group-hover:text-red-900 group-hover:scale-125 group-hover:animate-shake transition-all duration-200" />
                               </button>
                               <span className="ml-1">
-                                {c.status === "read" ? <FaCheckDouble className="text-white inline" /> :
-                                  c.status === "delivered" ? <FaCheckDouble className="text-white/70 inline" /> :
-                                  <FaCheck className="text-white/70 inline" />}
+                                {c.readBy?.includes(otherParty?._id)
+                                  ? <FaCheckDouble className="text-white inline" />
+                                  : c.status === "delivered"
+                                    ? <FaCheckDouble className="text-white/70 inline" />
+                                    : <FaCheck className="text-white/70 inline" />}
                               </span>
                             </div>
                           )}
