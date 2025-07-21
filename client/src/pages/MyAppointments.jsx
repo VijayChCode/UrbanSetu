@@ -5,7 +5,6 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import Appointment from "../components/Appointment";
 import { toast, ToastContainer } from 'react-toastify';
 import { socket } from "../utils/socket";
-import { useSwipeable } from 'react-swipeable';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -1119,32 +1118,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     return el ? el.getAttribute('data-msgid') : null;
   }
 
-  const swipeHandlers = useSwipeable({
-    onSwipedRight: (eventData) => {
-      if (eventData && eventData.event) {
-        const msgId = getMsgIdFromEvent(eventData.event);
-        const msg = comments.find(c => c._id === msgId);
-        if (msg && !msg.deleted && window.innerWidth < 768) {
-          setReplyTo(msg);
-          setSwipedMsgId(msg._id);
-          setTimeout(() => setSwipedMsgId(null), 400);
-        }
-      }
-    },
-    onSwipedLeft: (eventData) => {
-      if (eventData && eventData.event) {
-        const msgId = getMsgIdFromEvent(eventData.event);
-        const msg = comments.find(c => c._id === msgId);
-        if (msg && !msg.deleted && window.innerWidth < 768) {
-          setReplyTo(msg);
-          setSwipedMsgId(msg._id);
-          setTimeout(() => setSwipedMsgId(null), 400);
-        }
-      }
-    },
-    trackMouse: false,
-  });
-
   return (
     <>
       <tr className={`hover:bg-blue-50 transition align-top ${!isUpcoming ? 'bg-gray-100' : ''}`}>
@@ -1423,7 +1396,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                         )}
                         <div className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-fadeInChatBubble`} style={{ animationDelay: `${0.03 * index}s` }}>
                           <div
-                            {...swipeHandlers} data-msgid={c._id}
                             ref={el => messageRefs.current[c._id] = el}
                             className={`rounded-2xl px-4 py-2 text-sm shadow-lg max-w-[60%] break-words relative ${isMe ? 'bg-gradient-to-r from-blue-400 to-blue-600 text-white' : 'bg-white text-gray-800 border border-gray-200'}`}
                             style={{ animationDelay: `${0.03 * index}s` }}
@@ -1500,7 +1472,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             </div>
                             <div className="flex items-center gap-2 justify-end mt-1">
                               <button
-                                className={`hidden md:inline ${isMe ? 'text-yellow-500 hover:text-yellow-700' : 'text-blue-600 hover:text-blue-800'}`}
+                                className={`${isMe ? 'text-yellow-500 hover:text-yellow-700' : 'text-blue-600 hover:text-blue-800'}`}
                                 onClick={() => { setReplyTo(c); inputRef.current?.focus(); }}
                                 title="Reply"
                               >
