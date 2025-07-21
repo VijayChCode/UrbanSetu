@@ -1287,8 +1287,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 <div className="flex items-center gap-2 px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-200 to-purple-200 rounded-t-2xl relative">
                   <FaCommentDots className="text-blue-600 text-xl" />
                   <h3 className="text-lg font-bold text-blue-800">Chat</h3>
-                  {isOtherPartyOnline && (
+                  {isOtherPartyOnline ? (
                     <span className="ml-3 text-green-600 font-semibold text-sm">Online</span>
+                  ) : (
+                    <span className="ml-3 text-gray-600 font-semibold text-sm">Offline</span>
                   )}
                   <div className="flex items-center gap-3 ml-auto">
                     <button
