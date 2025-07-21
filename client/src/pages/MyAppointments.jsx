@@ -715,6 +715,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const [isOtherPartyOnline, setIsOtherPartyOnline] = useState(false);
   const [isOtherPartyTyping, setIsOtherPartyTyping] = useState(false);
   const typingTimeoutRef = useRef(null);
+  const inputRef = useRef(null); // Add inputRef here
 
   // Store locally removed deleted message IDs per appointment (move inside AppointmentRow)
   function getLocallyRemovedIds(apptId) {
@@ -1492,7 +1493,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             <div className="flex items-center gap-2 mt-1">
                               <button
                                 className={`hidden md:inline ${isMe ? 'text-yellow-500 hover:text-yellow-700' : 'text-blue-600 hover:text-blue-800'}`}
-                                onClick={() => setReplyTo(c)}
+                                onClick={() => { setReplyTo(c); inputRef.current?.focus(); }}
                                 title="Reply"
                               >
                                 <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c4.28 0 6.92 1.45 8.84 4.55.23.36.76.09.65-.32C18.31 13.13 15.36 10.36 10 9z"/></svg>
@@ -1506,6 +1507,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   <div ref={chatEndRef} />
                 </div>
                 <div className="flex gap-2 mt-2 px-4 pb-4">
+                  {replyTo && (
+                    <div className="flex items-center bg-blue-50 border-l-4 border-blue-400 px-2 py-1 mb-2 rounded">
+                      <span className="text-xs text-gray-700 font-semibold mr-2">Replying to:</span>
+                      <span className="text-xs text-gray-600 truncate">{replyTo.message}</span>
+                      <button className="ml-auto text-gray-400 hover:text-gray-700" onClick={() => setReplyTo(null)} title="Cancel reply">&times;</button>
+                    </div>
+                  )}
                   <input
                     type="text"
                     className="flex-1 px-3 py-2 border rounded-full text-sm focus:ring-2 focus:ring-blue-200 shadow"
@@ -1516,6 +1524,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                       socket.emit('typing', { toUserId: otherParty._id, fromUserId: currentUser._id, appointmentId: appt._id });
                     }}
                     onKeyDown={e => { if (e.key === 'Enter') handleCommentSend(); }}
+                    ref={inputRef}
                   />
                   <button
                     onClick={handleCommentSend}
