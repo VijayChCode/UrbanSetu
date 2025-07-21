@@ -1421,11 +1421,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             <span className="bg-gray-200 text-gray-700 text-xs px-3 py-1 rounded-full shadow">{getDateLabel(currentDate)}</span>
                           </div>
                         )}
-                        <div
-                          {...swipeHandlers} data-msgid={c._id}
-                          className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-fadeInChatBubble`} style={{ animationDelay: `${0.03 * index}s` }}
-                        >
-                          <div 
+                        <div className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-fadeInChatBubble`} style={{ animationDelay: `${0.03 * index}s` }}>
+                          <div
+                            {...swipeHandlers} data-msgid={c._id}
                             ref={el => messageRefs.current[c._id] = el}
                             className={`rounded-2xl px-4 py-2 text-sm shadow-lg max-w-[60%] break-words relative ${isMe ? 'bg-gradient-to-r from-blue-400 to-blue-600 text-white' : 'bg-white text-gray-800 border border-gray-200'}`}
                             style={{ animationDelay: `${0.03 * index}s` }}
