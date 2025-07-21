@@ -1387,7 +1387,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             ) : (
                               <div>
                                 {c.message}
-                                {c.edited && (
+                                {c.edited && c.originalMessage && c.message !== c.originalMessage && (
                                   <span className="ml-2 text-[10px] italic text-gray-300">(Edited)</span>
                                 )}
                               </div>
