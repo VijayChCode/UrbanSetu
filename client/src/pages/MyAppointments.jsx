@@ -1424,7 +1424,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               </div>
                             )}
                             <div className="font-semibold mb-1 flex items-center gap-2 flex-wrap break-all">
-                              <span className="truncate max-w-[60%] inline-block align-middle">{isMe ? "You" : (otherParty?.username || c.senderName || c.senderEmail)}</span>
+                              <span className="truncate max-w-[60%] min-w-[80px] inline-block align-middle overflow-hidden text-ellipsis">{isMe ? "You" : (otherParty?.username || c.senderName || c.senderEmail)}</span>
                             </div>
                             <div className="flex items-center gap-1">
                               {c.deleted ? (
