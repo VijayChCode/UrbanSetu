@@ -710,6 +710,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const location = useLocation();
   const [showChatModal, setShowChatModal] = useState(false);
   const chatEndRef = React.useRef(null);
+  const [isOtherPartyOnline, setIsOtherPartyOnline] = useState(false);
 
   // Store locally removed deleted message IDs per appointment (move inside AppointmentRow)
   function getLocallyRemovedIds(apptId) {
@@ -1043,6 +1044,24 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const locallyRemovedIds = getLocallyRemovedIds(appt._id);
   const filteredComments = comments.filter(c => new Date(c.timestamp).getTime() > clearTime && !locallyRemovedIds.includes(c._id));
 
+  useEffect(() => {
+    if (!showChatModal || !otherParty?._id) return;
+    // Ask backend if the other party is online
+    socket.emit('checkUserOnline', { userId: otherParty._id });
+    // Listen for response
+    function handleUserOnlineStatus(data) {
+      if (data.userId === otherParty._id) {
+        setIsOtherPartyOnline(!!data.online);
+      }
+    }
+    socket.on('userOnlineStatus', handleUserOnlineStatus);
+    socket.on('userOnlineUpdate', handleUserOnlineStatus);
+    return () => {
+      socket.off('userOnlineStatus', handleUserOnlineStatus);
+      socket.off('userOnlineUpdate', handleUserOnlineStatus);
+    };
+  }, [showChatModal, otherParty?._id]);
+
   return (
     <>
       <tr className={`hover:bg-blue-50 transition align-top ${!isUpcoming ? 'bg-gray-100' : ''}`}>
@@ -1268,6 +1287,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 <div className="flex items-center gap-2 px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-200 to-purple-200 rounded-t-2xl relative">
                   <FaCommentDots className="text-blue-600 text-xl" />
                   <h3 className="text-lg font-bold text-blue-800">Chat</h3>
+                  {isOtherPartyOnline && (
+                    <span className="ml-3 text-green-600 font-semibold text-sm">Online</span>
+                  )}
                   <div className="flex items-center gap-3 ml-auto">
                     <button
                       className="text-xs text-red-600 hover:underline"
