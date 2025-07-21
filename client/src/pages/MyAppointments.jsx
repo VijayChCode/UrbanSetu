@@ -702,6 +702,15 @@ export default function MyAppointments() {
   );
 }
 
+function getDateLabel(date) {
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+  if (date.toDateString() === today.toDateString()) return 'Today';
+  if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
+  return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
 function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDelete, actionLoading, onShowOtherParty, onOpenReinitiate, handleArchiveAppointment, handleUnarchiveAppointment, isArchived, onCancelRefresh }) {
   const [replyTo, setReplyTo] = useState(null);
   const [comment, setComment] = useState("");
@@ -1378,141 +1387,153 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   {filteredComments.map((c, index) => {
                     const isMe = c.senderEmail === currentUser.email;
                     const isEditing = editingComment === c._id;
+                    const currentDate = new Date(c.timestamp);
+                    const previousDate = index > 0 ? new Date(comments[index - 1].timestamp) : null;
+                    const isNewDay = previousDate ? currentDate.toDateString() !== previousDate.toDateString() : true;
+                    const formattedDate = currentDate.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric' });
+
                     return (
-                      <div
-                        key={c._id || index}
-                        {...swipeHandlers} data-msgid={c._id}
-                        className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-fadeInChatBubble`} style={{ animationDelay: `${0.03 * index}s` }}
-                      >
-                        <div 
-                          ref={el => messageRefs.current[c._id] = el}
-                          className={`rounded-2xl px-4 py-2 text-sm shadow-lg max-w-[60%] break-words relative ${isMe ? 'bg-gradient-to-r from-blue-400 to-blue-600 text-white' : 'bg-white text-gray-800 border border-gray-200'}`}
-                          style={{ animationDelay: `${0.03 * index}s` }}
-                        >
-                          {/* Reply preview above message if this is a reply */}
-                          {c.replyTo && (
-                            <div className="border-l-4 border-blue-300 pl-2 mb-1 text-xs text-gray-500 bg-blue-50 rounded w-full max-w-full break-words cursor-pointer" onClick={() => {
-                                if (messageRefs.current[c.replyTo]) {
-                                  messageRefs.current[c.replyTo].scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                  messageRefs.current[c.replyTo].classList.add('ring-2', 'ring-yellow-400');
-                                  setTimeout(() => {
-                                    messageRefs.current[c.replyTo].classList.remove('ring-2', 'ring-yellow-400');
-                                  }, 1000);
-                                }
-                              }} role="button" tabIndex={0} aria-label="Go to replied message">
-                              <span className="text-xs text-gray-600 truncate">{comments.find(msg => msg._id === c.replyTo)?.message || 'Original message'}</span>
-                            </div>
-                          )}
-                          <div className="font-semibold mb-1 flex items-center gap-2 flex-wrap break-all">
-                            <span className="truncate max-w-[60%] inline-block align-middle">{isMe ? "You" : (c.senderName || c.senderEmail)}</span>
-                            <span className="text-gray-300 ml-2 text-[10px]">{new Date(c.timestamp).toLocaleString()}</span>
+                      <>
+                        {isNewDay && (
+                          <div className="w-full flex justify-center my-2">
+                            <span className="bg-gray-200 text-gray-700 text-xs px-3 py-1 rounded-full shadow">{getDateLabel(currentDate)}</span>
                           </div>
-                          <div className="flex items-center gap-1">
-                            {c.deleted ? (
-                              <span className="flex items-center gap-1 text-gray-400 italic">
-                                <FaBan className="inline-block text-lg" /> {c.senderEmail === currentUser.email ? "You deleted this message" : "This message was deleted."}
-                                <button
-                                  className="ml-2 text-red-700 hover:text-red-900"
-                                  onClick={() => {
-                                    setComments(prev => prev.filter(msg => msg._id !== c._id));
-                                    addLocallyRemovedId(appt._id, c._id);
-                                  }}
-                                  title="Remove this deleted message from your chat view"
-                                >
-                                  <FaTrash className="group-hover:text-red-900 group-hover:scale-125 group-hover:animate-shake transition-all duration-200" />
-                                </button>
-                              </span>
-                            ) : isEditing ? (
-                              <>
-                                <input
-                                  type="text"
-                                  className="border rounded px-2 py-1 text-xs w-40 text-gray-900 bg-white focus:bg-white"
-                                  value={editText}
-                                  onChange={e => setEditText(e.target.value)}
-                                  onKeyDown={e => {
-                                    if (e.key === 'Enter' && !e.shiftKey) {
-                                      e.preventDefault();
-                                      handleEditComment(c._id);
-                                    }
-                                  }}
-                                  autoFocus
-                                />
-                                <button
-                                  onClick={() => handleEditComment(c._id)}
-                                  className="bg-green-700 hover:bg-green-900 text-white font-bold ml-1 px-3 py-1 rounded"
-                                >Save</button>
-                                <button
-                                  onClick={() => { setEditingComment(null); setEditText(""); }}
-                                  className="bg-red-700 hover:bg-red-900 text-white font-bold ml-1 px-3 py-1 rounded"
-                                >Cancel</button>
-                              </>
-                            ) : (
-                              <div>
-                                {c.message}
-                                {c.edited && (
-                                  <span className="ml-2 text-[10px] italic text-gray-300">(Edited)</span>
-                                )}
+                        )}
+                        <div
+                          key={c._id || index}
+                          {...swipeHandlers} data-msgid={c._id}
+                          className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-fadeInChatBubble`} style={{ animationDelay: `${0.03 * index}s` }}
+                        >
+                          <div 
+                            ref={el => messageRefs.current[c._id] = el}
+                            className={`rounded-2xl px-4 py-2 text-sm shadow-lg max-w-[60%] break-words relative ${isMe ? 'bg-gradient-to-r from-blue-400 to-blue-600 text-white' : 'bg-white text-gray-800 border border-gray-200'}`}
+                            style={{ animationDelay: `${0.03 * index}s` }}
+                          >
+                            {/* Reply preview above message if this is a reply */}
+                            {c.replyTo && (
+                              <div className="border-l-4 border-blue-300 pl-2 mb-1 text-xs text-gray-500 bg-blue-50 rounded w-full max-w-full break-words cursor-pointer" onClick={() => {
+                                  if (messageRefs.current[c.replyTo]) {
+                                    messageRefs.current[c.replyTo].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    messageRefs.current[c.replyTo].classList.add('ring-2', 'ring-yellow-400');
+                                    setTimeout(() => {
+                                      messageRefs.current[c.replyTo].classList.remove('ring-2', 'ring-yellow-400');
+                                    }, 1000);
+                                  }
+                                }} role="button" tabIndex={0} aria-label="Go to replied message">
+                                <span className="text-xs text-gray-600 truncate">{comments.find(msg => msg._id === c.replyTo)?.message || 'Original message'}</span>
                               </div>
                             )}
-                          </div>
-                          <div className="flex items-center gap-2 justify-end mt-1">
-                            <button
-                              className={`hidden md:inline ${isMe ? 'text-yellow-500 hover:text-yellow-700' : 'text-blue-600 hover:text-blue-800'}`}
-                              onClick={() => { setReplyTo(c); inputRef.current?.focus(); }}
-                              title="Reply"
-                            >
-                              <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c4.28 0 6.92 1.45 8.84 4.55.23.36.76.09.65-.32C18.31 13.13 15.36 10.36 10 9z"/></svg>
-                            </button>
-                            {(c.senderEmail === currentUser.email) && !isEditing && !c.deleted && (
-                              <>
-                                <button
-                                  onClick={() => startEditing(c)}
-                                  className="text-green-700 hover:text-green-900"
-                                  title="Edit comment"
-                                >
-                                  <FaPen size={12} />
-                                </button>
-                                <button
-                                  className="text-red-700 hover:text-red-900"
-                                  onClick={async () => {
-                                    if (!window.confirm('Are you sure you want to delete this comment?')) return;
-                                    try {
-                                      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${c._id}`, {
-                                        method: 'DELETE',
-                                        credentials: 'include'
-                                      });
-                                      const data = await res.json();
-                                      if (res.ok) {
-                                        setComments(prev => data.comments.map(newC => {
-                                          const localC = prev.find(lc => lc._id === newC._id);
-                                          if (localC && localC.status === 'read' && newC.status !== 'read') {
-                                            return { ...newC, status: 'read' };
-                                          }
-                                          return newC;
-                                        }));
-                                        toast.success("Comment deleted successfully!");
-                                      } else {
-                                        toast.error(data.message || 'Failed to delete comment.');
-                                      }
-                                    } catch (err) {
-                                      toast.error('An error occurred. Please try again.');
-                                    }
-                                  }}
-                                >
-                                  <FaTrash className="group-hover:text-red-900 group-hover:scale-125 group-hover:animate-shake transition-all duration-200" />
-                                </button>
-                                <span className="ml-1">
-                                  {c.readBy?.includes(otherParty?._id)
-                                    ? <FaCheckDouble className="text-white inline" />
-                                    : c.status === "delivered"
-                                      ? <FaCheckDouble className="text-white/70 inline" />
-                                      : <FaCheck className="text-white/70 inline" />}
+                            <div className="font-semibold mb-1 flex items-center gap-2 flex-wrap break-all">
+                              <span className="truncate max-w-[60%] inline-block align-middle">{isMe ? "You" : (c.senderName || c.senderEmail)}</span>
+                              <span className="text-gray-300 ml-2 text-[10px]">{new Date(c.timestamp).toLocaleString()}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              {c.deleted ? (
+                                <span className="flex items-center gap-1 text-gray-400 italic">
+                                  <FaBan className="inline-block text-lg" /> {c.senderEmail === currentUser.email ? "You deleted this message" : "This message was deleted."}
+                                  <button
+                                    className="ml-2 text-red-700 hover:text-red-900"
+                                    onClick={() => {
+                                      setComments(prev => prev.filter(msg => msg._id !== c._id));
+                                      addLocallyRemovedId(appt._id, c._id);
+                                    }}
+                                    title="Remove this deleted message from your chat view"
+                                  >
+                                    <FaTrash className="group-hover:text-red-900 group-hover:scale-125 group-hover:animate-shake transition-all duration-200" />
+                                  </button>
                                 </span>
-                              </>
-                            )}
+                              ) : isEditing ? (
+                                <>
+                                  <input
+                                    type="text"
+                                    className="border rounded px-2 py-1 text-xs w-40 text-gray-900 bg-white focus:bg-white"
+                                    value={editText}
+                                    onChange={e => setEditText(e.target.value)}
+                                    onKeyDown={e => {
+                                      if (e.key === 'Enter' && !e.shiftKey) {
+                                        e.preventDefault();
+                                        handleEditComment(c._id);
+                                      }
+                                    }}
+                                    autoFocus
+                                  />
+                                  <button
+                                    onClick={() => handleEditComment(c._id)}
+                                    className="bg-green-700 hover:bg-green-900 text-white font-bold ml-1 px-3 py-1 rounded"
+                                  >Save</button>
+                                  <button
+                                    onClick={() => { setEditingComment(null); setEditText(""); }}
+                                    className="bg-red-700 hover:bg-red-900 text-white font-bold ml-1 px-3 py-1 rounded"
+                                  >Cancel</button>
+                                </>
+                              ) : (
+                                <div>
+                                  {c.message}
+                                  {c.edited && (
+                                    <span className="ml-2 text-[10px] italic text-gray-300">(Edited)</span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 justify-end mt-1">
+                              <button
+                                className={`hidden md:inline ${isMe ? 'text-yellow-500 hover:text-yellow-700' : 'text-blue-600 hover:text-blue-800'}`}
+                                onClick={() => { setReplyTo(c); inputRef.current?.focus(); }}
+                                title="Reply"
+                              >
+                                <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c4.28 0 6.92 1.45 8.84 4.55.23.36.76.09.65-.32C18.31 13.13 15.36 10.36 10 9z"/></svg>
+                              </button>
+                              {(c.senderEmail === currentUser.email) && !isEditing && !c.deleted && (
+                                <>
+                                  <button
+                                    onClick={() => startEditing(c)}
+                                    className="text-green-700 hover:text-green-900"
+                                    title="Edit comment"
+                                  >
+                                    <FaPen size={12} />
+                                  </button>
+                                  <button
+                                    className="text-red-700 hover:text-red-900"
+                                    onClick={async () => {
+                                      if (!window.confirm('Are you sure you want to delete this comment?')) return;
+                                      try {
+                                        const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${c._id}`, {
+                                          method: 'DELETE',
+                                          credentials: 'include'
+                                        });
+                                        const data = await res.json();
+                                        if (res.ok) {
+                                          setComments(prev => data.comments.map(newC => {
+                                            const localC = prev.find(lc => lc._id === newC._id);
+                                            if (localC && localC.status === 'read' && newC.status !== 'read') {
+                                              return { ...newC, status: 'read' };
+                                            }
+                                            return newC;
+                                          }));
+                                          toast.success("Comment deleted successfully!");
+                                        } else {
+                                          toast.error(data.message || 'Failed to delete comment.');
+                                        }
+                                      } catch (err) {
+                                        toast.error('An error occurred. Please try again.');
+                                      }
+                                    }}
+                                  >
+                                    <FaTrash className="group-hover:text-red-900 group-hover:scale-125 group-hover:animate-shake transition-all duration-200" />
+                                  </button>
+                                  <span className="ml-1">
+                                    {c.readBy?.includes(otherParty?._id)
+                                      ? <FaCheckDouble className="text-white inline" />
+                                      : c.status === "delivered"
+                                        ? <FaCheckDouble className="text-white/70 inline" />
+                                        : <FaCheck className="text-white/70 inline" />}
+                                  </span>
+                                </>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
+                      </>
                     );
                   })}
                   <div ref={chatEndRef} />
