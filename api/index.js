@@ -154,16 +154,43 @@ io.use(async (socket, next) => {
   next();
 });
 
+let onlineUsers = new Set();
+
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id, 'UserID:', socket.user?._id?.toString());
 
-  // Example: Listen for a new comment event from client (optional)
-  socket.on('newComment', (data) => {
-    io.emit('commentUpdate', data);
+  // Track which user this socket belongs to
+  let thisUserId = null;
+
+  // Listen for presence pings
+  socket.on('userAppointmentsActive', ({ userId }) => {
+    thisUserId = userId;
+    onlineUsers.add(userId);
+    io.emit('userOnlineUpdate', { userId, online: true });
+    if (socket.onlineTimeout) clearTimeout(socket.onlineTimeout);
+    socket.onlineTimeout = setTimeout(() => {
+      onlineUsers.delete(userId);
+      io.emit('userOnlineUpdate', { userId, online: false });
+    }, 15000); // 15 seconds of inactivity = offline
+  });
+
+  // Listen for online status checks
+  socket.on('checkUserOnline', ({ userId }) => {
+    socket.emit('userOnlineStatus', { userId, online: onlineUsers.has(userId) });
   });
 
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id, 'UserID:', socket.user?._id?.toString());
+    if (thisUserId) {
+      onlineUsers.delete(thisUserId);
+      io.emit('userOnlineUpdate', { userId: thisUserId, online: false });
+    }
+    if (socket.onlineTimeout) clearTimeout(socket.onlineTimeout);
+  });
+
+  // Example: Listen for a new comment event from client (optional)
+  socket.on('newComment', (data) => {
+    io.emit('commentUpdate', data);
   });
 });
 
