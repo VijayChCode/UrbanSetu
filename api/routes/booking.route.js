@@ -256,7 +256,7 @@ router.patch('/:id/status', verifyToken, async (req, res) => {
 // POST: Add a comment to an appointment
 router.post('/:id/comment', verifyToken, async (req, res) => {
   try {
-    const { message } = req.body;
+    const { message, replyTo } = req.body;
     const { id } = req.params;
     const userId = req.user.id;
     
@@ -277,9 +277,18 @@ router.post('/:id/comment', verifyToken, async (req, res) => {
       return res.status(403).json({ message: "You can only comment on your own appointments unless you are an admin or root admin." });
     }
     
+    const newComment = {
+      sender: userId,
+      senderEmail: req.user.email,
+      message,
+      status: "sent",
+      readBy: [userId],
+      ...(replyTo ? { replyTo } : {}),
+    };
+    
     const updated = await booking.findByIdAndUpdate(
       id,
-      { $push: { comments: { sender: userId, senderEmail: req.user.email, message, status: "sent", readBy: [userId] } } },
+      { $push: { comments: newComment } },
       { new: true }
     ).populate('buyerId', 'username email mobileNumber')
      .populate('sellerId', 'username email mobileNumber')
@@ -289,9 +298,9 @@ router.post('/:id/comment', verifyToken, async (req, res) => {
     const io = req.app.get('io');
     if (io) {
       // Send only the new comment (last in array)
-      const newComment = updated.comments[updated.comments.length - 1];
-      io.emit('commentUpdate', { appointmentId: id, comment: newComment });
-      io.emit('commentDelivered', { appointmentId: id, commentId: newComment._id });
+      const newCommentObj = updated.comments[updated.comments.length - 1];
+      io.emit('commentUpdate', { appointmentId: id, comment: newCommentObj });
+      io.emit('commentDelivered', { appointmentId: id, commentId: newCommentObj._id });
     }
     
     res.status(200).json(updated);
