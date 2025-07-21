@@ -374,15 +374,17 @@ router.patch('/:id/comment/:commentId', verifyToken, async (req, res) => {
     if (comment.sender.toString() !== userId && !isAdmin) {
       return res.status(403).json({ message: "You can only edit your own comments." });
     }
-    // Update the message in place
-    comment.message = message;
-    comment.edited = true;
-    comment.editedAt = new Date();
-    await appointment.save();
-    // Emit socket event for real-time update
-    const io = req.app.get('io');
-    if (io) {
-      io.emit('commentUpdate', { appointmentId: id, comment });
+    // Only update if the message is different
+    if (comment.message !== message) {
+      comment.message = message;
+      comment.edited = true;
+      comment.editedAt = new Date();
+      await appointment.save();
+      // Emit socket event for real-time update
+      const io = req.app.get('io');
+      if (io) {
+        io.emit('commentUpdate', { appointmentId: id, comment });
+      }
     }
     // Return updated comments array
     res.status(200).json({ comments: appointment.comments });
