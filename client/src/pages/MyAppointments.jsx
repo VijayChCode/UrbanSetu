@@ -6,6 +6,7 @@ import Appointment from "../components/Appointment";
 import { toast, ToastContainer } from 'react-toastify';
 import { socket } from "../utils/socket";
 import { useRef } from "react";
+import { useSwipeable } from 'react-swipeable';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -27,6 +28,7 @@ export default function MyAppointments() {
   const [archivedAppointments, setArchivedAppointments] = useState([]);
   const [showArchived, setShowArchived] = useState(false);
   const navigate = useNavigate();
+  const [replyTo, setReplyTo] = useState(null);
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -755,16 +757,18 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       status: "sending",
       timestamp: new Date().toISOString(),
       readBy: [currentUser._id],
+      ...(replyTo ? { replyTo: replyTo._id } : {}),
     };
     setComments(prev => [...prev, tempMessage]);
     setComment("");
+    setReplyTo(null); // Clear replyTo after sending
 
     try {
       const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
-        body: JSON.stringify({ message: comment }),
+        body: JSON.stringify({ message: comment, ...(replyTo ? { replyTo: replyTo._id } : {}) }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -1349,12 +1353,35 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   </div>
                 </div>
                 <div className="flex-1 max-h-60 overflow-y-auto space-y-2 mb-4 px-4 pt-4 animate-fadeInChat">
+                  {replyTo && (
+                    <div className="flex items-center bg-blue-50 border-l-4 border-blue-400 px-2 py-1 mb-2 rounded">
+                      <span className="text-xs text-gray-700 font-semibold mr-2">Replying to:</span>
+                      <span className="text-xs text-gray-600 truncate">{replyTo.message}</span>
+                      <button className="ml-auto text-gray-400 hover:text-gray-700" onClick={() => setReplyTo(null)} title="Cancel reply">&times;</button>
+                    </div>
+                  )}
                   {filteredComments.map((c, index) => {
                     const isMe = c.senderEmail === currentUser.email;
                     const isEditing = editingComment === c._id;
+                    const handlers = useSwipeable({
+                      onSwipedRight: () => {
+                        if (!isMe && !c.deleted && window.innerWidth < 768) setReplyTo(c);
+                      },
+                      trackMouse: false,
+                    });
                     return (
-                      <div key={c._id || index} className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-fadeInChatBubble`} style={{ animationDelay: `${0.03 * index}s` }}>
-                        <div className={`rounded-2xl px-4 py-2 text-sm shadow-lg max-w-[80%] break-words relative ${isMe ? 'bg-gradient-to-r from-blue-400 to-blue-600 text-white' : 'bg-white text-gray-800 border border-gray-200'}`}>
+                      <div
+                        key={c._id || index}
+                        {...handlers}
+                        className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-fadeInChatBubble`} style={{ animationDelay: `${0.03 * index}s` }}
+                      >
+                        <div className={`rounded-2xl px-4 py-2 text-sm shadow-lg max-w-[80%] break-words relative ${isMe ? 'bg-gradient-to-r from-blue-200 to-blue-400 text-white' : 'bg-white text-gray-800 border border-gray-200'}`}>
+                          {/* Reply preview above message if this is a reply */}
+                          {c.replyTo && (
+                            <div className="border-l-4 border-blue-300 pl-2 mb-1 text-xs text-gray-500 bg-blue-50 rounded">
+                              {comments.find(msg => msg._id === c.replyTo)?.message || 'Original message'}
+                            </div>
+                          )}
                           <div className="font-semibold mb-1 flex items-center gap-2">
                             {isMe ? "You" : c.senderEmail}
                             <span className="text-gray-300 ml-2 text-[10px]">{new Date(c.timestamp).toLocaleString()}</span>
@@ -1457,14 +1484,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           {(!isMe && !isEditing && !c.deleted) && (
                             <div className="flex items-center gap-2 mt-1">
                               <button
-                                className="text-red-700 hover:text-red-900"
-                                onClick={() => {
-                                  setComments(prev => prev.filter(msg => msg._id !== c._id));
-                                  addLocallyRemovedId(appt._id, c._id);
-                                }}
-                                title="Remove this message from your chat view"
+                                className="hidden md:inline text-blue-500 hover:text-blue-700"
+                                onClick={() => setReplyTo(c)}
+                                title="Reply"
                               >
-                                <FaTrash className="group-hover:text-red-900 group-hover:scale-125 group-hover:animate-shake transition-all duration-200" />
+                                <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c4.28 0 6.92 1.45 8.84 4.55.23.36.76.09.65-.32C18.31 13.13 15.36 10.36 10 9z"/></svg>
                               </button>
                             </div>
                           )}
