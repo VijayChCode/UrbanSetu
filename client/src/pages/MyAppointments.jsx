@@ -1098,6 +1098,20 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     };
   }, [otherParty?._id, appt._id]);
 
+  const swipeHandlers = useSwipeable({
+    onSwipedRight: (eventData) => {
+      // Only allow reply on mobile, not for own or deleted messages
+      if (eventData && eventData.event && eventData.event.target) {
+        const msgId = eventData.event.target.getAttribute('data-msgid');
+        const msg = comments.find(c => c._id === msgId);
+        if (msg && msg.senderEmail !== currentUser.email && !msg.deleted && window.innerWidth < 768) {
+          setReplyTo(msg);
+        }
+      }
+    },
+    trackMouse: false,
+  });
+
   return (
     <>
       <tr className={`hover:bg-blue-50 transition align-top ${!isUpcoming ? 'bg-gray-100' : ''}`}>
@@ -1362,16 +1376,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   {filteredComments.map((c, index) => {
                     const isMe = c.senderEmail === currentUser.email;
                     const isEditing = editingComment === c._id;
-                    const handlers = useSwipeable({
-                      onSwipedRight: () => {
-                        if (!isMe && !c.deleted && window.innerWidth < 768) setReplyTo(c);
-                      },
-                      trackMouse: false,
-                    });
                     return (
                       <div
                         key={c._id || index}
-                        {...handlers}
+                        {...swipeHandlers} data-msgid={c._id}
                         className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-fadeInChatBubble`} style={{ animationDelay: `${0.03 * index}s` }}
                       >
                         <div className={`rounded-2xl px-4 py-2 text-sm shadow-lg max-w-[80%] break-words relative ${isMe ? 'bg-gradient-to-r from-blue-200 to-blue-400 text-white' : 'bg-white text-gray-800 border border-gray-200'}`}>
