@@ -1303,7 +1303,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           <div className="flex items-center gap-1">
                             {c.deleted ? (
                               <span className="flex items-center gap-1 text-gray-400 italic">
-                                <FaBan className="inline-block text-lg" /> This message has been deleted.
+                                <FaBan className="inline-block text-lg" /> {c.senderEmail === currentUser.email ? "You deleted this message" : "This message was deleted."}
                                 <button
                                   className="ml-2 text-xs text-red-400 hover:text-red-700 underline"
                                   onClick={() => {
