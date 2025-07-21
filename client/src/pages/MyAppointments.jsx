@@ -711,7 +711,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const [editText, setEditText] = useState("");
   const location = useLocation();
   const [showChatModal, setShowChatModal] = useState(false);
-  const chatEndRef = React.useRef(null);
+  const chatEndRef = useRef(null);
   const [isOtherPartyOnline, setIsOtherPartyOnline] = useState(false);
   const [isOtherPartyTyping, setIsOtherPartyTyping] = useState(false);
   const typingTimeoutRef = useRef(null);
