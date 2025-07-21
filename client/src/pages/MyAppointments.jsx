@@ -1491,7 +1491,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           {(!isEditing && !c.deleted) && (
                             <div className="flex items-center gap-2 mt-1">
                               <button
-                                className="hidden md:inline text-green-600 hover:text-green-800"
+                                className={`hidden md:inline ${isMe ? 'text-yellow-500 hover:text-yellow-700' : 'text-blue-600 hover:text-blue-800'}`}
                                 onClick={() => setReplyTo(c)}
                                 title="Reply"
                               >
