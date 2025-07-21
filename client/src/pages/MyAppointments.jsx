@@ -957,7 +957,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         .then(res => res.json())
         .then(data => {
           if (data && Array.isArray(data.comments)) {
-            setComments(data.comments);
+            setComments(prev => data.comments.map(newC => {
+              const localC = prev.find(lc => lc._id === newC._id);
+              if (localC && localC.status === 'read' && newC.status !== 'read') {
+                return { ...newC, status: 'read' };
+              }
+              return newC;
+            }));
           }
         });
       fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/read`, {
