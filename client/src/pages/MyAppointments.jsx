@@ -1104,7 +1104,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       if (eventData && eventData.event && eventData.event.target) {
         const msgId = eventData.event.target.getAttribute('data-msgid');
         const msg = comments.find(c => c._id === msgId);
-        if (msg && msg.senderEmail !== currentUser.email && !msg.deleted && window.innerWidth < 768) {
+        if (msg && !msg.deleted && window.innerWidth < 768) {
           setReplyTo(msg);
         }
       }
@@ -1382,7 +1382,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                         {...swipeHandlers} data-msgid={c._id}
                         className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-fadeInChatBubble`} style={{ animationDelay: `${0.03 * index}s` }}
                       >
-                        <div className={`rounded-2xl px-4 py-2 text-sm shadow-lg max-w-[80%] break-words relative ${isMe ? 'bg-gradient-to-r from-blue-200 to-blue-400 text-white' : 'bg-white text-gray-800 border border-gray-200'}`}>
+                        <div className={`rounded-2xl px-4 py-2 text-sm shadow-lg max-w-[80%] break-words relative ${isMe ? 'bg-gradient-to-r from-blue-400 to-blue-600 text-white' : 'bg-white text-gray-800 border border-gray-200'}`}>
                           {/* Reply preview above message if this is a reply */}
                           {c.replyTo && (
                             <div className="border-l-4 border-blue-300 pl-2 mb-1 text-xs text-gray-500 bg-blue-50 rounded">
@@ -1488,10 +1488,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               </span>
                             </div>
                           )}
-                          {(!isMe && !isEditing && !c.deleted) && (
+                          {(!isEditing && !c.deleted) && (
                             <div className="flex items-center gap-2 mt-1">
                               <button
-                                className="hidden md:inline text-blue-500 hover:text-blue-700"
+                                className="hidden md:inline text-green-600 hover:text-green-800"
                                 onClick={() => setReplyTo(c)}
                                 title="Reply"
                               >
