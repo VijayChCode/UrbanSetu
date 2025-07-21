@@ -1493,30 +1493,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                   </button>
                                   <button
                                     className="text-red-700 hover:text-red-900"
-                                    onClick={async () => {
-                                      if (!window.confirm('Are you sure you want to delete this comment?')) return;
-                                      try {
-                                        const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${c._id}`, {
-                                          method: 'DELETE',
-                                          credentials: 'include'
-                                        });
-                                        const data = await res.json();
-                                        if (res.ok) {
-                                          setComments(prev => data.comments.map(newC => {
-                                            const localC = prev.find(lc => lc._id === newC._id);
-                                            if (localC && localC.status === 'read' && newC.status !== 'read') {
-                                              return { ...newC, status: 'read' };
-                                            }
-                                            return newC;
-                                          }));
-                                          toast.success("Comment deleted successfully!");
-                                        } else {
-                                          toast.error(data.message || 'Failed to delete comment.');
-                                        }
-                                      } catch (err) {
-                                        toast.error('An error occurred. Please try again.');
-                                      }
+                                    onClick={() => {
+                                      setComments(prev => prev.filter(msg => msg._id !== c._id));
+                                      addLocallyRemovedId(appt._id, c._id);
                                     }}
+                                    title="Remove this message from your chat view"
                                   >
                                     <FaTrash className="group-hover:text-red-900 group-hover:scale-125 group-hover:animate-shake transition-all duration-200" />
                                   </button>
