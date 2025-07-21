@@ -1386,27 +1386,21 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                       >
                         <div 
                           ref={el => messageRefs.current[c._id] = el}
-                          className={`rounded-2xl px-4 py-2 text-sm shadow-lg max-w-[80%] break-words relative ${isMe ? 'bg-gradient-to-r from-blue-400 to-blue-600 text-white' : 'bg-white text-gray-800 border border-gray-200'}`}
+                          className={`rounded-2xl px-4 py-2 text-sm shadow-lg max-w-[60%] break-words relative ${isMe ? 'bg-gradient-to-r from-blue-400 to-blue-600 text-white' : 'bg-white text-gray-800 border border-gray-200'}`}
                           style={{ animationDelay: `${0.03 * index}s` }}
                         >
                           {/* Reply preview above message if this is a reply */}
                           {c.replyTo && (
-                            <div className="border-l-4 border-blue-300 pl-2 mb-1 text-xs text-gray-500 bg-blue-50 rounded w-full max-w-full break-words">
-                              <button
-                                onClick={() => {
-                                  if (messageRefs.current[c.replyTo]) {
-                                    messageRefs.current[c.replyTo].scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                    messageRefs.current[c.replyTo].classList.add('ring-2', 'ring-yellow-400');
-                                    setTimeout(() => {
-                                      messageRefs.current[c.replyTo].classList.remove('ring-2', 'ring-yellow-400');
-                                    }, 1000);
-                                  }
-                                }}
-                                className="text-blue-600 hover:underline"
-                                title="Click to reply to this message"
-                              >
-                                {comments.find(msg => msg._id === c.replyTo)?.message || 'Original message'}
-                              </button>
+                            <div className="border-l-4 border-blue-300 pl-2 mb-1 text-xs text-gray-500 bg-blue-50 rounded w-full max-w-full break-words cursor-pointer" onClick={() => {
+                                if (messageRefs.current[c.replyTo]) {
+                                  messageRefs.current[c.replyTo].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                  messageRefs.current[c.replyTo].classList.add('ring-2', 'ring-yellow-400');
+                                  setTimeout(() => {
+                                    messageRefs.current[c.replyTo].classList.remove('ring-2', 'ring-yellow-400');
+                                  }, 1000);
+                                }
+                              }} role="button" tabIndex={0} aria-label="Go to replied message">
+                              <span className="text-xs text-gray-600 truncate">{comments.find(msg => msg._id === c.replyTo)?.message || 'Original message'}</span>
                             </div>
                           )}
                           <div className="font-semibold mb-1 flex items-center gap-2">
