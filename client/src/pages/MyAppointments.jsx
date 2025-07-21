@@ -1358,7 +1358,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                     });
                                     const data = await res.json();
                                     if (res.ok) {
-                                      setComments(data.comments);
+                                      setComments(prev => data.comments.map(newC => {
+                                        const localC = prev.find(lc => lc._id === newC._id);
+                                        if (localC && localC.status === 'read' && newC.status !== 'read') {
+                                          return { ...newC, status: 'read' };
+                                        }
+                                        return newC;
+                                      }));
                                       toast.success("Comment deleted successfully!");
                                     } else {
                                       toast.error(data.message || 'Failed to delete comment.');
