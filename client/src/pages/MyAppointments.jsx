@@ -27,6 +27,7 @@ export default function MyAppointments() {
   const [archivedAppointments, setArchivedAppointments] = useState([]);
   const [showArchived, setShowArchived] = useState(false);
   const navigate = useNavigate();
+  const [swipedMsgId, setSwipedMsgId] = useState(null);
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -1117,6 +1118,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         const msg = comments.find(c => c._id === msgId);
         if (msg && !msg.deleted && window.innerWidth < 768) {
           setReplyTo(msg);
+          setSwipedMsgId(msg._id);
         }
       }
     },
