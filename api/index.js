@@ -179,6 +179,10 @@ io.on('connection', (socket) => {
     socket.emit('userOnlineStatus', { userId, online: onlineUsers.has(userId) });
   });
 
+  socket.on('typing', ({ toUserId, fromUserId, appointmentId }) => {
+    socket.to(toUserId).emit('typing', { fromUserId, appointmentId });
+  });
+
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id, 'UserID:', socket.user?._id?.toString());
     if (thisUserId) {
