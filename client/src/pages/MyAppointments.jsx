@@ -28,7 +28,6 @@ export default function MyAppointments() {
   const [archivedAppointments, setArchivedAppointments] = useState([]);
   const [showArchived, setShowArchived] = useState(false);
   const navigate = useNavigate();
-  const [replyTo, setReplyTo] = useState(null);
 
   useEffect(() => {
     const fetchAppointments = async () => {
