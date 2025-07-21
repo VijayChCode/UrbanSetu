@@ -967,7 +967,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       if (data.appointmentId === appt._id) {
         setComments(prev =>
           prev.map(c =>
-            c._id === data.commentId ? { ...c, status: "delivered" } : c
+            c._id === data.commentId
+              ? { ...c, status: c.status === "read" ? "read" : "delivered" }
+              : c
           )
         );
       }
