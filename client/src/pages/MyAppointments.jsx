@@ -1340,7 +1340,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                     const isEditing = editingComment === c._id;
                     return (
                       <div key={c._id || index} className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-fadeInChatBubble`} style={{ animationDelay: `${0.03 * index}s` }}>
-                        <div className={`rounded-2xl px-4 py-2 text-sm shadow-lg max-w-[80%] break-words relative ${isMe ? 'bg-gradient-to-r from-blue-400 to-blue-600 text-white' : 'bg-white text-gray-800 border border-gray-200'}`}>
+                        <div className={`rounded-2xl px-4 py-2 text-sm shadow-lg max-w-[80%] break-words relative ${isMe ? 'bg-gradient-to-r from-blue-200 to-blue-400 text-white' : 'bg-white text-gray-800 border border-gray-200'}`}>
                           <div className="font-semibold mb-1 flex items-center gap-2">
                             {isMe ? "You" : c.senderEmail}
                             <span className="text-gray-300 ml-2 text-[10px]">{new Date(c.timestamp).toLocaleString()}</span>
@@ -1391,13 +1391,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             <div className="flex items-center gap-2 mt-1">
                               <button
                                 onClick={() => startEditing(c)}
-                                className="text-blue-200 hover:text-white"
+                                className="text-green-700 hover:text-green-900"
                                 title="Edit comment"
                               >
                                 <FaPen size={12} />
                               </button>
                               <button
-                                className="text-red-200 hover:text-white"
+                                className="text-red-700 hover:text-red-900"
                                 onClick={async () => {
                                   if (!window.confirm('Are you sure you want to delete this comment?')) return;
                                   try {
