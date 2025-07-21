@@ -1377,11 +1377,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                 />
                                 <button
                                   onClick={() => handleEditComment(c._id)}
-                                  className="text-green-700 hover:text-green-900 font-bold ml-1"
+                                  className="bg-green-700 hover:bg-green-900 text-white font-bold ml-1 px-3 py-1 rounded"
                                 >Save</button>
                                 <button
                                   onClick={() => { setEditingComment(null); setEditText(""); }}
-                                  className="text-red-700 hover:text-red-900 font-bold ml-1"
+                                  className="bg-red-700 hover:bg-red-900 text-white font-bold ml-1 px-3 py-1 rounded"
                                 >Cancel</button>
                               </>
                             ) : (
