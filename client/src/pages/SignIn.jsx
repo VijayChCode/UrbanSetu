@@ -5,6 +5,7 @@ import { signInFailure, signInStart, signInSuccess } from "../redux/user/userSli
 import Oauth from "../components/Oauth.jsx";
 import ContactSupportWrapper from "../components/ContactSupportWrapper.jsx";
 import { reconnectSocket } from "../utils/socket";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -14,6 +15,7 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
         password: ""
     });
     const [urlError, setUrlError] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
 
     const { loading, error, currentUser } = useSelector((state) => state.user);
     const navigate = useNavigate();
@@ -184,14 +186,25 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
                                 <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                                     Password
                                 </label>
-                                <input 
-                                    type="password" 
-                                    placeholder="Enter your password" 
-                                    id="password" 
-                                    onChange={handleChange} 
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                                    required
-                                />
+                                <div className="relative">
+                                    <input 
+                                        type={showPassword ? "text" : "password"}
+                                        placeholder="Enter your password" 
+                                        id="password" 
+                                        onChange={handleChange} 
+                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 pr-12"
+                                        required
+                                    />
+                                    <button
+                                        type="button"
+                                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-700 focus:outline-none"
+                                        tabIndex={-1}
+                                        onClick={() => setShowPassword((prev) => !prev)}
+                                        aria-label={showPassword ? "Hide password" : "Show password"}
+                                    >
+                                        {showPassword ? <FaEyeSlash /> : <FaEye />}
+                                    </button>
+                                </div>
                             </div>
                             
                             {/* Forgot Password Link */}
