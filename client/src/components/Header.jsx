@@ -214,7 +214,7 @@ function UserNavLinks({ mobile = false, onNavigate }) {
 
   const handleSignout = async () => {
     try {
-      const res = await fetch("/api/auth/signout", { method: "GET" });
+      const res = await fetch("/api/auth/signout", { method: "GET", credentials: "include" });
       const data = await res.json();
       if (data.success === false) {
         console.log(data.message);

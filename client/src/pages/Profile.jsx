@@ -463,7 +463,7 @@ export default function Profile() {
         toast.error("You have been signed out for security reasons. No changes were made to your profile.");
         dispatch(signoutUserStart());
         try {
-          const signoutRes = await fetch(`${API_BASE_URL}/api/auth/signout`);
+          const signoutRes = await fetch(`${API_BASE_URL}/api/auth/signout`, { credentials: 'include' });
           const signoutData = await signoutRes.json();
           if (signoutData.success === false) {
             dispatch(signoutUserFailure(signoutData.message));
@@ -591,7 +591,7 @@ export default function Profile() {
         toast.error("For your security, you've been signed out automatically.");
         // Signout and redirect
         dispatch(signoutUserStart());
-        const signoutRes = await fetch(`${API_BASE_URL}/api/auth/signout`);
+        const signoutRes = await fetch(`${API_BASE_URL}/api/auth/signout`, { credentials: 'include' });
         const signoutData = await signoutRes.json();
         if (signoutData.success === false) {
           dispatch(signoutUserFailure(signoutData.message));
@@ -606,7 +606,7 @@ export default function Profile() {
         toast.error("For your security, you've been signed out automatically.");
         // Signout and redirect
         dispatch(signoutUserStart());
-        const signoutRes = await fetch(`${API_BASE_URL}/api/auth/signout`);
+        const signoutRes = await fetch(`${API_BASE_URL}/api/auth/signout`, { credentials: 'include' });
         const signoutData = await signoutRes.json();
         if (signoutData.success === false) {
           dispatch(signoutUserFailure(signoutData.message));
@@ -687,7 +687,7 @@ export default function Profile() {
         toast.error("Your session has expired. Please sign in again. No admin rights are Transferred");
         // Signout and redirect
         dispatch(signoutUserStart());
-        const signoutRes = await fetch(`${API_BASE_URL}/api/auth/signout`);
+        const signoutRes = await fetch(`${API_BASE_URL}/api/auth/signout`, { credentials: 'include' });
         const signoutData = await signoutRes.json();
         if (signoutData.success === false) {
           dispatch(signoutUserFailure(signoutData.message));
@@ -704,7 +704,7 @@ export default function Profile() {
         toast.error("For your security, you've been signed out automatically.");
         // Signout and redirect
         dispatch(signoutUserStart());
-        const signoutRes = await fetch(`${API_BASE_URL}/api/auth/signout`);
+        const signoutRes = await fetch(`${API_BASE_URL}/api/auth/signout`, { credentials: 'include' });
         const signoutData = await signoutRes.json();
         if (signoutData.success === false) {
           dispatch(signoutUserFailure(signoutData.message));
@@ -761,7 +761,7 @@ export default function Profile() {
     e.preventDefault();
     try {
       dispatch(signoutUserStart());
-      const res = await fetch(`${API_BASE_URL}/api/auth/signout`);
+      const res = await fetch(`${API_BASE_URL}/api/auth/signout`, { credentials: 'include' });
       const data = await res.json();
       if (data.success === false) {
         dispatch(signoutUserFailure(data.message));
@@ -859,7 +859,7 @@ export default function Profile() {
         setShowTransferModal(false);
         toast.error("For your security, you've been signed out automatically.");
         dispatch(signoutUserStart());
-        const signoutRes = await fetch(`${API_BASE_URL}/api/auth/signout`);
+        const signoutRes = await fetch(`${API_BASE_URL}/api/auth/signout`, { credentials: 'include' });
         const signoutData = await signoutRes.json();
         if (signoutData.success === false) {
           dispatch(signoutUserFailure(signoutData.message));
