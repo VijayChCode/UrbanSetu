@@ -1350,14 +1350,14 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               <span className="flex items-center gap-1 text-gray-400 italic">
                                 <FaBan className="inline-block text-lg" /> {c.senderEmail === currentUser.email ? "You deleted this message" : "This message was deleted."}
                                 <button
-                                  className="ml-2 text-xs text-red-400 hover:text-red-700 underline"
+                                  className="ml-2 text-red-700 hover:text-red-900"
                                   onClick={() => {
                                     setComments(prev => prev.filter(msg => msg._id !== c._id));
                                     addLocallyRemovedId(appt._id, c._id);
                                   }}
                                   title="Remove this deleted message from your chat view"
                                 >
-                                  Remove
+                                  <FaTrash className="group-hover:text-red-900 group-hover:scale-125 group-hover:animate-shake transition-all duration-200" />
                                 </button>
                               </span>
                             ) : isEditing ? (
