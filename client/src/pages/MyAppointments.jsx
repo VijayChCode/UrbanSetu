@@ -1375,8 +1375,14 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                   }}
                                   autoFocus
                                 />
-                                <button onClick={() => handleEditComment(c._id)} className="text-green-600 hover:text-green-800 font-bold ml-1">Save</button>
-                                <button onClick={() => { setEditingComment(null); setEditText(""); }} className="text-gray-500 hover:text-gray-700 font-bold ml-1">Cancel</button>
+                                <button
+                                  onClick={() => handleEditComment(c._id)}
+                                  className="text-green-700 hover:text-green-900 font-bold ml-1"
+                                >Save</button>
+                                <button
+                                  onClick={() => { setEditingComment(null); setEditText(""); }}
+                                  className="text-red-700 hover:text-red-900 font-bold ml-1"
+                                >Cancel</button>
                               </>
                             ) : (
                               <div>
