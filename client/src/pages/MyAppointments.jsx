@@ -1440,6 +1440,20 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               </span>
                             </div>
                           )}
+                          {(!isMe && !isEditing && !c.deleted) && (
+                            <div className="flex items-center gap-2 mt-1">
+                              <button
+                                className="text-red-700 hover:text-red-900"
+                                onClick={() => {
+                                  setComments(prev => prev.filter(msg => msg._id !== c._id));
+                                  addLocallyRemovedId(appt._id, c._id);
+                                }}
+                                title="Remove this message from your chat view"
+                              >
+                                <FaTrash className="group-hover:text-red-900 group-hover:scale-125 group-hover:animate-shake transition-all duration-200" />
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
