@@ -1163,25 +1163,27 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                                 }}
                                 autoFocus
                               />
-                              <button 
-                                onClick={() => handleEditComment(c._id)} 
-                                disabled={savingComment === c._id}
-                                className="text-green-600 hover:text-green-800 disabled:text-green-400 disabled:cursor-not-allowed font-bold ml-1 flex items-center gap-1"
-                              >
-                                {savingComment === c._id ? (
-                                  <>
-                                    <div className="w-3 h-3 border border-green-600 border-t-transparent rounded-full animate-spin"></div>
-                                    Saving...
-                                  </>
-                                ) : (
-                                  'Save'
-                                )}
-                              </button>
-                              <button 
-                                onClick={() => { setEditingComment(null); setEditText(""); }} 
-                                disabled={savingComment === c._id}
-                                className="text-gray-500 hover:text-gray-700 disabled:text-gray-400 disabled:cursor-not-allowed font-bold ml-1"
-                              >Cancel</button>
+                              <div className="flex gap-1 justify-end">
+                                <button 
+                                  onClick={() => handleEditComment(c._id)} 
+                                  disabled={savingComment === c._id}
+                                  className="bg-green-700 hover:bg-green-900 disabled:bg-green-500 disabled:cursor-not-allowed text-white font-bold px-2 py-1 rounded text-xs flex items-center gap-1"
+                                >
+                                  {savingComment === c._id ? (
+                                    <>
+                                      <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
+                                      Saving...
+                                    </>
+                                  ) : (
+                                    'Save'
+                                  )}
+                                </button>
+                                <button 
+                                  onClick={() => { setEditingComment(null); setEditText(""); }} 
+                                  disabled={savingComment === c._id}
+                                  className="bg-red-700 hover:bg-red-900 disabled:bg-red-500 disabled:cursor-not-allowed text-white font-bold px-2 py-1 rounded text-xs"
+                                >Cancel</button>
+                              </div>
                             </>
                           ) : c.deleted ? (
                             <span className="flex items-center gap-1 text-gray-400 italic">
