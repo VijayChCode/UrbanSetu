@@ -1677,9 +1677,16 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   <button
                     onClick={handleCommentSend}
                     disabled={sending || !comment.trim()}
-                    className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-5 py-2 rounded-full text-sm font-semibold shadow hover:from-blue-600 hover:to-purple-600 transition disabled:opacity-50"
+                    className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-5 py-2 rounded-full text-sm font-semibold shadow hover:from-blue-600 hover:to-purple-600 transition disabled:opacity-50 flex items-center gap-2"
                   >
-                    Send
+                    {sending ? (
+                      <>
+                        <div className="w-4 h-4 border border-white border-t-transparent rounded-full animate-spin"></div>
+                        Sending...
+                      </>
+                    ) : (
+                      'Send'
+                    )}
                   </button>
                 </div>
                 {/* Animations for chat bubbles */}
