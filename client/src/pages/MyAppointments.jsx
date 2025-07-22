@@ -718,6 +718,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const [sending, setSending] = useState(false);
   const [editingComment, setEditingComment] = useState(null);
   const [editText, setEditText] = useState("");
+  const [savingComment, setSavingComment] = useState(null);
   const location = useLocation();
   const [showChatModal, setShowChatModal] = useState(false);
   const chatEndRef = useRef(null);
@@ -804,6 +805,19 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
 
   const handleEditComment = async (commentId) => {
     if (!editText.trim()) return;
+    
+    setSavingComment(commentId);
+    
+    // Optimistic update - update UI immediately
+    const optimisticUpdate = prev => prev.map(c => 
+      c._id === commentId 
+        ? { ...c, message: editText, edited: true, editedAt: new Date() }
+        : c
+    );
+    setComments(optimisticUpdate);
+    setEditingComment(null);
+    setEditText("");
+    
     try {
       const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${commentId}`, {
         method: "PATCH",
@@ -813,32 +827,57 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       });
       const data = await res.json();
       if (res.ok) {
-        setComments(prev => data.comments.map(newC => {
-          // For the edited message, always use the backend status (reset to 'sent' or 'delivered'), never preserve 'read'
-          if (newC._id === commentId) {
-            return newC;
+        // Update with server response - simpler and faster approach
+        setComments(prev => prev.map(c => {
+          const serverComment = data.comments.find(sc => sc._id === c._id);
+          if (serverComment) {
+            // For the edited message, use server data
+            if (serverComment._id === commentId) {
+              return serverComment;
+            }
+            // For other messages, preserve local read status if it exists
+            return c.status === 'read' && serverComment.status !== 'read' 
+              ? { ...serverComment, status: 'read' }
+              : serverComment;
           }
-          // Only preserve 'read' for messages that are not the edited one
-          const localC = prev.find(lc => lc._id === newC._id);
-          if (localC && localC.status === 'read' && newC.status !== 'read') {
-            return { ...newC, status: 'read' };
-          }
-          return newC;
+          return c;
         }));
-        setEditingComment(null);
-        setEditText("");
         toast.success("Comment edited successfully!");
       } else {
+        // Revert optimistic update on error
+        setComments(prev => prev.map(c => 
+          c._id === commentId 
+            ? { ...c, message: c.originalMessage || c.message, edited: c.wasEdited || false }
+            : c
+        ));
+        setEditingComment(commentId);
+        setEditText(editText);
         toast.error(data.message || "Failed to edit comment.");
       }
     } catch (err) {
+      // Revert optimistic update on error
+      setComments(prev => prev.map(c => 
+        c._id === commentId 
+          ? { ...c, message: c.originalMessage || c.message, edited: c.wasEdited || false }
+          : c
+      ));
+      setEditingComment(commentId);
+      setEditText(editText);
       toast.error('An error occurred. Please try again.');
+    } finally {
+      setSavingComment(null);
     }
   };
 
   const startEditing = (comment) => {
     setEditingComment(comment._id);
     setEditText(comment.message);
+    // Store original data for potential rollback
+    setComments(prev => prev.map(c => 
+      c._id === comment._id 
+        ? { ...c, originalMessage: c.message, wasEdited: c.edited }
+        : c
+    ));
   };
 
   const getStatusColor = (status) => {
@@ -1511,11 +1550,22 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                   <div className="flex gap-1 justify-end">
                                     <button
                                       onClick={() => handleEditComment(c._id)}
-                                      className="bg-green-700 hover:bg-green-900 text-white font-bold px-2 py-1 rounded text-xs"
-                                    >Save</button>
+                                      disabled={savingComment === c._id}
+                                      className="bg-green-700 hover:bg-green-900 disabled:bg-green-500 disabled:cursor-not-allowed text-white font-bold px-2 py-1 rounded text-xs flex items-center gap-1"
+                                    >
+                                      {savingComment === c._id ? (
+                                        <>
+                                          <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
+                                          Saving...
+                                        </>
+                                      ) : (
+                                        'Save'
+                                      )}
+                                    </button>
                                     <button
                                       onClick={() => { setEditingComment(null); setEditText(""); }}
-                                      className="bg-red-700 hover:bg-red-900 text-white font-bold px-2 py-1 rounded text-xs"
+                                      disabled={savingComment === c._id}
+                                      className="bg-red-700 hover:bg-red-900 disabled:bg-red-500 disabled:cursor-not-allowed text-white font-bold px-2 py-1 rounded text-xs"
                                     >Cancel</button>
                                   </div>
                                 </div>
