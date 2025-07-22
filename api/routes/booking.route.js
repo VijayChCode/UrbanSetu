@@ -337,7 +337,9 @@ router.delete('/:id/comment/:commentId', verifyToken, async (req, res) => {
       return res.status(404).json({ message: 'Comment not found.' });
     }
     comment.deleted = true;
-    comment.message = '';
+    comment.deletedBy = req.user.email; // Track who deleted it
+    comment.originalMessage = comment.message; // Preserve for admin access
+    comment.message = ''; // Hide for regular users
     await bookingToUpdate.save();
     // Emit socket event for real-time update
     const io = req.app.get('io');

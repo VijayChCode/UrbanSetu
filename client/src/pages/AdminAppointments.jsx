@@ -1244,19 +1244,45 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                               </div>
                             </>
                           ) : c.deleted ? (
-                            <span className="flex items-center gap-1 text-gray-400 italic">
-                              <FaBan className="inline-block text-lg" /> This message has been deleted.
-                              <button
-                                className="ml-2 text-xs text-red-400 hover:text-red-700 underline"
-                                onClick={() => {
-                                  setLocalComments(prev => prev.filter(msg => msg._id !== c._id));
-                                  addLocallyRemovedId(appt._id, c._id);
-                                }}
-                                title="Remove this deleted message from your chat view"
-                              >
-                                Remove
-                              </button>
-                            </span>
+                            <div>
+                              {/* Admin sees original content with deletion indicator */}
+                              {currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? (
+                                <div className="border border-red-300 bg-red-50 rounded p-2 mb-2">
+                                  <div className="flex items-center gap-2 text-red-600 text-xs font-semibold mb-1">
+                                    <FaBan className="inline-block" />
+                                    Message deleted by {c.deletedBy || 'user'} (Admin view - preserved for records)
+                                  </div>
+                                  <div className="text-gray-800 bg-white p-2 rounded border-l-4 border-red-400">
+                                    {c.originalMessage || c.message || '[Message content not preserved]'}
+                                  </div>
+                                  <button
+                                    className="mt-2 text-xs text-red-500 hover:text-red-700 underline"
+                                    onClick={() => {
+                                      setLocalComments(prev => prev.filter(msg => msg._id !== c._id));
+                                      addLocallyRemovedId(appt._id, c._id);
+                                    }}
+                                    title="Remove this deleted message from your admin view"
+                                  >
+                                    Hide from admin view
+                                  </button>
+                                </div>
+                              ) : (
+                                /* Regular users see standard deletion message */
+                                <span className="flex items-center gap-1 text-gray-400 italic">
+                                  <FaBan className="inline-block text-lg" /> This message has been deleted.
+                                  <button
+                                    className="ml-2 text-xs text-red-400 hover:text-red-700 underline"
+                                    onClick={() => {
+                                      setLocalComments(prev => prev.filter(msg => msg._id !== c._id));
+                                      addLocallyRemovedId(appt._id, c._id);
+                                    }}
+                                    title="Remove this deleted message from your chat view"
+                                  >
+                                    Remove
+                                  </button>
+                                </span>
+                              )}
+                            </div>
                           ) : (
                             <div>
                               {c.message}
