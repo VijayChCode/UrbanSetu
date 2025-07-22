@@ -663,11 +663,44 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
   const inputRef = React.useRef(null);
   const messageRefs = React.useRef({});
   const [isAtBottom, setIsAtBottom] = useLocalState(true);
+  const [unreadNewMessages, setUnreadNewMessages] = useLocalState(0);
 
   // Auto-scroll to bottom only when chat modal opens
   React.useEffect(() => {
     if (showChatModal && chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [showChatModal]);
+
+  // Track new messages and handle auto-scroll/unread count
+  const prevCommentsLengthRef = React.useRef(localComments.length);
+  React.useEffect(() => {
+    const newMessagesCount = localComments.length - prevCommentsLengthRef.current;
+    prevCommentsLengthRef.current = localComments.length;
+
+    if (newMessagesCount > 0 && showChatModal) {
+      if (isAtBottom) {
+        // Auto-scroll if user is at bottom
+        setTimeout(() => {
+          if (chatEndRef.current) {
+            chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+          }
+        }, 100);
+      } else {
+        // Add to unread count if user is not at bottom
+        setUnreadNewMessages(prev => prev + newMessagesCount);
+      }
+    }
+  }, [localComments.length, isAtBottom, showChatModal]);
+
+  // Reset unread count when chat modal is opened or closed
+  React.useEffect(() => {
+    if (showChatModal) {
+      // Reset count when chat opens
+      setUnreadNewMessages(0);
+    } else {
+      // Also reset when chat closes
+      setUnreadNewMessages(0);
     }
   }, [showChatModal]);
 
@@ -677,8 +710,13 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
       const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
       const atBottom = scrollHeight - scrollTop - clientHeight < 5; // 5px threshold
       setIsAtBottom(atBottom);
+      
+      // Clear unread count when user reaches bottom
+      if (atBottom && unreadNewMessages > 0) {
+        setUnreadNewMessages(0);
+      }
     }
-  }, []);
+  }, [unreadNewMessages]);
 
   // Add scroll event listener for chat container
   React.useEffect(() => {
@@ -698,6 +736,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
   const scrollToBottom = React.useCallback(() => {
     if (chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      setUnreadNewMessages(0); // Clear unread count when manually scrolling to bottom
     }
   }, []);
 
@@ -1334,9 +1373,9 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                  <div className="absolute bottom-20 right-6 z-20">
                    <button
                      onClick={scrollToBottom}
-                     className="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-3 shadow-lg transition-all duration-200 hover:scale-110 animate-pulse"
-                     title="Scroll to bottom"
-                     aria-label="Scroll to bottom"
+                     className="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-3 shadow-lg transition-all duration-200 hover:scale-110 relative"
+                     title={unreadNewMessages > 0 ? `${unreadNewMessages} new message${unreadNewMessages > 1 ? 's' : ''}` : "Scroll to bottom"}
+                     aria-label={unreadNewMessages > 0 ? `${unreadNewMessages} new messages, scroll to bottom` : "Scroll to bottom"}
                    >
                      <svg
                        width="20"
@@ -1347,6 +1386,11 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                      >
                        <path d="M12 16l-6-6h12l-6 6z" />
                      </svg>
+                     {unreadNewMessages > 0 && (
+                       <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1 border-2 border-white shadow-lg">
+                         {unreadNewMessages > 99 ? '99+' : unreadNewMessages}
+                       </div>
+                     )}
                    </button>
                  </div>
                )}
