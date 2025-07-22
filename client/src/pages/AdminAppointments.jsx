@@ -1210,7 +1210,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                         </div>
                         <div className="flex items-center gap-2 justify-end mt-1">
                           <button
-                            className={`${c.senderEmail === currentUser.email ? 'text-yellow-200 hover:text-yellow-400' : 'text-blue-200 hover:text-blue-400'}`}
+                            className={`${c.senderEmail === currentUser.email ? 'text-yellow-500 hover:text-yellow-700' : 'text-blue-600 hover:text-blue-800'}`}
                             onClick={() => { setReplyTo(c); inputRef.current?.focus(); }}
                             title="Reply"
                           >
@@ -1220,13 +1220,13 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                             <>
                               <button
                                 onClick={() => startEditing(c)}
-                                className="text-blue-200 hover:text-white"
+                                className="text-green-700 hover:text-green-900"
                                 title="Edit comment"
                               >
                                 <FaPen size={12} />
                               </button>
                               <button
-                                className="text-red-200 hover:text-white"
+                                className="text-red-700 hover:text-red-900"
                                 onClick={async () => {
                                   if (!window.confirm('Are you sure you want to delete this comment?')) return;
                                   try {
