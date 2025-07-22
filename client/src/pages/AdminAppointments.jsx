@@ -637,6 +637,15 @@ export default function AdminAppointments() {
   );
 }
 
+function getDateLabel(date) {
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+  if (date.toDateString() === today.toDateString()) return 'Today';
+  if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
+  return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
 function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReinitiateAppointment, handleArchiveAppointment, handleUnarchiveAppointment, onUserClick, isArchived }) {
   const [localComments, setLocalComments] = useLocalState(appt.comments || []);
   const [newComment, setNewComment] = useLocalState("");
@@ -1123,8 +1132,18 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                 {localComments.map((c, index) => {
                   const isMe = c.senderEmail === currentUser.email;
                   const isEditing = editingComment === c._id;
+                  const currentDate = new Date(c.timestamp);
+                  const previousDate = index > 0 ? new Date(localComments[index - 1].timestamp) : null;
+                  const isNewDay = previousDate ? currentDate.toDateString() !== previousDate.toDateString() : true;
+
                   return (
-                    <div key={c._id || index} className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-fadeInChatBubble`} style={{ animationDelay: `${0.03 * index}s` }}>
+                    <React.Fragment key={c._id || index}>
+                      {isNewDay && (
+                        <div className="w-full flex justify-center my-2">
+                          <span className="bg-gray-200 text-gray-700 text-xs px-3 py-1 rounded-full shadow">{getDateLabel(currentDate)}</span>
+                        </div>
+                      )}
+                      <div className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-fadeInChatBubble`} style={{ animationDelay: `${0.03 * index}s` }}>
                       <div 
                         ref={el => messageRefs.current[c._id] = el}
                         className={`rounded-2xl px-4 py-2 text-sm shadow-lg max-w-[80%] break-words relative ${isMe ? 'bg-gradient-to-r from-blue-400 to-blue-600 text-white' : 'bg-white text-gray-800 border border-gray-200'}`}
@@ -1145,7 +1164,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                         )}
                         <div className="font-semibold mb-1 flex items-center gap-2">
                           {isMe ? "You" : c.senderEmail}
-                          <span className="text-gray-300 ml-2 text-[10px]">{new Date(c.timestamp).toLocaleString()}</span>
+                          <span className="text-gray-300 ml-2 text-[10px]">{new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
                         </div>
                         <div className="flex items-center gap-1">
                           {isEditing ? (
@@ -1254,6 +1273,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                         </div>
                       </div>
                     </div>
+                    </React.Fragment>
                   );
                 })}
                 
