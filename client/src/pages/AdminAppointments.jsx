@@ -1331,61 +1331,67 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                               </div>
                             </>
                           ) : c.deleted ? (
-                            <div>
-                              {/* Admin sees original content with deletion indicator */}
-                              {currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? (
-                                <div className="border border-red-300 bg-red-50 rounded p-2 mb-2">
-                                  <div className="flex items-center gap-2 text-red-600 text-xs font-semibold mb-1">
-                                    <FaBan className="inline-block" />
-                                    Message deleted by {c.deletedBy || 'user'} (Admin view - preserved for records)
-                                  </div>
-                                  <div className="text-gray-800 bg-white p-2 rounded border-l-4 border-red-400">
-                                    {c.originalMessage ? (
-                                      <span>{c.originalMessage}</span>
-                                    ) : c.message ? (
-                                      <span>{c.message}</span>
-                                    ) : (
-                                      <span className="text-gray-500 italic">
-                                        [Message content not preserved - this message was deleted before content preservation was implemented]
-                                      </span>
-                                    )}
-                                  </div>
-                                  {/* Debug info for development */}
-                                  {process.env.NODE_ENV === 'development' && (
-                                    <div className="mt-1 text-xs text-gray-500 font-mono">
-                                      Debug: originalMessage={c.originalMessage ? 'exists' : 'null'}, 
-                                      message={c.message ? 'exists' : 'empty'}, 
-                                      deleted={c.deleted ? 'true' : 'false'}
+                            (() => {
+                              // Hide for admin if locally removed
+                              const locallyRemoved = getLocallyRemovedIds(appt._id).includes(c._id);
+                              if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) {
+                                if (locallyRemoved) return null;
+                                return (
+                                  <div className="border border-red-300 bg-red-50 rounded p-2 mb-2">
+                                    <div className="flex items-center gap-2 text-red-600 text-xs font-semibold mb-1">
+                                      <FaBan className="inline-block" />
+                                      Message deleted by {c.deletedBy || 'user'} (Admin view - preserved for records)
                                     </div>
-                                  )}
-                                  <button
-                                    className="mt-2 text-xs text-red-500 hover:text-red-700 underline"
-                                    onClick={() => {
-                                      setLocalComments(prev => prev.filter(msg => msg._id !== c._id));
-                                      addLocallyRemovedId(appt._id, c._id);
-                                    }}
-                                    title="Remove this deleted message from your admin view"
-                                  >
-                                    Hide from admin view
-                                  </button>
-                                </div>
-                              ) : (
-                                /* Regular users see standard deletion message */
-                                <span className="flex items-center gap-1 text-gray-400 italic">
-                                  <FaBan className="inline-block text-lg" /> This message has been deleted.
-                                  <button
-                                    className="ml-2 text-xs text-red-400 hover:text-red-700 underline"
-                                    onClick={() => {
-                                      setLocalComments(prev => prev.filter(msg => msg._id !== c._id));
-                                      addLocallyRemovedId(appt._id, c._id);
-                                    }}
-                                    title="Remove this deleted message from your chat view"
-                                  >
-                                    Remove
-                                  </button>
-                                </span>
-                              )}
-                            </div>
+                                    <div className="text-gray-800 bg-white p-2 rounded border-l-4 border-red-400">
+                                      {c.originalMessage ? (
+                                        <span>{c.originalMessage}</span>
+                                      ) : c.message ? (
+                                        <span>{c.message}</span>
+                                      ) : (
+                                        <span className="text-gray-500 italic">
+                                          [Message content not preserved - this message was deleted before content preservation was implemented]
+                                        </span>
+                                      )}
+                                    </div>
+                                    {/* Debug info for development */}
+                                    {process.env.NODE_ENV === 'development' && (
+                                      <div className="mt-1 text-xs text-gray-500 font-mono">
+                                        Debug: originalMessage={c.originalMessage ? 'exists' : 'null'}, 
+                                        message={c.message ? 'exists' : 'empty'}, 
+                                        deleted={c.deleted ? 'true' : 'false'}
+                                      </div>
+                                    )}
+                                    <button
+                                      className="mt-2 text-xs text-red-500 hover:text-red-700 underline"
+                                      onClick={() => {
+                                        setLocalComments(prev => prev.filter(msg => msg._id !== c._id));
+                                        addLocallyRemovedId(appt._id, c._id);
+                                      }}
+                                      title="Remove this deleted message from your admin view"
+                                    >
+                                      Hide from admin view
+                                    </button>
+                                  </div>
+                                );
+                              } else {
+                                // Regular users see standard deletion message
+                                return (
+                                  <span className="flex items-center gap-1 text-gray-400 italic">
+                                    <FaBan className="inline-block text-lg" /> This message has been deleted.
+                                    <button
+                                      className="ml-2 text-xs text-red-400 hover:text-red-700 underline"
+                                      onClick={() => {
+                                        setLocalComments(prev => prev.filter(msg => msg._id !== c._id));
+                                        addLocallyRemovedId(appt._id, c._id);
+                                      }}
+                                      title="Remove this deleted message from your chat view"
+                                    >
+                                      Remove
+                                    </button>
+                                  </span>
+                                );
+                              }
+                            })()
                           ) : (
                             <div>
                               {c.message}
