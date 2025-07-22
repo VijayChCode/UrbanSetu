@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { FaHeadset, FaTimes, FaCheck, FaReply, FaEnvelope, FaClock, FaUser, FaEye, FaTrash, FaPaperPlane } from 'react-icons/fa';
@@ -18,6 +18,9 @@ export default function AdminContactSupport() {
   const { currentUser } = useSelector((state) => state.user);
   const location = useLocation();
   const [error, setError] = useState("");
+  const [isAtBottom, setIsAtBottom] = useState(true);
+  const messagesContainerRef = useRef(null);
+  const messagesEndRef = useRef(null);
 
   // Check if user is admin
   const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin');
@@ -77,6 +80,36 @@ export default function AdminContactSupport() {
       document.body.style.width = '';
     };
   }, [isModalOpen]);
+
+  // Check if user is at the bottom of messages
+  const checkIfAtBottom = useCallback(() => {
+    if (messagesContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+      const atBottom = scrollHeight - scrollTop - clientHeight < 5; // 5px threshold
+      setIsAtBottom(atBottom);
+    }
+  }, []);
+
+  // Add scroll event listener for messages container
+  useEffect(() => {
+    const messagesContainer = messagesContainerRef.current;
+    if (messagesContainer && isModalOpen) {
+      messagesContainer.addEventListener('scroll', checkIfAtBottom);
+      // Check initial position
+      checkIfAtBottom();
+      
+      return () => {
+        messagesContainer.removeEventListener('scroll', checkIfAtBottom);
+      };
+    }
+  }, [isModalOpen, checkIfAtBottom]);
+
+  // Function to scroll to bottom
+  const scrollToBottom = useCallback(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, []);
 
   const fetchMessages = async () => {
     setLoading(true);
@@ -319,7 +352,7 @@ export default function AdminContactSupport() {
             </div>
 
             {/* Content */}
-            <div className="overflow-y-auto max-h-[calc(90vh-120px)]">
+            <div ref={messagesContainerRef} className="overflow-y-auto max-h-[calc(90vh-120px)] relative">
               {error && (
                 <div className="p-6 text-center text-red-600 font-semibold bg-red-50 border border-red-200 rounded-xl mb-4">
                   {error}
@@ -517,6 +550,30 @@ export default function AdminContactSupport() {
                       )}
                     </div>
                   ))}
+                  
+                  {/* Scroll to bottom button - WhatsApp style */}
+                  {!isAtBottom && messages.length > 0 && (
+                    <div className="absolute bottom-4 right-4 z-10">
+                      <button
+                        onClick={scrollToBottom}
+                        className="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-2 shadow-lg transition-all duration-200 hover:scale-105 animate-bounce"
+                        title="Scroll to bottom"
+                        aria-label="Scroll to bottom"
+                      >
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                          className="transform"
+                        >
+                          <path d="M12 16l-6-6h12l-6 6z" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
+                  
+                  <div ref={messagesEndRef} />
                 </div>
               )}
             </div>

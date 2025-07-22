@@ -648,6 +648,8 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
   const [adminPassword, setAdminPassword] = useLocalState("");
   const [passwordLoading, setPasswordLoading] = useLocalState(false);
   const chatEndRef = React.useRef(null);
+  const chatContainerRef = React.useRef(null);
+  const [isAtBottom, setIsAtBottom] = useLocalState(true);
 
   // Auto-scroll to bottom when chat modal opens or comments change
   React.useEffect(() => {
@@ -655,6 +657,36 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [showChatModal, localComments]);
+
+  // Check if user is at the bottom of chat
+  const checkIfAtBottom = React.useCallback(() => {
+    if (chatContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
+      const atBottom = scrollHeight - scrollTop - clientHeight < 5; // 5px threshold
+      setIsAtBottom(atBottom);
+    }
+  }, []);
+
+  // Add scroll event listener for chat container
+  React.useEffect(() => {
+    const chatContainer = chatContainerRef.current;
+    if (chatContainer && showChatModal) {
+      chatContainer.addEventListener('scroll', checkIfAtBottom);
+      // Check initial position
+      checkIfAtBottom();
+      
+      return () => {
+        chatContainer.removeEventListener('scroll', checkIfAtBottom);
+      };
+    }
+  }, [showChatModal, checkIfAtBottom]);
+
+  // Function to scroll to bottom
+  const scrollToBottom = React.useCallback(() => {
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, []);
 
   // Lock background scroll when chat modal is open
   React.useEffect(() => {
@@ -1009,7 +1041,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                   </button>
                 </div>
               </div>
-              <div className="flex-1 max-h-60 overflow-y-auto space-y-2 mb-4 px-4 pt-4 animate-fadeInChat">
+              <div ref={chatContainerRef} className="flex-1 max-h-60 overflow-y-auto space-y-2 mb-4 px-4 pt-4 animate-fadeInChat relative">
                 {localComments.map((c, index) => {
                   const isMe = c.senderEmail === currentUser.email;
                   const isEditing = editingComment === c._id;
@@ -1101,6 +1133,29 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                     </div>
                   );
                 })}
+                
+                {/* Scroll to bottom button - WhatsApp style */}
+                {!isAtBottom && (
+                  <div className="absolute bottom-4 right-4 z-10">
+                    <button
+                      onClick={scrollToBottom}
+                      className="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-2 shadow-lg transition-all duration-200 hover:scale-105 animate-bounce"
+                      title="Scroll to bottom"
+                      aria-label="Scroll to bottom"
+                    >
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        className="transform"
+                      >
+                        <path d="M12 16l-6-6h12l-6 6z" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+                
                 <div ref={chatEndRef} />
               </div>
               <div className="flex gap-2 mt-2 px-4 pb-4">

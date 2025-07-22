@@ -721,6 +721,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const location = useLocation();
   const [showChatModal, setShowChatModal] = useState(false);
   const chatEndRef = useRef(null);
+  const chatContainerRef = useRef(null);
+  const [isAtBottom, setIsAtBottom] = useState(true);
   const [isOtherPartyOnline, setIsOtherPartyOnline] = useState(false);
   const [isOtherPartyTyping, setIsOtherPartyTyping] = useState(false);
   const typingTimeoutRef = useRef(null);
@@ -947,6 +949,36 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [showChatModal, comments]);
+
+  // Check if user is at the bottom of chat
+  const checkIfAtBottom = React.useCallback(() => {
+    if (chatContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
+      const atBottom = scrollHeight - scrollTop - clientHeight < 5; // 5px threshold
+      setIsAtBottom(atBottom);
+    }
+  }, []);
+
+  // Add scroll event listener for chat container
+  React.useEffect(() => {
+    const chatContainer = chatContainerRef.current;
+    if (chatContainer && showChatModal) {
+      chatContainer.addEventListener('scroll', checkIfAtBottom);
+      // Check initial position
+      checkIfAtBottom();
+      
+      return () => {
+        chatContainer.removeEventListener('scroll', checkIfAtBottom);
+      };
+    }
+  }, [showChatModal, checkIfAtBottom]);
+
+  // Function to scroll to bottom
+  const scrollToBottom = React.useCallback(() => {
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, []);
 
   // Toast notification for new messages when chat is closed
   React.useEffect(() => {
@@ -1371,7 +1403,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                     </button>
                   </div>
                 </div>
-                <div className="flex-1 max-h-60 overflow-y-auto space-y-2 mb-4 px-4 pt-4 animate-fadeInChat">
+                <div ref={chatContainerRef} className="flex-1 max-h-60 overflow-y-auto space-y-2 mb-4 px-4 pt-4 animate-fadeInChat relative">
                   {replyTo && (
                     <div className="flex items-center bg-blue-50 border-l-4 border-blue-400 px-2 py-1 mb-2 rounded">
                       <span className="text-xs text-gray-700 font-semibold mr-2">Replying to:</span>
@@ -1543,6 +1575,29 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                       </React.Fragment>
                     );
                   })}
+                  
+                  {/* Scroll to bottom button - WhatsApp style */}
+                  {!isAtBottom && (
+                    <div className="absolute bottom-4 right-4 z-10">
+                      <button
+                        onClick={scrollToBottom}
+                        className="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-2 shadow-lg transition-all duration-200 hover:scale-105 animate-bounce"
+                        title="Scroll to bottom"
+                        aria-label="Scroll to bottom"
+                      >
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                          className="transform"
+                        >
+                          <path d="M12 16l-6-6h12l-6 6z" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
+                  
                   <div ref={chatEndRef} />
                 </div>
                 <div className="flex gap-2 mt-2 px-4 pb-4">

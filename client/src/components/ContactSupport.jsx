@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { FaHeadset, FaTimes, FaPaperPlane, FaEnvelope, FaUser, FaFileAlt, FaClock, FaTrash } from 'react-icons/fa';
 import { useSelector } from 'react-redux';
@@ -21,6 +21,9 @@ export default function ContactSupport() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState('');
+  const [isAtBottom, setIsAtBottom] = useState(true);
+  const messagesContainerRef = useRef(null);
+  const messagesEndRef = useRef(null);
   const location = useLocation();
 
   // Autofill name and email when modal opens and user is logged in
@@ -69,6 +72,36 @@ export default function ContactSupport() {
       document.body.style.width = '';
     };
   }, [isModalOpen]);
+
+  // Check if user is at the bottom of messages
+  const checkIfAtBottom = useCallback(() => {
+    if (messagesContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+      const atBottom = scrollHeight - scrollTop - clientHeight < 5; // 5px threshold
+      setIsAtBottom(atBottom);
+    }
+  }, []);
+
+  // Add scroll event listener for messages container
+  useEffect(() => {
+    const messagesContainer = messagesContainerRef.current;
+    if (messagesContainer && activeTab === 'messages') {
+      messagesContainer.addEventListener('scroll', checkIfAtBottom);
+      // Check initial position
+      checkIfAtBottom();
+      
+      return () => {
+        messagesContainer.removeEventListener('scroll', checkIfAtBottom);
+      };
+    }
+  }, [activeTab, checkIfAtBottom]);
+
+  // Function to scroll to bottom
+  const scrollToBottom = useCallback(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, []);
 
   const fetchUserMessages = async () => {
     setLoadingMessages(true);
@@ -472,7 +505,7 @@ export default function ContactSupport() {
                     </button>
                   </div>
                 ) : (
-                  <div className="space-y-4 max-h-96 overflow-y-auto">
+                  <div ref={messagesContainerRef} className="space-y-4 max-h-96 overflow-y-auto relative">
                     {userMessages.map((message) => (
                       <div key={message._id} className="border border-gray-200 rounded-lg p-4">
                         <div className="flex items-start justify-between mb-3">
@@ -530,6 +563,30 @@ export default function ContactSupport() {
                         </div>
                       </div>
                     ))}
+                    
+                    {/* Scroll to bottom button - WhatsApp style */}
+                    {!isAtBottom && userMessages.length > 0 && (
+                      <div className="absolute bottom-4 right-4 z-10">
+                        <button
+                          onClick={scrollToBottom}
+                          className="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-2 shadow-lg transition-all duration-200 hover:scale-105 animate-bounce"
+                          title="Scroll to bottom"
+                          aria-label="Scroll to bottom"
+                        >
+                          <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                            className="transform"
+                          >
+                            <path d="M12 16l-6-6h12l-6 6z" />
+                          </svg>
+                        </button>
+                      </div>
+                    )}
+                    
+                    <div ref={messagesEndRef} />
                   </div>
                 )}
               </div>
