@@ -1396,13 +1396,15 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                           )}
                         </div>
                         <div className="flex items-center gap-2 justify-end mt-1">
-                          <button
-                            className={`${c.senderEmail === currentUser.email ? 'text-yellow-500 hover:text-yellow-700' : 'text-blue-600 hover:text-blue-800'}`}
-                            onClick={() => { setReplyTo(c); inputRef.current?.focus(); }}
-                            title="Reply"
-                          >
-                            <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c4.28 0 6.92 1.45 8.84 4.55.23.36.76.09.65-.32C18.31 13.13 15.36 10.36 10 9z"/></svg>
-                          </button>
+                          {!c.deleted && (
+                            <button
+                              className={`${c.senderEmail === currentUser.email ? 'text-yellow-500 hover:text-yellow-700' : 'text-blue-600 hover:text-blue-800'}`}
+                              onClick={() => { setReplyTo(c); inputRef.current?.focus(); }}
+                              title="Reply"
+                            >
+                              <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c4.28 0 6.92 1.45 8.84 4.55.23.36.76.09.65-.32C18.31 13.13 15.36 10.36 10 9z"/></svg>
+                            </button>
+                          )}
                           {(c.senderEmail === currentUser.email) && !isEditing && !c.deleted && (
                             <>
                               <button
