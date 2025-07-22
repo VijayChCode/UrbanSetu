@@ -1494,10 +1494,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                   </button>
                                 </span>
                               ) : isEditing ? (
-                                <>
+                                <div className="w-full">
                                   <input
                                     type="text"
-                                    className="border rounded px-2 py-1 text-xs w-40 text-gray-900 bg-white focus:bg-white"
+                                    className="border rounded px-2 py-1 text-xs w-full text-gray-900 bg-white focus:bg-white mb-2"
                                     value={editText}
                                     onChange={e => setEditText(e.target.value)}
                                     onKeyDown={e => {
@@ -1508,15 +1508,17 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                     }}
                                     autoFocus
                                   />
-                                  <button
-                                    onClick={() => handleEditComment(c._id)}
-                                    className="bg-green-700 hover:bg-green-900 text-white font-bold ml-1 px-3 py-1 rounded"
-                                  >Save</button>
-                                  <button
-                                    onClick={() => { setEditingComment(null); setEditText(""); }}
-                                    className="bg-red-700 hover:bg-red-900 text-white font-bold ml-1 px-3 py-1 rounded"
-                                  >Cancel</button>
-                                </>
+                                  <div className="flex gap-1 justify-end">
+                                    <button
+                                      onClick={() => handleEditComment(c._id)}
+                                      className="bg-green-700 hover:bg-green-900 text-white font-bold px-2 py-1 rounded text-xs"
+                                    >Save</button>
+                                    <button
+                                      onClick={() => { setEditingComment(null); setEditText(""); }}
+                                      className="bg-red-700 hover:bg-red-900 text-white font-bold px-2 py-1 rounded text-xs"
+                                    >Cancel</button>
+                                  </div>
+                                </div>
                               ) : (
                                 <div>
                                   {c.message}
