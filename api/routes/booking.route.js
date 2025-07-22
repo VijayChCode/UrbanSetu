@@ -336,9 +336,29 @@ router.delete('/:id/comment/:commentId', verifyToken, async (req, res) => {
     if (!comment) {
       return res.status(404).json({ message: 'Comment not found.' });
     }
+    // Preserve original content before marking as deleted
+    console.log('Deleting comment:', {
+      id: comment._id,
+      currentMessage: comment.message,
+      hasOriginalMessage: !!comment.originalMessage,
+      messageLength: comment.message ? comment.message.length : 0,
+      alreadyDeleted: comment.deleted
+    });
+    
+    // If already deleted but no original message preserved, we can't recover content
+    if (comment.deleted && !comment.originalMessage) {
+      console.log('Warning: Comment already deleted and no original message preserved');
+    }
+    
+    if (!comment.originalMessage && comment.message) {
+      comment.originalMessage = comment.message; // Only preserve if not already preserved
+      console.log('Preserved original message:', comment.originalMessage);
+    } else if (!comment.originalMessage && !comment.message) {
+      console.log('Warning: No content to preserve - message is already empty');
+    }
     comment.deleted = true;
     comment.deletedBy = req.user.email; // Track who deleted it
-    comment.originalMessage = comment.message; // Preserve for admin access
+    comment.deletedAt = new Date(); // Track when it was deleted
     comment.message = ''; // Hide for regular users
     await bookingToUpdate.save();
     // Emit socket event for real-time update

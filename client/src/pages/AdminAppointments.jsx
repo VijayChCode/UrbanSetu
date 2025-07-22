@@ -1253,8 +1253,24 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                                     Message deleted by {c.deletedBy || 'user'} (Admin view - preserved for records)
                                   </div>
                                   <div className="text-gray-800 bg-white p-2 rounded border-l-4 border-red-400">
-                                    {c.originalMessage || c.message || '[Message content not preserved]'}
+                                    {c.originalMessage ? (
+                                      <span>{c.originalMessage}</span>
+                                    ) : c.message ? (
+                                      <span>{c.message}</span>
+                                    ) : (
+                                      <span className="text-gray-500 italic">
+                                        [Message content not preserved - this message was deleted before content preservation was implemented]
+                                      </span>
+                                    )}
                                   </div>
+                                  {/* Debug info for development */}
+                                  {process.env.NODE_ENV === 'development' && (
+                                    <div className="mt-1 text-xs text-gray-500 font-mono">
+                                      Debug: originalMessage={c.originalMessage ? 'exists' : 'null'}, 
+                                      message={c.message ? 'exists' : 'empty'}, 
+                                      deleted={c.deleted ? 'true' : 'false'}
+                                    </div>
+                                  )}
                                   <button
                                     className="mt-2 text-xs text-red-500 hover:text-red-700 underline"
                                     onClick={() => {
