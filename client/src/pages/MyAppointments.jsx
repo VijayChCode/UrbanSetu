@@ -1349,12 +1349,19 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
             disabled={!isUpcoming}
           >
             <FaCommentDots size={20} />
-            {unreadCount > 0 && !isUpcoming && (
+            {/* Typing indicator - highest priority */}
+            {isOtherPartyTyping && isUpcoming && (
+              <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-bold border-2 border-white animate-pulse">
+                ...
+              </span>
+            )}
+            {/* Unread count when not typing */}
+            {!isOtherPartyTyping && unreadCount > 0 && !isUpcoming && (
               <span className="absolute -top-1 -right-1 bg-gray-400 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-bold border-2 border-white">
                 {unreadCount}
               </span>
             )}
-            {unreadCount > 0 && isUpcoming && (
+            {!isOtherPartyTyping && unreadCount > 0 && isUpcoming && (
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-bold border-2 border-white">
                 {unreadCount}
               </span>

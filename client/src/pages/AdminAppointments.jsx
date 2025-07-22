@@ -650,6 +650,8 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
   const chatEndRef = React.useRef(null);
   const chatContainerRef = React.useRef(null);
   const [isAtBottom, setIsAtBottom] = useLocalState(true);
+  const [isOtherPartyTyping, setIsOtherPartyTyping] = useLocalState(false);
+  const typingTimeoutRef = React.useRef(null);
 
   // Auto-scroll to bottom when chat modal opens or comments change
   React.useEffect(() => {
@@ -739,6 +741,22 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
       socket.off('commentUpdate', handleCommentUpdate);
     };
   }, [appt._id, setLocalComments]);
+
+  // Listen for typing events from the other party
+  React.useEffect(() => {
+    function handleTyping(data) {
+      if (data.appointmentId === appt._id && data.fromUserId !== currentUser._id) {
+        setIsOtherPartyTyping(true);
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = setTimeout(() => setIsOtherPartyTyping(false), 2000);
+      }
+    }
+    socket.on('typing', handleTyping);
+    return () => {
+      socket.off('typing', handleTyping);
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    };
+  }, [appt._id, currentUser._id]);
 
   const handleCommentSend = async () => {
     if (!newComment.trim()) return;
@@ -979,6 +997,12 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
           onClick={handleChatButtonClick}
         >
           <FaCommentDots size={20} />
+          {/* Typing indicator */}
+          {isOtherPartyTyping && (
+            <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-bold border-2 border-white animate-pulse">
+              ...
+            </span>
+          )}
         </button>
         {showPasswordModal && (
           <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
@@ -1020,6 +1044,9 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
               <div className="flex items-center gap-2 px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-200 to-purple-200 rounded-t-2xl relative">
                 <FaCommentDots className="text-blue-600 text-xl" />
                 <h3 className="text-lg font-bold text-blue-800">Chat</h3>
+                {isOtherPartyTyping && (
+                  <span className="ml-3 text-blue-600 font-semibold text-sm">Typing...</span>
+                )}
                 <div className="flex items-center gap-3 ml-auto">
                   <button
                     className="text-xs text-red-600 hover:underline"
@@ -1142,7 +1169,16 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                   className="flex-1 px-3 py-2 border rounded-full text-sm focus:ring-2 focus:ring-blue-200 shadow"
                   placeholder="Type a message..."
                   value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
+                  onChange={(e) => {
+                    setNewComment(e.target.value);
+                    // Emit typing event to both buyer and seller
+                    if (appt.buyerId?._id) {
+                      socket.emit('typing', { toUserId: appt.buyerId._id, fromUserId: currentUser._id, appointmentId: appt._id });
+                    }
+                    if (appt.sellerId?._id) {
+                      socket.emit('typing', { toUserId: appt.sellerId._id, fromUserId: currentUser._id, appointmentId: appt._id });
+                    }
+                  }}
                   onKeyDown={e => { if (e.key === 'Enter') handleCommentSend(); }}
                 />
                 <button
