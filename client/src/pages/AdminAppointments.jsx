@@ -703,9 +703,16 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
   React.useEffect(() => {
     function handleCommentUpdateNotify(data) {
       if (data.appointmentId === appt._id && !showChatModal) {
+        // Check if sender is admin by checking if senderEmail matches any admin user
+        const isSenderBuyer = data.comment.senderEmail === appt.buyerId?.email;
+        const isSenderSeller = data.comment.senderEmail === appt.sellerId?.email;
+        const isSenderAdmin = !isSenderBuyer && !isSenderSeller;
+        
+        const senderName = isSenderAdmin ? "Organization" : (data.comment.senderEmail || 'User');
+        
         toast.custom((t) => (
           <div className="bg-blue-600 text-white px-4 py-2 rounded shadow-lg flex items-center gap-2 animate-bounce-in">
-            <FaCommentDots /> New message from {data.comment.senderEmail || 'User'}
+            <FaCommentDots /> New message from {senderName}
             <button onClick={() => { setShowChatModal(true); toast.dismiss(t.id); }} className="ml-4 bg-white text-blue-700 px-2 py-1 rounded">Open Chat</button>
           </div>
         ));
@@ -1049,7 +1056,18 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                     <div key={c._id || index} className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-fadeInChatBubble`} style={{ animationDelay: `${0.03 * index}s` }}>
                       <div className={`rounded-2xl px-4 py-2 text-sm shadow-lg max-w-[80%] break-words relative ${isMe ? 'bg-gradient-to-r from-blue-400 to-blue-600 text-white' : 'bg-white text-gray-800 border border-gray-200'}`}>
                         <div className="font-semibold mb-1 flex items-center gap-2">
-                          {isMe ? "You" : c.senderEmail}
+                          {isMe ? "You" : (() => {
+                            // Check if sender is admin by checking if senderEmail matches any admin user
+                            // For now, we'll identify admin by checking if the message sender is neither buyer nor seller
+                            const isSenderBuyer = c.senderEmail === appt.buyerId?.email;
+                            const isSenderSeller = c.senderEmail === appt.sellerId?.email;
+                            const isSenderAdmin = !isSenderBuyer && !isSenderSeller;
+                            
+                            if (isSenderAdmin) {
+                              return "Organization";
+                            }
+                            return c.senderEmail;
+                          })()}
                           <span className="text-gray-300 ml-2 text-[10px]">{new Date(c.timestamp).toLocaleString()}</span>
                         </div>
                         <div className="flex items-center gap-1">

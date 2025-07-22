@@ -984,7 +984,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   React.useEffect(() => {
     function handleCommentUpdateNotify(data) {
       if (data.appointmentId === appt._id && !showChatModal) {
-        toast.info(`New message from ${data.comment.senderEmail || 'User'}`);
+        // Check if sender is admin by checking if senderEmail matches any admin user
+        const isSenderBuyer = data.comment.senderEmail === appt.buyerId?.email;
+        const isSenderSeller = data.comment.senderEmail === appt.sellerId?.email;
+        const isSenderAdmin = !isSenderBuyer && !isSenderSeller;
+        
+        const senderName = isSenderAdmin ? "Organization" : (data.comment.senderEmail || 'User');
+        toast.info(`New message from ${senderName}`);
       }
     }
     socket.on('commentUpdate', handleCommentUpdateNotify);
@@ -1455,7 +1461,18 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             )}
                             <div className="font-semibold mb-1 flex items-center gap-2 flex-wrap break-all">
                               <span className="truncate max-w-[60%] min-w-[80px] inline-block align-middle overflow-hidden text-ellipsis">
-                                {isMe ? "You" : (otherParty?.username || c.senderName || c.senderEmail)}
+                                {isMe ? "You" : (() => {
+                                  // Check if sender is admin by checking if senderEmail matches any admin user
+                                  // For now, we'll identify admin by checking if the message sender is neither buyer nor seller
+                                  const isSenderBuyer = c.senderEmail === appt.buyerId?.email;
+                                  const isSenderSeller = c.senderEmail === appt.sellerId?.email;
+                                  const isSenderAdmin = !isSenderBuyer && !isSenderSeller;
+                                  
+                                  if (isSenderAdmin) {
+                                    return "Organization";
+                                  }
+                                  return otherParty?.username || c.senderName || c.senderEmail;
+                                })()}
                               </span>
                               <span className="text-gray-300 ml-2 text-[10px]">
                                 {new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
