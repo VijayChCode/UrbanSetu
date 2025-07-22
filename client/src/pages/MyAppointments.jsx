@@ -724,6 +724,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const chatEndRef = useRef(null);
   const chatContainerRef = useRef(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
+  const [unreadNewMessages, setUnreadNewMessages] = useState(0);
   const [isOtherPartyOnline, setIsOtherPartyOnline] = useState(false);
   const [isOtherPartyTyping, setIsOtherPartyTyping] = useState(false);
   const typingTimeoutRef = useRef(null);
@@ -982,12 +983,33 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     }
   };
 
-  // Auto-scroll to bottom when chat modal opens or comments change
+  // Auto-scroll to bottom only when chat modal opens or when user is at bottom
   React.useEffect(() => {
     if (showChatModal && chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [showChatModal, comments]);
+  }, [showChatModal]);
+
+  // Track new messages and handle auto-scroll/unread count
+  const prevCommentsLengthRef = useRef(comments.length);
+  React.useEffect(() => {
+    const newMessagesCount = comments.length - prevCommentsLengthRef.current;
+    prevCommentsLengthRef.current = comments.length;
+
+    if (newMessagesCount > 0 && showChatModal) {
+      if (isAtBottom) {
+        // Auto-scroll if user is at bottom
+        setTimeout(() => {
+          if (chatEndRef.current) {
+            chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+          }
+        }, 100);
+      } else {
+        // Add to unread count if user is not at bottom
+        setUnreadNewMessages(prev => prev + newMessagesCount);
+      }
+    }
+  }, [comments.length, isAtBottom, showChatModal]);
 
   // Check if user is at the bottom of chat
   const checkIfAtBottom = React.useCallback(() => {
@@ -995,8 +1017,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
       const atBottom = scrollHeight - scrollTop - clientHeight < 5; // 5px threshold
       setIsAtBottom(atBottom);
+      
+      // Clear unread count when user reaches bottom
+      if (atBottom && unreadNewMessages > 0) {
+        setUnreadNewMessages(0);
+      }
     }
-  }, []);
+  }, [unreadNewMessages]);
 
   // Add scroll event listener for chat container
   React.useEffect(() => {
@@ -1016,6 +1043,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const scrollToBottom = React.useCallback(() => {
     if (chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      setUnreadNewMessages(0); // Clear unread count when manually scrolling to bottom
     }
   }, []);
 
@@ -1139,6 +1167,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
+      setUnreadNewMessages(0); // Reset unread count when chat is closed
     }
     return () => {
       document.body.style.overflow = '';
@@ -1714,9 +1743,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
               <div className="absolute bottom-20 right-6 z-20">
                 <button
                   onClick={scrollToBottom}
-                  className="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-3 shadow-lg transition-all duration-200 hover:scale-110 animate-pulse"
-                  title="Scroll to bottom"
-                  aria-label="Scroll to bottom"
+                  className="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-3 shadow-lg transition-all duration-200 hover:scale-110 relative"
+                  title={unreadNewMessages > 0 ? `${unreadNewMessages} new message${unreadNewMessages > 1 ? 's' : ''}` : "Scroll to bottom"}
+                  aria-label={unreadNewMessages > 0 ? `${unreadNewMessages} new messages, scroll to bottom` : "Scroll to bottom"}
                 >
                   <svg
                     width="20"
@@ -1727,6 +1756,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   >
                     <path d="M12 16l-6-6h12l-6 6z" />
                   </svg>
+                  {unreadNewMessages > 0 && (
+                    <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1 border-2 border-white shadow-lg">
+                      {unreadNewMessages > 99 ? '99+' : unreadNewMessages}
+                    </div>
+                  )}
                 </button>
               </div>
             )}
