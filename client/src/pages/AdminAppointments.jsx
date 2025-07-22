@@ -643,6 +643,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
   const [sending, setSending] = useLocalState(false);
   const [editingComment, setEditingComment] = useLocalState(null);
   const [editText, setEditText] = useLocalState("");
+  const [savingComment, setSavingComment] = useLocalState(null);
   const [showChatModal, setShowChatModal] = useLocalState(false);
   const [showPasswordModal, setShowPasswordModal] = useLocalState(false);
   const [adminPassword, setAdminPassword] = useLocalState("");
@@ -743,22 +744,48 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
   const handleCommentSend = async () => {
     if (!newComment.trim()) return;
     setSending(true);
+
+    // Create a temporary message object for optimistic update
+    const tempId = `temp-${Date.now()}`;
+    const tempMessage = {
+      _id: tempId,
+      senderEmail: currentUser.email,
+      message: newComment,
+      status: "sending",
+      timestamp: new Date().toISOString(),
+      readBy: [currentUser._id],
+    };
+    
+    // Optimistic update - add message immediately
+    setLocalComments(prev => [...prev, tempMessage]);
+    const messageToSend = newComment;
+    setNewComment("");
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
-        body: JSON.stringify({ message: newComment }),
+        body: JSON.stringify({ message: messageToSend }),
       });
       const data = await res.json();
       if (res.ok) {
-        setLocalComments(data.comments);
-        setNewComment("");
+        // Replace temp message with real message from server
+        setLocalComments(prev => [
+          ...prev.filter(msg => msg._id !== tempId),
+          ...data.comments.filter(newC => !prev.some(msg => msg._id === newC._id))
+        ]);
         toast.success("Comment sent successfully!");
       } else {
+        // Remove temp message on error
+        setLocalComments(prev => prev.filter(msg => msg._id !== tempId));
+        setNewComment(messageToSend); // Restore message
         toast.error(data.message || "Failed to send comment.");
       }
     } catch (err) {
+      // Remove temp message on error
+      setLocalComments(prev => prev.filter(msg => msg._id !== tempId));
+      setNewComment(messageToSend); // Restore message
       toast.error("An error occurred. Please try again.");
     }
     setSending(false);
@@ -766,7 +793,19 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
 
   const handleEditComment = async (commentId) => {
     if (!editText.trim()) return;
-    console.log('Admin editing comment:', commentId, 'with text:', editText);
+    
+    setSavingComment(commentId);
+    
+    // Optimistic update - update UI immediately
+    const optimisticUpdate = prev => prev.map(c => 
+      c._id === commentId 
+        ? { ...c, message: editText, edited: true, editedAt: new Date() }
+        : c
+    );
+    setLocalComments(optimisticUpdate);
+    setEditingComment(null);
+    setEditText("");
+    
     try {
       const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${commentId}`, {
         method: "PATCH",
@@ -775,24 +814,58 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
         body: JSON.stringify({ message: editText }),
       });
       const data = await res.json();
-      console.log('Edit response:', res.status, data);
       if (res.ok) {
-        setLocalComments(data.comments);
-        setEditingComment(null);
-        setEditText("");
+        // Update with server response
+        setLocalComments(prev => prev.map(c => {
+          const serverComment = data.comments.find(sc => sc._id === c._id);
+          if (serverComment) {
+            // For the edited message, use server data
+            if (serverComment._id === commentId) {
+              return serverComment;
+            }
+            // For other messages, preserve local read status if it exists
+            return c.status === 'read' && serverComment.status !== 'read' 
+              ? { ...serverComment, status: 'read' }
+              : serverComment;
+          }
+          return c;
+        }));
         toast.success("Comment edited successfully!");
       } else {
+        // Revert optimistic update on error
+        setLocalComments(prev => prev.map(c => 
+          c._id === commentId 
+            ? { ...c, message: c.originalMessage || c.message, edited: c.wasEdited || false }
+            : c
+        ));
+        setEditingComment(commentId);
+        setEditText(editText);
         toast.error(data.message || "Failed to edit comment.");
       }
     } catch (err) {
-      console.error('Edit comment error:', err);
+      // Revert optimistic update on error
+      setLocalComments(prev => prev.map(c => 
+        c._id === commentId 
+          ? { ...c, message: c.originalMessage || c.message, edited: c.wasEdited || false }
+          : c
+      ));
+      setEditingComment(commentId);
+      setEditText(editText);
       toast.error("An error occurred. Please try again.");
+    } finally {
+      setSavingComment(null);
     }
   };
 
   const startEditing = (comment) => {
     setEditingComment(comment._id);
     setEditText(comment.message);
+    // Store original data for potential rollback
+    setLocalComments(prev => prev.map(c => 
+      c._id === comment._id 
+        ? { ...c, originalMessage: c.message, wasEdited: c.edited }
+        : c
+    ));
   };
 
   // Check if comment is from current admin user
@@ -1068,8 +1141,25 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                                 }}
                                 autoFocus
                               />
-                              <button onClick={() => handleEditComment(c._id)} className="text-green-600 hover:text-green-800 font-bold ml-1">Save</button>
-                              <button onClick={() => { setEditingComment(null); setEditText(""); }} className="text-gray-500 hover:text-gray-700 font-bold ml-1">Cancel</button>
+                              <button 
+                                onClick={() => handleEditComment(c._id)} 
+                                disabled={savingComment === c._id}
+                                className="text-green-600 hover:text-green-800 disabled:text-green-400 disabled:cursor-not-allowed font-bold ml-1 flex items-center gap-1"
+                              >
+                                {savingComment === c._id ? (
+                                  <>
+                                    <div className="w-3 h-3 border border-green-600 border-t-transparent rounded-full animate-spin"></div>
+                                    Saving...
+                                  </>
+                                ) : (
+                                  'Save'
+                                )}
+                              </button>
+                              <button 
+                                onClick={() => { setEditingComment(null); setEditText(""); }} 
+                                disabled={savingComment === c._id}
+                                className="text-gray-500 hover:text-gray-700 disabled:text-gray-400 disabled:cursor-not-allowed font-bold ml-1"
+                              >Cancel</button>
                             </>
                           ) : c.deleted ? (
                             <span className="flex items-center gap-1 text-gray-400 italic">
@@ -1148,9 +1238,16 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                 <button
                   onClick={handleCommentSend}
                   disabled={sending || !newComment.trim()}
-                  className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-5 py-2 rounded-full text-sm font-semibold shadow hover:from-blue-600 hover:to-purple-600 transition disabled:opacity-50"
+                  className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-5 py-2 rounded-full text-sm font-semibold shadow hover:from-blue-600 hover:to-purple-600 transition disabled:opacity-50 flex items-center gap-2"
                 >
-                  Send
+                  {sending ? (
+                    <>
+                      <div className="w-4 h-4 border border-white border-t-transparent rounded-full animate-spin"></div>
+                      Sending...
+                    </>
+                  ) : (
+                    'Send'
+                  )}
                 </button>
               </div>
               {/* Animations for chat bubbles */}
