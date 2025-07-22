@@ -644,12 +644,15 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
   const [editingComment, setEditingComment] = useLocalState(null);
   const [editText, setEditText] = useLocalState("");
   const [savingComment, setSavingComment] = useLocalState(null);
+  const [replyTo, setReplyTo] = useLocalState(null);
   const [showChatModal, setShowChatModal] = useLocalState(false);
   const [showPasswordModal, setShowPasswordModal] = useLocalState(false);
   const [adminPassword, setAdminPassword] = useLocalState("");
   const [passwordLoading, setPasswordLoading] = useLocalState(false);
   const chatEndRef = React.useRef(null);
   const chatContainerRef = React.useRef(null);
+  const inputRef = React.useRef(null);
+  const messageRefs = React.useRef({});
   const [isAtBottom, setIsAtBottom] = useLocalState(true);
 
   // Auto-scroll to bottom when chat modal opens or comments change
@@ -754,19 +757,21 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
       status: "sending",
       timestamp: new Date().toISOString(),
       readBy: [currentUser._id],
+      ...(replyTo ? { replyTo: replyTo._id } : {}),
     };
     
     // Optimistic update - add message immediately
     setLocalComments(prev => [...prev, tempMessage]);
     const messageToSend = newComment;
     setNewComment("");
+    setReplyTo(null); // Clear replyTo after sending
 
     try {
       const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
-        body: JSON.stringify({ message: messageToSend }),
+        body: JSON.stringify({ message: messageToSend, ...(replyTo ? { replyTo: replyTo._id } : {}) }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -1120,7 +1125,24 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                   const isEditing = editingComment === c._id;
                   return (
                     <div key={c._id || index} className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-fadeInChatBubble`} style={{ animationDelay: `${0.03 * index}s` }}>
-                      <div className={`rounded-2xl px-4 py-2 text-sm shadow-lg max-w-[80%] break-words relative ${isMe ? 'bg-gradient-to-r from-blue-400 to-blue-600 text-white' : 'bg-white text-gray-800 border border-gray-200'}`}>
+                      <div 
+                        ref={el => messageRefs.current[c._id] = el}
+                        className={`rounded-2xl px-4 py-2 text-sm shadow-lg max-w-[80%] break-words relative ${isMe ? 'bg-gradient-to-r from-blue-400 to-blue-600 text-white' : 'bg-white text-gray-800 border border-gray-200'}`}
+                      >
+                        {/* Reply preview above message if this is a reply */}
+                        {c.replyTo && (
+                          <div className="border-l-4 border-blue-300 pl-2 mb-1 text-xs text-gray-500 bg-blue-50 rounded w-full max-w-full break-words cursor-pointer" onClick={() => {
+                              if (messageRefs.current[c.replyTo]) {
+                                messageRefs.current[c.replyTo].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                messageRefs.current[c.replyTo].classList.add('ring-2', 'ring-yellow-400');
+                                setTimeout(() => {
+                                  messageRefs.current[c.replyTo].classList.remove('ring-2', 'ring-yellow-400');
+                                }, 1000);
+                              }
+                            }} role="button" tabIndex={0} aria-label="Go to replied message">
+                            <span className="text-xs text-gray-600 truncate">{localComments.find(msg => msg._id === c.replyTo)?.message || 'Original message'}</span>
+                          </div>
+                        )}
                         <div className="font-semibold mb-1 flex items-center gap-2">
                           {isMe ? "You" : c.senderEmail}
                           <span className="text-gray-300 ml-2 text-[10px]">{new Date(c.timestamp).toLocaleString()}</span>
@@ -1184,41 +1206,50 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                             </div>
                           )}
                         </div>
-                        {(c.senderEmail === currentUser.email) && !isEditing && !c.deleted && (
-                          <div className="flex items-center gap-2 mt-1">
-                            <button
-                              onClick={() => startEditing(c)}
-                              className="text-blue-200 hover:text-white"
-                              title="Edit comment"
-                            >
-                              <FaPen size={12} />
-                            </button>
-                            <button
-                              className="text-red-200 hover:text-white"
-                              onClick={async () => {
-                                if (!window.confirm('Are you sure you want to delete this comment?')) return;
-                                try {
-                                  const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${c._id}`, {
-                                    method: 'DELETE',
-                                    credentials: 'include'
-                                  });
-                                  const data = await res.json();
-                                  if (res.ok) {
-                                    setLocalComments(data.comments);
-                                    toast.success("Comment deleted successfully!");
-                                  } else {
-                                    toast.error(data.message || 'Failed to delete comment.');
+                        <div className="flex items-center gap-2 justify-end mt-1">
+                          <button
+                            className={`${c.senderEmail === currentUser.email ? 'text-yellow-200 hover:text-yellow-400' : 'text-blue-200 hover:text-blue-400'}`}
+                            onClick={() => { setReplyTo(c); inputRef.current?.focus(); }}
+                            title="Reply"
+                          >
+                            <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c4.28 0 6.92 1.45 8.84 4.55.23.36.76.09.65-.32C18.31 13.13 15.36 10.36 10 9z"/></svg>
+                          </button>
+                          {(c.senderEmail === currentUser.email) && !isEditing && !c.deleted && (
+                            <>
+                              <button
+                                onClick={() => startEditing(c)}
+                                className="text-blue-200 hover:text-white"
+                                title="Edit comment"
+                              >
+                                <FaPen size={12} />
+                              </button>
+                              <button
+                                className="text-red-200 hover:text-white"
+                                onClick={async () => {
+                                  if (!window.confirm('Are you sure you want to delete this comment?')) return;
+                                  try {
+                                    const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${c._id}`, {
+                                      method: 'DELETE',
+                                      credentials: 'include'
+                                    });
+                                    const data = await res.json();
+                                    if (res.ok) {
+                                      setLocalComments(data.comments);
+                                      toast.success("Comment deleted successfully!");
+                                    } else {
+                                      toast.error(data.message || 'Failed to delete comment.');
+                                    }
+                                  } catch (err) {
+                                    toast.error('An error occurred. Please try again.');
                                   }
-                                } catch (err) {
-                                  toast.error('An error occurred. Please try again.');
-                                }
-                              }}
-                              title="Delete comment"
-                            >
-                              <FaTrash size={12} />
-                            </button>
-                          </div>
-                        )}
+                                }}
+                                title="Delete comment"
+                              >
+                                <FaTrash size={12} />
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );
@@ -1227,6 +1258,13 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                 <div ref={chatEndRef} />
               </div>
               <div className="flex gap-2 mt-2 px-4 pb-4">
+                {replyTo && (
+                  <div className="flex items-center bg-blue-50 border-l-4 border-blue-400 px-2 py-1 mb-2 rounded">
+                    <span className="text-xs text-gray-700 font-semibold mr-2">Replying to:</span>
+                    <span className="text-xs text-gray-600 truncate">{replyTo.message}</span>
+                    <button className="ml-auto text-gray-400 hover:text-gray-700" onClick={() => setReplyTo(null)} title="Cancel reply">&times;</button>
+                  </div>
+                )}
                 <input
                   type="text"
                   className="flex-1 px-3 py-2 border rounded-full text-sm focus:ring-2 focus:ring-blue-200 shadow"
@@ -1234,6 +1272,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') handleCommentSend(); }}
+                  ref={inputRef}
                 />
                 <button
                   onClick={handleCommentSend}
