@@ -564,31 +564,31 @@ export default function ContactSupport() {
                       </div>
                     ))}
                     
-                    {/* Scroll to bottom button - WhatsApp style */}
-                    {!isAtBottom && userMessages.length > 0 && (
-                      <div className="absolute bottom-4 right-4 z-10">
-                        <button
-                          onClick={scrollToBottom}
-                          className="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-2 shadow-lg transition-all duration-200 hover:scale-105 animate-bounce"
-                          title="Scroll to bottom"
-                          aria-label="Scroll to bottom"
-                        >
-                          <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="currentColor"
-                            className="transform"
-                          >
-                            <path d="M12 16l-6-6h12l-6 6z" />
-                          </svg>
-                        </button>
-                      </div>
-                    )}
-                    
                     <div ref={messagesEndRef} />
                   </div>
                 )}
+              </div>
+            )}
+            
+            {/* Floating Scroll to bottom button - WhatsApp style */}
+            {!isAtBottom && userMessages.length > 0 && activeTab === 'messages' && (
+              <div className="absolute bottom-6 right-6 z-20">
+                <button
+                  onClick={scrollToBottom}
+                  className="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-3 shadow-lg transition-all duration-200 hover:scale-110 animate-pulse"
+                  title="Scroll to bottom"
+                  aria-label="Scroll to bottom"
+                >
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    className="transform"
+                  >
+                    <path d="M12 16l-6-6h12l-6 6z" />
+                  </svg>
+                </button>
               </div>
             )}
           </div>
