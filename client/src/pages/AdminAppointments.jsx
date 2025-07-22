@@ -664,12 +664,12 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
   const messageRefs = React.useRef({});
   const [isAtBottom, setIsAtBottom] = useLocalState(true);
 
-  // Auto-scroll to bottom when chat modal opens or comments change
+  // Auto-scroll to bottom only when chat modal opens
   React.useEffect(() => {
     if (showChatModal && chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [showChatModal, localComments]);
+  }, [showChatModal]);
 
   // Check if user is at the bottom of chat
   const checkIfAtBottom = React.useCallback(() => {
