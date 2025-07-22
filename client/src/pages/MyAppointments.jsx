@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo, FaCommentDots, FaCheckDouble, FaBan, FaPaperPlane } from "react-icons/fa";
+import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo, FaCommentDots, FaCheckDouble, FaBan, FaPaperPlane, FaCalendar } from "react-icons/fa";
 import { useSelector } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Appointment from "../components/Appointment";
@@ -643,33 +643,88 @@ export default function MyAppointments() {
           </div>
           )
         )}
-      {/* Other Party Details Modal */}
+      {/* Other Party Details Modal - Enhanced Design */}
       {showOtherPartyModal && selectedOtherParty && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 relative">
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-2 sm:mx-4 max-h-[90vh] overflow-y-auto relative animate-fadeIn">
+            {/* Close button */}
             <button
-              className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-2xl"
+              className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors z-10 shadow"
               onClick={() => setShowOtherPartyModal(false)}
               title="Close"
+              aria-label="Close"
             >
-              &times;
+              <FaTimes className="w-4 h-4" />
             </button>
-            <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-              <FaUser className="text-blue-500" />
-              {selectedOtherParty.username || 'User Details'}
-            </h3>
-            <div className="space-y-2">
-              <p className="flex items-center gap-2"><FaEnvelope className="text-gray-500" /> <span>{selectedOtherParty.email}</span></p>
-              <p className="flex items-center gap-2"><FaPhone className="text-gray-500" /> <span>{selectedOtherParty.mobileNumber || 'Not provided'}</span></p>
-              <p><strong>Role:</strong> {selectedOtherParty.role}</p>
-              <p><strong>Member Since:</strong> {selectedOtherParty.createdAt ? new Date(selectedOtherParty.createdAt).toLocaleDateString() : ''}</p>
+            
+            {/* Header with gradient background */}
+            <div className="flex flex-col items-center justify-center bg-gradient-to-r from-blue-100 to-purple-100 rounded-t-2xl px-6 py-6 border-b border-gray-200">
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <img
+                    src={selectedOtherParty.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedOtherParty.username || 'User')}&background=6366f1&color=ffffff&size=128`}
+                    alt={selectedOtherParty.username}
+                    className="w-16 h-16 rounded-full object-cover border-4 border-white shadow-lg"
+                  />
+                  <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 border-2 border-white rounded-full flex items-center justify-center">
+                    <FaUser className="w-3 h-3 text-white" />
+                  </div>
+                </div>
+                <div className="text-center">
+                  <h2 className="text-xl font-bold text-blue-800 flex items-center gap-2">
+                    {selectedOtherParty.username || 'User'}
+                    {selectedOtherParty.role === 'admin' && (
+                      <FaUserShield className="text-purple-600 text-base" title="Admin user" />
+                    )}
+                  </h2>
+                  <p className="text-sm text-gray-600 capitalize font-medium bg-white px-3 py-1 rounded-full shadow-sm">
+                    {selectedOtherParty.role || 'User'}
+                  </p>
+                </div>
+              </div>
             </div>
-            <button
-              onClick={() => setShowOtherPartyModal(false)}
-              className="mt-6 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 w-full"
-            >
-              Close
-            </button>
+
+            {/* Body with enhanced styling */}
+            <div className="px-6 py-6 space-y-4">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border-l-4 border-blue-500">
+                  <FaEnvelope className="text-blue-500 w-5 h-5 flex-shrink-0" />
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold">Email</p>
+                    <p className="text-gray-800 font-medium">{selectedOtherParty.email}</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border-l-4 border-green-500">
+                  <FaPhone className="text-green-500 w-5 h-5 flex-shrink-0" />
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold">Phone</p>
+                    <p className="text-gray-800 font-medium">{selectedOtherParty.mobileNumber || 'Not provided'}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border-l-4 border-purple-500">
+                  <FaCalendar className="text-purple-500 w-5 h-5 flex-shrink-0" />
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold">Member Since</p>
+                    <p className="text-gray-800 font-medium">
+                      {selectedOtherParty.createdAt ? new Date(selectedOtherParty.createdAt).toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      }) : 'Not available'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowOtherPartyModal(false)}
+                className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg font-semibold"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
