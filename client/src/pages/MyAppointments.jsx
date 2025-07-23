@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo, FaCommentDots, FaCheckDouble, FaBan, FaPaperPlane, FaCalendar } from "react-icons/fa";
+import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo, FaCommentDots, FaCheckDouble, FaBan, FaPaperPlane, FaCalendar, FaLightbulb } from "react-icons/fa";
 import { useSelector } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Appointment from "../components/Appointment";
@@ -809,6 +809,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const [isOtherPartyOnline, setIsOtherPartyOnline] = useState(false);
   const [isOtherPartyOnlineInTable, setIsOtherPartyOnlineInTable] = useState(false);
   const [isOtherPartyTyping, setIsOtherPartyTyping] = useState(false);
+  const [showShortcutTip, setShowShortcutTip] = useState(false);
   const typingTimeoutRef = useRef(null);
   const inputRef = useRef(null); // Add inputRef here
   const messageRefs = useRef({}); // Add messageRefs here
@@ -1762,6 +1763,22 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                     >
                       Clear Chat
                     </button>
+                    <div className="relative">
+                      <button
+                        className="text-yellow-500 hover:text-yellow-600 bg-yellow-50 hover:bg-yellow-100 rounded-full p-2 transition-colors shadow"
+                        onClick={() => setShowShortcutTip(!showShortcutTip)}
+                        title="Keyboard shortcut tip"
+                        aria-label="Show keyboard shortcut tip"
+                      >
+                        <FaLightbulb className="text-sm" />
+                      </button>
+                      {showShortcutTip && (
+                        <div className="absolute top-full right-0 mt-2 bg-gray-800 text-white text-xs rounded-lg px-3 py-2 shadow-lg z-20 whitespace-nowrap">
+                          Press Ctrl + F to quickly focus and type your search.
+                          <div className="absolute -top-1 right-4 w-2 h-2 bg-gray-800 transform rotate-45"></div>
+                        </div>
+                      )}
+                    </div>
                     <button
                       className="text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors z-10 shadow"
                       onClick={() => setShowChatModal(false)}
