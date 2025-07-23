@@ -13,7 +13,7 @@ const NetworkStatus = () => {
   // Show reconnection message briefly when coming back online
   if (isOnline && wasOffline) {
     return (
-      <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 animate-fade-in">
+      <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-[100] animate-fade-in">
         <div className="bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 animate-slide-down">
           <FaCheckCircle className="text-xl animate-pulse" />
           <div className="text-center">
@@ -27,7 +27,7 @@ const NetworkStatus = () => {
 
   // Show offline message when no internet
   return (
-    <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 animate-fade-in">
+    <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-[100] animate-fade-in">
       <div className="bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 animate-slide-down">
         <FaTimesCircle className="text-xl animate-pulse" />
         <div className="text-center">
