@@ -1481,6 +1481,23 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     };
   }, [otherParty?._id, appt._id]);
 
+  // Keyboard shortcut Ctrl+F to focus message input
+  useEffect(() => {
+    if (!showChatModal) return;
+    
+    const handleKeyDown = (event) => {
+      if (event.ctrlKey && event.key === 'f') {
+        event.preventDefault(); // Prevent browser find dialog
+        inputRef.current?.focus();
+      }
+    };
+    
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showChatModal]);
+
   // Add this helper function near the top of AppointmentRow or before swipeHandlers
   function getMsgIdFromEvent(event) {
     let el = event.target;

@@ -1012,6 +1012,23 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
     };
   }, [appt._id, setLocalComments]);
 
+  // Keyboard shortcut Ctrl+F to focus message input
+  React.useEffect(() => {
+    if (!showChatModal) return;
+    
+    const handleKeyDown = (event) => {
+      if (event.ctrlKey && event.key === 'f') {
+        event.preventDefault(); // Prevent browser find dialog
+        inputRef.current?.focus();
+      }
+    };
+    
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showChatModal]);
+
   const handleCommentSend = async () => {
     if (!newComment.trim()) return;
     setSending(true);
