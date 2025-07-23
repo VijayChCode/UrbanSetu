@@ -55,6 +55,13 @@ export default function Appointment() {
           const activeStatuses = ["pending", "accepted"];
           const found = data.find(appt => {
             if (!appt.listingId || (appt.listingId._id !== listingId && appt.listingId !== listingId)) return false;
+            
+            // Check if appointment is outdated (past date/time)
+            const isOutdated = new Date(appt.date) < new Date() || (new Date(appt.date).toDateString() === new Date().toDateString() && appt.time && appt.time < new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+            
+            // Don't block if appointment is outdated
+            if (isOutdated) return false;
+            
             if (activeStatuses.includes(appt.status)) return true;
             // Only block if reinitiation is still possible for the current user
             if (appt.status === "cancelledByBuyer" && appt.buyerId && (appt.buyerId._id === currentUser._id || appt.buyerId === currentUser._id) && (appt.buyerReinitiationCount || 0) < 2) return true;
