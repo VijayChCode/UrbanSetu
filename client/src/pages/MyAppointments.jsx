@@ -1824,7 +1824,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   <button
                     onClick={handleCommentSend}
                     disabled={sending || !comment.trim()}
-                    className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-5 py-2 rounded-full text-sm font-semibold shadow hover:from-blue-600 hover:to-purple-600 transition disabled:opacity-50 flex items-center gap-2"
+                    className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-5 py-2 rounded-full text-sm font-semibold shadow hover:from-blue-600 hover:to-purple-600 transition disabled:opacity-50 flex items-center gap-2 min-w-20"
                   >
                     {sending ? (
                       <>
