@@ -1336,12 +1336,12 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                           {isMe ? "You" : c.senderEmail}
                           <span className="text-gray-300 ml-2 text-[10px]">{new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
                         </div>
-                        <div className="flex items-center gap-1">
+                        <div>
                           {isEditing ? (
-                            <>
+                            <div className="w-full">
                               <input
                                 type="text"
-                                className="border rounded px-2 py-1 text-xs w-40 text-gray-900 bg-white focus:bg-white"
+                                className="border rounded px-2 py-1 text-xs w-full text-gray-900 bg-white focus:bg-white mb-2"
                                 value={editText}
                                 onChange={e => setEditText(e.target.value)}
                                 onKeyDown={e => {
@@ -1373,7 +1373,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                                   className="bg-red-700 hover:bg-red-900 disabled:bg-red-500 disabled:cursor-not-allowed text-white font-bold px-2 py-1 rounded text-xs"
                                 >Cancel</button>
                               </div>
-                            </>
+                            </div>
                           ) : c.deleted ? (
                             (() => {
                               // Check if admin has hidden this deleted message locally using state
