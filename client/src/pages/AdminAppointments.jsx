@@ -751,6 +751,10 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
   const messageRefs = React.useRef({});
   const [isAtBottom, setIsAtBottom] = useLocalState(true);
   const [unreadNewMessages, setUnreadNewMessages] = useLocalState(0);
+  const [hiddenMessageIds, setHiddenMessageIds] = useLocalState(() => getLocallyHiddenIds(appt._id));
+
+  // Clear chat functionality
+  const clearTimeKey = `chatClearTime_${appt._id}`;
 
   // Auto-scroll to bottom only when chat modal opens
   React.useEffect(() => {
@@ -1067,18 +1071,32 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
       return [];
     }
   }
-  function addLocallyHiddenId(apptId, msgId) {
-    const ids = getLocallyHiddenIds(apptId);
-    if (!ids.includes(msgId)) {
-      const updated = [...ids, msgId];
-      localStorage.setItem(`hiddenDeletedMsgs_${apptId}`, JSON.stringify(updated));
-    }
-  }
-  function removeLocallyHiddenId(apptId, msgId) {
-    const ids = getLocallyHiddenIds(apptId);
-    const updated = ids.filter(id => id !== msgId);
-    localStorage.setItem(`hiddenDeletedMsgs_${apptId}`, JSON.stringify(updated));
-  }
+  
+  // Optimized functions that update both state and localStorage instantly
+  const hideMessage = React.useCallback((msgId) => {
+    setHiddenMessageIds(prev => {
+      if (!prev.includes(msgId)) {
+        const updated = [...prev, msgId];
+        // Update localStorage asynchronously to avoid blocking UI
+        setTimeout(() => {
+          localStorage.setItem(`hiddenDeletedMsgs_${appt._id}`, JSON.stringify(updated));
+        }, 0);
+        return updated;
+      }
+      return prev;
+    });
+  }, [appt._id]);
+
+  const showMessage = React.useCallback((msgId) => {
+    setHiddenMessageIds(prev => {
+      const updated = prev.filter(id => id !== msgId);
+      // Update localStorage asynchronously to avoid blocking UI
+      setTimeout(() => {
+        localStorage.setItem(`hiddenDeletedMsgs_${appt._id}`, JSON.stringify(updated));
+      }, 0);
+      return updated;
+    });
+  }, [appt._id]);
 
   return (
           <tr className={`hover:bg-blue-50 transition align-top ${isArchived ? 'bg-gray-50' : ''} ${!isUpcoming ? (isArchived ? 'bg-gray-100' : 'bg-gray-100') : ''}`}>
@@ -1245,6 +1263,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                       localStorage.setItem(clearTimeKey, Date.now());
                       // Clear hidden messages list when clearing chat
                       localStorage.removeItem(`hiddenDeletedMsgs_${appt._id}`);
+                      setHiddenMessageIds([]);
                       setLocalComments([]);
                     }}
                     title="Clear chat locally"
@@ -1339,8 +1358,8 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                             </>
                           ) : c.deleted ? (
                             (() => {
-                              // Check if admin has hidden this deleted message locally
-                              const locallyHidden = getLocallyHiddenIds(appt._id).includes(c._id);
+                              // Check if admin has hidden this deleted message locally using state
+                              const locallyHidden = hiddenMessageIds.includes(c._id);
                               if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) {
                                 if (locallyHidden) {
                                   // Show collapsed placeholder for hidden deleted message
@@ -1353,9 +1372,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                                         </div>
                                         <button
                                           className="text-xs text-blue-500 hover:text-blue-700 underline"
-                                          onClick={() => {
-                                            removeLocallyHiddenId(appt._id, c._id);
-                                          }}
+                                          onClick={() => showMessage(c._id)}
                                           title="Show this deleted message content"
                                         >
                                           Show
@@ -1409,9 +1426,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                                     )}
                                     <button
                                       className="mt-2 text-xs text-red-500 hover:text-red-700 underline"
-                                      onClick={() => {
-                                        addLocallyHiddenId(appt._id, c._id);
-                                      }}
+                                      onClick={() => hideMessage(c._id)}
                                       title="Hide this deleted message from your admin view"
                                     >
                                       Hide from admin view
