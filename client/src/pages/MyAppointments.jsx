@@ -806,6 +806,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [unreadNewMessages, setUnreadNewMessages] = useState(0);
   const [isOtherPartyOnline, setIsOtherPartyOnline] = useState(false);
+  const [isOtherPartyOnlineInTable, setIsOtherPartyOnlineInTable] = useState(false);
   const [isOtherPartyTyping, setIsOtherPartyTyping] = useState(false);
   const typingTimeoutRef = useRef(null);
   const inputRef = useRef(null); // Add inputRef here
@@ -1279,6 +1280,29 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     };
   }, [showChatModal, otherParty?._id]);
 
+  // Check online status for table display (independent of chat modal)
+  useEffect(() => {
+    if (!otherParty?._id) return;
+    
+    // Ask backend if the other party is online for table display
+    socket.emit('checkUserOnline', { userId: otherParty._id });
+    
+    // Listen for response
+    function handleTableUserOnlineStatus(data) {
+      if (data.userId === otherParty._id) {
+        setIsOtherPartyOnlineInTable(!!data.online);
+      }
+    }
+    
+    socket.on('userOnlineStatus', handleTableUserOnlineStatus);
+    socket.on('userOnlineUpdate', handleTableUserOnlineStatus);
+    
+    return () => {
+      socket.off('userOnlineStatus', handleTableUserOnlineStatus);
+      socket.off('userOnlineUpdate', handleTableUserOnlineStatus);
+    };
+  }, [otherParty?._id]);
+
   // Listen for typing events from the other party
   useEffect(() => {
     function handleTyping(data) {
@@ -1519,6 +1543,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-bold border-2 border-white">
                 {unreadCount}
               </span>
+            )}
+            {/* Online status green dot - show when no typing and no unread count */}
+            {!isOtherPartyTyping && unreadCount === 0 && isOtherPartyOnlineInTable && isUpcoming && (
+              <span className="absolute -top-1 -right-1 bg-green-500 border-2 border-white rounded-full w-3 h-3"></span>
             )}
           </button>
         </td>
