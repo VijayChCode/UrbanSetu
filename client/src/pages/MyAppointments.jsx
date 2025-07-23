@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo, FaCommentDots, FaCheckDouble, FaBan, FaPaperPlane, FaCalendar } from "react-icons/fa";
 import { useSelector } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -1066,14 +1066,14 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   };
 
   // Auto-scroll to bottom only when chat modal opens or when user is at bottom
-  React.useEffect(() => {
+  useEffect(() => {
     if (showChatModal && chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [showChatModal]);
 
   // Mark messages as read when user can actually see them at the bottom of chat
-  const markVisibleMessagesAsRead = React.useCallback(async () => {
+  const markVisibleMessagesAsRead = useCallback(async () => {
     if (!chatContainerRef.current) return;
     
     // Only mark messages as read when user is at the bottom of chat AND has manually scrolled
@@ -1130,7 +1130,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   // Track new messages and handle auto-scroll/unread count
   const prevCommentsLengthRef = useRef(comments.length);
   const prevCommentsRef = useRef(comments);
-  React.useEffect(() => {
+  useEffect(() => {
     const newMessages = comments.slice(prevCommentsLengthRef.current);
     const newMessagesCount = newMessages.length;
     prevCommentsLengthRef.current = comments.length;
@@ -1165,7 +1165,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   }, [comments.length, isAtBottom, showChatModal, currentUser.email, markVisibleMessagesAsRead, hasManuallyScrolled]);
 
   // Check if user is at the bottom of chat
-  const checkIfAtBottom = React.useCallback(() => {
+  const checkIfAtBottom = useCallback(() => {
     if (chatContainerRef.current) {
       const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
       const atBottom = scrollHeight - scrollTop - clientHeight < 10; // 10px threshold
@@ -1192,7 +1192,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   }, [unreadNewMessages, markVisibleMessagesAsRead, comments, currentUser._id, hasManuallyScrolled]);
 
   // Add scroll event listener for chat container
-  React.useEffect(() => {
+  useEffect(() => {
     const chatContainer = chatContainerRef.current;
     if (chatContainer && showChatModal) {
       const handleScroll = () => {
@@ -1215,14 +1215,14 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   }, [showChatModal, checkIfAtBottom]);
 
   // Reset manual scroll flag when modal opens
-  React.useEffect(() => {
+  useEffect(() => {
     if (showChatModal) {
       setHasManuallyScrolled(false);
     }
   }, [showChatModal]);
 
   // Function to scroll to bottom
-  const scrollToBottom = React.useCallback(() => {
+  const scrollToBottom = useCallback(() => {
     if (chatEndRef.current) {
       setHasManuallyScrolled(true); // Mark as manual scroll
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -1235,7 +1235,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   }, [markVisibleMessagesAsRead]);
 
   // Toast notification for new messages when chat is closed
-  React.useEffect(() => {
+  useEffect(() => {
     function handleCommentUpdateNotify(data) {
       if (data.appointmentId === appt._id && !showChatModal) {
         // Check if sender is admin by checking if senderEmail matches any admin user
@@ -1254,7 +1254,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   }, [appt._id, showChatModal]);
 
   // Real-time comment updates via socket.io (for chat sync)
-  React.useEffect(() => {
+  useEffect(() => {
     function handleCommentUpdate(data) {
       if (data.appointmentId === appt._id) {
         setComments((prev) => {
@@ -1291,7 +1291,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   }, [appt._id, setComments, showChatModal, currentUser.email]);
 
   // Mark all comments as read when chat modal opens
-  React.useEffect(() => {
+  useEffect(() => {
     if (showChatModal) {
       // Fetch latest comments from backend when chatbox is opened
       fetch(`${API_BASE_URL}/api/bookings/${appt._id}`)
@@ -1315,7 +1315,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   }, [showChatModal, appt._id]);
 
   // Listen for commentDelivered and commentRead events
-  React.useEffect(() => {
+  useEffect(() => {
     function handleCommentDelivered(data) {
       if (data.appointmentId === appt._id) {
         setComments(prev =>
@@ -1349,7 +1349,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   // Calculate unread messages for the current user
   const unreadCount = comments.filter(c => !c.readBy?.includes(currentUser._id) && c.senderEmail !== currentUser.email).length;
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (showChatModal) {
       document.body.style.overflow = 'hidden';
     } else {
