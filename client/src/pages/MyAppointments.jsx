@@ -1089,13 +1089,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     if (unreadMessages.length > 0) {
       try {
         // Mark messages as read in backend
-        const response = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/messages/read`, {
-          method: 'POST',
+        const response = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/read`, {
+          method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ 
-            messageIds: unreadMessages.map(msg => msg._id)
-          })
+          credentials: 'include'
         });
         
         if (response.ok) {
