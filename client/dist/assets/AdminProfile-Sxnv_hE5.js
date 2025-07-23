@@ -1,1 +1,0 @@
-import{j as r}from"./index-D2W3CUrl.js";import e from"./Profile-DNlcEDXY.js";function t(){return r.jsx("div",{className:"min-h-screen bg-gradient-to-br from-blue-50 to-purple-100 py-10 px-2 md:px-8",children:r.jsx(e,{})})}export{t as default};

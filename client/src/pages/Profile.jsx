@@ -233,7 +233,7 @@ export default function Profile() {
 
         setUserStats(prev => ({
           listings: Array.isArray(listingsData) ? listingsData.length : 0,
-          appointments: appointmentsData.count || 0,
+          appointments: Array.isArray(appointmentsData) ? appointmentsData.length : 0,
           wishlist: prev.wishlist // Keep the wishlist count from context
         }));
       }
