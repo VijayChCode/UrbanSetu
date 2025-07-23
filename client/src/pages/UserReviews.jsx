@@ -274,7 +274,7 @@ export default function UserReviews() {
           <button
             onClick={handleRefresh}
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:from-blue-600 hover:to-purple-600 transition disabled:opacity-50 disabled:cursor-not-allowed shadow"
             title="Refresh reviews"
           >
             <FaSync className={`${loading ? 'animate-spin' : ''}`} />
@@ -376,7 +376,7 @@ export default function UserReviews() {
                   <div className="flex flex-col gap-2 lg:flex-shrink-0 w-full sm:w-auto">
                     <button
                       onClick={() => handleEditReview(review)}
-                      className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:from-blue-600 hover:to-purple-600 transition shadow"
                     >
                       <FaEdit />
                       Edit
@@ -384,7 +384,7 @@ export default function UserReviews() {
                     
                     <button
                       onClick={() => handleDeleteReview(review._id)}
-                      className="flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                      className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-lg hover:from-red-600 hover:to-pink-600 transition shadow"
                     >
                       <FaTrash />
                       Delete
