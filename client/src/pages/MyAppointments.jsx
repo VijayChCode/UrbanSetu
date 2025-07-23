@@ -1073,24 +1073,32 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
 
   // Track new messages and handle auto-scroll/unread count
   const prevCommentsLengthRef = useRef(comments.length);
+  const prevCommentsRef = useRef(comments);
   React.useEffect(() => {
-    const newMessagesCount = comments.length - prevCommentsLengthRef.current;
+    const newMessages = comments.slice(prevCommentsLengthRef.current);
+    const newMessagesCount = newMessages.length;
     prevCommentsLengthRef.current = comments.length;
+    prevCommentsRef.current = comments;
 
     if (newMessagesCount > 0 && showChatModal) {
-      if (isAtBottom) {
-        // Auto-scroll if user is at bottom
+      // Check if any new messages are from current user (sent messages)
+      const hasSentMessages = newMessages.some(msg => msg.senderEmail === currentUser.email);
+      // Check if any new messages are from other users (received messages)
+      const receivedMessages = newMessages.filter(msg => msg.senderEmail !== currentUser.email);
+      
+      if (hasSentMessages || isAtBottom) {
+        // Auto-scroll if user sent a message OR if user is at bottom
         setTimeout(() => {
           if (chatEndRef.current) {
             chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
           }
         }, 100);
-      } else {
-        // Add to unread count if user is not at bottom
-        setUnreadNewMessages(prev => prev + newMessagesCount);
+      } else if (receivedMessages.length > 0) {
+        // Add to unread count only for received messages when user is not at bottom
+        setUnreadNewMessages(prev => prev + receivedMessages.length);
       }
     }
-  }, [comments.length, isAtBottom, showChatModal]);
+  }, [comments.length, isAtBottom, showChatModal, currentUser.email]);
 
   // Check if user is at the bottom of chat
   const checkIfAtBottom = React.useCallback(() => {

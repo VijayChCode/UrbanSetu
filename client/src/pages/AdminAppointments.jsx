@@ -789,24 +789,32 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
 
   // Track new messages and handle auto-scroll/unread count
   const prevCommentsLengthRef = React.useRef(localComments.length);
+  const prevCommentsRef = React.useRef(localComments);
   React.useEffect(() => {
-    const newMessagesCount = localComments.length - prevCommentsLengthRef.current;
+    const newMessages = localComments.slice(prevCommentsLengthRef.current);
+    const newMessagesCount = newMessages.length;
     prevCommentsLengthRef.current = localComments.length;
+    prevCommentsRef.current = localComments;
 
     if (newMessagesCount > 0 && showChatModal) {
-      if (isAtBottom) {
-        // Auto-scroll if user is at bottom
+      // Check if any new messages are from current user (sent messages)
+      const hasSentMessages = newMessages.some(msg => msg.senderEmail === currentUser.email);
+      // Check if any new messages are from other users (received messages)
+      const receivedMessages = newMessages.filter(msg => msg.senderEmail !== currentUser.email);
+      
+      if (hasSentMessages || isAtBottom) {
+        // Auto-scroll if user sent a message OR if user is at bottom
         setTimeout(() => {
           if (chatEndRef.current) {
             chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
           }
         }, 100);
-      } else {
-        // Add to unread count if user is not at bottom
-        setUnreadNewMessages(prev => prev + newMessagesCount);
+      } else if (receivedMessages.length > 0) {
+        // Add to unread count only for received messages when user is not at bottom
+        setUnreadNewMessages(prev => prev + receivedMessages.length);
       }
     }
-  }, [localComments.length, isAtBottom, showChatModal]);
+  }, [localComments.length, isAtBottom, showChatModal, currentUser.email]);
 
   // Reset unread count when chat modal is opened or closed
   React.useEffect(() => {
