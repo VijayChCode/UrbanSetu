@@ -27,6 +27,7 @@ export default function MyAppointments() {
   const [showArchived, setShowArchived] = useState(false);
   const navigate = useNavigate();
   const [swipedMsgId, setSwipedMsgId] = useState(null);
+  const [hasManuallyScrolled, setHasManuallyScrolled] = useState(false);
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -1189,9 +1190,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       }
     }
   }, [unreadNewMessages, markVisibleMessagesAsRead, comments, currentUser._id, hasManuallyScrolled]);
-
-  // Track if user has manually scrolled (to differentiate from automatic scroll)
-  const [hasManuallyScrolled, setHasManuallyScrolled] = useState(false);
 
   // Add scroll event listener for chat container
   React.useEffect(() => {
