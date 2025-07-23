@@ -1145,21 +1145,11 @@ router.post("/admin", verifyToken, async (req, res) => {
           }
         ]
       },
-      // Also check for cancelled appointments where reinitiation is still possible
+      // Also check for cancelled appointments where buyer can still reinitiate
+      // Note: Don't block for cancelledBySeller - buyer should be able to book new appointment
       {
         status: "cancelledByBuyer",
         buyerReinitiationCount: { $lt: 2 },
-        $or: [
-          { date: { $gt: currentDateString } },
-          { 
-            date: currentDateString,
-            time: { $gt: currentTimeString }
-          }
-        ]
-      },
-      {
-        status: "cancelledBySeller",
-        sellerReinitiationCount: { $lt: 2 },
         $or: [
           { date: { $gt: currentDateString } },
           { 

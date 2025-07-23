@@ -85,6 +85,8 @@ export default function AdminAppointmentListing() {
           
           if (appt.buyerId && (appt.buyerId._id === userIdToCheck || appt.buyerId === userIdToCheck)) {
             if (activeStatuses.includes(appt.status)) return true;
+            // Only block if cancelled by buyer and buyer can still reinitiate
+            // Don't block if cancelled by seller (not buyer's fault)
             if (appt.status === "cancelledByBuyer" && (appt.buyerReinitiationCount || 0) < 2) return true;
           }
           return false;
