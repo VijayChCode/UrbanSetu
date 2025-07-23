@@ -1991,14 +1991,16 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   
                   <div ref={chatEndRef} />
                 </div>
-                <div className="flex gap-2 mt-2 px-4 pb-4">
-                  {replyTo && (
-                    <div className="flex items-center bg-blue-50 border-l-4 border-blue-400 px-2 py-1 mb-2 rounded">
+                {replyTo && (
+                  <div className="px-4 mb-2">
+                    <div className="flex items-center bg-blue-50 border-l-4 border-blue-400 px-2 py-1 rounded">
                       <span className="text-xs text-gray-700 font-semibold mr-2">Replying to:</span>
                       <span className="text-xs text-gray-600 truncate">{replyTo.message}</span>
                       <button className="ml-auto text-gray-400 hover:text-gray-700" onClick={() => setReplyTo(null)} title="Cancel reply">&times;</button>
                     </div>
-                  )}
+                  </div>
+                )}
+                <div className="flex gap-2 mt-2 px-4 pb-4">
                   <input
                     type="text"
                     className="flex-1 px-3 py-2 border rounded-full text-sm focus:ring-2 focus:ring-blue-200 shadow"
