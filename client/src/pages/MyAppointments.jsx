@@ -27,7 +27,6 @@ export default function MyAppointments() {
   const [showArchived, setShowArchived] = useState(false);
   const navigate = useNavigate();
   const [swipedMsgId, setSwipedMsgId] = useState(null);
-  const [hasManuallyScrolled, setHasManuallyScrolled] = useState(false);
   const hasManuallyScrolledRef = useRef(false);
 
   useEffect(() => {
@@ -1197,8 +1196,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     const chatContainer = chatContainerRef.current;
     if (chatContainer && showChatModal) {
       const handleScroll = () => {
-        setHasManuallyScrolled(true); // Mark that user has scrolled
-        hasManuallyScrolledRef.current = true;
+        hasManuallyScrolledRef.current = true; // Mark that user has scrolled
         checkIfAtBottom();
       };
       
@@ -1219,16 +1217,14 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   // Reset manual scroll flag when modal opens
   useEffect(() => {
     if (showChatModal) {
-      setHasManuallyScrolled(false);
-      hasManuallyScrolledRef.current = false;
+      hasManuallyScrolledRef.current = false; // Reset manual scroll flag
     }
   }, [showChatModal]);
 
   // Function to scroll to bottom
   const scrollToBottom = useCallback(() => {
     if (chatEndRef.current) {
-      setHasManuallyScrolled(true); // Mark as manual scroll
-      hasManuallyScrolledRef.current = true;
+      hasManuallyScrolledRef.current = true; // Mark as manual scroll
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
       setUnreadNewMessages(0); // Clear unread count when manually scrolling to bottom
       // Mark visible messages as read after scrolling
