@@ -1091,6 +1091,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         setTimeout(() => {
           if (chatEndRef.current) {
             chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+            
+            // If user is at bottom and received new messages, mark them as read after scroll
+            if (isAtBottom && receivedMessages.length > 0) {
+              setTimeout(() => {
+                markVisibleMessagesAsRead();
+              }, 300); // Wait for scroll to complete
+            }
           }
         }, 100);
       } else if (receivedMessages.length > 0) {
@@ -1098,61 +1105,59 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         setUnreadNewMessages(prev => prev + receivedMessages.length);
       }
     }
-  }, [comments.length, isAtBottom, showChatModal, currentUser.email]);
+  }, [comments.length, isAtBottom, showChatModal, currentUser.email, markVisibleMessagesAsRead]);
 
-  // Mark messages as read only when they are actually visible on screen
+  // Mark messages as read when user can actually see them at the bottom of chat
   const markVisibleMessagesAsRead = React.useCallback(async () => {
     if (!chatContainerRef.current) return;
     
-    const containerRect = chatContainerRef.current.getBoundingClientRect();
+    // Only mark messages as read when user is at the bottom of chat
+    const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
+    const isAtBottom = scrollHeight - scrollTop - clientHeight < 10; // 10px threshold
+    
+    if (!isAtBottom) return; // Don't mark as read if not at bottom
+    
     const unreadMessages = comments.filter(c => 
       !c.readBy?.includes(currentUser._id) && 
       c.senderEmail !== currentUser.email
     );
     
-    // Find which unread messages are actually visible in the viewport
-    const visibleUnreadMessages = unreadMessages.filter(msg => {
-      const messageElement = document.querySelector(`[data-message-id="${msg._id}"]`);
-      if (!messageElement) return false;
-      
-      const messageRect = messageElement.getBoundingClientRect();
-      // Check if message is visible within the chat container
-      return messageRect.bottom >= containerRect.top && messageRect.top <= containerRect.bottom;
-    });
-    
-    if (visibleUnreadMessages.length > 0) {
+    if (unreadMessages.length > 0) {
       try {
-        // Mark only visible messages as read in backend
+        // Mark messages as read in backend
         const response = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/messages/read`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
           body: JSON.stringify({ 
-            messageIds: visibleUnreadMessages.map(msg => msg._id)
+            messageIds: unreadMessages.map(msg => msg._id)
           })
         });
         
         if (response.ok) {
-          // Update local state immediately for visible messages only
+          // Update local state immediately
           setComments(prev => 
             prev.map(c => 
-              visibleUnreadMessages.some(visible => visible._id === c._id)
+              unreadMessages.some(unread => unread._id === c._id)
                 ? { ...c, readBy: [...(c.readBy || []), currentUser._id], status: 'read' }
                 : c
             )
           );
           
-          // Emit socket event for real-time updates to other party
-          visibleUnreadMessages.forEach(msg => {
+          // Emit socket event for real-time updates to sender (user1)
+          unreadMessages.forEach(msg => {
             socket.emit('messageRead', {
               appointmentId: appt._id,
               messageId: msg._id,
-              userId: currentUser._id
+              userId: currentUser._id,
+              readBy: currentUser._id
             });
           });
+          
+          console.log(`Marked ${unreadMessages.length} messages as read for user ${currentUser._id}`);
         }
       } catch (error) {
-        console.error('Error marking visible messages as read:', error);
+        console.error('Error marking messages as read:', error);
       }
     }
   }, [comments, currentUser._id, appt._id, socket]);
@@ -1161,20 +1166,28 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const checkIfAtBottom = React.useCallback(() => {
     if (chatContainerRef.current) {
       const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
-      const atBottom = scrollHeight - scrollTop - clientHeight < 5; // 5px threshold
+      const atBottom = scrollHeight - scrollTop - clientHeight < 10; // 10px threshold
       setIsAtBottom(atBottom);
       
-      // Only mark messages as read when actually at bottom AND has unread messages
+      // When user reaches bottom, mark unread messages as read
       if (atBottom) {
-        // Mark visible messages as read (only those actually visible on screen)
-        markVisibleMessagesAsRead();
-        // Clear unread count only after marking visible messages as read
+        const unreadCount = comments.filter(c => 
+          !c.readBy?.includes(currentUser._id) && 
+          c.senderEmail !== currentUser.email
+        ).length;
+        
+        if (unreadCount > 0) {
+          console.log(`User reached bottom, marking ${unreadCount} messages as read`);
+          markVisibleMessagesAsRead();
+        }
+        
+        // Clear unread notification count
         if (unreadNewMessages > 0) {
           setUnreadNewMessages(0);
         }
       }
     }
-  }, [unreadNewMessages, markVisibleMessagesAsRead]);
+  }, [unreadNewMessages, markVisibleMessagesAsRead, comments, currentUser._id]);
 
   // Add scroll event listener for chat container
   React.useEffect(() => {
@@ -1184,7 +1197,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       // Only check initial position for setting isAtBottom state, don't mark as read automatically
       if (chatContainer) {
         const { scrollTop, scrollHeight, clientHeight } = chatContainer;
-        const atBottom = scrollHeight - scrollTop - clientHeight < 5;
+        const atBottom = scrollHeight - scrollTop - clientHeight < 10;
         setIsAtBottom(atBottom);
       }
       
