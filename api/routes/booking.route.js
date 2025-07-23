@@ -350,21 +350,64 @@ router.delete('/:id/comment/:commentId', verifyToken, async (req, res) => {
       console.log('Warning: Comment already deleted and no original message preserved');
     }
     
+    // Preserve original message before marking as deleted
     if (!comment.originalMessage && comment.message) {
       comment.originalMessage = comment.message; // Only preserve if not already preserved
-      console.log('Preserved original message:', comment.originalMessage);
+      console.log('✅ Preserved original message:', comment.originalMessage);
     } else if (!comment.originalMessage && !comment.message) {
-      console.log('Warning: No content to preserve - message is already empty');
+      console.log('⚠️ Warning: No content to preserve - message is already empty');
+    } else if (comment.originalMessage) {
+      console.log('ℹ️ Original message already preserved:', comment.originalMessage);
     }
+    
+    console.log('📋 Comment deletion state:', {
+      messageLength: comment.message ? comment.message.length : 0,
+      hasOriginalMessage: !!comment.originalMessage,
+      originalMessageLength: comment.originalMessage ? comment.originalMessage.length : 0,
+      deletedBy: req.user.email
+    });
+    
     comment.deleted = true;
     comment.deletedBy = req.user.email; // Track who deleted it
     comment.deletedAt = new Date(); // Track when it was deleted
-    comment.message = ''; // Hide for regular users
+    
+    // Store the comment data for socket emission with proper preserved content (before clearing message)
+    const commentForEmission = {
+      _id: comment._id,
+      senderEmail: comment.senderEmail,
+      message: comment.message, // Keep current message for socket before clearing
+      originalMessage: comment.originalMessage,
+      deleted: true,
+      deletedBy: req.user.email,
+      deletedAt: comment.deletedAt,
+      timestamp: comment.timestamp,
+      readBy: comment.readBy,
+      replyTo: comment.replyTo,
+      edited: comment.edited,
+      editedAt: comment.editedAt
+    };
+    
+    comment.message = ''; // Hide for regular users (clear after preserving for socket)
+    
+    // Mark the comments array as modified to ensure proper save
+    bookingToUpdate.markModified('comments');
     await bookingToUpdate.save();
-    // Emit socket event for real-time update
+    
+    // Verify the save was successful by finding the comment again
+    const savedComment = bookingToUpdate.comments.id(commentId);
+    console.log('💾 After save - comment state:', {
+      deleted: savedComment.deleted,
+      messageIsEmpty: savedComment.message === '',
+      hasOriginalMessage: !!savedComment.originalMessage,
+      originalMessage: savedComment.originalMessage,
+      deletedBy: savedComment.deletedBy
+    });
+    
+    // Emit socket event for real-time update with preserved message content
     const io = req.app.get('io');
     if (io) {
-      io.emit('commentUpdate', { appointmentId: id, comment });
+      io.emit('commentUpdate', { appointmentId: id, comment: commentForEmission });
+      console.log('📡 Socket emitted with preserved content');
     }
     // Return updated comments array
     res.status(200).json({ comments: bookingToUpdate.comments });

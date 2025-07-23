@@ -69,10 +69,13 @@ const bookingSchema = new mongoose.Schema({
       },
       senderEmail: String,
       message: String,
+      originalMessage: String, // Preserve original content when deleted
       timestamp: { type: Date, default: Date.now },
       status: { type: String, default: "sent" },
       readBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
       deleted: { type: Boolean, default: false },
+      deletedBy: String, // Email of who deleted the message
+      deletedAt: Date, // When the message was deleted
       edited: { type: Boolean, default: false },
       editedAt: { type: Date },
       replyTo: { type: mongoose.Schema.Types.ObjectId, default: null },

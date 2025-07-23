@@ -1343,15 +1343,31 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                                       Message deleted by {c.deletedBy || 'user'} (Admin view - preserved for records)
                                     </div>
                                     <div className="text-gray-800 bg-white p-2 rounded border-l-4 border-red-400">
-                                      {c.originalMessage ? (
-                                        <span>{c.originalMessage}</span>
-                                      ) : c.message ? (
-                                        <span>{c.message}</span>
-                                      ) : (
-                                        <span className="text-gray-500 italic">
-                                          [Message content not preserved - this message was deleted before content preservation was implemented]
-                                        </span>
-                                      )}
+                                      {(() => {
+                                        // Debug logging for deleted messages
+                                        if (process.env.NODE_ENV === 'development') {
+                                          console.log('🔍 Deleted message render debug:', {
+                                            messageId: c._id,
+                                            hasOriginalMessage: !!c.originalMessage,
+                                            originalMessage: c.originalMessage,
+                                            hasMessage: !!c.message,
+                                            message: c.message,
+                                            deletedBy: c.deletedBy
+                                          });
+                                        }
+                                        
+                                        if (c.originalMessage) {
+                                          return <span>{c.originalMessage}</span>;
+                                        } else if (c.message) {
+                                          return <span>{c.message}</span>;
+                                        } else {
+                                          return (
+                                            <span className="text-gray-500 italic">
+                                              [Message content not preserved - this message was deleted before content preservation was implemented]
+                                            </span>
+                                          );
+                                        }
+                                      })()}
                                     </div>
                                     {/* Debug info for development */}
                                     {process.env.NODE_ENV === 'development' && (
