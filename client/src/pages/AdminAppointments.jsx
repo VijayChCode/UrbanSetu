@@ -630,11 +630,22 @@ export default function AdminAppointments() {
                 <div className="flex flex-col items-center justify-center bg-gradient-to-r from-blue-100 to-purple-100 rounded-t-2xl px-6 py-6 border-b border-gray-200">
                   <div className="flex items-center gap-4">
                     <div className="relative">
-                      <img
-                        src={selectedUser.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.username || 'User')}&background=6366f1&color=ffffff&size=128`}
-                        alt={selectedUser.username}
-                        className="w-16 h-16 rounded-full object-cover border-4 border-white shadow-lg"
-                      />
+                      {selectedUser.avatar ? (
+                        <img
+                          src={selectedUser.avatar}
+                          alt={selectedUser.username}
+                          className="w-16 h-16 rounded-full object-cover border-4 border-white shadow-lg"
+                        />
+                      ) : (
+                        <div className="w-16 h-16 rounded-full border-4 border-white shadow-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                          <span className="text-white font-bold text-lg">
+                            {selectedUser.username 
+                              ? selectedUser.username.split(' ').map(name => name.charAt(0).toUpperCase()).join('').slice(0, 2)
+                              : 'U'
+                            }
+                          </span>
+                        </div>
+                      )}
                       <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 border-2 border-white rounded-full flex items-center justify-center">
                         {selectedUser.role === 'admin' || selectedUser.role === 'rootadmin' ? (
                           <FaUserShield className="w-3 h-3 text-white" />
