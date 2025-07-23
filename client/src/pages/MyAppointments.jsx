@@ -805,6 +805,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const chatContainerRef = useRef(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [unreadNewMessages, setUnreadNewMessages] = useState(0);
+  const [currentFloatingDate, setCurrentFloatingDate] = useState('');
   const [isOtherPartyOnline, setIsOtherPartyOnline] = useState(false);
   const [isOtherPartyOnlineInTable, setIsOtherPartyOnlineInTable] = useState(false);
   const [isOtherPartyTyping, setIsOtherPartyTyping] = useState(false);
@@ -1072,6 +1073,48 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   }, [showChatModal]);
 
   // Mark messages as read when user can actually see them at the bottom of chat
+  // Function to update floating date based on visible messages
+  const updateFloatingDate = useCallback(() => {
+    if (!chatContainerRef.current || filteredComments.length === 0) return;
+    
+    const container = chatContainerRef.current;
+    const containerRect = container.getBoundingClientRect();
+    const containerTop = containerRect.top + 60; // Account for header
+    
+    // Find the first visible message
+    let visibleDate = '';
+    for (let i = 0; i < filteredComments.length; i++) {
+      const messageElement = messageRefs.current[filteredComments[i]._id];
+      if (messageElement) {
+        const messageRect = messageElement.getBoundingClientRect();
+        if (messageRect.top >= containerTop && messageRect.bottom <= containerRect.bottom) {
+          const messageDate = new Date(filteredComments[i].timestamp);
+          visibleDate = getDateLabel(messageDate);
+          break;
+        }
+      }
+    }
+    
+    // If no message is fully visible, find the one that's partially visible at the top
+    if (!visibleDate) {
+      for (let i = 0; i < filteredComments.length; i++) {
+        const messageElement = messageRefs.current[filteredComments[i]._id];
+        if (messageElement) {
+          const messageRect = messageElement.getBoundingClientRect();
+          if (messageRect.bottom > containerTop) {
+            const messageDate = new Date(filteredComments[i].timestamp);
+            visibleDate = getDateLabel(messageDate);
+            break;
+          }
+        }
+      }
+    }
+    
+    if (visibleDate && visibleDate !== currentFloatingDate) {
+      setCurrentFloatingDate(visibleDate);
+    }
+  }, [filteredComments, currentFloatingDate]);
+
   const markVisibleMessagesAsRead = useCallback(async () => {
     if (!chatContainerRef.current) return;
     
@@ -1192,8 +1235,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     const chatContainer = chatContainerRef.current;
     if (chatContainer && showChatModal) {
       const handleScroll = () => {
-        // User has scrolled - this will trigger checkIfAtBottom
+        // User has scrolled - this will trigger checkIfAtBottom and updateFloatingDate
         checkIfAtBottom();
+        updateFloatingDate();
       };
       
       chatContainer.addEventListener('scroll', handleScroll);
@@ -1204,11 +1248,14 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         setIsAtBottom(atBottom);
       }
       
+      // Initialize floating date
+      setTimeout(updateFloatingDate, 100);
+      
       return () => {
         chatContainer.removeEventListener('scroll', handleScroll);
       };
     }
-  }, [showChatModal, checkIfAtBottom]);
+  }, [showChatModal, checkIfAtBottom, updateFloatingDate]);
 
   // Auto-scroll when modal opens  
   useEffect(() => {
@@ -1696,6 +1743,14 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   </div>
                 </div>
                 <div ref={chatContainerRef} className="flex-1 overflow-y-auto space-y-2 mb-4 px-4 pt-4 animate-fadeInChat relative" style={{minHeight: '400px', maxHeight: 'calc(100vh - 200px)'}}>
+                  {/* Floating Date Indicator */}
+                  {currentFloatingDate && filteredComments.length > 0 && (
+                    <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-30 pointer-events-none">
+                      <div className="bg-blue-600 text-white text-xs px-4 py-2 rounded-full shadow-lg border-2 border-white animate-fadeIn">
+                        {currentFloatingDate}
+                      </div>
+                    </div>
+                  )}
                   {replyTo && (
                     <div className="flex items-center bg-blue-50 border-l-4 border-blue-400 px-2 py-1 mb-2 rounded">
                       <span className="text-xs text-gray-700 font-semibold mr-2">Replying to:</span>
