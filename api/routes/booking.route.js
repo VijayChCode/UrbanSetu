@@ -1144,6 +1144,29 @@ router.post("/admin", verifyToken, async (req, res) => {
             time: { $gt: currentTimeString }
           }
         ]
+      },
+      // Also check for cancelled appointments where reinitiation is still possible
+      {
+        status: "cancelledByBuyer",
+        buyerReinitiationCount: { $lt: 2 },
+        $or: [
+          { date: { $gt: currentDateString } },
+          { 
+            date: currentDateString,
+            time: { $gt: currentTimeString }
+          }
+        ]
+      },
+      {
+        status: "cancelledBySeller",
+        sellerReinitiationCount: { $lt: 2 },
+        $or: [
+          { date: { $gt: currentDateString } },
+          { 
+            date: currentDateString,
+            time: { $gt: currentTimeString }
+          }
+        ]
       }
     ];
     let visibilityCondition = { visibleToBuyer: { $ne: false } };
@@ -1154,7 +1177,7 @@ router.post("/admin", verifyToken, async (req, res) => {
       ...visibilityCondition
     });
     if (existing) {
-      return res.status(400).json({ message: "This user already has an active appointment for this property." });
+      return res.status(400).json({ message: "This user already has an active appointment for this property or can still reinitiate. Booking Failed." });
     }
     // Create the appointment
     const newBooking = new booking({
