@@ -1075,11 +1075,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const markVisibleMessagesAsRead = React.useCallback(async () => {
     if (!chatContainerRef.current) return;
     
-    // Only mark messages as read when user is at the bottom of chat
+    // Only mark messages as read when user is at the bottom of chat AND has manually scrolled
     const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
     const isAtBottom = scrollHeight - scrollTop - clientHeight < 10; // 10px threshold
     
-    if (!isAtBottom) return; // Don't mark as read if not at bottom
+    if (!isAtBottom || !hasManuallyScrolled) return; // Don't mark as read if not at bottom or haven't scrolled
     
     const unreadMessages = comments.filter(c => 
       !c.readBy?.includes(currentUser._id) && 
@@ -1124,7 +1124,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         console.error('Error marking messages as read:', error);
       }
     }
-  }, [comments, currentUser._id, appt._id, socket]);
+  }, [comments, currentUser._id, appt._id, socket, hasManuallyScrolled]);
 
   // Track new messages and handle auto-scroll/unread count
   const prevCommentsLengthRef = useRef(comments.length);
@@ -1147,8 +1147,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
           if (chatEndRef.current) {
             chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
             
-            // If user is at bottom and received new messages, mark them as read after scroll
-            if (isAtBottom && receivedMessages.length > 0) {
+            // If user was at bottom and received new messages, mark them as read after scroll
+            // Only if they had manually scrolled before (showing they were actively using chat)
+            if (isAtBottom && receivedMessages.length > 0 && hasManuallyScrolled) {
               setTimeout(() => {
                 markVisibleMessagesAsRead();
               }, 300); // Wait for scroll to complete
@@ -1160,7 +1161,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         setUnreadNewMessages(prev => prev + receivedMessages.length);
       }
     }
-  }, [comments.length, isAtBottom, showChatModal, currentUser.email, markVisibleMessagesAsRead]);
+  }, [comments.length, isAtBottom, showChatModal, currentUser.email, markVisibleMessagesAsRead, hasManuallyScrolled]);
 
   // Check if user is at the bottom of chat
   const checkIfAtBottom = React.useCallback(() => {
@@ -1169,15 +1170,15 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       const atBottom = scrollHeight - scrollTop - clientHeight < 10; // 10px threshold
       setIsAtBottom(atBottom);
       
-      // When user reaches bottom, mark unread messages as read
-      if (atBottom) {
+      // When user reaches bottom, mark unread messages as read ONLY if they manually scrolled
+      if (atBottom && hasManuallyScrolled) {
         const unreadCount = comments.filter(c => 
           !c.readBy?.includes(currentUser._id) && 
           c.senderEmail !== currentUser.email
         ).length;
         
         if (unreadCount > 0) {
-          console.log(`User reached bottom, marking ${unreadCount} messages as read`);
+          console.log(`User manually scrolled to bottom, marking ${unreadCount} messages as read`);
           markVisibleMessagesAsRead();
         }
         
@@ -1187,13 +1188,21 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         }
       }
     }
-  }, [unreadNewMessages, markVisibleMessagesAsRead, comments, currentUser._id]);
+  }, [unreadNewMessages, markVisibleMessagesAsRead, comments, currentUser._id, hasManuallyScrolled]);
+
+  // Track if user has manually scrolled (to differentiate from automatic scroll)
+  const [hasManuallyScrolled, setHasManuallyScrolled] = useState(false);
 
   // Add scroll event listener for chat container
   React.useEffect(() => {
     const chatContainer = chatContainerRef.current;
     if (chatContainer && showChatModal) {
-      chatContainer.addEventListener('scroll', checkIfAtBottom);
+      const handleScroll = () => {
+        setHasManuallyScrolled(true); // Mark that user has scrolled
+        checkIfAtBottom();
+      };
+      
+      chatContainer.addEventListener('scroll', handleScroll);
       // Only check initial position for setting isAtBottom state, don't mark as read automatically
       if (chatContainer) {
         const { scrollTop, scrollHeight, clientHeight } = chatContainer;
@@ -1202,14 +1211,22 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       }
       
       return () => {
-        chatContainer.removeEventListener('scroll', checkIfAtBottom);
+        chatContainer.removeEventListener('scroll', handleScroll);
       };
     }
   }, [showChatModal, checkIfAtBottom]);
 
+  // Reset manual scroll flag when modal opens
+  React.useEffect(() => {
+    if (showChatModal) {
+      setHasManuallyScrolled(false);
+    }
+  }, [showChatModal]);
+
   // Function to scroll to bottom
   const scrollToBottom = React.useCallback(() => {
     if (chatEndRef.current) {
+      setHasManuallyScrolled(true); // Mark as manual scroll
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
       setUnreadNewMessages(0); // Clear unread count when manually scrolling to bottom
       // Mark visible messages as read after scrolling
