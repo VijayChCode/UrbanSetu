@@ -1191,7 +1191,15 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
 
   // Function to update floating date based on visible messages
   const updateFloatingDate = useCallback(() => {
-    if (!chatContainerRef.current || filteredComments.length === 0) return;
+    if (!chatContainerRef.current || comments.length === 0) return;
+    
+    // Filter comments inside the function to avoid dependency on filteredComments
+    const clearTimeKey = `chatClearTime_${appt._id}`;
+    const clearTime = Number(localStorage.getItem(clearTimeKey)) || 0;
+    const locallyRemovedIds = getLocallyRemovedIds(appt._id);
+    const filteredComments = comments.filter(c => new Date(c.timestamp).getTime() > clearTime && !locallyRemovedIds.includes(c._id));
+    
+    if (filteredComments.length === 0) return;
     
     const container = chatContainerRef.current;
     const containerRect = container.getBoundingClientRect();
@@ -1229,7 +1237,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     if (visibleDate && visibleDate !== currentFloatingDate) {
       setCurrentFloatingDate(visibleDate);
     }
-  }, [filteredComments, currentFloatingDate]);
+  }, [comments, currentFloatingDate, appt._id]);
 
   // Add scroll event listener for chat container
   useEffect(() => {
