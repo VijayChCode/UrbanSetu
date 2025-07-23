@@ -778,8 +778,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
   const [unreadNewMessages, setUnreadNewMessages] = useLocalState(0);
   const [hiddenMessageIds, setHiddenMessageIds] = useLocalState(() => getLocallyHiddenIds(appt._id));
 
-  // Clear chat functionality
-  const clearTimeKey = `chatClearTime_${appt._id}`;
+
 
   // Auto-scroll to bottom only when chat modal opens
   React.useEffect(() => {
@@ -1282,19 +1281,6 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                 <FaCommentDots className="text-blue-600 text-xl" />
                 <h3 className="text-lg font-bold text-blue-800">Chat</h3>
                 <div className="flex items-center gap-3 ml-auto">
-                  <button
-                    className="text-xs text-red-600 hover:underline"
-                    onClick={() => {
-                      localStorage.setItem(clearTimeKey, Date.now());
-                      // Clear hidden messages list when clearing chat
-                      localStorage.removeItem(`hiddenDeletedMsgs_${appt._id}`);
-                      setHiddenMessageIds([]);
-                      setLocalComments([]);
-                    }}
-                    title="Clear chat locally"
-                  >
-                    Clear Chat
-                  </button>
                   <button
                     className="text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors z-10 shadow"
                     onClick={() => setShowChatModal(false)}
