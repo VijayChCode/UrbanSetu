@@ -1423,7 +1423,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                     <React.Fragment key={c._id || index}>
                       {isNewDay && (
                         <div className="w-full flex justify-center my-2">
-                          <span className="bg-gray-200 text-gray-700 text-xs px-3 py-1 rounded-full shadow">{getDateLabel(currentDate)}</span>
+                                                      <span className="bg-blue-600 text-white text-xs px-4 py-2 rounded-full shadow-lg border-2 border-white">{getDateLabel(currentDate)}</span>
                         </div>
                       )}
                       <div className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-fadeInChatBubble`} style={{ animationDelay: `${0.03 * index}s` }}>
