@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import { FaStar, FaTrash, FaEdit, FaCheck, FaTimes, FaThumbsUp, FaCheckCircle, FaSort, FaSortUp, FaSortDown, FaReply, FaPen, FaExclamationTriangle, FaBan } from 'react-icons/fa';
+import { FaStar, FaTrash, FaEdit, FaCheck, FaTimes, FaThumbsUp, FaCheckCircle, FaSort, FaSortUp, FaSortDown, FaReply, FaPen, FaExclamationTriangle, FaBan, FaUser } from 'react-icons/fa';
 import ReviewForm from './ReviewForm.jsx';
 import ReplyForm from './ReplyForm.jsx';
 import { socket } from '../utils/socket';
@@ -10,6 +10,11 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId }) {
   const { currentUser } = useSelector((state) => state.user);
+
+  // Helper function to check if avatar is valid
+  const isValidAvatar = (avatar) => {
+    return avatar && avatar.trim() && avatar !== 'null' && avatar !== 'undefined' && avatar !== '';
+  };
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -678,12 +683,25 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
         <div key={review._id} className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
           <div className="flex items-start justify-between">
             <div className="flex items-center space-x-3 mb-3">
-              {review.userAvatar && !isAdminUser(review) && (
-                <img
-                  src={review.userAvatar}
-                  alt={review.userName}
-                  className="w-10 h-10 rounded-full object-cover"
-                />
+              {!isAdminUser(review) && (
+                <>
+                  {isValidAvatar(review.userAvatar) ? (
+                    <img
+                      src={review.userAvatar}
+                      alt={review.userName}
+                      className="w-10 h-10 rounded-full object-cover"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextElementSibling.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <div 
+                    className={`w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center ${isValidAvatar(review.userAvatar) ? 'hidden' : 'flex'}`}
+                  >
+                    <FaUser className="text-white text-lg" />
+                  </div>
+                </>
               )}
               <div>
                 <div className="flex items-center gap-2">
@@ -876,8 +894,25 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
                 {replies[review._id]?.map(reply => (
                   <div key={reply._id} className="bg-gradient-to-r from-gray-50 to-white rounded-lg p-3 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200">
                     <div className="flex items-center gap-2 mb-2">
-                      {reply.userAvatar && !isAdminUser(reply) && (
-                        <img src={reply.userAvatar} alt={reply.userName} className="w-6 h-6 rounded-full object-cover" />
+                      {!isAdminUser(reply) && (
+                        <>
+                          {isValidAvatar(reply.userAvatar) ? (
+                            <img 
+                              src={reply.userAvatar} 
+                              alt={reply.userName} 
+                              className="w-6 h-6 rounded-full object-cover"
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                                e.target.nextElementSibling.style.display = 'flex';
+                              }}
+                            />
+                          ) : null}
+                          <div 
+                            className={`w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center ${isValidAvatar(reply.userAvatar) ? 'hidden' : 'flex'}`}
+                          >
+                            <FaUser className="text-white text-xs" />
+                          </div>
+                        </>
                       )}
                       {isAdminUser(reply) ? (
                         <span className="font-semibold text-blue-700 flex items-center gap-1 text-xs">
