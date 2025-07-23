@@ -810,6 +810,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const [isOtherPartyOnlineInTable, setIsOtherPartyOnlineInTable] = useState(false);
   const [isOtherPartyTyping, setIsOtherPartyTyping] = useState(false);
   const [showShortcutTip, setShowShortcutTip] = useState(false);
+  const [loadingComments, setLoadingComments] = useState(false);
   const typingTimeoutRef = useRef(null);
   const inputRef = useRef(null); // Add inputRef here
   const messageRefs = useRef({}); // Add messageRefs here
@@ -1345,29 +1346,30 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     };
   }, [appt._id, setComments, showChatModal, currentUser.email]);
 
-  // Mark all comments as read when chat modal opens
+  // Mark all comments as read when chat modal opens and fetch latest if needed
   useEffect(() => {
     if (showChatModal) {
-      // Fetch latest comments from backend when chatbox is opened
-      fetch(`${API_BASE_URL}/api/bookings/${appt._id}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data && Array.isArray(data.comments)) {
-            setComments(prev => data.comments.map(newC => {
-              const localC = prev.find(lc => lc._id === newC._id);
-              if (localC && localC.status === 'read' && newC.status !== 'read') {
-                return { ...newC, status: 'read' };
-              }
-              return newC;
-            }));
-          }
-        });
+      // Mark comments as read immediately
       fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/read`, {
         method: 'PATCH',
         credentials: 'include'
       });
+      
+      // Only fetch latest comments if we don't have any comments loaded
+      if (comments.length === 0) {
+        setLoadingComments(true);
+        fetch(`${API_BASE_URL}/api/bookings/${appt._id}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data && Array.isArray(data.comments)) {
+              setComments(data.comments);
+            }
+          })
+          .catch(err => console.error('Failed to fetch comments:', err))
+          .finally(() => setLoadingComments(false));
+      }
     }
-  }, [showChatModal, appt._id]);
+  }, [showChatModal, appt._id, comments.length]);
 
   // Listen for commentDelivered and commentRead events
   useEffect(() => {
@@ -1807,7 +1809,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                       <button className="ml-auto text-gray-400 hover:text-gray-700" onClick={() => setReplyTo(null)} title="Cancel reply">&times;</button>
                     </div>
                   )}
-                  {filteredComments.length === 0 ? (
+                  {loadingComments ? (
+                    <div className="flex flex-col items-center justify-center h-full text-center py-8">
+                      <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                      <p className="text-gray-500 font-medium text-sm">Loading messages...</p>
+                    </div>
+                  ) : filteredComments.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-center py-8">
                       <FaCommentDots className="text-gray-300 text-4xl mb-3" />
                       <p className="text-gray-500 font-medium text-sm">No messages yet</p>
