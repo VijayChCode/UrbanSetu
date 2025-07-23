@@ -1236,6 +1236,48 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     }
   }, [markVisibleMessagesAsRead]);
 
+  // Function to update floating date based on visible messages
+  const updateFloatingDate = useCallback(() => {
+    if (!chatContainerRef.current || filteredComments.length === 0) return;
+    
+    const container = chatContainerRef.current;
+    const containerRect = container.getBoundingClientRect();
+    const containerTop = containerRect.top + 60; // Account for header
+    
+    // Find the first visible message
+    let visibleDate = '';
+    for (let i = 0; i < filteredComments.length; i++) {
+      const messageElement = messageRefs.current[filteredComments[i]._id];
+      if (messageElement) {
+        const messageRect = messageElement.getBoundingClientRect();
+        if (messageRect.top >= containerTop && messageRect.bottom <= containerRect.bottom) {
+          const messageDate = new Date(filteredComments[i].timestamp);
+          visibleDate = getDateLabel(messageDate);
+          break;
+        }
+      }
+    }
+    
+    // If no message is fully visible, find the one that's partially visible at the top
+    if (!visibleDate) {
+      for (let i = 0; i < filteredComments.length; i++) {
+        const messageElement = messageRefs.current[filteredComments[i]._id];
+        if (messageElement) {
+          const messageRect = messageElement.getBoundingClientRect();
+          if (messageRect.bottom > containerTop) {
+            const messageDate = new Date(filteredComments[i].timestamp);
+            visibleDate = getDateLabel(messageDate);
+            break;
+          }
+        }
+      }
+    }
+    
+    if (visibleDate && visibleDate !== currentFloatingDate) {
+      setCurrentFloatingDate(visibleDate);
+    }
+  }, [filteredComments, currentFloatingDate]);
+
   // Toast notification for new messages when chat is closed
   useEffect(() => {
     function handleCommentUpdateNotify(data) {
@@ -1370,47 +1412,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const locallyRemovedIds = getLocallyRemovedIds(appt._id);
   const filteredComments = comments.filter(c => new Date(c.timestamp).getTime() > clearTime && !locallyRemovedIds.includes(c._id));
 
-  // Function to update floating date based on visible messages
-  const updateFloatingDate = useCallback(() => {
-    if (!chatContainerRef.current || filteredComments.length === 0) return;
-    
-    const container = chatContainerRef.current;
-    const containerRect = container.getBoundingClientRect();
-    const containerTop = containerRect.top + 60; // Account for header
-    
-    // Find the first visible message
-    let visibleDate = '';
-    for (let i = 0; i < filteredComments.length; i++) {
-      const messageElement = messageRefs.current[filteredComments[i]._id];
-      if (messageElement) {
-        const messageRect = messageElement.getBoundingClientRect();
-        if (messageRect.top >= containerTop && messageRect.bottom <= containerRect.bottom) {
-          const messageDate = new Date(filteredComments[i].timestamp);
-          visibleDate = getDateLabel(messageDate);
-          break;
-        }
-      }
-    }
-    
-    // If no message is fully visible, find the one that's partially visible at the top
-    if (!visibleDate) {
-      for (let i = 0; i < filteredComments.length; i++) {
-        const messageElement = messageRefs.current[filteredComments[i]._id];
-        if (messageElement) {
-          const messageRect = messageElement.getBoundingClientRect();
-          if (messageRect.bottom > containerTop) {
-            const messageDate = new Date(filteredComments[i].timestamp);
-            visibleDate = getDateLabel(messageDate);
-            break;
-          }
-        }
-      }
-    }
-    
-    if (visibleDate && visibleDate !== currentFloatingDate) {
-      setCurrentFloatingDate(visibleDate);
-    }
-  }, [filteredComments, currentFloatingDate]);
+
 
   useEffect(() => {
     if (!showChatModal || !otherParty?._id) return;
