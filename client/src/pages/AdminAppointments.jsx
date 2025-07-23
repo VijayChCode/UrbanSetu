@@ -1306,7 +1306,14 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                 </div>
               </div>
               <div ref={chatContainerRef} className="flex-1 max-h-60 overflow-y-auto space-y-2 mb-4 px-4 pt-4 animate-fadeInChat relative">
-                {localComments.map((c, index) => {
+                {localComments.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full text-center py-8">
+                    <FaCommentDots className="text-gray-300 text-4xl mb-3" />
+                    <p className="text-gray-500 font-medium text-sm">No messages yet</p>
+                    <p className="text-gray-400 text-xs mt-1">Start a conversation to communicate with the parties</p>
+                  </div>
+                ) : (
+                  localComments.map((c, index) => {
                   const isMe = c.senderEmail === currentUser.email;
                   const isEditing = editingComment === c._id;
                   const currentDate = new Date(c.timestamp);
@@ -1526,7 +1533,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                     </div>
                     </React.Fragment>
                   );
-                })}
+                }))}
                 
                 <div ref={chatEndRef} />
               </div>

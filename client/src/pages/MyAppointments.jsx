@@ -1600,7 +1600,14 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                       <button className="ml-auto text-gray-400 hover:text-gray-700" onClick={() => setReplyTo(null)} title="Cancel reply">&times;</button>
                     </div>
                   )}
-                  {filteredComments.map((c, index) => {
+                  {filteredComments.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full text-center py-8">
+                      <FaCommentDots className="text-gray-300 text-4xl mb-3" />
+                      <p className="text-gray-500 font-medium text-sm">No messages yet</p>
+                      <p className="text-gray-400 text-xs mt-1">Start the conversation and connect with the other party</p>
+                    </div>
+                  ) : (
+                    filteredComments.map((c, index) => {
                     const isMe = c.senderEmail === currentUser.email;
                     const isEditing = editingComment === c._id;
                     const currentDate = new Date(c.timestamp);
@@ -1789,7 +1796,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                         </div>
                       </React.Fragment>
                     );
-                  })}
+                  }))}
                   
                   <div ref={chatEndRef} />
                 </div>
