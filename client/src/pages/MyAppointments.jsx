@@ -1552,12 +1552,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         </td>
       </tr>
       {showChatModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-gradient-to-br from-blue-50 to-purple-100 rounded-2xl shadow-2xl max-w-md w-full p-0 relative animate-fadeIn flex flex-col">
+        <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gradient-to-br from-blue-50 to-purple-100 rounded-2xl shadow-2xl w-full h-full max-w-6xl max-h-full p-0 relative animate-fadeIn flex flex-col">
             { !isUpcoming ? (
-              <div className="flex flex-col items-center justify-center h-60 p-8">
-                <FaCommentDots className="text-4xl text-gray-400 mb-4" />
-                <div className="text-lg font-semibold text-gray-500 text-center">Chat not available for outdated appointments</div>
+              <div className="flex flex-col items-center justify-center flex-1 p-8 min-h-96">
+                <FaCommentDots className="text-6xl text-gray-400 mb-6" />
+                <div className="text-xl font-semibold text-gray-500 text-center">Chat not available for outdated appointments</div>
+                <div className="text-gray-400 text-center mt-2">This appointment has already passed</div>
               </div>
             ) : (
               <>
@@ -1592,7 +1593,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                     </button>
                   </div>
                 </div>
-                <div ref={chatContainerRef} className="flex-1 max-h-60 overflow-y-auto space-y-2 mb-4 px-4 pt-4 animate-fadeInChat relative">
+                <div ref={chatContainerRef} className="flex-1 overflow-y-auto space-y-2 mb-4 px-4 pt-4 animate-fadeInChat relative" style={{minHeight: '400px', maxHeight: 'calc(100vh - 200px)'}}>
                   {replyTo && (
                     <div className="flex items-center bg-blue-50 border-l-4 border-blue-400 px-2 py-1 mb-2 rounded">
                       <span className="text-xs text-gray-700 font-semibold mr-2">Replying to:</span>

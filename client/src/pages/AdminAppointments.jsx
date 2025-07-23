@@ -1275,8 +1275,8 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
           </div>
         )}
         {showChatModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="bg-gradient-to-br from-blue-50 to-purple-100 rounded-2xl shadow-2xl max-w-md w-full p-0 relative animate-fadeIn flex flex-col">
+          <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-gradient-to-br from-blue-50 to-purple-100 rounded-2xl shadow-2xl w-full h-full max-w-6xl max-h-full p-0 relative animate-fadeIn flex flex-col">
               <div className="flex items-center gap-2 px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-200 to-purple-200 rounded-t-2xl relative">
                 <FaCommentDots className="text-blue-600 text-xl" />
                 <h3 className="text-lg font-bold text-blue-800">Chat</h3>
@@ -1291,7 +1291,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                   </button>
                 </div>
               </div>
-              <div ref={chatContainerRef} className="flex-1 max-h-60 overflow-y-auto space-y-2 mb-4 px-4 pt-4 animate-fadeInChat relative">
+              <div ref={chatContainerRef} className="flex-1 overflow-y-auto space-y-2 mb-4 px-4 pt-4 animate-fadeInChat relative" style={{minHeight: '400px', maxHeight: 'calc(100vh - 200px)'}}>
                 {localComments.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full text-center py-8">
                     <FaCommentDots className="text-gray-300 text-4xl mb-3" />
