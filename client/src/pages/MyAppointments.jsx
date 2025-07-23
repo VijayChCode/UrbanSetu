@@ -1100,6 +1100,50 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     }
   }, [comments.length, isAtBottom, showChatModal, currentUser.email]);
 
+  // Mark messages as read when user can see them
+  const markMessagesAsRead = React.useCallback(async () => {
+    const unreadMessages = comments.filter(c => 
+      !c.readBy?.includes(currentUser._id) && 
+      c.senderEmail !== currentUser.email
+    );
+    
+    if (unreadMessages.length > 0) {
+      try {
+        // Mark messages as read in backend
+        const response = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/messages/read`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ 
+            messageIds: unreadMessages.map(msg => msg._id)
+          })
+        });
+        
+        if (response.ok) {
+          // Update local state immediately
+          setComments(prev => 
+            prev.map(c => 
+              unreadMessages.some(unread => unread._id === c._id)
+                ? { ...c, readBy: [...(c.readBy || []), currentUser._id], status: 'read' }
+                : c
+            )
+          );
+          
+          // Emit socket event for real-time updates to other party
+          unreadMessages.forEach(msg => {
+            socket.emit('messageRead', {
+              appointmentId: appt._id,
+              messageId: msg._id,
+              userId: currentUser._id
+            });
+          });
+        }
+      } catch (error) {
+        console.error('Error marking messages as read:', error);
+      }
+    }
+  }, [comments, currentUser._id, appt._id, socket]);
+
   // Check if user is at the bottom of chat
   const checkIfAtBottom = React.useCallback(() => {
     if (chatContainerRef.current) {
@@ -1107,12 +1151,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       const atBottom = scrollHeight - scrollTop - clientHeight < 5; // 5px threshold
       setIsAtBottom(atBottom);
       
-      // Clear unread count when user reaches bottom
+      // Clear unread count and mark messages as read when user reaches bottom
       if (atBottom && unreadNewMessages > 0) {
         setUnreadNewMessages(0);
+        markMessagesAsRead();
       }
     }
-  }, [unreadNewMessages]);
+  }, [unreadNewMessages, markMessagesAsRead]);
 
   // Add scroll event listener for chat container
   React.useEffect(() => {
