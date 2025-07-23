@@ -1393,7 +1393,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                           {isMe ? "You" : c.senderEmail}
                           <span className="text-gray-300 ml-2 text-[10px]">{new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
                         </div>
-                        <div>
+                        <div className="text-left">
                           {isEditing ? (
                             <div className="w-full">
                               <input
