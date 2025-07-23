@@ -1758,9 +1758,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 <div ref={chatContainerRef} className="flex-1 overflow-y-auto space-y-2 mb-4 px-4 pt-4 animate-fadeInChat relative" style={{minHeight: '400px', maxHeight: 'calc(100vh - 200px)'}}>
                   {/* Floating Date Indicator */}
                   {currentFloatingDate && filteredComments.length > 0 && (
-                    <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-30 pointer-events-none">
-                      <div className="bg-blue-600 text-white text-xs px-4 py-2 rounded-full shadow-lg border-2 border-white animate-fadeIn">
-                        {currentFloatingDate}
+                    <div className="sticky top-0 left-0 right-0 z-30 pointer-events-none">
+                      <div className="w-full flex justify-center py-2">
+                        <div className="bg-blue-600 text-white text-xs px-4 py-2 rounded-full shadow-lg border-2 border-white animate-fadeIn">
+                          {currentFloatingDate}
+                        </div>
                       </div>
                     </div>
                   )}
