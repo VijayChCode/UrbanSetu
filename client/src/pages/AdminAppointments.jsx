@@ -1059,20 +1059,25 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
     setPasswordLoading(false);
   };
 
-  // Store locally removed deleted message IDs per appointment
-  function getLocallyRemovedIds(apptId) {
+  // Store locally hidden deleted message IDs per appointment
+  function getLocallyHiddenIds(apptId) {
     try {
-      return JSON.parse(localStorage.getItem(`removedDeletedMsgs_${apptId}`)) || [];
+      return JSON.parse(localStorage.getItem(`hiddenDeletedMsgs_${apptId}`)) || [];
     } catch {
       return [];
     }
   }
-  function addLocallyRemovedId(apptId, msgId) {
-    const ids = getLocallyRemovedIds(apptId);
+  function addLocallyHiddenId(apptId, msgId) {
+    const ids = getLocallyHiddenIds(apptId);
     if (!ids.includes(msgId)) {
       const updated = [...ids, msgId];
-      localStorage.setItem(`removedDeletedMsgs_${apptId}`, JSON.stringify(updated));
+      localStorage.setItem(`hiddenDeletedMsgs_${apptId}`, JSON.stringify(updated));
     }
+  }
+  function removeLocallyHiddenId(apptId, msgId) {
+    const ids = getLocallyHiddenIds(apptId);
+    const updated = ids.filter(id => id !== msgId);
+    localStorage.setItem(`hiddenDeletedMsgs_${apptId}`, JSON.stringify(updated));
   }
 
   return (
@@ -1238,6 +1243,8 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                     className="text-xs text-red-600 hover:underline"
                     onClick={() => {
                       localStorage.setItem(clearTimeKey, Date.now());
+                      // Clear hidden messages list when clearing chat
+                      localStorage.removeItem(`hiddenDeletedMsgs_${appt._id}`);
                       setLocalComments([]);
                     }}
                     title="Clear chat locally"
@@ -1332,10 +1339,33 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                             </>
                           ) : c.deleted ? (
                             (() => {
-                              // Hide for admin if locally removed
-                              const locallyRemoved = getLocallyRemovedIds(appt._id).includes(c._id);
+                              // Check if admin has hidden this deleted message locally
+                              const locallyHidden = getLocallyHiddenIds(appt._id).includes(c._id);
                               if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) {
-                                if (locallyRemoved) return null;
+                                if (locallyHidden) {
+                                  // Show collapsed placeholder for hidden deleted message
+                                  return (
+                                    <div className="border border-gray-300 bg-gray-100 rounded p-2 mb-2">
+                                      <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2 text-gray-600 text-xs">
+                                          <FaBan className="inline-block" />
+                                          <span>Deleted message hidden from view</span>
+                                        </div>
+                                        <button
+                                          className="text-xs text-blue-500 hover:text-blue-700 underline"
+                                          onClick={() => {
+                                            removeLocallyHiddenId(appt._id, c._id);
+                                          }}
+                                          title="Show this deleted message content"
+                                        >
+                                          Show
+                                        </button>
+                                      </div>
+                                    </div>
+                                  );
+                                }
+                                
+                                // Show full deleted message content
                                 return (
                                   <div className="border border-red-300 bg-red-50 rounded p-2 mb-2">
                                     <div className="flex items-center gap-2 text-red-600 text-xs font-semibold mb-1">
@@ -1380,10 +1410,9 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                                     <button
                                       className="mt-2 text-xs text-red-500 hover:text-red-700 underline"
                                       onClick={() => {
-                                        setLocalComments(prev => prev.filter(msg => msg._id !== c._id));
-                                        addLocallyRemovedId(appt._id, c._id);
+                                        addLocallyHiddenId(appt._id, c._id);
                                       }}
-                                      title="Remove this deleted message from your admin view"
+                                      title="Hide this deleted message from your admin view"
                                     >
                                       Hide from admin view
                                     </button>
@@ -1394,16 +1423,6 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                                 return (
                                   <span className="flex items-center gap-1 text-gray-400 italic">
                                     <FaBan className="inline-block text-lg" /> This message has been deleted.
-                                    <button
-                                      className="ml-2 text-xs text-red-400 hover:text-red-700 underline"
-                                      onClick={() => {
-                                        setLocalComments(prev => prev.filter(msg => msg._id !== c._id));
-                                        addLocallyRemovedId(appt._id, c._id);
-                                      }}
-                                      title="Remove this deleted message from your chat view"
-                                    >
-                                      Remove
-                                    </button>
                                   </span>
                                 );
                               }
