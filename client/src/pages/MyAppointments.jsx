@@ -1100,37 +1100,50 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     }
   }, [comments.length, isAtBottom, showChatModal, currentUser.email]);
 
-  // Mark messages as read when user can see them
-  const markMessagesAsRead = React.useCallback(async () => {
+  // Mark messages as read only when they are actually visible on screen
+  const markVisibleMessagesAsRead = React.useCallback(async () => {
+    if (!chatContainerRef.current) return;
+    
+    const containerRect = chatContainerRef.current.getBoundingClientRect();
     const unreadMessages = comments.filter(c => 
       !c.readBy?.includes(currentUser._id) && 
       c.senderEmail !== currentUser.email
     );
     
-    if (unreadMessages.length > 0) {
+    // Find which unread messages are actually visible in the viewport
+    const visibleUnreadMessages = unreadMessages.filter(msg => {
+      const messageElement = document.querySelector(`[data-message-id="${msg._id}"]`);
+      if (!messageElement) return false;
+      
+      const messageRect = messageElement.getBoundingClientRect();
+      // Check if message is visible within the chat container
+      return messageRect.bottom >= containerRect.top && messageRect.top <= containerRect.bottom;
+    });
+    
+    if (visibleUnreadMessages.length > 0) {
       try {
-        // Mark messages as read in backend
+        // Mark only visible messages as read in backend
         const response = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/messages/read`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
           body: JSON.stringify({ 
-            messageIds: unreadMessages.map(msg => msg._id)
+            messageIds: visibleUnreadMessages.map(msg => msg._id)
           })
         });
         
         if (response.ok) {
-          // Update local state immediately
+          // Update local state immediately for visible messages only
           setComments(prev => 
             prev.map(c => 
-              unreadMessages.some(unread => unread._id === c._id)
+              visibleUnreadMessages.some(visible => visible._id === c._id)
                 ? { ...c, readBy: [...(c.readBy || []), currentUser._id], status: 'read' }
                 : c
             )
           );
           
           // Emit socket event for real-time updates to other party
-          unreadMessages.forEach(msg => {
+          visibleUnreadMessages.forEach(msg => {
             socket.emit('messageRead', {
               appointmentId: appt._id,
               messageId: msg._id,
@@ -1139,7 +1152,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
           });
         }
       } catch (error) {
-        console.error('Error marking messages as read:', error);
+        console.error('Error marking visible messages as read:', error);
       }
     }
   }, [comments, currentUser._id, appt._id, socket]);
@@ -1151,21 +1164,29 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       const atBottom = scrollHeight - scrollTop - clientHeight < 5; // 5px threshold
       setIsAtBottom(atBottom);
       
-      // Clear unread count and mark messages as read when user reaches bottom
-      if (atBottom && unreadNewMessages > 0) {
-        setUnreadNewMessages(0);
-        markMessagesAsRead();
+      // Only mark messages as read when actually at bottom AND has unread messages
+      if (atBottom) {
+        // Mark visible messages as read (only those actually visible on screen)
+        markVisibleMessagesAsRead();
+        // Clear unread count only after marking visible messages as read
+        if (unreadNewMessages > 0) {
+          setUnreadNewMessages(0);
+        }
       }
     }
-  }, [unreadNewMessages, markMessagesAsRead]);
+  }, [unreadNewMessages, markVisibleMessagesAsRead]);
 
   // Add scroll event listener for chat container
   React.useEffect(() => {
     const chatContainer = chatContainerRef.current;
     if (chatContainer && showChatModal) {
       chatContainer.addEventListener('scroll', checkIfAtBottom);
-      // Check initial position
-      checkIfAtBottom();
+      // Only check initial position for setting isAtBottom state, don't mark as read automatically
+      if (chatContainer) {
+        const { scrollTop, scrollHeight, clientHeight } = chatContainer;
+        const atBottom = scrollHeight - scrollTop - clientHeight < 5;
+        setIsAtBottom(atBottom);
+      }
       
       return () => {
         chatContainer.removeEventListener('scroll', checkIfAtBottom);
@@ -1178,8 +1199,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     if (chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
       setUnreadNewMessages(0); // Clear unread count when manually scrolling to bottom
+      // Mark visible messages as read after scrolling
+      setTimeout(() => {
+        markVisibleMessagesAsRead();
+      }, 500); // Wait for scroll animation to complete
     }
-  }, []);
+  }, [markVisibleMessagesAsRead]);
 
   // Toast notification for new messages when chat is closed
   React.useEffect(() => {
@@ -1679,6 +1704,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                         <div className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-fadeInChatBubble`} style={{ animationDelay: `${0.03 * index}s` }}>
                           <div
                             ref={el => messageRefs.current[c._id] = el}
+                            data-message-id={c._id}
                             className={`rounded-2xl px-4 py-2 text-sm shadow-lg max-w-[60%] break-words relative ${isMe ? 'bg-gradient-to-r from-blue-400 to-blue-600 text-white' : 'bg-white text-gray-800 border border-gray-200'}`}
                             style={{ animationDelay: `${0.03 * index}s` }}
                           >
