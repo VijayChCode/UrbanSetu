@@ -8,6 +8,7 @@ import Private from "./components/Private";
 import AdminRoute from "./components/AdminRoute";
 import WishlistProvider from "./WishlistContext";
 import ContactSupportWrapper from "./components/ContactSupportWrapper";
+import NetworkStatus from "./components/NetworkStatus";
 import UserChangePassword from './pages/UserChangePassword';
 import AdminChangePassword from './pages/AdminChangePassword';
 import NotFound from './pages/NotFound';
@@ -260,6 +261,7 @@ function AppRoutes({ bootstrapped }) {
 
   return (
     <>
+      <NetworkStatus />
       {!hideHeaderRoutes.includes(location.pathname) && (
         currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')
           ? <AdminHeader />

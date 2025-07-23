@@ -33,6 +33,9 @@
   .animate-bell-ring {
     animation: bellRing 1.5s ease-in-out;
   }
+  .animate-slide-down {
+    animation: slideDown 0.5s ease-out both;
+  }
 }
 
 @keyframes fadeIn {
@@ -87,6 +90,16 @@
   80% { transform: rotate(-2deg); }
   90% { transform: rotate(1deg); }
   100% { transform: rotate(0deg); }
+}
+@keyframes slideDown {
+  0% { 
+    opacity: 0; 
+    transform: translateY(-20px) translateX(-50%); 
+  }
+  100% { 
+    opacity: 1; 
+    transform: translateY(0) translateX(-50%); 
+  }
 }
 
 /* Custom scrollbar for notification popup */
