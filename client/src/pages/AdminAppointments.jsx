@@ -630,12 +630,24 @@ export default function AdminAppointments() {
                 <div className="flex flex-col items-center justify-center bg-gradient-to-r from-blue-100 to-purple-100 rounded-t-2xl px-6 py-6 border-b border-gray-200">
                   <div className="flex items-center gap-4">
                     <div className="relative">
-                      {selectedUser.avatar ? (
+                      {selectedUser.avatar && selectedUser.avatar.trim() && selectedUser.avatar !== 'null' && selectedUser.avatar !== 'undefined' ? (
                         <img
                           src={selectedUser.avatar}
                           alt={selectedUser.username}
                           className="w-16 h-16 rounded-full object-cover border-4 border-white shadow-lg"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextElementSibling.style.display = 'flex';
+                          }}
                         />
+                        <div className="w-16 h-16 rounded-full border-4 border-white shadow-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center" style={{display: 'none'}}>
+                          <span className="text-white font-bold text-lg">
+                            {selectedUser.username 
+                              ? selectedUser.username.split(' ').map(name => name.charAt(0).toUpperCase()).join('').slice(0, 2)
+                              : 'U'
+                            }
+                          </span>
+                        </div>
                       ) : (
                         <div className="w-16 h-16 rounded-full border-4 border-white shadow-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
                           <span className="text-white font-bold text-lg">
