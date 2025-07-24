@@ -1481,8 +1481,8 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                             <span className="text-xs text-gray-600 truncate">{localComments.find(msg => msg._id === c.replyTo)?.message || 'Original message'}</span>
                           </div>
                         )}
-                        <div className="font-semibold mb-1 flex items-center gap-2">
-                          <span className="truncate max-w-[60%] min-w-[80px] inline-block align-middle overflow-hidden text-ellipsis">
+                        <div className="font-semibold mb-1 flex items-center gap-2 justify-start text-left">
+                          <span className="truncate max-w-[60%] min-w-[80px] inline-block align-middle overflow-hidden text-ellipsis text-left">
                             {isMe ? "You" : (() => {
                               // Check if sender is buyer or seller to get their name
                               const isSenderBuyer = c.senderEmail === appt.buyerId?.email;
