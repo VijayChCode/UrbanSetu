@@ -1776,7 +1776,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                       </button>
                       {showShortcutTip && (
                         <div className="absolute top-full right-0 mt-2 bg-gray-800 text-white text-xs rounded-lg px-3 py-2 shadow-lg z-20 whitespace-nowrap">
-                          Press Ctrl + F to quickly focus and type your search.
+                          Press Ctrl + F to quickly focus and type your message.
                           <div className="absolute -top-1 right-4 w-2 h-2 bg-gray-800 transform rotate-45"></div>
                         </div>
                       )}
