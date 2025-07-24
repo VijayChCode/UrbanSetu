@@ -1920,7 +1920,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                     <button
                                       onClick={() => handleEditComment(c._id)}
                                       disabled={savingComment === c._id}
-                                      className="bg-green-700 hover:bg-green-900 disabled:bg-green-500 disabled:cursor-not-allowed text-white font-bold px-2 py-1 rounded text-xs flex items-center gap-1"
+                                      className="bg-green-800 hover:bg-green-950 disabled:bg-green-600 disabled:cursor-not-allowed text-white font-bold px-2 py-1 rounded text-xs flex items-center gap-1"
                                     >
                                       {savingComment === c._id ? (
                                         <>
@@ -1961,7 +1961,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                 <>
                                   <button
                                     onClick={() => startEditing(c)}
-                                    className="text-green-700 hover:text-green-900"
+                                    className="text-green-800 hover:text-green-950"
                                     title="Edit comment"
                                   >
                                     <FaPen size={12} />
