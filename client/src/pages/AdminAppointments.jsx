@@ -1482,7 +1482,22 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                           </div>
                         )}
                         <div className="font-semibold mb-1 flex items-center gap-2">
-                          {isMe ? "You" : c.senderEmail}
+                          <span className="truncate max-w-[60%] min-w-[80px] inline-block align-middle overflow-hidden text-ellipsis">
+                            {isMe ? "You" : (() => {
+                              // Check if sender is buyer or seller to get their name
+                              const isSenderBuyer = c.senderEmail === appt.buyerId?.email;
+                              const isSenderSeller = c.senderEmail === appt.sellerId?.email;
+                              
+                              if (isSenderBuyer) {
+                                return appt.buyerId?.username || c.senderName || c.senderEmail;
+                              } else if (isSenderSeller) {
+                                return appt.sellerId?.username || c.senderName || c.senderEmail;
+                              } else {
+                                // Sender is neither buyer nor seller (could be another admin)
+                                return c.senderName || c.senderEmail;
+                              }
+                            })()}
+                          </span>
                           <span className="text-gray-300 ml-2 text-[10px]">{new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
                         </div>
                         <div className="text-left">
