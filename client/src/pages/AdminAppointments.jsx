@@ -780,7 +780,15 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
   const [showShortcutTip, setShowShortcutTip] = useLocalState(false);
   const [hiddenMessageIds, setHiddenMessageIds] = useLocalState(() => getLocallyHiddenIds(appt._id));
 
-
+  // Auto-close shortcut tip after 10 seconds
+  React.useEffect(() => {
+    if (showShortcutTip) {
+      const timer = setTimeout(() => {
+        setShowShortcutTip(false);
+      }, 10000);
+      return () => clearTimeout(timer);
+    }
+  }, [showShortcutTip]);
 
   // Auto-scroll to bottom only when chat modal opens
   React.useEffect(() => {

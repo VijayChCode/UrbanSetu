@@ -815,6 +815,16 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const inputRef = useRef(null); // Add inputRef here
   const messageRefs = useRef({}); // Add messageRefs here
 
+  // Auto-close shortcut tip after 10 seconds
+  useEffect(() => {
+    if (showShortcutTip) {
+      const timer = setTimeout(() => {
+        setShowShortcutTip(false);
+      }, 10000);
+      return () => clearTimeout(timer);
+    }
+  }, [showShortcutTip]);
+
   // Store locally removed deleted message IDs per appointment (move inside AppointmentRow)
   function getLocallyRemovedIds(apptId) {
     try {
