@@ -1074,7 +1074,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
           ...prev.filter(msg => msg._id !== tempId),
           ...data.comments.filter(newC => !prev.some(msg => msg._id === newC._id))
         ]);
-        toast.success("Comment sent successfully!");
+        toast.success("Message sent successfully!");
       } else {
         // Remove temp message on error
         setLocalComments(prev => prev.filter(msg => msg._id !== tempId));
@@ -1130,7 +1130,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
           }
           return c;
         }));
-        toast.success("Comment edited successfully!");
+        toast.success("Message edited successfully!");
       } else {
         // Revert optimistic update on error
         setLocalComments(prev => prev.map(c => 
@@ -1655,7 +1655,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                                     const data = await res.json();
                                     if (res.ok) {
                                       setLocalComments(data.comments);
-                                      toast.success("Comment deleted successfully!");
+                                      toast.success("Message deleted successfully!");
                                     } else {
                                       toast.error(data.message || 'Failed to delete comment.');
                                     }

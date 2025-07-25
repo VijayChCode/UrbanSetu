@@ -885,7 +885,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
           ...prev.filter(msg => msg._id !== tempId),
           ...data.comments.filter(newC => !prev.some(msg => msg._id === newC._id))
         ]);
-        toast.success("Comment sent successfully!");
+        toast.success("Message sent successfully!");
       } else {
         // Remove the temp message on error
         setComments(prev => prev.filter(msg => msg._id !== tempId));
@@ -938,7 +938,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
           }
           return c;
         }));
-        toast.success("Comment edited successfully!");
+        toast.success("Message edited successfully!");
       } else {
         // Revert optimistic update on error
         setComments(prev => prev.map(c => 
@@ -1964,7 +1964,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                             }
                                             return newC;
                                           }));
-                                          toast.success("Comment deleted successfully!");
+                                          toast.success("Message deleted successfully!");
                                         } else {
                                           toast.error(data.message || 'Failed to delete comment.');
                                         }
