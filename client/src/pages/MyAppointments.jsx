@@ -1823,13 +1823,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                       </div>
                     </div>
                   )}
-                  {replyTo && (
-                    <div className="flex items-center bg-blue-50 border-l-4 border-blue-400 px-2 py-1 mb-2 rounded">
-                      <span className="text-xs text-gray-700 font-semibold mr-2">Replying to:</span>
-                      <span className="text-xs text-gray-600 truncate">{replyTo.message}</span>
-                      <button className="ml-auto text-gray-400 hover:text-gray-700" onClick={() => setReplyTo(null)} title="Cancel reply">&times;</button>
-                    </div>
-                  )}
                   {loadingComments ? (
                     <div className="flex flex-col items-center justify-center h-full text-center py-8">
                       <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
