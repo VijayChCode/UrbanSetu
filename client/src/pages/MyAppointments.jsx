@@ -1783,6 +1783,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           if (window.confirm('Are you sure you want to clear chat? This action cannot be undone.')) {
                             localStorage.setItem(clearTimeKey, Date.now());
                             setComments([]);
+                            toast.success("Chat Cleared.")
                           }
                         }}
                         title="Clear chat locally"
