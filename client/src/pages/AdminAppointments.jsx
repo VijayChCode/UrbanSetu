@@ -1104,6 +1104,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
     setLocalComments(optimisticUpdate);
     setEditingComment(null);
     setEditText("");
+    setNewComment(""); // Clear the main input
     
     try {
       const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${commentId}`, {
@@ -1139,6 +1140,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
         ));
         setEditingComment(commentId);
         setEditText(editText);
+        setNewComment(editText); // Restore the text in main input for retry
         toast.error(data.message || "Failed to edit comment.");
       }
     } catch (err) {
@@ -1150,6 +1152,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
       ));
       setEditingComment(commentId);
       setEditText(editText);
+      setNewComment(editText); // Restore the text in main input for retry
       toast.error("An error occurred. Please try again.");
     } finally {
       setSavingComment(null);
@@ -1159,12 +1162,20 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
   const startEditing = (comment) => {
     setEditingComment(comment._id);
     setEditText(comment.message);
+    setNewComment(comment.message); // Set the message in the main input
     // Store original data for potential rollback
     setLocalComments(prev => prev.map(c => 
       c._id === comment._id 
         ? { ...c, originalMessage: c.message, wasEdited: c.edited }
         : c
     ));
+    // Focus the main input
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+        inputRef.current.select(); // Select all text for easy editing
+      }
+    }, 100);
   };
 
   // Check if comment is from current admin user
@@ -1509,44 +1520,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                           <span className="text-gray-300 ml-2 text-[10px]">{new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
                         </div>
                         <div className="text-left">
-                          {isEditing ? (
-                            <div className="w-full">
-                              <input
-                                type="text"
-                                className="border rounded px-2 py-1 text-xs w-full text-gray-900 bg-white focus:bg-white mb-2"
-                                value={editText}
-                                onChange={e => setEditText(e.target.value)}
-                                onKeyDown={e => {
-                                  if (e.key === 'Enter' && !e.shiftKey) {
-                                    e.preventDefault();
-                                    handleEditComment(c._id);
-                                  }
-                                }}
-                                autoFocus
-                              />
-                              <div className="flex gap-1 justify-end">
-                                <button 
-                                  onClick={() => handleEditComment(c._id)} 
-                                  disabled={savingComment === c._id}
-                                  className="bg-green-800 hover:bg-green-950 disabled:bg-green-600 disabled:cursor-not-allowed text-white font-bold px-2 py-1 rounded text-xs flex items-center gap-1"
-                                >
-                                  {savingComment === c._id ? (
-                                    <>
-                                      <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
-                                      Saving...
-                                    </>
-                                  ) : (
-                                    'Save'
-                                  )}
-                                </button>
-                                <button 
-                                  onClick={() => { setEditingComment(null); setEditText(""); }} 
-                                  disabled={savingComment === c._id}
-                                  className="bg-red-700 hover:bg-red-900 disabled:bg-red-500 disabled:cursor-not-allowed text-white font-bold px-2 py-1 rounded text-xs"
-                                >Cancel</button>
-                              </div>
-                            </div>
-                          ) : c.deleted ? (
+                          {c.deleted ? (
                             (() => {
                               // Check if admin has hidden this deleted message locally using state
                               const locallyHidden = hiddenMessageIds.includes(c._id);
@@ -1634,9 +1608,17 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                             })()
                           ) : (
                             <div>
-                              {c.message}
-                              {c.edited && (
-                                <span className="ml-2 text-[10px] italic text-gray-300">(Edited)</span>
+                              {isEditing ? (
+                                <div className="bg-yellow-100 border-l-4 border-yellow-400 px-2 py-1 rounded">
+                                  <span className="text-yellow-800 text-xs font-medium">✏️ Editing this message below...</span>
+                                </div>
+                              ) : (
+                                <>
+                                  {c.message}
+                                  {c.edited && (
+                                    <span className="ml-2 text-[10px] italic text-gray-300">(Edited)</span>
+                                  )}
+                                </>
                               )}
                             </div>
                           )}
@@ -1651,12 +1633,13 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                               <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c4.28 0 6.92 1.45 8.84 4.55.23.36.76.09.65-.32C18.31 13.13 15.36 10.36 10 9z"/></svg>
                             </button>
                           )}
-                          {(c.senderEmail === currentUser.email) && !isEditing && !c.deleted && (
+                          {(c.senderEmail === currentUser.email) && !c.deleted && (
                             <>
                               <button
                                 onClick={() => startEditing(c)}
                                 className="text-green-800 hover:text-green-950"
                                 title="Edit comment"
+                                disabled={editingComment !== null} // Disable if already editing another message
                               >
                                 <FaPen size={12} />
                               </button>
@@ -1695,6 +1678,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                 
                 <div ref={chatEndRef} />
               </div>
+              {/* Reply indicator */}
               {replyTo && (
                 <div className="px-4 mb-2">
                   <div className="flex items-center bg-blue-50 border-l-4 border-blue-400 px-2 py-1 rounded">
@@ -1704,22 +1688,64 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                   </div>
                 </div>
               )}
+              
+              {/* Edit indicator */}
+              {editingComment && (
+                <div className="px-4 mb-2">
+                  <div className="flex items-center bg-yellow-50 border-l-4 border-yellow-400 px-2 py-1 rounded">
+                    <span className="text-xs text-yellow-700 font-semibold mr-2">✏️ Editing message:</span>
+                    <span className="text-xs text-yellow-600 truncate">{editText}</span>
+                    <button 
+                      className="ml-auto text-yellow-400 hover:text-yellow-700" 
+                      onClick={() => { 
+                        setEditingComment(null); 
+                        setEditText(""); 
+                        setNewComment(""); 
+                      }} 
+                      title="Cancel edit"
+                    >&times;</button>
+                  </div>
+                </div>
+              )}
+              
               <div className="flex gap-2 mt-2 px-4 pb-4">
                 <input
                   type="text"
                   className="flex-1 px-3 py-2 border rounded-full text-sm focus:ring-2 focus:ring-blue-200 shadow"
-                  placeholder="Type a message..."
+                  placeholder={editingComment ? "Edit your message..." : "Type a message..."}
                   value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') handleCommentSend(); }}
+                  onChange={(e) => {
+                    setNewComment(e.target.value);
+                    if (editingComment) {
+                      setEditText(e.target.value);
+                    }
+                  }}
+                  onKeyDown={e => { 
+                    if (e.key === 'Enter') {
+                      if (editingComment) {
+                        handleEditComment(editingComment);
+                      } else {
+                        handleCommentSend();
+                      }
+                    }
+                  }}
                   ref={inputRef}
                 />
                 <button
-                  onClick={handleCommentSend}
-                  disabled={sending || !newComment.trim()}
+                  onClick={editingComment ? () => handleEditComment(editingComment) : handleCommentSend}
+                  disabled={(editingComment ? savingComment === editingComment : sending) || !newComment.trim()}
                   className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-5 py-2 rounded-full text-sm font-semibold shadow hover:from-blue-600 hover:to-purple-600 transition disabled:opacity-50 flex items-center gap-2 min-w-20"
                 >
-                  {sending ? (
+                  {editingComment ? (
+                    savingComment === editingComment ? (
+                      <>
+                        <div className="w-4 h-4 border border-white border-t-transparent rounded-full animate-spin"></div>
+                        Saving...
+                      </>
+                    ) : (
+                      'Save'
+                    )
+                  ) : sending ? (
                     <>
                       <div className="w-4 h-4 border border-white border-t-transparent rounded-full animate-spin"></div>
                       Sending...

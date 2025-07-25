@@ -912,6 +912,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     setComments(optimisticUpdate);
     setEditingComment(null);
     setEditText("");
+    setComment(""); // Clear the main input
     
     try {
       const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${commentId}`, {
@@ -947,6 +948,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         ));
         setEditingComment(commentId);
         setEditText(editText);
+        setComment(editText); // Restore the text in main input for retry
         toast.error(data.message || "Failed to edit comment.");
       }
     } catch (err) {
@@ -958,6 +960,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       ));
       setEditingComment(commentId);
       setEditText(editText);
+      setComment(editText); // Restore the text in main input for retry
       toast.error('An error occurred. Please try again.');
     } finally {
       setSavingComment(null);
@@ -967,12 +970,20 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const startEditing = (comment) => {
     setEditingComment(comment._id);
     setEditText(comment.message);
+    setComment(comment.message); // Set the message in the main input
     // Store original data for potential rollback
     setComments(prev => prev.map(c => 
       c._id === comment._id 
         ? { ...c, originalMessage: c.message, wasEdited: c.edited }
         : c
     ));
+    // Focus the main input
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+        inputRef.current.select(); // Select all text for easy editing
+      }
+    }, 100);
   };
 
   const getStatusColor = (status) => {
@@ -1901,48 +1912,19 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                     <FaTrash className="group-hover:text-red-900 group-hover:scale-125 group-hover:animate-shake transition-all duration-200" />
                                   </button>
                                 </span>
-                              ) : isEditing ? (
-                                <div className="w-full">
-                                  <input
-                                    type="text"
-                                    className="border rounded px-2 py-1 text-xs w-full text-gray-900 bg-white focus:bg-white mb-2"
-                                    value={editText}
-                                    onChange={e => setEditText(e.target.value)}
-                                    onKeyDown={e => {
-                                      if (e.key === 'Enter' && !e.shiftKey) {
-                                        e.preventDefault();
-                                        handleEditComment(c._id);
-                                      }
-                                    }}
-                                    autoFocus
-                                  />
-                                  <div className="flex gap-1 justify-end">
-                                    <button
-                                      onClick={() => handleEditComment(c._id)}
-                                      disabled={savingComment === c._id}
-                                      className="bg-green-800 hover:bg-green-950 disabled:bg-green-600 disabled:cursor-not-allowed text-white font-bold px-2 py-1 rounded text-xs flex items-center gap-1"
-                                    >
-                                      {savingComment === c._id ? (
-                                        <>
-                                          <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
-                                          Saving...
-                                        </>
-                                      ) : (
-                                        'Save'
-                                      )}
-                                    </button>
-                                    <button
-                                      onClick={() => { setEditingComment(null); setEditText(""); }}
-                                      disabled={savingComment === c._id}
-                                      className="bg-red-700 hover:bg-red-900 disabled:bg-red-500 disabled:cursor-not-allowed text-white font-bold px-2 py-1 rounded text-xs"
-                                    >Cancel</button>
-                                  </div>
-                                </div>
                               ) : (
                                 <div>
-                                  {c.message}
-                                  {c.edited && (
-                                    <span className="ml-2 text-[10px] italic text-gray-300">(Edited)</span>
+                                  {isEditing ? (
+                                    <div className="bg-yellow-100 border-l-4 border-yellow-400 px-2 py-1 rounded">
+                                      <span className="text-yellow-800 text-xs font-medium">✏️ Editing this message below...</span>
+                                    </div>
+                                  ) : (
+                                    <>
+                                      {c.message}
+                                      {c.edited && (
+                                        <span className="ml-2 text-[10px] italic text-gray-300">(Edited)</span>
+                                      )}
+                                    </>
                                   )}
                                 </div>
                               )}
@@ -1957,12 +1939,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                   <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c4.28 0 6.92 1.45 8.84 4.55.23.36.76.09.65-.32C18.31 13.13 15.36 10.36 10 9z"/></svg>
                                 </button>
                               )}
-                              {(c.senderEmail === currentUser.email) && !isEditing && !c.deleted && (
+                              {(c.senderEmail === currentUser.email) && !c.deleted && (
                                 <>
                                   <button
                                     onClick={() => startEditing(c)}
                                     className="text-green-800 hover:text-green-950"
                                     title="Edit comment"
+                                    disabled={editingComment !== null} // Disable if already editing another message
                                   >
                                     <FaPen size={12} />
                                   </button>
@@ -2025,6 +2008,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   
                   <div ref={chatEndRef} />
                 </div>
+                {/* Reply indicator */}
                 {replyTo && (
                   <div className="px-4 mb-2">
                     <div className="flex items-center bg-blue-50 border-l-4 border-blue-400 px-2 py-1 rounded">
@@ -2034,25 +2018,67 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                     </div>
                   </div>
                 )}
+                
+                {/* Edit indicator */}
+                {editingComment && (
+                  <div className="px-4 mb-2">
+                    <div className="flex items-center bg-yellow-50 border-l-4 border-yellow-400 px-2 py-1 rounded">
+                      <span className="text-xs text-yellow-700 font-semibold mr-2">✏️ Editing message:</span>
+                      <span className="text-xs text-yellow-600 truncate">{editText}</span>
+                      <button 
+                        className="ml-auto text-yellow-400 hover:text-yellow-700" 
+                        onClick={() => { 
+                          setEditingComment(null); 
+                          setEditText(""); 
+                          setComment(""); 
+                        }} 
+                        title="Cancel edit"
+                      >&times;</button>
+                    </div>
+                  </div>
+                )}
+                
                 <div className="flex gap-2 mt-2 px-4 pb-4">
                   <input
                     type="text"
                     className="flex-1 px-3 py-2 border rounded-full text-sm focus:ring-2 focus:ring-blue-200 shadow"
-                    placeholder="Type a message..."
+                    placeholder={editingComment ? "Edit your message..." : "Type a message..."}
                     value={comment}
                     onChange={e => {
                       setComment(e.target.value);
-                      socket.emit('typing', { toUserId: otherParty._id, fromUserId: currentUser._id, appointmentId: appt._id });
+                      if (editingComment) {
+                        setEditText(e.target.value);
+                      }
+                      if (!editingComment) {
+                        socket.emit('typing', { toUserId: otherParty._id, fromUserId: currentUser._id, appointmentId: appt._id });
+                      }
                     }}
-                    onKeyDown={e => { if (e.key === 'Enter') handleCommentSend(); }}
+                    onKeyDown={e => { 
+                      if (e.key === 'Enter') {
+                        if (editingComment) {
+                          handleEditComment(editingComment);
+                        } else {
+                          handleCommentSend();
+                        }
+                      }
+                    }}
                     ref={inputRef}
                   />
                   <button
-                    onClick={handleCommentSend}
-                    disabled={sending || !comment.trim()}
+                    onClick={editingComment ? () => handleEditComment(editingComment) : handleCommentSend}
+                    disabled={(editingComment ? savingComment === editingComment : sending) || !comment.trim()}
                     className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-5 py-2 rounded-full text-sm font-semibold shadow hover:from-blue-600 hover:to-purple-600 transition disabled:opacity-50 flex items-center gap-2 min-w-20"
                   >
-                    {sending ? (
+                    {editingComment ? (
+                      savingComment === editingComment ? (
+                        <>
+                          <div className="w-4 h-4 border border-white border-t-transparent rounded-full animate-spin"></div>
+                          Saving...
+                        </>
+                      ) : (
+                        'Save'
+                      )
+                    ) : sending ? (
                       <>
                         <div className="w-4 h-4 border border-white border-t-transparent rounded-full animate-spin"></div>
                         Sending...
