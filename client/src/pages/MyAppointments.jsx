@@ -1780,8 +1780,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                       <button
                         className="text-xs text-red-600 hover:underline"
                         onClick={() => {
-                          localStorage.setItem(clearTimeKey, Date.now());
-                          setComments([]);
+                          if (window.confirm('Are you sure you want to delete chat? This action cannot be undone.')) {
+                            localStorage.setItem(clearTimeKey, Date.now());
+                            setComments([]);
+                          }
                         }}
                         title="Clear chat locally"
                       >
