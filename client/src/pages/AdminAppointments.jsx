@@ -1423,6 +1423,17 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                 <FaCommentDots className="text-blue-600 text-xl" />
                 <h3 className="text-lg font-bold text-blue-800">Chat</h3>
                 <div className="flex items-center gap-3 ml-auto">
+                  {localComments.length > 0 && (
+                    <button
+                      className="text-xs text-red-600 hover:underline"
+                      onClick={() => {
+                        setLocalComments([]);
+                      }}
+                      title="Clear chat locally"
+                    >
+                      Clear Chat
+                    </button>
+                  )}
                   <div className="relative">
                     <button
                       className="text-yellow-500 hover:text-yellow-600 bg-yellow-50 hover:bg-yellow-100 rounded-full p-2 transition-colors shadow"

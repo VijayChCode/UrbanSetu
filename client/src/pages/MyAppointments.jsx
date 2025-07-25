@@ -1776,16 +1776,18 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                     <span className="ml-3 text-gray-600 font-semibold text-sm">Offline</span>
                   )}
                   <div className="flex items-center gap-3 ml-auto">
-                    <button
-                      className="text-xs text-red-600 hover:underline"
-                      onClick={() => {
-                        localStorage.setItem(clearTimeKey, Date.now());
-                        setComments([]);
-                      }}
-                      title="Clear chat locally"
-                    >
-                      Clear Chat
-                    </button>
+                    {filteredComments.length > 0 && (
+                      <button
+                        className="text-xs text-red-600 hover:underline"
+                        onClick={() => {
+                          localStorage.setItem(clearTimeKey, Date.now());
+                          setComments([]);
+                        }}
+                        title="Clear chat locally"
+                      >
+                        Clear Chat
+                      </button>
+                    )}
                     <div className="relative">
                       <button
                         className="text-yellow-500 hover:text-yellow-600 bg-yellow-50 hover:bg-yellow-100 rounded-full p-2 transition-colors shadow"
