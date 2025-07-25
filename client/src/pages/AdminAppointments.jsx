@@ -1646,7 +1646,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                               <button
                                 className="text-red-700 hover:text-red-900"
                                 onClick={async () => {
-                                  if (!window.confirm('Are you sure you want to delete this chat?')) return;
+                                  if (!window.confirm('Are you sure you want to delete this message?')) return;
                                   try {
                                     const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${c._id}`, {
                                       method: 'DELETE',

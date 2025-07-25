@@ -1780,7 +1780,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                       <button
                         className="text-xs text-red-600 hover:underline"
                         onClick={() => {
-                          if (window.confirm('Are you sure you want to delete chat? This action cannot be undone.')) {
+                          if (window.confirm('Are you sure you want to clear chat? This action cannot be undone.')) {
                             localStorage.setItem(clearTimeKey, Date.now());
                             setComments([]);
                           }
@@ -1949,7 +1949,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                   <button
                                     className="text-red-700 hover:text-red-900"
                                     onClick={async () => {
-                                                                              if (!window.confirm('Are you sure you want to delete this chat?')) return;
+                                                                              if (!window.confirm('Are you sure you want to delete this message?')) return;
                                       try {
                                         const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${c._id}`, {
                                           method: 'DELETE',
