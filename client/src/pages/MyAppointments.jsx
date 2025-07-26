@@ -2240,7 +2240,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 <span className="font-medium text-gray-900">
                   {otherParty?.username || 'other user'}
                 </span>
-                ? This will only remove it from your view.
+                ?
               </p>
             )}
             
