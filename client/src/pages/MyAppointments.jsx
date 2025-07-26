@@ -877,8 +877,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     if (!messageToDelete) return;
     
     try {
-      if (deleteForBoth) {
-        // Delete for both users (existing logic)
+      if (messageToDelete.senderEmail === currentUser.email) {
+        // Own message - delete for both users
         const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${messageToDelete._id}`, {
           method: 'DELETE',
           credentials: 'include'
@@ -892,12 +892,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
             }
             return newC;
           }));
-          toast.success("Message deleted for both users!");
+          toast.success("Message deleted!");
         } else {
           toast.error(data.message || 'Failed to delete comment.');
         }
       } else {
-        // Delete locally only
+        // Received message - delete locally only
         setComments(prev => prev.filter(msg => msg._id !== messageToDelete._id));
         addLocallyRemovedId(appt._id, messageToDelete._id);
         toast.success("Message hidden from your view!");
@@ -2190,55 +2190,27 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
 
       {/* Delete Message Confirmation Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-              <FaTrash className="text-red-500" />
-              Delete Message
-            </h3>
-            
+        <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-8 max-w-sm w-full mx-4 shadow-2xl">
             {messageToDelete?.senderEmail === currentUser.email ? (
-              // Own message - show existing functionality
+              // Own message - show "Delete message from me?"
               <>
-                <p className="text-gray-600 mb-4">
-                  Are you sure you want to delete this message?
+                <p className="text-gray-700 mb-8 text-center text-lg font-medium">
+                  Delete message from me?
                 </p>
-                
-                <div className="mb-6">
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={deleteForBoth}
-                      onChange={(e) => setDeleteForBoth(e.target.checked)}
-                      className="form-checkbox h-4 w-4 text-red-600 rounded border-gray-300 focus:ring-red-500"
-                    />
-                    <span className="text-sm text-gray-700">
-                      Also delete for{' '}
-                      <span className="font-medium text-gray-900">
-                        {otherParty?.username || 'other user'}
-                      </span>
-                    </span>
-                  </label>
-                  <p className="text-xs text-gray-500 mt-1 ml-7">
-                    {deleteForBoth 
-                      ? "The message will be permanently deleted for both users"
-                      : "The message will only be hidden from your view"
-                    }
-                  </p>
-                </div>
               </>
             ) : (
               // Received message - show simplified message
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-700 mb-8 text-center text-lg font-medium">
                 Delete message from{' '}
-                <span className="font-medium text-gray-900">
+                <span className="font-semibold text-gray-900">
                   {otherParty?.username || 'other user'}
                 </span>
-                ? This will only remove it from your view.
+                ?
               </p>
             )}
             
-            <div className="flex gap-3 justify-end">
+            <div className="flex gap-3 justify-center">
               <button
                 type="button"
                 onClick={() => {
@@ -2246,20 +2218,16 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   setMessageToDelete(null);
                   setDeleteForBoth(true);
                 }}
-                className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors"
+                className="px-6 py-3 rounded-lg bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors min-w-[100px]"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleConfirmDelete}
-                className="px-4 py-2 rounded bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors flex items-center gap-2"
+                className="px-6 py-3 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 transition-colors min-w-[100px]"
               >
-                <FaTrash size={12} />
-                {messageToDelete?.senderEmail === currentUser.email
-                  ? (deleteForBoth ? 'Delete for Both' : 'Hide from Me')
-                  : 'Delete for me'
-                }
+                Delete
               </button>
             </div>
           </div>
