@@ -1912,13 +1912,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                     {filteredComments.length > 0 && (
                       <button
                         className="text-xs text-red-600 hover:underline"
-                        onClick={() => {
-                          if (window.confirm('Are you sure you want to clear chat? This action cannot be undone.')) {
-                            localStorage.setItem(clearTimeKey, Date.now());
-                            setComments([]);
-                            toast.success("Chat Cleared")
-                          }
-                        }}
+                        onClick={() => setShowClearChatModal(true)}
                         title="Clear chat locally"
                       >
                         Clear Chat
