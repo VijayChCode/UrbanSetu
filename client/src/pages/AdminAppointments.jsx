@@ -769,6 +769,8 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
   const [showChatModal, setShowChatModal] = useLocalState(false);
   const [showPasswordModal, setShowPasswordModal] = useLocalState(false);
   const [adminPassword, setAdminPassword] = useLocalState("");
+  const [showDeleteModal, setShowDeleteModal] = useLocalState(false);
+  const [messageToDelete, setMessageToDelete] = useLocalState(null);
   const [passwordLoading, setPasswordLoading] = useLocalState(false);
   const chatEndRef = React.useRef(null);
   const chatContainerRef = React.useRef(null);
@@ -1247,6 +1249,35 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
     setPasswordLoading(false);
   };
 
+  // Handle delete confirmation
+  const handleDeleteClick = (message) => {
+    setMessageToDelete(message);
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!messageToDelete) return;
+    
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${messageToDelete._id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setLocalComments(data.comments);
+        toast.success("Message deleted successfully!");
+      } else {
+        toast.error(data.message || 'Failed to delete comment.');
+      }
+    } catch (err) {
+      toast.error('An error occurred. Please try again.');
+    }
+    
+    setShowDeleteModal(false);
+    setMessageToDelete(null);
+  };
+
   // Store locally hidden deleted message IDs per appointment
   function getLocallyHiddenIds(apptId) {
     try {
@@ -1665,24 +1696,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                               </button>
                               <button
                                 className="text-red-700 hover:text-red-900"
-                                onClick={async () => {
-                                  if (!window.confirm('Are you sure you want to delete this message?')) return;
-                                  try {
-                                    const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${c._id}`, {
-                                      method: 'DELETE',
-                                      credentials: 'include'
-                                    });
-                                    const data = await res.json();
-                                    if (res.ok) {
-                                      setLocalComments(data.comments);
-                                      toast.success("Message deleted successfully!");
-                                    } else {
-                                      toast.error(data.message || 'Failed to delete comment.');
-                                    }
-                                  } catch (err) {
-                                    toast.error('An error occurred. Please try again.');
-                                  }
-                                }}
+                                onClick={() => handleDeleteClick(c)}
                                 title="Delete comment"
                               >
                                 <FaTrash size={12} />
@@ -1819,6 +1833,46 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                    </button>
                  </div>
                )}
+            </div>
+          </div>
+        )}
+
+        {/* Delete Message Confirmation Modal */}
+        {showDeleteModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-2 sm:mx-4 animate-fadeIn">
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                    <FaTrash className="text-red-600 text-lg" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-800">Delete Message</h3>
+                    <p className="text-sm text-gray-600">Are you sure you want to delete this message from everyone?</p>
+                  </div>
+                </div>
+                
+                <div className="flex gap-3 justify-end">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowDeleteModal(false);
+                      setMessageToDelete(null);
+                    }}
+                    className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleConfirmDelete}
+                    className="px-4 py-2 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 transition-colors flex items-center gap-2"
+                  >
+                    <FaTrash size={12} />
+                    Delete
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}
