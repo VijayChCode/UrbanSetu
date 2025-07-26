@@ -1980,8 +1980,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                   <button
                                     className="ml-2 text-red-700 hover:text-red-900"
                                     onClick={() => {
-                                      setComments(prev => prev.filter(msg => msg._id !== c._id));
-                                      addLocallyRemovedId(appt._id, c._id);
+                                      setMessageToDelete(c);
+                                      setDeleteForBoth(false); // Always delete locally for deleted messages
+                                      setShowDeleteModal(true);
                                     }}
                                     title="Remove this deleted message from your chat view"
                                   >
@@ -2197,7 +2198,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
               Delete Message
             </h3>
             
-            {messageToDelete?.senderEmail === currentUser.email ? (
+            {messageToDelete?.deleted ? (
+              // Deleted message - show simplified message for local removal
+              <p className="text-gray-600 mb-6">
+                Delete this message for me? This will only remove it from your view.
+              </p>
+            ) : messageToDelete?.senderEmail === currentUser.email ? (
               // Own message - show existing functionality
               <>
                 <p className="text-gray-600 mb-4">
@@ -2256,9 +2262,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 className="px-4 py-2 rounded bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors flex items-center gap-2"
               >
                 <FaTrash size={12} />
-                {messageToDelete?.senderEmail === currentUser.email
-                  ? (deleteForBoth ? 'Delete for Both' : 'Hide from Me')
-                  : 'Delete for me'
+                {messageToDelete?.deleted
+                  ? 'Delete for me'
+                  : messageToDelete?.senderEmail === currentUser.email
+                    ? (deleteForBoth ? 'Delete for Both' : 'Hide from Me')
+                    : 'Delete for me'
                 }
               </button>
             </div>
