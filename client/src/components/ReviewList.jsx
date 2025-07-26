@@ -699,7 +699,14 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
                   <div 
                     className={`w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center ${isValidAvatar(review.userAvatar) ? 'hidden' : 'flex'}`}
                   >
-                    <FaUser className="text-white text-lg" />
+                    <span className="text-white font-bold text-sm">
+                      {review.userName 
+                        ? review.userName.split(' ').length > 1 
+                          ? review.userName.split(' ').slice(0, 2).map(name => name.charAt(0).toUpperCase()).join('')
+                          : review.userName.charAt(0).toUpperCase()
+                        : 'U'
+                      }
+                    </span>
                   </div>
                 </>
               )}
@@ -910,7 +917,14 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
                           <div 
                             className={`w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center ${isValidAvatar(reply.userAvatar) ? 'hidden' : 'flex'}`}
                           >
-                            <FaUser className="text-white text-xs" />
+                            <span className="text-white font-bold text-xs">
+                              {reply.userName 
+                                ? reply.userName.split(' ').length > 1 
+                                  ? reply.userName.split(' ').slice(0, 2).map(name => name.charAt(0).toUpperCase()).join('')
+                                  : reply.userName.charAt(0).toUpperCase()
+                                : 'U'
+                              }
+                            </span>
                           </div>
                         </>
                       )}

@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { FaSearch, FaHome, FaInfoCircle, FaCompass, FaPlus, FaList, FaHeart, FaCalendarAlt, FaUser, FaSignOutAlt, FaStar, FaBars, FaTimes } from "react-icons/fa";
+import UserAvatar from "./UserAvatar";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { signoutUserSuccess } from "../redux/user/userSlice.js";
@@ -309,62 +310,41 @@ function UserNavLinks({ mobile = false, onNavigate }) {
           {/* Profile avatar for desktop/tablet */}
           {!mobile && (
             <li>
-              {currentUser.avatar ? (
-                <img
-                  alt="avatar"
-                  src={currentUser.avatar}
-                  className="h-8 w-8 rounded-full border-2 border-gray-300 shadow cursor-pointer transition-transform duration-300 hover:scale-110 object-cover"
-                  onError={e => { e.target.onerror = null; e.target.style.display = 'none'; e.target.parentNode.querySelector('.header-fallback-avatar').style.display = 'flex'; }}
-                  onClick={() => {
-                    if (currentUser.role === 'admin' || currentUser.role === 'rootadmin') {
-                      navigate('/admin/profile');
-                    } else {
-                      navigate('/user/profile');
-                    }
-                    if (onNavigate) onNavigate();
-                  }}
-                  title="Profile"
+              <div
+                className="cursor-pointer transition-transform duration-300 hover:scale-110"
+                onClick={() => {
+                  if (currentUser.role === 'admin' || currentUser.role === 'rootadmin') {
+                    navigate('/admin/profile');
+                  } else {
+                    navigate('/user/profile');
+                  }
+                  if (onNavigate) onNavigate();
+                }}
+                title="Profile"
+              >
+                <UserAvatar 
+                  user={currentUser} 
+                  size="h-8 w-8" 
+                  textSize="text-xs"
+                  showBorder={true}
                 />
-              ) : null}
-              {(!currentUser.avatar || currentUser.avatar === "") && (
-                <div className="h-8 w-8 rounded-full border-2 border-gray-300 shadow cursor-pointer transition-transform duration-300 hover:scale-110 object-cover bg-gray-100 flex items-center justify-center header-fallback-avatar"
-                  style={{ display: currentUser.avatar ? 'none' : 'flex' }}
-                  onClick={() => {
-                    if (currentUser.role === 'admin' || currentUser.role === 'rootadmin') {
-                      navigate('/admin/profile');
-                    } else {
-                      navigate('/user/profile');
-                    }
-                    if (onNavigate) onNavigate();
-                  }}
-                  title="Profile"
-                >
-                  <FaUser className="text-gray-400 text-xl" />
-                </div>
-              )}
+              </div>
             </li>
           )}
           {mobile && (
             <li>
-              {currentUser.avatar ? (
-                <img
-                  alt="avatar"
-                  src={currentUser.avatar}
-                  className="h-8 w-8 rounded-full border-2 border-gray-300 shadow cursor-pointer transition-transform duration-300 hover:scale-110 object-cover"
-                  onError={e => { e.target.onerror = null; e.target.style.display = 'none'; e.target.parentNode.querySelector('.header-fallback-avatar').style.display = 'flex'; }}
-                  onClick={() => { navigate("/user/profile"); if (onNavigate) onNavigate(); }}
-                  title="Profile"
+              <div
+                className="cursor-pointer transition-transform duration-300 hover:scale-110"
+                onClick={() => { navigate("/user/profile"); if (onNavigate) onNavigate(); }}
+                title="Profile"
+              >
+                <UserAvatar 
+                  user={currentUser} 
+                  size="h-8 w-8" 
+                  textSize="text-xs"
+                  showBorder={true}
                 />
-              ) : null}
-              {(!currentUser.avatar || currentUser.avatar === "") && (
-                <div className="h-8 w-8 rounded-full border-2 border-gray-300 shadow cursor-pointer transition-transform duration-300 hover:scale-110 object-cover bg-gray-100 flex items-center justify-center header-fallback-avatar"
-                  style={{ display: currentUser.avatar ? 'none' : 'flex' }}
-                  onClick={() => { navigate("/user/profile"); if (onNavigate) onNavigate(); }}
-                  title="Profile"
-                >
-                  <FaUser className="text-gray-400 text-xl" />
-                </div>
-              )}
+              </div>
             </li>
           )}
         </>

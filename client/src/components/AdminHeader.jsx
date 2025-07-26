@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { signoutUserStart, signoutUserSuccess, signoutUserFailure } from "../redux/user/userSlice";
 import { FaHome, FaCalendarAlt, FaPlus, FaSignOutAlt, FaSearch, FaUserCheck, FaList, FaInfoCircle, FaCompass, FaBars, FaTimes, FaUser } from "react-icons/fa";
+import UserAvatar from "./UserAvatar";
 import NotificationBell from "./NotificationBell.jsx";
 import { persistor } from '../redux/store';
 import { reconnectSocket } from "../utils/socket";
@@ -257,48 +258,34 @@ function AdminNavLinks({ mobile = false, onNavigate, pendingCount, handleSignout
       {/* Profile avatar for desktop/tablet */}
       {currentUser && !mobile && (
         <li>
-          {currentUser.avatar ? (
-            <img
-              alt="avatar"
-              src={currentUser.avatar}
-              className="h-8 w-8 rounded-full border-2 border-gray-300 shadow cursor-pointer transition-transform duration-300 hover:scale-110 object-cover"
-              onError={e => { e.target.onerror = null; e.target.style.display = 'none'; e.target.parentNode.querySelector('.header-fallback-avatar').style.display = 'flex'; }}
-              onClick={() => { navigate("/admin/profile"); if (onNavigate) onNavigate(); }}
-              title="Profile"
+          <div
+            className="cursor-pointer transition-transform duration-300 hover:scale-110"
+            onClick={() => { navigate("/admin/profile"); if (onNavigate) onNavigate(); }}
+            title="Profile"
+          >
+            <UserAvatar 
+              user={currentUser} 
+              size="h-8 w-8" 
+              textSize="text-xs"
+              showBorder={true}
             />
-          ) : null}
-          {(!currentUser.avatar || currentUser.avatar === "") && (
-            <div className="h-8 w-8 rounded-full border-2 border-gray-300 shadow cursor-pointer transition-transform duration-300 hover:scale-110 object-cover bg-gray-100 flex items-center justify-center header-fallback-avatar"
-              style={{ display: currentUser.avatar ? 'none' : 'flex' }}
-              onClick={() => { navigate("/admin/profile"); if (onNavigate) onNavigate(); }}
-              title="Profile"
-            >
-              <FaUser className="text-gray-400 text-xl" />
-            </div>
-          )}
+          </div>
         </li>
       )}
       {currentUser && mobile && (
         <li>
-          {currentUser.avatar ? (
-            <img
-              alt="avatar"
-              src={currentUser.avatar}
-              className="h-8 w-8 rounded-full border-2 border-gray-300 shadow cursor-pointer transition-transform duration-300 hover:scale-110 object-cover"
-              onError={e => { e.target.onerror = null; e.target.style.display = 'none'; e.target.parentNode.querySelector('.header-fallback-avatar').style.display = 'flex'; }}
-              onClick={() => { navigate("/admin/profile"); if (onNavigate) onNavigate(); }}
-              title="Profile"
+          <div
+            className="cursor-pointer transition-transform duration-300 hover:scale-110"
+            onClick={() => { navigate("/admin/profile"); if (onNavigate) onNavigate(); }}
+            title="Profile"
+          >
+            <UserAvatar 
+              user={currentUser} 
+              size="h-8 w-8" 
+              textSize="text-xs"
+              showBorder={true}
             />
-          ) : null}
-          {(!currentUser.avatar || currentUser.avatar === "") && (
-            <div className="h-8 w-8 rounded-full border-2 border-gray-300 shadow cursor-pointer transition-transform duration-300 hover:scale-110 object-cover bg-gray-100 flex items-center justify-center header-fallback-avatar"
-              style={{ display: currentUser.avatar ? 'none' : 'flex' }}
-              onClick={() => { navigate("/admin/profile"); if (onNavigate) onNavigate(); }}
-              title="Profile"
-            >
-              <FaUser className="text-gray-400 text-xl" />
-            </div>
-          )}
+          </div>
         </li>
       )}
     </ul>

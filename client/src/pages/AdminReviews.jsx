@@ -467,7 +467,14 @@ export default function AdminReviews() {
                     <div 
                       className={`w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center ${isValidAvatar(review.userAvatar) ? 'hidden' : 'flex'}`}
                     >
-                      <FaUser className="text-white text-lg" />
+                      <span className="text-white font-bold text-sm">
+                        {review.userName 
+                          ? review.userName.split(' ').length > 1 
+                            ? review.userName.split(' ').slice(0, 2).map(name => name.charAt(0).toUpperCase()).join('')
+                            : review.userName.charAt(0).toUpperCase()
+                          : 'U'
+                        }
+                      </span>
                     </div>
                     <div className="ml-4">
                       <div className="flex items-center gap-2">
@@ -692,7 +699,14 @@ export default function AdminReviews() {
                 <div 
                   className={`w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center border-4 border-white shadow-lg ${isValidAvatar(selectedReview.userAvatar) ? 'hidden' : 'flex'}`}
                 >
-                  <FaUser className="text-white text-xl" />
+                  <span className="text-white font-bold text-lg">
+                    {selectedReview.userName 
+                      ? selectedReview.userName.split(' ').length > 1 
+                        ? selectedReview.userName.split(' ').slice(0, 2).map(name => name.charAt(0).toUpperCase()).join('')
+                        : selectedReview.userName.charAt(0).toUpperCase()
+                      : 'U'
+                    }
+                  </span>
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-blue-800 flex items-center gap-2">

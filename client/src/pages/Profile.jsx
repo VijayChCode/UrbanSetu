@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { FaEdit, FaUser, FaEnvelope, FaPhone, FaKey, FaTrash, FaSignOutAlt, FaHome, FaCalendarAlt, FaHeart, FaEye, FaCrown, FaTimes, FaCheck, FaStar } from "react-icons/fa";
+import UserAvatar from "../components/UserAvatar";
 import {
   updateUserStart,
   updateUserSuccess,
@@ -984,19 +985,11 @@ export default function Profile() {
           <div className="flex flex-col md:flex-row items-center justify-between">
             <div className="flex flex-col sm:flex-row items-center sm:space-x-6 w-full text-center sm:text-left mb-4 md:mb-0">
               <div className="relative flex-shrink-0 mx-auto sm:mx-0">
-                {currentUser.avatar ? (
-                <img
-                  alt="avatar"
-                  src={currentUser.avatar}
-                  className="h-24 w-24 rounded-full border-4 border-blue-200 object-cover shadow-lg aspect-square"
-                  style={{ aspectRatio: '1/1' }}
-                    onError={e => { e.target.onerror = null; e.target.src = ''; }}
+                <UserAvatar 
+                  user={currentUser} 
+                  size="h-24 w-24" 
+                  textSize="text-2xl"
                 />
-                ) : (
-                  <div className="h-24 w-24 rounded-full border-4 border-blue-200 object-cover shadow-lg aspect-square bg-gray-100 flex items-center justify-center">
-                    <FaUser className="text-gray-400 text-6xl" />
-                  </div>
-                )}
                 {currentUser.role === 'admin' && (
                   <div className="absolute -top-2 -right-2 bg-purple-500 text-white rounded-full p-2">
                     <FaCrown className="w-4 h-4" />
@@ -1060,18 +1053,13 @@ export default function Profile() {
             </h2>
             <form onSubmit={onSubmitForm} className="space-y-6">
               <div className="flex flex-col items-center mb-6">
-                {formData.avatar ? (
-                  <img
-                    src={formData.avatar}
-                    alt="Avatar"
-                    className="w-24 h-24 rounded-full border-4 border-blue-200 shadow-lg object-cover mb-2"
-                    onError={e => { e.target.onerror = null; e.target.src = ''; }}
+                <div className="mb-2">
+                  <UserAvatar 
+                    user={{ ...currentUser, avatar: formData.avatar }} 
+                    size="w-24 h-24" 
+                    textSize="text-2xl"
                   />
-                ) : (
-                  <div className="w-24 h-24 rounded-full border-4 border-blue-200 shadow-lg bg-gray-100 flex items-center justify-center mb-2">
-                    <FaUser className="text-gray-400 text-6xl" />
-                  </div>
-                )}
+                </div>
                 {isEditing && (
                   <>
                     <div className="flex flex-wrap gap-2 justify-center mt-2">
