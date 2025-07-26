@@ -1842,13 +1842,15 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
           <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-2 sm:mx-4 animate-fadeIn">
               <div className="p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                    <FaTrash className="text-red-600 text-lg" />
+                <div className="flex items-start gap-4 mb-6">
+                  <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <FaTrash className="text-red-600 text-xl" />
                   </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-800">Delete Message</h3>
-                    <p className="text-sm text-gray-600">Are you sure you want to delete this message from everyone?</p>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">Delete Message</h3>
+                    <p className="text-sm text-gray-600 leading-relaxed text-justify">
+                      Are you sure you want to delete this message from everyone?
+                    </p>
                   </div>
                 </div>
                 
@@ -1868,7 +1870,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                     onClick={handleConfirmDelete}
                     className="px-4 py-2 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 transition-colors flex items-center gap-2"
                   >
-                    <FaTrash size={12} />
+                    <FaTrash size={14} />
                     Delete
                   </button>
                 </div>
