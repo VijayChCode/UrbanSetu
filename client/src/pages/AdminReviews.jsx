@@ -26,6 +26,8 @@ export default function AdminReviews() {
   const [reviewToRemove, setReviewToRemove] = useState(null);
   const [removalReason, setRemovalReason] = useState('');
   const [removalNote, setRemovalNote] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [reviewToDelete, setReviewToDelete] = useState(null);
   const [responseEdit, setResponseEdit] = useState({});
   const [responseLoading, setResponseLoading] = useState({});
   const [responseError, setResponseError] = useState({});
@@ -76,7 +78,7 @@ export default function AdminReviews() {
 
   // Scroll lock for modals: lock body scroll when review details modal is open (mobile and desktop)
   useEffect(() => {
-    if (selectedReview || (showRemovalModal && reviewToRemove)) {
+    if (selectedReview || (showRemovalModal && reviewToRemove) || (showDeleteModal && reviewToDelete)) {
       // Prevent background scroll on all devices
       document.body.style.overflow = 'hidden';
       document.body.style.position = 'fixed';
@@ -91,7 +93,7 @@ export default function AdminReviews() {
       document.body.style.position = '';
       document.body.style.width = '';
     };
-  }, [selectedReview, showRemovalModal, reviewToRemove]);
+  }, [selectedReview, showRemovalModal, reviewToRemove, showDeleteModal, reviewToDelete]);
 
   const fetchReviews = async () => {
     try {
@@ -203,6 +205,15 @@ export default function AdminReviews() {
       }
     } catch (error) {
       toast.error('Network error. Please try again.');
+    }
+  };
+
+  const handleDeleteReview = () => {
+    if (reviewToDelete) {
+      setReviews(reviews.filter(r => r._id !== reviewToDelete._id));
+      setShowDeleteModal(false);
+      setReviewToDelete(null);
+      toast.success('Review deleted from table successfully');
     }
   };
 
@@ -578,11 +589,10 @@ export default function AdminReviews() {
                       <FaEye /> View
                     </button>
                     <button
-                      onClick={() => {
-                        if (window.confirm('Are you sure you want to delete this review from the table?')) {
-                          setReviews(reviews.filter(r => r._id !== review._id));
-                          toast.success('Review deleted from table successfully');
-                        }
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setReviewToDelete(review);
+                        setShowDeleteModal(true);
                       }}
                       className="bg-gradient-to-r from-gray-500 to-gray-600 text-white px-4 py-2 rounded-lg hover:from-gray-600 hover:to-gray-700 transition-all transform hover:scale-105 shadow font-semibold flex items-center gap-2"
                       title="Delete from table"
@@ -838,6 +848,41 @@ export default function AdminReviews() {
                   toast.info('Review removal cancelled');
                 }}
                 className="flex-1 bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Modal */}
+      {showDeleteModal && reviewToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2">
+          <div className="bg-white rounded-lg p-4 sm:p-6 max-w-xs sm:max-w-md w-full mx-2 sm:mx-4">
+            <h2 className="text-xl font-semibold mb-4 text-red-600">Delete Review</h2>
+            <p className="text-gray-600 mb-4">
+              Are you sure you want to delete this review from the table? This will only remove it from your current view and won't affect the actual review data.
+            </p>
+            <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 mb-4">
+              <p className="text-yellow-800 text-sm">
+                <strong>Note:</strong> This action only removes the review from your current table view. The review data remains in the database.
+              </p>
+            </div>
+            <div className="flex space-x-3 mt-6">
+              <button
+                onClick={handleDeleteReview}
+                className="flex-1 bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors"
+              >
+                Delete from Table
+              </button>
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setReviewToDelete(null);
+                  toast.info('Delete action cancelled');
+                }}
+                className="flex-1 bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition-colors"
               >
                 Cancel
               </button>
