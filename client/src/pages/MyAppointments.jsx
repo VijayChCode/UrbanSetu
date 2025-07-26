@@ -815,6 +815,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const typingTimeoutRef = useRef(null);
   const scrollTimeoutRef = useRef(null);
   const inputRef = useRef(null); // Add inputRef here
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [messageToDelete, setMessageToDelete] = useState(null);
+  const [deleteForBoth, setDeleteForBoth] = useState(true);
   const messageRefs = useRef({}); // Add messageRefs here
 
   // Auto-close shortcut tip after 10 seconds
@@ -843,6 +846,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     }
   }
 
+
+
   const isAdmin = (currentUser.role === 'admin' || currentUser.role === 'rootadmin') && currentUser.adminApprovalStatus === 'approved';
   const isAdminContext = location.pathname.includes('/admin');
   const isSeller = appt.role === 'seller';
@@ -853,6 +858,52 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   
   const canSeeContactInfo = (isAdmin || appt.status === 'accepted') && isUpcoming;
   const otherParty = isSeller ? appt.buyerId : appt.sellerId;
+
+  // Handle delete confirmation modal
+  const handleDeleteClick = (message) => {
+    setMessageToDelete(message);
+    setDeleteForBoth(true); // Default to delete for both
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!messageToDelete) return;
+    
+    try {
+      if (deleteForBoth) {
+        // Delete for both users (existing logic)
+        const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${messageToDelete._id}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setComments(prev => data.comments.map(newC => {
+            const localC = prev.find(lc => lc._id === newC._id);
+            if (localC && localC.status === 'read' && newC.status !== 'read') {
+              return { ...newC, status: 'read' };
+            }
+            return newC;
+          }));
+          toast.success("Message deleted for both users!");
+        } else {
+          toast.error(data.message || 'Failed to delete comment.');
+        }
+      } else {
+        // Delete locally only
+        setComments(prev => prev.filter(msg => msg._id !== messageToDelete._id));
+        addLocallyRemovedId(appt._id, messageToDelete._id);
+        toast.success("Message hidden from your view!");
+      }
+    } catch (err) {
+      toast.error('An error occurred. Please try again.');
+    }
+    
+    // Close modal and reset state
+    setShowDeleteModal(false);
+    setMessageToDelete(null);
+    setDeleteForBoth(true);
+  };
 
   const handleCommentSend = async () => {
     if (!comment.trim()) return;
@@ -1969,30 +2020,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                   </button>
                                   <button
                                     className="text-red-700 hover:text-red-900"
-                                    onClick={async () => {
-                                                                              if (!window.confirm('Are you sure you want to delete this message?')) return;
-                                      try {
-                                        const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${c._id}`, {
-                                          method: 'DELETE',
-                                          credentials: 'include'
-                                        });
-                                        const data = await res.json();
-                                        if (res.ok) {
-                                          setComments(prev => data.comments.map(newC => {
-                                            const localC = prev.find(lc => lc._id === newC._id);
-                                            if (localC && localC.status === 'read' && newC.status !== 'read') {
-                                              return { ...newC, status: 'read' };
-                                            }
-                                            return newC;
-                                          }));
-                                          toast.success("Message deleted successfully!");
-                                        } else {
-                                          toast.error(data.message || 'Failed to delete comment.');
-                                        }
-                                      } catch (err) {
-                                        toast.error('An error occurred. Please try again.');
-                                      }
-                                    }}
+                                    onClick={() => handleDeleteClick(c)}
                                   >
                                     <FaTrash className="group-hover:text-red-900 group-hover:scale-125 group-hover:animate-shake transition-all duration-200" />
                                   </button>
@@ -2155,6 +2183,68 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
           </div>
         </div>
       )}
+
+      {/* Delete Message Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+              <FaTrash className="text-red-500" />
+              Delete Message
+            </h3>
+            
+            <p className="text-gray-600 mb-4">
+              Are you sure you want to delete this message?
+            </p>
+            
+            <div className="mb-6">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={deleteForBoth}
+                  onChange={(e) => setDeleteForBoth(e.target.checked)}
+                  className="form-checkbox h-4 w-4 text-red-600 rounded border-gray-300 focus:ring-red-500"
+                />
+                <span className="text-sm text-gray-700">
+                  Also delete for{' '}
+                  <span className="font-medium text-gray-900">
+                    {otherParty?.username || 'other user'}
+                  </span>
+                </span>
+              </label>
+              <p className="text-xs text-gray-500 mt-1 ml-7">
+                {deleteForBoth 
+                  ? "The message will be permanently deleted for both users"
+                  : "The message will only be hidden from your view"
+                }
+              </p>
+            </div>
+            
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setMessageToDelete(null);
+                  setDeleteForBoth(true);
+                }}
+                className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                className="px-4 py-2 rounded bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors flex items-center gap-2"
+              >
+                <FaTrash size={12} />
+                {deleteForBoth ? 'Delete for Both' : 'Hide from Me'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </>
   );
 } 
