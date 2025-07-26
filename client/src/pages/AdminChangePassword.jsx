@@ -1,11 +1,14 @@
 import React, { useState } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { signoutUserStart, signoutUserSuccess, signoutUserFailure } from "../redux/user/userSlice";
+import { reconnectSocket } from "../utils/socket";
 
 export default function AdminChangePassword() {
   const { currentUser } = useSelector((state) => state.user);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const [formData, setFormData] = useState({
     previousPassword: "",
@@ -72,7 +75,32 @@ export default function AdminChangePassword() {
       setLoading(false);
       if (res.status === 401) {
         setError("Session expired or unauthorized. Please sign in again.");
-        setTimeout(() => navigate("/sign-in"), 1500);
+        // Proper logout process
+        dispatch(signoutUserStart());
+        try {
+          const signoutRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/auth/signout`, { credentials: 'include' });
+          const signoutData = await signoutRes.json();
+          if (signoutData.success === false) {
+            dispatch(signoutUserFailure(signoutData.message));
+          } else {
+            dispatch(signoutUserSuccess(signoutData));
+            // Clear persisted state
+            if (window.persistor && window.persistor.purge) {
+              await window.persistor.purge();
+            }
+            // Disconnect and reconnect socket to clear auth
+            reconnectSocket();
+            // Clear localStorage token if used
+            localStorage.removeItem('accessToken');
+            // Expire the access_token cookie on client side
+            document.cookie = 'access_token=; Max-Age=0; path=/; domain=' + window.location.hostname + '; secure; samesite=None';
+          }
+        } catch (err) {
+          dispatch(signoutUserFailure(err.message));
+        }
+        setTimeout(() => {
+          navigate("/sign-in", { replace: true });
+        }, 1500);
         return;
       }
       if (!res.ok || data.success === false) {
