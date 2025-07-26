@@ -953,10 +953,10 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
           clearTimeout(scrollTimeoutRef.current);
         }
         
-        // Hide floating date after scrolling stops (1.5 seconds of inactivity)
+        // Hide floating date after scrolling stops (1 second of inactivity)
         scrollTimeoutRef.current = setTimeout(() => {
           setIsScrolling(false);
-        }, 1500);
+        }, 1000);
       };
       
       chatContainer.addEventListener('scroll', handleScroll);
@@ -1469,10 +1469,12 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
               </div>
               <div ref={chatContainerRef} className="flex-1 overflow-y-auto space-y-2 mb-4 px-4 pt-4 animate-fadeInChat relative" style={{minHeight: '400px', maxHeight: 'calc(100vh - 200px)'}}>
                 {/* Floating Date Indicator */}
-                {currentFloatingDate && localComments.length > 0 && isScrolling && (
-                  <div className="sticky top-0 left-0 right-0 z-30 pointer-events-none">
+                {currentFloatingDate && localComments.length > 0 && (
+                  <div className={`sticky top-0 left-0 right-0 z-30 pointer-events-none transition-all duration-300 ease-in-out ${
+                    isScrolling ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+                  }`}>
                     <div className="w-full flex justify-center py-2">
-                      <div className="bg-blue-600 text-white text-xs px-4 py-2 rounded-full shadow-lg border-2 border-white animate-fadeIn">
+                      <div className="bg-blue-600 text-white text-xs px-4 py-2 rounded-full shadow-lg border-2 border-white">
                         {currentFloatingDate}
                       </div>
                     </div>
