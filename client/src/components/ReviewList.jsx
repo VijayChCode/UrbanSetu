@@ -5,6 +5,7 @@ import ReviewForm from './ReviewForm.jsx';
 import ReplyForm from './ReplyForm.jsx';
 import { socket } from '../utils/socket';
 import { toast } from 'react-toastify';
+import UserAvatar from './UserAvatar';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -684,31 +685,12 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
           <div className="flex items-start justify-between">
             <div className="flex items-center space-x-3 mb-3">
               {!isAdminUser(review) && (
-                <>
-                  {isValidAvatar(review.userAvatar) ? (
-                    <img
-                      src={review.userAvatar}
-                      alt={review.userName}
-                      className="w-10 h-10 rounded-full object-cover"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.nextElementSibling.style.display = 'flex';
-                      }}
-                    />
-                  ) : null}
-                  <div 
-                    className={`w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center ${isValidAvatar(review.userAvatar) ? 'hidden' : 'flex'}`}
-                  >
-                    <span className="text-white font-bold text-sm">
-                      {review.userName 
-                        ? review.userName.split(' ').length > 1 
-                          ? review.userName.split(' ').slice(0, 2).map(name => name.charAt(0).toUpperCase()).join('')
-                          : review.userName.charAt(0).toUpperCase()
-                        : 'U'
-                      }
-                    </span>
-                  </div>
-                </>
+                <UserAvatar 
+                  user={{ username: review.userName, avatar: review.userAvatar }} 
+                  size="w-10 h-10" 
+                  textSize="text-sm"
+                  showBorder={false}
+                />
               )}
               <div>
                 <div className="flex items-center gap-2">
@@ -902,31 +884,12 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
                   <div key={reply._id} className="bg-gradient-to-r from-gray-50 to-white rounded-lg p-3 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200">
                     <div className="flex items-center gap-2 mb-2">
                       {!isAdminUser(reply) && (
-                        <>
-                          {isValidAvatar(reply.userAvatar) ? (
-                            <img 
-                              src={reply.userAvatar} 
-                              alt={reply.userName} 
-                              className="w-6 h-6 rounded-full object-cover"
-                              onError={(e) => {
-                                e.target.style.display = 'none';
-                                e.target.nextElementSibling.style.display = 'flex';
-                              }}
-                            />
-                          ) : null}
-                          <div 
-                            className={`w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center ${isValidAvatar(reply.userAvatar) ? 'hidden' : 'flex'}`}
-                          >
-                            <span className="text-white font-bold text-xs">
-                              {reply.userName 
-                                ? reply.userName.split(' ').length > 1 
-                                  ? reply.userName.split(' ').slice(0, 2).map(name => name.charAt(0).toUpperCase()).join('')
-                                  : reply.userName.charAt(0).toUpperCase()
-                                : 'U'
-                              }
-                            </span>
-                          </div>
-                        </>
+                        <UserAvatar 
+                          user={{ username: reply.userName, avatar: reply.userAvatar }} 
+                          size="w-6 h-6" 
+                          textSize="text-xs"
+                          showBorder={false}
+                        />
                       )}
                       {isAdminUser(reply) ? (
                         <span className="font-semibold text-blue-700 flex items-center gap-1 text-xs">

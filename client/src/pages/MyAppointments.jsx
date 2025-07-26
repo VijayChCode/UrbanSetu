@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo, FaCommentDots, FaCheckDouble, FaBan, FaPaperPlane, FaCalendar, FaLightbulb } from "react-icons/fa";
+import UserAvatar from '../components/UserAvatar';
 import { useSelector } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Appointment from "../components/Appointment";
@@ -682,36 +683,13 @@ export default function MyAppointments() {
             <div className="flex flex-col items-center justify-center bg-gradient-to-r from-blue-100 to-purple-100 rounded-t-2xl px-6 py-6 border-b border-gray-200">
               <div className="flex items-center gap-4">
                 <div className="relative">
-                  {selectedOtherParty.avatar && selectedOtherParty.avatar.trim() && selectedOtherParty.avatar !== 'null' && selectedOtherParty.avatar !== 'undefined' ? (
-                    <>
-                      <img
-                        src={selectedOtherParty.avatar}
-                        alt={selectedOtherParty.username}
-                        className="w-16 h-16 rounded-full object-cover border-4 border-white shadow-lg"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.nextElementSibling.style.display = 'flex';
-                        }}
-                      />
-                      <div className="w-16 h-16 rounded-full border-4 border-white shadow-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center" style={{display: 'none'}}>
-                        <span className="text-white font-bold text-lg">
-                          {selectedOtherParty.username 
-                            ? selectedOtherParty.username.split(' ').map(name => name.charAt(0).toUpperCase()).join('').slice(0, 2)
-                            : 'U'
-                          }
-                        </span>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="w-16 h-16 rounded-full border-4 border-white shadow-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                      <span className="text-white font-bold text-lg">
-                        {selectedOtherParty.username 
-                          ? selectedOtherParty.username.split(' ').map(name => name.charAt(0).toUpperCase()).join('').slice(0, 2)
-                          : 'U'
-                        }
-                      </span>
-                    </div>
-                  )}
+                  <UserAvatar 
+                    user={{ username: selectedOtherParty.username, avatar: selectedOtherParty.avatar }} 
+                    size="w-16 h-16" 
+                    textSize="text-lg"
+                    showBorder={true}
+                    className="border-4 border-white shadow-lg"
+                  />
                   <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 border-2 border-white rounded-full flex items-center justify-center">
                     <FaUser className="w-3 h-3 text-white" />
                   </div>

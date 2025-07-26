@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import { FaStar, FaCheck, FaTimes, FaTrash, FaEye, FaBan, FaSort, FaSortUp, FaSortDown, FaCheckCircle, FaThumbsUp, FaReply, FaSync, FaHome, FaUser } from 'react-icons/fa';
 import { socket } from '../utils/socket';
 import { toast } from 'react-toastify';
+import UserAvatar from '../components/UserAvatar';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -453,29 +454,12 @@ export default function AdminReviews() {
               >
                 <div className="flex flex-row items-center gap-3 sm:table-cell sm:align-top sm:w-1/4 mb-2 sm:mb-0">
                   <div className="flex items-center">
-                    {isValidAvatar(review.userAvatar) ? (
-                      <img
-                        src={review.userAvatar}
-                        alt={review.userName}
-                        className="w-10 h-10 rounded-full object-cover"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.nextElementSibling.style.display = 'flex';
-                        }}
-                      />
-                    ) : null}
-                    <div 
-                      className={`w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center ${isValidAvatar(review.userAvatar) ? 'hidden' : 'flex'}`}
-                    >
-                      <span className="text-white font-bold text-sm">
-                        {review.userName 
-                          ? review.userName.split(' ').length > 1 
-                            ? review.userName.split(' ').slice(0, 2).map(name => name.charAt(0).toUpperCase()).join('')
-                            : review.userName.charAt(0).toUpperCase()
-                          : 'U'
-                        }
-                      </span>
-                    </div>
+                    <UserAvatar 
+                      user={{ username: review.userName, avatar: review.userAvatar }} 
+                      size="w-10 h-10" 
+                      textSize="text-sm"
+                      showBorder={false}
+                    />
                     <div className="ml-4">
                       <div className="flex items-center gap-2">
                         <div className="text-sm font-medium text-gray-900">
@@ -685,29 +669,13 @@ export default function AdminReviews() {
             {/* Header */}
             <div className="flex flex-col items-center justify-center bg-gradient-to-r from-blue-100 to-purple-100 rounded-t-2xl px-6 py-5 border-b border-gray-200">
               <div className="flex items-center gap-3">
-                {isValidAvatar(selectedReview.userAvatar) ? (
-                  <img
-                    src={selectedReview.userAvatar}
-                    alt={selectedReview.userName}
-                    className="w-14 h-14 rounded-full object-cover border-4 border-white shadow-lg"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                      e.target.nextElementSibling.style.display = 'flex';
-                    }}
-                  />
-                ) : null}
-                <div 
-                  className={`w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center border-4 border-white shadow-lg ${isValidAvatar(selectedReview.userAvatar) ? 'hidden' : 'flex'}`}
-                >
-                  <span className="text-white font-bold text-lg">
-                    {selectedReview.userName 
-                      ? selectedReview.userName.split(' ').length > 1 
-                        ? selectedReview.userName.split(' ').slice(0, 2).map(name => name.charAt(0).toUpperCase()).join('')
-                        : selectedReview.userName.charAt(0).toUpperCase()
-                      : 'U'
-                    }
-                  </span>
-                </div>
+                <UserAvatar 
+                  user={{ username: selectedReview.userName, avatar: selectedReview.userAvatar }} 
+                  size="w-14 h-14" 
+                  textSize="text-lg"
+                  showBorder={true}
+                  className="border-4 border-white shadow-lg"
+                />
                 <div>
                   <h2 className="text-xl font-bold text-blue-800 flex items-center gap-2">
                     {selectedReview.userName}

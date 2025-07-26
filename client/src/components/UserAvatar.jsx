@@ -54,7 +54,7 @@ const UserAvatar = ({
     return gradients[Math.abs(hash) % gradients.length];
   };
 
-  const borderClass = showBorder ? 'border-4 border-blue-200' : '';
+  const borderClass = showBorder && !className.includes('border-') ? 'border-4 border-blue-200' : '';
   const baseClasses = `${size} rounded-full ${borderClass} flex items-center justify-center text-white font-bold ${className}`;
 
   if (user?.avatar) {
