@@ -2107,7 +2107,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
             )}
             
             {/* Floating Scroll to bottom button - WhatsApp style */}
-            {!isAtBottom && isUpcoming && (
+            {!isAtBottom && isUpcoming && !editingComment && !replyTo && (
               <div className="absolute bottom-20 right-6 z-20">
                 <button
                   onClick={scrollToBottom}
