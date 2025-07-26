@@ -1138,7 +1138,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         if (typeof window !== 'undefined') {
           const event = new CustomEvent('removeAppointmentRow', { detail: appt._id });
           window.dispatchEvent(event);
-          toast.success("Appointment removed from your table sucessfully");
+          toast.success("Appointment removed from your table successfully");
         }
       } else {
         toast.error('Failed to remove appointment from table.');
@@ -1859,7 +1859,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           if (window.confirm('Are you sure you want to clear chat? This action cannot be undone.')) {
                             localStorage.setItem(clearTimeKey, Date.now());
                             setComments([]);
-                            toast.success("Chat Cleared")
+                            toast.success("Chat cleared successfully!")
                           }
                         }}
                         title="Clear chat locally"
