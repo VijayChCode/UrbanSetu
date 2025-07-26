@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { signoutUserStart, signoutUserSuccess, signoutUserFailure } from "../redux/user/userSlice";
 import { reconnectSocket } from "../utils/socket";
+import { toast } from 'react-toastify';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -100,6 +101,7 @@ export default function UserChangePassword() {
         } catch (err) {
           dispatch(signoutUserFailure(err.message));
         }
+        toast.error("Session expired or unauthorized. Please sign in again.");
         setTimeout(() => {
           navigate("/sign-in", { replace: true });
         }, 1500);
