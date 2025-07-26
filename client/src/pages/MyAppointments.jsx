@@ -818,6 +818,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [messageToDelete, setMessageToDelete] = useState(null);
   const [deleteForBoth, setDeleteForBoth] = useState(true);
+  const [showClearChatModal, setShowClearChatModal] = useState(false);
   const messageRefs = useRef({}); // Add messageRefs here
 
   // Auto-close shortcut tip after 10 seconds
@@ -910,6 +911,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     setShowDeleteModal(false);
     setMessageToDelete(null);
     setDeleteForBoth(true);
+  };
+
+  const handleClearChat = () => {
+    localStorage.setItem(clearTimeKey, Date.now());
+    setComments([]);
+    toast.success("Chat Cleared");
+    setShowClearChatModal(false);
   };
 
   const handleCommentSend = async () => {
@@ -1855,13 +1863,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                     {filteredComments.length > 0 && (
                       <button
                         className="text-xs text-red-600 hover:underline"
-                        onClick={() => {
-                          if (window.confirm('Are you sure you want to clear chat? This action cannot be undone.')) {
-                            localStorage.setItem(clearTimeKey, Date.now());
-                            setComments([]);
-                            toast.success("Chat Cleared")
-                          }
-                        }}
+                        onClick={() => setShowClearChatModal(true)}
                         title="Clear chat locally"
                       >
                         Clear Chat
@@ -2268,6 +2270,40 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                     ? (deleteForBoth ? 'Delete for everyone' : 'Delete for me')
                     : 'Delete for me'
                 }
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Clear Chat Confirmation Modal */}
+      {showClearChatModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+              <FaTrash className="text-red-500" />
+              Clear Chat
+            </h3>
+            
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to clear chat? This action cannot be undone.
+            </p>
+            
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => setShowClearChatModal(false)}
+                className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleClearChat}
+                className="px-4 py-2 rounded bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors flex items-center gap-2"
+              >
+                <FaTrash size={12} />
+                Clear Chat
               </button>
             </div>
           </div>
