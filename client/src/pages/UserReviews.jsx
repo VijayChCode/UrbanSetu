@@ -15,6 +15,8 @@ export default function UserReviews() {
   const [editingReview, setEditingReview] = useState(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [reviewToDelete, setReviewToDelete] = useState(null);
 
   useEffect(() => {
     fetchUserReviews();
@@ -129,13 +131,16 @@ export default function UserReviews() {
     }
   };
 
-  const handleDeleteReview = async (reviewId) => {
-    if (!window.confirm('Are you sure you want to delete this review?')) {
-      return;
-    }
+  const handleDeleteReview = (review) => {
+    setReviewToDelete(review);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteReview = async () => {
+    if (!reviewToDelete) return;
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/review/delete/${reviewId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/review/delete/${reviewToDelete._id}`, {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -143,13 +148,16 @@ export default function UserReviews() {
       const data = await res.json();
 
       if (res.ok) {
-        setReviews(reviews.filter(review => review._id !== reviewId));
+        setReviews(reviews.filter(review => review._id !== reviewToDelete._id));
         toast.success('Review deleted successfully');
       } else {
         toast.error(data.message || 'Failed to delete review');
       }
     } catch (error) {
       toast.error('Network error. Please try again.');
+    } finally {
+      setShowDeleteModal(false);
+      setReviewToDelete(null);
     }
   };
 
@@ -383,7 +391,7 @@ export default function UserReviews() {
                     </button>
                     
                     <button
-                      onClick={() => handleDeleteReview(review._id)}
+                      onClick={() => handleDeleteReview(review)}
                       className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-lg hover:from-red-600 hover:to-pink-600 transition shadow"
                     >
                       <FaTrash />
@@ -414,6 +422,61 @@ export default function UserReviews() {
               >
                 Cancel
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Review Confirmation Modal */}
+      {showDeleteModal && reviewToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-white rounded-lg max-w-md w-full mx-4 shadow-xl">
+            <div className="p-4 sm:p-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <FaTrash className="text-red-500" />
+                Delete Review
+              </h3>
+              
+              <p className="text-gray-600 mb-4">
+                Are you sure you want to delete this review? This action cannot be undone.
+              </p>
+
+              {/* Show review details for confirmation */}
+              <div className="bg-gray-50 rounded-lg p-3 mb-4">
+                <div className="flex items-center gap-2 mb-2">
+                  {renderStars(reviewToDelete.rating)}
+                  <span className="text-sm text-gray-600">
+                    {reviewToDelete.rating} star{reviewToDelete.rating > 1 ? 's' : ''}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-700 line-clamp-3">{reviewToDelete.comment}</p>
+                {reviewToDelete.listingId && (
+                  <p className="text-xs text-gray-500 mt-2">
+                    Property: {reviewToDelete.listingId.name}
+                  </p>
+                )}
+              </div>
+              
+              <div className="flex gap-3 justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setReviewToDelete(null);
+                  }}
+                  className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmDeleteReview}
+                  className="px-4 py-2 rounded bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors flex items-center gap-2"
+                >
+                  <FaTrash size={12} />
+                  Delete Review
+                </button>
+              </div>
             </div>
           </div>
         </div>
