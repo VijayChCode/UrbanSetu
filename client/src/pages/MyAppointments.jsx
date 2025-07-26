@@ -2201,7 +2201,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
             {messageToDelete?.deleted ? (
               // Deleted message - show simplified message for local removal
               <p className="text-gray-600 mb-6">
-                Delete this message for me? This will only remove it from your view.
+                Delete this message for me?
               </p>
             ) : messageToDelete?.senderEmail === currentUser.email ? (
               // Own message - show existing functionality
