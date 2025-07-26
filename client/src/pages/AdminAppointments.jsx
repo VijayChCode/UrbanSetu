@@ -1099,7 +1099,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
         // Remove temp message on error
         setLocalComments(prev => prev.filter(msg => msg._id !== tempId));
         setNewComment(messageToSend); // Restore message
-        toast.error(data.message || "Failed to send comment.");
+        toast.error(data.message || "Failed to send message.");
       }
     } catch (err) {
       // Remove temp message on error
@@ -1161,7 +1161,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
         setEditingComment(commentId);
         setEditText(editText);
         setNewComment(editText); // Restore the text in main input for retry
-        toast.error(data.message || "Failed to edit comment.");
+        toast.error(data.message || "Failed to edit message.");
       }
     } catch (err) {
       // Revert optimistic update on error
@@ -1268,7 +1268,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
         setLocalComments(data.comments);
         toast.success("Message deleted successfully!");
       } else {
-        toast.error(data.message || 'Failed to delete comment.');
+        toast.error(data.message || 'Failed to delete message.');
       }
     } catch (err) {
       toast.error('An error occurred. Please try again.');
@@ -1849,7 +1849,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-gray-800 mb-2">Delete Message</h3>
                     <p className="text-sm text-gray-600 leading-relaxed text-justify">
-                      Are you sure you want to delete this message from everyone?
+                      Are you sure you want to delete this message for everyone?
                     </p>
                   </div>
                 </div>

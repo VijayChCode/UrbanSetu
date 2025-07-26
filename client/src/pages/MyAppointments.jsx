@@ -892,15 +892,15 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
             }
             return newC;
           }));
-          toast.success("Message deleted for both users!");
+          toast.success("Message deleted for everyone!");
         } else {
-          toast.error(data.message || 'Failed to delete comment.');
+          toast.error(data.message || 'Failed to delete message.');
         }
       } else {
         // Delete locally only
         setComments(prev => prev.filter(msg => msg._id !== messageToDelete._id));
         addLocallyRemovedId(appt._id, messageToDelete._id);
-        toast.success("Message hidden from your view!");
+        toast.success("Message deleted for you!");
       }
     } catch (err) {
       toast.error('An error occurred. Please try again.');
@@ -949,7 +949,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       } else {
         // Remove the temp message on error
         setComments(prev => prev.filter(msg => msg._id !== tempId));
-        toast.error(data.message || "Failed to send comment.");
+        toast.error(data.message || "Failed to send message.");
       }
     } catch (err) {
       setComments(prev => prev.filter(msg => msg._id !== tempId));
@@ -1009,7 +1009,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         setEditingComment(commentId);
         setEditText(editText);
         setComment(editText); // Restore the text in main input for retry
-        toast.error(data.message || "Failed to edit comment.");
+        toast.error(data.message || "Failed to edit message.");
       }
     } catch (err) {
       // Revert optimistic update on error
@@ -2227,8 +2227,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   </label>
                   <p className="text-xs text-gray-500 mt-1 ml-7">
                     {deleteForBoth 
-                      ? "The message will be permanently deleted for both users"
-                      : "The message will only be hidden from your view"
+                      ? "The message will be permanently deleted for everyone"
+                      : "The message will only be deleted for you"
                     }
                   </p>
                 </div>
@@ -2265,7 +2265,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 {messageToDelete?.deleted
                   ? 'Delete for me'
                   : messageToDelete?.senderEmail === currentUser.email
-                    ? (deleteForBoth ? 'Delete for Both' : 'Hide from Me')
+                    ? (deleteForBoth ? 'Delete for everyone' : 'Delete for me')
                     : 'Delete for me'
                 }
               </button>
