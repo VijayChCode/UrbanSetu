@@ -1922,7 +1922,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                     const isMe = c.senderEmail === currentUser.email;
                     const isEditing = editingComment === c._id;
                     const currentDate = new Date(c.timestamp);
-                    const previousDate = index > 0 ? new Date(comments[index - 1].timestamp) : null;
+                    const previousDate = index > 0 ? new Date(filteredComments[index - 1].timestamp) : null;
                     const isNewDay = previousDate ? currentDate.toDateString() !== previousDate.toDateString() : true;
                     const formattedDate = currentDate.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric' });
 
