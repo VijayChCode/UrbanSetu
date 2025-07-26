@@ -1922,17 +1922,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                     const isMe = c.senderEmail === currentUser.email;
                     const isEditing = editingComment === c._id;
                     const currentDate = new Date(c.timestamp);
-                    const previousDate = index > 0 ? new Date(comments[index - 1].timestamp) : null;
-                    const isNewDay = previousDate ? currentDate.toDateString() !== previousDate.toDateString() : true;
                     const formattedDate = currentDate.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric' });
 
                     return (
                       <React.Fragment key={c._id || index}>
-                        {isNewDay && (
-                          <div className="w-full flex justify-center my-2">
-                            <span className="bg-blue-600 text-white text-xs px-4 py-2 rounded-full shadow-lg border-2 border-white">{getDateLabel(currentDate)}</span>
-                          </div>
-                        )}
                         <div className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-fadeInChatBubble`} style={{ animationDelay: `${0.03 * index}s` }}>
                           <div
                             ref={el => messageRefs.current[c._id] = el}
