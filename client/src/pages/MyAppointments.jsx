@@ -806,12 +806,14 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [unreadNewMessages, setUnreadNewMessages] = useState(0);
   const [currentFloatingDate, setCurrentFloatingDate] = useState('');
+  const [isScrolling, setIsScrolling] = useState(false);
   const [isOtherPartyOnline, setIsOtherPartyOnline] = useState(false);
   const [isOtherPartyOnlineInTable, setIsOtherPartyOnlineInTable] = useState(false);
   const [isOtherPartyTyping, setIsOtherPartyTyping] = useState(false);
   const [showShortcutTip, setShowShortcutTip] = useState(false);
   const [loadingComments, setLoadingComments] = useState(false);
   const typingTimeoutRef = useRef(null);
+  const scrollTimeoutRef = useRef(null);
   const inputRef = useRef(null); // Add inputRef here
   const messageRefs = useRef({}); // Add messageRefs here
 
@@ -1270,6 +1272,19 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         // User has scrolled - this will trigger checkIfAtBottom and updateFloatingDate
         checkIfAtBottom();
         updateFloatingDate();
+        
+        // Show floating date when scrolling starts
+        setIsScrolling(true);
+        
+        // Clear existing timeout
+        if (scrollTimeoutRef.current) {
+          clearTimeout(scrollTimeoutRef.current);
+        }
+        
+        // Hide floating date after scrolling stops (1.5 seconds of inactivity)
+        scrollTimeoutRef.current = setTimeout(() => {
+          setIsScrolling(false);
+        }, 1500);
       };
       
       chatContainer.addEventListener('scroll', handleScroll);
@@ -1285,6 +1300,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       
       return () => {
         chatContainer.removeEventListener('scroll', handleScroll);
+        if (scrollTimeoutRef.current) {
+          clearTimeout(scrollTimeoutRef.current);
+        }
       };
     }
   }, [showChatModal, checkIfAtBottom, updateFloatingDate]);
@@ -1819,7 +1837,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 </div>
                 <div ref={chatContainerRef} className="flex-1 overflow-y-auto space-y-2 mb-4 px-4 pt-4 animate-fadeInChat relative" style={{minHeight: '400px', maxHeight: 'calc(100vh - 200px)'}}>
                   {/* Floating Date Indicator */}
-                  {currentFloatingDate && filteredComments.length > 0 && (
+                  {currentFloatingDate && filteredComments.length > 0 && isScrolling && (
                     <div className="sticky top-0 left-0 right-0 z-30 pointer-events-none">
                       <div className="w-full flex justify-center py-2">
                         <div className="bg-blue-600 text-white text-xs px-4 py-2 rounded-full shadow-lg border-2 border-white animate-fadeIn">

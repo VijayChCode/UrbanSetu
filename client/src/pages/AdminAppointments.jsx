@@ -777,8 +777,10 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
   const [isAtBottom, setIsAtBottom] = useLocalState(true);
   const [unreadNewMessages, setUnreadNewMessages] = useLocalState(0);
   const [currentFloatingDate, setCurrentFloatingDate] = useLocalState('');
+  const [isScrolling, setIsScrolling] = useLocalState(false);
   const [showShortcutTip, setShowShortcutTip] = useLocalState(false);
   const [hiddenMessageIds, setHiddenMessageIds] = useLocalState(() => getLocallyHiddenIds(appt._id));
+  const scrollTimeoutRef = React.useRef(null);
 
   // Auto-close shortcut tip after 10 seconds
   React.useEffect(() => {
@@ -942,6 +944,19 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
       const handleScroll = () => {
         checkIfAtBottom();
         updateFloatingDate();
+        
+        // Show floating date when scrolling starts
+        setIsScrolling(true);
+        
+        // Clear existing timeout
+        if (scrollTimeoutRef.current) {
+          clearTimeout(scrollTimeoutRef.current);
+        }
+        
+        // Hide floating date after scrolling stops (1.5 seconds of inactivity)
+        scrollTimeoutRef.current = setTimeout(() => {
+          setIsScrolling(false);
+        }, 1500);
       };
       
       chatContainer.addEventListener('scroll', handleScroll);
@@ -953,6 +968,9 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
       
       return () => {
         chatContainer.removeEventListener('scroll', handleScroll);
+        if (scrollTimeoutRef.current) {
+          clearTimeout(scrollTimeoutRef.current);
+        }
       };
     }
   }, [showChatModal, checkIfAtBottom, updateFloatingDate]);
@@ -1451,7 +1469,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
               </div>
               <div ref={chatContainerRef} className="flex-1 overflow-y-auto space-y-2 mb-4 px-4 pt-4 animate-fadeInChat relative" style={{minHeight: '400px', maxHeight: 'calc(100vh - 200px)'}}>
                 {/* Floating Date Indicator */}
-                {currentFloatingDate && localComments.length > 0 && (
+                {currentFloatingDate && localComments.length > 0 && isScrolling && (
                   <div className="sticky top-0 left-0 right-0 z-30 pointer-events-none">
                     <div className="w-full flex justify-center py-2">
                       <div className="bg-blue-600 text-white text-xs px-4 py-2 rounded-full shadow-lg border-2 border-white animate-fadeIn">
