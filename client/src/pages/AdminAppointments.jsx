@@ -21,6 +21,14 @@ export default function AdminAppointments() {
   const [showArchived, setShowArchived] = useState(false);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  
+  // State for appointment action modals
+  const [appointmentToHandle, setAppointmentToHandle] = useState(null);
+  const [cancelReason, setCancelReason] = useState('');
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showReinitiateModal, setShowReinitiateModal] = useState(false);
+  const [showArchiveModal, setShowArchiveModal] = useState(false);
+  const [showUnarchiveModal, setShowUnarchiveModal] = useState(false);
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -240,7 +248,6 @@ export default function AdminAppointments() {
   };
 
   const confirmReinitiate = async () => {
-    
     try {
       console.log('Attempting to reinitiate appointment:', appointmentToHandle);
       
@@ -278,7 +285,6 @@ export default function AdminAppointments() {
   };
 
   const confirmArchive = async () => {
-    
     try {
       const res = await fetch(`${API_BASE_URL}/api/bookings/${appointmentToHandle}/archive`, { 
         method: "PATCH",
@@ -315,7 +321,6 @@ export default function AdminAppointments() {
   };
 
   const confirmUnarchive = async () => {
-    
     try {
       const res = await fetch(`${API_BASE_URL}/api/bookings/${appointmentToHandle}/unarchive`, { 
         method: "PATCH",
@@ -593,6 +598,23 @@ export default function AdminAppointments() {
                         handleUnarchiveAppointment={handleUnarchiveAppointment}
                         onUserClick={handleUserClick}
                         isArchived={true}
+                        // Modal states
+                        showCancelModal={showCancelModal}
+                        setShowCancelModal={setShowCancelModal}
+                        showReinitiateModal={showReinitiateModal}
+                        setShowReinitiateModal={setShowReinitiateModal}
+                        showArchiveModal={showArchiveModal}
+                        setShowArchiveModal={setShowArchiveModal}
+                        showUnarchiveModal={showUnarchiveModal}
+                        setShowUnarchiveModal={setShowUnarchiveModal}
+                        appointmentToHandle={appointmentToHandle}
+                        setAppointmentToHandle={setAppointmentToHandle}
+                        cancelReason={cancelReason}
+                        setCancelReason={setCancelReason}
+                        confirmAdminCancel={confirmAdminCancel}
+                        confirmReinitiate={confirmReinitiate}
+                        confirmArchive={confirmArchive}
+                        confirmUnarchive={confirmUnarchive}
                       />
                     ))}
                   </tbody>
@@ -631,6 +653,23 @@ export default function AdminAppointments() {
                       handleUnarchiveAppointment={handleUnarchiveAppointment}
                       onUserClick={handleUserClick}
                       isArchived={false}
+                      // Modal states
+                      showCancelModal={showCancelModal}
+                      setShowCancelModal={setShowCancelModal}
+                      showReinitiateModal={showReinitiateModal}
+                      setShowReinitiateModal={setShowReinitiateModal}
+                      showArchiveModal={showArchiveModal}
+                      setShowArchiveModal={setShowArchiveModal}
+                      showUnarchiveModal={showUnarchiveModal}
+                      setShowUnarchiveModal={setShowUnarchiveModal}
+                      appointmentToHandle={appointmentToHandle}
+                      setAppointmentToHandle={setAppointmentToHandle}
+                      cancelReason={cancelReason}
+                      setCancelReason={setCancelReason}
+                      confirmAdminCancel={confirmAdminCancel}
+                      confirmReinitiate={confirmReinitiate}
+                      confirmArchive={confirmArchive}
+                      confirmUnarchive={confirmUnarchive}
                     />
                   ))}
                 </tbody>
@@ -793,7 +832,33 @@ function getDateLabel(date) {
   return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReinitiateAppointment, handleArchiveAppointment, handleUnarchiveAppointment, onUserClick, isArchived }) {
+function AdminAppointmentRow({ 
+  appt, 
+  currentUser, 
+  handleAdminCancel, 
+  handleReinitiateAppointment, 
+  handleArchiveAppointment, 
+  handleUnarchiveAppointment, 
+  onUserClick, 
+  isArchived,
+  // Modal states from parent
+  showCancelModal,
+  setShowCancelModal,
+  showReinitiateModal,
+  setShowReinitiateModal,
+  showArchiveModal,
+  setShowArchiveModal,
+  showUnarchiveModal,
+  setShowUnarchiveModal,
+  appointmentToHandle,
+  setAppointmentToHandle,
+  cancelReason,
+  setCancelReason,
+  confirmAdminCancel,
+  confirmReinitiate,
+  confirmArchive,
+  confirmUnarchive
+}) {
   const [localComments, setLocalComments] = useLocalState(appt.comments || []);
   const [newComment, setNewComment] = useLocalState("");
   const [sending, setSending] = useLocalState(false);
@@ -806,16 +871,6 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
   const [adminPassword, setAdminPassword] = useLocalState("");
   const [showDeleteModal, setShowDeleteModal] = useLocalState(false);
   const [messageToDelete, setMessageToDelete] = useLocalState(null);
-  
-  // New modal states for appointment actions
-  const [showCancelModal, setShowCancelModal] = useLocalState(false);
-  const [showReinitiateModal, setShowReinitiateModal] = useLocalState(false);
-  const [showArchiveModal, setShowArchiveModal] = useLocalState(false);
-  const [showUnarchiveModal, setShowUnarchiveModal] = useLocalState(false);
-  
-  // Store appointment and reasons for modals
-  const [appointmentToHandle, setAppointmentToHandle] = useLocalState(null);
-  const [cancelReason, setCancelReason] = useLocalState('');
   const [passwordLoading, setPasswordLoading] = useLocalState(false);
   const chatEndRef = React.useRef(null);
   const chatContainerRef = React.useRef(null);
@@ -1925,7 +1980,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
         )}
 
         {/* Cancel Appointment Modal */}
-        {showCancelModal && (
+        {showCancelModal && appointmentToHandle === appt._id && (
           <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-2 sm:mx-4 animate-fadeIn">
               <div className="p-6">
@@ -1980,7 +2035,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
         )}
 
         {/* Reinitiate Appointment Modal */}
-        {showReinitiateModal && (
+        {showReinitiateModal && appointmentToHandle === appt._id && (
           <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-2 sm:mx-4 animate-fadeIn">
               <div className="p-6">
@@ -2022,7 +2077,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
         )}
 
         {/* Archive Appointment Modal */}
-        {showArchiveModal && (
+        {showArchiveModal && appointmentToHandle === appt._id && (
           <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-2 sm:mx-4 animate-fadeIn">
               <div className="p-6">
@@ -2064,7 +2119,7 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
         )}
 
         {/* Unarchive Appointment Modal */}
-        {showUnarchiveModal && (
+        {showUnarchiveModal && appointmentToHandle === appt._id && (
           <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-2 sm:mx-4 animate-fadeIn">
               <div className="p-6">
