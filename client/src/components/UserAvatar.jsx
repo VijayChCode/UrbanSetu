@@ -23,30 +23,35 @@ const UserAvatar = ({
     return name.charAt(0).toUpperCase();
   };
 
-  // Generate a consistent background color based on the user's name
+  // Generate a consistent vibrant gradient background based on the user's name
   const getBackgroundColor = (name) => {
-    if (!name) return 'bg-gray-500';
+    if (!name) return 'bg-gradient-to-br from-gray-500 to-gray-600';
     
-    const colors = [
-      'bg-red-500',
-      'bg-blue-500', 
-      'bg-green-500',
-      'bg-yellow-500',
-      'bg-purple-500',
-      'bg-pink-500',
-      'bg-indigo-500',
-      'bg-teal-500',
-      'bg-orange-500',
-      'bg-cyan-500'
+    const gradients = [
+      'bg-gradient-to-br from-red-500 to-pink-600',
+      'bg-gradient-to-br from-blue-500 to-purple-600', 
+      'bg-gradient-to-br from-green-500 to-teal-600',
+      'bg-gradient-to-br from-yellow-500 to-orange-600',
+      'bg-gradient-to-br from-purple-500 to-indigo-600',
+      'bg-gradient-to-br from-pink-500 to-rose-600',
+      'bg-gradient-to-br from-indigo-500 to-blue-600',
+      'bg-gradient-to-br from-teal-500 to-green-600',
+      'bg-gradient-to-br from-orange-500 to-red-600',
+      'bg-gradient-to-br from-cyan-500 to-blue-600',
+      'bg-gradient-to-br from-emerald-500 to-teal-600',
+      'bg-gradient-to-br from-violet-500 to-purple-600',
+      'bg-gradient-to-br from-fuchsia-500 to-pink-600',
+      'bg-gradient-to-br from-sky-500 to-blue-600',
+      'bg-gradient-to-br from-lime-500 to-green-600'
     ];
     
-    // Use name to generate consistent color
+    // Use name to generate consistent gradient
     let hash = 0;
     for (let i = 0; i < name.length; i++) {
       hash = name.charCodeAt(i) + ((hash << 5) - hash);
     }
     
-    return colors[Math.abs(hash) % colors.length];
+    return gradients[Math.abs(hash) % gradients.length];
   };
 
   const borderClass = showBorder ? 'border-4 border-blue-200' : '';
