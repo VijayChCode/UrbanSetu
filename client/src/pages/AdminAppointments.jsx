@@ -179,30 +179,36 @@ export default function AdminAppointments() {
   }, [currentUser]);
 
   const handleAdminCancel = async (id) => {
-    const reason = prompt("Please provide a reason for cancelling this appointment:");
-    if (!reason) return;
-    
-    if (!window.confirm("Are you sure you want to cancel this appointment?")) return;
+    setAppointmentToHandle(id);
+    setCancelReason('');
+    setShowCancelModal(true);
+  };
+
+  const confirmAdminCancel = async () => {
+    if (!cancelReason.trim()) {
+      toast.error('Please provide a reason for cancelling this appointment.');
+      return;
+    }
     
     try {
-      console.log('Attempting to cancel appointment:', id);
+      console.log('Attempting to cancel appointment:', appointmentToHandle);
       console.log('Current user:', currentUser);
       console.log('User role:', currentUser.role);
       console.log('Admin approval status:', currentUser.adminApprovalStatus);
       
       // Find the appointment to check its current status
-      const appointment = appointments.find(appt => appt._id === id);
+      const appointment = appointments.find(appt => appt._id === appointmentToHandle);
       if (appointment) {
         console.log('Current appointment status:', appointment.status);
         console.log('Appointment date:', appointment.date);
         console.log('Appointment time:', appointment.time);
       }
       
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${id}/cancel`, { 
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${appointmentToHandle}/cancel`, { 
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
-        body: JSON.stringify({ reason }),
+        body: JSON.stringify({ reason: cancelReason }),
       });
       
       console.log('Response status:', res.status);
@@ -211,25 +217,34 @@ export default function AdminAppointments() {
       
       if (res.ok) {
         setAppointments((prev) =>
-          prev.map((appt) => (appt._id === id ? { ...appt, status: "cancelledByAdmin", cancelReason: reason } : appt))
+          prev.map((appt) => (appt._id === appointmentToHandle ? { ...appt, status: "cancelledByAdmin", cancelReason: cancelReason } : appt))
         );
         toast.success("Appointment cancelled successfully. Both buyer and seller have been notified of the cancellation.");
       } else {
         toast.error(data.message || "Failed to cancel appointment.");
       }
+      
+      // Close modal and reset state
+      setShowCancelModal(false);
+      setAppointmentToHandle(null);
+      setCancelReason('');
     } catch (err) {
-      console.error('Error in handleAdminCancel:', err);
+      console.error('Error in confirmAdminCancel:', err);
       toast.error("An error occurred. Please try again.");
     }
   };
 
   const handleReinitiateAppointment = async (id) => {
-    if (!window.confirm("Are you sure you want to reinitiate this appointment? This will notify both buyer and seller.")) return;
+    setAppointmentToHandle(id);
+    setShowReinitiateModal(true);
+  };
+
+  const confirmReinitiate = async () => {
     
     try {
-      console.log('Attempting to reinitiate appointment:', id);
+      console.log('Attempting to reinitiate appointment:', appointmentToHandle);
       
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${id}/reinitiate`, { 
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${appointmentToHandle}/reinitiate`, { 
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
@@ -241,23 +256,31 @@ export default function AdminAppointments() {
       
       if (res.ok) {
         setAppointments((prev) =>
-          prev.map((appt) => (appt._id === id ? { ...appt, status: "pending", cancelReason: "" } : appt))
+          prev.map((appt) => (appt._id === appointmentToHandle ? { ...appt, status: "pending", cancelReason: "" } : appt))
         );
         toast.success("Appointment reinitiated successfully. Both buyer and seller have been notified.");
       } else {
         toast.error(data.message || "Failed to reinitiate appointment.");
       }
+      
+      // Close modal and reset state
+      setShowReinitiateModal(false);
+      setAppointmentToHandle(null);
     } catch (err) {
-      console.error('Error in handleReinitiateAppointment:', err);
+      console.error('Error in confirmReinitiate:', err);
       toast.error("An error occurred. Please try again.");
     }
   };
 
   const handleArchiveAppointment = async (id) => {
-    if (!window.confirm("Are you sure you want to archive this appointment? It will be moved to the archived section.")) return;
+    setAppointmentToHandle(id);
+    setShowArchiveModal(true);
+  };
+
+  const confirmArchive = async () => {
     
     try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${id}/archive`, { 
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${appointmentToHandle}/archive`, { 
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
@@ -267,26 +290,34 @@ export default function AdminAppointments() {
       
       if (res.ok) {
         // Remove from active appointments and add to archived
-        const archivedAppt = appointments.find(appt => appt._id === id);
+        const archivedAppt = appointments.find(appt => appt._id === appointmentToHandle);
         if (archivedAppt) {
-          setAppointments((prev) => prev.filter((appt) => appt._id !== id));
+          setAppointments((prev) => prev.filter((appt) => appt._id !== appointmentToHandle));
           setArchivedAppointments((prev) => [{ ...archivedAppt, archivedByAdmin: true, archivedAt: new Date() }, ...prev]);
         }
         toast.success("Appointment archived successfully.");
       } else {
         toast.error(data.message || "Failed to archive appointment.");
       }
+      
+      // Close modal and reset state
+      setShowArchiveModal(false);
+      setAppointmentToHandle(null);
     } catch (err) {
-      console.error('Error in handleArchiveAppointment:', err);
+      console.error('Error in confirmArchive:', err);
       toast.error("An error occurred. Please try again.");
     }
   };
 
   const handleUnarchiveAppointment = async (id) => {
-    if (!window.confirm("Are you sure you want to unarchive this appointment? It will be moved back to the active appointments.")) return;
+    setAppointmentToHandle(id);
+    setShowUnarchiveModal(true);
+  };
+
+  const confirmUnarchive = async () => {
     
     try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${id}/unarchive`, { 
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${appointmentToHandle}/unarchive`, { 
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
@@ -296,17 +327,21 @@ export default function AdminAppointments() {
       
       if (res.ok) {
         // Remove from archived appointments and add back to active
-        const unarchivedAppt = archivedAppointments.find(appt => appt._id === id);
+        const unarchivedAppt = archivedAppointments.find(appt => appt._id === appointmentToHandle);
         if (unarchivedAppt) {
-          setArchivedAppointments((prev) => prev.filter((appt) => appt._id !== id));
+          setArchivedAppointments((prev) => prev.filter((appt) => appt._id !== appointmentToHandle));
           setAppointments((prev) => [{ ...unarchivedAppt, archivedByAdmin: false, archivedAt: undefined }, ...prev]);
         }
         toast.success("Appointment unarchived successfully.");
       } else {
         toast.error(data.message || "Failed to unarchive appointment.");
       }
+      
+      // Close modal and reset state
+      setShowUnarchiveModal(false);
+      setAppointmentToHandle(null);
     } catch (err) {
-      console.error('Error in handleUnarchiveAppointment:', err);
+      console.error('Error in confirmUnarchive:', err);
       toast.error("An error occurred. Please try again.");
     }
   };
@@ -771,6 +806,16 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
   const [adminPassword, setAdminPassword] = useLocalState("");
   const [showDeleteModal, setShowDeleteModal] = useLocalState(false);
   const [messageToDelete, setMessageToDelete] = useLocalState(null);
+  
+  // New modal states for appointment actions
+  const [showCancelModal, setShowCancelModal] = useLocalState(false);
+  const [showReinitiateModal, setShowReinitiateModal] = useLocalState(false);
+  const [showArchiveModal, setShowArchiveModal] = useLocalState(false);
+  const [showUnarchiveModal, setShowUnarchiveModal] = useLocalState(false);
+  
+  // Store appointment and reasons for modals
+  const [appointmentToHandle, setAppointmentToHandle] = useLocalState(null);
+  const [cancelReason, setCancelReason] = useLocalState('');
   const [passwordLoading, setPasswordLoading] = useLocalState(false);
   const chatEndRef = React.useRef(null);
   const chatContainerRef = React.useRef(null);
@@ -1872,6 +1917,187 @@ function AdminAppointmentRow({ appt, currentUser, handleAdminCancel, handleReini
                   >
                     <FaTrash size={14} />
                     Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Cancel Appointment Modal */}
+        {showCancelModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-2 sm:mx-4 animate-fadeIn">
+              <div className="p-6">
+                <div className="flex items-start gap-4 mb-6">
+                  <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <FaBan className="text-red-600 text-xl" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">Cancel Appointment</h3>
+                    <p className="text-sm text-gray-600 leading-relaxed text-justify mb-4">
+                      Are you sure you want to cancel this appointment?
+                    </p>
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Reason for cancellation (required):
+                      </label>
+                      <textarea
+                        value={cancelReason}
+                        onChange={(e) => setCancelReason(e.target.value)}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                        rows="3"
+                        placeholder="Please provide a reason for cancelling this appointment..."
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex gap-3 justify-end">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowCancelModal(false);
+                      setAppointmentToHandle(null);
+                      setCancelReason('');
+                    }}
+                    className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={confirmAdminCancel}
+                    className="px-4 py-2 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 transition-colors flex items-center gap-2"
+                  >
+                    <FaBan size={14} />
+                    Cancel Appointment
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Reinitiate Appointment Modal */}
+        {showReinitiateModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-2 sm:mx-4 animate-fadeIn">
+              <div className="p-6">
+                <div className="flex items-start gap-4 mb-6">
+                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <FaUndo className="text-green-600 text-xl" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">Reinitiate Appointment</h3>
+                    <p className="text-sm text-gray-600 leading-relaxed text-justify">
+                      Are you sure you want to reinitiate this appointment? This will notify both buyer and seller.
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex gap-3 justify-end">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowReinitiateModal(false);
+                      setAppointmentToHandle(null);
+                    }}
+                    className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={confirmReinitiate}
+                    className="px-4 py-2 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 transition-colors flex items-center gap-2"
+                  >
+                    <FaUndo size={14} />
+                    Reinitiate
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Archive Appointment Modal */}
+        {showArchiveModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-2 sm:mx-4 animate-fadeIn">
+              <div className="p-6">
+                <div className="flex items-start gap-4 mb-6">
+                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <FaArchive className="text-blue-600 text-xl" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">Archive Appointment</h3>
+                    <p className="text-sm text-gray-600 leading-relaxed text-justify">
+                      Are you sure you want to archive this appointment? It will be moved to the archived section.
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex gap-3 justify-end">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowArchiveModal(false);
+                      setAppointmentToHandle(null);
+                    }}
+                    className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={confirmArchive}
+                    className="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors flex items-center gap-2"
+                  >
+                    <FaArchive size={14} />
+                    Archive
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Unarchive Appointment Modal */}
+        {showUnarchiveModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-2 sm:mx-4 animate-fadeIn">
+              <div className="p-6">
+                <div className="flex items-start gap-4 mb-6">
+                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <FaUndo className="text-green-600 text-xl" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">Unarchive Appointment</h3>
+                    <p className="text-sm text-gray-600 leading-relaxed text-justify">
+                      Are you sure you want to unarchive this appointment? It will be moved back to the active appointments.
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex gap-3 justify-end">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowUnarchiveModal(false);
+                      setAppointmentToHandle(null);
+                    }}
+                    className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={confirmUnarchive}
+                    className="px-4 py-2 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 transition-colors flex items-center gap-2"
+                  >
+                    <FaUndo size={14} />
+                    Unarchive
                   </button>
                 </div>
               </div>
