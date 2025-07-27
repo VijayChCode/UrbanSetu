@@ -1102,22 +1102,50 @@ function AdminAppointmentRow({
         setLocalComments((prev) => {
           const idx = prev.findIndex(c => c._id === data.comment._id);
           if (idx !== -1) {
-            // Update the existing comment in place
+            // Update the existing comment in place, but do not downgrade 'read' to 'delivered'
             const updated = [...prev];
-            updated[idx] = data.comment;
+            const localComment = prev[idx];
+            const incomingComment = data.comment;
+            let status = incomingComment.status;
+            if (localComment.status === 'read' && incomingComment.status !== 'read') {
+              status = 'read';
+            }
+            updated[idx] = { ...incomingComment, status };
             return updated;
           } else {
-            // Only add if not present (for new messages)
-            return [...prev, data.comment];
+            // Only add if not present and not a temporary message
+            const isTemporaryMessage = prev.some(msg => msg._id.toString().startsWith('temp-'));
+            if (!isTemporaryMessage || data.comment.senderEmail !== currentUser.email) {
+              return [...prev, data.comment];
+            }
+            return prev;
           }
         });
+        
+        // Auto-scroll for incoming messages if user is at bottom
+        if (showChatModal && data.comment.senderEmail !== currentUser.email) {
+          // Mark as read if chat is open
+          setTimeout(() => {
+            fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/read`, {
+              method: 'PATCH',
+              credentials: 'include'
+            });
+          }, 100);
+          
+          // Auto-scroll to show new message if user is near bottom
+          setTimeout(() => {
+            if (chatEndRef.current && isAtBottom) {
+              chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+            }
+          }, 50);
+        }
       }
     }
     socket.on('commentUpdate', handleCommentUpdate);
     return () => {
       socket.off('commentUpdate', handleCommentUpdate);
     };
-  }, [appt._id, setLocalComments]);
+  }, [appt._id, setLocalComments, showChatModal, currentUser.email, isAtBottom]);
 
   // Keyboard shortcut Ctrl+F to focus message input
   React.useEffect(() => {
@@ -1138,54 +1166,77 @@ function AdminAppointmentRow({
 
   const handleCommentSend = async () => {
     if (!newComment.trim()) return;
-    setSending(true);
-
-    // Create a temporary message object for optimistic update
+    
+    // Store the message content and reply before clearing the input
+    const messageContent = newComment.trim();
+    const replyToData = replyTo;
+    
+    // Create a temporary message object with immediate display
     const tempId = `temp-${Date.now()}`;
     const tempMessage = {
       _id: tempId,
+      sender: currentUser._id,
       senderEmail: currentUser.email,
-      message: newComment,
+      senderName: currentUser.username,
+      message: messageContent,
       status: "sending",
       timestamp: new Date().toISOString(),
       readBy: [currentUser._id],
-      ...(replyTo ? { replyTo: replyTo._id } : {}),
+      ...(replyToData ? { replyTo: replyToData._id } : {}),
     };
-    
-    // Optimistic update - add message immediately
+
+    // Immediately update UI - this makes the message appear instantly
     setLocalComments(prev => [...prev, tempMessage]);
-    const messageToSend = newComment;
     setNewComment("");
-    setReplyTo(null); // Clear replyTo after sending
+    setReplyTo(null);
+    setSending(true);
+
+    // Scroll to bottom immediately after adding the message
+    setTimeout(() => {
+      if (chatEndRef.current) {
+        chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 50);
 
     try {
       const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
-        body: JSON.stringify({ message: messageToSend, ...(replyTo ? { replyTo: replyTo._id } : {}) }),
+        body: JSON.stringify({ 
+          message: messageContent, 
+          ...(replyToData ? { replyTo: replyToData._id } : {}) 
+        }),
       });
+      
       const data = await res.json();
+      
       if (res.ok) {
-        // Replace temp message with real message from server
-        setLocalComments(prev => [
-          ...prev.filter(msg => msg._id !== tempId),
-          ...data.comments.filter(newC => !prev.some(msg => msg._id === newC._id))
-        ]);
-        toast.success("Message sent successfully!");
+        // Find the new comment from the response
+        const newCommentFromServer = data.comments[data.comments.length - 1];
+        
+        // Replace the temp message with the real one
+        setLocalComments(prev => prev.map(msg => 
+          msg._id === tempId 
+            ? { ...newCommentFromServer, status: 'sent' } // Start with 'sent' status
+            : msg
+        ));
+        
+        // Don't show success toast as it's too verbose for chat
       } else {
-        // Remove temp message on error
+        // Remove the temp message and show error
         setLocalComments(prev => prev.filter(msg => msg._id !== tempId));
-        setNewComment(messageToSend); // Restore message
+        setNewComment(messageContent); // Restore message
         toast.error(data.message || "Failed to send message.");
       }
     } catch (err) {
-      // Remove temp message on error
+      // Remove the temp message and show error
       setLocalComments(prev => prev.filter(msg => msg._id !== tempId));
-      setNewComment(messageToSend); // Restore message
-      toast.error("An error occurred. Please try again.");
+      setNewComment(messageContent); // Restore message
+      toast.error('An error occurred. Please try again.');
+    } finally {
+      setSending(false);
     }
-    setSending(false);
   };
 
   const handleEditComment = async (commentId) => {
@@ -1779,6 +1830,15 @@ function AdminAppointmentRow({
                               >
                                 <FaTrash size={12} />
                               </button>
+                              <span className="ml-1">
+                                {c.readBy?.some(userId => userId !== currentUser._id)
+                                  ? <FaCheckDouble className="text-blue-600 inline" title="Read" />
+                                  : c.status === "delivered"
+                                    ? <FaCheckDouble className="text-blue-400 inline" title="Delivered" />
+                                    : c.status === "sending"
+                                      ? <FaCheck className="text-blue-300 inline animate-pulse" title="Sending..." />
+                                      : <FaCheck className="text-blue-400 inline" title="Sent" />}
+                              </span>
                             </>
                           )}
                         </div>
@@ -1833,7 +1893,8 @@ function AdminAppointmentRow({
                     }
                   }}
                   onKeyDown={e => { 
-                    if (e.key === 'Enter') {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault(); // Prevent line break
                       if (editingComment) {
                         handleEditComment(editingComment);
                       } else {
