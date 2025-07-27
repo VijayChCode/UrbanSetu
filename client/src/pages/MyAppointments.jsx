@@ -2066,7 +2066,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                       ? <FaCheckDouble className="text-white inline" />
                                       : c.status === "delivered"
                                         ? <FaCheckDouble className="text-white/70 inline" />
-                                        : <FaCheck className="text-white/70 inline" />}
+                                        : c.status === "sending"
+                                          ? <FaCheck className="text-white/50 inline animate-pulse" />
+                                          : <FaCheck className="text-white/70 inline" />}
                                   </span>
                                 </>
                               )}

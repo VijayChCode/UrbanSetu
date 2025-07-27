@@ -300,7 +300,21 @@ router.post('/:id/comment', verifyToken, async (req, res) => {
       // Send only the new comment (last in array)
       const newCommentObj = updated.comments[updated.comments.length - 1];
       io.emit('commentUpdate', { appointmentId: id, comment: newCommentObj });
-      io.emit('commentDelivered', { appointmentId: id, commentId: newCommentObj._id });
+      
+      // Only mark as delivered if the intended recipient is online
+      const onlineUsers = req.app.get('onlineUsers') || new Set();
+      const isBuyer = bookingToComment.buyerId.toString() === userId;
+      const recipientId = isBuyer ? bookingToComment.sellerId.toString() : bookingToComment.buyerId.toString();
+      
+      if (onlineUsers.has(recipientId)) {
+        // Recipient is online, mark as delivered
+        await booking.findOneAndUpdate(
+          { _id: id, 'comments._id': newCommentObj._id },
+          { $set: { 'comments.$.status': 'delivered' } }
+        );
+        io.emit('commentDelivered', { appointmentId: id, commentId: newCommentObj._id });
+      }
+      // If recipient is offline, message stays as "sent" until they come online
     }
     
     res.status(200).json(updated);
@@ -1256,8 +1270,13 @@ export function registerUserAppointmentsSocket(io) {
         for (const appt of bookings) {
           let updated = false;
           for (const comment of appt.comments) {
-            // If comment is not from this user and not delivered to this user
-            if (comment.sender.toString() !== userId && comment.status !== 'delivered') {
+            // Only mark as delivered if:
+            // 1. Comment is not from this user 
+            // 2. Comment status is "sent" (meaning it was sent while recipient was offline)
+            // 3. Comment is not already delivered or read
+            if (comment.sender.toString() !== userId && 
+                comment.status === 'sent' && 
+                !comment.readBy?.includes(userId)) {
               comment.status = 'delivered';
               updated = true;
               io.emit('commentDelivered', { appointmentId: appt._id.toString(), commentId: comment._id.toString() });
