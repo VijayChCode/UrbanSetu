@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { FaHeadset, FaTimes, FaCheck, FaReply, FaEnvelope, FaClock, FaUser, FaEye, FaTrash, FaPaperPlane } from 'react-icons/fa';
 import { toast } from 'react-toastify';
+import ConfirmationModal from './ConfirmationModal';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -21,6 +22,11 @@ export default function AdminContactSupport() {
   const [isAtBottom, setIsAtBottom] = useState(true);
   const messagesContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
+  
+  // Confirmation modal state
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [messageToDelete, setMessageToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Check if user is admin
   const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin');
@@ -170,16 +176,29 @@ export default function AdminContactSupport() {
   };
 
   const handleDeleteMessage = async (messageId) => {
-    if (!window.confirm('Are you sure you want to delete this message?')) return;
+    setMessageToDelete(messageId);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!messageToDelete) return;
+    
+    setIsDeleting(true);
     try {
-      await fetch(`${API_BASE_URL}/api/contact/messages/${messageId}`, {
+      await fetch(`${API_BASE_URL}/api/contact/messages/${messageToDelete}`, {
         method: 'DELETE',
         credentials: 'include',
       });
       fetchMessages();
       fetchUnreadCount();
+      toast.success('Message deleted successfully!');
     } catch (error) {
       console.error('Error deleting message:', error);
+      toast.error('Failed to delete message. Please try again.');
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+      setMessageToDelete(null);
     }
   };
 
@@ -641,6 +660,22 @@ export default function AdminContactSupport() {
           }
         }
       `}</style>
+
+      {/* Confirmation Modal for Message Deletion */}
+      <ConfirmationModal
+        isOpen={showDeleteConfirm}
+        onClose={() => {
+          setShowDeleteConfirm(false);
+          setMessageToDelete(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Delete Message"
+        message="Are you sure you want to delete this message? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        isDestructive={true}
+        isLoading={isDeleting}
+      />
     </>
   );
 } 

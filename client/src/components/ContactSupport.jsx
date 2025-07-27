@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { FaHeadset, FaTimes, FaPaperPlane, FaEnvelope, FaUser, FaFileAlt, FaClock, FaTrash } from 'react-icons/fa';
 import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
+import ConfirmationModal from './ConfirmationModal';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -25,6 +26,11 @@ export default function ContactSupport() {
   const messagesContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
   const location = useLocation();
+  
+  // Confirmation modal state
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [messageToDelete, setMessageToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Autofill name and email when modal opens and user is logged in
   useEffect(() => {
@@ -148,22 +154,26 @@ export default function ContactSupport() {
   };
 
   const deleteUserMessage = async (messageId) => {
-    if (!window.confirm('Are you sure you want to delete this message? This action cannot be undone.')) {
-      return;
-    }
+    setMessageToDelete(messageId);
+    setShowDeleteConfirm(true);
+  };
 
+  const handleConfirmDelete = async () => {
+    if (!messageToDelete) return;
+    
+    setIsDeleting(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/contact/user-messages/${messageId}?email=${encodeURIComponent(currentUser.email)}`, {
+      const response = await fetch(`${API_BASE_URL}/api/contact/user-messages/${messageToDelete}?email=${encodeURIComponent(currentUser.email)}`, {
         method: 'DELETE',
         credentials: 'include'
       });
 
       if (response.ok) {
         // Remove the message from the local state
-        setUserMessages(prev => prev.filter(msg => msg._id !== messageId));
+        setUserMessages(prev => prev.filter(msg => msg._id !== messageToDelete));
         
         // Recalculate unread replies count
-        const updatedMessages = userMessages.filter(msg => msg._id !== messageId);
+        const updatedMessages = userMessages.filter(msg => msg._id !== messageToDelete);
         const unreadCount = updatedMessages.filter(msg => msg.adminReply && msg.status === 'unread').length;
         setUnreadReplies(unreadCount);
         
@@ -175,6 +185,10 @@ export default function ContactSupport() {
     } catch (error) {
       console.error('Error deleting message:', error);
       toast.error('Failed to delete message. Please try again.');
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+      setMessageToDelete(null);
     }
   };
 
@@ -648,6 +662,22 @@ export default function ContactSupport() {
           }
         }
       `}</style>
+
+      {/* Confirmation Modal for Message Deletion */}
+      <ConfirmationModal
+        isOpen={showDeleteConfirm}
+        onClose={() => {
+          setShowDeleteConfirm(false);
+          setMessageToDelete(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Delete Message"
+        message="Are you sure you want to delete this message? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        isDestructive={true}
+        isLoading={isDeleting}
+      />
     </>
   );
 } 
