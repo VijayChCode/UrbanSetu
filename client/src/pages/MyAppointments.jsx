@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo, FaCommentDots, FaCheckDouble, FaBan, FaPaperPlane, FaCalendar, FaLightbulb } from "react-icons/fa";
+import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo, FaCommentDots, FaCheckDouble, FaBan, FaPaperPlane, FaCalendar, FaLightbulb, FaSnowflake } from "react-icons/fa";
 import UserAvatar from '../components/UserAvatar';
 import { useSelector } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -173,11 +173,43 @@ export default function MyAppointments() {
         return updated;
       }));
     };
+    
+    // Listen for chat freeze/unfreeze events
+    const handleChatFrozen = (data) => {
+      setAppointments(prev => prev.map(appt => 
+        appt._id === data.appointmentId 
+          ? { ...appt, chatFrozen: true, chatFrozenAt: data.frozenAt }
+          : appt
+      ));
+      setArchivedAppointments(prev => prev.map(appt => 
+        appt._id === data.appointmentId 
+          ? { ...appt, chatFrozen: true, chatFrozenAt: data.frozenAt }
+          : appt
+      ));
+    };
+    
+    const handleChatUnfrozen = (data) => {
+      setAppointments(prev => prev.map(appt => 
+        appt._id === data.appointmentId 
+          ? { ...appt, chatFrozen: false, chatFrozenAt: undefined, chatFrozenBy: undefined }
+          : appt
+      ));
+      setArchivedAppointments(prev => prev.map(appt => 
+        appt._id === data.appointmentId 
+          ? { ...appt, chatFrozen: false, chatFrozenAt: undefined, chatFrozenBy: undefined }
+          : appt
+      ));
+    };
+    
     socket.on('profileUpdated', handleProfileUpdate);
+    socket.on('chatFrozen', handleChatFrozen);
+    socket.on('chatUnfrozen', handleChatUnfrozen);
     
     return () => {
       socket.off('appointmentCreated', handleAppointmentCreated);
       socket.off('profileUpdated', handleProfileUpdate);
+      socket.off('chatFrozen', handleChatFrozen);
+      socket.off('chatUnfrozen', handleChatUnfrozen);
     };
   }, [currentUser]);
 
@@ -1836,30 +1868,38 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-50' 
                 : 'bg-blue-100 hover:bg-blue-200 text-blue-700'
             }`}
-            title={!isUpcoming ? "Chat not available for outdated appointments" : "Open Chat"}
+            title={!isUpcoming ? "Chat not available for outdated appointments" : appt.chatFrozen ? "Chat is frozen by administrator" : "Open Chat"}
             onClick={!isUpcoming ? undefined : () => setShowChatModal(true)}
             disabled={!isUpcoming}
           >
             <FaCommentDots size={20} />
+            {/* Chat frozen indicator - top priority */}
+            {appt.chatFrozen && (
+              <FaSnowflake 
+                className="absolute -top-1 -left-1 text-blue-600 bg-white rounded-full p-0.5" 
+                size={12}
+                title="Chat is frozen by administrator"
+              />
+            )}
             {/* Typing indicator - highest priority */}
-            {isOtherPartyTyping && isUpcoming && (
+            {isOtherPartyTyping && isUpcoming && !appt.chatFrozen && (
               <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-bold border-2 border-white animate-pulse">
                 ...
               </span>
             )}
             {/* Unread count when not typing */}
-            {!isOtherPartyTyping && unreadCount > 0 && !isUpcoming && (
+            {!isOtherPartyTyping && unreadCount > 0 && !isUpcoming && !appt.chatFrozen && (
               <span className="absolute -top-1 -right-1 bg-gray-400 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-bold border-2 border-white">
                 {unreadCount}
               </span>
             )}
-            {!isOtherPartyTyping && unreadCount > 0 && isUpcoming && (
+            {!isOtherPartyTyping && unreadCount > 0 && isUpcoming && !appt.chatFrozen && (
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-bold border-2 border-white">
                 {unreadCount}
               </span>
             )}
             {/* Online status green dot - show when no typing and no unread count */}
-            {!isOtherPartyTyping && unreadCount === 0 && isOtherPartyOnlineInTable && isUpcoming && (
+            {!isOtherPartyTyping && unreadCount === 0 && isOtherPartyOnlineInTable && isUpcoming && !appt.chatFrozen && (
               <span className="absolute -top-1 -right-1 bg-green-500 border-2 border-white rounded-full w-3 h-3"></span>
             )}
           </button>
@@ -2118,18 +2158,40 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   </div>
                 )}
                 
+                {/* Chat Frozen Indicator */}
+                {appt.chatFrozen && (
+                  <div className="px-4 mb-2">
+                    <div className="flex items-center bg-blue-50 border-l-4 border-blue-400 px-3 py-2 rounded">
+                      <FaSnowflake className="text-blue-500 w-4 h-4 flex-shrink-0 mr-2" />
+                      <span className="text-sm text-blue-700 font-medium">
+                        Chat has been frozen by an administrator. You cannot send messages at this time.
+                      </span>
+                    </div>
+                  </div>
+                )}
+                
                 <div className="flex gap-2 mt-2 px-4 pb-4">
                   <input
                     type="text"
-                    className="flex-1 px-3 py-2 border rounded-full text-sm focus:ring-2 focus:ring-blue-200 shadow"
-                    placeholder={editingComment ? "Edit your message..." : "Type a message..."}
+                    className={`flex-1 px-3 py-2 border rounded-full text-sm shadow ${
+                      appt.chatFrozen 
+                        ? 'bg-gray-100 border-gray-300 cursor-not-allowed focus:ring-gray-200' 
+                        : 'focus:ring-2 focus:ring-blue-200'
+                    }`}
+                    placeholder={
+                      appt.chatFrozen 
+                        ? "Chat is frozen by administrator" 
+                        : editingComment 
+                          ? "Edit your message..." 
+                          : "Type a message..."
+                    }
                     value={comment}
                     onChange={e => {
                       setComment(e.target.value);
                       if (editingComment) {
                         setEditText(e.target.value);
                       }
-                      if (!editingComment) {
+                      if (!editingComment && !appt.chatFrozen) {
                         socket.emit('typing', { toUserId: otherParty._id, fromUserId: currentUser._id, appointmentId: appt._id });
                       }
                     }}
@@ -2143,10 +2205,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                       }
                     }}
                     ref={inputRef}
+                    disabled={appt.chatFrozen}
                   />
                   <button
                     onClick={editingComment ? () => handleEditComment(editingComment) : handleCommentSend}
-                    disabled={(editingComment ? savingComment === editingComment : sending) || !comment.trim()}
+                    disabled={(editingComment ? savingComment === editingComment : sending) || !comment.trim() || appt.chatFrozen}
                     className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-5 py-2 rounded-full text-sm font-semibold shadow hover:from-blue-600 hover:to-purple-600 transition disabled:opacity-50 flex items-center gap-2 min-w-20"
                   >
                     {editingComment ? (

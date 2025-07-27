@@ -94,6 +94,17 @@ const bookingSchema = new mongoose.Schema({
   archivedAt: {
     type: Date
   },
+  chatFrozen: {
+    type: Boolean,
+    default: false
+  },
+  chatFrozenBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  chatFrozenAt: {
+    type: Date
+  },
   reinitiationCount: { type: Number, default: 0 },
   buyerReinitiationCount: { type: Number, default: 0 },
   sellerReinitiationCount: { type: Number, default: 0 },
