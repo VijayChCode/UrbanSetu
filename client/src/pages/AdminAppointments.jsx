@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { FaTrash, FaSearch, FaPen, FaUser, FaEnvelope, FaCalendar, FaPhone, FaUserShield, FaArchive, FaUndo, FaCommentDots, FaCheck, FaCheckDouble, FaBan, FaTimes, FaLightbulb } from "react-icons/fa";
+import { FaTrash, FaSearch, FaPen, FaUser, FaEnvelope, FaCalendar, FaPhone, FaUserShield, FaArchive, FaUndo, FaCommentDots, FaCheck, FaCheckDouble, FaBan, FaTimes, FaLightbulb, FaSnowflake, FaLock, FaUnlock } from "react-icons/fa";
 import UserAvatar from '../components/UserAvatar';
 import { useSelector } from "react-redux";
 import { useState as useLocalState } from "react";
@@ -30,6 +30,11 @@ export default function AdminAppointments() {
   const [showReinitiateModal, setShowReinitiateModal] = useState(false);
   const [showArchiveModal, setShowArchiveModal] = useState(false);
   const [showUnarchiveModal, setShowUnarchiveModal] = useState(false);
+  
+  // State for freeze chat functionality
+  const [showFreezeModal, setShowFreezeModal] = useState(false);
+  const [showUnfreezeModal, setShowUnfreezeModal] = useState(false);
+  const [freezeAction, setFreezeAction] = useState(null); // 'freeze' or 'unfreeze'
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -119,11 +124,50 @@ export default function AdminAppointments() {
         return updated;
       }));
     };
+    
+    // Listen for chat freeze/unfreeze events
+    const handleChatFrozen = (data) => {
+      const updateAppointment = (appt) => {
+        if (appt._id === data.appointmentId) {
+          return {
+            ...appt,
+            chatFrozen: true,
+            chatFrozenAt: data.frozenAt
+          };
+        }
+        return appt;
+      };
+      
+      setAppointments(prev => prev.map(updateAppointment));
+      setArchivedAppointments(prev => prev.map(updateAppointment));
+    };
+    
+    const handleChatUnfrozen = (data) => {
+      const updateAppointment = (appt) => {
+        if (appt._id === data.appointmentId) {
+          return {
+            ...appt,
+            chatFrozen: false,
+            chatFrozenAt: undefined,
+            chatFrozenBy: undefined
+          };
+        }
+        return appt;
+      };
+      
+      setAppointments(prev => prev.map(updateAppointment));
+      setArchivedAppointments(prev => prev.map(updateAppointment));
+    };
+    
     socket.on('profileUpdated', handleProfileUpdate);
+    socket.on('chatFrozen', handleChatFrozen);
+    socket.on('chatUnfrozen', handleChatUnfrozen);
     
     return () => {
       clearInterval(interval);
       socket.off('profileUpdated', handleProfileUpdate);
+      socket.off('chatFrozen', handleChatFrozen);
+      socket.off('chatUnfrozen', handleChatUnfrozen);
     };
   }, []);
 
@@ -348,6 +392,63 @@ export default function AdminAppointments() {
       setAppointmentToHandle(null);
     } catch (err) {
       console.error('Error in confirmUnarchive:', err);
+      toast.error("An error occurred. Please try again.");
+    }
+  };
+
+  // Freeze chat handler
+  const handleFreezeChat = async (id) => {
+    setAppointmentToHandle(id);
+    setFreezeAction('freeze');
+    setShowFreezeModal(true);
+  };
+
+  const handleUnfreezeChat = async (id) => {
+    setAppointmentToHandle(id);
+    setFreezeAction('unfreeze');
+    setShowUnfreezeModal(true);
+  };
+
+  const confirmFreezeChat = async () => {
+    try {
+      const endpoint = freezeAction === 'freeze' ? 'freeze-chat' : 'unfreeze-chat';
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${appointmentToHandle}/${endpoint}`, { 
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: 'include',
+      });
+      
+      const data = await res.json();
+      
+      if (res.ok) {
+        // Update the appointment in both active and archived lists
+        const updateAppointment = (appt) => {
+          if (appt._id === appointmentToHandle) {
+            return {
+              ...appt,
+              chatFrozen: freezeAction === 'freeze',
+              chatFrozenBy: freezeAction === 'freeze' ? currentUser._id : undefined,
+              chatFrozenAt: freezeAction === 'freeze' ? new Date() : undefined
+            };
+          }
+          return appt;
+        };
+        
+        setAppointments(prev => prev.map(updateAppointment));
+        setArchivedAppointments(prev => prev.map(updateAppointment));
+        
+        toast.success(freezeAction === 'freeze' ? "Chat has been frozen successfully." : "Chat has been unfrozen successfully.");
+      } else {
+        toast.error(data.message || `Failed to ${freezeAction} chat.`);
+      }
+      
+      // Close modals and reset state
+      setShowFreezeModal(false);
+      setShowUnfreezeModal(false);
+      setAppointmentToHandle(null);
+      setFreezeAction(null);
+    } catch (err) {
+      console.error(`Error in confirm${freezeAction === 'freeze' ? 'Freeze' : 'Unfreeze'}Chat:`, err);
       toast.error("An error occurred. Please try again.");
     }
   };
@@ -597,6 +698,8 @@ export default function AdminAppointments() {
                         handleReinitiateAppointment={handleReinitiateAppointment}
                         handleArchiveAppointment={handleArchiveAppointment}
                         handleUnarchiveAppointment={handleUnarchiveAppointment}
+                        handleFreezeChat={handleFreezeChat}
+                        handleUnfreezeChat={handleUnfreezeChat}
                         onUserClick={handleUserClick}
                         isArchived={true}
                         // Modal states
@@ -608,6 +711,10 @@ export default function AdminAppointments() {
                         setShowArchiveModal={setShowArchiveModal}
                         showUnarchiveModal={showUnarchiveModal}
                         setShowUnarchiveModal={setShowUnarchiveModal}
+                        showFreezeModal={showFreezeModal}
+                        setShowFreezeModal={setShowFreezeModal}
+                        showUnfreezeModal={showUnfreezeModal}
+                        setShowUnfreezeModal={setShowUnfreezeModal}
                         appointmentToHandle={appointmentToHandle}
                         setAppointmentToHandle={setAppointmentToHandle}
                         cancelReason={cancelReason}
@@ -616,6 +723,8 @@ export default function AdminAppointments() {
                         confirmReinitiate={confirmReinitiate}
                         confirmArchive={confirmArchive}
                         confirmUnarchive={confirmUnarchive}
+                        confirmFreezeChat={confirmFreezeChat}
+                        freezeAction={freezeAction}
                       />
                     ))}
                   </tbody>
@@ -643,36 +752,44 @@ export default function AdminAppointments() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredAppointments.map((appt) => (
-                    <AdminAppointmentRow
-                      key={appt._id}
-                      appt={appt}
-                      currentUser={currentUser}
-                      handleAdminCancel={handleAdminCancel}
-                      handleReinitiateAppointment={handleReinitiateAppointment}
-                      handleArchiveAppointment={handleArchiveAppointment}
-                      handleUnarchiveAppointment={handleUnarchiveAppointment}
-                      onUserClick={handleUserClick}
-                      isArchived={false}
-                      // Modal states
-                      showCancelModal={showCancelModal}
-                      setShowCancelModal={setShowCancelModal}
-                      showReinitiateModal={showReinitiateModal}
-                      setShowReinitiateModal={setShowReinitiateModal}
-                      showArchiveModal={showArchiveModal}
-                      setShowArchiveModal={setShowArchiveModal}
-                      showUnarchiveModal={showUnarchiveModal}
-                      setShowUnarchiveModal={setShowUnarchiveModal}
-                      appointmentToHandle={appointmentToHandle}
-                      setAppointmentToHandle={setAppointmentToHandle}
-                      cancelReason={cancelReason}
-                      setCancelReason={setCancelReason}
-                      confirmAdminCancel={confirmAdminCancel}
-                      confirmReinitiate={confirmReinitiate}
-                      confirmArchive={confirmArchive}
-                      confirmUnarchive={confirmUnarchive}
-                    />
-                  ))}
+                                      {filteredAppointments.map((appt) => (
+                      <AdminAppointmentRow
+                        key={appt._id}
+                        appt={appt}
+                        currentUser={currentUser}
+                        handleAdminCancel={handleAdminCancel}
+                        handleReinitiateAppointment={handleReinitiateAppointment}
+                        handleArchiveAppointment={handleArchiveAppointment}
+                        handleUnarchiveAppointment={handleUnarchiveAppointment}
+                        handleFreezeChat={handleFreezeChat}
+                        handleUnfreezeChat={handleUnfreezeChat}
+                        onUserClick={handleUserClick}
+                        isArchived={false}
+                        // Modal states
+                        showCancelModal={showCancelModal}
+                        setShowCancelModal={setShowCancelModal}
+                        showReinitiateModal={showReinitiateModal}
+                        setShowReinitiateModal={setShowReinitiateModal}
+                        showArchiveModal={showArchiveModal}
+                        setShowArchiveModal={setShowArchiveModal}
+                        showUnarchiveModal={showUnarchiveModal}
+                        setShowUnarchiveModal={setShowUnarchiveModal}
+                        showFreezeModal={showFreezeModal}
+                        setShowFreezeModal={setShowFreezeModal}
+                        showUnfreezeModal={showUnfreezeModal}
+                        setShowUnfreezeModal={setShowUnfreezeModal}
+                        appointmentToHandle={appointmentToHandle}
+                        setAppointmentToHandle={setAppointmentToHandle}
+                        cancelReason={cancelReason}
+                        setCancelReason={setCancelReason}
+                        confirmAdminCancel={confirmAdminCancel}
+                        confirmReinitiate={confirmReinitiate}
+                        confirmArchive={confirmArchive}
+                        confirmUnarchive={confirmUnarchive}
+                        confirmFreezeChat={confirmFreezeChat}
+                        freezeAction={freezeAction}
+                      />
+                    ))}
                 </tbody>
               </table>
             </div>
@@ -817,6 +934,8 @@ function AdminAppointmentRow({
   handleReinitiateAppointment, 
   handleArchiveAppointment, 
   handleUnarchiveAppointment, 
+  handleFreezeChat,
+  handleUnfreezeChat,
   onUserClick, 
   isArchived,
   // Modal states from parent
@@ -828,6 +947,10 @@ function AdminAppointmentRow({
   setShowArchiveModal,
   showUnarchiveModal,
   setShowUnarchiveModal,
+  showFreezeModal,
+  setShowFreezeModal,
+  showUnfreezeModal,
+  setShowUnfreezeModal,
   appointmentToHandle,
   setAppointmentToHandle,
   cancelReason,
@@ -835,7 +958,9 @@ function AdminAppointmentRow({
   confirmAdminCancel,
   confirmReinitiate,
   confirmArchive,
-  confirmUnarchive
+  confirmUnarchive,
+  confirmFreezeChat,
+  freezeAction
 }) {
   const [localComments, setLocalComments] = useLocalState(appt.comments || []);
   const [newComment, setNewComment] = useLocalState("");
@@ -1113,9 +1238,29 @@ function AdminAppointmentRow({
         });
       }
     }
+    
+    function handleChatFrozen(data) {
+      if (data.appointmentId === appt._id) {
+        toast.info(`Chat has been frozen by ${data.frozenBy}`);
+        // The parent component will handle updating the appointment data
+      }
+    }
+    
+    function handleChatUnfrozen(data) {
+      if (data.appointmentId === appt._id) {
+        toast.info(`Chat has been unfrozen by ${data.unfrozenBy}`);
+        // The parent component will handle updating the appointment data
+      }
+    }
+    
     socket.on('commentUpdate', handleCommentUpdate);
+    socket.on('chatFrozen', handleChatFrozen);
+    socket.on('chatUnfrozen', handleChatUnfrozen);
+    
     return () => {
       socket.off('commentUpdate', handleCommentUpdate);
+      socket.off('chatFrozen', handleChatFrozen);
+      socket.off('chatUnfrozen', handleChatUnfrozen);
     };
   }, [appt._id, setLocalComments]);
 
@@ -1502,13 +1647,35 @@ function AdminAppointmentRow({
         </div>
       </td>
       <td className="border p-2 text-center relative">
-        <button
-          className="flex items-center justify-center bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-full p-2 shadow-md mx-auto relative"
-          title="Open Chat"
-          onClick={handleChatButtonClick}
-        >
-          <FaCommentDots size={20} />
-        </button>
+        <div className="flex items-center justify-center gap-2">
+          <button
+            className="flex items-center justify-center bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-full p-2 shadow-md relative"
+            title="Open Chat"
+            onClick={handleChatButtonClick}
+          >
+            <FaCommentDots size={20} />
+            {appt.chatFrozen && (
+              <FaSnowflake 
+                className="absolute -top-1 -right-1 text-blue-600 bg-white rounded-full p-0.5" 
+                size={12}
+                title="Chat is frozen"
+              />
+            )}
+          </button>
+          
+          {/* Freeze/Unfreeze Chat Button */}
+          <button
+            className={`flex items-center justify-center rounded-full p-2 shadow-md transition-all ${
+              appt.chatFrozen 
+                ? 'bg-orange-100 hover:bg-orange-200 text-orange-700' 
+                : 'bg-blue-100 hover:bg-blue-200 text-blue-700'
+            }`}
+            title={appt.chatFrozen ? "Unfreeze Chat" : "Freeze Chat"}
+            onClick={() => appt.chatFrozen ? handleUnfreezeChat(appt._id) : handleFreezeChat(appt._id)}
+          >
+            {appt.chatFrozen ? <FaUnlock size={16} /> : <FaSnowflake size={16} />}
+          </button>
+        </div>
         {showPasswordModal && (
           <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-xs relative flex flex-col items-center">
@@ -1820,11 +1987,33 @@ function AdminAppointmentRow({
                 </div>
               )}
               
+              {/* Chat Frozen Indicator */}
+              {appt.chatFrozen && (
+                <div className="px-4 mb-2">
+                  <div className="flex items-center bg-blue-50 border-l-4 border-blue-400 px-3 py-2 rounded">
+                    <FaSnowflake className="text-blue-500 w-4 h-4 flex-shrink-0 mr-2" />
+                    <span className="text-sm text-blue-700 font-medium">
+                      Chat is frozen by administrator. Only admins can send messages.
+                    </span>
+                  </div>
+                </div>
+              )}
+              
               <div className="flex gap-2 mt-2 px-4 pb-4">
                 <input
                   type="text"
-                  className="flex-1 px-3 py-2 border rounded-full text-sm focus:ring-2 focus:ring-blue-200 shadow"
-                  placeholder={editingComment ? "Edit your message..." : "Type a message..."}
+                  className={`flex-1 px-3 py-2 border rounded-full text-sm shadow ${
+                    appt.chatFrozen && !((currentUser?.role === 'admin' && currentUser?.adminApprovalStatus === 'approved') || currentUser?.role === 'rootadmin')
+                      ? 'bg-gray-100 border-gray-300 cursor-not-allowed focus:ring-gray-200' 
+                      : 'focus:ring-2 focus:ring-blue-200'
+                  }`}
+                  placeholder={
+                    appt.chatFrozen && !((currentUser?.role === 'admin' && currentUser?.adminApprovalStatus === 'approved') || currentUser?.role === 'rootadmin')
+                      ? "Chat is frozen by administrator" 
+                      : editingComment 
+                        ? "Edit your message..." 
+                        : "Type a message..."
+                  }
                   value={newComment}
                   onChange={(e) => {
                     setNewComment(e.target.value);
@@ -1842,10 +2031,15 @@ function AdminAppointmentRow({
                     }
                   }}
                   ref={inputRef}
+                  disabled={appt.chatFrozen && !((currentUser?.role === 'admin' && currentUser?.adminApprovalStatus === 'approved') || currentUser?.role === 'rootadmin')}
                 />
                 <button
                   onClick={editingComment ? () => handleEditComment(editingComment) : handleCommentSend}
-                  disabled={(editingComment ? savingComment === editingComment : sending) || !newComment.trim()}
+                  disabled={
+                    (editingComment ? savingComment === editingComment : sending) || 
+                    !newComment.trim() ||
+                    (appt.chatFrozen && !((currentUser?.role === 'admin' && currentUser?.adminApprovalStatus === 'approved') || currentUser?.role === 'rootadmin'))
+                  }
                   className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-5 py-2 rounded-full text-sm font-semibold shadow hover:from-blue-600 hover:to-purple-600 transition disabled:opacity-50 flex items-center gap-2 min-w-20"
                 >
                   {editingComment ? (
@@ -2131,6 +2325,90 @@ function AdminAppointmentRow({
                   >
                     <FaUndo size={14} />
                     Unarchive
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Freeze Chat Modal */}
+        {showFreezeModal && appointmentToHandle === appt._id && freezeAction === 'freeze' && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-2 sm:mx-4 animate-fadeIn">
+              <div className="p-6">
+                <div className="flex items-start gap-4 mb-6">
+                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <FaSnowflake className="text-blue-600 text-xl" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">Freeze Chat</h3>
+                    <p className="text-sm text-gray-600 leading-relaxed text-justify">
+                      Are you sure you want to freeze the chat for this appointment? Once frozen, buyers and sellers will not be able to send new messages. Only administrators can still send messages.
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex gap-3 justify-end">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowFreezeModal(false);
+                      setAppointmentToHandle(null);
+                    }}
+                    className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={confirmFreezeChat}
+                    className="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors flex items-center gap-2"
+                  >
+                    <FaSnowflake size={14} />
+                    Freeze Chat
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Unfreeze Chat Modal */}
+        {showUnfreezeModal && appointmentToHandle === appt._id && freezeAction === 'unfreeze' && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-2 sm:mx-4 animate-fadeIn">
+              <div className="p-6">
+                <div className="flex items-start gap-4 mb-6">
+                  <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <FaUnlock className="text-orange-600 text-xl" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">Unfreeze Chat</h3>
+                    <p className="text-sm text-gray-600 leading-relaxed text-justify">
+                      Are you sure you want to unfreeze the chat for this appointment? Once unfrozen, buyers and sellers will be able to send messages again.
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex gap-3 justify-end">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowUnfreezeModal(false);
+                      setAppointmentToHandle(null);
+                    }}
+                    className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={confirmFreezeChat}
+                    className="px-4 py-2 rounded-lg bg-orange-600 text-white font-medium hover:bg-orange-700 transition-colors flex items-center gap-2"
+                  >
+                    <FaUnlock size={14} />
+                    Unfreeze Chat
                   </button>
                 </div>
               </div>

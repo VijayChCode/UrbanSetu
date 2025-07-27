@@ -277,6 +277,11 @@ router.post('/:id/comment', verifyToken, async (req, res) => {
       return res.status(403).json({ message: "You can only comment on your own appointments unless you are an admin or root admin." });
     }
     
+    // Check if chat is frozen and prevent non-admin users from commenting
+    if (bookingToComment.chatFrozen && !isAdmin) {
+      return res.status(403).json({ message: "Chat has been frozen by an administrator. You cannot send messages at this time." });
+    }
+    
     const newComment = {
       sender: userId,
       senderEmail: req.user.email,
@@ -1271,4 +1276,103 @@ export function registerUserAppointmentsSocket(io) {
     });
   });
 }
+
+// PATCH: Freeze chat for an appointment (Admin only)
+router.patch('/:id/freeze-chat', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+    
+    // Check if user is admin or rootadmin
+    const user = await User.findById(userId);
+    const isAdmin = (user && user.role === 'admin' && user.adminApprovalStatus === 'approved') || (user && user.role === 'rootadmin');
+    
+    if (!isAdmin) {
+      return res.status(403).json({ message: "Only administrators can freeze chats." });
+    }
+    
+    const appointment = await booking.findById(id);
+    if (!appointment) {
+      return res.status(404).json({ message: 'Appointment not found.' });
+    }
+    
+    if (appointment.chatFrozen) {
+      return res.status(400).json({ message: 'Chat is already frozen for this appointment.' });
+    }
+    
+    appointment.chatFrozen = true;
+    appointment.chatFrozenBy = userId;
+    appointment.chatFrozenAt = new Date();
+    
+    await appointment.save();
+    
+    // Emit socket.io event for real-time update
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('chatFrozen', { 
+        appointmentId: id, 
+        frozenBy: user.email,
+        frozenAt: appointment.chatFrozenAt 
+      });
+    }
+    
+    res.status(200).json({ 
+      message: 'Chat has been frozen successfully.',
+      chatFrozen: true,
+      chatFrozenBy: user.email,
+      chatFrozenAt: appointment.chatFrozenAt
+    });
+  } catch (err) {
+    console.error('Error freezing chat:', err);
+    res.status(500).json({ message: 'Failed to freeze chat.' });
+  }
+});
+
+// PATCH: Unfreeze chat for an appointment (Admin only)
+router.patch('/:id/unfreeze-chat', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+    
+    // Check if user is admin or rootadmin
+    const user = await User.findById(userId);
+    const isAdmin = (user && user.role === 'admin' && user.adminApprovalStatus === 'approved') || (user && user.role === 'rootadmin');
+    
+    if (!isAdmin) {
+      return res.status(403).json({ message: "Only administrators can unfreeze chats." });
+    }
+    
+    const appointment = await booking.findById(id);
+    if (!appointment) {
+      return res.status(404).json({ message: 'Appointment not found.' });
+    }
+    
+    if (!appointment.chatFrozen) {
+      return res.status(400).json({ message: 'Chat is not frozen for this appointment.' });
+    }
+    
+    appointment.chatFrozen = false;
+    appointment.chatFrozenBy = undefined;
+    appointment.chatFrozenAt = undefined;
+    
+    await appointment.save();
+    
+    // Emit socket.io event for real-time update
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('chatUnfrozen', { 
+        appointmentId: id, 
+        unfrozenBy: user.email 
+      });
+    }
+    
+    res.status(200).json({ 
+      message: 'Chat has been unfrozen successfully.',
+      chatFrozen: false 
+    });
+  } catch (err) {
+    console.error('Error unfreezing chat:', err);
+    res.status(500).json({ message: 'Failed to unfreeze chat.' });
+  }
+});
 
