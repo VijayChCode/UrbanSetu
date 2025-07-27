@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { FaEdit, FaUser, FaEnvelope, FaPhone, FaKey, FaTrash, FaSignOutAlt, FaHome, FaCalendarAlt, FaHeart, FaEye, FaCrown, FaTimes, FaCheck, FaStar } from "react-icons/fa";
 import UserAvatar from "../components/UserAvatar";
+import ContactSupportWrapper from "../components/ContactSupportWrapper";
 import { authenticatedFetch, createAuthenticatedFetchOptions } from '../utils/auth';
 import {
   updateUserStart,
@@ -1749,6 +1750,9 @@ export default function Profile() {
           </div>
         </div>
       )}
+
+      {/* Contact Support Wrapper */}
+      <ContactSupportWrapper />
 
       <div className="mt-8 flex flex-col items-center space-y-2 text-sm text-gray-600">
         {currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? (
