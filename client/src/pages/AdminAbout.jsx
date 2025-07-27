@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import ContactSupportWrapper from '../components/ContactSupportWrapper';
+
 import { FaBullseye, FaGlobe, FaUsers, FaShieldAlt, FaUserFriends, FaEnvelope, FaStar, FaEdit } from 'react-icons/fa';
 import { useSelector } from 'react-redux';
 
@@ -405,7 +405,6 @@ export default function AdminAbout() {
         </div>
         <div className="text-xs text-gray-500 mt-2">&copy; {new Date().getFullYear()} UrbanSetu. All rights reserved.</div>
       </div>
-      <ContactSupportWrapper />
     </div>
   );
 }

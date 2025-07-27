@@ -1,5 +1,5 @@
 import React from "react";
-import ContactSupportWrapper from '../components/ContactSupportWrapper';
+
 
 export default function UserPrivacy() {
   return (
@@ -43,7 +43,6 @@ export default function UserPrivacy() {
         </ul>
         <p className="mt-8 text-gray-600">If you have questions about this policy, please contact our support team.</p>
       </div>
-      <ContactSupportWrapper />
     </div>
   );
 } 

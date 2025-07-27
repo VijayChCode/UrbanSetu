@@ -4,7 +4,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Autoplay } from "swiper/modules";
 import "swiper/css/bundle";
 import ListingItem from "../components/ListingItem";
-import ContactSupportWrapper from "../components/ContactSupportWrapper";
+
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -136,7 +136,6 @@ export default function Home() {
           </div>
         )}
       </div>
-      <ContactSupportWrapper />
     </div>
   );
 }

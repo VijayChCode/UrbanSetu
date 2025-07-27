@@ -15,7 +15,7 @@ import {
   signoutUserSuccess,
   signoutUserFailure,
 } from "../redux/user/userSlice";
-import ContactSupportWrapper from "../components/ContactSupportWrapper";
+
 import { useWishlist } from "../WishlistContext";
 import { toast } from 'react-toastify';
 import { persistor } from '../redux/store';
@@ -1783,8 +1783,6 @@ export default function Profile() {
           </>
         )}
       </div>
-
-      <ContactSupportWrapper />
     </div>
   );
 }

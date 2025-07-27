@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import ContactSupportWrapper from '../components/ContactSupportWrapper';
+
 import { FaBullseye, FaGlobe, FaUsers, FaShieldAlt, FaUserFriends, FaEnvelope, FaStar } from 'react-icons/fa';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -108,7 +108,6 @@ export default function PublicAbout() {
           </p>
         </div>
       </div>
-      <ContactSupportWrapper />
       {/* Connect with Us section */}
       <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-6 mt-6 flex flex-col items-center">
         <h2 className="text-xl font-bold mb-2">Connect with Us</h2>
