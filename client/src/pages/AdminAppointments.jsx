@@ -1832,12 +1832,12 @@ function AdminAppointmentRow({
                               </button>
                               <span className="ml-1">
                                 {c.readBy?.some(userId => userId !== currentUser._id)
-                                  ? <FaCheckDouble className="text-blue-600 inline" title="Read" />
+                                  ? <FaCheckDouble className="text-white inline" title="Read" />
                                   : c.status === "delivered"
-                                    ? <FaCheckDouble className="text-blue-400 inline" title="Delivered" />
+                                    ? <FaCheckDouble className="text-white/70 inline" title="Delivered" />
                                     : c.status === "sending"
-                                      ? <FaCheck className="text-blue-300 inline animate-pulse" title="Sending..." />
-                                      : <FaCheck className="text-blue-400 inline" title="Sent" />}
+                                      ? <FaCheck className="text-white/50 inline animate-pulse" title="Sending..." />
+                                      : <FaCheck className="text-white/70 inline" title="Sent" />}
                               </span>
                             </>
                           )}
