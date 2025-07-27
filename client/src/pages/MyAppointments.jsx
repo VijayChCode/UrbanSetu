@@ -937,48 +937,75 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
 
   const handleCommentSend = async () => {
     if (!comment.trim()) return;
-    setSending(true);
-
-    // Create a temporary message object
+    
+    // Store the message content and reply before clearing the input
+    const messageContent = comment.trim();
+    const replyToData = replyTo;
+    
+    // Create a temporary message object with immediate display
     const tempId = `temp-${Date.now()}`;
     const tempMessage = {
       _id: tempId,
+      sender: currentUser._id,
       senderEmail: currentUser.email,
-      message: comment,
+      senderName: currentUser.username,
+      message: messageContent,
       status: "sending",
       timestamp: new Date().toISOString(),
       readBy: [currentUser._id],
-      ...(replyTo ? { replyTo: replyTo._id } : {}),
+      ...(replyToData ? { replyTo: replyToData._id } : {}),
     };
+
+    // Immediately update UI - this makes the message appear instantly
     setComments(prev => [...prev, tempMessage]);
     setComment("");
-    setReplyTo(null); // Clear replyTo after sending
+    setReplyTo(null);
+    setSending(true);
+
+    // Scroll to bottom immediately after adding the message
+    setTimeout(() => {
+      if (chatEndRef.current) {
+        chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 50);
 
     try {
       const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
-        body: JSON.stringify({ message: comment, ...(replyTo ? { replyTo: replyTo._id } : {}) }),
+        body: JSON.stringify({ 
+          message: messageContent, 
+          ...(replyToData ? { replyTo: replyToData._id } : {}) 
+        }),
       });
+      
       const data = await res.json();
+      
       if (res.ok) {
-        // Replace the temp message with the real one from the backend
-        setComments(prev => [
-          ...prev.filter(msg => msg._id !== tempId),
-          ...data.comments.filter(newC => !prev.some(msg => msg._id === newC._id))
-        ]);
-        toast.success("Message sent successfully!");
+        // Find the new comment from the response
+        const newComment = data.comments[data.comments.length - 1];
+        
+        // Replace the temp message with the real one
+        setComments(prev => prev.map(msg => 
+          msg._id === tempId 
+            ? { ...newComment, status: 'sent' } // Start with 'sent' status
+            : msg
+        ));
+        
+        // Don't show success toast as it's too verbose for chat
       } else {
-        // Remove the temp message on error
+        // Remove the temp message and show error
         setComments(prev => prev.filter(msg => msg._id !== tempId));
         toast.error(data.message || "Failed to send message.");
       }
     } catch (err) {
+      // Remove the temp message and show error
       setComments(prev => prev.filter(msg => msg._id !== tempId));
       toast.error('An error occurred. Please try again.');
+    } finally {
+      setSending(false);
     }
-    setSending(false);
   };
 
   const handleEditComment = async (commentId) => {
@@ -1462,16 +1489,31 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
             updated[idx] = { ...incomingComment, status };
             return updated;
           } else {
-            // Only add if not present (for new messages)
-            return [...prev, data.comment];
+            // Only add if not present and not a temporary message
+            const isTemporaryMessage = prev.some(msg => msg._id.toString().startsWith('temp-'));
+            if (!isTemporaryMessage || data.comment.senderEmail !== currentUser.email) {
+              return [...prev, data.comment];
+            }
+            return prev;
           }
         });
-        // If chat is open and the new comment is not from the current user, mark as read
+        
+        // Auto-scroll for incoming messages if user is at bottom
         if (showChatModal && data.comment.senderEmail !== currentUser.email) {
-          fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/read`, {
-            method: 'PATCH',
-            credentials: 'include'
-          });
+          // Mark as read if chat is open
+          setTimeout(() => {
+            fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/read`, {
+              method: 'PATCH',
+              credentials: 'include'
+            });
+          }, 100);
+          
+          // Auto-scroll to show new message if user is near bottom
+          setTimeout(() => {
+            if (chatEndRef.current && isAtBottom) {
+              chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+            }
+          }, 50);
         }
       }
     }
@@ -1479,7 +1521,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     return () => {
       socket.off('commentUpdate', handleCommentUpdate);
     };
-  }, [appt._id, setComments, showChatModal, currentUser.email]);
+  }, [appt._id, setComments, showChatModal, currentUser.email, isAtBottom]);
 
   // Mark all comments as read when chat modal opens and fetch latest if needed
   useEffect(() => {
@@ -2092,12 +2134,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                   </button>
                                   <span className="ml-1">
                                     {c.readBy?.includes(otherParty?._id)
-                                      ? <FaCheckDouble className="text-white inline" />
+                                      ? <FaCheckDouble className="text-white inline" title="Read" />
                                       : c.status === "delivered"
-                                        ? <FaCheckDouble className="text-white/70 inline" />
+                                        ? <FaCheckDouble className="text-white/70 inline" title="Delivered" />
                                         : c.status === "sending"
-                                          ? <FaCheck className="text-white/50 inline animate-pulse" />
-                                          : <FaCheck className="text-white/70 inline" />}
+                                          ? <FaCheck className="text-white/50 inline animate-pulse" title="Sending..." />
+                                          : <FaCheck className="text-white/70 inline" title="Sent" />}
                                   </span>
                                 </>
                               )}
@@ -2165,7 +2207,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                       }
                     }}
                     onKeyDown={e => { 
-                      if (e.key === 'Enter') {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault(); // Prevent line break
                         if (editingComment) {
                           handleEditComment(editingComment);
                         } else {
