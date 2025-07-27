@@ -166,7 +166,6 @@ io.on('connection', (socket) => {
 
   // Listen for presence pings
   socket.on('userAppointmentsActive', ({ userId }) => {
-    const onlineUsers = socket.request.app.get('onlineUsers');
     thisUserId = userId;
     onlineUsers.add(userId);
     io.emit('userOnlineUpdate', { userId, online: true });
@@ -179,7 +178,6 @@ io.on('connection', (socket) => {
 
   // Listen for online status checks
   socket.on('checkUserOnline', ({ userId }) => {
-    const onlineUsers = socket.request.app.get('onlineUsers');
     socket.emit('userOnlineStatus', { userId, online: onlineUsers.has(userId) });
   });
 
@@ -190,7 +188,6 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id, 'UserID:', socket.user?._id?.toString());
     if (thisUserId) {
-      const onlineUsers = socket.request.app.get('onlineUsers');
       onlineUsers.delete(thisUserId);
       io.emit('userOnlineUpdate', { userId: thisUserId, online: false });
     }
