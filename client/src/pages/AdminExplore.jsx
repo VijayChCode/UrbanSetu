@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import ListingItem from "../components/ListingItem";
-import ContactSupportWrapper from "../components/ContactSupportWrapper";
 import LocationSelector from "../components/LocationSelector";
 import duckImg from "../assets/duck-go-final.gif";
 
@@ -299,7 +298,6 @@ export default function AdminExplore() {
           </div>
         </div>
       </div>
-      <ContactSupportWrapper />
     </>
   );
 }
