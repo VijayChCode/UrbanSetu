@@ -4,7 +4,17 @@ import User from '../models/user.model.js';
 
 export const verifyToken = async (req, res, next) => {
   try {
-    const token = req.cookies.access_token;
+    // Try to get token from cookies first (preferred method)
+    let token = req.cookies.access_token;
+    
+    // If no cookie token, try Authorization header as fallback (for third-party cookie blocking)
+    if (!token) {
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.substring(7); // Remove 'Bearer ' prefix
+      }
+    }
+    
     if (!token) {
       return res.status(401).json({ message: 'Access token not found' });
     }

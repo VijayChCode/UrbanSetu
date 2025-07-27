@@ -6,6 +6,7 @@ import Oauth from "../components/Oauth.jsx";
 import ContactSupportWrapper from "../components/ContactSupportWrapper.jsx";
 import { reconnectSocket } from "../utils/socket";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { areCookiesEnabled, createAuthenticatedFetchOptions } from '../utils/auth';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -63,6 +64,13 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
         dispatch(signInStart());
+        
+        // Check if cookies are enabled for better UX
+        const cookiesEnabled = areCookiesEnabled();
+        if (!cookiesEnabled) {
+            console.warn('Third-party cookies are blocked. Using localStorage fallback for authentication.');
+        }
+        
         try {
             const apiUrl = `${API_BASE_URL}/api/auth/signin`;
             const options = {
@@ -84,6 +92,11 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
             if (data.token) {
                 localStorage.setItem('accessToken', data.token);
                 console.log('Saved accessToken to localStorage:', data.token);
+                
+                // If cookies are blocked, show a helpful message
+                if (!cookiesEnabled) {
+                    console.log('Authentication will use localStorage since cookies are blocked');
+                }
             } else {
                 console.warn('No token found in login response!');
             }

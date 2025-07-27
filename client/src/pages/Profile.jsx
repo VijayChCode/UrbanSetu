@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { FaEdit, FaUser, FaEnvelope, FaPhone, FaKey, FaTrash, FaSignOutAlt, FaHome, FaCalendarAlt, FaHeart, FaEye, FaCrown, FaTimes, FaCheck, FaStar } from "react-icons/fa";
 import UserAvatar from "../components/UserAvatar";
+import { authenticatedFetch, createAuthenticatedFetchOptions } from '../utils/auth';
 import {
   updateUserStart,
   updateUserSuccess,
@@ -208,8 +209,8 @@ export default function Profile() {
       if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) {
         // Fetch admin-specific stats
         const [listingsRes, appointmentsRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/listing/user`, { credentials: 'include' }),
-          fetch(`${API_BASE_URL}/api/bookings/`, { credentials: 'include' })
+          authenticatedFetch(`${API_BASE_URL}/api/listing/user`),
+          authenticatedFetch(`${API_BASE_URL}/api/bookings/`)
         ]);
 
         const listingsData = await listingsRes.json();
@@ -225,8 +226,8 @@ export default function Profile() {
       } else {
         // Fetch regular user stats
         const [listingsRes, appointmentsRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/listing/user`, { credentials: 'include' }),
-          fetch(`${API_BASE_URL}/api/bookings/user/${currentUser._id}`, { credentials: 'include' })
+          authenticatedFetch(`${API_BASE_URL}/api/listing/user`),
+          authenticatedFetch(`${API_BASE_URL}/api/bookings/user/${currentUser._id}`)
         ]);
 
         const listingsData = await listingsRes.json();
@@ -274,9 +275,7 @@ export default function Profile() {
     }
     try {
       setEmailValidation({ loading: true, message: "", available: null });
-      const res = await fetch(`${API_BASE_URL}/api/user/check-email/${encodeURIComponent(email.trim())}`, {
-        credentials: 'include'
-      });
+      const res = await authenticatedFetch(`${API_BASE_URL}/api/user/check-email/${encodeURIComponent(email.trim())}`);
       const data = await res.json();
       setEmailValidation({ 
         loading: false, 
@@ -310,9 +309,7 @@ export default function Profile() {
     }
     try {
       setMobileValidation({ loading: true, message: "", available: null });
-      const res = await fetch(`${API_BASE_URL}/api/user/check-mobile/${encodeURIComponent(mobile.trim())}`, {
-        credentials: 'include'
-      });
+      const res = await authenticatedFetch(`${API_BASE_URL}/api/user/check-mobile/${encodeURIComponent(mobile.trim())}`);
       const data = await res.json();
       setMobileValidation({ 
         loading: false, 
@@ -414,18 +411,17 @@ export default function Profile() {
     try {
       dispatch(updateUserStart());
       const apiUrl = `${API_BASE_URL}/api/user/update/${currentUser._id}`;
-      const options = {
+      const options = createAuthenticatedFetchOptions({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: 'include',
         body: JSON.stringify({
           ...formData,
           avatar: formData.avatar === undefined ? "" : formData.avatar,
           password: updatePassword,
         }),
-      };
+      });
       const res = await fetch(apiUrl, options);
       const data = await res.json();
       console.log('Profile update response:', data); // Debug log
