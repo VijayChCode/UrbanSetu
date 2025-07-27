@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { FaStar, FaEdit, FaTrash, FaCheck, FaTimes, FaSync } from 'react-icons/fa';
 import ReviewForm from '../components/ReviewForm.jsx';
+import ContactSupportWrapper from '../components/ContactSupportWrapper';
 import { socket } from '../utils/socket.js';
 import { toast } from 'react-toastify';
 
@@ -481,6 +482,7 @@ export default function UserReviews() {
           </div>
         </div>
       )}
+      <ContactSupportWrapper />
     </div>
   );
 } 

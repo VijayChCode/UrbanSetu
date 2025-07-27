@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { signInFailure, signInStart, signInSuccess } from "../redux/user/userSlice.js";
 import Oauth from "../components/Oauth.jsx";
-import ContactSupportWrapper from "../components/ContactSupportWrapper.jsx";
+
 import { reconnectSocket } from "../utils/socket";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { areCookiesEnabled, createAuthenticatedFetchOptions } from '../utils/auth';
@@ -273,7 +273,6 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
                     </div>
                 </div>
             </div>
-            <ContactSupportWrapper />
         </div>
     );
 }

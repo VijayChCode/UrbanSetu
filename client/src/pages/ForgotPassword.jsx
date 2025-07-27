@@ -521,7 +521,6 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
           </div>
         </div>
       </div>
-      <ContactSupportWrapper />
     </div>
   );
 } 

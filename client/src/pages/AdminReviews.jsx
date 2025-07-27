@@ -4,6 +4,7 @@ import { FaStar, FaCheck, FaTimes, FaTrash, FaEye, FaBan, FaSort, FaSortUp, FaSo
 import { socket } from '../utils/socket';
 import { toast } from 'react-toastify';
 import UserAvatar from '../components/UserAvatar';
+import ContactSupportWrapper from '../components/ContactSupportWrapper';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -872,6 +873,7 @@ export default function AdminReviews() {
           </div>
         </div>
       )}
+      <ContactSupportWrapper />
     </div>
   );
 } 
