@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { FaHeadset, FaTimes, FaPaperPlane, FaEnvelope, FaUser, FaFileAlt, FaClock, FaTrash } from 'react-icons/fa';
 import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
+import ConfirmationModal from './ConfirmationModal';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -25,6 +26,8 @@ export default function ContactSupport() {
   const messagesContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
   const location = useLocation();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [messageToDelete, setMessageToDelete] = useState(null);
 
   // Autofill name and email when modal opens and user is logged in
   useEffect(() => {
@@ -148,22 +151,25 @@ export default function ContactSupport() {
   };
 
   const deleteUserMessage = async (messageId) => {
-    if (!window.confirm('Are you sure you want to delete this message? This action cannot be undone.')) {
-      return;
-    }
+    setMessageToDelete(messageId);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteMessage = async () => {
+    if (!messageToDelete) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/contact/user-messages/${messageId}?email=${encodeURIComponent(currentUser.email)}`, {
+      const response = await fetch(`${API_BASE_URL}/api/contact/user-messages/${messageToDelete}?email=${encodeURIComponent(currentUser.email)}`, {
         method: 'DELETE',
         credentials: 'include'
       });
 
       if (response.ok) {
         // Remove the message from the local state
-        setUserMessages(prev => prev.filter(msg => msg._id !== messageId));
+        setUserMessages(prev => prev.filter(msg => msg._id !== messageToDelete));
         
         // Recalculate unread replies count
-        const updatedMessages = userMessages.filter(msg => msg._id !== messageId);
+        const updatedMessages = userMessages.filter(msg => msg._id !== messageToDelete);
         const unreadCount = updatedMessages.filter(msg => msg.adminReply && msg.status === 'unread').length;
         setUnreadReplies(unreadCount);
         
@@ -594,6 +600,18 @@ export default function ContactSupport() {
           </div>
         </div>
       )}
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={confirmDeleteMessage}
+        title="Delete Message"
+        message="Are you sure you want to delete this message? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+      />
 
       {/* Custom CSS for animations and mobile button sizing */}
       <style jsx>{`

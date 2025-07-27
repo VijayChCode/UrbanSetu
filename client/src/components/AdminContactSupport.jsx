@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { FaHeadset, FaTimes, FaCheck, FaReply, FaEnvelope, FaClock, FaUser, FaEye, FaTrash, FaPaperPlane } from 'react-icons/fa';
 import { toast } from 'react-toastify';
+import ConfirmationModal from './ConfirmationModal';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -21,6 +22,8 @@ export default function AdminContactSupport() {
   const [isAtBottom, setIsAtBottom] = useState(true);
   const messagesContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [messageToDelete, setMessageToDelete] = useState(null);
 
   // Check if user is admin
   const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin');
@@ -170,9 +173,14 @@ export default function AdminContactSupport() {
   };
 
   const handleDeleteMessage = async (messageId) => {
-    if (!window.confirm('Are you sure you want to delete this message?')) return;
+    setMessageToDelete(messageId);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteMessage = async () => {
+    if (!messageToDelete) return;
     try {
-      await fetch(`${API_BASE_URL}/api/contact/messages/${messageId}`, {
+      await fetch(`${API_BASE_URL}/api/contact/messages/${messageToDelete}`, {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -580,6 +588,18 @@ export default function AdminContactSupport() {
           </div>
         </div>
       )}
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={confirmDeleteMessage}
+        title="Delete Message"
+        message="Are you sure you want to delete this message?"
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+      />
 
       {/* Custom CSS for animations */}
       <style jsx>{`
