@@ -869,6 +869,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   // Add function to check if appointment is upcoming
   const isUpcoming = new Date(appt.date) > new Date() || (new Date(appt.date).toDateString() === new Date().toDateString() && (!appt.time || appt.time > new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })));
   
+  // Check if chat should be disabled (for outdated, pending, rejected, or cancelled by admin appointments)
+  const isChatDisabled = !isUpcoming || appt.status === 'pending' || appt.status === 'rejected' || appt.status === 'cancelledByAdmin';
+  
   const canSeeContactInfo = (isAdmin || appt.status === 'accepted') && isUpcoming;
   const otherParty = isSeller ? appt.buyerId : appt.sellerId;
 
@@ -1832,34 +1835,42 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         <td className="border p-2 text-center relative">
           <button
             className={`flex items-center justify-center rounded-full p-2 shadow-md mx-auto relative ${
-              !isUpcoming 
+              isChatDisabled 
                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-50' 
                 : 'bg-blue-100 hover:bg-blue-200 text-blue-700'
             }`}
-            title={!isUpcoming ? "Chat not available for outdated appointments" : "Open Chat"}
-            onClick={!isUpcoming ? undefined : () => setShowChatModal(true)}
-            disabled={!isUpcoming}
+            title={isChatDisabled ? (
+              !isUpcoming 
+                ? "Chat not available for outdated appointments" 
+                : appt.status === 'pending'
+                  ? "Chat not available for pending appointments"
+                  : appt.status === 'rejected'
+                    ? "Chat not available for rejected appointments"
+                    : "Chat not available for appointments cancelled by admin"
+            ) : "Open Chat"}
+            onClick={isChatDisabled ? undefined : () => setShowChatModal(true)}
+            disabled={isChatDisabled}
           >
             <FaCommentDots size={20} />
             {/* Typing indicator - highest priority */}
-            {isOtherPartyTyping && isUpcoming && (
+            {isOtherPartyTyping && !isChatDisabled && (
               <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-bold border-2 border-white animate-pulse">
                 ...
               </span>
             )}
             {/* Unread count when not typing */}
-            {!isOtherPartyTyping && unreadCount > 0 && !isUpcoming && (
+            {!isOtherPartyTyping && unreadCount > 0 && isChatDisabled && (
               <span className="absolute -top-1 -right-1 bg-gray-400 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-bold border-2 border-white">
                 {unreadCount}
               </span>
             )}
-            {!isOtherPartyTyping && unreadCount > 0 && isUpcoming && (
+            {!isOtherPartyTyping && unreadCount > 0 && !isChatDisabled && (
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-bold border-2 border-white">
                 {unreadCount}
               </span>
             )}
             {/* Online status green dot - show when no typing and no unread count */}
-            {!isOtherPartyTyping && unreadCount === 0 && isOtherPartyOnlineInTable && isUpcoming && (
+            {!isOtherPartyTyping && unreadCount === 0 && isOtherPartyOnlineInTable && !isChatDisabled && (
               <span className="absolute -top-1 -right-1 bg-green-500 border-2 border-white rounded-full w-3 h-3"></span>
             )}
           </button>
@@ -1868,11 +1879,29 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       {showChatModal && (
         <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-gradient-to-br from-blue-50 to-purple-100 rounded-2xl shadow-2xl w-full h-full max-w-6xl max-h-full p-0 relative animate-fadeIn flex flex-col">
-            { !isUpcoming ? (
+            { isChatDisabled ? (
               <div className="flex flex-col items-center justify-center flex-1 p-8 min-h-96">
                 <FaCommentDots className="text-6xl text-gray-400 mb-6" />
-                <div className="text-xl font-semibold text-gray-500 text-center">Chat not available for outdated appointments</div>
-                <div className="text-gray-400 text-center mt-2">This appointment has already passed</div>
+                <div className="text-xl font-semibold text-gray-500 text-center">
+                  {!isUpcoming 
+                    ? "Chat not available for outdated appointments"
+                    : appt.status === 'pending'
+                      ? "Chat not available for pending appointments"
+                      : appt.status === 'rejected'
+                        ? "Chat not available for rejected appointments"
+                        : "Chat not available for appointments cancelled by admin"
+                  }
+                </div>
+                <div className="text-gray-400 text-center mt-2">
+                  {!isUpcoming 
+                    ? "This appointment has already passed"
+                    : appt.status === 'pending'
+                      ? "Chat will be enabled once the appointment is accepted"
+                      : appt.status === 'rejected'
+                        ? "This appointment has been rejected"
+                        : "This appointment has been cancelled by admin"
+                  }
+                </div>
               </div>
             ) : (
               <>
@@ -2191,7 +2220,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
             )}
             
             {/* Floating Scroll to bottom button - WhatsApp style */}
-            {!isAtBottom && isUpcoming && !editingComment && !replyTo && (
+            {!isAtBottom && !isChatDisabled && !editingComment && !replyTo && (
               <div className="absolute bottom-20 right-6 z-20">
                 <button
                   onClick={scrollToBottom}
