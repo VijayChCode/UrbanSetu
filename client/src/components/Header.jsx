@@ -163,7 +163,7 @@ export default function Header() {
             onClick={() => setMobileMenuOpen(false)}
           />
           {/* Menu content */}
-          <div className="relative w-4/5 max-w-sm h-full mobile-menu-content animate-slide-in-right">
+          <div className="relative w-4/5 max-w-sm h-full mobile-menu-content animate-slide-in-right overflow-hidden">
             <div className="flex flex-col h-full p-6">
               {/* Close button */}
               <button
