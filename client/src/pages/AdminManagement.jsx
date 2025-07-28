@@ -27,6 +27,15 @@ export default function AdminManagement() {
   const [managementPassword, setManagementPassword] = useState("");
   const [managementPasswordError, setManagementPasswordError] = useState("");
   const [managementPasswordLoading, setManagementPasswordLoading] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmModalData, setConfirmModalData] = useState({
+    title: '',
+    message: '',
+    onConfirm: null,
+    confirmText: 'Confirm',
+    cancelText: 'Cancel',
+    confirmButtonClass: 'bg-red-500 hover:bg-red-600'
+  });
   const lockoutTimerRef = useRef(null);
   const warningTimerRef = useRef(null);
 
@@ -133,31 +142,42 @@ export default function AdminManagement() {
 
   // Optimistic UI for delete
   const handleDelete = async (id, type) => {
-    if (!window.confirm(`Are you sure you want to delete this ${type}?`)) return;
-    // Optimistically update UI
-    if (type === 'user') {
-      setUsers(prev => prev.filter(u => u._id !== id));
-    } else {
-      setAdmins(prev => prev.filter(a => a._id !== id));
-    }
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/management/delete/${type}/${id}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-      const data = await res.json();
-      if (res.ok) {
-        toast.success(`${type === "user" ? "User" : "Admin"} deleted`);
-        // Emit socket event
-        socket.emit(type === 'user' ? 'user_update' : 'admin_update', { type: 'delete', [type]: { _id: id } });
+    const performDelete = async () => {
+      // Optimistically update UI
+      if (type === 'user') {
+        setUsers(prev => prev.filter(u => u._id !== id));
       } else {
-        fetchData();
-        toast.error(data.message || "Failed to delete");
+        setAdmins(prev => prev.filter(a => a._id !== id));
       }
-    } catch (err) {
-      fetchData();
-      toast.error("Failed to delete");
-    }
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/admin/management/delete/${type}/${id}`, {
+          method: "DELETE",
+          credentials: "include",
+        });
+        const data = await res.json();
+        if (res.ok) {
+          toast.success(`${type === "user" ? "User" : "Admin"} deleted`);
+          // Emit socket event
+          socket.emit(type === 'user' ? 'user_update' : 'admin_update', { type: 'delete', [type]: { _id: id } });
+        } else {
+          fetchData();
+          toast.error(data.message || "Failed to delete");
+        }
+      } catch (err) {
+        fetchData();
+        toast.error("Failed to delete");
+      }
+    };
+    
+    showConfirmation(
+      'Confirm Deletion',
+      `Are you sure you want to delete this ${type}? This action cannot be undone.`,
+      performDelete,
+      {
+        confirmText: 'Delete',
+        confirmButtonClass: 'bg-red-500 hover:bg-red-600'
+      }
+    );
   };
 
   const handleAccountClick = async (account, type) => {
@@ -213,68 +233,90 @@ export default function AdminManagement() {
 
   // Optimistic UI for promote
   const handlePromote = async (id) => {
-    if (!window.confirm("Are you sure you want to promote this user to admin?")) return;
-    // Optimistically move user to admins
-    const user = users.find(u => u._id === id);
-    if (user) {
-      setUsers(prev => prev.filter(u => u._id !== id));
-      setAdmins(prev => [
-        { ...user, role: 'admin', adminApprovalStatus: 'approved' },
-        ...admins
-      ]);
-    }
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/management/promote/${id}`, {
-        method: "PATCH",
-        credentials: "include",
-      });
-      const data = await res.json();
-      if (res.ok) {
-        toast.success("User promoted to admin successfully");
-        // Emit socket event
-        socket.emit('admin_update', { type: 'add', admin: { ...user, ...data } });
-        socket.emit('user_update', { type: 'delete', user: { _id: id } });
-      } else {
-        fetchData();
-        toast.error(data.message || "Failed to promote user");
+    const performPromote = async () => {
+      // Optimistically move user to admins
+      const user = users.find(u => u._id === id);
+      if (user) {
+        setUsers(prev => prev.filter(u => u._id !== id));
+        setAdmins(prev => [
+          { ...user, role: 'admin', adminApprovalStatus: 'approved' },
+          ...admins
+        ]);
       }
-    } catch (err) {
-      fetchData();
-      toast.error("Failed to promote user");
-    }
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/admin/management/promote/${id}`, {
+          method: "PATCH",
+          credentials: "include",
+        });
+        const data = await res.json();
+        if (res.ok) {
+          toast.success("User promoted to admin successfully");
+          // Emit socket event
+          socket.emit('admin_update', { type: 'add', admin: { ...user, ...data } });
+          socket.emit('user_update', { type: 'delete', user: { _id: id } });
+        } else {
+          fetchData();
+          toast.error(data.message || "Failed to promote user");
+        }
+      } catch (err) {
+        fetchData();
+        toast.error("Failed to promote user");
+      }
+    };
+    
+    showConfirmation(
+      'Promote User to Admin',
+      'Are you sure you want to promote this user to admin? They will gain administrative privileges.',
+      performPromote,
+      {
+        confirmText: 'Promote',
+        confirmButtonClass: 'bg-purple-500 hover:bg-purple-600'
+      }
+    );
   };
 
   // Optimistic UI for demote
   const handleDemote = async (id) => {
-    if (!window.confirm("Are you sure you want to demote this admin to a user?")) return;
-    // Optimistically move admin to users
-    const admin = admins.find(a => a._id === id);
-    if (admin) {
-      setAdmins(prev => prev.filter(a => a._id !== id));
-      setUsers(prev => [
-        { ...admin, role: 'user', adminApprovalStatus: undefined },
-        ...users
-      ]);
-    }
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/management/demote/${id}`, {
-        method: "PATCH",
-        credentials: "include",
-      });
-      const data = await res.json();
-      if (res.ok) {
-        toast.success("Admin demoted to user successfully");
-        // Emit socket event
-        socket.emit('user_update', { type: 'add', user: { ...admin, ...data } });
-        socket.emit('admin_update', { type: 'delete', admin: { _id: id } });
-      } else {
-        fetchData();
-        toast.error(data.message || "Failed to demote admin");
+    const performDemote = async () => {
+      // Optimistically move admin to users
+      const admin = admins.find(a => a._id === id);
+      if (admin) {
+        setAdmins(prev => prev.filter(a => a._id !== id));
+        setUsers(prev => [
+          { ...admin, role: 'user', adminApprovalStatus: undefined },
+          ...users
+        ]);
       }
-    } catch (err) {
-      fetchData();
-      toast.error("Failed to demote admin");
-    }
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/admin/management/demote/${id}`, {
+          method: "PATCH",
+          credentials: "include",
+        });
+        const data = await res.json();
+        if (res.ok) {
+          toast.success("Admin demoted to user successfully");
+          // Emit socket event
+          socket.emit('user_update', { type: 'add', user: { ...admin, ...data } });
+          socket.emit('admin_update', { type: 'delete', admin: { _id: id } });
+        } else {
+          fetchData();
+          toast.error(data.message || "Failed to demote admin");
+        }
+      } catch (err) {
+        fetchData();
+        toast.error("Failed to demote admin");
+      }
+    };
+    
+    showConfirmation(
+      'Demote Admin to User',
+      'Are you sure you want to demote this admin to a user? They will lose their administrative privileges.',
+      performDemote,
+      {
+        confirmText: 'Demote',
+        confirmButtonClass: 'bg-blue-500 hover:bg-blue-600'
+      }
+    );
   };
 
   // Add this handler at the top-level of the component
@@ -328,6 +370,38 @@ export default function AdminManagement() {
     );
   };
 
+  // Helper function to show confirmation modal
+  const showConfirmation = (title, message, onConfirm, options = {}) => {
+    setConfirmModalData({
+      title,
+      message,
+      onConfirm,
+      confirmText: options.confirmText || 'Confirm',
+      cancelText: options.cancelText || 'Cancel',
+      confirmButtonClass: options.confirmButtonClass || 'bg-red-500 hover:bg-red-600'
+    });
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmModalClose = () => {
+    setShowConfirmModal(false);
+    setConfirmModalData({
+      title: '',
+      message: '',
+      onConfirm: null,
+      confirmText: 'Confirm',
+      cancelText: 'Cancel',
+      confirmButtonClass: 'bg-red-500 hover:bg-red-600'
+    });
+  };
+
+  const handleConfirmModalConfirm = () => {
+    if (confirmModalData.onConfirm) {
+      confirmModalData.onConfirm();
+    }
+    handleConfirmModalClose();
+  };
+
   // Helper to start lockout timer
   const startLockoutTimer = () => {
     // Clear any existing timers
@@ -359,9 +433,9 @@ export default function AdminManagement() {
     };
   }, [showPasswordModal]);
 
-  // Add scroll lock for modal
+  // Add scroll lock for modals
   useEffect(() => {
-    if (showAccountModal) {
+    if (showAccountModal || showConfirmModal) {
       document.body.style.overflow = 'hidden';
       document.body.style.position = 'fixed';
       document.body.style.width = '100%';
@@ -375,7 +449,7 @@ export default function AdminManagement() {
       document.body.style.position = '';
       document.body.style.width = '';
     };
-  }, [showAccountModal]);
+  }, [showAccountModal, showConfirmModal]);
 
   // Guard: If users/admins are not arrays, show session expired/unauthorized message
   if (!Array.isArray(users) || (tab === 'admins' && !Array.isArray(admins) && currentUser.isDefaultAdmin)) {
@@ -814,6 +888,33 @@ export default function AdminManagement() {
           </div>
         </div>
       )}
+      
+      {/* Confirmation Modal */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 animate-fadeIn">
+            <div className="p-6">
+              <h3 className="text-xl font-bold text-gray-800 mb-4">{confirmModalData.title}</h3>
+              <p className="text-gray-600 mb-6">{confirmModalData.message}</p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={handleConfirmModalClose}
+                  className="px-4 py-2 rounded-lg bg-gray-200 text-gray-800 hover:bg-gray-300 font-semibold transition-colors"
+                >
+                  {confirmModalData.cancelText}
+                </button>
+                <button
+                  onClick={handleConfirmModalConfirm}
+                  className={`px-4 py-2 rounded-lg text-white font-semibold transition-colors ${confirmModalData.confirmButtonClass}`}
+                >
+                  {confirmModalData.confirmText}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Animations */}
       <style jsx>{`
         @keyframes fadeIn {
