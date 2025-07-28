@@ -235,6 +235,19 @@
   left: 100%;
 }
 
+/* Body scroll lock for mobile menu */
+body.mobile-menu-open {
+  overflow: hidden !important;
+  position: fixed !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Prevent touch scrolling on mobile when menu is open */
+body.mobile-menu-open * {
+  -webkit-overflow-scrolling: auto !important;
+}
+
 /* Custom scrollbar for notification popup */
 .notification-scroll-area {
   max-height: 24rem; /* same as max-h-96 */

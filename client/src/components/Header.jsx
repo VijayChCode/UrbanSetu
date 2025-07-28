@@ -34,6 +34,48 @@ export default function Header() {
     }
   }, [searchOpen]);
 
+  // Prevent background scrolling when mobile menu is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      // Save previous body styles
+      const prevOverflow = document.body.style.overflow;
+      const prevPosition = document.body.style.position;
+      const prevWidth = document.body.style.width;
+      const prevTop = document.body.style.top;
+      
+      // Lock body scroll
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      document.body.style.top = `-${window.scrollY}px`;
+      document.body.classList.add('mobile-menu-open');
+      
+      // Cleanup function
+      return () => {
+        const scrollY = document.body.style.top;
+        document.body.style.overflow = prevOverflow;
+        document.body.style.position = prevPosition;
+        document.body.style.width = prevWidth;
+        document.body.style.top = prevTop;
+        document.body.classList.remove('mobile-menu-open');
+        
+        // Restore scroll position
+        if (scrollY) {
+          window.scrollTo(0, parseInt(scrollY || '0') * -1);
+        }
+      };
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.top = '';
+      document.body.classList.remove('mobile-menu-open');
+    };
+  }, [mobileMenuOpen]);
+
   // Function to get header gradient based on current route
   const getHeaderGradient = () => {
     const path = location.pathname;
@@ -161,6 +203,7 @@ export default function Header() {
           <div 
             className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-backdrop-blur-in"
             onClick={() => setMobileMenuOpen(false)}
+            style={{ pointerEvents: 'auto' }}
           />
           {/* Menu content */}
           <div className="relative w-4/5 max-w-sm h-full mobile-menu-content animate-slide-in-right overflow-hidden">
