@@ -138,11 +138,13 @@ export default function Header() {
       {/* Hamburger menu for mobile (right side) */}
       <div className="flex items-center sm:hidden">
         <button
-          className="text-white text-2xl p-2 focus:outline-none"
+          className="text-white text-2xl p-2 focus:outline-none transition-all duration-300 hover:scale-110 hover:text-yellow-300 rounded-lg hover:bg-white/10"
           onClick={() => setMobileMenuOpen((prev) => !prev)}
           aria-label="Open navigation menu"
         >
-          {mobileMenuOpen ? <FaTimes /> : <FaBars />}
+          <div className={`transition-transform duration-300 ${mobileMenuOpen ? 'animate-hamburger-to-x' : 'animate-x-to-hamburger'}`}>
+            {mobileMenuOpen ? <FaTimes /> : <FaBars />}
+          </div>
         </button>
       </div>
       {/* Desktop nav links */}
@@ -154,28 +156,43 @@ export default function Header() {
       </div>
       {/* Mobile nav menu */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex flex-col items-end sm:hidden">
-          <div className="w-3/4 max-w-xs bg-white h-full shadow-lg p-6 flex flex-col gap-4 animate-slide-in-right">
-            <button
-              className="self-end text-2xl text-gray-700 mb-2"
-              onClick={() => setMobileMenuOpen(false)}
-              aria-label="Close navigation menu"
-            >
-              <FaTimes />
-            </button>
-            <form onSubmit={handleSubmit} className="flex items-center border rounded-lg overflow-hidden bg-white mb-4 focus-within:ring-2 focus-within:ring-yellow-300 transition-all w-full">
-              <input
-                type="text"
-                placeholder="Search..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="px-2 py-1 outline-none w-full text-black focus:bg-blue-50 transition-colors text-sm"
-              />
-              <button className={`${getSearchButtonColor()} text-white p-2 hover:bg-yellow-400 hover:text-blue-700 transition-colors`} type="submit">
-                <FaSearch />
+        <div className="fixed inset-0 z-50 flex flex-col items-end sm:hidden">
+          {/* Backdrop with blur effect */}
+          <div 
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-backdrop-blur-in"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+          {/* Menu content */}
+          <div className="relative w-4/5 max-w-sm h-full mobile-menu-content animate-slide-in-right">
+            <div className="flex flex-col h-full p-6">
+              {/* Close button */}
+              <button
+                className="self-end text-2xl text-gray-700 mb-6 p-2 hover:bg-gray-100 rounded-full transition-all duration-200 hover:scale-110"
+                onClick={() => setMobileMenuOpen(false)}
+                aria-label="Close navigation menu"
+              >
+                <FaTimes />
               </button>
-            </form>
-            <UserNavLinks mobile onNavigate={() => setMobileMenuOpen(false)} />
+              
+              {/* Search form */}
+              <form onSubmit={handleSubmit} className="flex items-center border-2 border-gray-200 rounded-xl overflow-hidden bg-white mb-6 focus-within:ring-2 focus-within:ring-blue-300 focus-within:border-blue-300 transition-all duration-300 shadow-sm hover:shadow-md">
+                <input
+                  type="text"
+                  placeholder="Search properties..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="px-4 py-3 outline-none w-full text-gray-800 focus:bg-blue-50 transition-colors text-sm"
+                />
+                <button className={`${getSearchButtonColor()} text-white p-3 hover:bg-yellow-400 hover:text-blue-700 transition-all duration-300`} type="submit">
+                  <FaSearch />
+                </button>
+              </form>
+              
+              {/* Navigation links */}
+              <div className="flex-1 overflow-y-auto">
+                <UserNavLinks mobile onNavigate={() => setMobileMenuOpen(false)} />
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -241,7 +258,7 @@ function UserNavLinks({ mobile = false, onNavigate }) {
   };
 
   return (
-    <ul className={`${mobile ? 'flex flex-col gap-4 text-gray-800 text-lg' : 'flex space-x-2 sm:space-x-4 items-center text-white text-base font-normal'}`}>
+    <ul className={`${mobile ? 'flex flex-col gap-2 text-gray-800' : 'flex space-x-2 sm:space-x-4 items-center text-white text-base font-normal'}`}>
       {/* Search icon/input first, white color */}
       {!mobile ? (
         <li className="flex items-center">
@@ -274,39 +291,75 @@ function UserNavLinks({ mobile = false, onNavigate }) {
           )}
         </li>
       ) : null}
+      
+      {/* Mobile menu items with staggered animations */}
       <Link to={location.pathname.startsWith('/user') ? '/user' : '/'} onClick={onNavigate}>
-        <li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all"><FaHome /> Home</li>
+        <li className={`mobile-menu-item ${mobile ? 'animate-menu-item-in p-4 rounded-xl hover:bg-blue-50 transition-all duration-300 flex items-center gap-3 text-lg font-medium' : 'hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all'}`}>
+          <FaHome className="text-xl text-blue-500" /> 
+          <span>Home</span>
+        </li>
       </Link>
+      
       <Link to="/about" onClick={onNavigate}>
-        <li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all"><FaInfoCircle /> About</li>
+        <li className={`mobile-menu-item ${mobile ? 'animate-menu-item-in-delay-1 p-4 rounded-xl hover:bg-blue-50 transition-all duration-300 flex items-center gap-3 text-lg font-medium' : 'hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all'}`}>
+          <FaInfoCircle className="text-xl text-green-500" /> 
+          <span>About</span>
+        </li>
       </Link>
+      
       <Link to="/search" onClick={onNavigate}>
-        <li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all"><FaCompass /> Explore</li>
+        <li className={`mobile-menu-item ${mobile ? 'animate-menu-item-in-delay-2 p-4 rounded-xl hover:bg-blue-50 transition-all duration-300 flex items-center gap-3 text-lg font-medium' : 'hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all'}`}>
+          <FaCompass className="text-xl text-purple-500" /> 
+          <span>Explore</span>
+        </li>
       </Link>
+      
       {currentUser && (
         <>
           <Link to="/user/create-listing" onClick={onNavigate}>
-            <li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all"><FaPlus /> Add Property</li>
+            <li className={`mobile-menu-item ${mobile ? 'animate-menu-item-in-delay-3 p-4 rounded-xl hover:bg-blue-50 transition-all duration-300 flex items-center gap-3 text-lg font-medium' : 'hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all'}`}>
+              <FaPlus className="text-xl text-orange-500" /> 
+              <span>Add Property</span>
+            </li>
           </Link>
+          
           <Link to="/user/my-listings" onClick={onNavigate}>
-            <li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all"><FaList /> My Listings</li>
+            <li className={`mobile-menu-item ${mobile ? 'animate-menu-item-in-delay-4 p-4 rounded-xl hover:bg-blue-50 transition-all duration-300 flex items-center gap-3 text-lg font-medium' : 'hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all'}`}>
+              <FaList className="text-xl text-indigo-500" /> 
+              <span>My Listings</span>
+            </li>
           </Link>
+          
           <Link to="/user/wishlist" onClick={onNavigate}>
-            <li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all"><FaHeart /> Wish List</li>
+            <li className={`mobile-menu-item ${mobile ? 'animate-menu-item-in-delay-5 p-4 rounded-xl hover:bg-blue-50 transition-all duration-300 flex items-center gap-3 text-lg font-medium' : 'hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all'}`}>
+              <FaHeart className="text-xl text-red-500" /> 
+              <span>Wish List</span>
+            </li>
           </Link>
+          
           <Link to="/user/my-appointments" onClick={onNavigate}>
-            <li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all"><FaCalendarAlt /> My Appointments</li>
+            <li className={`mobile-menu-item ${mobile ? 'animate-menu-item-in-delay-6 p-4 rounded-xl hover:bg-blue-50 transition-all duration-300 flex items-center gap-3 text-lg font-medium' : 'hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all'}`}>
+              <FaCalendarAlt className="text-xl text-teal-500" /> 
+              <span>My Appointments</span>
+            </li>
           </Link>
         </>
       )}
+      
       {currentUser ? (
         <>
-          <li className="flex items-center">
+          <li className={`mobile-menu-item ${mobile ? 'animate-menu-item-in-delay-1 p-4 rounded-xl hover:bg-blue-50 transition-all duration-300 flex items-center gap-3 text-lg font-medium' : 'flex items-center'}`}>
             <NotificationBell mobile={mobile} />
           </li>
-          <li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 cursor-pointer transition-all" onClick={() => { handleSignout(); if (onNavigate) onNavigate(); }}>
-            <FaSignOutAlt /> Sign Out
+          
+          <li 
+            className={`mobile-menu-item ${mobile ? 'animate-menu-item-in-delay-2 p-4 rounded-xl hover:bg-red-50 transition-all duration-300 flex items-center gap-3 text-lg font-medium cursor-pointer' : 'hover:text-yellow-300 hover:scale-110 flex items-center gap-1 cursor-pointer transition-all'}`} 
+            onClick={() => { handleSignout(); if (onNavigate) onNavigate(); }}
+          >
+            <FaSignOutAlt className={`text-xl ${mobile ? 'text-red-500' : ''}`} /> 
+            <span>Sign Out</span>
           </li>
+          
           {/* Profile avatar for desktop/tablet */}
           {!mobile && (
             <li>
@@ -331,10 +384,12 @@ function UserNavLinks({ mobile = false, onNavigate }) {
               </div>
             </li>
           )}
+          
+          {/* Profile for mobile */}
           {mobile && (
-            <li>
+            <li className="mobile-menu-item animate-menu-item-in-delay-3">
               <div
-                className="cursor-pointer transition-transform duration-300 hover:scale-110"
+                className="cursor-pointer transition-transform duration-300 hover:scale-110 p-4 rounded-xl hover:bg-blue-50 transition-all duration-300 flex items-center gap-3 text-lg font-medium"
                 onClick={() => { navigate("/user/profile"); if (onNavigate) onNavigate(); }}
                 title="Profile"
               >
@@ -344,13 +399,17 @@ function UserNavLinks({ mobile = false, onNavigate }) {
                   textSize="text-xs"
                   showBorder={true}
                 />
+                <span>Profile</span>
               </div>
             </li>
           )}
         </>
       ) : (
         <Link to="/sign-in" onClick={onNavigate}>
-          <li className="hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all"><FaUser /> Sign In</li>
+          <li className={`mobile-menu-item ${mobile ? 'animate-menu-item-in-delay-1 p-4 rounded-xl hover:bg-blue-50 transition-all duration-300 flex items-center gap-3 text-lg font-medium' : 'hover:text-yellow-300 hover:scale-110 flex items-center gap-1 transition-all'}`}>
+            <FaUser className="text-xl text-blue-500" /> 
+            <span>Sign In</span>
+          </li>
         </Link>
       )}
     </ul>

@@ -21,6 +21,39 @@
   .animate-slide-in-left {
     animation: slideInLeft 0.8s cubic-bezier(0.23, 1, 0.32, 1) both;
   }
+  .animate-slide-in-right {
+    animation: slideInRight 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+  }
+  .animate-slide-out-right {
+    animation: slideOutRight 0.3s cubic-bezier(0.55, 0.055, 0.675, 0.19) both;
+  }
+  .animate-backdrop-blur-in {
+    animation: backdropBlurIn 0.3s ease-out both;
+  }
+  .animate-backdrop-blur-out {
+    animation: backdropBlurOut 0.3s ease-in both;
+  }
+  .animate-menu-item-in {
+    animation: menuItemIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+  }
+  .animate-menu-item-in-delay-1 {
+    animation: menuItemIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.1s both;
+  }
+  .animate-menu-item-in-delay-2 {
+    animation: menuItemIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.2s both;
+  }
+  .animate-menu-item-in-delay-3 {
+    animation: menuItemIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.3s both;
+  }
+  .animate-menu-item-in-delay-4 {
+    animation: menuItemIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.4s both;
+  }
+  .animate-menu-item-in-delay-5 {
+    animation: menuItemIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.5s both;
+  }
+  .animate-menu-item-in-delay-6 {
+    animation: menuItemIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.6s both;
+  }
   .animate-float {
     animation: float 6s ease-in-out infinite;
   }
@@ -35,6 +68,12 @@
   }
   .animate-slide-down {
     animation: slideDown 0.5s ease-out both;
+  }
+  .animate-hamburger-to-x {
+    animation: hamburgerToX 0.3s ease-in-out both;
+  }
+  .animate-x-to-hamburger {
+    animation: xToHamburger 0.3s ease-in-out both;
   }
 }
 
@@ -53,6 +92,66 @@
 @keyframes slideInLeft {
   from { opacity: 0; transform: translateX(-40px); }
   to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideInRight {
+  from { 
+    opacity: 0; 
+    transform: translateX(100%); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateX(0); 
+  }
+}
+@keyframes slideOutRight {
+  from { 
+    opacity: 1; 
+    transform: translateX(0); 
+  }
+  to { 
+    opacity: 0; 
+    transform: translateX(100%); 
+  }
+}
+@keyframes backdropBlurIn {
+  from { 
+    backdrop-filter: blur(0px);
+    background-color: rgba(0, 0, 0, 0);
+  }
+  to { 
+    backdrop-filter: blur(8px);
+    background-color: rgba(0, 0, 0, 0.6);
+  }
+}
+@keyframes backdropBlurOut {
+  from { 
+    backdrop-filter: blur(8px);
+    background-color: rgba(0, 0, 0, 0.6);
+  }
+  to { 
+    backdrop-filter: blur(0px);
+    background-color: rgba(0, 0, 0, 0);
+  }
+}
+@keyframes menuItemIn {
+  from { 
+    opacity: 0; 
+    transform: translateX(20px) scale(0.95);
+  }
+  to { 
+    opacity: 1; 
+    transform: translateX(0) scale(1);
+  }
+}
+@keyframes hamburgerToX {
+  0% { transform: rotate(0deg); }
+  50% { transform: rotate(90deg); }
+  100% { transform: rotate(180deg); }
+}
+@keyframes xToHamburger {
+  0% { transform: rotate(180deg); }
+  50% { transform: rotate(90deg); }
+  100% { transform: rotate(0deg); }
 }
 @keyframes float {
   0%, 100% {
@@ -100,6 +199,40 @@
     opacity: 1; 
     transform: translateY(0) translateX(-50%); 
   }
+}
+
+/* Mobile menu specific styles */
+.mobile-menu-backdrop {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.mobile-menu-content {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.mobile-menu-item {
+  position: relative;
+  overflow: hidden;
+}
+
+.mobile-menu-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+  transition: left 0.5s;
+}
+
+.mobile-menu-item:hover::before {
+  left: 100%;
 }
 
 /* Custom scrollbar for notification popup */
