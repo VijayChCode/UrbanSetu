@@ -70,6 +70,16 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ["active", "suspended"],
     default: "active"
+  },
+  isEmailVerified: {
+    type: Boolean,
+    default: false
+  },
+  emailVerificationOTP: {
+    type: String
+  },
+  emailVerificationOTPExpiry: {
+    type: Date
   }
 }, { timestamps: true });
 

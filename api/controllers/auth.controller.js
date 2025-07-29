@@ -2,6 +2,7 @@ import User from "../models/user.model.js";
 import bcryptjs from "bcryptjs";
 import { errorHandler } from "../utils/error.js";
 import jwt from 'jsonwebtoken'
+import nodemailer from 'nodemailer';
 
 export const SignUp=async (req,res,next)=>{
     const {username,email,password,role,mobileNumber}=req.body;
@@ -30,16 +31,38 @@ export const SignUp=async (req,res,next)=>{
         // Set admin approval status based on role
         const adminApprovalStatus = role === "admin" ? "pending" : "approved";
         
+        // Generate OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
         const newUser=new User({
             username,
             email: emailLower,
             password:hashedPassword,
             mobileNumber,
             role,
-            adminApprovalStatus
+            adminApprovalStatus,
+            isEmailVerified: false,
+            emailVerificationOTP: otp,
+            emailVerificationOTPExpiry: otpExpiry
         })
         
         await newUser.save();
+        
+        // Send OTP email
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS
+            }
+        });
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: emailLower,
+            subject: 'Verify your email address',
+            text: `Your verification OTP is: ${otp}. It will expire in 10 minutes.`
+        };
+        await transporter.sendMail(mailOptions);
         
         if (role === "admin") {
             res.status(201).json({
@@ -48,8 +71,9 @@ export const SignUp=async (req,res,next)=>{
             });
         } else {
             res.status(201).json({
-                message: "User added successfully",
-                requiresApproval: false
+                message: "User added successfully. Please verify your email with the OTP sent.",
+                requiresApproval: role === "admin",
+                emailVerificationRequired: true
             });
         }
     }
@@ -317,3 +341,69 @@ export const resetPassword = async (req, res, next) => {
         next(error);
     }
 };
+
+export const verifyEmailOTP = async (req, res, next) => {
+    const { email, otp } = req.body;
+    try {
+        const user = await User.findOne({ email: email.toLowerCase() });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        if (user.isEmailVerified) {
+            return res.status(400).json({ message: 'Email already verified' });
+        }
+        if (!user.emailVerificationOTP || !user.emailVerificationOTPExpiry) {
+            return res.status(400).json({ message: 'No OTP found. Please request a new one.' });
+        }
+        if (user.emailVerificationOTP !== otp) {
+            return res.status(400).json({ message: 'Invalid OTP' });
+        }
+        if (user.emailVerificationOTPExpiry < new Date()) {
+            return res.status(400).json({ message: 'OTP expired. Please request a new one.' });
+        }
+        user.isEmailVerified = true;
+        user.emailVerificationOTP = undefined;
+        user.emailVerificationOTPExpiry = undefined;
+        await user.save();
+        res.status(200).json({ message: 'Email verified successfully' });
+    } catch (error) {
+        next(error);
+    }
+}
+
+export const resendEmailOTP = async (req, res, next) => {
+    const { email } = req.body;
+    try {
+        const user = await User.findOne({ email: email.toLowerCase() });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        if (user.isEmailVerified) {
+            return res.status(400).json({ message: 'Email already verified' });
+        }
+        // Generate new OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+        user.emailVerificationOTP = otp;
+        user.emailVerificationOTPExpiry = otpExpiry;
+        await user.save();
+        // Send OTP email
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS
+            }
+        });
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: email.toLowerCase(),
+            subject: 'Resend: Verify your email address',
+            text: `Your new verification OTP is: ${otp}. It will expire in 10 minutes.`
+        };
+        await transporter.sendMail(mailOptions);
+        res.status(200).json({ message: 'OTP resent successfully' });
+    } catch (error) {
+        next(error);
+    }
+}
