@@ -4,11 +4,12 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/navigation";
 import { Navigation } from "swiper/modules";
-import { FaBath, FaBed, FaChair, FaMapMarkerAlt, FaParking, FaShare, FaEdit, FaTrash, FaArrowLeft, FaHeart } from "react-icons/fa";
+import { FaBath, FaBed, FaChair, FaMapMarkerAlt, FaParking, FaShare, FaEdit, FaTrash, FaArrowLeft, FaHeart, FaExpand } from "react-icons/fa";
 import { maskAddress, shouldShowLocationLink, getLocationLinkText } from "../utils/addressMasking";
 import { toast } from 'react-toastify';
 import { useWishlist } from '../WishlistContext';
 import { useSelector } from 'react-redux';
+import ImagePreview from "../components/ImagePreview.jsx";
 
 export default function AdminListing() {
   const params = useParams();
@@ -16,9 +17,16 @@ export default function AdminListing() {
   const [listing, setListing] = useState(null);
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showImagePreview, setShowImagePreview] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   const formatINR = (amount) => {
     return `₹${Number(amount).toLocaleString("en-IN")}`;
+  };
+
+  const handleImageClick = (index) => {
+    setSelectedImageIndex(index);
+    setShowImagePreview(true);
   };
 
   const handleDelete = async () => {
@@ -130,27 +138,46 @@ export default function AdminListing() {
         </h3>
 
         {/* Swiper Section */}
-        <Swiper navigation modules={[Navigation]} className="rounded-lg overflow-hidden relative mb-6">
-          {listing.imageUrls && listing.imageUrls.length > 0 ? (
-            listing.imageUrls.map((url, index) => (
-              <SwiperSlide key={index}>
-                <img
-                  src={url}
-                  alt={`${listing.name} - Image ${index + 1}`}
-                  className="w-full h-40 sm:h-64 md:h-96 object-cover"
-                  onError={(e) => {
-                    e.target.src = "https://via.placeholder.com/800x600?text=Image+Not+Available";
-                    e.target.className = "w-full h-40 sm:h-64 md:h-96 object-cover opacity-50";
-                  }}
-                />
+        <div className="relative mb-6">
+          <Swiper navigation modules={[Navigation]} className="rounded-lg overflow-hidden relative">
+            {listing.imageUrls && listing.imageUrls.length > 0 ? (
+              listing.imageUrls.map((url, index) => (
+                <SwiperSlide key={index}>
+                  <div className="relative group cursor-pointer" onClick={() => handleImageClick(index)}>
+                    <img
+                      src={url}
+                      alt={`${listing.name} - Image ${index + 1}`}
+                      className="w-full h-40 sm:h-64 md:h-96 object-cover transition-transform duration-200 group-hover:scale-105"
+                      onError={(e) => {
+                        e.target.src = "https://via.placeholder.com/800x600?text=Image+Not+Available";
+                        e.target.className = "w-full h-40 sm:h-64 md:h-96 object-cover opacity-50";
+                      }}
+                    />
+                    {/* Expand Button Overlay */}
+                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 flex items-center justify-center">
+                      <div className="bg-white bg-opacity-90 rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <FaExpand className="text-gray-700" />
+                      </div>
+                    </div>
+                    {/* Click to expand text */}
+                    <div className="absolute bottom-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      Click to expand
+                    </div>
+                  </div>
+                </SwiperSlide>
+              ))
+            ) : (
+              <SwiperSlide>
+                <div className="w-full h-64 md:h-96 bg-gray-200 flex items-center justify-center">
+                  <div className="text-center text-gray-500">
+                    <div className="text-6xl mb-4">🏠</div>
+                    <p className="text-lg">No images available</p>
+                  </div>
+                </div>
               </SwiperSlide>
-            ))
-          ) : (
-            <SwiperSlide>
-              <div className="h-64 md:h-96 bg-cover bg-center" style={{ backgroundImage: `url(${listing.imageUrls[0]})` }}></div>
-            </SwiperSlide>
-          )}
-        </Swiper>
+            )}
+          </Swiper>
+        </div>
 
         {/* Share Button */}
         <div className="flex justify-end items-center space-x-4 mb-4 pr-2">
@@ -302,6 +329,16 @@ export default function AdminListing() {
           </div>
         </div>
       </div>
+      
+      {/* Image Preview Modal */}
+      {listing && listing.imageUrls && listing.imageUrls.length > 0 && (
+        <ImagePreview
+          isOpen={showImagePreview}
+          onClose={() => setShowImagePreview(false)}
+          images={listing.imageUrls}
+          initialIndex={selectedImageIndex}
+        />
+      )}
     </div>
   );
 } 
