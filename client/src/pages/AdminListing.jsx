@@ -25,6 +25,7 @@ export default function AdminListing() {
   };
 
   const handleImageClick = (index) => {
+    console.log('Image clicked:', index);
     setSelectedImageIndex(index);
     setShowImagePreview(true);
   };
@@ -139,11 +140,19 @@ export default function AdminListing() {
 
         {/* Swiper Section */}
         <div className="relative mb-6">
-          <Swiper navigation modules={[Navigation]} className="rounded-lg overflow-hidden relative">
+          <Swiper 
+            navigation 
+            modules={[Navigation]} 
+            className="rounded-lg overflow-hidden relative"
+            onSlideChange={(swiper) => {
+              // Update selected image index when swiper changes
+              setSelectedImageIndex(swiper.activeIndex);
+            }}
+          >
             {listing.imageUrls && listing.imageUrls.length > 0 ? (
               listing.imageUrls.map((url, index) => (
                 <SwiperSlide key={index}>
-                  <div className="relative group cursor-pointer" onClick={() => handleImageClick(index)}>
+                  <div className="relative group">
                     <img
                       src={url}
                       alt={`${listing.name} - Image ${index + 1}`}
@@ -163,6 +172,21 @@ export default function AdminListing() {
                     <div className="absolute bottom-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                       Click to expand
                     </div>
+                    {/* Invisible clickable overlay */}
+                    <button
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleImageClick(index);
+                      }}
+                      onTouchEnd={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleImageClick(index);
+                      }}
+                      aria-label={`Expand image ${index + 1}`}
+                    />
                   </div>
                 </SwiperSlide>
               ))
