@@ -518,7 +518,7 @@ export default function NotificationBell({ mobile = false }) {
                       </div>
 
                       {/* Notifications List */}
-                      <div className="notification-scroll-area">
+                      <div className="notification-scroll-area-mobile">
                         {notifications.length === 0 ? (
                           <div className="p-6 text-center text-gray-500">
                             <FaBell className="w-8 h-8 mx-auto mb-2 text-gray-300" />
@@ -618,9 +618,9 @@ export default function NotificationBell({ mobile = false }) {
                         )}
                       </div>
 
-                      {/* Footer */}
+                      {/* Footer - Always visible when there are notifications */}
                       {notifications.length > 0 && (
-                        <div className="p-3 border-t border-gray-100 bg-gray-50">
+                        <div className="sticky bottom-0 p-3 border-t border-gray-100 bg-gray-50 shadow-lg">
                           <button
                             onClick={() => {
                               // Clear all notifications
@@ -879,7 +879,7 @@ export default function NotificationBell({ mobile = false }) {
               </div>
 
               {/* Notifications List */}
-              <div className="notification-scroll-area">
+              <div className="notification-scroll-area-desktop">
                 {notifications.length === 0 ? (
                   <div className="p-6 text-center text-gray-500">
                     <FaBell className="w-8 h-8 mx-auto mb-2 text-gray-300" />
@@ -978,9 +978,9 @@ export default function NotificationBell({ mobile = false }) {
                 )}
               </div>
 
-              {/* Footer */}
+              {/* Footer - Always visible when there are notifications */}
               {notifications.length > 0 && (
-                <div className="p-3 border-t border-gray-100 bg-gray-50">
+                <div className="sticky bottom-0 p-3 border-t border-gray-100 bg-gray-50 shadow-lg">
                   <button
                     onClick={() => {
                       // Clear all notifications
