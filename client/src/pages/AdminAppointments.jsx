@@ -1277,7 +1277,7 @@ function AdminAppointmentRow({
         // Replace the temp message with the real one
         setLocalComments(prev => prev.map(msg => 
           msg._id === tempId 
-            ? { ...newCommentFromServer, status: 'sent' } // Start with 'sent' status
+            ? { ...newCommentFromServer } // Use the status from server (could be 'sent' or 'delivered')
             : msg
         ));
         

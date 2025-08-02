@@ -1065,7 +1065,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         // Replace the temp message with the real one
         setComments(prev => prev.map(msg => 
           msg._id === tempId 
-            ? { ...newComment, status: 'sent' } // Start with 'sent' status
+            ? { ...newComment } // Use the status from server (could be 'sent' or 'delivered')
             : msg
         ));
         
