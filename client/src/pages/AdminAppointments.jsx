@@ -1724,20 +1724,20 @@ function AdminAppointmentRow({
                         ref={el => messageRefs.current[c._id] = el}
                         className={`rounded-2xl px-4 py-2 text-sm shadow-lg max-w-[80%] break-words relative ${isMe ? 'bg-gradient-to-r from-blue-400 to-blue-600 text-white' : 'bg-white text-gray-800 border border-gray-200'}`}
                       >
-                        {/* Reply preview above message if this is a reply */}
-                        {c.replyTo && (
-                          <div className="border-l-4 border-blue-300 pl-2 mb-1 text-xs text-gray-500 bg-blue-50 rounded w-full max-w-full break-words cursor-pointer" onClick={() => {
-                              if (messageRefs.current[c.replyTo]) {
-                                messageRefs.current[c.replyTo].scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                messageRefs.current[c.replyTo].classList.add('ring-2', 'ring-yellow-400');
-                                setTimeout(() => {
-                                  messageRefs.current[c.replyTo].classList.remove('ring-2', 'ring-yellow-400');
-                                }, 1000);
-                              }
-                            }} role="button" tabIndex={0} aria-label="Go to replied message">
-                            <span className="text-xs text-gray-600 truncate">{localComments.find(msg => msg._id === c.replyTo)?.message || 'Original message'}</span>
-                          </div>
-                        )}
+                                                    {/* Reply preview above message if this is a reply */}
+                            {c.replyTo && (
+                              <div className="border-l-4 border-blue-300 pl-2 mb-1 text-xs text-gray-500 bg-blue-50 rounded w-full max-w-full break-words cursor-pointer" onClick={() => {
+                                  if (messageRefs.current[c.replyTo]) {
+                                    messageRefs.current[c.replyTo].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    messageRefs.current[c.replyTo].classList.add('ring-2', 'ring-yellow-400');
+                                    setTimeout(() => {
+                                      messageRefs.current[c.replyTo].classList.remove('ring-2', 'ring-yellow-400');
+                                    }, 1000);
+                                  }
+                                }} role="button" tabIndex={0} aria-label="Go to replied message">
+                                <span className="text-xs text-gray-600 truncate max-w-[200px]">{localComments.find(msg => msg._id === c.replyTo)?.message?.substring(0, 50) || 'Original message'}{localComments.find(msg => msg._id === c.replyTo)?.message?.length > 50 ? '...' : ''}</span>
+                              </div>
+                            )}
                         <div className="font-semibold mb-1 flex items-center gap-2 justify-start text-left">
                           <span className="truncate max-w-[60%] min-w-[80px] inline-block align-middle overflow-hidden text-ellipsis text-left">
                             {isMe ? "You" : (() => {
@@ -1920,16 +1920,16 @@ function AdminAppointmentRow({
                 
                 <div ref={chatEndRef} />
               </div>
-              {/* Reply indicator */}
-              {replyTo && (
-                <div className="px-4 mb-2">
-                  <div className="flex items-center bg-blue-50 border-l-4 border-blue-400 px-2 py-1 rounded">
-                    <span className="text-xs text-gray-700 font-semibold mr-2">Replying to:</span>
-                    <span className="text-xs text-gray-600 truncate">{replyTo.message}</span>
-                    <button className="ml-auto text-gray-400 hover:text-gray-700" onClick={() => setReplyTo(null)} title="Cancel reply">&times;</button>
+                              {/* Reply indicator */}
+                {replyTo && (
+                  <div className="px-4 mb-2">
+                    <div className="flex items-center bg-blue-50 border-l-4 border-blue-400 px-2 py-1 rounded">
+                      <span className="text-xs text-gray-700 font-semibold mr-2">Replying to:</span>
+                      <span className="text-xs text-gray-600 truncate max-w-[300px]">{replyTo.message?.substring(0, 80)}{replyTo.message?.length > 80 ? '...' : ''}</span>
+                      <button className="ml-auto text-gray-400 hover:text-gray-700" onClick={() => setReplyTo(null)} title="Cancel reply">&times;</button>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
               
               {/* Edit indicator */}
               {editingComment && (

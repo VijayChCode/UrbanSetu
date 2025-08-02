@@ -46,13 +46,16 @@ export default function LocationSelector({ value, onChange, mode = "form" }) {
   const selectedCities = value.cities || [];
   const handleCitySelect = (cityName) => {
     if (selectedCities.includes(cityName)) {
-      onChange({ ...value, cities: selectedCities.filter((c) => c !== cityName) });
+      const newCities = selectedCities.filter((c) => c !== cityName);
+      onChange({ ...value, cities: newCities, city: newCities.length > 0 ? newCities[0] : "" });
     } else {
-      onChange({ ...value, cities: [...selectedCities, cityName] });
+      const newCities = [...selectedCities, cityName];
+      onChange({ ...value, cities: newCities, city: cityName });
     }
   };
   const handleRemoveCity = (cityName) => {
-    onChange({ ...value, cities: selectedCities.filter((c) => c !== cityName) });
+    const newCities = selectedCities.filter((c) => c !== cityName);
+    onChange({ ...value, cities: newCities, city: newCities.length > 0 ? newCities[0] : "" });
   };
 
   // Keyboard navigation for city dropdown (search mode only)
