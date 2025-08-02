@@ -475,25 +475,39 @@ export default function MyAppointments() {
     }
   };
 
-  // Function to copy message to clipboard
-  const copyMessageToClipboard = async (message) => {
-    if (!message || typeof message !== 'string') {
+  // Function to copy message to clipboard using message ID
+  const copyMessageToClipboard = async (messageId, messageText) => {
+    console.log('Copy function called with ID:', messageId, 'Text:', messageText);
+    
+    // First try to get the message from comments array by ID
+    let textToCopy = messageText;
+    if (!textToCopy && messageId) {
+      const comment = comments.find(c => c._id === messageId);
+      textToCopy = comment?.message;
+      console.log('Found comment by ID:', comment);
+    }
+    
+    if (!textToCopy || typeof textToCopy !== 'string') {
+      console.error('No valid message to copy');
       toast.error('No message to copy');
       return;
     }
     
+    console.log('Attempting to copy text:', textToCopy);
+    
     try {
-      await navigator.clipboard.writeText(message);
+      await navigator.clipboard.writeText(textToCopy);
       toast.success('Copied', {
         autoClose: 2000,
         position: 'bottom-right'
       });
+      console.log('Copy successful via clipboard API');
     } catch (err) {
       console.error('Failed to copy with clipboard API:', err);
       // Fallback for older browsers
       try {
         const textArea = document.createElement('textarea');
-        textArea.value = message;
+        textArea.value = textToCopy;
         textArea.style.position = 'fixed';
         textArea.style.left = '-999999px';
         textArea.style.top = '-999999px';
@@ -508,7 +522,9 @@ export default function MyAppointments() {
             autoClose: 2000,
             position: 'bottom-right'
           });
+          console.log('Copy successful via fallback method');
         } else {
+          console.error('Fallback copy failed');
           toast.error('Failed to copy message');
         }
       } catch (fallbackErr) {
@@ -2181,8 +2197,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                     onClick={(e) => {
                                       e.preventDefault();
                                       e.stopPropagation();
-                                      console.log('Copy button clicked, message:', c.message);
-                                      copyMessageToClipboard(c.message);
+                                      console.log('Copy button clicked for message ID:', c._id, 'message:', c.message);
+                                      copyMessageToClipboard(c._id, c.message);
                                     }}
                                     title="Copy message"
                                   >
