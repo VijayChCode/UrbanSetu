@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { FaTrash, FaSearch, FaPen, FaUser, FaEnvelope, FaCalendar, FaPhone, FaUserShield, FaArchive, FaUndo, FaCommentDots, FaCheck, FaCheckDouble, FaBan, FaTimes, FaLightbulb } from "react-icons/fa";
+import { FaTrash, FaSearch, FaPen, FaUser, FaEnvelope, FaCalendar, FaPhone, FaUserShield, FaArchive, FaUndo, FaCommentDots, FaCheck, FaCheckDouble, FaBan, FaTimes, FaLightbulb, FaCopy } from "react-icons/fa";
 import UserAvatar from '../components/UserAvatar';
 import { useSelector } from "react-redux";
 import { useState as useLocalState } from "react";
@@ -439,6 +439,29 @@ export default function AdminAppointments() {
       // Optionally handle error
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Function to copy message to clipboard
+  const copyMessageToClipboard = async (message) => {
+    try {
+      await navigator.clipboard.writeText(message);
+      toast.success('Message copied to clipboard!', {
+        autoClose: 2000,
+        position: 'bottom-right'
+      });
+    } catch (err) {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = message;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      toast.success('Message copied to clipboard!', {
+        autoClose: 2000,
+        position: 'bottom-right'
+      });
     }
   };
 
@@ -1805,13 +1828,22 @@ function AdminAppointmentRow({
                         </div>
                         <div className="flex items-center gap-2 justify-end mt-1">
                           {!c.deleted && (
-                            <button
-                              className={`${c.senderEmail === currentUser.email ? 'text-yellow-500 hover:text-yellow-700' : 'text-blue-600 hover:text-blue-800'}`}
-                              onClick={() => { setReplyTo(c); inputRef.current?.focus(); }}
-                              title="Reply"
-                            >
-                              <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c4.28 0 6.92 1.45 8.84 4.55.23.36.76.09.65-.32C18.31 13.13 15.36 10.36 10 9z"/></svg>
-                            </button>
+                            <>
+                              <button
+                                className={`${c.senderEmail === currentUser.email ? 'text-yellow-500 hover:text-yellow-700' : 'text-blue-600 hover:text-blue-800'}`}
+                                onClick={() => { setReplyTo(c); inputRef.current?.focus(); }}
+                                title="Reply"
+                              >
+                                <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c4.28 0 6.92 1.45 8.84 4.55.23.36.76.09.65-.32C18.31 13.13 15.36 10.36 10 9z"/></svg>
+                              </button>
+                              <button
+                                className={`${c.senderEmail === currentUser.email ? 'text-blue-400 hover:text-blue-300' : 'text-gray-600 hover:text-gray-800'}`}
+                                onClick={() => copyMessageToClipboard(c.message)}
+                                title="Copy message"
+                              >
+                                <FaCopy size={14} />
+                              </button>
+                            </>
                           )}
                           {(c.senderEmail === currentUser.email) && !c.deleted && (
                             <>
