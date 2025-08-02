@@ -118,19 +118,14 @@ export default function NotificationBell({ mobile = false }) {
     
     setFetchingUsers(true);
     try {
-      console.log('Fetching users for admin notification...');
       const res = await fetch(`${API_BASE_URL}/api/notifications/admin/users`, {
         credentials: 'include',
       });
       const data = await res.json();
       
-      console.log('Users fetch response:', res.status, data);
-      
       if (res.ok) {
         setUsers(data);
-        console.log('Users loaded:', data.length, 'users');
       } else {
-        console.error('Failed to fetch users:', data);
         toast.error('Failed to fetch users: ' + (data.message || 'Unknown error'));
       }
     } catch (error) {
@@ -383,10 +378,7 @@ export default function NotificationBell({ mobile = false }) {
 
   // Fetch users when send tab is active (admin only)
   useEffect(() => {
-    console.log('useEffect triggered:', { isOpen, activeTab, currentUser: !!currentUser, isAdmin: isAdmin() });
-    
     if (isOpen && activeTab === 'send' && currentUser && isAdmin()) {
-      console.log('Fetching users for send tab...');
       fetchUsers();
     }
   }, [isOpen, activeTab, currentUser]);
@@ -394,10 +386,7 @@ export default function NotificationBell({ mobile = false }) {
   // Don't render if no user
   if (!currentUser) return null;
 
-  // Debug: Check admin role
-  console.log('Current user:', currentUser);
-  console.log('Current user role:', currentUser.role);
-  console.log('Is admin:', currentUser.role === 'admin' || currentUser.role === 'rootadmin' || currentUser.isDefaultAdmin);
+
 
   // Helper function to check if user is admin
   const isAdmin = () => {
@@ -409,7 +398,6 @@ export default function NotificationBell({ mobile = false }) {
 
   useEffect(() => {
     const handleNewNotification = (notification) => {
-      console.log('Received notification via socket:', notification);
       if (!currentUser || notification.userId !== currentUser._id) return;
       setNotifications((prev) => [notification, ...prev]);
       setUnreadCount((count) => count + 1);
@@ -418,8 +406,25 @@ export default function NotificationBell({ mobile = false }) {
     return () => socket.off('notificationCreated', handleNewNotification);
   }, [currentUser]);
 
+  // Handle click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (bellRef.current && !bellRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
+
   return (
-    <div className="relative">
+    <div className="relative" style={{ overflow: 'visible' }}>
       {/* Notification Bell Button */}
       <button
         ref={bellRef}
@@ -435,6 +440,7 @@ export default function NotificationBell({ mobile = false }) {
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
+
       </button>
 
       {/* Notification Dropdown or Modal */}
@@ -514,11 +520,41 @@ export default function NotificationBell({ mobile = false }) {
                             <FaRedo className="w-4 h-4" />
                             Refresh
                           </button>
+                          {/* Test notification button - remove in production */}
+                          <button
+                            onClick={async () => {
+                              try {
+                                const res = await fetch(`${API_BASE_URL}/api/notifications/create`, {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  credentials: 'include',
+                                  body: JSON.stringify({
+                                    userId: currentUser._id,
+                                    title: 'Test Notification',
+                                    message: 'This is a test notification',
+                                    type: 'admin_message'
+                                  })
+                                });
+                                if (res.ok) {
+                                  toast.success('Test notification created');
+                                  fetchNotifications();
+                                  fetchUnreadCount();
+                                }
+                              } catch (error) {
+                                console.error('Error creating test notification:', error);
+                              }
+                            }}
+                            className="ml-2 text-sm text-green-500 hover:text-green-600 flex items-center gap-1"
+                            title="Create test notification"
+                          >
+                            Test
+                          </button>
                         </div>
                       </div>
 
                       {/* Notifications List */}
                       <div className="notification-scroll-area-mobile">
+
                         {notifications.length === 0 ? (
                           <div className="p-6 text-center text-gray-500">
                             <FaBell className="w-8 h-8 mx-auto mb-2 text-gray-300" />
@@ -811,7 +847,7 @@ export default function NotificationBell({ mobile = false }) {
           )
         ) : (
           // Desktop: Dropdown
-          <div className="absolute left-1/2 -translate-x-1/2 right-auto mt-2 w-full max-w-xs sm:w-96 sm:left-auto sm:right-0 sm:-translate-x-0 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-96 overflow-hidden notification-popup">
+          <div className="absolute right-0 mt-2 w-full max-w-xs sm:w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-[9999] max-h-96 overflow-hidden notification-popup">
           {/* Header with Tabs */}
           <div className="border-b border-gray-100">
             <div className="flex items-center justify-between p-4">
@@ -875,11 +911,41 @@ export default function NotificationBell({ mobile = false }) {
                     <FaRedo className="w-4 h-4" />
                     Refresh
                   </button>
+                  {/* Test notification button - remove in production */}
+                  <button
+                    onClick={async () => {
+                      try {
+                        const res = await fetch(`${API_BASE_URL}/api/notifications/create`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          credentials: 'include',
+                          body: JSON.stringify({
+                            userId: currentUser._id,
+                            title: 'Test Notification',
+                            message: 'This is a test notification',
+                            type: 'admin_message'
+                          })
+                        });
+                        if (res.ok) {
+                          toast.success('Test notification created');
+                          fetchNotifications();
+                          fetchUnreadCount();
+                        }
+                      } catch (error) {
+                        console.error('Error creating test notification:', error);
+                      }
+                    }}
+                    className="ml-2 text-sm text-green-500 hover:text-green-600 flex items-center gap-1"
+                    title="Create test notification"
+                  >
+                    Test
+                  </button>
                 </div>
               </div>
 
               {/* Notifications List */}
               <div className="notification-scroll-area-desktop">
+
                 {notifications.length === 0 ? (
                   <div className="p-6 text-center text-gray-500">
                     <FaBell className="w-8 h-8 mx-auto mb-2 text-gray-300" />
