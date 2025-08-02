@@ -693,6 +693,7 @@ export default function MyAppointments() {
                       handleUnarchiveAppointment={handleUnarchiveAppointment}
                       isArchived={true}
                       onCancelRefresh={handleCancelRefresh}
+                      copyMessageToClipboard={copyMessageToClipboard}
                     />
                   ))}
                 </tbody>
@@ -733,6 +734,7 @@ export default function MyAppointments() {
                       handleUnarchiveAppointment={handleUnarchiveAppointment}
                       isArchived={false}
                       onCancelRefresh={handleCancelRefresh}
+                      copyMessageToClipboard={copyMessageToClipboard}
                   />
                 ))}
               </tbody>
@@ -865,7 +867,7 @@ function getDateLabel(date) {
   return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDelete, actionLoading, onShowOtherParty, onOpenReinitiate, handleArchiveAppointment, handleUnarchiveAppointment, isArchived, onCancelRefresh }) {
+function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDelete, actionLoading, onShowOtherParty, onOpenReinitiate, handleArchiveAppointment, handleUnarchiveAppointment, isArchived, onCancelRefresh, copyMessageToClipboard }) {
   const [replyTo, setReplyTo] = useState(null);
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState(appt.comments || []);

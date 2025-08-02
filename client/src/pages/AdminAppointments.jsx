@@ -657,6 +657,7 @@ export default function AdminAppointments() {
                         handleUnarchiveAppointment={handleUnarchiveAppointment}
                         onUserClick={handleUserClick}
                         isArchived={true}
+                        copyMessageToClipboard={copyMessageToClipboard}
                         // Modal states
                         showCancelModal={showCancelModal}
                         setShowCancelModal={setShowCancelModal}
@@ -712,6 +713,7 @@ export default function AdminAppointments() {
                       handleUnarchiveAppointment={handleUnarchiveAppointment}
                       onUserClick={handleUserClick}
                       isArchived={false}
+                      copyMessageToClipboard={copyMessageToClipboard}
                       // Modal states
                       showCancelModal={showCancelModal}
                       setShowCancelModal={setShowCancelModal}
@@ -877,6 +879,7 @@ function AdminAppointmentRow({
   handleUnarchiveAppointment, 
   onUserClick, 
   isArchived,
+  copyMessageToClipboard,
   // Modal states from parent
   showCancelModal,
   setShowCancelModal,
