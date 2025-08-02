@@ -1371,7 +1371,7 @@ export default function Profile() {
         {/* Quick Actions Section */}
         <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">Quick Actions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
             <button
               onClick={handleShowListings}
               className="bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600 transition-colors flex flex-col items-center"
@@ -1403,20 +1403,20 @@ export default function Profile() {
               <FaStar className="w-5 h-5 mb-1" />
               <span className="font-medium text-sm">{(currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? 'Reviews' : 'My Reviews'}</span>
             </Link>
-            
-            <button
-              onClick={() => navigate((currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? '/admin/change-password' : '/user/change-password')}
-              className="bg-purple-500 text-white p-3 rounded-lg hover:bg-purple-600 transition-colors flex flex-col items-center cursor-pointer"
-            >
-              <FaKey className="w-5 h-5 mb-1" />
-              <span className="font-medium text-sm">Change Password</span>
-            </button>
           </div>
         </div>
 
         {/* Account Management Section */}
         <div className="bg-white rounded-xl shadow-lg p-8">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">Account Management</h2>
+          
+          <button
+            onClick={() => navigate((currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? '/admin/change-password' : '/user/change-password')}
+            className="bg-purple-500 text-white px-6 py-3 rounded-lg mb-6 hover:bg-purple-600 transition-colors flex items-center justify-center font-semibold"
+          >
+            <FaKey className="w-4 h-4 mr-2" />
+            Change Password
+          </button>
           
           {(currentUser.role === 'admin' || currentUser.role === 'rootadmin') && (
             <button
