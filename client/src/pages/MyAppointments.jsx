@@ -210,7 +210,12 @@ export default function MyAppointments() {
           prev.map((appt) => (appt._id === id ? { ...appt, status } : appt))
         );
         const statusText = status === "accepted" ? "accepted" : "rejected";
-        toast.success(`Appointment ${statusText} successfully! ${status === "accepted" ? "Contact information is now visible to both parties." : ""}`);
+        toast.success(`Appointment ${statusText} successfully! ${status === "accepted" ? "Contact information is now visible to both parties." : ""}`, {
+          autoClose: 5000,
+          closeOnClick: true,
+          pauseOnHover: false,
+          draggable: false
+        });
         navigate("/user/my-appointments");
       } else {
         toast.error(data.message || "Failed to update appointment status.");
@@ -250,7 +255,12 @@ export default function MyAppointments() {
         setAppointments((prev) =>
           prev.map((appt) => (appt._id === appointmentToHandle ? { ...appt, status: "deletedByAdmin", adminComment: deleteReason } : appt))
         );
-        toast.success("Appointment deleted successfully. Both buyer and seller have been notified.");
+        toast.success("Appointment deleted successfully. Both buyer and seller have been notified.", {
+          autoClose: 5000,
+          closeOnClick: true,
+          pauseOnHover: false,
+          draggable: false
+        });
         navigate("/user/my-appointments");
       } else {
         toast.error(data.message || "Failed to delete appointment.");
@@ -282,7 +292,12 @@ export default function MyAppointments() {
           setAppointments((prev) => prev.filter((appt) => appt._id !== appointmentToHandle));
           setArchivedAppointments((prev) => [{ ...archivedAppt, archivedAt: new Date() }, ...prev]);
         }
-        toast.success("Appointment archived successfully.");
+        toast.success("Appointment archived successfully.", {
+          autoClose: 5000,
+          closeOnClick: true,
+          pauseOnHover: false,
+          draggable: false
+        });
       } else {
         toast.error(data.message || "Failed to archive appointment.");
       }
@@ -312,7 +327,12 @@ export default function MyAppointments() {
           setArchivedAppointments((prev) => prev.filter((appt) => appt._id !== appointmentToHandle));
           setAppointments((prev) => [{ ...unarchivedAppt, archivedAt: undefined }, ...prev]);
         }
-        toast.success("Appointment unarchived successfully.");
+        toast.success("Appointment unarchived successfully.", {
+          autoClose: 5000,
+          closeOnClick: true,
+          pauseOnHover: false,
+          draggable: false
+        });
       } else {
         toast.error(data.message || "Failed to unarchive appointment.");
       }
@@ -409,7 +429,12 @@ export default function MyAppointments() {
       });
       const data = await res.json();
       if (res.ok) {
-        toast.success('Appointment reinitiated successfully!');
+        toast.success('Appointment reinitiated successfully!', {
+          autoClose: 5000,
+          closeOnClick: true,
+          pauseOnHover: false,
+          draggable: false
+        });
         setShowReinitiateModal(false);
         setReinitiateData(null);
         navigate("/user/my-appointments");
@@ -471,15 +496,7 @@ export default function MyAppointments() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-100 py-10 px-2 md:px-8">
-      <ToastContainer
-        position="top-center"
-        autoClose={2000}
-        closeOnClick
-        containerClassName="!z-[100]"
-        toastOptions={{
-          style: { fontSize: '0.9rem', borderRadius: '8px', boxShadow: '0 2px 8px #0001' }
-        }}
-      />
+
       <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-6">
         <div className="flex justify-between items-center mb-6">
           <div>

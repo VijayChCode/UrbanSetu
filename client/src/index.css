@@ -344,7 +344,7 @@ body.mobile-menu-open * {
     padding: 0 !important;
     display: flex !important;
     justify-content: center !important;
-    pointer-events: none;
+    pointer-events: auto !important;
   }
   .Toastify__toast {
     max-width: 90vw !important;
@@ -353,10 +353,24 @@ body.mobile-menu-open * {
     word-break: break-word;
     margin-left: 0 !important;
     margin-right: 0 !important;
-    pointer-events: auto;
+    pointer-events: auto !important;
     box-sizing: border-box;
   }
 }
+
+/* Ensure close button is always clickable */
 .Toastify__close-button {
   pointer-events: auto !important;
+  cursor: pointer !important;
+  opacity: 1 !important;
+}
+
+/* Ensure toast body is clickable */
+.Toastify__toast-body {
+  pointer-events: auto !important;
+}
+
+/* Ensure progress bar works properly */
+.Toastify__progress-bar {
+  pointer-events: none !important;
 }
