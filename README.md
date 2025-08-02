@@ -26,7 +26,7 @@ A full-stack real estate management application built with MERN stack (MongoDB, 
 
 The system includes a default admin account with exclusive privileges:
 
-- **Email**: email@gmail.com
+- **Email**: rootadmin@gmail.com
 - **Password**: ********
 - **Status**: Pre-approved (no approval required)
 - **Privileges**: Only this admin can approve new admin requests
@@ -46,7 +46,7 @@ This will create the default admin account with pre-approved status and exclusiv
 The application includes a secure admin approval system with exclusive default admin privileges:
 
 ### How it works:
-1. **Default Admin**: The default admin (adminvijay@gmail.com) can sign in immediately and has exclusive approval privileges
+1. **Default Admin**: The default admin (rootadmin@gmail.com) can sign in immediately and has exclusive approval privileges
 2. **New Admin Registration**: When someone else signs up as an admin, their account is created with `adminApprovalStatus: "pending"`
 3. **Approval Required**: Pending admins cannot sign in until approved by the default admin
 4. **Exclusive Approval**: Only the default admin can view and approve/reject new admin requests
@@ -60,7 +60,7 @@ The application includes a secure admin approval system with exclusive default a
 5. User can now sign in (if approved) or remains blocked (if rejected)
 
 ### Admin Privileges:
-- **Default Admin (adminvijay@gmail.com)**:
+- **Default Admin (rootadmin@gmail.com)**:
   - Can approve/reject new admin requests
   - Has access to all admin functionality
   - Can manage properties, appointments, etc.
