@@ -20,6 +20,7 @@ import jwt from 'jsonwebtoken';
 
 import path from 'path'
 import User from './models/user.model.js';
+import booking from './models/booking.model.js';
 import bcryptjs from 'bcryptjs';
 
 dotenv.config();
@@ -133,6 +134,36 @@ const io = new SocketIOServer(server, {
 
 app.set('io', io);
 
+// Helper function to check and mark messages as delivered when a user comes online
+async function checkAndMarkMessagesAsDelivered(userId, io) {
+  try {
+    // Find all bookings where this user is buyer or seller
+    const bookings = await booking.find({
+      $or: [ { buyerId: userId }, { sellerId: userId } ]
+    });
+    
+    for (const appt of bookings) {
+      let updated = false;
+      for (const comment of appt.comments) {
+        // Only mark as delivered if:
+        // 1. Comment is not from this user 
+        // 2. Comment status is "sent" (meaning it was sent while recipient was offline)
+        // 3. Comment is not already delivered or read
+        if (comment.sender.toString() !== userId && 
+            comment.status === 'sent' && 
+            !comment.readBy?.includes(userId)) {
+          comment.status = 'delivered';
+          updated = true;
+          io.emit('commentDelivered', { appointmentId: appt._id.toString(), commentId: comment._id.toString() });
+        }
+      }
+      if (updated) await appt.save();
+    }
+  } catch (err) {
+    console.error('Error marking comments as delivered when user came online:', err);
+  }
+}
+
 // Make onlineUsers available to routes for checking recipient online status
 let onlineUsers = new Set();
 app.set('onlineUsers', onlineUsers);
@@ -167,8 +198,16 @@ io.on('connection', (socket) => {
   // Listen for presence pings
   socket.on('userAppointmentsActive', ({ userId }) => {
     thisUserId = userId;
+    const wasOnline = onlineUsers.has(userId);
     onlineUsers.add(userId);
-    io.emit('userOnlineUpdate', { userId, online: true });
+    
+    // If user wasn't online before, emit online update and check for messages to mark as delivered
+    if (!wasOnline) {
+      io.emit('userOnlineUpdate', { userId, online: true });
+      // Check for messages that need to be marked as delivered to this newly online user
+      checkAndMarkMessagesAsDelivered(userId, io);
+    }
+    
     if (socket.onlineTimeout) clearTimeout(socket.onlineTimeout);
     socket.onlineTimeout = setTimeout(() => {
       onlineUsers.delete(userId);
