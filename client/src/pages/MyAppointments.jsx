@@ -475,62 +475,61 @@ export default function MyAppointments() {
     }
   };
 
-  // Function to copy message to clipboard using message ID
-  const copyMessageToClipboard = async (messageId, messageText) => {
-    console.log('Copy function called with ID:', messageId, 'Text:', messageText);
+  // Function to copy message to clipboard
+  const copyMessageToClipboard = (messageText) => {
+    console.log('Copy button clicked, message:', messageText);
     
-    // First try to get the message from comments array by ID
-    let textToCopy = messageText;
-    if (!textToCopy && messageId) {
-      const comment = comments.find(c => c._id === messageId);
-      textToCopy = comment?.message;
-      console.log('Found comment by ID:', comment);
-    }
-    
-    if (!textToCopy || typeof textToCopy !== 'string') {
-      console.error('No valid message to copy');
+    if (!messageText) {
       toast.error('No message to copy');
       return;
     }
     
-    console.log('Attempting to copy text:', textToCopy);
-    
-    try {
-      await navigator.clipboard.writeText(textToCopy);
-      toast.success('Copied', {
-        autoClose: 2000,
-        position: 'bottom-right'
-      });
-      console.log('Copy successful via clipboard API');
-    } catch (err) {
-      console.error('Failed to copy with clipboard API:', err);
-      // Fallback for older browsers
-      try {
-        const textArea = document.createElement('textarea');
-        textArea.value = textToCopy;
-        textArea.style.position = 'fixed';
-        textArea.style.left = '-999999px';
-        textArea.style.top = '-999999px';
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        const success = document.execCommand('copy');
-        document.body.removeChild(textArea);
-        
-        if (success) {
+    // Try modern clipboard API first
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(messageText)
+        .then(() => {
           toast.success('Copied', {
             autoClose: 2000,
             position: 'bottom-right'
           });
-          console.log('Copy successful via fallback method');
-        } else {
-          console.error('Fallback copy failed');
-          toast.error('Failed to copy message');
-        }
-      } catch (fallbackErr) {
-        console.error('Fallback copy also failed:', fallbackErr);
-        toast.error('Copy not supported by your browser');
+        })
+        .catch(() => {
+          // Fallback to older method
+          copyWithFallback(messageText);
+        });
+    } else {
+      // Use fallback method for older browsers
+      copyWithFallback(messageText);
+    }
+  };
+
+  // Fallback copy method
+  const copyWithFallback = (text) => {
+    try {
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      textArea.style.top = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      const success = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      
+      if (success) {
+        console.log('Copy successful via fallback method');
+        toast.success('Copied', {
+          autoClose: 2000,
+          position: 'bottom-right'
+        });
+      } else {
+        console.error('Fallback copy failed');
+        toast.error('Failed to copy message');
       }
+    } catch (err) {
+      console.error('Fallback copy error:', err);
+      toast.error('Copy not supported');
     }
   };
 
@@ -2194,11 +2193,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                   </button>
                                   <button
                                     className={`${isMe ? 'text-blue-400 hover:text-blue-300' : 'text-gray-600 hover:text-gray-800'}`}
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      e.stopPropagation();
-                                      console.log('Copy button clicked for message ID:', c._id, 'message:', c.message);
-                                      copyMessageToClipboard(c._id, c.message);
+                                    onClick={() => {
+                                      console.log('Button clicked! Message:', c.message);
+                                      copyMessageToClipboard(c.message);
                                     }}
                                     title="Copy message"
                                   >
