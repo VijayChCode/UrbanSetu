@@ -2126,7 +2126,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                     }, 1000);
                                   }
                                 }} role="button" tabIndex={0} aria-label="Go to replied message">
-                                <span className="text-xs text-gray-600 truncate max-w-[200px]">{comments.find(msg => msg._id === c.replyTo)?.message?.substring(0, 50) || 'Original message'}{comments.find(msg => msg._id === c.replyTo)?.message?.length > 50 ? '...' : ''}</span>
+                                <span className="text-xs text-gray-600 truncate max-w-[150px]">{comments.find(msg => msg._id === c.replyTo)?.message?.substring(0, 30) || 'Original message'}{comments.find(msg => msg._id === c.replyTo)?.message?.length > 30 ? '...' : ''}</span>
                               </div>
                             )}
                             <div className="font-semibold mb-1 flex items-center gap-2 flex-wrap break-all">
@@ -2253,7 +2253,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   <div className="px-4 mb-2">
                     <div className="flex items-center bg-blue-50 border-l-4 border-blue-400 px-2 py-1 rounded">
                       <span className="text-xs text-gray-700 font-semibold mr-2">Replying to:</span>
-                      <span className="text-xs text-gray-600 truncate max-w-[300px]">{replyTo.message?.substring(0, 80)}{replyTo.message?.length > 80 ? '...' : ''}</span>
+                      <span className="text-xs text-gray-600 truncate max-w-[200px]">{replyTo.message?.substring(0, 40)}{replyTo.message?.length > 40 ? '...' : ''}</span>
                       <button className="ml-auto text-gray-400 hover:text-gray-700" onClick={() => setReplyTo(null)} title="Cancel reply">&times;</button>
                     </div>
                   </div>
