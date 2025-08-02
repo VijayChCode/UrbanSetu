@@ -54,6 +54,9 @@ export default function Appointment() {
           // Find active appointment for this property
           const activeStatuses = ["pending", "accepted"];
           const found = data.find(appt => {
+            // Only check appointments where the current user is the buyer (not seller)
+            if (!appt.buyerId || (appt.buyerId._id !== currentUser._id && appt.buyerId !== currentUser._id)) return false;
+            
             if (!appt.listingId || (appt.listingId._id !== listingId && appt.listingId !== listingId)) return false;
             
             // Check if appointment is outdated (past date/time)
@@ -63,9 +66,8 @@ export default function Appointment() {
             if (isOutdated) return false;
             
             if (activeStatuses.includes(appt.status)) return true;
-            // Only block if reinitiation is still possible for the current user
-            if (appt.status === "cancelledByBuyer" && appt.buyerId && (appt.buyerId._id === currentUser._id || appt.buyerId === currentUser._id) && (appt.buyerReinitiationCount || 0) < 2) return true;
-            if (appt.status === "cancelledBySeller" && appt.sellerId && (appt.sellerId._id === currentUser._id || appt.sellerId === currentUser._id) && (appt.sellerReinitiationCount || 0) < 2) return true;
+            // Only block if reinitiation is still possible for the current user (as buyer)
+            if (appt.status === "cancelledByBuyer" && (appt.buyerReinitiationCount || 0) < 2) return true;
             return false;
           });
           setHasActiveAppointment(!!found);

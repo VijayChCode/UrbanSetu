@@ -38,7 +38,7 @@ router.post("/", verifyToken, async (req, res) => {
     }
 
     // --- Prevent duplicate active appointments ---
-    // Only block: pending, accepted appointments that are not outdated
+    // Only block: pending, accepted appointments that are not outdated for the same buyer
     const currentDate = new Date();
     const currentDateString = currentDate.toISOString().split('T')[0];
     const currentTimeString = currentDate.toTimeString().split(' ')[0];
@@ -55,20 +55,12 @@ router.post("/", verifyToken, async (req, res) => {
         ]
       }
     ];
-    // Determine if current user is buyer or seller
-    let visibilityCondition = {};
-    if (buyerId.toString() === seller._id.toString()) {
-      // Edge case: user is both buyer and seller (shouldn't happen, but just in case)
-      visibilityCondition = { $or: [ { visibleToBuyer: { $ne: false } }, { visibleToSeller: { $ne: false } } ] };
-    } else if (buyerId.toString() === buyer._id.toString()) {
-      visibilityCondition = { visibleToBuyer: { $ne: false } };
-    } else if (buyerId.toString() === seller._id.toString()) {
-      visibilityCondition = { visibleToSeller: { $ne: false } };
-    }
+    
+    // Check for existing appointments where the current user is the buyer
     const existing = await booking.findOne({
       listingId,
-      $or: orConditions,
-      ...visibilityCondition
+      buyerId: buyerId, // Only check appointments where this user is the buyer
+      $or: orConditions
     });
     if (existing) {
       return res.status(400).json({ message: "You already have an active appointment for this property. Please complete, cancel, or wait for the other party to respond before booking again." });
