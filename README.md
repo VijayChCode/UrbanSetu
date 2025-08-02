@@ -188,4 +188,5 @@ mern-estate/
 
 ## License
 
-This project is licensed under the MIT License. 
+Copyright © 2025 UrbanSetu.
+All rights reserved. No part of this software may be copied, modified, or distributed without express permission.
