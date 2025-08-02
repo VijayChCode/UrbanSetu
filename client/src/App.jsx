@@ -332,7 +332,7 @@ function AppRoutes({ bootstrapped }) {
       </Suspense>
       <ToastContainer 
         position="top-center" 
-        autoClose={3000} 
+        autoClose={2000} 
         hideProgressBar={false}
         newestOnTop 
         closeOnClick={true}
