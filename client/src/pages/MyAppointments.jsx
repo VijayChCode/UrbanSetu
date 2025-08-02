@@ -477,24 +477,44 @@ export default function MyAppointments() {
 
   // Function to copy message to clipboard
   const copyMessageToClipboard = async (message) => {
+    if (!message || typeof message !== 'string') {
+      toast.error('No message to copy');
+      return;
+    }
+    
     try {
       await navigator.clipboard.writeText(message);
-      toast.success('Message copied to clipboard!', {
+      toast.success('Copied', {
         autoClose: 2000,
         position: 'bottom-right'
       });
     } catch (err) {
+      console.error('Failed to copy with clipboard API:', err);
       // Fallback for older browsers
-      const textArea = document.createElement('textarea');
-      textArea.value = message;
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textArea);
-      toast.success('Message copied to clipboard!', {
-        autoClose: 2000,
-        position: 'bottom-right'
-      });
+      try {
+        const textArea = document.createElement('textarea');
+        textArea.value = message;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        const success = document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
+        if (success) {
+          toast.success('Copied', {
+            autoClose: 2000,
+            position: 'bottom-right'
+          });
+        } else {
+          toast.error('Failed to copy message');
+        }
+      } catch (fallbackErr) {
+        console.error('Fallback copy also failed:', fallbackErr);
+        toast.error('Copy not supported by your browser');
+      }
     }
   };
 
@@ -2158,7 +2178,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                   </button>
                                   <button
                                     className={`${isMe ? 'text-blue-400 hover:text-blue-300' : 'text-gray-600 hover:text-gray-800'}`}
-                                    onClick={() => copyMessageToClipboard(c.message)}
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      console.log('Copy button clicked, message:', c.message);
+                                      copyMessageToClipboard(c.message);
+                                    }}
                                     title="Copy message"
                                   >
                                     <FaCopy size={14} />

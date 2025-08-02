@@ -444,24 +444,44 @@ export default function AdminAppointments() {
 
   // Function to copy message to clipboard
   const copyMessageToClipboard = async (message) => {
+    if (!message || typeof message !== 'string') {
+      toast.error('No message to copy');
+      return;
+    }
+    
     try {
       await navigator.clipboard.writeText(message);
-      toast.success('Message copied to clipboard!', {
+      toast.success('Copied', {
         autoClose: 2000,
         position: 'bottom-right'
       });
     } catch (err) {
+      console.error('Failed to copy with clipboard API:', err);
       // Fallback for older browsers
-      const textArea = document.createElement('textarea');
-      textArea.value = message;
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textArea);
-      toast.success('Message copied to clipboard!', {
-        autoClose: 2000,
-        position: 'bottom-right'
-      });
+      try {
+        const textArea = document.createElement('textarea');
+        textArea.value = message;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        const success = document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
+        if (success) {
+          toast.success('Copied', {
+            autoClose: 2000,
+            position: 'bottom-right'
+          });
+        } else {
+          toast.error('Failed to copy message');
+        }
+      } catch (fallbackErr) {
+        console.error('Fallback copy also failed:', fallbackErr);
+        toast.error('Copy not supported by your browser');
+      }
     }
   };
 
@@ -1836,13 +1856,18 @@ function AdminAppointmentRow({
                               >
                                 <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c4.28 0 6.92 1.45 8.84 4.55.23.36.76.09.65-.32C18.31 13.13 15.36 10.36 10 9z"/></svg>
                               </button>
-                              <button
-                                className={`${c.senderEmail === currentUser.email ? 'text-blue-400 hover:text-blue-300' : 'text-gray-600 hover:text-gray-800'}`}
-                                onClick={() => copyMessageToClipboard(c.message)}
-                                title="Copy message"
-                              >
-                                <FaCopy size={14} />
-                              </button>
+                                                             <button
+                                 className={`${c.senderEmail === currentUser.email ? 'text-blue-400 hover:text-blue-300' : 'text-gray-600 hover:text-gray-800'}`}
+                                 onClick={(e) => {
+                                   e.preventDefault();
+                                   e.stopPropagation();
+                                   console.log('Copy button clicked, message:', c.message);
+                                   copyMessageToClipboard(c.message);
+                                 }}
+                                 title="Copy message"
+                               >
+                                 <FaCopy size={14} />
+                               </button>
                             </>
                           )}
                           {(c.senderEmail === currentUser.email) && !c.deleted && (
