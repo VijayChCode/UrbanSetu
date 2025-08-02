@@ -8,6 +8,7 @@ import { useState } from 'react';
 const WishList = () => {
   const { wishlist, loading } = useWishlist();
   const [showTooltip, setShowTooltip] = useState(false);
+  const navigate = useNavigate(); // Move this hook call before conditional return
 
   if (loading) {
     return (
@@ -23,7 +24,6 @@ const WishList = () => {
     );
   }
 
-  const navigate = useNavigate();
   return (
     <div className="bg-gradient-to-br from-blue-50 to-purple-100 min-h-screen py-10 px-2 md:px-8">
       <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-lg p-6 relative">
