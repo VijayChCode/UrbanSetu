@@ -391,7 +391,7 @@ function UserNavLinks({ mobile = false, onNavigate }) {
       
       {currentUser ? (
         <>
-          <li className={`mobile-menu-item ${mobile ? 'animate-menu-item-in-delay-1 p-4 rounded-xl hover:bg-blue-50 transition-all duration-300 flex items-center gap-3 text-lg font-medium' : 'flex items-center'}`}>
+          <li className={`mobile-menu-item ${mobile ? 'animate-menu-item-in-delay-1 p-4 rounded-xl hover:bg-blue-50 transition-all duration-300 flex items-center gap-3 text-lg font-medium' : 'flex items-center relative'}`}>
             <NotificationBell mobile={mobile} />
           </li>
           

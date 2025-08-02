@@ -811,7 +811,27 @@ export default function NotificationBell({ mobile = false }) {
           )
         ) : (
           // Desktop: Dropdown
-          <div className="absolute left-1/2 -translate-x-1/2 right-auto mt-2 w-full max-w-xs sm:w-96 sm:left-auto sm:right-0 sm:-translate-x-0 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-96 overflow-hidden notification-popup">
+          createPortal(
+                                      <div 
+              className="fixed inset-0 z-[9998] bg-black bg-opacity-20"
+              onClick={() => setIsOpen(false)}
+              style={{ pointerEvents: 'auto' }}
+            >
+
+              <div 
+                className="fixed w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-[9999] max-h-96 overflow-hidden notification-popup" 
+                onClick={(e) => e.stopPropagation()}
+                style={{ 
+                  top: '80px',
+                  right: '20px',
+                  maxHeight: 'calc(100vh - 120px)',
+                  backgroundColor: 'white',
+                  border: '2px solid #e5e7eb',
+                  boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                  position: 'fixed',
+                  zIndex: 9999
+                }}
+              >
           {/* Header with Tabs */}
           <div className="border-b border-gray-100">
             <div className="flex items-center justify-between p-4">
@@ -1165,7 +1185,10 @@ export default function NotificationBell({ mobile = false }) {
             </div>
           )}
         </div>
+              </div>,
+        document.body
         )
+      )
       )}
       {/* Animations for notification entry */}
       <style jsx>{`
