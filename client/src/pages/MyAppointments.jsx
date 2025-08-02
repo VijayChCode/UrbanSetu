@@ -183,10 +183,10 @@ export default function MyAppointments() {
 
   useEffect(() => {
     if (!currentUser) return;
-    // Emit userAppointmentsActive every 5 seconds
+    // Emit userAppointmentsActive every 1 seconds
     const interval = setInterval(() => {
       socket.emit('userAppointmentsActive', { userId: currentUser._id });
-    }, 5000);
+    }, 1000);
     return () => clearInterval(interval);
   }, [currentUser]);
 
@@ -1726,7 +1726,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       if (data.fromUserId === otherParty?._id && data.appointmentId === appt._id) {
         setIsOtherPartyTyping(true);
         if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-        typingTimeoutRef.current = setTimeout(() => setIsOtherPartyTyping(false), 2000);
+        typingTimeoutRef.current = setTimeout(() => setIsOtherPartyTyping(false), 1000);
       }
     }
     socket.on('typing', handleTyping);
