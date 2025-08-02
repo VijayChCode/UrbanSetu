@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import data from "../data/countries+states+cities.json";
 import Fuse from "fuse.js";
 
@@ -96,7 +96,6 @@ export default function LocationSelector({ value, onChange, mode = "form" }) {
           ))}
         </select>
       </div>
-    </div>
     </div>
   );
 } 
