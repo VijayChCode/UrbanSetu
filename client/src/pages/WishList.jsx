@@ -11,18 +11,23 @@ const WishList = () => {
   const navigate = useNavigate(); // Move this hook call before conditional return
 
   if (loading) {
-    return (
-      <div className="bg-gradient-to-br from-blue-50 to-purple-100 min-h-screen py-10 px-2 md:px-8">
-        <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-lg p-6 relative">
-          <h3 className="text-3xl font-extrabold text-blue-700 mb-6 text-center drop-shadow">
-            My Wishlist
-          </h3>
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Loading wishlist...</p>
+  return (
+    <div className="bg-gradient-to-br from-blue-50 to-purple-100 min-h-screen py-10 px-2 md:px-8">
+      <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-lg p-6 relative">
+        <h3 className="text-3xl font-extrabold text-blue-700 mb-6 text-center drop-shadow">
+          My Wishlist
+        </h3>
+
+        {/* Centered spinner and loading text */}
+        <div className="flex flex-col items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+          <p className="text-gray-600 text-center">Loading wishlist...</p>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
+
 
   return (
     <div className="bg-gradient-to-br from-blue-50 to-purple-100 min-h-screen py-10 px-2 md:px-8">
