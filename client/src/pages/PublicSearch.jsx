@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import ListingItem from "../components/ListingItem";
 import ContactSupportWrapper from "../components/ContactSupportWrapper";
 import LocationSelector from "../components/LocationSelector";
+import data from "../data/countries+states+cities.json";
 import duckImg from "../assets/duck-go-final.gif";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -43,7 +44,7 @@ export default function PublicSearch() {
             order: urlParams.get("order") || "desc",
             minPrice: urlParams.get("minPrice") || "",
             maxPrice: urlParams.get("maxPrice") || "",
-            city: urlParams.get("city") || "",
+            city: "", // City filter disabled for public search
             state: urlParams.get("state") || "",
             bedrooms: urlParams.get("bedrooms") || "",
             bathrooms: urlParams.get("bathrooms") || "",
@@ -51,7 +52,7 @@ export default function PublicSearch() {
         setLocationFilter({
             state: urlParams.get("state") || "",
             district: urlParams.get("district") || "",
-            city: urlParams.get("city") || "",
+            city: "", // Always clear city for public search
         });
 
         const fetchListings = async () => {
@@ -109,8 +110,10 @@ export default function PublicSearch() {
     };
 
     const handleLocationChange = (loc) => {
-        setLocationFilter(loc);
-        setFormData((prev) => ({ ...prev, state: loc.state, district: loc.district, city: loc.city }));
+        // For public search, always clear city filter
+        const updatedLoc = { ...loc, city: "" };
+        setLocationFilter(updatedLoc);
+        setFormData((prev) => ({ ...prev, state: loc.state, district: loc.district, city: "" }));
     };
 
     if (loading) {
@@ -162,9 +165,40 @@ export default function PublicSearch() {
                         <option value="createdAt_asc">Oldest</option>
                     </select>
 
-                    {/* LocationSelector for search */}
+                    {/* LocationSelector for search - City disabled for public search */}
                     <div className="md:col-span-2">
-                        <LocationSelector value={locationFilter} onChange={handleLocationChange} mode="search" />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* State Dropdown */}
+                            <div>
+                                <label className="block mb-1 font-semibold text-gray-700">State</label>
+                                <select
+                                    className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500"
+                                    value={locationFilter.state || ""}
+                                    onChange={(e) => handleLocationChange({ ...locationFilter, state: e.target.value, city: "" })}
+                                >
+                                    <option value="">Select State</option>
+                                    {(() => {
+                                        const india = data.find((country) => country.name === "India");
+                                        const states = india ? india.states : [];
+                                        return states.map((s) => (
+                                            <option key={s.state_code} value={s.name}>
+                                                {s.name}
+                                            </option>
+                                        ));
+                                    })()}
+                                </select>
+                            </div>
+                            {/* City Dropdown - Disabled */}
+                            <div>
+                                <label className="block mb-1 font-semibold text-gray-700 text-gray-400">City (Not Available)</label>
+                                <select
+                                    className="w-full p-2 border rounded-md bg-gray-100 text-gray-500 cursor-not-allowed"
+                                    disabled={true}
+                                >
+                                    <option value="">City filter disabled</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Radio Buttons for Type Selection */}
