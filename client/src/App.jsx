@@ -339,6 +339,7 @@ function AppRoutes({ bootstrapped }) {
         pauseOnFocusLoss={false}
         draggable={false}
         pauseOnHover={false}
+        transition={SlideRight}
         rtl={false}
         theme="light"
         limit={3}
