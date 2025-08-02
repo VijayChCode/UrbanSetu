@@ -110,9 +110,7 @@ export default function PublicSearch() {
 
     const handleLocationChange = (loc) => {
         setLocationFilter(loc);
-        // For search mode, use the first city from cities array or single city
-        const cityValue = loc.cities && loc.cities.length > 0 ? loc.cities[0] : loc.city;
-        setFormData((prev) => ({ ...prev, state: loc.state, district: loc.district, city: cityValue }));
+        setFormData((prev) => ({ ...prev, state: loc.state, district: loc.district, city: loc.city }));
     };
 
     if (loading) {
