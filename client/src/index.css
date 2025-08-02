@@ -335,15 +335,15 @@ body.mobile-menu-open * {
 
 /* Responsive Toastify width for mobile */
 @media (max-width: 600px) {
-  /* Center the toast container for top-center position */
-  .Toastify__toast-container--top-center {
-    left: 50% !important;
-    transform: translateX(-50%) !important;
+  /* Position the toast container for bottom-left position */
+  .Toastify__toast-container--bottom-left {
+    left: 0 !important;
+    bottom: 0 !important;
     width: 100vw !important;
     max-width: 100vw !important;
     padding: 0 !important;
     display: flex !important;
-    justify-content: center !important;
+    justify-content: flex-start !important;
     pointer-events: auto !important;
   }
   .Toastify__toast {

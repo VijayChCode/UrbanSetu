@@ -457,7 +457,7 @@ export default function AdminAppointments() {
         .then(() => {
           toast.success('Copied', {
             autoClose: 2000,
-            position: 'bottom-right'
+            position: 'bottom-left'
           });
         })
         .catch(() => {
@@ -488,7 +488,7 @@ export default function AdminAppointments() {
         console.log('Copy successful via fallback method');
         toast.success('Copied', {
           autoClose: 2000,
-          position: 'bottom-right'
+          position: 'bottom-left'
         });
       } else {
         console.error('Fallback copy failed');
@@ -524,7 +524,7 @@ export default function AdminAppointments() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-100 py-10 px-2 md:px-8">
       <ToastContainer
-        position="top-center"
+        position="bottom-left"
         autoClose={2000}
         closeOnClick
         containerClassName="!z-[100]"
