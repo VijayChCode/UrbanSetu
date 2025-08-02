@@ -1410,68 +1410,69 @@ export default function Profile() {
         <div className="bg-white rounded-xl shadow-lg p-8">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">Account Management</h2>
           
-          <button
-            onClick={() => navigate((currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? '/admin/change-password' : '/user/change-password')}
-            className="bg-purple-500 text-white px-6 py-3 rounded-lg mb-6 hover:bg-purple-600 transition-colors flex items-center justify-center font-semibold"
-          >
-            <FaKey className="w-4 h-4 mr-2" />
-            Change Password
-          </button>
-          
-          {(currentUser.role === 'admin' || currentUser.role === 'rootadmin') && (
+          <div className="space-y-4">
             <button
-              onClick={() => navigate('/admin/management')}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg mb-6 hover:bg-blue-700 transition-colors flex items-center justify-center font-semibold"
+              onClick={() => navigate((currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? '/admin/change-password' : '/user/change-password')}
+              className="w-full bg-purple-500 text-white px-6 py-3 rounded-lg hover:bg-purple-600 transition-colors flex items-center justify-center font-semibold"
             >
-              Accounts
+              <FaKey className="w-4 h-4 mr-2" />
+              Change Password
             </button>
-          )}
             
-          {currentUser.isDefaultAdmin && (
-            <button
-              onClick={onShowTransferModal}
-              className="bg-yellow-500 text-white px-6 py-3 rounded-lg mb-6 hover:bg-yellow-600 transition-colors flex items-center justify-center font-semibold"
-              style={{ marginBottom: 16 }}
-            >
-              <FaCrown className="w-4 h-4 mr-2" />
-              Transfer Rights
-            </button>
-          )}
-          
-          {/* Note for default admin about account deletion */}
-          {currentUser.isDefaultAdmin && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-              <div className="flex items-start">
-                <div className="flex-shrink-0">
-                  <svg className="h-4 w-4 text-blue-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="ml-2">
-                  <p className="text-sm text-blue-700">
-                    <strong>Note:</strong> You must transfer your default admin rights to another admin before you can delete your account.
-                  </p>
+            {(currentUser.role === 'admin' || currentUser.role === 'rootadmin') && (
+              <button
+                onClick={() => navigate('/admin/management')}
+                className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center font-semibold"
+              >
+                Accounts
+              </button>
+            )}
+              
+            {currentUser.isDefaultAdmin && (
+              <button
+                onClick={onShowTransferModal}
+                className="w-full bg-yellow-500 text-white px-6 py-3 rounded-lg hover:bg-yellow-600 transition-colors flex items-center justify-center font-semibold"
+              >
+                <FaCrown className="w-4 h-4 mr-2" />
+                Transfer Rights
+              </button>
+            )}
+            
+            {/* Note for default admin about account deletion */}
+            {currentUser.isDefaultAdmin && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <div className="flex items-start">
+                  <div className="flex-shrink-0">
+                    <svg className="h-4 w-4 text-blue-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-2">
+                    <p className="text-sm text-blue-700">
+                      <strong>Note:</strong> You must transfer your default admin rights to another admin before you can delete your account.
+                    </p>
+                  </div>
                 </div>
               </div>
+            )}
+              
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <button
+                onClick={onHandleSignout}
+                className="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors flex items-center justify-center font-semibold"
+              >
+                <FaSignOutAlt className="w-4 h-4 mr-2" />
+                Sign Out
+              </button>
+              
+              <button
+                onClick={onHandleDelete}
+                className="bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 transition-colors flex items-center justify-center font-semibold"
+              >
+                <FaTrash className="w-4 h-4 mr-2" />
+                Delete Account
+              </button>
             </div>
-          )}
-            
-          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
-            <button
-              onClick={onHandleSignout}
-              className="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors flex items-center justify-center"
-            >
-              <FaSignOutAlt className="w-4 h-4 mr-2" />
-              Sign Out
-            </button>
-            
-          <button
-              onClick={onHandleDelete}
-              className="bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 transition-colors flex items-center justify-center"
-            >
-              <FaTrash className="w-4 h-4 mr-2" />
-              Delete Account
-            </button>
           </div>
         </div>
       </div>
