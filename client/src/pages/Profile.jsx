@@ -27,6 +27,90 @@ import avataaarsSchema from '../data/dicebear-avataaars-schema.json';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+// Animation CSS classes
+const animationClasses = {
+  fadeInUp: "animate-[fadeInUp_0.6s_ease-out_forwards] opacity-0 translate-y-8",
+  fadeInLeft: "animate-[fadeInLeft_0.6s_ease-out_forwards] opacity-0 -translate-x-8",
+  fadeInRight: "animate-[fadeInRight_0.6s_ease-out_forwards] opacity-0 translate-x-8",
+  fadeIn: "animate-[fadeIn_0.6s_ease-out_forwards] opacity-0",
+  scaleIn: "animate-[scaleIn_0.5s_ease-out_forwards] opacity-0 scale-95",
+  slideInUp: "animate-[slideInUp_0.5s_ease-out_forwards] opacity-0 translate-y-4",
+  staggerDelay: (index) => `animation-delay-${index * 150}ms`,
+  bounceIn: "animate-[bounceIn_0.7s_ease-out_forwards] opacity-0 scale-50",
+  pulse: "animate-pulse",
+  spin: "animate-spin",
+  bounce: "animate-bounce",
+  wiggle: "animate-[wiggle_1s_ease-in-out_infinite]",
+  heartbeat: "animate-[heartbeat_1.5s_ease-in-out_infinite]",
+  float: "animate-[float_3s_ease-in-out_infinite]",
+  shimmer: "animate-[shimmer_2s_linear_infinite]",
+};
+
+// Custom keyframe animations to be added to CSS
+const customAnimations = `
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeInLeft {
+  from { opacity: 0; transform: translateX(-30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes fadeInRight {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes slideInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes bounceIn {
+  0% { opacity: 0; transform: scale(0.3); }
+  50% { opacity: 1; transform: scale(1.05); }
+  70% { transform: scale(0.9); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes wiggle {
+  0%, 7% { transform: rotateZ(0); }
+  15% { transform: rotateZ(-15deg); }
+  20% { transform: rotateZ(10deg); }
+  25% { transform: rotateZ(-10deg); }
+  30% { transform: rotateZ(6deg); }
+  35% { transform: rotateZ(-4deg); }
+  40%, 100% { transform: rotateZ(0); }
+}
+@keyframes heartbeat {
+  0%, 50%, 100% { transform: scale(1); }
+  25% { transform: scale(1.1); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+@keyframes shimmer {
+  0% { background-position: -200px 0; }
+  100% { background-position: calc(200px + 100%) 0; }
+}
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animation-delay-0 { animation-delay: 0ms; }
+.animation-delay-150 { animation-delay: 150ms; }
+.animation-delay-300 { animation-delay: 300ms; }
+.animation-delay-450 { animation-delay: 450ms; }
+.animation-delay-600 { animation-delay: 600ms; }
+.animation-delay-750 { animation-delay: 750ms; }
+`;
+
 // At the top, add the full list of DiceBear styles and a master filter list:
 const dicebearStyles = [
   { key: 'adventurer', label: 'Adventurer' },
@@ -117,6 +201,38 @@ const renderColorOption = (color) => (
   </option>
 );
 
+// Custom Counter Component with Animation
+const AnimatedCounter = ({ end, duration = 1000, delay = 0 }) => {
+  const [count, setCount] = useState(0);
+  const [started, setStarted] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setStarted(true);
+      let start = 0;
+      const increment = end / (duration / 50);
+      const counter = setInterval(() => {
+        start += increment;
+        if (start >= end) {
+          setCount(end);
+          clearInterval(counter);
+        } else {
+          setCount(Math.floor(start));
+        }
+      }, 50);
+      return () => clearInterval(counter);
+    }, delay);
+    
+    return () => clearTimeout(timer);
+  }, [end, duration, delay]);
+
+  return (
+    <span className={`${started ? 'animate-[countUp_0.6s_ease-out_forwards]' : 'opacity-0'}`}>
+      {count}
+    </span>
+  );
+};
+
 export default function Profile() {
   const { currentUser, error } = useSelector((state) => state.user);
   const { wishlist } = useWishlist();
@@ -162,10 +278,36 @@ export default function Profile() {
   const [originalEmail, setOriginalEmail] = useState("");
   const [originalMobile, setOriginalMobile] = useState("");
   
+  // Animation states
+  const [isVisible, setIsVisible] = useState(false);
+  const [statsAnimated, setStatsAnimated] = useState(false);
+  
   const navigate = useNavigate();
 
   // Hide My Appointments button in admin context
   const isAdminProfile = window.location.pathname.startsWith('/admin');
+
+  // Add custom animations to head
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = customAnimations;
+    document.head.appendChild(style);
+    
+    // Trigger visibility for animations
+    const timer = setTimeout(() => setIsVisible(true), 100);
+    
+    return () => {
+      document.head.removeChild(style);
+      clearTimeout(timer);
+    };
+  }, []);
+
+  // Trigger stats animation when they change
+  useEffect(() => {
+    if (userStats.listings > 0 || userStats.appointments > 0 || userStats.wishlist > 0) {
+      setStatsAnimated(true);
+    }
+  }, [userStats]);
 
   // Set original values when component mounts or user changes
   useEffect(() => {
@@ -930,10 +1072,21 @@ export default function Profile() {
   // Loader: Only show full-page spinner if not editing
   if (loading && !isEditing) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-100">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Loading profile...</p>
+          <div className="relative">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-200 mx-auto"></div>
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-600 border-t-transparent absolute top-0 left-1/2 transform -translate-x-1/2"></div>
+            <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${animationClasses.pulse}`}>
+              <FaUser className="w-6 h-6 text-blue-600" />
+            </div>
+          </div>
+          <p className={`mt-4 text-gray-600 font-medium ${animationClasses.pulse}`}>Loading profile...</p>
+          <div className="flex justify-center mt-2 space-x-1">
+            <div className={`w-2 h-2 bg-blue-600 rounded-full ${animationClasses.bounce} animation-delay-0`}></div>
+            <div className={`w-2 h-2 bg-blue-600 rounded-full ${animationClasses.bounce} animation-delay-150`}></div>
+            <div className={`w-2 h-2 bg-blue-600 rounded-full ${animationClasses.bounce} animation-delay-300`}></div>
+          </div>
         </div>
       </div>
     );
@@ -978,46 +1131,50 @@ export default function Profile() {
     <div className="bg-gradient-to-br from-blue-50 to-purple-100 min-h-screen py-10 px-2 md:px-8">
       <div className="max-w-6xl mx-auto">
         {/* Header Section */}
-        <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
+        <div className={`bg-white rounded-xl shadow-lg p-8 mb-6 ${isVisible ? animationClasses.fadeInUp : 'opacity-0 translate-y-8'}`}>
           <div className="flex flex-col md:flex-row items-center justify-between">
             <div className="flex flex-col sm:flex-row items-center sm:space-x-6 w-full text-center sm:text-left mb-4 md:mb-0">
-              <div className="relative flex-shrink-0 mx-auto sm:mx-0">
-                <UserAvatar 
-                  user={currentUser} 
-                  size="h-24 w-24" 
-                  textSize="text-2xl"
-                />
+              <div className={`relative flex-shrink-0 mx-auto sm:mx-0 group ${isVisible ? animationClasses.scaleIn + ' animation-delay-150' : 'opacity-0 scale-95'}`}>
+                <div className="transform transition-all duration-300 group-hover:scale-110">
+                  <UserAvatar 
+                    user={currentUser} 
+                    size="h-24 w-24" 
+                    textSize="text-2xl"
+                  />
+                </div>
                 {currentUser.role === 'admin' && (
-                  <div className="absolute -top-2 -right-2 bg-purple-500 text-white rounded-full p-2">
+                  <div className={`absolute -top-2 -right-2 bg-purple-500 text-white rounded-full p-2 ${animationClasses.bounceIn} animation-delay-300 ${animationClasses.float}`}>
                     <FaCrown className="w-4 h-4" />
                   </div>
                 )}
                 {currentUser.isDefaultAdmin && (
-                  <div className="absolute -bottom-2 -right-2 bg-red-500 text-white rounded-full p-2">
+                  <div className={`absolute -bottom-2 -right-2 bg-red-500 text-white rounded-full p-2 ${animationClasses.bounceIn} animation-delay-450 ${animationClasses.pulse}`}>
                     <FaCrown className="w-3 h-3" />
                   </div>
                 )}
               </div>
-              <div className="mt-4 sm:mt-0 w-full">
+              <div className={`mt-4 sm:mt-0 w-full ${isVisible ? animationClasses.fadeInLeft + ' animation-delay-300' : 'opacity-0 -translate-x-8'}`}>
                 <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 flex flex-wrap items-center justify-center sm:justify-start">
-                  {currentUser.username}
+                  <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                    {currentUser.username}
+                  </span>
                   {currentUser.role === 'admin' && (
-                    <span className="ml-2 bg-purple-100 text-purple-800 text-sm px-3 py-1 rounded-full font-medium">
+                    <span className="ml-2 bg-purple-100 text-purple-800 text-sm px-3 py-1 rounded-full font-medium transform transition-all duration-300 hover:scale-110 hover:bg-purple-200">
                       Admin
                     </span>
                   )}
                   {currentUser.isDefaultAdmin && (
-                    <span className="ml-2 bg-red-100 text-red-800 text-sm px-3 py-1 rounded-full font-medium">
+                    <span className="ml-2 bg-red-100 text-red-800 text-sm px-3 py-1 rounded-full font-medium transform transition-all duration-300 hover:scale-110 hover:bg-red-200 animate-pulse">
                       Default Admin
                     </span>
                   )}
                 </h1>
-                <p className="text-gray-600 flex flex-wrap items-center justify-center sm:justify-start break-all">
-                  <FaEnvelope className="w-4 h-4 mr-2" />
+                <p className="text-gray-600 flex flex-wrap items-center justify-center sm:justify-start break-all transition-all duration-300 hover:text-blue-600">
+                  <FaEnvelope className="w-4 h-4 mr-2 transform transition-all duration-300 hover:scale-125" />
                   {currentUser.email}
                 </p>
-                <p className="text-gray-600 flex flex-wrap items-center justify-center sm:justify-start break-all">
-                  <FaPhone className="w-4 h-4 mr-2" />
+                <p className="text-gray-600 flex flex-wrap items-center justify-center sm:justify-start break-all transition-all duration-300 hover:text-green-600">
+                  <FaPhone className="w-4 h-4 mr-2 transform transition-all duration-300 hover:scale-125" />
                   {currentUser.mobileNumber && currentUser.mobileNumber !== "0000000000" 
                     ? `+91 ${currentUser.mobileNumber.slice(0, 5)} ${currentUser.mobileNumber.slice(5)}`
                     : "Mobile number not provided"
@@ -1026,16 +1183,16 @@ export default function Profile() {
                     <span className="text-xs text-gray-400 ml-2">(Generated for Google signup)</span>
                   )}
                 </p>
-                <p className="text-sm text-gray-500 text-center sm:text-left mt-1">
+                <p className="text-sm text-gray-500 text-center sm:text-left mt-1 transition-all duration-300 hover:text-gray-700">
                   Member since {formatDate(currentUser.createdAt)}
                 </p>
               </div>
             </div>
             <button
               onClick={() => setIsEditing(!isEditing)}
-              className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-3 sm:px-6 py-2 sm:py-3 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-1 sm:gap-2 text-sm sm:text-base w-full sm:w-auto justify-center"
+              className={`bg-gradient-to-r from-blue-500 to-purple-500 text-white px-3 sm:px-6 py-2 sm:py-3 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 hover:rotate-1 shadow-lg font-semibold flex items-center gap-1 sm:gap-2 text-sm sm:text-base w-full sm:w-auto justify-center group ${isVisible ? animationClasses.fadeInRight + ' animation-delay-450' : 'opacity-0 translate-x-8'}`}
             >
-              <FaEdit className="w-4 h-4" />
+              <FaEdit className={`w-4 h-4 transition-transform duration-300 ${isEditing ? 'rotate-180' : ''} group-hover:${animationClasses.wiggle}`} />
               {isEditing ? 'Cancel Edit' : 'Edit Profile'}
             </button>
           </div>
@@ -1043,10 +1200,12 @@ export default function Profile() {
 
         {/* Edit Profile Form - show below profile card, push stats down when editing */}
         {isEditing && (
-          <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-              <FaEdit className="w-5 h-5 mr-2 text-blue-600" />
-              Edit Profile Information
+          <div className={`bg-white rounded-xl shadow-lg p-8 mb-6 ${animationClasses.slideInUp}`}>
+            <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center group">
+              <FaEdit className={`w-5 h-5 mr-2 text-blue-600 transition-transform duration-300 group-hover:${animationClasses.wiggle}`} />
+              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Edit Profile Information
+              </span>
             </h2>
             <form onSubmit={onSubmitForm} className="space-y-6">
               <div className="flex flex-col items-center mb-6">
@@ -1061,16 +1220,29 @@ export default function Profile() {
                   <>
                     <div className="flex flex-wrap gap-2 justify-center mt-2">
                       {defaultAvatars.map((url, idx) => (
-                        <button key={url} type="button" onClick={() => setFormData({ ...formData, avatar: url })} className={`w-12 h-12 rounded-full border-2 ${formData.avatar === url ? 'border-blue-500' : 'border-gray-300'} focus:outline-none focus:ring-2 focus:ring-blue-400`}>
-                          <img src={url} alt={`Avatar ${idx+1}`} className="w-full h-full rounded-full object-cover" />
+                        <button 
+                          key={url} 
+                          type="button" 
+                          onClick={() => setFormData({ ...formData, avatar: url })} 
+                          className={`w-12 h-12 rounded-full border-2 transition-all duration-300 transform hover:scale-110 hover:shadow-lg ${formData.avatar === url ? 'border-blue-500 shadow-lg scale-105' : 'border-gray-300 hover:border-blue-400'} focus:outline-none focus:ring-2 focus:ring-blue-400 ${animationClasses.bounceIn} animation-delay-${idx * 50}`}
+                        >
+                          <img 
+                            src={url} 
+                            alt={`Avatar ${idx+1}`} 
+                            className="w-full h-full rounded-full object-cover transition-all duration-300 hover:brightness-110" 
+                          />
                         </button>
                       ))}
-                      <label className="w-12 h-12 rounded-full border-2 border-gray-300 flex items-center justify-center cursor-pointer bg-gray-100 hover:bg-gray-200">
+                      <label className={`w-12 h-12 rounded-full border-2 border-gray-300 flex items-center justify-center cursor-pointer bg-gray-100 hover:bg-gray-200 transition-all duration-300 transform hover:scale-110 hover:shadow-lg hover:border-blue-400 group ${animationClasses.bounceIn} animation-delay-${defaultAvatars.length * 50}`}>
                         <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
-                        <FaEdit className="text-gray-500" />
+                        <FaEdit className={`text-gray-500 group-hover:text-blue-500 transition-colors duration-300 group-hover:${animationClasses.wiggle}`} />
                       </label>
-                      <button type="button" onClick={() => setFormData({ ...formData, avatar: "" })} className="w-12 h-12 rounded-full border-2 border-red-400 flex items-center justify-center bg-red-50 hover:bg-red-100">
-                        <FaTrash className="text-red-500" />
+                      <button 
+                        type="button" 
+                        onClick={() => setFormData({ ...formData, avatar: "" })} 
+                        className={`w-12 h-12 rounded-full border-2 border-red-400 flex items-center justify-center bg-red-50 hover:bg-red-100 transition-all duration-300 transform hover:scale-110 hover:shadow-lg hover:border-red-500 group ${animationClasses.bounceIn} animation-delay-${(defaultAvatars.length + 1) * 50}`}
+                      >
+                        <FaTrash className={`text-red-500 group-hover:text-red-600 transition-colors duration-300 group-hover:${animationClasses.wiggle}`} />
                       </button>
                     </div>
                     {/* DiceBear Avatar Customization */}
@@ -1345,95 +1517,109 @@ export default function Profile() {
 
         {/* Stats Section - show below profile card if not editing, below edit form if editing */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div className="bg-white rounded-xl shadow-lg p-6 text-center">
-            <div className="bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
-              <FaHome className="w-6 h-6 text-blue-600" />
+          <div className={`bg-white rounded-xl shadow-lg p-6 text-center group hover:shadow-2xl transition-all duration-500 hover:scale-105 hover:-translate-y-2 ${isVisible ? animationClasses.scaleIn + ' animation-delay-450' : 'opacity-0 scale-95'}`}>
+            <div className={`bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-200 transition-all duration-300 ${animationClasses.float} group-hover:scale-110`}>
+              <FaHome className="w-6 h-6 text-blue-600 group-hover:text-blue-700 transition-colors duration-300" />
             </div>
-            <h3 className="text-2xl font-bold text-gray-800">{userStats.listings}</h3>
-            <p className="text-gray-600">My Listings</p>
+            <h3 className="text-2xl font-bold text-gray-800 group-hover:text-blue-600 transition-colors duration-300">
+              {statsAnimated ? <AnimatedCounter end={userStats.listings} delay={500} /> : userStats.listings}
+            </h3>
+            <p className="text-gray-600 group-hover:text-blue-500 transition-colors duration-300">My Listings</p>
           </div>
-          <div className="bg-white rounded-xl shadow-lg p-6 text-center">
-            <div className="bg-green-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
-              <FaCalendarAlt className="w-6 h-6 text-green-600" />
+          <div className={`bg-white rounded-xl shadow-lg p-6 text-center group hover:shadow-2xl transition-all duration-500 hover:scale-105 hover:-translate-y-2 ${isVisible ? animationClasses.scaleIn + ' animation-delay-600' : 'opacity-0 scale-95'}`}>
+            <div className={`bg-green-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-green-200 transition-all duration-300 ${animationClasses.float} group-hover:scale-110`}>
+              <FaCalendarAlt className="w-6 h-6 text-green-600 group-hover:text-green-700 transition-colors duration-300" />
             </div>
-            <h3 className="text-2xl font-bold text-gray-800">{userStats.appointments}</h3>
-            <p className="text-gray-600">Appointments</p>
+            <h3 className="text-2xl font-bold text-gray-800 group-hover:text-green-600 transition-colors duration-300">
+              {statsAnimated ? <AnimatedCounter end={userStats.appointments} delay={650} /> : userStats.appointments}
+            </h3>
+            <p className="text-gray-600 group-hover:text-green-500 transition-colors duration-300">Appointments</p>
           </div>
-          <div className="bg-white rounded-xl shadow-lg p-6 text-center">
-            <div className="bg-red-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
-              <FaHeart className="w-6 h-6 text-red-600" />
+          <div className={`bg-white rounded-xl shadow-lg p-6 text-center group hover:shadow-2xl transition-all duration-500 hover:scale-105 hover:-translate-y-2 ${isVisible ? animationClasses.scaleIn + ' animation-delay-750' : 'opacity-0 scale-95'}`}>
+            <div className={`bg-red-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-red-200 transition-all duration-300 ${animationClasses.heartbeat} group-hover:scale-110`}>
+              <FaHeart className="w-6 h-6 text-red-600 group-hover:text-red-700 transition-colors duration-300" />
             </div>
-            <h3 className="text-2xl font-bold text-gray-800">{userStats.wishlist}</h3>
-            <p className="text-gray-600">Wishlist Items</p>
+            <h3 className="text-2xl font-bold text-gray-800 group-hover:text-red-600 transition-colors duration-300">
+              {statsAnimated ? <AnimatedCounter end={userStats.wishlist} delay={800} /> : userStats.wishlist}
+            </h3>
+            <p className="text-gray-600 group-hover:text-red-500 transition-colors duration-300">Wishlist Items</p>
           </div>
         </div>
 
         {/* Quick Actions Section */}
-        <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Quick Actions</h2>
+        <div className={`bg-white rounded-xl shadow-lg p-8 mb-6 ${isVisible ? animationClasses.fadeInUp + ' animation-delay-300' : 'opacity-0 translate-y-8'}`}>
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">
+            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Quick Actions
+            </span>
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
             <button
               onClick={handleShowListings}
-              className="bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600 transition-colors flex flex-col items-center"
+              className={`bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600 transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 hover:shadow-lg flex flex-col items-center group ${animationClasses.bounceIn} animation-delay-450`}
             >
-              <FaHome className="w-5 h-5 mb-1" />
+              <FaHome className={`w-5 h-5 mb-1 transition-transform duration-300 group-hover:${animationClasses.bounce}`} />
               <span className="font-medium text-sm">My Listings</span>
             </button>
             
             <Link
               to={(currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? "/admin/appointments" : "/user/my-appointments"}
-              className="bg-green-500 text-white p-3 rounded-lg hover:bg-green-600 transition-colors flex flex-col items-center"
+              className={`bg-green-500 text-white p-3 rounded-lg hover:bg-green-600 transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 hover:shadow-lg flex flex-col items-center group ${animationClasses.bounceIn} animation-delay-600`}
             >
-              <FaCalendarAlt className="w-5 h-5 mb-1" />
+              <FaCalendarAlt className={`w-5 h-5 mb-1 transition-transform duration-300 group-hover:${animationClasses.bounce}`} />
               <span className="font-medium text-sm">{(currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? 'Appointments' : 'My Appointments'}</span>
             </Link>
             
             <Link
               to={(currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? "/admin/wishlist" : "/user/wishlist"}
-              className="bg-red-500 text-white p-3 rounded-lg hover:bg-red-600 transition-colors flex flex-col items-center"
+              className={`bg-red-500 text-white p-3 rounded-lg hover:bg-red-600 transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 hover:shadow-lg flex flex-col items-center group ${animationClasses.bounceIn} animation-delay-750`}
             >
-              <FaHeart className="w-5 h-5 mb-1" />
+              <FaHeart className={`w-5 h-5 mb-1 transition-transform duration-300 group-hover:${animationClasses.heartbeat}`} />
               <span className="font-medium text-sm">My Wishlist</span>
             </Link>
             
             <Link
               to={(currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? "/admin/reviews" : "/user/reviews"}
-              className="bg-yellow-500 text-white p-3 rounded-lg hover:bg-yellow-600 transition-colors flex flex-col items-center"
+              className={`bg-yellow-500 text-white p-3 rounded-lg hover:bg-yellow-600 transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 hover:shadow-lg flex flex-col items-center group ${animationClasses.bounceIn} animation-delay-900`}
             >
-              <FaStar className="w-5 h-5 mb-1" />
+              <FaStar className={`w-5 h-5 mb-1 transition-transform duration-300 group-hover:${animationClasses.pulse}`} />
               <span className="font-medium text-sm">{(currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? 'Reviews' : 'My Reviews'}</span>
             </Link>
           </div>
         </div>
 
         {/* Account Management Section */}
-        <div className="bg-white rounded-xl shadow-lg p-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Account Management</h2>
+        <div className={`bg-white rounded-xl shadow-lg p-8 ${isVisible ? animationClasses.fadeInUp + ' animation-delay-600' : 'opacity-0 translate-y-8'}`}>
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">
+            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Account Management
+            </span>
+          </h2>
           
           <div className="space-y-4">
             <button
               onClick={() => navigate((currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? '/admin/change-password' : '/user/change-password')}
-              className="w-full bg-purple-500 text-white px-6 py-3 rounded-lg hover:bg-purple-600 transition-colors flex items-center justify-center font-semibold"
+              className={`w-full bg-purple-500 text-white px-6 py-3 rounded-lg hover:bg-purple-600 transition-all duration-300 transform hover:scale-105 hover:shadow-lg flex items-center justify-center font-semibold group ${animationClasses.slideInUp} animation-delay-750`}
             >
-              <FaKey className="w-4 h-4 mr-2" />
+              <FaKey className={`w-4 h-4 mr-2 transition-transform duration-300 group-hover:${animationClasses.wiggle}`} />
               Change Password
             </button>
             
             {(currentUser.role === 'admin' || currentUser.role === 'rootadmin') && (
               <button
                 onClick={() => navigate('/admin/management')}
-                className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center font-semibold"
+                className={`w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 hover:shadow-lg flex items-center justify-center font-semibold group ${animationClasses.slideInUp} animation-delay-900`}
               >
-                Accounts
+                <span className="group-hover:animate-pulse">Accounts</span>
               </button>
             )}
               
             {currentUser.isDefaultAdmin && (
               <button
                 onClick={onShowTransferModal}
-                className="w-full bg-yellow-500 text-white px-6 py-3 rounded-lg hover:bg-yellow-600 transition-colors flex items-center justify-center font-semibold"
+                className={`w-full bg-yellow-500 text-white px-6 py-3 rounded-lg hover:bg-yellow-600 transition-all duration-300 transform hover:scale-105 hover:shadow-lg flex items-center justify-center font-semibold group ${animationClasses.slideInUp} animation-delay-1050`}
               >
-                <FaCrown className="w-4 h-4 mr-2" />
+                <FaCrown className={`w-4 h-4 mr-2 transition-transform duration-300 group-hover:${animationClasses.bounce} text-yellow-200`} />
                 Transfer Rights
               </button>
             )}
@@ -1459,17 +1645,17 @@ export default function Profile() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <button
                 onClick={onHandleSignout}
-                className="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors flex items-center justify-center font-semibold"
+                className={`bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-all duration-300 transform hover:scale-105 hover:shadow-lg flex items-center justify-center font-semibold group ${animationClasses.slideInUp} animation-delay-1200`}
               >
-                <FaSignOutAlt className="w-4 h-4 mr-2" />
+                <FaSignOutAlt className={`w-4 h-4 mr-2 transition-transform duration-300 group-hover:-translate-x-1`} />
                 Sign Out
               </button>
               
               <button
                 onClick={onHandleDelete}
-                className="bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 transition-colors flex items-center justify-center font-semibold"
+                className={`bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 transition-all duration-300 transform hover:scale-105 hover:shadow-lg flex items-center justify-center font-semibold group ${animationClasses.slideInUp} animation-delay-1350`}
               >
-                <FaTrash className="w-4 h-4 mr-2" />
+                <FaTrash className={`w-4 h-4 mr-2 transition-transform duration-300 group-hover:${animationClasses.wiggle}`} />
                 Delete Account
               </button>
             </div>
@@ -1479,8 +1665,8 @@ export default function Profile() {
 
       {/* Admin Selection Modal */}
       {showAdminModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[80vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-[fadeIn_0.3s_ease-out]">
+          <div className={`bg-white rounded-xl shadow-xl max-w-md w-full max-h-[80vh] overflow-y-auto ${animationClasses.scaleIn}`}>
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-bold text-gray-800">Transfer Default Admin Rights</h3>
@@ -1558,8 +1744,8 @@ export default function Profile() {
       )}
 
       {showPasswordModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
+        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-[fadeIn_0.3s_ease-out]">
+          <div className={`bg-white rounded-xl shadow-xl max-w-md w-full ${animationClasses.scaleIn}`}>
             <div className="p-6">
               <h3 className="text-xl font-bold text-gray-800 mb-4">Confirm Account Deletion</h3>
               <p className="mb-4 text-gray-600">Please enter your password to confirm account deletion. This action cannot be undone.</p>
@@ -1590,8 +1776,8 @@ export default function Profile() {
       )}
 
       {showTransferPasswordModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
+        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-[fadeIn_0.3s_ease-out]">
+          <div className={`bg-white rounded-xl shadow-xl max-w-md w-full ${animationClasses.scaleIn}`}>
             <div className="p-6">
               <h3 className="text-xl font-bold text-gray-800 mb-4">Confirm Account Deletion</h3>
               <p className="mb-4 text-gray-600">Please enter your password to confirm account deletion after transferring default admin rights. This action cannot be undone.</p>
@@ -1624,8 +1810,8 @@ export default function Profile() {
 
       {/* Update Profile Password Modal */}
       {showUpdatePasswordModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
+        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-[fadeIn_0.3s_ease-out]">
+          <div className={`bg-white rounded-xl shadow-xl max-w-md w-full ${animationClasses.scaleIn}`}>
             <div className="p-6">
               <h3 className="text-xl font-bold text-gray-800 mb-4">Confirm Profile Update</h3>
               <p className="mb-4 text-gray-600">Please enter your password to confirm the profile changes.</p>
@@ -1665,8 +1851,8 @@ export default function Profile() {
 
       {/* Transfer Rights Modal */}
       {showTransferModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[80vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-[fadeIn_0.3s_ease-out]">
+          <div className={`bg-white rounded-xl shadow-xl max-w-md w-full max-h-[80vh] overflow-y-auto ${animationClasses.scaleIn}`}>
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-bold text-gray-800">Transfer Root Admin Rights</h3>
