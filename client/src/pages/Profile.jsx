@@ -1721,7 +1721,7 @@ export default function Profile() {
                     onChange={e => setTransferPassword(e.target.value)}
                   />
                   {transferError && <div className="text-red-600 text-sm mt-2">{transferError}</div>}
-                  <div className="flex justify-end space-x-3">
+                  <div className="flex justify-end space-x-3 mt-6">
                     <button
                       type="button"
                       onClick={() => setShowTransferModal(false)}
