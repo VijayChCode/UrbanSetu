@@ -252,7 +252,7 @@ export default function MyAppointments() {
         return;
       }
       if (res.ok) {
-        setAppointments(prev) =>
+        setAppointments((prev) =>
           prev.map((appt) => (appt._id === appointmentToHandle ? { ...appt, status: "deletedByAdmin", adminComment: deleteReason } : appt))
         );
         toast.success("Appointment deleted successfully. Both buyer and seller have been notified.", {
