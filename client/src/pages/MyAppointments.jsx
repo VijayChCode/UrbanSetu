@@ -211,7 +211,7 @@ export default function MyAppointments() {
         );
         const statusText = status === "accepted" ? "accepted" : "rejected";
         toast.success(`Appointment ${statusText} successfully! ${status === "accepted" ? "Contact information is now visible to both parties." : ""}`, {
-          autoClose: 5000,
+          autoClose: 3000,
           closeOnClick: true,
           pauseOnHover: false,
           draggable: false
@@ -252,7 +252,7 @@ export default function MyAppointments() {
         return;
       }
       if (res.ok) {
-        setAppointments((prev) =>
+        setAppointments(prev) =>
           prev.map((appt) => (appt._id === appointmentToHandle ? { ...appt, status: "deletedByAdmin", adminComment: deleteReason } : appt))
         );
         toast.success("Appointment deleted successfully. Both buyer and seller have been notified.", {
