@@ -2030,23 +2030,21 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
               </div>
             ) : (
               <>
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 rounded-t-3xl relative">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-white rounded-full p-1 sm:p-1.5 shadow-lg flex-shrink-0">
-                      <FaCommentDots className="text-blue-600 text-base sm:text-lg" />
-                    </div>
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 min-w-0 flex-1">
-                      <h3 className="text-base sm:text-lg font-bold text-white truncate">Live Chat</h3>
-                      {/* Status badges - shown inline on desktop, below title on mobile */}
-                      <div className="sm:hidden">
-                        {isOtherPartyTyping ? (
-                          <span className="text-yellow-100 font-semibold text-xs bg-yellow-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">Typing...</span>
-                        ) : isOtherPartyOnline ? (
-                          <span className="text-green-100 font-semibold text-xs bg-green-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">Online</span>
-                        ) : (
-                          <span className="text-gray-100 font-semibold text-xs bg-gray-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">Offline</span>
-                        )}
-                      </div>
+                <div className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 rounded-t-3xl relative">
+                  <div className="bg-white rounded-full p-1 sm:p-1.5 shadow-lg flex-shrink-0">
+                    <FaCommentDots className="text-blue-600 text-base sm:text-lg" />
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 min-w-0 flex-1">
+                    <h3 className="text-base sm:text-lg font-bold text-white truncate">Live Chat</h3>
+                    {/* Status badges - shown inline on desktop, below title on mobile */}
+                    <div className="sm:hidden">
+                      {isOtherPartyTyping ? (
+                        <span className="text-yellow-100 font-semibold text-xs bg-yellow-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">Typing...</span>
+                      ) : isOtherPartyOnline ? (
+                        <span className="text-green-100 font-semibold text-xs bg-green-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">Online</span>
+                      ) : (
+                        <span className="text-gray-100 font-semibold text-xs bg-gray-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">Offline</span>
+                      )}
                     </div>
                   </div>
                   {/* Status badges - shown inline on desktop only */}
