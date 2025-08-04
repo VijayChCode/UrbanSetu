@@ -1191,6 +1191,14 @@ function AdminAppointmentRow({
           }
         });
         
+        // If the message was deleted and was unread, reduce unread count
+        if (data.comment.deleted && data.comment.senderEmail !== currentUser.email) {
+          const wasUnread = !data.comment.readBy?.includes(currentUser._id);
+          if (wasUnread) {
+            setUnreadNewMessages(prev => Math.max(0, prev - 1));
+          }
+        }
+        
         // Auto-scroll for incoming messages if user is at bottom
         if (showChatModal && data.comment.senderEmail !== currentUser.email) {
           // Mark as read if chat is open

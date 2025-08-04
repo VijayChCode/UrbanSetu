@@ -1591,6 +1591,14 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
           }
         });
         
+        // If the message was deleted and was unread, reduce unread count
+        if (data.comment.deleted && data.comment.senderEmail !== currentUser.email) {
+          const wasUnread = !data.comment.readBy?.includes(currentUser._id);
+          if (wasUnread) {
+            setUnreadNewMessages(prev => Math.max(0, prev - 1));
+          }
+        }
+        
         // Auto-scroll for incoming messages if user is at bottom
         if (showChatModal && data.comment.senderEmail !== currentUser.email) {
           // Mark as read if chat is open
@@ -1673,8 +1681,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     };
   }, [appt._id, setComments]);
 
-  // Calculate unread messages for the current user
-  const unreadCount = comments.filter(c => !c.readBy?.includes(currentUser._id) && c.senderEmail !== currentUser.email).length;
+  // Calculate unread messages for the current user (excluding locally removed messages)
+  const locallyRemovedIds = getLocallyRemovedIds(appt._id);
+  const unreadCount = comments.filter(c => 
+    !c.readBy?.includes(currentUser._id) && 
+    c.senderEmail !== currentUser.email &&
+    !locallyRemovedIds.includes(c._id)
+  ).length;
 
   useEffect(() => {
     if (showChatModal) {
@@ -1692,7 +1705,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const clearTimeKey = `chatClearTime_${appt._id}`;
   const clearTime = Number(localStorage.getItem(clearTimeKey)) || 0;
   // Filter out locally removed deleted messages
-  const locallyRemovedIds = getLocallyRemovedIds(appt._id);
   const filteredComments = comments.filter(c => new Date(c.timestamp).getTime() > clearTime && !locallyRemovedIds.includes(c._id));
 
 
