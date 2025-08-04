@@ -173,7 +173,7 @@ io.on('connection', (socket) => {
     socket.onlineTimeout = setTimeout(() => {
       onlineUsers.delete(userId);
       io.emit('userOnlineUpdate', { userId, online: false });
-    }, 5000); // 5 seconds of inactivity = offline
+    }, 2000); // 2 seconds of inactivity = offline
   });
 
   // Listen for online status checks
