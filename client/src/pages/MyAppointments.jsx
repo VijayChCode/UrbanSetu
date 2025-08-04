@@ -2338,7 +2338,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   </div>
                 )}
                 
-                <div className="flex gap-3 mt-2 px-4 pb-3">
+                <div className="flex gap-2 mt-1 px-3 pb-2">
                   <input
                     type="text"
                     className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-full text-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-400 shadow-lg transition-all duration-200 bg-white"
