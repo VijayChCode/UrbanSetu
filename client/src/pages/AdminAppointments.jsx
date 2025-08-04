@@ -1191,9 +1191,14 @@ function AdminAppointmentRow({
           }
         });
         
-        // If the message was deleted and was unread, reduce unread count
+        // If the message was deleted and was from another user, reduce unread count
         if (data.comment.deleted && data.comment.senderEmail !== currentUser.email) {
-          const wasUnread = !data.comment.readBy?.includes(currentUser._id);
+          // Check if this message was previously unread by looking at the existing message
+          const existingMessage = localComments.find(c => c._id === data.comment._id);
+          const wasUnread = existingMessage && 
+                           !existingMessage.readBy?.includes(currentUser._id) && 
+                           existingMessage.senderEmail !== currentUser.email;
+          
           if (wasUnread) {
             setUnreadNewMessages(prev => Math.max(0, prev - 1));
           }
