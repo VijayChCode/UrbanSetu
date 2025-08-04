@@ -15,7 +15,7 @@ A full-stack real estate management application built with MERN stack (MongoDB, 
 
 ### Admin Features
 - **Admin Approval System**: New admin signups require approval from the default admin only
-- **Default Admin**: Pre-configured admin account with exclusive approval privileges
+- **Default Admin**: Pre-configured admin account with exclusive approval privilegess
 - Property management (create, edit, delete)
 - Appointment management with status updates
 - User management
