@@ -1996,7 +1996,7 @@ function AdminAppointmentRow({
                 </div>
               )}
               
-              <div className="flex gap-3 mt-4 px-6 pb-6">
+              <div className="flex gap-3 mt-2 px-4 pb-3">
                 <input
                   type="text"
                   className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-full text-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-400 shadow-lg transition-all duration-200 bg-white"
