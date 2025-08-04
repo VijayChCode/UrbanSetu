@@ -2138,7 +2138,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                       title="Close"
                       aria-label="Close"
                     >
-                      &times;
+                      <FaTimes className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
@@ -2347,7 +2347,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                     <div className="flex items-center bg-blue-50 border-l-4 border-blue-400 px-2 py-1 rounded">
                       <span className="text-xs text-gray-700 font-semibold mr-2">Replying to:</span>
                       <span className="text-xs text-gray-600 truncate max-w-[200px]">{replyTo.message?.substring(0, 40)}{replyTo.message?.length > 40 ? '...' : ''}</span>
-                      <button className="ml-auto text-gray-400 hover:text-gray-700" onClick={() => setReplyTo(null)} title="Cancel reply">&times;</button>
+                      <button className="ml-auto text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-1 transition-colors" onClick={() => setReplyTo(null)} title="Cancel reply">
+                        <FaTimes className="w-3 h-3" />
+                      </button>
                     </div>
                   </div>
                 )}
@@ -2359,14 +2361,16 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                       <span className="text-xs text-yellow-700 font-semibold mr-2">✏️ Editing message:</span>
                       <span className="text-xs text-yellow-600 truncate">{editText}</span>
                       <button 
-                        className="ml-auto text-yellow-400 hover:text-yellow-700" 
+                        className="ml-auto text-yellow-400 hover:text-yellow-700 bg-yellow-100 hover:bg-yellow-200 rounded-full p-1 transition-colors" 
                         onClick={() => { 
                           setEditingComment(null); 
                           setEditText(""); 
                           setComment(""); 
                         }} 
                         title="Cancel edit"
-                      >&times;</button>
+                      >
+                        <FaTimes className="w-3 h-3" />
+                      </button>
                     </div>
                   </div>
                 )}

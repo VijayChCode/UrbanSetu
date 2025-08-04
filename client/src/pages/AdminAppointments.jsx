@@ -1650,11 +1650,11 @@ function AdminAppointmentRow({
           <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-xs relative flex flex-col items-center">
               <button
-                className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-2xl"
+                className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors"
                 onClick={() => setShowPasswordModal(false)}
                 title="Close"
               >
-                &times;
+                <FaTimes className="w-4 h-4" />
               </button>
               <h3 className="text-lg font-bold mb-4 text-blue-700 flex items-center gap-2">
                 <FaUserShield /> Admin Password Required
@@ -1711,7 +1711,7 @@ function AdminAppointmentRow({
                     title="Close"
                     aria-label="Close"
                   >
-                    &times;
+                    <FaTimes className="w-4 h-4" />
                   </button>
                 </div>
               </div>
@@ -1993,7 +1993,9 @@ function AdminAppointmentRow({
                     <div className="flex items-center bg-blue-50 border-l-4 border-blue-400 px-2 py-1 rounded">
                       <span className="text-xs text-gray-700 font-semibold mr-2">Replying to:</span>
                       <span className="text-xs text-gray-600 truncate max-w-[200px]">{replyTo.message?.substring(0, 40)}{replyTo.message?.length > 40 ? '...' : ''}</span>
-                      <button className="ml-auto text-gray-400 hover:text-gray-700" onClick={() => setReplyTo(null)} title="Cancel reply">&times;</button>
+                      <button className="ml-auto text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-1 transition-colors" onClick={() => setReplyTo(null)} title="Cancel reply">
+                        <FaTimes className="w-3 h-3" />
+                      </button>
                     </div>
                   </div>
                 )}
@@ -2005,14 +2007,16 @@ function AdminAppointmentRow({
                     <span className="text-xs text-yellow-700 font-semibold mr-2">✏️ Editing message:</span>
                     <span className="text-xs text-yellow-600 truncate">{editText}</span>
                     <button 
-                      className="ml-auto text-yellow-400 hover:text-yellow-700" 
+                      className="ml-auto text-yellow-400 hover:text-yellow-700 bg-yellow-100 hover:bg-yellow-200 rounded-full p-1 transition-colors" 
                       onClick={() => { 
                         setEditingComment(null); 
                         setEditText(""); 
                         setNewComment(""); 
                       }} 
                       title="Cancel edit"
-                    >&times;</button>
+                    >
+                      <FaTimes className="w-3 h-3" />
+                    </button>
                   </div>
                 </div>
               )}
