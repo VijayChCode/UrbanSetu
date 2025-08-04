@@ -1983,7 +1983,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         </td>
         <td className="border p-2 text-center relative">
           <button
-            className={`flex items-center justify-center rounded-full p-3 shadow-lg mx-auto relative transform transition-all duration-200 group ${
+            className={`px-4 py-2 rounded-lg mx-auto relative transform transition-all duration-200 group ${
               isChatDisabled 
                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-50' 
                 : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white hover:shadow-xl hover:scale-105'
@@ -2000,10 +2000,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
             onClick={isChatDisabled ? undefined : () => setShowChatModal(true)}
             disabled={isChatDisabled}
           >
-            <FaCommentDots size={22} className={!isChatDisabled ? "group-hover:animate-pulse" : ""} />
-            {!isChatDisabled && (
-              <div className="absolute inset-0 bg-white rounded-full opacity-0 group-hover:opacity-20 transition-opacity duration-200"></div>
-            )}
+            <span className="text-sm font-medium">Chat</span>
             {/* Typing indicator - highest priority */}
             {isOtherPartyTyping && !isChatDisabled && (
               <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-bold border-2 border-white animate-pulse">
@@ -2058,30 +2055,42 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
             ) : (
               <>
                 <div className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 rounded-t-3xl relative">
-                  <div className="bg-white rounded-full p-1 sm:p-1.5 shadow-lg flex-shrink-0">
-                    <FaCommentDots className="text-blue-600 text-base sm:text-lg" />
+                  <div 
+                    className="bg-white rounded-full p-1 sm:p-1.5 shadow-lg flex-shrink-0 cursor-pointer hover:scale-105 transition-transform duration-200"
+                    onClick={() => onShowOtherParty(otherParty)}
+                    title="Click to view user details"
+                  >
+                    {otherParty?.avatar ? (
+                      <img 
+                        src={otherParty.avatar} 
+                        alt={otherParty.username || 'User'} 
+                        className="w-8 h-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center text-white font-semibold text-sm">
+                        {(otherParty?.username || 'U').charAt(0).toUpperCase()}
+                      </div>
+                    )}
                   </div>
                   <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 min-w-0 flex-1">
-                    <h3 className="text-base sm:text-lg font-bold text-white truncate">Live Chat</h3>
-                    {/* Status badges - shown inline on desktop, below title on mobile */}
-                    <div className="sm:hidden">
-                      {isOtherPartyTyping ? (
-                        <span className="text-yellow-100 font-semibold text-xs bg-yellow-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">Typing...</span>
-                      ) : isOtherPartyOnline ? (
-                        <span className="text-green-100 font-semibold text-xs bg-green-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">Online</span>
-                      ) : (
-                        <span className="text-gray-100 font-semibold text-xs bg-gray-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">Offline</span>
-                      )}
-                    </div>
-                    {/* Status badges - shown inline on desktop only */}
-                    <div className="hidden sm:block">
-                      {isOtherPartyTyping ? (
-                        <span className="text-yellow-100 font-semibold text-sm bg-yellow-500 bg-opacity-80 px-3 py-1 rounded-full">Typing...</span>
-                      ) : isOtherPartyOnline ? (
-                        <span className="text-green-100 font-semibold text-sm bg-green-500 bg-opacity-80 px-3 py-1 rounded-full">Online</span>
-                      ) : (
-                        <span className="text-gray-100 font-semibold text-sm bg-gray-500 bg-opacity-80 px-3 py-1 rounded-full">Offline</span>
-                      )}
+                    <div className="flex items-center gap-2">
+                      <h3 
+                        className="text-base sm:text-lg font-bold text-white truncate cursor-pointer hover:underline"
+                        onClick={() => onShowOtherParty(otherParty)}
+                        title="Click to view user details"
+                      >
+                        {otherParty?.username || 'Unknown User'}
+                      </h3>
+                      {/* Online status indicator */}
+                      <div className="flex items-center gap-1">
+                        {isOtherPartyTyping ? (
+                          <span className="text-yellow-100 font-semibold text-xs bg-yellow-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">Typing...</span>
+                        ) : isOtherPartyOnline ? (
+                          <span className="text-green-100 font-semibold text-xs bg-green-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">Online</span>
+                        ) : (
+                          <span className="text-gray-100 font-semibold text-xs bg-gray-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">Offline</span>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 sm:gap-4 ml-auto flex-shrink-0">
@@ -2188,23 +2197,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                 </span>
                               </div>
                             )}
-                            <div className="font-semibold mb-2 flex items-center gap-2 justify-start text-left">
-                              <span className={`truncate max-w-[120px] min-w-[60px] inline-block align-middle overflow-hidden text-ellipsis text-left ${
-                                isMe ? 'text-blue-100' : 'text-gray-700'
-                              }`}>
-                                {isMe ? "You" : (() => {
-                                  // Check if sender is admin by checking if senderEmail matches any admin user
-                                  // For now, we'll identify admin by checking if the message sender is neither buyer nor seller
-                                  const isSenderBuyer = c.senderEmail === appt.buyerId?.email;
-                                  const isSenderSeller = c.senderEmail === appt.sellerId?.email;
-                                  const isSenderAdmin = !isSenderBuyer && !isSenderSeller;
-                                  
-                                  if (isSenderAdmin) {
-                                    return "Organization";
-                                  }
-                                  return otherParty?.username || c.senderName || c.senderEmail;
-                                })()}
-                              </span>
+                            <div className="flex items-center justify-end mb-1">
                               <span className={`text-[10px] px-2 py-1 rounded-full flex-shrink-0 ${
                                 isMe ? 'text-blue-200 bg-blue-600 bg-opacity-30' : 'text-gray-500 bg-gray-100'
                               }`}>
