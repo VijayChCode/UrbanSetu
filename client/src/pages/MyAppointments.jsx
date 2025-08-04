@@ -1983,7 +1983,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         </td>
         <td className="border p-2 text-center relative">
           <button
-            className={`px-4 py-2 rounded-lg mx-auto relative transform transition-all duration-200 group ${
+            className={`flex items-center justify-center rounded-full p-3 shadow-lg mx-auto relative transform transition-all duration-200 group ${
               isChatDisabled 
                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-50' 
                 : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white hover:shadow-xl hover:scale-105'
@@ -2000,7 +2000,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
             onClick={isChatDisabled ? undefined : () => setShowChatModal(true)}
             disabled={isChatDisabled}
           >
-            <span className="text-sm font-medium">Chat</span>
+            <FaCommentDots size={22} className={!isChatDisabled ? "group-hover:animate-pulse" : ""} />
+            {!isChatDisabled && (
+              <div className="absolute inset-0 bg-white rounded-full opacity-0 group-hover:opacity-20 transition-opacity duration-200"></div>
+            )}
             {/* Typing indicator - highest priority */}
             {isOtherPartyTyping && !isChatDisabled && (
               <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-bold border-2 border-white animate-pulse">
