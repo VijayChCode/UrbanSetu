@@ -2036,11 +2036,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   </div>
                   <h3 className="text-lg font-bold text-white">Live Chat</h3>
                   {isOtherPartyTyping ? (
-                    <span className="ml-3 text-yellow-200 font-semibold text-sm bg-yellow-600 bg-opacity-30 px-3 py-1 rounded-full">Typing...</span>
+                    <span className="ml-3 text-yellow-100 font-semibold text-sm bg-yellow-500 bg-opacity-80 px-3 py-1 rounded-full">Typing...</span>
                   ) : isOtherPartyOnline ? (
-                    <span className="ml-3 text-green-200 font-semibold text-sm bg-green-600 bg-opacity-30 px-3 py-1 rounded-full">Online</span>
+                    <span className="ml-3 text-green-100 font-semibold text-sm bg-green-500 bg-opacity-80 px-3 py-1 rounded-full">Online</span>
                   ) : (
-                    <span className="ml-3 text-gray-200 font-semibold text-sm bg-gray-600 bg-opacity-30 px-3 py-1 rounded-full">Offline</span>
+                    <span className="ml-3 text-gray-100 font-semibold text-sm bg-gray-500 bg-opacity-80 px-3 py-1 rounded-full">Offline</span>
                   )}
                   <div className="flex items-center gap-3 ml-auto">
                     {filteredComments.length > 0 && (
@@ -2122,7 +2122,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           <div
                             ref={el => messageRefs.current[c._id] = el}
                             data-message-id={c._id}
-                            className={`rounded-2xl px-5 py-3 text-sm shadow-xl max-w-[60%] break-words relative transform hover:scale-[1.02] transition-transform duration-200 ${
+                            className={`rounded-2xl px-5 py-3 text-sm shadow-xl max-w-[60%] break-words relative transform hover:scale-[1.02] transition-transform duration-200 min-h-[60px] ${
                               isMe 
                                 ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-blue-200' 
                                 : 'bg-white text-gray-800 border border-gray-200 shadow-gray-200 hover:shadow-gray-300'
@@ -2203,17 +2203,19 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               )}
                             </div>
                             <div className="flex items-center gap-2 justify-end mt-2" data-message-actions>
-                              {/* Options icon - always visible */}
-                              <button
-                                className={`${isMe ? 'text-blue-200 hover:text-white' : 'text-gray-500 hover:text-gray-700'} transition-all duration-200 hover:scale-110 p-1 rounded-full hover:bg-white hover:bg-opacity-20`}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setVisibleActionsMessageId(visibleActionsMessageId === c._id ? null : c._id);
-                                }}
-                                title="Message options"
-                              >
-                                <FaEllipsisV size={isMe ? 16 : 14} />
-                              </button>
+                              {/* Options icon - only visible for non-deleted messages */}
+                              {!c.deleted && (
+                                <button
+                                  className={`${isMe ? 'text-blue-200 hover:text-white' : 'text-gray-500 hover:text-gray-700'} transition-all duration-200 hover:scale-110 p-1 rounded-full hover:bg-white hover:bg-opacity-20`}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setVisibleActionsMessageId(visibleActionsMessageId === c._id ? null : c._id);
+                                  }}
+                                  title="Message options"
+                                >
+                                  <FaEllipsisV size={isMe ? 16 : 14} />
+                                </button>
+                              )}
                               
                               {/* Action buttons - only visible when options are toggled */}
                               {visibleActionsMessageId === c._id && (
