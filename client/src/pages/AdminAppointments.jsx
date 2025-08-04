@@ -744,7 +744,15 @@ export default function AdminAppointments() {
       {showUserModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-2 sm:mx-4 max-h-[90vh] overflow-y-auto relative animate-fadeIn">
-
+            {/* Close button */}
+            <button
+              className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors z-10 shadow"
+              onClick={() => setShowUserModal(false)}
+              title="Close"
+              aria-label="Close"
+            >
+              <FaTimes className="w-4 h-4" />
+            </button>
 
             {userLoading ? (
               <div className="flex items-center justify-center p-8">

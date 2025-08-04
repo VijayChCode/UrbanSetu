@@ -745,10 +745,18 @@ export default function MyAppointments() {
       {/* Other Party Details Modal - Enhanced Design */}
       {showOtherPartyModal && selectedOtherParty && (
         <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-2 sm:mx-4 max-h-[90vh] overflow-y-auto relative animate-fadeIn">
-
-            
-            {/* Header with gradient background */}
+                      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-2 sm:mx-4 max-h-[90vh] overflow-y-auto relative animate-fadeIn">
+              {/* Close button */}
+              <button
+                className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors z-10 shadow"
+                onClick={() => setShowOtherPartyModal(false)}
+                title="Close"
+                aria-label="Close"
+              >
+                <FaTimes className="w-4 h-4" />
+              </button>
+              
+              {/* Header with gradient background */}
             <div className="flex flex-col items-center justify-center bg-gradient-to-r from-blue-100 to-purple-100 rounded-t-2xl px-6 py-6 border-b border-gray-200">
               <div className="flex items-center gap-4">
                 <div className="relative">
