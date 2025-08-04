@@ -974,6 +974,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     
     try {
       if (deleteForBoth) {
+        // Check if the message was unread by current user before deleting
+        const wasUnread = !messageToDelete.readBy?.includes(currentUser._id) && 
+                         messageToDelete.senderEmail !== currentUser.email;
+        
         // Delete for both users (existing logic)
         const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${messageToDelete._id}`, {
           method: 'DELETE',
@@ -988,6 +992,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
             }
             return newC;
           }));
+          
+          // Reduce unread count if the deleted message was unread
+          if (wasUnread) {
+            setUnreadNewMessages(prev => Math.max(0, prev - 1));
+          }
+          
           toast.success("Message deleted for everyone!");
         } else {
           toast.error(data.message || 'Failed to delete message.');
@@ -1043,11 +1053,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     setSending(true);
 
     // Scroll to bottom immediately after adding the message
-    setTimeout(() => {
-      if (chatEndRef.current) {
-        chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
-      }
-    }, 50);
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
 
     try {
       const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment`, {
