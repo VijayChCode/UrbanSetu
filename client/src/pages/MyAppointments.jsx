@@ -2046,16 +2046,16 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                         <span className="text-gray-100 font-semibold text-xs bg-gray-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">Offline</span>
                       )}
                     </div>
-                  </div>
-                  {/* Status badges - shown inline on desktop only */}
-                  <div className="hidden sm:block">
-                    {isOtherPartyTyping ? (
-                      <span className="text-yellow-100 font-semibold text-sm bg-yellow-500 bg-opacity-80 px-3 py-1 rounded-full">Typing...</span>
-                    ) : isOtherPartyOnline ? (
-                      <span className="text-green-100 font-semibold text-sm bg-green-500 bg-opacity-80 px-3 py-1 rounded-full">Online</span>
-                    ) : (
-                      <span className="text-gray-100 font-semibold text-sm bg-gray-500 bg-opacity-80 px-3 py-1 rounded-full">Offline</span>
-                    )}
+                    {/* Status badges - shown inline on desktop only */}
+                    <div className="hidden sm:block">
+                      {isOtherPartyTyping ? (
+                        <span className="text-yellow-100 font-semibold text-sm bg-yellow-500 bg-opacity-80 px-3 py-1 rounded-full">Typing...</span>
+                      ) : isOtherPartyOnline ? (
+                        <span className="text-green-100 font-semibold text-sm bg-green-500 bg-opacity-80 px-3 py-1 rounded-full">Online</span>
+                      ) : (
+                        <span className="text-gray-100 font-semibold text-sm bg-gray-500 bg-opacity-80 px-3 py-1 rounded-full">Offline</span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex items-center gap-1 sm:gap-3 ml-auto flex-shrink-0">
                     {filteredComments.length > 0 && (
