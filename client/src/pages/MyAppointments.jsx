@@ -1536,6 +1536,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   useEffect(() => {
     function handleCommentUpdateNotify(data) {
       if (data.appointmentId === appt._id && !showChatModal) {
+        // Don't show notification for deleted messages
+        if (data.comment.deleted) {
+          return;
+        }
+        
         // Check if sender is admin by checking if senderEmail matches any admin user
         const isSenderBuyer = data.comment.senderEmail === appt.buyerId?.email;
         const isSenderSeller = data.comment.senderEmail === appt.sellerId?.email;

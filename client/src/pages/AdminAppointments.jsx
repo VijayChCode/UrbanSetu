@@ -1146,6 +1146,11 @@ function AdminAppointmentRow({
   React.useEffect(() => {
     function handleCommentUpdateNotify(data) {
       if (data.appointmentId === appt._id && !showChatModal) {
+        // Don't show notification for deleted messages
+        if (data.comment.deleted) {
+          return;
+        }
+        
         toast.custom((t) => (
           <div className="bg-blue-600 text-white px-4 py-2 rounded shadow-lg flex items-center gap-2 animate-bounce-in">
             <FaCommentDots /> New message from {data.comment.senderEmail || 'User'}
