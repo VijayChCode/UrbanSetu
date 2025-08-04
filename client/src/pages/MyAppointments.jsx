@@ -2414,13 +2414,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
               <div className="absolute bottom-20 right-6 z-20">
                 <button
                   onClick={scrollToBottom}
-                  className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-full p-4 shadow-xl transition-all duration-200 hover:scale-110 relative transform hover:shadow-2xl"
+                  className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-full p-3 shadow-xl transition-all duration-200 hover:scale-110 relative transform hover:shadow-2xl"
                   title={unreadNewMessages > 0 ? `${unreadNewMessages} new message${unreadNewMessages > 1 ? 's' : ''}` : "Scroll to bottom"}
                   aria-label={unreadNewMessages > 0 ? `${unreadNewMessages} new messages, scroll to bottom` : "Scroll to bottom"}
                 >
                   <svg
-                    width="20"
-                    height="20"
+                    width="16"
+                    height="16"
                     viewBox="0 0 24 24"
                     fill="currentColor"
                     className="transform"
