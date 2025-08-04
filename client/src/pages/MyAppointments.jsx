@@ -921,19 +921,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     }
   }, [showShortcutTip]);
 
-  // Close action menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (visibleActionsMessageId && !event.target.closest('[data-message-actions]')) {
-        setVisibleActionsMessageId(null);
-      }
-    };
-
-    if (visibleActionsMessageId) {
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
-    }
-  }, [visibleActionsMessageId]);
+  // Removed handleClickOutside functionality - options now only close when clicking three dots again
 
   // Store locally removed deleted message IDs per appointment (move inside AppointmentRow)
   function getLocallyRemovedIds(apptId) {
