@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { FaTrash, FaSearch, FaPen, FaUser, FaEnvelope, FaCalendar, FaPhone, FaUserShield, FaArchive, FaUndo, FaCommentDots, FaCheck, FaCheckDouble, FaBan, FaTimes, FaLightbulb, FaCopy } from "react-icons/fa";
+import { FaTrash, FaSearch, FaPen, FaUser, FaEnvelope, FaCalendar, FaPhone, FaUserShield, FaArchive, FaUndo, FaCommentDots, FaCheck, FaCheckDouble, FaBan, FaTimes, FaLightbulb, FaCopy, FaEllipsisV } from "react-icons/fa";
 import UserAvatar from '../components/UserAvatar';
 import { useSelector } from "react-redux";
 import { useState as useLocalState } from "react";
@@ -921,6 +921,7 @@ function AdminAppointmentRow({
   const [isScrolling, setIsScrolling] = useLocalState(false);
   const [showShortcutTip, setShowShortcutTip] = useLocalState(false);
   const [hiddenMessageIds, setHiddenMessageIds] = useLocalState(() => getLocallyHiddenIds(appt._id));
+  const [visibleActionsMessageId, setVisibleActionsMessageId] = useLocalState(null);
   const scrollTimeoutRef = React.useRef(null);
 
   // Auto-close shortcut tip after 10 seconds
@@ -932,6 +933,20 @@ function AdminAppointmentRow({
       return () => clearTimeout(timer);
     }
   }, [showShortcutTip]);
+
+  // Close action menu when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (visibleActionsMessageId && !event.target.closest('[data-message-actions]')) {
+        setVisibleActionsMessageId(null);
+      }
+    };
+
+    if (visibleActionsMessageId) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [visibleActionsMessageId]);
 
   // Auto-scroll to bottom only when chat modal opens
   React.useEffect(() => {
@@ -1864,55 +1879,77 @@ function AdminAppointmentRow({
                             </div>
                           )}
                         </div>
-                        <div className="flex items-center gap-2 justify-end mt-1">
-                          {!c.deleted && (
+                        <div className="flex items-center gap-2 justify-end mt-1" data-message-actions>
+                          {/* Options icon - always visible */}
+                          <button
+                            className={`${c.senderEmail === currentUser.email ? 'text-gray-300 hover:text-gray-100' : 'text-gray-500 hover:text-gray-700'} transition-colors`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setVisibleActionsMessageId(visibleActionsMessageId === c._id ? null : c._id);
+                            }}
+                            title="Message options"
+                          >
+                            <FaEllipsisV size={12} />
+                          </button>
+                          
+                          {/* Action buttons - only visible when options are toggled */}
+                          {visibleActionsMessageId === c._id && (
                             <>
-                              <button
-                                className={`${c.senderEmail === currentUser.email ? 'text-yellow-500 hover:text-yellow-700' : 'text-blue-600 hover:text-blue-800'}`}
-                                onClick={() => { setReplyTo(c); inputRef.current?.focus(); }}
-                                title="Reply"
-                              >
-                                <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c4.28 0 6.92 1.45 8.84 4.55.23.36.76.09.65-.32C18.31 13.13 15.36 10.36 10 9z"/></svg>
-                              </button>
-                                                                                                                                                                                                                                                       <button
-                                   className={`${c.senderEmail === currentUser.email ? 'text-blue-400 hover:text-blue-300' : 'text-gray-600 hover:text-gray-800'}`}
-                                   onClick={() => {
-                                     console.log('Button clicked! Message:', c.message);
-                                     copyMessageToClipboard(c.message);
-                                   }}
-                                   title="Copy message"
-                                 >
-                                   <FaCopy size={14} />
-                                 </button>
+                              {!c.deleted && (
+                                <>
+                                  <button
+                                    className={`${c.senderEmail === currentUser.email ? 'text-yellow-500 hover:text-yellow-700' : 'text-blue-600 hover:text-blue-800'}`}
+                                    onClick={() => { setReplyTo(c); inputRef.current?.focus(); setVisibleActionsMessageId(null); }}
+                                    title="Reply"
+                                  >
+                                    <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c4.28 0 6.92 1.45 8.84 4.55.23.36.76.09.65-.32C18.31 13.13 15.36 10.36 10 9z"/></svg>
+                                  </button>
+                                  <button
+                                    className={`${c.senderEmail === currentUser.email ? 'text-blue-400 hover:text-blue-300' : 'text-gray-600 hover:text-gray-800'}`}
+                                    onClick={() => {
+                                      console.log('Button clicked! Message:', c.message);
+                                      copyMessageToClipboard(c.message);
+                                      setVisibleActionsMessageId(null);
+                                    }}
+                                    title="Copy message"
+                                  >
+                                    <FaCopy size={14} />
+                                  </button>
+                                </>
+                              )}
+                              {(c.senderEmail === currentUser.email) && !c.deleted && (
+                                <>
+                                  <button
+                                    onClick={() => { startEditing(c); setVisibleActionsMessageId(null); }}
+                                    className="text-green-800 hover:text-green-950"
+                                    title="Edit comment"
+                                    disabled={editingComment !== null} // Disable if already editing another message
+                                  >
+                                    <FaPen size={12} />
+                                  </button>
+                                  <button
+                                    className="text-red-700 hover:text-red-900"
+                                    onClick={() => { handleDeleteClick(c); setVisibleActionsMessageId(null); }}
+                                    title="Delete comment"
+                                  >
+                                    <FaTrash size={12} />
+                                  </button>
+                                </>
+                              )}
                             </>
                           )}
+                          
+                          {/* Read status indicator - always visible for sent messages */}
                           {(c.senderEmail === currentUser.email) && !c.deleted && (
-                            <>
-                              <button
-                                onClick={() => startEditing(c)}
-                                className="text-green-800 hover:text-green-950"
-                                title="Edit comment"
-                                disabled={editingComment !== null} // Disable if already editing another message
-                              >
-                                <FaPen size={12} />
-                              </button>
-                              <button
-                                className="text-red-700 hover:text-red-900"
-                                onClick={() => handleDeleteClick(c)}
-                                title="Delete comment"
-                              >
-                                <FaTrash size={12} />
-                              </button>
-                              <span className="ml-1">
-                                {c.readBy?.some(userId => userId !== currentUser._id)
-                                  ? <FaCheckDouble className="text-white inline" title="Read" />
-                                  : c.status === "delivered"
-                                    ? <FaCheckDouble className="text-white/70 inline" title="Delivered" />
-                                    : c.status === "sending"
-                                      ? <FaCheck className="text-white/50 inline animate-pulse" title="Sending..." />
-                                      : <FaCheck className="text-white/70 inline" title="Sent" />}
-                              </span>
-                            </>
+                            <span className="ml-1">
+                              {c.readBy?.some(userId => userId !== currentUser._id)
+                                ? <FaCheckDouble className="text-white inline" title="Read" />
+                                : c.status === "delivered"
+                                  ? <FaCheckDouble className="text-white/70 inline" title="Delivered" />
+                                  : c.status === "sending"
+                                    ? <FaCheck className="text-white/50 inline animate-pulse" title="Sending..." />
+                                    : <FaCheck className="text-white/70 inline" title="Sent" />}
+                            </span>
                           )}
                         </div>
                       </div>
