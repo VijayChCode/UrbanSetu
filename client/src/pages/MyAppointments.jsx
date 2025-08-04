@@ -2030,11 +2030,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
               </div>
             ) : (
               <>
-                <div className="flex items-center gap-3 px-8 py-6 border-b border-gray-200 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 rounded-t-3xl relative">
-                  <div className="bg-white rounded-full p-2 shadow-lg">
-                    <FaCommentDots className="text-blue-600 text-xl" />
+                <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 rounded-t-3xl relative">
+                  <div className="bg-white rounded-full p-1.5 shadow-lg">
+                    <FaCommentDots className="text-blue-600 text-lg" />
                   </div>
-                  <h3 className="text-xl font-bold text-white">Live Chat</h3>
+                  <h3 className="text-lg font-bold text-white">Live Chat</h3>
                   {isOtherPartyTyping ? (
                     <span className="ml-3 text-yellow-200 font-semibold text-sm bg-yellow-600 bg-opacity-30 px-3 py-1 rounded-full">Typing...</span>
                   ) : isOtherPartyOnline ? (
@@ -2124,7 +2124,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             data-message-id={c._id}
                             className={`rounded-2xl px-5 py-3 text-sm shadow-xl max-w-[60%] break-words relative transform hover:scale-[1.02] transition-transform duration-200 ${
                               isMe 
-                                ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-blue-200' 
+                                ? 'bg-gradient-to-r from-blue-400 to-blue-500 text-white shadow-blue-200' 
                                 : 'bg-white text-gray-800 border border-gray-200 shadow-gray-200 hover:shadow-gray-300'
                             }`}
                             style={{ animationDelay: `${0.03 * index}s` }}
@@ -2146,8 +2146,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                 </span>
                               </div>
                             )}
-                            <div className="font-semibold mb-2 flex items-center gap-2 flex-wrap break-all">
-                              <span className={`truncate max-w-[60%] min-w-[80px] inline-block align-middle overflow-hidden text-ellipsis ${
+                            <div className="font-semibold mb-2 flex items-center gap-2 justify-start text-left">
+                              <span className={`truncate max-w-[120px] min-w-[60px] inline-block align-middle overflow-hidden text-ellipsis text-left ${
                                 isMe ? 'text-blue-100' : 'text-gray-700'
                               }`}>
                                 {isMe ? "You" : (() => {
@@ -2163,7 +2163,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                   return otherParty?.username || c.senderName || c.senderEmail;
                                 })()}
                               </span>
-                              <span className={`ml-2 text-[10px] px-2 py-1 rounded-full ${
+                              <span className={`text-[10px] px-2 py-1 rounded-full flex-shrink-0 ${
                                 isMe ? 'text-blue-200 bg-blue-600 bg-opacity-30' : 'text-gray-500 bg-gray-100'
                               }`}>
                                 {new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
@@ -2186,7 +2186,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                   </button>
                                 </span>
                               ) : (
-                                <div>
+                                <div className={isMe ? 'text-base font-medium' : 'text-sm'}>
                                   {isEditing ? (
                                     <div className="bg-yellow-100 border-l-4 border-yellow-400 px-2 py-1 rounded">
                                       <span className="text-yellow-800 text-xs font-medium">✏️ Editing this message below...</span>
@@ -2212,7 +2212,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                 }}
                                 title="Message options"
                               >
-                                <FaEllipsisV size={14} />
+                                <FaEllipsisV size={isMe ? 16 : 14} />
                               </button>
                               
                               {/* Action buttons - only visible when options are toggled */}
@@ -2225,7 +2225,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                         onClick={() => { setReplyTo(c); inputRef.current?.focus(); setVisibleActionsMessageId(null); }}
                                         title="Reply"
                                       >
-                                        <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c4.28 0 6.92 1.45 8.84 4.55.23.36.76.09.65-.32C18.31 13.13 15.36 10.36 10 9z"/></svg>
+                                        <svg width={isMe ? "20" : "18"} height={isMe ? "20" : "18"} fill="currentColor" viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c4.28 0 6.92 1.45 8.84 4.55.23.36.76.09.65-.32C18.31 13.13 15.36 10.36 10 9z"/></svg>
                                       </button>
                                       <button
                                         className={`${isMe ? 'text-blue-300 hover:text-blue-100' : 'text-gray-600 hover:text-gray-800'} transition-all duration-200 hover:scale-110 p-1 rounded-full hover:bg-white hover:bg-opacity-20`}
@@ -2236,7 +2236,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                         }}
                                         title="Copy message"
                                       >
-                                        <FaCopy size={14} />
+                                        <FaCopy size={isMe ? 16 : 14} />
                                       </button>
                                     </>
                                   )}
@@ -2248,13 +2248,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                         title="Edit comment"
                                         disabled={editingComment !== null} // Disable if already editing another message
                                       >
-                                        <FaPen size={14} />
+                                        <FaPen size={16} />
                                       </button>
                                       <button
                                         className="text-red-300 hover:text-red-100 transition-all duration-200 hover:scale-110 p-1 rounded-full hover:bg-white hover:bg-opacity-20"
                                         onClick={() => { handleDeleteClick(c); setVisibleActionsMessageId(null); }}
                                       >
-                                        <FaTrash size={14} />
+                                        <FaTrash size={16} />
                                       </button>
                                     </>
                                   )}
