@@ -2073,7 +2073,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                     )}
                   </div>
                   <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
                       <h3 
                         className="text-base sm:text-lg font-bold text-white truncate cursor-pointer hover:underline"
                         onClick={() => onShowOtherParty(otherParty)}
@@ -2081,8 +2081,18 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                       >
                         {otherParty?.username || 'Unknown User'}
                       </h3>
-                      {/* Online status indicator */}
-                      <div className="flex items-center gap-1">
+                      {/* Online status indicator - below name on mobile, inline on desktop */}
+                      <div className="flex items-center gap-1 sm:hidden">
+                        {isOtherPartyTyping ? (
+                          <span className="text-yellow-100 font-semibold text-xs bg-yellow-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">Typing...</span>
+                        ) : isOtherPartyOnline ? (
+                          <span className="text-green-100 font-semibold text-xs bg-green-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">Online</span>
+                        ) : (
+                          <span className="text-gray-100 font-semibold text-xs bg-gray-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">Offline</span>
+                        )}
+                      </div>
+                      {/* Online status indicator - inline on desktop only */}
+                      <div className="hidden sm:flex items-center gap-1">
                         {isOtherPartyTyping ? (
                           <span className="text-yellow-100 font-semibold text-xs bg-yellow-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">Typing...</span>
                         ) : isOtherPartyOnline ? (
