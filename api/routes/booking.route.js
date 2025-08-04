@@ -132,8 +132,8 @@ router.get("/my", verifyToken, async (req, res) => {
     const bookings = await booking.find({
       $or: [{ buyerId: userId }, { sellerId: userId }]
     })
-    .populate('buyerId', 'username email mobileNumber')
-    .populate('sellerId', 'username email mobileNumber')
+    .populate('buyerId', 'username email mobileNumber avatar')
+    .populate('sellerId', 'username email mobileNumber avatar')
     .populate('listingId', '_id name address')
     .sort({ createdAt: -1 });
     
@@ -157,8 +157,8 @@ router.get("/my", verifyToken, async (req, res) => {
 router.get("/pending", async (req, res) => {
   try {
     const pendingBookings = await booking.find({ status: "pending" })
-      .populate('buyerId', 'username email mobileNumber')
-      .populate('sellerId', 'username email mobileNumber')
+      .populate('buyerId', 'username email mobileNumber avatar')
+      .populate('sellerId', 'username email mobileNumber avatar')
       .populate('listingId', '_id name address')
       .sort({ createdAt: -1 });
     res.status(200).json(pendingBookings);
@@ -188,8 +188,8 @@ router.patch('/:id/status', verifyToken, async (req, res) => {
       id,
       { status },
       { new: true }
-    ).populate('buyerId', 'username email mobileNumber')
-     .populate('sellerId', 'username email mobileNumber')
+    ).populate('buyerId', 'username email mobileNumber avatar')
+     .populate('sellerId', 'username email mobileNumber avatar')
      .populate('listingId', '_id name address');
 
     // --- NEW LOGIC: Update review for verified badge if booking is accepted/completed ---
