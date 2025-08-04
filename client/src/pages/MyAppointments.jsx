@@ -490,7 +490,7 @@ export default function MyAppointments() {
         .then(() => {
           toast.success('Copied', {
             autoClose: 2000,
-            position: 'bottom-right'
+            position: 'bottom-center'
           });
         })
         .catch(() => {
@@ -521,7 +521,7 @@ export default function MyAppointments() {
         console.log('Copy successful via fallback method');
         toast.success('Copied', {
           autoClose: 2000,
-          position: 'bottom-right'
+          position: 'bottom-center'
         });
       } else {
         console.error('Fallback copy failed');
