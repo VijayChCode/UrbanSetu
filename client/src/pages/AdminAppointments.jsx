@@ -1618,11 +1618,12 @@ function AdminAppointmentRow({
       </td>
       <td className="border p-2 text-center relative">
         <button
-          className="flex items-center justify-center bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-full p-2 shadow-md mx-auto relative"
+          className="flex items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-full p-3 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 mx-auto relative group"
           title="Open Chat"
           onClick={handleChatButtonClick}
         >
-          <FaCommentDots size={20} />
+          <FaCommentDots size={22} className="group-hover:animate-pulse" />
+          <div className="absolute inset-0 bg-white rounded-full opacity-0 group-hover:opacity-20 transition-opacity duration-200"></div>
         </button>
         {showPasswordModal && (
           <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
@@ -1659,11 +1660,13 @@ function AdminAppointmentRow({
           </div>
         )}
         {showChatModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-gradient-to-br from-blue-50 to-purple-100 rounded-2xl shadow-2xl w-full h-full max-w-6xl max-h-full p-0 relative animate-fadeIn flex flex-col">
-              <div className="flex items-center gap-2 px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-200 to-purple-200 rounded-t-2xl relative">
-                <FaCommentDots className="text-blue-600 text-xl" />
-                <h3 className="text-lg font-bold text-blue-800">Chat</h3>
+          <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-md flex items-center justify-center z-50 p-4">
+            <div className="bg-gradient-to-br from-white via-blue-50 to-purple-50 rounded-3xl shadow-2xl w-full h-full max-w-6xl max-h-full p-0 relative animate-fadeIn flex flex-col border border-gray-200">
+              <div className="flex items-center gap-3 px-8 py-6 border-b border-gray-200 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 rounded-t-3xl relative">
+                <div className="bg-white rounded-full p-2 shadow-lg">
+                  <FaCommentDots className="text-blue-600 text-xl" />
+                </div>
+                <h3 className="text-xl font-bold text-white">Live Chat</h3>
                 <div className="flex items-center gap-3 ml-auto">
                   <div className="relative">
                     <button
@@ -1728,11 +1731,15 @@ function AdminAppointmentRow({
                       <div className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-fadeInChatBubble`} style={{ animationDelay: `${0.03 * index}s` }}>
                       <div 
                         ref={el => messageRefs.current[c._id] = el}
-                        className={`rounded-2xl px-4 py-2 text-sm shadow-lg max-w-[80%] break-words relative ${isMe ? 'bg-gradient-to-r from-blue-400 to-blue-600 text-white' : 'bg-white text-gray-800 border border-gray-200'}`}
+                        className={`rounded-2xl px-5 py-3 text-sm shadow-xl max-w-[80%] break-words relative transform hover:scale-[1.02] transition-transform duration-200 ${
+                          isMe 
+                            ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-blue-200' 
+                            : 'bg-white text-gray-800 border border-gray-200 shadow-gray-200 hover:shadow-gray-300'
+                        }`}
                       >
                                                     {/* Reply preview above message if this is a reply */}
                             {c.replyTo && (
-                              <div className="border-l-4 border-blue-300 pl-2 mb-1 text-xs text-gray-500 bg-blue-50 rounded w-full max-w-full break-words cursor-pointer" onClick={() => {
+                              <div className="border-l-4 border-purple-400 pl-3 mb-2 text-xs bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg w-full max-w-full break-words cursor-pointer transform hover:scale-[1.02] transition-transform duration-200" onClick={() => {
                                   if (messageRefs.current[c.replyTo]) {
                                     messageRefs.current[c.replyTo].scrollIntoView({ behavior: 'smooth', block: 'center' });
                                     messageRefs.current[c.replyTo].classList.add('ring-2', 'ring-yellow-400');
@@ -1741,11 +1748,16 @@ function AdminAppointmentRow({
                                     }, 1000);
                                   }
                                 }} role="button" tabIndex={0} aria-label="Go to replied message">
-                                <span className="text-xs text-gray-600 truncate max-w-[150px]">{localComments.find(msg => msg._id === c.replyTo)?.message?.substring(0, 30) || 'Original message'}{localComments.find(msg => msg._id === c.replyTo)?.message?.length > 30 ? '...' : ''}</span>
+                                <span className="text-xs text-gray-700 font-medium truncate max-w-[150px] flex items-center gap-1">
+                                  <span className="text-purple-500">↩</span>
+                                  {localComments.find(msg => msg._id === c.replyTo)?.message?.substring(0, 30) || 'Original message'}{localComments.find(msg => msg._id === c.replyTo)?.message?.length > 30 ? '...' : ''}
+                                </span>
                               </div>
                             )}
-                        <div className="font-semibold mb-1 flex items-center gap-2 justify-start text-left">
-                          <span className="truncate max-w-[60%] min-w-[80px] inline-block align-middle overflow-hidden text-ellipsis text-left">
+                        <div className="font-semibold mb-2 flex items-center gap-2 justify-start text-left">
+                          <span className={`truncate max-w-[60%] min-w-[80px] inline-block align-middle overflow-hidden text-ellipsis text-left ${
+                            isMe ? 'text-blue-100' : 'text-gray-700'
+                          }`}>
                             {isMe ? "You" : (() => {
                               // Check if sender is buyer or seller to get their name
                               const isSenderBuyer = c.senderEmail === appt.buyerId?.email;
@@ -1761,7 +1773,11 @@ function AdminAppointmentRow({
                               }
                             })()}
                           </span>
-                          <span className="text-gray-300 ml-2 text-[10px]">{new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
+                          <span className={`ml-2 text-[10px] px-2 py-1 rounded-full ${
+                            isMe ? 'text-blue-200 bg-blue-600 bg-opacity-30' : 'text-gray-500 bg-gray-100'
+                          }`}>
+                            {new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
+                          </span>
                         </div>
                         <div className="text-left">
                           {c.deleted ? (
@@ -1867,17 +1883,17 @@ function AdminAppointmentRow({
                             </div>
                           )}
                         </div>
-                        <div className="flex items-center gap-2 justify-end mt-1" data-message-actions>
+                        <div className="flex items-center gap-2 justify-end mt-2" data-message-actions>
                           {/* Options icon - always visible */}
                           <button
-                            className={`${c.senderEmail === currentUser.email ? 'text-gray-300 hover:text-gray-100' : 'text-gray-500 hover:text-gray-700'} transition-colors`}
+                            className={`${c.senderEmail === currentUser.email ? 'text-blue-200 hover:text-white' : 'text-gray-500 hover:text-gray-700'} transition-all duration-200 hover:scale-110 p-1 rounded-full hover:bg-white hover:bg-opacity-20`}
                             onClick={(e) => {
                               e.stopPropagation();
                               setVisibleActionsMessageId(visibleActionsMessageId === c._id ? null : c._id);
                             }}
                             title="Message options"
                           >
-                            <FaEllipsisV size={12} />
+                            <FaEllipsisV size={14} />
                           </button>
                           
                           {/* Action buttons - only visible when options are toggled */}
@@ -1886,14 +1902,14 @@ function AdminAppointmentRow({
                               {!c.deleted && (
                                 <>
                                   <button
-                                    className={`${c.senderEmail === currentUser.email ? 'text-yellow-500 hover:text-yellow-700' : 'text-blue-600 hover:text-blue-800'}`}
+                                    className={`${c.senderEmail === currentUser.email ? 'text-yellow-300 hover:text-yellow-100' : 'text-blue-600 hover:text-blue-800'} transition-all duration-200 hover:scale-110 p-1 rounded-full hover:bg-white hover:bg-opacity-20`}
                                     onClick={() => { setReplyTo(c); inputRef.current?.focus(); setVisibleActionsMessageId(null); }}
                                     title="Reply"
                                   >
                                     <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c4.28 0 6.92 1.45 8.84 4.55.23.36.76.09.65-.32C18.31 13.13 15.36 10.36 10 9z"/></svg>
                                   </button>
                                   <button
-                                    className={`${c.senderEmail === currentUser.email ? 'text-blue-400 hover:text-blue-300' : 'text-gray-600 hover:text-gray-800'}`}
+                                    className={`${c.senderEmail === currentUser.email ? 'text-blue-300 hover:text-blue-100' : 'text-gray-600 hover:text-gray-800'} transition-all duration-200 hover:scale-110 p-1 rounded-full hover:bg-white hover:bg-opacity-20`}
                                     onClick={() => {
                                       console.log('Button clicked! Message:', c.message);
                                       copyMessageToClipboard(c.message);
@@ -1909,18 +1925,18 @@ function AdminAppointmentRow({
                                 <>
                                   <button
                                     onClick={() => { startEditing(c); setVisibleActionsMessageId(null); }}
-                                    className="text-green-800 hover:text-green-950"
+                                    className="text-green-300 hover:text-green-100 transition-all duration-200 hover:scale-110 p-1 rounded-full hover:bg-white hover:bg-opacity-20"
                                     title="Edit comment"
                                     disabled={editingComment !== null} // Disable if already editing another message
                                   >
-                                    <FaPen size={12} />
+                                    <FaPen size={14} />
                                   </button>
                                   <button
-                                    className="text-red-700 hover:text-red-900"
+                                    className="text-red-300 hover:text-red-100 transition-all duration-200 hover:scale-110 p-1 rounded-full hover:bg-white hover:bg-opacity-20"
                                     onClick={() => { handleDeleteClick(c); setVisibleActionsMessageId(null); }}
                                     title="Delete comment"
                                   >
-                                    <FaTrash size={12} />
+                                    <FaTrash size={14} />
                                   </button>
                                 </>
                               )}
@@ -1929,14 +1945,14 @@ function AdminAppointmentRow({
                           
                           {/* Read status indicator - always visible for sent messages */}
                           {(c.senderEmail === currentUser.email) && !c.deleted && (
-                            <span className="ml-1">
+                            <span className="ml-2 flex items-center gap-1">
                               {c.readBy?.some(userId => userId !== currentUser._id)
-                                ? <FaCheckDouble className="text-white inline" title="Read" />
+                                ? <FaCheckDouble className="text-green-300 text-sm" title="Read" />
                                 : c.status === "delivered"
-                                  ? <FaCheckDouble className="text-white/70 inline" title="Delivered" />
+                                  ? <FaCheckDouble className="text-blue-200 text-sm" title="Delivered" />
                                   : c.status === "sending"
-                                    ? <FaCheck className="text-white/50 inline animate-pulse" title="Sending..." />
-                                    : <FaCheck className="text-white/70 inline" title="Sent" />}
+                                    ? <FaCheck className="text-blue-200 text-sm animate-pulse" title="Sending..." />
+                                    : <FaCheck className="text-blue-200 text-sm" title="Sent" />}
                             </span>
                           )}
                         </div>
@@ -1978,10 +1994,10 @@ function AdminAppointmentRow({
                 </div>
               )}
               
-              <div className="flex gap-2 mt-2 px-4 pb-4">
+              <div className="flex gap-3 mt-4 px-6 pb-6">
                 <input
                   type="text"
-                  className="flex-1 px-3 py-2 border rounded-full text-sm focus:ring-2 focus:ring-blue-200 shadow"
+                  className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-full text-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-400 shadow-lg transition-all duration-200 bg-white"
                   placeholder={editingComment ? "Edit your message..." : "Type a message..."}
                   value={newComment}
                   onChange={(e) => {
@@ -2005,7 +2021,7 @@ function AdminAppointmentRow({
                 <button
                   onClick={editingComment ? () => handleEditComment(editingComment) : handleCommentSend}
                   disabled={(editingComment ? savingComment === editingComment : sending) || !newComment.trim()}
-                  className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-5 py-2 rounded-full text-sm font-semibold shadow hover:from-blue-600 hover:to-purple-600 transition disabled:opacity-50 flex items-center gap-2 min-w-20"
+                  className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-full text-sm font-semibold shadow-lg hover:from-blue-600 hover:to-purple-700 hover:shadow-xl transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:transform-none flex items-center gap-2 min-w-24"
                 >
                   {editingComment ? (
                     savingComment === editingComment ? (
@@ -2049,7 +2065,7 @@ function AdminAppointmentRow({
                  <div className="absolute bottom-20 right-6 z-20">
                    <button
                      onClick={scrollToBottom}
-                     className="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-3 shadow-lg transition-all duration-200 hover:scale-110 relative"
+                     className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-full p-4 shadow-xl transition-all duration-200 hover:scale-110 relative transform hover:shadow-2xl"
                      title={unreadNewMessages > 0 ? `${unreadNewMessages} new message${unreadNewMessages > 1 ? 's' : ''}` : "Scroll to bottom"}
                      aria-label={unreadNewMessages > 0 ? `${unreadNewMessages} new messages, scroll to bottom` : "Scroll to bottom"}
                    >
