@@ -457,7 +457,7 @@ export default function AdminAppointments() {
         .then(() => {
           toast.success('Copied', {
             autoClose: 2000,
-            position: 'bottom-right'
+            position: 'bottom-center'
           });
         })
         .catch(() => {
@@ -488,7 +488,7 @@ export default function AdminAppointments() {
         console.log('Copy successful via fallback method');
         toast.success('Copied', {
           autoClose: 2000,
-          position: 'bottom-right'
+          position: 'bottom-center'
         });
       } else {
         console.error('Fallback copy failed');
