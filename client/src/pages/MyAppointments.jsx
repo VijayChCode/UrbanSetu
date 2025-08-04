@@ -2137,7 +2137,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           <div
                             ref={el => messageRefs.current[c._id] = el}
                             data-message-id={c._id}
-                            className={`rounded-2xl px-4 sm:px-5 py-3 text-sm shadow-xl max-w-[85%] sm:max-w-[70%] md:max-w-[60%] break-words relative transform hover:scale-[1.02] transition-transform duration-200 min-h-[60px] ${
+                            className={`rounded-2xl px-4 sm:px-5 py-3 text-sm shadow-xl max-w-[85%] sm:max-w-[70%] md:max-w-[60%] break-all overflow-hidden relative transform hover:scale-[1.02] transition-transform duration-200 min-h-[60px] ${
                               isMe 
                                 ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-blue-200' 
                                 : 'bg-white text-gray-800 border border-gray-200 shadow-gray-200 hover:shadow-gray-300'
