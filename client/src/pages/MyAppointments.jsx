@@ -2124,7 +2124,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             data-message-id={c._id}
                             className={`rounded-2xl px-5 py-3 text-sm shadow-xl max-w-[60%] break-words relative transform hover:scale-[1.02] transition-transform duration-200 ${
                               isMe 
-                                ? 'bg-gradient-to-r from-blue-400 to-blue-500 text-white shadow-blue-200' 
+                                ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-blue-200' 
                                 : 'bg-white text-gray-800 border border-gray-200 shadow-gray-200 hover:shadow-gray-300'
                             }`}
                             style={{ animationDelay: `${0.03 * index}s` }}
