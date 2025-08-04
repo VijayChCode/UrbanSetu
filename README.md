@@ -7,7 +7,7 @@ A full-stack real estate management application built with MERN stack (MongoDB, 
 ### User Features
 - User registration and authentication
 - Property browsing and search
-- Property listings with detailed information
+- Property listings with detailed informations
 - Wishlist functionality
 - Appointment booking with real estate agents
 - Profile management
