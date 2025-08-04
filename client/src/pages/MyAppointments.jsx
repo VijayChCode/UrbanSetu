@@ -2057,7 +2057,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 sm:gap-3 ml-auto flex-shrink-0">
+                  <div className="flex items-center gap-2 sm:gap-4 ml-auto flex-shrink-0">
                     {filteredComments.length > 0 && (
                       <button
                         className="text-xs text-red-600 hover:underline"
