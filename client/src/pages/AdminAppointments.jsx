@@ -1193,13 +1193,8 @@ function AdminAppointmentRow({
         
         // If the message was deleted and was from another user, reduce unread count
         if (data.comment.deleted && data.comment.senderEmail !== currentUser.email) {
-          // Check if this message was previously unread by looking at the existing message
-          const existingMessage = localComments.find(c => c._id === data.comment._id);
-          const wasUnread = existingMessage && 
-                           !existingMessage.readBy?.includes(currentUser._id) && 
-                           existingMessage.senderEmail !== currentUser.email;
-          
-          if (wasUnread) {
+          // Simple approach: if there's an unread count, reduce it by one
+          if (unreadNewMessages > 0) {
             setUnreadNewMessages(prev => Math.max(0, prev - 1));
           }
         }
