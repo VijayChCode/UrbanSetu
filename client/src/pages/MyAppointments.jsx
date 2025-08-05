@@ -2319,7 +2319,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               {(c.senderEmail === currentUser.email) && !c.deleted && (
                                 <span className="ml-2 flex items-center gap-1">
                                   {c.readBy?.includes(otherParty?._id)
-                                    ? <FaCheckDouble className="text-green-500 text-sm" title="Read" />
+                                    ? <FaCheckDouble className="text-green-600 text-sm" title="Read" />
                                     : c.status === "delivered"
                                       ? <FaCheckDouble className="text-blue-200 text-sm" title="Delivered" />
                                       : c.status === "sending"
