@@ -799,7 +799,7 @@ export default function AdminManagement() {
               title="Close"
               aria-label="Close"
             >
-              &times;
+              <FaTimes className="w-4 h-4" />
             </button>
             {/* Header */}
             <div className="flex flex-col items-center justify-center bg-gradient-to-r from-blue-100 to-purple-100 rounded-t-2xl px-6 py-5 border-b border-gray-200">
