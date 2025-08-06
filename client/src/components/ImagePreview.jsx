@@ -159,12 +159,19 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0 }) => {
     }
   };
 
+  const handleOverlayClick = (e) => {
+    // Only close if the user clicks directly on the overlay (not on modal content)
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
   if (!isOpen || !images || images.length === 0) return null;
 
   return (
     <div 
       className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center"
-      onClick={handleImageClick}
+      onClick={handleOverlayClick}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
