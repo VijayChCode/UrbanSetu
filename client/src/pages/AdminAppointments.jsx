@@ -1749,7 +1749,7 @@ function AdminAppointmentRow({
                         ref={el => messageRefs.current[c._id] = el}
                         className={`rounded-2xl px-4 sm:px-5 py-3 text-sm shadow-xl max-w-[90%] sm:max-w-[80%] md:max-w-[70%] break-all overflow-hidden relative transform hover:scale-[1.02] transition-transform duration-200 min-h-[60px] ${
                           isMe 
-                            ? 'bg-gradient-to-r from-blue-500 to-purple-400 text-white shadow-blue-200' 
+                            ? 'bg-gradient-to-r from-blue-600 to-purple-700 text-white shadow-blue-200' 
                             : 'bg-white text-gray-800 border border-gray-200 shadow-gray-200 hover:shadow-gray-300'
                         }`}
                       >
