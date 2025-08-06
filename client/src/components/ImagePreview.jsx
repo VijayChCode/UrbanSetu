@@ -68,6 +68,17 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0 }) => {
     };
   }, [isOpen, images.length, onClose]);
 
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
   const handleZoomIn = () => {
     setScale(prev => Math.min(prev * 1.2, 5));
   };
