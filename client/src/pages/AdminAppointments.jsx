@@ -459,7 +459,6 @@ export default function AdminAppointments() {
       setLoading(false);
     }
   };
-  const isAdminContext = location.pathname.includes('/admin');
 
   // Function to copy message to clipboard
   const copyMessageToClipboard = (messageText) => {
