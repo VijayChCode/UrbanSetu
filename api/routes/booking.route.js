@@ -1139,6 +1139,11 @@ router.patch('/:id/comments/read', verifyToken, async (req, res) => {
 
     let updated = false;
     bookingDoc.comments.forEach(comment => {
+      // Ensure readBy is an array and check if user has already read this comment
+      if (!comment.readBy || !Array.isArray(comment.readBy)) {
+        comment.readBy = [];
+      }
+      
       if (!comment.readBy.map(String).includes(userId)) {
         comment.readBy.push(userId);
         comment.status = "read";
