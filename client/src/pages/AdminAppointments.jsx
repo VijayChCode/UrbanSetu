@@ -1993,14 +1993,14 @@ function AdminAppointmentRow({
                             </div>
                           )}
                         </div>
-                        <div className="flex items-center gap-2 justify-end mt-2" data-message-actions>
+                        <div className="flex items-center gap-1 justify-end mt-2" data-message-actions>
                           <span className={`${isMe ? 'text-blue-200' : 'text-gray-500'} text-[10px]`}>
                             {new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
                           </span>
                           {/* Options icon - only visible for non-deleted messages */}
                           {!c.deleted && (
                             <button
-                              className={`${c.senderEmail === currentUser.email ? 'text-blue-200 hover:text-white' : 'text-gray-500 hover:text-gray-700'} transition-all duration-200 hover:scale-110 p-1 rounded-full hover:bg-white hover:bg-opacity-20`}
+                              className={`${c.senderEmail === currentUser.email ? 'text-blue-200 hover:text-white' : 'text-gray-500 hover:text-gray-700'} transition-all duration-200 hover:scale-110 p-1 rounded-full hover:bg-white hover:bg-opacity-20 ml-1`}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setHeaderOptionsMessageId(c._id);
@@ -2008,20 +2008,20 @@ function AdminAppointmentRow({
                               title="Message options"
                               aria-label="Message options"
                             >
-                              <FaEllipsisV size={c.senderEmail === currentUser.email ? 16 : 14} />
+                              <FaEllipsisV size={c.senderEmail === currentUser.email ? 14 : 12} />
                             </button>
                           )}
                           
                           {/* Read status indicator - always visible for sent messages */}
                           {(c.senderEmail === currentUser.email) && !c.deleted && (
-                            <span className="ml-2 flex items-center gap-1">
+                            <span className="ml-1 flex items-center gap-1">
                               {c.readBy?.some(userId => userId !== currentUser._id)
-                                ? <FaCheckDouble className="text-green-600 text-sm" title="Read" />
+                                ? <FaCheckDouble className="text-green-400 text-xs" title="Read" />
                                 : c.status === "delivered"
-                                  ? <FaCheckDouble className="text-blue-200 text-sm" title="Delivered" />
+                                  ? <FaCheckDouble className="text-blue-200 text-xs" title="Delivered" />
                                   : c.status === "sending"
-                                    ? <FaCheck className="text-blue-200 text-sm animate-pulse" title="Sending..." />
-                                    : <FaCheck className="text-blue-200 text-sm" title="Sent" />}
+                                    ? <FaCheck className="text-blue-200 text-xs animate-pulse" title="Sending..." />
+                                    : <FaCheck className="text-blue-200 text-xs" title="Sent" />}
                             </span>
                           )}
                         </div>
