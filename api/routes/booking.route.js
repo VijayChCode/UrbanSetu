@@ -434,10 +434,21 @@ router.delete('/:id/comments', verifyToken, async (req, res) => {
     }
 
     // Verify current user is admin or rootadmin
-    const user = await User.findById(req.user.id).select('+password role adminApprovalStatus');
-    const isAdmin = (user && user.role === 'admin' && user.adminApprovalStatus === 'approved') || (user && user.role === 'rootadmin');
+    const requesterId = (req.user && (req.user._id || req.user.id)) ? (req.user._id || req.user.id) : null;
+    if (!requesterId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+    const user = await User.findById(requesterId).select('password role adminApprovalStatus');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    const isAdmin = (user.role === 'admin' && user.adminApprovalStatus === 'approved') || (user.role === 'rootadmin');
     if (!isAdmin) {
       return res.status(403).json({ message: 'Only admins can clear chat.' });
+    }
+
+    if (!user.password) {
+      return res.status(400).json({ message: 'Password not set for this account.' });
     }
 
     // Verify password
@@ -1328,4 +1339,3 @@ export function registerUserAppointmentsSocket(io) {
     });
   });
 }
-
