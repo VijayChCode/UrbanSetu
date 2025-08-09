@@ -2430,12 +2430,28 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                       }
                     }}
                     onKeyDown={e => { 
-                      if ((e.key === 'Enter') && (e.ctrlKey || e.metaKey)) {
-                        e.preventDefault();
-                        if (editingComment) {
-                          handleEditComment(editingComment);
-                        } else {
-                          handleCommentSend();
+                      // Check if this is a desktop device (not mobile/tablet)
+                      const isDesktop = window.innerWidth >= 768 && !('ontouchstart' in window || navigator.maxTouchPoints > 0);
+                      
+                      if (e.key === 'Enter') {
+                        // For desktop: Enter sends message, Shift+Enter creates new line
+                        if (isDesktop && !e.shiftKey) {
+                          e.preventDefault();
+                          if (editingComment) {
+                            handleEditComment(editingComment);
+                          } else {
+                            handleCommentSend();
+                          }
+                        }
+                        // For mobile or with Shift+Enter: allow new line (default behavior)
+                        // Ctrl+Enter or Cmd+Enter still works on all devices
+                        else if ((e.ctrlKey || e.metaKey)) {
+                          e.preventDefault();
+                          if (editingComment) {
+                            handleEditComment(editingComment);
+                          } else {
+                            handleCommentSend();
+                          }
                         }
                       }
                     }}
