@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
 
 const openai = new OpenAI({
-    apiKey: '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'
+    apiKey: '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'
 });
 
 export const chatWithOpenAI = async (req, res) => {
