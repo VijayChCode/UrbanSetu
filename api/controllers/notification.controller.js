@@ -2,6 +2,7 @@ import Notification from '../models/notification.model.js';
 import User from '../models/user.model.js';
 import Listing from '../models/listing.model.js';
 import { errorHandler } from '../utils/error.js';
+import Booking from '../models/booking.model.js';
 
 // Create notification
 export const createNotification = async (req, res, next) => {
@@ -19,6 +20,86 @@ export const createNotification = async (req, res, next) => {
 
     const savedNotification = await notification.save();
     res.status(201).json(savedNotification);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Report a chat message: create notifications for all admins/rootadmins
+export const reportChatMessage = async (req, res, next) => {
+  try {
+    const { appointmentId, commentId, reason, details } = req.body;
+    if (!appointmentId || !commentId || !reason) {
+      return res.status(400).json({ success: false, message: 'appointmentId, commentId and reason are required' });
+    }
+
+    // Load appointment and related data
+    const appointment = await Booking.findById(appointmentId)
+      .populate('buyerId', 'username email')
+      .populate('sellerId', 'username email')
+      .populate('listingId', 'name address');
+    if (!appointment) {
+      return res.status(404).json({ success: false, message: 'Appointment not found' });
+    }
+
+    // Find the reported comment
+    const comment = appointment.comments.id(commentId);
+    if (!comment) {
+      return res.status(404).json({ success: false, message: 'Message not found in this appointment' });
+    }
+
+    // Build a clear notification text for admins
+    const reporterName = req.user?.username || 'Unknown';
+    const reporterEmail = req.user?.email || '';
+    const buyer = appointment.buyerId;
+    const seller = appointment.sellerId;
+    const listing = appointment.listingId;
+    const messageText = comment.originalMessage || comment.message || '[no content]';
+
+    const title = `Chat message reported: ${reason}`;
+    const lines = [
+      `Reporter: ${reporterName} (${reporterEmail})`,
+      `Appointment: ${appointment._id.toString()}${listing ? ` — ${listing.name}` : ''}`,
+      `Between: ${buyer?.username || 'Buyer'} (${buyer?.email || 'n/a'}) ↔ ${seller?.username || 'Seller'} (${seller?.email || 'n/a'})`,
+      `Message ID: ${commentId}`,
+      `Message excerpt: "${messageText.substring(0, 300)}"`,
+      details ? `Reporter notes: ${details}` : null,
+    ].filter(Boolean);
+    const message = lines.join('\n');
+
+    // Find all admins and root admins (active, approved)
+    const admins = await User.find({
+      status: { $ne: 'suspended' },
+      $or: [
+        { role: 'rootadmin' },
+        { role: 'admin', adminApprovalStatus: 'approved' },
+      ],
+    }, '_id');
+
+    if (admins.length === 0) {
+      return res.status(200).json({ success: true, message: 'No admins found to notify' });
+    }
+
+    // Create notifications for each admin
+    const notifications = admins.map(a => ({
+      userId: a._id,
+      type: 'admin_message',
+      title,
+      message,
+      adminId: null,
+    }));
+
+    const created = await Notification.insertMany(notifications);
+
+    // Emit socket event to each admin for real-time updates
+    const io = req.app.get('io');
+    if (io) {
+      created.forEach(n => {
+        io.to(n.userId.toString()).emit('notificationCreated', n);
+      });
+    }
+
+    return res.status(201).json({ success: true, count: created.length });
   } catch (error) {
     next(error);
   }

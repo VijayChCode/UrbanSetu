@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo, FaCommentDots, FaCheckDouble, FaBan, FaPaperPlane, FaCalendar, FaLightbulb, FaCopy, FaEllipsisV } from "react-icons/fa";
+import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo, FaCommentDots, FaCheckDouble, FaBan, FaPaperPlane, FaCalendar, FaLightbulb, FaCopy, FaEllipsisV, FaFlag } from "react-icons/fa";
 import UserAvatar from '../components/UserAvatar';
 import { useSelector } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -2085,6 +2085,21 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             <FaCopy size={18} />
                           </button>
                         )}
+                        {/* Report (only for received messages, not deleted) */}
+                        {(selectedMessageForHeaderOptions.senderEmail !== currentUser.email) && !selectedMessageForHeaderOptions.deleted && (
+                          <button
+                            className="text-white hover:text-red-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                            onClick={() => {
+                              setReportingMessage(selectedMessageForHeaderOptions);
+                              setShowReportModal(true);
+                              setHeaderOptionsMessageId(null);
+                            }}
+                            title="Report message"
+                            aria-label="Report message"
+                          >
+                            <FaFlag size={18} />
+                          </button>
+                        )}
                         {/* Edit/Delete for own message */}
                         {(selectedMessageForHeaderOptions.senderEmail === currentUser.email) && !selectedMessageForHeaderOptions.deleted && (
                           <>
@@ -2866,6 +2881,94 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
               >
                 <FaTrash size={12} />
                 Remove Permanently
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Report Message Modal */}
+      {showReportModal && reportingMessage && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+              <FaFlag className="text-red-500" /> Report message
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Reason</label>
+                <select
+                  value={reportReason}
+                  onChange={(e) => setReportReason(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-red-500 text-gray-900"
+                >
+                  <option value="">-- Select a reason --</option>
+                  <option value="Spam or scam">Spam or scam</option>
+                  <option value="Harassment or hate speech">Harassment or hate speech</option>
+                  <option value="Inappropriate content">Inappropriate content</option>
+                  <option value="Sensitive or personal data">Sensitive or personal data</option>
+                  <option value="Fraud or illegal activity">Fraud or illegal activity</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Additional details (optional)</label>
+                <textarea
+                  value={reportDetails}
+                  onChange={(e) => setReportDetails(e.target.value)}
+                  rows={4}
+                  placeholder="Add any context to help admins review..."
+                  className="w-full p-2 border border-gray-300 rounded resize-y focus:outline-none focus:ring-2 focus:ring-red-500 text-gray-900"
+                />
+              </div>
+              <div className="bg-gray-50 rounded p-3 text-sm text-gray-700">
+                <div className="font-semibold mb-1">Message excerpt:</div>
+                <div className="line-clamp-4 whitespace-pre-wrap">{(reportingMessage.message || '').slice(0, 300)}</div>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => { setShowReportModal(false); setReportingMessage(null); setReportReason(''); setReportDetails(''); }}
+                className="px-4 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (!reportReason) { toast.error('Please select a reason'); return; }
+                  setSubmittingReport(true);
+                  try {
+                    const res = await fetch(`${API_BASE_URL}/api/notifications/report-chat`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      credentials: 'include',
+                      body: JSON.stringify({
+                        appointmentId: appt._id,
+                        commentId: reportingMessage._id,
+                        reason: reportReason,
+                        details: reportDetails,
+                      }),
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                      toast.success('Reported to admins');
+                      setShowReportModal(false);
+                      setReportingMessage(null);
+                      setReportReason('');
+                      setReportDetails('');
+                    } else {
+                      toast.error(data.message || 'Failed to submit report');
+                    }
+                  } catch (err) {
+                    toast.error('Network error while reporting');
+                  } finally {
+                    setSubmittingReport(false);
+                  }
+                }}
+                disabled={submittingReport || !reportReason}
+                className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {submittingReport ? 'Reporting…' : 'Report'}
               </button>
             </div>
           </div>

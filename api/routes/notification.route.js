@@ -10,6 +10,7 @@ import {
   adminSendNotification,
   getAllUsersForNotifications,
   adminSendNotificationToAll,
+  reportChatMessage,
 } from '../controllers/notification.controller.js';
 import { verifyToken } from '../utils/verify.js';
 
@@ -40,5 +41,8 @@ router.delete('/user/:userId/all', verifyToken, deleteAllNotifications);
 router.post('/admin/send', verifyToken, adminSendNotification);
 router.post('/admin/send-all', verifyToken, adminSendNotificationToAll);
 router.get('/admin/users', verifyToken, getAllUsersForNotifications);
+
+// Report chat message (any authenticated user)
+router.post('/report-chat', verifyToken, reportChatMessage);
 
 export default router; 
