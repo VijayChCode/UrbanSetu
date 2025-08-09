@@ -2261,7 +2261,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           <div
                             ref={el => messageRefs.current[c._id] = el}
                             data-message-id={c._id}
-                            className={`rounded-2xl px-4 sm:px-5 py-3 text-sm shadow-xl max-w-[85%] sm:max-w-[70%] md:max-w-[60%] break-all overflow-hidden relative transform hover:scale-[1.02] transition-transform duration-200 min-h-[60px] ${
+                            className={`rounded-2xl px-4 sm:px-5 py-3 text-sm shadow-xl max-w-[85%] sm:max-w-[70%] md:max-w-[60%] break-all overflow-hidden relative transform hover:scale-[1.02] transition-transform duration-200 min-h-[60px] ${isMe ? 'pr-16' : 'pr-12'} ${
                               isMe 
                                 ? 'bg-gradient-to-r from-blue-600 to-purple-700 text-white shadow-blue-200' 
                                 : 'bg-white text-gray-800 border border-gray-200 shadow-gray-200 hover:shadow-gray-300'
@@ -2340,19 +2340,30 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                 </div>
                               )}
                             </div>
-                            <div className="flex items-center gap-2 justify-end mt-2" data-message-actions>
-                              {/* Inline options removed; options are now shown in the chat header */}
-                              {/* Read status indicator - always visible for sent messages */}
+                            <div className={`absolute bottom-2 right-3 flex items-center gap-1 text-[10px] ${isMe ? 'text-blue-200' : 'text-gray-500'}`}>
+                              <span>
+                                {new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
+                              </span>
                               {(c.senderEmail === currentUser.email) && !c.deleted && (
-                                <span className="ml-2 flex items-center gap-1">
+                                <span className="flex items-center gap-1 ml-1">
                                   {c.readBy?.includes(otherParty?._id)
-                                    ? <FaCheckDouble className="text-green-600 text-sm" title="Read" />
-                                    : c.status === "delivered"
-                                      ? <FaCheckDouble className="text-blue-200 text-sm" title="Delivered" />
-                                      : c.status === "sending"
-                                        ? <FaCheck className="text-blue-200 text-sm animate-pulse" title="Sending..." />
-                                        : <FaCheck className="text-blue-200 text-sm" title="Sent" />}
+                                    ? <FaCheckDouble className="text-green-400 text-xs" title="Read" />
+                                    : c.status === 'delivered'
+                                      ? <FaCheckDouble className="text-blue-200 text-xs" title="Delivered" />
+                                      : c.status === 'sending'
+                                        ? <FaCheck className="text-blue-200 text-xs animate-pulse" title="Sending..." />
+                                        : <FaCheck className="text-blue-200 text-xs" title="Sent" />}
                                 </span>
+                              )}
+                              {!c.deleted && (
+                                <button
+                                  className={`${isMe ? 'hover:bg-white hover:bg-opacity-20' : 'hover:bg-gray-100'} ml-1 p-1 rounded-full transition-colors`}
+                                  onClick={(e) => { e.stopPropagation(); setHeaderOptionsMessageId(c._id); }}
+                                  title="Message options"
+                                  aria-label="Message options"
+                                >
+                                  <FaEllipsisV size={isMe ? 14 : 12} />
+                                </button>
                               )}
                             </div>
                           </div>
