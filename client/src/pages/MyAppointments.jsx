@@ -2261,7 +2261,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           <div
                             ref={el => messageRefs.current[c._id] = el}
                             data-message-id={c._id}
-                            className={`rounded-2xl px-4 sm:px-5 py-3 text-sm shadow-xl max-w-[85%] sm:max-w-[70%] md:max-w-[60%] break-all overflow-hidden relative transform hover:scale-[1.02] transition-transform duration-200 min-h-[60px] ${isMe ? 'pr-16' : 'pr-12'} ${
+                            className={`rounded-2xl px-4 sm:px-5 py-3 text-sm shadow-xl max-w-[85%] sm:max-w-[70%] md:max-w-[60%] break-all overflow-hidden relative transform hover:scale-[1.02] transition-transform duration-200 min-h-[60px] min-w-[100px] ${isMe ? 'pr-20' : 'pr-16'} ${
                               isMe 
                                 ? 'bg-gradient-to-r from-blue-600 to-purple-700 text-white shadow-blue-200' 
                                 : 'bg-white text-gray-800 border border-gray-200 shadow-gray-200 hover:shadow-gray-300'
@@ -2326,6 +2326,16 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               <span>
                                 {new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
                               </span>
+                              {!c.deleted && (
+                                <button
+                                  className={`${isMe ? 'hover:bg-white hover:bg-opacity-20' : 'hover:bg-gray-100'} ml-1 p-1 rounded-full transition-colors`}
+                                  onClick={(e) => { e.stopPropagation(); setHeaderOptionsMessageId(c._id); }}
+                                  title="Message options"
+                                  aria-label="Message options"
+                                >
+                                  <FaEllipsisV size={isMe ? 14 : 12} />
+                                </button>
+                              )}
                               {(c.senderEmail === currentUser.email) && !c.deleted && (
                                 <span className="flex items-center gap-1 ml-1">
                                   {c.readBy?.includes(otherParty?._id)
@@ -2336,16 +2346,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                         ? <FaCheck className="text-blue-200 text-xs animate-pulse" title="Sending..." />
                                         : <FaCheck className="text-blue-200 text-xs" title="Sent" />}
                                 </span>
-                              )}
-                              {!c.deleted && (
-                                <button
-                                  className={`${isMe ? 'hover:bg-white hover:bg-opacity-20' : 'hover:bg-gray-100'} ml-1 p-1 rounded-full transition-colors`}
-                                  onClick={(e) => { e.stopPropagation(); setHeaderOptionsMessageId(c._id); }}
-                                  title="Message options"
-                                  aria-label="Message options"
-                                >
-                                  <FaEllipsisV size={isMe ? 14 : 12} />
-                                </button>
                               )}
                             </div>
                           </div>
