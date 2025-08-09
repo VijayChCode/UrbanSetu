@@ -2318,9 +2318,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                     </div>
                                   ) : (
                                     <>
-                                      <span className="whitespace-pre-wrap">{c.message}</span>
+                                      <span className="whitespace-pre-wrap">{(c.message || '').replace(/\n+$/, '')}</span>
                                       {c.edited && (
-                                        <span className="ml-2 text-[10px] italic text-gray-300">(Edited)</span>
+                                        <span className="ml-2 text-[10px] italic text-gray-300 whitespace-nowrap">(Edited)</span>
                                       )}
                                     </>
                                   )}
