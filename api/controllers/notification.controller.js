@@ -56,14 +56,15 @@ export const reportChatMessage = async (req, res, next) => {
     const listing = appointment.listingId;
     const messageText = comment.originalMessage || comment.message || '[no content]';
 
-    const title = `Chat message reported: ${reason}`;
+    const title = `Chat message reported`;
     const lines = [
+      `Reason: ${reason}`,
       `Reporter: ${reporterName} (${reporterEmail})`,
       `Appointment: ${appointment._id.toString()}${listing ? ` — ${listing.name}` : ''}`,
       `Between: ${buyer?.username || 'Buyer'} (${buyer?.email || 'n/a'}) ↔ ${seller?.username || 'Seller'} (${seller?.email || 'n/a'})`,
       `Message ID: ${commentId}`,
       `Message excerpt: "${messageText.substring(0, 300)}"`,
-      details ? `Reporter notes: ${details}` : null,
+      details ? `Additional details: ${details}` : null,
     ].filter(Boolean);
     const message = lines.join('\n');
 
