@@ -1188,35 +1188,6 @@ function AdminAppointmentRow({
   }, [showChatModal]);
 
   React.useEffect(() => {
-    function handleCommentUpdateNotify(data) {
-      if (data.appointmentId === appt._id && !showChatModal) {
-        // Don't show notification for deleted messages
-        if (data.comment.deleted) {
-          return;
-        }
-        
-        toast.info(`New message from ${data.comment.senderEmail || 'User'}`, {
-          onClick: () => setShowChatModal(true),
-          autoClose: 5000,
-          closeOnClick: true
-        });
-      }
-    }
-    socket.on('commentUpdate', handleCommentUpdateNotify);
-    const handleChatCleared = (data) => {
-      if (data.appointmentId === appt._id) {
-        setLocalComments([]);
-        toast.success('Chat deleted by admin');
-      }
-    };
-    socket.on('chatCleared', handleChatCleared);
-    return () => {
-      socket.off('commentUpdate', handleCommentUpdateNotify);
-      socket.off('chatCleared', handleChatCleared);
-    };
-  }, [appt._id, showChatModal]);
-
-  React.useEffect(() => {
     function handleCommentUpdate(data) {
       if (data.appointmentId === appt._id) {
         setLocalComments((prev) => {
@@ -1270,8 +1241,18 @@ function AdminAppointmentRow({
       }
     }
     socket.on('commentUpdate', handleCommentUpdate);
+    
+    const handleChatCleared = (data) => {
+      if (data.appointmentId === appt._id) {
+        setLocalComments([]);
+        toast.success('Chat deleted by admin');
+      }
+    };
+    socket.on('chatCleared', handleChatCleared);
+    
     return () => {
       socket.off('commentUpdate', handleCommentUpdate);
+      socket.off('chatCleared', handleChatCleared);
     };
   }, [appt._id, setLocalComments, showChatModal, currentUser.email, isAtBottom]);
 
