@@ -186,6 +186,7 @@ export default function Appointment() {
                 name="date"
                 value={formData.date}
                 onChange={handleChange}
+                placeholder="Select Date"
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 min={new Date().toISOString().split("T")[0]}
                 required
@@ -195,6 +196,7 @@ export default function Appointment() {
                 name="time"
                 value={formData.time}
                 onChange={handleChange}
+                placeholder="Select Time"
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
