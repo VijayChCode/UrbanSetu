@@ -3,7 +3,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import Oauth from "../components/Oauth";
 import ContactSupportWrapper from "../components/ContactSupportWrapper";
-import OpenAIChatbox from "../components/OpenAIChatbox.jsx";
 import { useSelector } from "react-redux";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -152,8 +151,6 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
 
   return (
     <div className="min-h-screen flex">
-      {/* OpenAI Chatbox */}
-      <OpenAIChatbox />
       
       {/* Left Side - Image and Quote */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-green-600 to-blue-700 relative overflow-hidden">
