@@ -2277,7 +2277,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           <div
                             ref={el => messageRefs.current[c._id] = el}
                             data-message-id={c._id}
-                            className={`rounded-2xl px-4 sm:px-5 py-3 text-sm shadow-xl max-w-[85%] sm:max-w-[70%] md:max-w-[60%] break-all overflow-hidden relative transform hover:scale-[1.02] transition-transform duration-200 min-h-[60px] min-w-[100px] ${isMe ? 'pr-20' : 'pr-16'} ${
+                            className={`rounded-2xl px-4 sm:px-5 py-3 text-sm shadow-xl max-w-[85%] sm:max-w-[70%] md:max-w-[60%] break-words overflow-hidden relative transform hover:scale-[1.02] transition-transform duration-200 min-h-[60px] min-w-[140px] ${isMe ? 'pr-24' : 'pr-20'} ${
                               isMe 
                                 ? 'bg-gradient-to-r from-blue-600 to-purple-700 text-white shadow-blue-200' 
                                 : 'bg-white text-gray-800 border border-gray-200 shadow-gray-200 hover:shadow-gray-300'
@@ -2305,7 +2305,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             {!isMe && (c.senderEmail !== appt.buyerId?.email) && (c.senderEmail !== appt.sellerId?.email) && (
                               <div className="font-semibold mb-1 text-xs text-purple-600">UrbanSetu</div>
                             )}
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 mb-6">
                               {c.deleted ? (
                                 <span className="flex items-center gap-1 text-gray-400 italic">
                                   <FaBan className="inline-block text-lg" /> {c.senderEmail === currentUser.email ? "You deleted this message" : "This message was deleted."}
@@ -2327,7 +2327,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                 </div>
                               )}
                             </div>
-                            <div className={`absolute bottom-2 right-3 flex items-center gap-1 text-[10px] ${isMe ? 'text-blue-200' : 'text-gray-500'}`}>
+                            <div className={`absolute bottom-2 right-2 flex items-center gap-1 text-[10px] ${isMe ? 'text-blue-200' : 'text-gray-500'}`}>
                               <span>
                                 {new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
                               </span>
