@@ -905,6 +905,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const [cancelReason, setCancelReason] = useState('');
   const [deleteReason, setDeleteReason] = useState('');
   const messageRefs = useRef({}); // Add messageRefs here
+  
+  // New: track which message's options are shown in the header
+  const [headerOptionsMessageId, setHeaderOptionsMessageId] = useState(null);
 
   // Auto-close shortcut tip after 10 seconds
   useEffect(() => {
@@ -1789,6 +1792,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     return el ? el.getAttribute('data-msgid') : null;
   }
 
+  // Message selected for header options overlay
+  const selectedMessageForHeaderOptions = headerOptionsMessageId ? comments.find(msg => msg._id === headerOptionsMessageId) : null;
+
   return (
     <>
       <tr className={`hover:bg-blue-50 transition align-top ${!isUpcoming ? 'bg-gray-100' : ''}`}>
@@ -2053,89 +2059,163 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
             ) : (
               <>
                 <div className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 rounded-t-3xl relative">
-                  <div 
-                    className="bg-white rounded-full p-1 sm:p-1.5 shadow-lg flex-shrink-0 cursor-pointer hover:scale-105 transition-transform duration-200"
-                    onClick={() => onShowOtherParty(otherParty)}
-                    title="Click to view user details"
-                  >
-                    {otherParty?.avatar ? (
-                      <img 
-                        src={otherParty.avatar} 
-                        alt={otherParty.username || 'User'} 
-                        className="w-8 h-8 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center text-white font-semibold text-sm">
-                        {(otherParty?.username || 'U').charAt(0).toUpperCase()}
+                  {headerOptionsMessageId && selectedMessageForHeaderOptions ? (
+                    // Header-level options overlay (options + close icon only)
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center gap-3">
+                        {/* Reply */}
+                        {!selectedMessageForHeaderOptions.deleted && (
+                          <button
+                            className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                            onClick={() => { setReplyTo(selectedMessageForHeaderOptions); inputRef.current?.focus(); setHeaderOptionsMessageId(null); }}
+                            title="Reply"
+                            aria-label="Reply"
+                          >
+                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c4.28 0 6.92 1.45 8.84 4.55.23.36.76.09.65-.32C18.31 13.13 15.36 10.36 10 9z"/></svg>
+                          </button>
+                        )}
+                        {/* Copy */}
+                        {!selectedMessageForHeaderOptions.deleted && (
+                          <button
+                            className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                            onClick={() => { copyMessageToClipboard(selectedMessageForHeaderOptions.message); setHeaderOptionsMessageId(null); }}
+                            title="Copy message"
+                            aria-label="Copy message"
+                          >
+                            <FaCopy size={18} />
+                          </button>
+                        )}
+                        {/* Edit/Delete for own message */}
+                        {(selectedMessageForHeaderOptions.senderEmail === currentUser.email) && !selectedMessageForHeaderOptions.deleted && (
+                          <>
+                            <button
+                              onClick={() => { startEditing(selectedMessageForHeaderOptions); setHeaderOptionsMessageId(null); }}
+                              className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                              title="Edit comment"
+                              aria-label="Edit comment"
+                              disabled={editingComment !== null}
+                            >
+                              <FaPen size={18} />
+                            </button>
+                            <button
+                              className="text-white hover:text-red-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                              onClick={() => { handleDeleteClick(selectedMessageForHeaderOptions); setHeaderOptionsMessageId(null); }}
+                              title="Delete"
+                              aria-label="Delete"
+                            >
+                              <FaTrash size={18} />
+                            </button>
+                          </>
+                        )}
+                        {/* Delete locally for received messages */}
+                        {(selectedMessageForHeaderOptions.senderEmail !== currentUser.email) && !selectedMessageForHeaderOptions.deleted && (
+                          <button
+                            className="text-white hover:text-red-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                            onClick={() => { handleDeleteReceivedMessage(selectedMessageForHeaderOptions); setHeaderOptionsMessageId(null); }}
+                            title="Delete locally"
+                            aria-label="Delete locally"
+                          >
+                            <FaTrash size={18} />
+                          </button>
+                        )}
                       </div>
-                    )}
-                  </div>
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 min-w-0 flex-1">
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-                      <h3 
-                        className="text-base sm:text-lg font-bold text-white truncate cursor-pointer hover:underline"
+                      <button
+                        className="text-white hover:text-gray-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors z-10 shadow"
+                        onClick={() => setHeaderOptionsMessageId(null)}
+                        title="Close options"
+                        aria-label="Close options"
+                      >
+                        <FaTimes className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    // Original header content
+                    <>
+                      <div 
+                        className="bg-white rounded-full p-1 sm:p-1.5 shadow-lg flex-shrink-0 cursor-pointer hover:scale-105 transition-transform duration-200"
                         onClick={() => onShowOtherParty(otherParty)}
                         title="Click to view user details"
                       >
-                        {otherParty?.username || 'Unknown User'}
-                      </h3>
-                      {/* Online status indicator - below name on mobile, inline on desktop */}
-                      <div className="flex items-center gap-1 sm:hidden">
-                        {isOtherPartyTyping ? (
-                          <span className="text-yellow-100 font-semibold text-xs bg-yellow-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">Typing...</span>
-                        ) : isOtherPartyOnline ? (
-                          <span className="text-green-100 font-semibold text-xs bg-green-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">Online</span>
+                        {otherParty?.avatar ? (
+                          <img 
+                            src={otherParty.avatar} 
+                            alt={otherParty.username || 'User'} 
+                            className="w-8 h-8 rounded-full object-cover"
+                          />
                         ) : (
-                          <span className="text-gray-100 font-semibold text-xs bg-gray-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">Offline</span>
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center text-white font-semibold text-sm">
+                            {(otherParty?.username || 'U').charAt(0).toUpperCase()}
+                          </div>
                         )}
                       </div>
-                      {/* Online status indicator - inline on desktop only */}
-                      <div className="hidden sm:flex items-center gap-1">
-                        {isOtherPartyTyping ? (
-                          <span className="text-yellow-100 font-semibold text-xs bg-yellow-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">Typing...</span>
-                        ) : isOtherPartyOnline ? (
-                          <span className="text-green-100 font-semibold text-xs bg-green-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">Online</span>
-                        ) : (
-                          <span className="text-gray-100 font-semibold text-xs bg-gray-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">Offline</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 sm:gap-4 ml-auto flex-shrink-0">
-                    {filteredComments.length > 0 && (
-                      <button
-                        className="text-xs text-red-600 hover:underline"
-                        onClick={() => setShowClearChatModal(true)}
-                        title="Clear chat locally"
-                      >
-                        Clear Chat
-                      </button>
-                    )}
-                    <div className="relative">
-                      <button
-                        className="text-yellow-500 hover:text-yellow-600 bg-yellow-50 hover:bg-yellow-100 rounded-full p-2 transition-colors shadow"
-                        onClick={() => setShowShortcutTip(!showShortcutTip)}
-                        title="Keyboard shortcut tip"
-                        aria-label="Show keyboard shortcut tip"
-                      >
-                        <FaLightbulb className="text-sm" />
-                      </button>
-                      {showShortcutTip && (
-                        <div className="absolute top-full right-0 mt-2 bg-gray-800 text-white text-xs rounded-lg px-3 py-2 shadow-lg z-20 whitespace-nowrap">
-                          Press Ctrl + F to quickly focus and type your message.
-                          <div className="absolute -top-1 right-4 w-2 h-2 bg-gray-800 transform rotate-45"></div>
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 min-w-0 flex-1">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                          <h3 
+                            className="text-base sm:text-lg font-bold text-white truncate cursor-pointer hover:underline"
+                            onClick={() => onShowOtherParty(otherParty)}
+                            title="Click to view user details"
+                          >
+                            {otherParty?.username || 'Unknown User'}
+                          </h3>
+                          {/* Online status indicator - below name on mobile, inline on desktop */}
+                          <div className="flex items-center gap-1 sm:hidden">
+                            {isOtherPartyTyping ? (
+                              <span className="text-yellow-100 font-semibold text-xs bg-yellow-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">Typing...</span>
+                            ) : isOtherPartyOnline ? (
+                              <span className="text-green-100 font-semibold text-xs bg-green-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">Online</span>
+                            ) : (
+                              <span className="text-gray-100 font-semibold text-xs bg-gray-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">Offline</span>
+                            )}
+                          </div>
+                          {/* Online status indicator - inline on desktop only */}
+                          <div className="hidden sm:flex items-center gap-1">
+                            {isOtherPartyTyping ? (
+                              <span className="text-yellow-100 font-semibold text-xs bg-yellow-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">Typing...</span>
+                            ) : isOtherPartyOnline ? (
+                              <span className="text-green-100 font-semibold text-xs bg-green-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">Online</span>
+                            ) : (
+                              <span className="text-gray-100 font-semibold text-xs bg-gray-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">Offline</span>
+                            )}
+                          </div>
                         </div>
-                      )}
-                    </div>
-                    <button
-                      className="text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors z-10 shadow"
-                      onClick={() => setShowChatModal(false)}
-                      title="Close"
-                      aria-label="Close"
-                    >
-                      <FaTimes className="w-4 h-4" />
-                    </button>
-                  </div>
+                      </div>
+                      <div className="flex items-center gap-2 sm:gap-4 ml-auto flex-shrink-0">
+                        {filteredComments.length > 0 && (
+                          <button
+                            className="text-xs text-red-600 hover:underline"
+                            onClick={() => setShowClearChatModal(true)}
+                            title="Clear chat locally"
+                          >
+                            Clear Chat
+                          </button>
+                        )}
+                        <div className="relative">
+                          <button
+                            className="text-yellow-500 hover:text-yellow-600 bg-yellow-50 hover:bg-yellow-100 rounded-full p-2 transition-colors shadow"
+                            onClick={() => setShowShortcutTip(!showShortcutTip)}
+                            title="Keyboard shortcut tip"
+                            aria-label="Show keyboard shortcut tip"
+                          >
+                            <FaLightbulb className="text-sm" />
+                          </button>
+                          {showShortcutTip && (
+                            <div className="absolute top-full right-0 mt-2 bg-gray-800 text-white text-xs rounded-lg px-3 py-2 shadow-lg z-20 whitespace-nowrap">
+                              Press Ctrl + F to quickly focus and type your message.
+                              <div className="absolute -top-1 right-4 w-2 h-2 bg-gray-800 transform rotate-45"></div>
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          className="text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors z-10 shadow"
+                          onClick={() => setShowChatModal(false)}
+                          title="Close"
+                          aria-label="Close"
+                        >
+                          <FaTimes className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
                 <div ref={chatContainerRef} className="flex-1 overflow-y-auto space-y-2 mb-4 px-4 pt-4 animate-fadeInChat relative" style={{minHeight: '400px', maxHeight: 'calc(100vh - 200px)'}}>
                   {/* Floating Date Indicator */}
@@ -2210,6 +2290,17 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               <div className="font-semibold mb-1 text-xs text-purple-600">UrbanSetu</div>
                             )}
                             <div className="flex items-center justify-end mb-1">
+                              {/* Three-dots moved next to time, to open header-level options */}
+                              {!c.deleted && (
+                                <button
+                                  className={`${isMe ? 'text-blue-200 hover:text-white' : 'text-gray-500 hover:text-gray-700'} transition-all duration-200 hover:scale-110 p-1 rounded-full ${isMe ? 'hover:bg-white hover:bg-opacity-20' : 'hover:bg-gray-100'}`}
+                                  onClick={(e) => { e.stopPropagation(); setHeaderOptionsMessageId(c._id); }}
+                                  title="Message options"
+                                  aria-label="Message options"
+                                >
+                                  <FaEllipsisV size={isMe ? 16 : 14} />
+                                </button>
+                              )}
                               <span className={`text-[10px] px-2 py-1 rounded-full flex-shrink-0 ${
                                 isMe ? 'text-blue-200 bg-blue-600 bg-opacity-30' : 'text-gray-500 bg-gray-100'
                               }`}>
@@ -2250,75 +2341,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               )}
                             </div>
                             <div className="flex items-center gap-2 justify-end mt-2" data-message-actions>
-                              {/* Options icon - only visible for non-deleted messages */}
-                              {!c.deleted && (
-                                <button
-                                  className={`${isMe ? 'text-blue-200 hover:text-white' : 'text-gray-500 hover:text-gray-700'} transition-all duration-200 hover:scale-110 p-1 rounded-full hover:bg-white hover:bg-opacity-20`}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setVisibleActionsMessageId(visibleActionsMessageId === c._id ? null : c._id);
-                                  }}
-                                  title="Message options"
-                                >
-                                  <FaEllipsisV size={isMe ? 16 : 14} />
-                                </button>
-                              )}
-                              
-                              {/* Action buttons - only visible when options are toggled */}
-                              {visibleActionsMessageId === c._id && (
-                                <>
-                                  {!c.deleted && (
-                                    <>
-                                      <button
-                                        className={`${isMe ? 'text-yellow-300 hover:text-yellow-100' : 'text-blue-600 hover:text-blue-800'} transition-all duration-200 hover:scale-110 p-1 rounded-full hover:bg-white hover:bg-opacity-20`}
-                                        onClick={() => { setReplyTo(c); inputRef.current?.focus(); setVisibleActionsMessageId(null); }}
-                                        title="Reply"
-                                      >
-                                        <svg width={isMe ? "20" : "18"} height={isMe ? "20" : "18"} fill="currentColor" viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c4.28 0 6.92 1.45 8.84 4.55.23.36.76.09.65-.32C18.31 13.13 15.36 10.36 10 9z"/></svg>
-                                      </button>
-                                      <button
-                                        className={`${isMe ? 'text-blue-300 hover:text-blue-100' : 'text-gray-600 hover:text-gray-800'} transition-all duration-200 hover:scale-110 p-1 rounded-full hover:bg-white hover:bg-opacity-20`}
-                                        onClick={() => {
-                                          console.log('Button clicked! Message:', c.message);
-                                          copyMessageToClipboard(c.message);
-                                          setVisibleActionsMessageId(null);
-                                        }}
-                                        title="Copy message"
-                                      >
-                                        <FaCopy size={isMe ? 16 : 14} />
-                                      </button>
-                                    </>
-                                  )}
-                                  {(c.senderEmail === currentUser.email) && !c.deleted && (
-                                    <>
-                                      <button
-                                        onClick={() => { startEditing(c); setVisibleActionsMessageId(null); }}
-                                        className="text-green-300 hover:text-green-100 transition-all duration-200 hover:scale-110 p-1 rounded-full hover:bg-white hover:bg-opacity-20"
-                                        title="Edit comment"
-                                        disabled={editingComment !== null} // Disable if already editing another message
-                                      >
-                                        <FaPen size={16} />
-                                      </button>
-                                      <button
-                                        className="text-red-300 hover:text-red-100 transition-all duration-200 hover:scale-110 p-1 rounded-full hover:bg-white hover:bg-opacity-20"
-                                        onClick={() => { handleDeleteClick(c); setVisibleActionsMessageId(null); }}
-                                      >
-                                        <FaTrash size={16} />
-                                      </button>
-                                    </>
-                                  )}
-                                  {!isMe && !isEditing && !c.deleted && (
-                                    <button
-                                      className="text-red-500 hover:text-red-700 text-xs"
-                                      onClick={() => { handleDeleteReceivedMessage(c); setVisibleActionsMessageId(null); }}
-                                      title="Delete message locally"
-                                    >
-                                      <FaTrash size={14} />
-                                    </button>
-                                  )}
-                                </>
-                              )}
-                              
+                              {/* Inline options removed; options are now shown in the chat header */}
                               {/* Read status indicator - always visible for sent messages */}
                               {(c.senderEmail === currentUser.email) && !c.deleted && (
                                 <span className="ml-2 flex items-center gap-1">
