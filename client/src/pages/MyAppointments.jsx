@@ -1549,7 +1549,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         const isSenderSeller = data.comment.senderEmail === appt.sellerId?.email;
         const isSenderAdmin = !isSenderBuyer && !isSenderSeller;
         
-        const senderName = isSenderAdmin ? "Organization" : (data.comment.senderEmail || 'User');
+        const senderName = isSenderAdmin ? "UrbanSetu" : (data.comment.senderEmail || 'User');
         toast.info(`New message from ${senderName}`);
       }
     }
@@ -2204,6 +2204,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                   {comments.find(msg => msg._id === c.replyTo)?.message?.substring(0, 30) || 'Original message'}{comments.find(msg => msg._id === c.replyTo)?.message?.length > 30 ? '...' : ''}
                                 </span>
                               </div>
+                            )}
+                            {/* Sender label for admin messages */}
+                            {!isMe && (c.senderEmail !== appt.buyerId?.email) && (c.senderEmail !== appt.sellerId?.email) && (
+                              <div className="font-semibold mb-1 text-xs text-purple-600">UrbanSetu</div>
                             )}
                             <div className="flex items-center justify-end mb-1">
                               <span className={`text-[10px] px-2 py-1 rounded-full flex-shrink-0 ${
