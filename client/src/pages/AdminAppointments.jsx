@@ -32,14 +32,6 @@ export default function AdminAppointments() {
   const [showArchiveModal, setShowArchiveModal] = useState(false);
   const [showUnarchiveModal, setShowUnarchiveModal] = useState(false);
 
-  const [showShortcutTip, setShowShortcutTip] = useLocalState(false);
-  const [hiddenMessageIds, setHiddenMessageIds] = useLocalState(() => getLocallyHiddenIds(appt._id));
-  const [visibleActionsMessageId, setVisibleActionsMessageId] = useLocalState(null);
-  const scrollTimeoutRef = React.useRef(null);
-  const [showDeleteChatModal, setShowDeleteChatModal] = useLocalState(false);
-  const [deleteChatPassword, setDeleteChatPassword] = useLocalState("");
-  const [deleteChatLoading, setDeleteChatLoading] = useLocalState(false);
-
   useEffect(() => {
     const fetchAppointments = async () => {
       try {
