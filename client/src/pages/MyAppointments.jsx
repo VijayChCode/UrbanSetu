@@ -2981,7 +2981,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                     });
                     const data = await res.json();
                     if (res.ok) {
-                      toast.success('Reported to admins');
+                      toast.info('Thank you for reporting.');
                       setShowReportModal(false);
                       setReportingMessage(null);
                       setReportReason('');
