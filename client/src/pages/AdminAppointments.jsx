@@ -1844,9 +1844,9 @@ function AdminAppointmentRow({
                                         }
                                         
                                         if (c.originalMessage) {
-                                          return <span>{c.originalMessage}</span>;
+                                          return <span className="whitespace-pre-wrap">{c.originalMessage}</span>;
                                         } else if (c.message) {
-                                          return <span>{c.message}</span>;
+                                          return <span className="whitespace-pre-wrap">{c.message}</span>;
                                         } else {
                                           return (
                                             <span className="text-gray-500 italic">
@@ -1889,12 +1889,12 @@ function AdminAppointmentRow({
                                   <span className="text-yellow-800 text-xs font-medium">✏️ Editing this message below...</span>
                                 </div>
                               ) : (
-                                <>
-                                  {c.message}
-                                  {c.edited && (
-                                    <span className="ml-2 text-[10px] italic text-gray-300">(Edited)</span>
-                                  )}
-                                </>
+                                                                  <>
+                                    <span className="whitespace-pre-wrap">{c.message}</span>
+                                    {c.edited && (
+                                      <span className="ml-2 text-[10px] italic text-gray-300">(Edited)</span>
+                                    )}
+                                  </>
                               )}
                             </div>
                           )}
@@ -2017,9 +2017,9 @@ function AdminAppointmentRow({
               )}
               
               <div className="flex gap-2 mt-1 px-3 pb-2">
-                <input
-                  type="text"
-                  className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-full text-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-400 shadow-lg transition-all duration-200 bg-white"
+                <textarea
+                  rows={1}
+                  className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-400 shadow-lg transition-all duration-200 bg-white resize-y whitespace-pre-wrap"
                   placeholder={editingComment ? "Edit your message..." : "Type a message..."}
                   value={newComment}
                   onChange={(e) => {
@@ -2029,8 +2029,8 @@ function AdminAppointmentRow({
                     }
                   }}
                   onKeyDown={e => { 
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault(); // Prevent line break
+                    if ((e.key === 'Enter') && (e.ctrlKey || e.metaKey)) {
+                      e.preventDefault();
                       if (editingComment) {
                         handleEditComment(editingComment);
                       } else {
