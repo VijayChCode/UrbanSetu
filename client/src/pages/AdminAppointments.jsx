@@ -1547,7 +1547,9 @@ function AdminAppointmentRow({
       return prev;
     });
   }, [appt._id]);
-
+  
+const isAdminContext = location.pathname.includes('/admin');
+  
   const showMessage = React.useCallback((msgId) => {
     setHiddenMessageIds(prev => {
       const updated = prev.filter(id => id !== msgId);
