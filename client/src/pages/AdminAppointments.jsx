@@ -1696,14 +1696,16 @@ function AdminAppointmentRow({
                 </div>
                 <h3 className="text-lg font-bold text-white">Live Chat</h3>
                 <div className="flex items-center gap-3 ml-auto">
-                  <button
-                    className="text-red-100 hover:text-white bg-red-500/30 hover:bg-red-500/50 rounded-full p-2 transition-colors shadow flex items-center gap-2"
-                    onClick={() => setShowDeleteChatModal(true)}
-                    title="Delete entire chat"
-                    aria-label="Delete chat"
-                  >
-                    <FaTrash className="text-sm" />
-                  </button>
+                  {localComments.length > 0 && (
+                    <button
+                      className="text-red-100 hover:text-white bg-red-500/30 hover:bg-red-500/50 rounded-full p-2 transition-colors shadow flex items-center gap-2"
+                      onClick={() => setShowDeleteChatModal(true)}
+                      title="Delete entire chat"
+                      aria-label="Delete chat"
+                    >
+                      <FaTrash className="text-sm" />
+                    </button>
+                  )}
                   <div className="relative">
                     <button
                       className="text-yellow-500 hover:text-yellow-600 bg-yellow-50 hover:bg-yellow-100 rounded-full p-2 transition-colors shadow"
@@ -1808,11 +1810,6 @@ function AdminAppointmentRow({
                                 return c.senderName || c.senderEmail;
                               }
                             })()}
-                          </span>
-                          <span className={`text-[10px] px-2 py-1 rounded-full flex-shrink-0 ${
-                            isMe ? 'text-blue-200 bg-blue-600 bg-opacity-30' : 'text-gray-500 bg-gray-100'
-                          }`}>
-                            {new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
                           </span>
                         </div>
                         <div className={`text-left ${isMe ? 'text-base font-medium' : 'text-sm'}`}>
@@ -1920,6 +1917,9 @@ function AdminAppointmentRow({
                           )}
                         </div>
                         <div className="flex items-center gap-2 justify-end mt-2" data-message-actions>
+                          <span className={`${isMe ? 'text-blue-200' : 'text-gray-500'} text-[10px]`}>
+                            {new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
+                          </span>
                           {/* Options icon - only visible for non-deleted messages */}
                           {!c.deleted && (
                             <button
