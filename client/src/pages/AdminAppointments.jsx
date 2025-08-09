@@ -980,21 +980,6 @@ function AdminAppointmentRow({
     }
   }, [appt.comments]);
 
-  // Fetch latest comments when chat modal is opened
-  const fetchLatestComments = async () => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments`, {
-        credentials: 'include'
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setLocalComments(data.comments || []);
-      }
-    } catch (err) {
-      console.error('Failed to fetch latest comments:', err);
-    }
-  };
-
   // Track new messages and handle auto-scroll/unread count
   const prevCommentsLengthRef = React.useRef(localComments.length);
   const prevCommentsRef = React.useRef(localComments);
@@ -1210,12 +1195,11 @@ function AdminAppointmentRow({
           return;
         }
         
-        toast.custom((t) => (
-          <div className="bg-blue-600 text-white px-4 py-2 rounded shadow-lg flex items-center gap-2 animate-bounce-in">
-            <FaCommentDots /> New message from {data.comment.senderEmail || 'User'}
-            <button onClick={() => { setShowChatModal(true); toast.dismiss(t.id); }} className="ml-4 bg-white text-blue-700 px-2 py-1 rounded">Open Chat</button>
-          </div>
-        ));
+        toast.info(`New message from ${data.comment.senderEmail || 'User'}`, {
+          onClick: () => setShowChatModal(true),
+          autoClose: 5000,
+          closeOnClick: true
+        });
       }
     }
     socket.on('commentUpdate', handleCommentUpdateNotify);
@@ -1510,8 +1494,6 @@ function AdminAppointmentRow({
       const data = await res.json();
       if (res.ok && data.success) {
         setShowPasswordModal(false);
-        // Fetch latest comments before opening chat modal
-        await fetchLatestComments();
         setShowChatModal(true);
       } else {
         toast.error("Incorrect password. Please try again.");
