@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import ContactSupportWrapper from "../components/ContactSupportWrapper";
-import OpenAIChatbox from "../components/OpenAIChatbox.jsx";
 import { useSelector } from "react-redux";
 import NotFound from "./NotFound";
 
@@ -220,8 +219,6 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
   if (step === 1) {
     return (
       <div className="min-h-screen flex">
-        {/* OpenAI Chatbox */}
-        <OpenAIChatbox />
         
         {/* Left Side - Image and Quote */}
         <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-orange-600 to-red-700 relative overflow-hidden">
@@ -345,8 +342,6 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
 
   return (
     <div className="min-h-screen flex">
-      {/* OpenAI Chatbox */}
-      <OpenAIChatbox />
       
       {/* Left Side - Image and Quote */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-green-600 to-teal-700 relative overflow-hidden">
