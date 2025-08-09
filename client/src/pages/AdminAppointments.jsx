@@ -917,11 +917,13 @@ function AdminAppointmentRow({
   const [isScrolling, setIsScrolling] = useLocalState(false);
   const [showShortcutTip, setShowShortcutTip] = useLocalState(false);
   const [hiddenMessageIds, setHiddenMessageIds] = useLocalState(() => getLocallyHiddenIds(appt._id));
-  const [visibleActionsMessageId, setVisibleActionsMessageId] = useLocalState(null);
+  const [headerOptionsMessageId, setHeaderOptionsMessageId] = useLocalState(null);
   const scrollTimeoutRef = React.useRef(null);
   const [showDeleteChatModal, setShowDeleteChatModal] = useLocalState(false);
   const [deleteChatPassword, setDeleteChatPassword] = useLocalState("");
   const [deleteChatLoading, setDeleteChatLoading] = useLocalState(false);
+
+  const selectedMessageForHeaderOptions = headerOptionsMessageId ? localComments.find(msg => msg._id === headerOptionsMessageId) : null;
 
   // Auto-close shortcut tip after 10 seconds
   React.useEffect(() => {
@@ -1691,46 +1693,114 @@ function AdminAppointmentRow({
           <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-md flex items-center justify-center z-50 p-4">
             <div className="bg-gradient-to-br from-white via-blue-50 to-purple-50 rounded-3xl shadow-2xl w-full h-full max-w-6xl max-h-full p-0 relative animate-fadeIn flex flex-col border border-gray-200">
               <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 rounded-t-3xl relative">
-                <div className="bg-white rounded-full p-1.5 shadow-lg">
-                  <FaCommentDots className="text-blue-600 text-lg" />
-                </div>
-                <h3 className="text-lg font-bold text-white">Live Chat</h3>
-                <div className="flex items-center gap-3 ml-auto">
-                  {localComments.length > 0 && (
+                {headerOptionsMessageId && selectedMessageForHeaderOptions ? (
+                  <div className="flex items-center justify-between w-full">
+                    <div className="flex items-center gap-3">
+                      {!selectedMessageForHeaderOptions.deleted && (
+                        <button
+                          className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                          onClick={() => { setReplyTo(selectedMessageForHeaderOptions); inputRef.current?.focus(); setHeaderOptionsMessageId(null); }}
+                          title="Reply"
+                          aria-label="Reply"
+                        >
+                          <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c4.28 0 6.92 1.45 8.84 4.55.23.36.76.09.65-.32C18.31 13.13 15.36 10.36 10 9z"/></svg>
+                        </button>
+                      )}
+                      {!selectedMessageForHeaderOptions.deleted && (
+                        <button
+                          className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                          onClick={() => { copyMessageToClipboard(selectedMessageForHeaderOptions.message); setHeaderOptionsMessageId(null); }}
+                          title="Copy message"
+                          aria-label="Copy message"
+                        >
+                          <FaCopy size={18} />
+                        </button>
+                      )}
+                      {(selectedMessageForHeaderOptions.senderEmail === currentUser.email) && !selectedMessageForHeaderOptions.deleted && (
+                        <>
+                          <button
+                            onClick={() => { startEditing(selectedMessageForHeaderOptions); setHeaderOptionsMessageId(null); }}
+                            className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                            title="Edit comment"
+                            aria-label="Edit comment"
+                            disabled={editingComment !== null}
+                          >
+                            <FaPen size={18} />
+                          </button>
+                          <button
+                            className="text-white hover:text-red-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                            onClick={() => { handleDeleteClick(selectedMessageForHeaderOptions); setHeaderOptionsMessageId(null); }}
+                            title="Delete"
+                            aria-label="Delete"
+                          >
+                            <FaTrash size={18} />
+                          </button>
+                        </>
+                      )}
+                      {(selectedMessageForHeaderOptions.senderEmail !== currentUser.email) && !selectedMessageForHeaderOptions.deleted && (
+                        <button
+                          className="text-white hover:text-red-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                          onClick={() => { handleDeleteClick(selectedMessageForHeaderOptions); setHeaderOptionsMessageId(null); }}
+                          title="Delete"
+                          aria-label="Delete"
+                        >
+                          <FaTrash size={18} />
+                        </button>
+                      )}
+                    </div>
                     <button
-                      className="text-red-100 hover:text-white bg-red-500/30 hover:bg-red-500/50 rounded-full p-2 transition-colors shadow flex items-center gap-2"
-                      onClick={() => setShowDeleteChatModal(true)}
-                      title="Delete entire chat"
-                      aria-label="Delete chat"
+                      className="text-white hover:text-gray-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors z-10 shadow"
+                      onClick={() => setHeaderOptionsMessageId(null)}
+                      title="Close options"
+                      aria-label="Close options"
                     >
-                      <FaTrash className="text-sm" />
+                      <FaTimes className="w-4 h-4" />
                     </button>
-                  )}
-                  <div className="relative">
-                    <button
-                      className="text-yellow-500 hover:text-yellow-600 bg-yellow-50 hover:bg-yellow-100 rounded-full p-2 transition-colors shadow"
-                      onClick={() => setShowShortcutTip(!showShortcutTip)}
-                      title="Keyboard shortcut tip"
-                      aria-label="Show keyboard shortcut tip"
-                    >
-                      <FaLightbulb className="text-sm" />
-                    </button>
-                    {showShortcutTip && (
-                      <div className="absolute top-full right-0 mt-2 bg-gray-800 text-white text-xs rounded-lg px-3 py-2 shadow-lg z-20 whitespace-nowrap">
-                        Press Ctrl + F to quickly focus and type your message.
-                        <div className="absolute -top-1 right-4 w-2 h-2 bg-gray-800 transform rotate-45"></div>
-                      </div>
-                    )}
                   </div>
-                  <button
-                    className="text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors z-10 shadow"
-                    onClick={() => setShowChatModal(false)}
-                    title="Close"
-                    aria-label="Close"
-                  >
-                    <FaTimes className="w-4 h-4" />
-                  </button>
-                </div>
+                ) : (
+                  <>
+                    <div className="bg-white rounded-full p-1.5 shadow-lg">
+                      <FaCommentDots className="text-blue-600 text-lg" />
+                    </div>
+                    <h3 className="text-lg font-bold text-white">Live Chat</h3>
+                    <div className="flex items-center gap-3 ml-auto">
+                      {localComments.length > 0 && (
+                        <button
+                          className="text-red-100 hover:text-white bg-red-500/30 hover:bg-red-500/50 rounded-full p-2 transition-colors shadow flex items-center gap-2"
+                          onClick={() => setShowDeleteChatModal(true)}
+                          title="Delete entire chat"
+                          aria-label="Delete chat"
+                        >
+                          <FaTrash className="text-sm" />
+                        </button>
+                      )}
+                      <div className="relative">
+                        <button
+                          className="text-yellow-500 hover:text-yellow-600 bg-yellow-50 hover:bg-yellow-100 rounded-full p-2 transition-colors shadow"
+                          onClick={() => setShowShortcutTip(!showShortcutTip)}
+                          title="Keyboard shortcut tip"
+                          aria-label="Show keyboard shortcut tip"
+                        >
+                          <FaLightbulb className="text-sm" />
+                        </button>
+                        {showShortcutTip && (
+                          <div className="absolute top-full right-0 mt-2 bg-gray-800 text-white text-xs rounded-lg px-3 py-2 shadow-lg z-20 whitespace-nowrap">
+                            Press Ctrl + F to quickly focus and type your message.
+                            <div className="absolute -top-1 right-4 w-2 h-2 bg-gray-800 transform rotate-45"></div>
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        className="text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors z-10 shadow"
+                        onClick={() => setShowChatModal(false)}
+                        title="Close"
+                        aria-label="Close"
+                      >
+                        <FaTimes className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
               <div ref={chatContainerRef} className="flex-1 overflow-y-auto space-y-2 mb-4 px-4 pt-4 animate-fadeInChat relative" style={{minHeight: '400px', maxHeight: 'calc(100vh - 200px)'}}>
                 {/* Floating Date Indicator */}
@@ -1926,59 +1996,13 @@ function AdminAppointmentRow({
                               className={`${c.senderEmail === currentUser.email ? 'text-blue-200 hover:text-white' : 'text-gray-500 hover:text-gray-700'} transition-all duration-200 hover:scale-110 p-1 rounded-full hover:bg-white hover:bg-opacity-20`}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setVisibleActionsMessageId(visibleActionsMessageId === c._id ? null : c._id);
+                                setHeaderOptionsMessageId(c._id);
                               }}
                               title="Message options"
+                              aria-label="Message options"
                             >
                               <FaEllipsisV size={c.senderEmail === currentUser.email ? 16 : 14} />
                             </button>
-                          )}
-                          
-                          {/* Action buttons - only visible when options are toggled */}
-                          {visibleActionsMessageId === c._id && (
-                            <>
-                              {!c.deleted && (
-                                <>
-                                  <button
-                                    className={`${c.senderEmail === currentUser.email ? 'text-yellow-300 hover:text-yellow-100' : 'text-blue-600 hover:text-blue-800'} transition-all duration-200 hover:scale-110 p-1 rounded-full hover:bg-white hover:bg-opacity-20`}
-                                    onClick={() => { setReplyTo(c); inputRef.current?.focus(); setVisibleActionsMessageId(null); }}
-                                    title="Reply"
-                                  >
-                                    <svg width={c.senderEmail === currentUser.email ? "20" : "18"} height={c.senderEmail === currentUser.email ? "20" : "18"} fill="currentColor" viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c4.28 0 6.92 1.45 8.84 4.55.23.36.76.09.65-.32C18.31 13.13 15.36 10.36 10 9z"/></svg>
-                                  </button>
-                                  <button
-                                    className={`${c.senderEmail === currentUser.email ? 'text-blue-300 hover:text-blue-100' : 'text-gray-600 hover:text-gray-800'} transition-all duration-200 hover:scale-110 p-1 rounded-full hover:bg-white hover:bg-opacity-20`}
-                                    onClick={() => {
-                                      console.log('Button clicked! Message:', c.message);
-                                      copyMessageToClipboard(c.message);
-                                      setVisibleActionsMessageId(null);
-                                    }}
-                                    title="Copy message"
-                                  >
-                                    <FaCopy size={c.senderEmail === currentUser.email ? 16 : 14} />
-                                  </button>
-                                </>
-                              )}
-                              {(c.senderEmail === currentUser.email) && !c.deleted && (
-                                <>
-                                  <button
-                                    onClick={() => { startEditing(c); setVisibleActionsMessageId(null); }}
-                                    className="text-green-300 hover:text-green-100 transition-all duration-200 hover:scale-110 p-1 rounded-full hover:bg-white hover:bg-opacity-20"
-                                    title="Edit comment"
-                                    disabled={editingComment !== null} // Disable if already editing another message
-                                  >
-                                    <FaPen size={16} />
-                                  </button>
-                                  <button
-                                    className="text-red-300 hover:text-red-100 transition-all duration-200 hover:scale-110 p-1 rounded-full hover:bg-white hover:bg-opacity-20"
-                                    onClick={() => { handleDeleteClick(c); setVisibleActionsMessageId(null); }}
-                                    title="Delete comment"
-                                  >
-                                    <FaTrash size={16} />
-                                  </button>
-                                </>
-                              )}
-                            </>
                           )}
                           
                           {/* Read status indicator - always visible for sent messages */}
