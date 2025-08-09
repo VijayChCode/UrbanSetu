@@ -1579,7 +1579,7 @@ function AdminAppointmentRow({
         <div>
           {appt.listingId ? (
             <Link 
-              to={`/admin/listing/${appt.listingId._id}`}
+              to={isAdminContext ? `/admin/listing/${appt.listingId._id}` : `/user/listing/${appt.listingId._id}`}
               className="font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
             >
               {appt.propertyName}
