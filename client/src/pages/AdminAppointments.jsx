@@ -1548,8 +1548,6 @@ function AdminAppointmentRow({
     });
   }, [appt._id]);
   
-const isAdminContext = location.pathname.includes('/admin');
-  
   const showMessage = React.useCallback((msgId) => {
     setHiddenMessageIds(prev => {
       const updated = prev.filter(id => id !== msgId);
@@ -1581,7 +1579,7 @@ const isAdminContext = location.pathname.includes('/admin');
         <div>
           {appt.listingId ? (
             <Link 
-              to={isAdminContext ? `/admin/listing/${appt.listingId._id}` : `/user/listing/${appt.listingId._id}`}
+              to={`/admin/listing/${appt.listingId._id}`}
               className="font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
             >
               {appt.propertyName}
