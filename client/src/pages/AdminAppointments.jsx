@@ -1846,15 +1846,15 @@ function AdminAppointmentRow({
                       <div className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-fadeInChatBubble`} style={{ animationDelay: `${0.03 * index}s` }}>
                       <div 
                         ref={el => messageRefs.current[c._id] = el}
-                        className={`rounded-2xl px-4 sm:px-5 py-3 text-sm shadow-xl max-w-[90%] sm:max-w-[80%] md:max-w-[70%] break-all overflow-hidden relative transform hover:scale-[1.02] transition-transform duration-200 min-h-[60px] ${
+                        className={`rounded-2xl px-4 sm:px-5 py-3 text-sm shadow-xl max-w-[90%] sm:max-w-[80%] md:max-w-[70%] break-all overflow-hidden relative transition-all duration-200 min-h-[60px] ${
                           isMe 
-                            ? 'bg-gradient-to-r from-blue-600 to-purple-700 text-white shadow-blue-200' 
-                            : 'bg-white text-gray-800 border border-gray-200 shadow-gray-200 hover:shadow-gray-300'
+                            ? 'bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-500 hover:to-purple-600 text-white shadow-blue-200 hover:shadow-blue-300' 
+                            : 'bg-white hover:bg-gray-50 text-gray-800 border border-gray-200 shadow-gray-200 hover:shadow-lg hover:border-gray-300'
                         }`}
                       >
                                                     {/* Reply preview above message if this is a reply */}
                             {c.replyTo && (
-                              <div className="border-l-4 border-purple-400 pl-3 mb-2 text-xs bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg w-full max-w-full break-words cursor-pointer transform hover:scale-[1.02] transition-transform duration-200" onClick={() => {
+                              <div className="border-l-4 border-purple-400 pl-3 mb-2 text-xs bg-gradient-to-r from-purple-50 to-blue-50 hover:from-purple-100 hover:to-blue-100 rounded-lg w-full max-w-full break-words cursor-pointer transition-all duration-200 hover:shadow-sm" onClick={() => {
                                   if (messageRefs.current[c.replyTo]) {
                                     messageRefs.current[c.replyTo].scrollIntoView({ behavior: 'smooth', block: 'center' });
                                     messageRefs.current[c.replyTo].classList.add('ring-2', 'ring-yellow-400');
