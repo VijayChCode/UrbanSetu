@@ -2118,6 +2118,22 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             <FaTrash size={18} />
                           </button>
                         )}
+                        {/* Delete from chat locally for deleted messages */}
+                        {selectedMessageForHeaderOptions.deleted && (
+                          <button
+                            className="text-white hover:text-red-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                            onClick={() => { 
+                              setMessageToDelete(selectedMessageForHeaderOptions);
+                              setDeleteForBoth(false); // Always delete locally for deleted messages
+                              setShowDeleteModal(true);
+                              setHeaderOptionsMessageId(null); 
+                            }}
+                            title="Delete from chat locally"
+                            aria-label="Delete from chat locally"
+                          >
+                            <FaTrash size={18} />
+                          </button>
+                        )}
                       </div>
                       <button
                         className="text-white hover:text-gray-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors z-10 shadow"
@@ -2293,17 +2309,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               {c.deleted ? (
                                 <span className="flex items-center gap-1 text-gray-400 italic">
                                   <FaBan className="inline-block text-lg" /> {c.senderEmail === currentUser.email ? "You deleted this message" : "This message was deleted."}
-                                  <button
-                                    className="ml-2 text-red-700 hover:text-red-900"
-                                    onClick={() => {
-                                      setMessageToDelete(c);
-                                      setDeleteForBoth(false); // Always delete locally for deleted messages
-                                      setShowDeleteModal(true);
-                                    }}
-                                    title="Remove this deleted message from your chat view"
-                                  >
-                                    <FaTrash className="group-hover:text-red-900 group-hover:scale-125 group-hover:animate-shake transition-all duration-200" />
-                                  </button>
                                 </span>
                               ) : (
                                 <div className={isMe ? 'text-base font-medium' : 'text-sm'}>
@@ -2326,16 +2331,14 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               <span>
                                 {new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
                               </span>
-                              {!c.deleted && (
-                                <button
-                                  className={`${isMe ? 'hover:bg-white hover:bg-opacity-20' : 'hover:bg-gray-100'} ml-1 p-1 rounded-full transition-colors`}
-                                  onClick={(e) => { e.stopPropagation(); setHeaderOptionsMessageId(c._id); }}
-                                  title="Message options"
-                                  aria-label="Message options"
-                                >
-                                  <FaEllipsisV size={isMe ? 14 : 12} />
-                                </button>
-                              )}
+                              <button
+                                className={`${isMe ? 'hover:bg-white hover:bg-opacity-20' : 'hover:bg-gray-100'} ml-1 p-1 rounded-full transition-colors`}
+                                onClick={(e) => { e.stopPropagation(); setHeaderOptionsMessageId(c._id); }}
+                                title="Message options"
+                                aria-label="Message options"
+                              >
+                                <FaEllipsisV size={isMe ? 14 : 12} />
+                              </button>
                               {(c.senderEmail === currentUser.email) && !c.deleted && (
                                 <span className="flex items-center gap-1 ml-1">
                                   {c.readBy?.includes(otherParty?._id)
