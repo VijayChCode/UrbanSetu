@@ -6,6 +6,7 @@ import { useState as useLocalState } from "react";
 import { Link } from "react-router-dom";
 import { toast, ToastContainer } from 'react-toastify';
 import { socket } from "../utils/socket";
+// Note: Do not import server-only libs here
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -30,6 +31,14 @@ export default function AdminAppointments() {
   const [showReinitiateModal, setShowReinitiateModal] = useState(false);
   const [showArchiveModal, setShowArchiveModal] = useState(false);
   const [showUnarchiveModal, setShowUnarchiveModal] = useState(false);
+
+  const [showShortcutTip, setShowShortcutTip] = useLocalState(false);
+  const [hiddenMessageIds, setHiddenMessageIds] = useLocalState(() => getLocallyHiddenIds(appt._id));
+  const [visibleActionsMessageId, setVisibleActionsMessageId] = useLocalState(null);
+  const scrollTimeoutRef = React.useRef(null);
+  const [showDeleteChatModal, setShowDeleteChatModal] = useLocalState(false);
+  const [deleteChatPassword, setDeleteChatPassword] = useLocalState("");
+  const [deleteChatLoading, setDeleteChatLoading] = useLocalState(false);
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -918,6 +927,9 @@ function AdminAppointmentRow({
   const [hiddenMessageIds, setHiddenMessageIds] = useLocalState(() => getLocallyHiddenIds(appt._id));
   const [visibleActionsMessageId, setVisibleActionsMessageId] = useLocalState(null);
   const scrollTimeoutRef = React.useRef(null);
+  const [showDeleteChatModal, setShowDeleteChatModal] = useLocalState(false);
+  const [deleteChatPassword, setDeleteChatPassword] = useLocalState("");
+  const [deleteChatLoading, setDeleteChatLoading] = useLocalState(false);
 
   // Auto-close shortcut tip after 10 seconds
   React.useEffect(() => {
@@ -1155,8 +1167,16 @@ function AdminAppointmentRow({
       }
     }
     socket.on('commentUpdate', handleCommentUpdateNotify);
+    const handleChatCleared = (data) => {
+      if (data.appointmentId === appt._id) {
+        setLocalComments([]);
+        toast.success('Chat deleted by admin');
+      }
+    };
+    socket.on('chatCleared', handleChatCleared);
     return () => {
       socket.off('commentUpdate', handleCommentUpdateNotify);
+      socket.off('chatCleared', handleChatCleared);
     };
   }, [appt._id, showChatModal]);
 
@@ -1678,12 +1698,20 @@ function AdminAppointmentRow({
         {showChatModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-md flex items-center justify-center z-50 p-4">
             <div className="bg-gradient-to-br from-white via-blue-50 to-purple-50 rounded-3xl shadow-2xl w-full h-full max-w-6xl max-h-full p-0 relative animate-fadeIn flex flex-col border border-gray-200">
-                              <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 rounded-t-3xl relative">
-                  <div className="bg-white rounded-full p-1.5 shadow-lg">
-                    <FaCommentDots className="text-blue-600 text-lg" />
-                  </div>
-                  <h3 className="text-lg font-bold text-white">Live Chat</h3>
+              <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 rounded-t-3xl relative">
+                <div className="bg-white rounded-full p-1.5 shadow-lg">
+                  <FaCommentDots className="text-blue-600 text-lg" />
+                </div>
+                <h3 className="text-lg font-bold text-white">Live Chat</h3>
                 <div className="flex items-center gap-3 ml-auto">
+                  <button
+                    className="text-red-100 hover:text-white bg-red-500/30 hover:bg-red-500/50 rounded-full p-2 transition-colors shadow flex items-center gap-2"
+                    onClick={() => setShowDeleteChatModal(true)}
+                    title="Delete entire chat"
+                    aria-label="Delete chat"
+                  >
+                    <FaTrash className="text-sm" />
+                  </button>
                   <div className="relative">
                     <button
                       className="text-yellow-500 hover:text-yellow-600 bg-yellow-50 hover:bg-yellow-100 rounded-full p-2 transition-colors shadow"
@@ -2106,6 +2134,77 @@ function AdminAppointmentRow({
                        </div>
                      )}
                    </button>
+                 </div>
+               )}
+               {/* Delete Chat Confirmation Modal (overlay above chat) */}
+               {showDeleteChatModal && (
+                 <div className="absolute inset-0 bg-black/30 flex items-center justify-center z-50">
+                   <div className="bg-white rounded-xl p-6 w-full max-w-sm relative shadow-2xl">
+                     <button
+                       className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors"
+                       onClick={() => { setShowDeleteChatModal(false); setDeleteChatPassword(''); }}
+                       title="Close"
+                       aria-label="Close"
+                     >
+                       <FaTimes className="w-4 h-4" />
+                     </button>
+                     <h3 className="text-lg font-bold mb-4 text-red-600 flex items-center gap-2">
+                       <FaTrash /> Delete Entire Chat
+                     </h3>
+                     <p className="text-sm text-gray-600 mb-3">This will permanently delete all messages for this appointment. Enter admin password to confirm.</p>
+                     <input
+                       type="password"
+                       className="border rounded px-3 py-2 w-full focus:ring-2 focus:ring-red-200 mb-4"
+                       placeholder="Admin password"
+                       value={deleteChatPassword}
+                       onChange={e => setDeleteChatPassword(e.target.value)}
+                       autoFocus
+                     />
+                     <div className="flex gap-3 justify-end">
+                       <button
+                         type="button"
+                         onClick={() => { setShowDeleteChatModal(false); setDeleteChatPassword(''); }}
+                         className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors"
+                       >
+                         Cancel
+                       </button>
+                       <button
+                         type="button"
+                         disabled={deleteChatLoading || !deleteChatPassword}
+                         onClick={async () => {
+                           try {
+                             setDeleteChatLoading(true);
+                             const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments`, {
+                               method: 'DELETE',
+                               headers: { 'Content-Type': 'application/json' },
+                               credentials: 'include',
+                               body: JSON.stringify({ password: deleteChatPassword })
+                             });
+                             const data = await res.json();
+                             if (res.ok) {
+                               setLocalComments([]);
+                               toast.success('Chat deleted successfully.');
+                               setShowDeleteChatModal(false);
+                               setDeleteChatPassword('');
+                             } else {
+                               toast.error(data.message || 'Failed to delete chat');
+                             }
+                           } catch (e) {
+                             toast.error('An error occurred. Please try again.');
+                           } finally {
+                             setDeleteChatLoading(false);
+                           }
+                         }}
+                         className="px-4 py-2 rounded bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors flex items-center gap-2 disabled:opacity-60"
+                       >
+                         {deleteChatLoading ? 'Deleting...' : (
+                           <>
+                             <FaTrash size={12} /> Delete Chat
+                           </>
+                         )}
+                       </button>
+                     </div>
+                   </div>
                  </div>
                )}
             </div>

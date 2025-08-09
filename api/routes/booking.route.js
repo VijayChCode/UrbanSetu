@@ -5,6 +5,7 @@ import User from "../models/user.model.js";
 import { verifyToken } from '../utils/verify.js';
 import Review from '../models/review.model.js';
 import Notification from '../models/notification.model.js';
+import bcryptjs from 'bcryptjs';
 
 const router = express.Router();
 
@@ -419,6 +420,51 @@ router.delete('/:id/comment/:commentId', verifyToken, async (req, res) => {
     res.status(200).json({ comments: bookingToUpdate.comments });
   } catch (err) {
     res.status(500).json({ message: 'Failed to delete comment.' });
+  }
+});
+
+// DELETE: Clear all comments for an appointment (admin only, password required)
+router.delete('/:id/comments', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { password } = req.body || {};
+
+    if (!password) {
+      return res.status(400).json({ message: 'Password is required.' });
+    }
+
+    // Verify current user is admin or rootadmin
+    const user = await User.findById(req.user.id).select('+password role adminApprovalStatus');
+    const isAdmin = (user && user.role === 'admin' && user.adminApprovalStatus === 'approved') || (user && user.role === 'rootadmin');
+    if (!isAdmin) {
+      return res.status(403).json({ message: 'Only admins can clear chat.' });
+    }
+
+    // Verify password
+    const validPassword = await bcryptjs.compare(password, user.password);
+    if (!validPassword) {
+      return res.status(401).json({ message: 'Incorrect password.' });
+    }
+
+    // Find booking and clear comments
+    const bookingToUpdate = await booking.findById(id);
+    if (!bookingToUpdate) {
+      return res.status(404).json({ message: 'Appointment not found.' });
+    }
+
+    bookingToUpdate.comments = [];
+    await bookingToUpdate.save();
+
+    // Emit optional socket event
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('chatCleared', { appointmentId: id });
+    }
+
+    return res.status(200).json({ message: 'Chat deleted successfully.' });
+  } catch (err) {
+    console.error('Error clearing chat:', err);
+    return res.status(500).json({ message: 'Failed to delete chat.' });
   }
 });
 
