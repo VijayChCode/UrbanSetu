@@ -1139,18 +1139,28 @@ router.patch('/:id/comments/read', verifyToken, async (req, res) => {
 
     let updated = false;
     bookingDoc.comments.forEach(comment => {
-      // Ensure readBy is an array and check if user has already read this comment
-      if (!comment.readBy || !Array.isArray(comment.readBy)) {
-        comment.readBy = [];
-      }
-      
-      if (!comment.readBy.map(String).includes(userId)) {
-        comment.readBy.push(userId);
-        comment.status = "read";
-        updated = true;
+      try {
+        // Ensure readBy is an array and check if user has already read this comment
+        if (!comment.readBy || !Array.isArray(comment.readBy)) {
+          comment.readBy = [];
+        }
+        
+        // Convert ObjectIds to strings for comparison
+        const readByStrings = comment.readBy.map(id => id.toString());
+        if (!readByStrings.includes(userId)) {
+          comment.readBy.push(userId);
+          comment.status = "read";
+          updated = true;
+        }
+      } catch (commentError) {
+        console.error('Error processing comment:', commentError);
+        // Continue with other comments even if one fails
       }
     });
-    if (updated) await bookingDoc.save();
+    
+    if (updated) {
+      await bookingDoc.save();
+    }
 
     // Emit read event for all comments
     const io = req.app.get('io');

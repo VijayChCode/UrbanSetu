@@ -1619,11 +1619,18 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         // Auto-scroll for incoming messages if user is at bottom
         if (showChatModal && data.comment.senderEmail !== currentUser.email) {
           // Mark as read if chat is open
-          setTimeout(() => {
-            fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/read`, {
-              method: 'PATCH',
-              credentials: 'include'
-            });
+          setTimeout(async () => {
+            try {
+              const response = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/read`, {
+                method: 'PATCH',
+                credentials: 'include'
+              });
+              if (!response.ok) {
+                console.warn('Failed to mark comments as read:', response.status);
+              }
+            } catch (error) {
+              console.warn('Error marking comments as read:', error);
+            }
           }, 100);
           
           // Auto-scroll to show new message if user is near bottom
@@ -1648,23 +1655,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/read`, {
         method: 'PATCH',
         credentials: 'include'
+      }).catch(error => {
+        console.warn('Error marking comments as read on modal open:', error);
       });
-      
-      // Only fetch latest comments if we don't have any comments loaded
-      if (comments.length === 0) {
-        setLoadingComments(true);
-        fetch(`${API_BASE_URL}/api/bookings/${appt._id}`)
-          .then(res => res.json())
-          .then(data => {
-            if (data && Array.isArray(data.comments)) {
-              setComments(data.comments);
-            }
-          })
-          .catch(err => console.error('Failed to fetch comments:', err))
-          .finally(() => setLoadingComments(false));
-      }
     }
-  }, [showChatModal, appt._id, comments.length]);
+  }, [showChatModal, appt._id]);
 
   // Listen for commentDelivered and commentRead events
   useEffect(() => {
