@@ -236,7 +236,11 @@ function AppRoutes({ bootstrapped }) {
     const interval = setInterval(async () => {
       try {
         const res = await fetch(`${API_BASE_URL}/api/auth/verify`, { credentials: 'include' });
-        if (res.status === 403) {
+        if (res.status === 401) {
+          // Session expired - silently sign out user
+          dispatch(signoutUserSuccess());
+          navigate("/sign-in");
+        } else if (res.status === 403) {
           try {
             const data = await res.clone().json();
             if (data.message && data.message.toLowerCase().includes("suspended")) {
@@ -246,7 +250,9 @@ function AppRoutes({ bootstrapped }) {
             }
           } catch (e) {}
         }
-      } catch (e) {}
+      } catch (e) {
+        // Network errors or other issues - ignore silently
+      }
     }, 30000); // 30 seconds
     return () => clearInterval(interval);
   }, [dispatch, navigate, currentUser]);

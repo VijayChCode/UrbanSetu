@@ -55,18 +55,21 @@ export default function MyAppointments() {
       }
     };
     const fetchArchivedAppointments = async () => {
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/bookings/archived`, {
-          credentials: 'include'
-        });
-        if (!res.ok) throw new Error('Not allowed');
-        const data = await res.json();
-        setArchivedAppointments(Array.isArray(data) ? data : []);
-      } catch (err) {
-        setArchivedAppointments([]);
-        if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) {
+      // Only fetch archived appointments for admin users
+      if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) {
+        try {
+          const res = await fetch(`${API_BASE_URL}/api/bookings/archived`, {
+            credentials: 'include'
+          });
+          if (!res.ok) throw new Error('Not allowed');
+          const data = await res.json();
+          setArchivedAppointments(Array.isArray(data) ? data : []);
+        } catch (err) {
+          setArchivedAppointments([]);
           toast.error("Failed to fetch archived appointments");
         }
+      } else {
+        setArchivedAppointments([]);
       }
     };
     fetchAppointments();
@@ -463,10 +466,15 @@ export default function MyAppointments() {
       } else {
         throw new Error('Failed to fetch appointments');
       }
-      const resArchived = await fetch(`${API_BASE_URL}/api/bookings/archived`, { credentials: 'include' });
-      if (resArchived.ok) {
-        const dataArchived = await resArchived.json();
-        setArchivedAppointments(Array.isArray(dataArchived) ? dataArchived : []);
+      // Only fetch archived appointments for admin users
+      if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) {
+        const resArchived = await fetch(`${API_BASE_URL}/api/bookings/archived`, { credentials: 'include' });
+        if (resArchived.ok) {
+          const dataArchived = await resArchived.json();
+          setArchivedAppointments(Array.isArray(dataArchived) ? dataArchived : []);
+        }
+      } else {
+        setArchivedAppointments([]);
       }
     } catch (err) {
       setError('Failed to refresh appointments. Please try again.');
@@ -1314,8 +1322,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
 
   // Mark messages as read when user can actually see them at the bottom of chat
 
+  const markingReadRef = useRef(false);
+  
   const markVisibleMessagesAsRead = useCallback(async () => {
-    if (!chatContainerRef.current) return;
+    if (!chatContainerRef.current || markingReadRef.current) return;
     
     // Only mark messages as read when user is at the bottom of chat AND has manually scrolled
     const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
@@ -1329,6 +1339,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     );
     
     if (unreadMessages.length > 0) {
+      markingReadRef.current = true; // Prevent concurrent requests
       try {
         // Mark messages as read in backend
         const response = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/read`, {
@@ -1361,6 +1372,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         }
       } catch (error) {
         console.error('Error marking messages as read:', error);
+      } finally {
+        markingReadRef.current = false; // Reset the flag
       }
     }
   }, [comments, currentUser._id, appt._id, socket]);

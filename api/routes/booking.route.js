@@ -1155,7 +1155,8 @@ router.patch('/:id/comments/read', verifyToken, async (req, res) => {
 
     res.status(200).json({ success: true });
   } catch (err) {
-    res.status(500).json({ message: 'Failed to mark comments as read.' });
+    console.error('Error marking comments as read:', err);
+    res.status(500).json({ message: 'Failed to mark comments as read.', error: err.message });
   }
 });
 

@@ -1027,13 +1027,18 @@ function AdminAppointmentRow({
   }, [localComments, currentFloatingDate]);
 
   // Mark messages as read when user can see them
+  const markingReadRef = React.useRef(false);
+  
   const markMessagesAsRead = React.useCallback(async () => {
+    if (markingReadRef.current) return; // Prevent concurrent requests
+    
     const unreadMessages = localComments.filter(c => 
       !c.readBy?.includes(currentUser._id) && 
       c.senderEmail !== currentUser.email
     );
     
     if (unreadMessages.length > 0) {
+      markingReadRef.current = true;
       try {
         // Mark messages as read in backend
         const response = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/read`, {
@@ -1063,6 +1068,8 @@ function AdminAppointmentRow({
         }
       } catch (error) {
         console.error('Error marking messages as read:', error);
+      } finally {
+        markingReadRef.current = false;
       }
     }
   }, [localComments, currentUser._id, appt._id, socket]);
