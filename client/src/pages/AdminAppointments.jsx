@@ -32,6 +32,17 @@ export default function AdminAppointments() {
   const [showArchiveModal, setShowArchiveModal] = useState(false);
   const [showUnarchiveModal, setShowUnarchiveModal] = useState(false);
 
+  // Add state to track updated comments for each appointment
+  const [updatedComments, setUpdatedComments] = useState({});
+
+  // Function to update comments for a specific appointment
+  const updateAppointmentComments = (appointmentId, comments) => {
+    setUpdatedComments(prev => ({
+      ...prev,
+      [appointmentId]: comments
+    }));
+  };
+
   useEffect(() => {
     const fetchAppointments = async () => {
       try {
@@ -398,7 +409,10 @@ export default function AdminAppointments() {
       matchesDate = matchesDate && new Date(appt.date) <= new Date(endDate);
     }
     return matchesStatus && matchesSearch && matchesDate;
-  });
+  }).map((appt) => ({
+    ...appt,
+    comments: updatedComments[appt._id] || appt.comments || []
+  }));
 
   const filteredArchivedAppointments = archivedAppointments.filter((appt) => {
     const isOutdated = new Date(appt.date) < new Date() || (new Date(appt.date).toDateString() === new Date().toDateString() && appt.time && appt.time < new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
@@ -420,7 +434,10 @@ export default function AdminAppointments() {
       matchesDate = matchesDate && new Date(appt.date) <= new Date(endDate);
     }
     return matchesStatus && matchesSearch && matchesDate;
-  });
+  }).map((appt) => ({
+    ...appt,
+    comments: updatedComments[appt._id] || appt.comments || []
+  }));
 
   // Add this function to fetch latest data on demand
   const handleManualRefresh = async () => {
@@ -659,6 +676,7 @@ export default function AdminAppointments() {
                         onUserClick={handleUserClick}
                         isArchived={true}
                         copyMessageToClipboard={copyMessageToClipboard}
+                        updateAppointmentComments={updateAppointmentComments}
                         // Modal states
                         showCancelModal={showCancelModal}
                         setShowCancelModal={setShowCancelModal}
@@ -715,6 +733,7 @@ export default function AdminAppointments() {
                       onUserClick={handleUserClick}
                       isArchived={false}
                       copyMessageToClipboard={copyMessageToClipboard}
+                      updateAppointmentComments={updateAppointmentComments}
                       // Modal states
                       showCancelModal={showCancelModal}
                       setShowCancelModal={setShowCancelModal}
@@ -876,6 +895,7 @@ function AdminAppointmentRow({
   onUserClick, 
   isArchived,
   copyMessageToClipboard,
+  updateAppointmentComments,
   // Modal states from parent
   showCancelModal,
   setShowCancelModal,
@@ -943,6 +963,37 @@ function AdminAppointmentRow({
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [showChatModal]);
+
+  // Sync localComments back to parent component whenever they change
+  React.useEffect(() => {
+    if (updateAppointmentComments) {
+      updateAppointmentComments(appt._id, localComments);
+    }
+  }, [localComments, appt._id, updateAppointmentComments]);
+
+  // Preserve local comments when appointment data is refreshed
+  React.useEffect(() => {
+    // Only update localComments if we don't have any local updates
+    // or if the server data has more comments than our local state
+    if (appt.comments && appt.comments.length > localComments.length) {
+      setLocalComments(appt.comments);
+    }
+  }, [appt.comments]);
+
+  // Fetch latest comments when chat modal is opened
+  const fetchLatestComments = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments`, {
+        credentials: 'include'
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setLocalComments(data.comments || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch latest comments:', err);
+    }
+  };
 
   // Track new messages and handle auto-scroll/unread count
   const prevCommentsLengthRef = React.useRef(localComments.length);
@@ -1459,6 +1510,8 @@ function AdminAppointmentRow({
       const data = await res.json();
       if (res.ok && data.success) {
         setShowPasswordModal(false);
+        // Fetch latest comments before opening chat modal
+        await fetchLatestComments();
         setShowChatModal(true);
       } else {
         toast.error("Incorrect password. Please try again.");
