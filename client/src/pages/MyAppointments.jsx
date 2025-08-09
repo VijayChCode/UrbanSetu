@@ -2289,24 +2289,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             {!isMe && (c.senderEmail !== appt.buyerId?.email) && (c.senderEmail !== appt.sellerId?.email) && (
                               <div className="font-semibold mb-1 text-xs text-purple-600">UrbanSetu</div>
                             )}
-                            <div className="flex items-center justify-end mb-1">
-                              {/* Three-dots moved next to time, to open header-level options */}
-                              {!c.deleted && (
-                                <button
-                                  className={`${isMe ? 'text-blue-200 hover:text-white' : 'text-gray-500 hover:text-gray-700'} transition-all duration-200 hover:scale-110 p-1 rounded-full ${isMe ? 'hover:bg-white hover:bg-opacity-20' : 'hover:bg-gray-100'}`}
-                                  onClick={(e) => { e.stopPropagation(); setHeaderOptionsMessageId(c._id); }}
-                                  title="Message options"
-                                  aria-label="Message options"
-                                >
-                                  <FaEllipsisV size={isMe ? 16 : 14} />
-                                </button>
-                              )}
-                              <span className={`text-[10px] px-2 py-1 rounded-full flex-shrink-0 ${
-                                isMe ? 'text-blue-200 bg-blue-600 bg-opacity-30' : 'text-gray-500 bg-gray-100'
-                              }`}>
-                                {new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
-                              </span>
-                            </div>
                             <div className="flex items-center gap-1">
                               {c.deleted ? (
                                 <span className="flex items-center gap-1 text-gray-400 italic">
