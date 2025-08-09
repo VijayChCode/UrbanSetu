@@ -1120,9 +1120,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         : c
     );
     setComments(optimisticUpdate);
-    setEditingComment(null);
-    setEditText("");
-    setComment(""); // Clear the main input
     
     try {
       const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${commentId}`, {
@@ -1148,6 +1145,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
           }
           return c;
         }));
+        setEditingComment(null);
+        setEditText("");
+        setComment(""); // Clear the main input
         toast.success("Message edited successfully!");
       } else {
         // Revert optimistic update on error

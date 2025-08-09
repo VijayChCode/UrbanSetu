@@ -1358,9 +1358,6 @@ function AdminAppointmentRow({
         : c
     );
     setLocalComments(optimisticUpdate);
-    setEditingComment(null);
-    setEditText("");
-    setNewComment(""); // Clear the main input
     
     try {
       const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${commentId}`, {
@@ -1386,6 +1383,9 @@ function AdminAppointmentRow({
           }
           return c;
         }));
+        setEditingComment(null);
+        setEditText("");
+        setNewComment(""); // Clear the main input
         toast.success("Message edited successfully!");
       } else {
         // Revert optimistic update on error
