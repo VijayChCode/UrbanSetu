@@ -154,16 +154,8 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0 }) => {
   };
 
   const handleImageClick = (e) => {
-    if (e.target === imageRef.current) {
-      onClose();
-    }
-  };
-
-  const handleOverlayClick = (e) => {
-    // Only close if the user clicks directly on the overlay (not on modal content)
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
+    // Removed click-to-close functionality - only close icon should close the preview
+    e.stopPropagation();
   };
 
   if (!isOpen || !images || images.length === 0) return null;
@@ -171,7 +163,6 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0 }) => {
   return (
     <div 
       className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center"
-      onClick={handleOverlayClick}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
@@ -280,10 +271,10 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0 }) => {
       <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2 text-white bg-black bg-opacity-50 rounded-lg px-4 py-2 text-sm max-w-xs">
         <div className="text-center">
           <div className="hidden sm:block">Use mouse wheel or +/- to zoom</div>
-          <div className="hidden sm:block">Drag to pan • Click outside to close</div>
+          <div className="hidden sm:block">Drag to pan • Use close icon to exit</div>
           <div className="hidden sm:block">Arrow keys to navigate • ESC to close</div>
           <div className="sm:hidden">Tap to zoom • Swipe to navigate</div>
-          <div className="sm:hidden">Pinch to zoom • Tap outside to close</div>
+          <div className="sm:hidden">Pinch to zoom • Use close icon to exit</div>
         </div>
       </div>
     </div>
