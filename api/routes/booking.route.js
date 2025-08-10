@@ -1,4 +1,5 @@
 import express from "express";
+import mongoose from "mongoose";
 import booking from "../models/booking.model.js";
 import Listing from "../models/listing.model.js";
 import User from "../models/user.model.js";
@@ -253,6 +254,11 @@ router.post('/:id/comment', verifyToken, async (req, res) => {
     const { id } = req.params;
     const userId = req.user.id;
     
+    // Validate ObjectId format
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid appointment ID format.' });
+    }
+    
     const bookingToComment = await booking.findById(id);
     if (!bookingToComment) {
       return res.status(404).json({ message: 'Appointment not found.' });
@@ -325,6 +331,14 @@ router.delete('/:id/comment/:commentId', verifyToken, async (req, res) => {
   try {
     const { id, commentId } = req.params;
     const userId = req.user.id;
+    
+    // Validate ObjectId formats
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid appointment ID format.' });
+    }
+    if (!commentId || !mongoose.Types.ObjectId.isValid(commentId)) {
+      return res.status(400).json({ message: 'Invalid comment ID format.' });
+    }
     
     const bookingToUpdate = await booking.findById(id);
     if (!bookingToUpdate) {
@@ -433,6 +447,11 @@ router.delete('/:id/comments', verifyToken, async (req, res) => {
     const { id } = req.params;
     const { password } = req.body || {};
 
+    // Validate ObjectId format
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid appointment ID format.' });
+    }
+
     if (!password) {
       return res.status(400).json({ message: 'Password is required.' });
     }
@@ -489,6 +508,14 @@ router.patch('/:id/comment/:commentId', verifyToken, async (req, res) => {
     const { id, commentId } = req.params;
     const { message } = req.body;
     const userId = req.user.id;
+    
+    // Validate ObjectId formats
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid appointment ID format.' });
+    }
+    if (!commentId || !mongoose.Types.ObjectId.isValid(commentId)) {
+      return res.status(400).json({ message: 'Invalid comment ID format.' });
+    }
     
     const appointment = await booking.findById(id);
     if (!appointment) {
@@ -1137,44 +1164,102 @@ router.get('/stats', verifyToken, async (req, res) => {
 router.patch('/:id/comments/read', verifyToken, async (req, res) => {
   const { id } = req.params;
   const userId = req.user.id;
+  
   try {
+    // Validate ObjectId format
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid appointment ID format.' });
+    }
+
+    // Validate user ID
+    if (!userId) {
+      return res.status(400).json({ message: 'User ID not found in token.' });
+    }
+
     const bookingDoc = await booking.findById(id);
-    if (!bookingDoc) return res.status(404).json({ message: 'Appointment not found.' });
+    if (!bookingDoc) {
+      return res.status(404).json({ message: 'Appointment not found.' });
+    }
+
+    // Check if user is authorized to read this appointment's comments
+    const userIdStr = userId.toString();
+    const buyerIdStr = bookingDoc.buyerId?.toString();
+    const sellerIdStr = bookingDoc.sellerId?.toString();
+    
+    if (userIdStr !== buyerIdStr && userIdStr !== sellerIdStr && req.user.role !== 'admin' && req.user.role !== 'rootadmin') {
+      return res.status(403).json({ message: 'Not authorized to read comments for this appointment.' });
+    }
 
     let updated = false;
-    bookingDoc.comments.forEach(comment => {
-      try {
-        // Ensure readBy is an array and check if user has already read this comment
-        if (!comment.readBy || !Array.isArray(comment.readBy)) {
-          comment.readBy = [];
+    
+    if (bookingDoc.comments && Array.isArray(bookingDoc.comments)) {
+      bookingDoc.comments.forEach(comment => {
+        try {
+          // Skip deleted comments or comments from the same user
+          if (comment.deleted || comment.senderEmail === req.user.email) {
+            return;
+          }
+
+          // Ensure readBy is an array
+          if (!comment.readBy || !Array.isArray(comment.readBy)) {
+            comment.readBy = [];
+          }
+          
+          // Convert ObjectIds to strings for comparison
+          const readByStrings = comment.readBy.map(id => id ? id.toString() : '');
+          if (!readByStrings.includes(userIdStr)) {
+            comment.readBy.push(userId);
+            comment.status = "read";
+            updated = true;
+          }
+        } catch (commentError) {
+          console.error('Error processing individual comment:', {
+            commentId: comment._id,
+            error: commentError.message
+          });
+          // Continue with other comments even if one fails
         }
-        
-        // Convert ObjectIds to strings for comparison
-        const readByStrings = comment.readBy.map(id => id.toString());
-        if (!readByStrings.includes(userId)) {
-          comment.readBy.push(userId);
-          comment.status = "read";
-          updated = true;
-        }
-      } catch (commentError) {
-        console.error('Error processing comment:', commentError);
-        // Continue with other comments even if one fails
-      }
-    });
+      });
+    }
     
     if (updated) {
-      await bookingDoc.save();
+      try {
+        await bookingDoc.save();
+      } catch (saveError) {
+        console.error('Error saving booking document:', saveError);
+        return res.status(500).json({ message: 'Failed to save read status.', error: saveError.message });
+      }
     }
 
-    // Emit read event for all comments
-    const io = req.app.get('io');
-    if (io) {
-      io.emit('commentRead', { appointmentId: id, userId });
+    // Emit read event for real-time updates (only if socket.io is available)
+    try {
+      const io = req.app.get('io');
+      if (io) {
+        io.emit('commentRead', { appointmentId: id, userId: userIdStr });
+      }
+    } catch (socketError) {
+      console.error('Socket.io error:', socketError);
+      // Don't fail the request if socket fails
     }
 
-    res.status(200).json({ success: true });
+    res.status(200).json({ success: true, updated });
   } catch (err) {
-    console.error('Error marking comments as read:', err);
+    console.error('Error marking comments as read:', {
+      appointmentId: id,
+      userId: userId,
+      error: err.message,
+      stack: err.stack
+    });
+    
+    // Provide more specific error messages
+    if (err.name === 'CastError') {
+      return res.status(400).json({ message: 'Invalid appointment ID format.' });
+    }
+    
+    if (err.name === 'ValidationError') {
+      return res.status(400).json({ message: 'Validation error.', error: err.message });
+    }
+    
     res.status(500).json({ message: 'Failed to mark comments as read.', error: err.message });
   }
 });
