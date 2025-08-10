@@ -118,6 +118,8 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
       socket.off('reviewReplyUpdated', handleSocketReplyUpdate);
       socket.off('profileUpdated', handleProfileUpdate);
       console.log('[ReviewList] Socket listeners cleaned up');
+      // Restore body scroll when component unmounts
+      document.body.style.overflow = 'unset';
     };
   }, [listingId, sortBy, sortOrder]);
 
@@ -594,6 +596,8 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
   const handleReportReview = (review) => {
     setReportingReview(review);
     setReportReason('');
+    // Prevent body scroll when modal is open
+    document.body.style.overflow = 'hidden';
   };
 
   const handleSubmitReport = async () => {
@@ -614,6 +618,8 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
         toast.success('Thank you for reporting. Our team will review this issue.');
         setReportingReview(null);
         setReportReason('');
+        // Restore body scroll when modal is closed
+        document.body.style.overflow = 'unset';
       } else {
         toast.error(data.message || 'Failed to report issue.');
       }
@@ -1047,7 +1053,11 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
             <div className="flex justify-end gap-2 mt-2">
               <button
                 className="bg-gray-400 text-white px-3 py-1 rounded hover:bg-gray-600 text-sm"
-                onClick={() => setReportingReview(null)}
+                onClick={() => {
+                  setReportingReview(null);
+                  // Restore body scroll when modal is closed
+                  document.body.style.overflow = 'unset';
+                }}
                 disabled={reportLoading}
               >
                 Cancel
