@@ -571,7 +571,7 @@ export default function MyAppointments() {
             </h3>
             {!showArchived && (
               <p className="text-sm text-gray-600 mt-1">
-                💡 Monitor all appointments across the platform. Use the status filter to view appointments.
+                💡 Monitor all appointments across the platform. Use the status filter to view appointments and interactive chatbox to connect with otherparty.
               </p>
             )}
           </div>
