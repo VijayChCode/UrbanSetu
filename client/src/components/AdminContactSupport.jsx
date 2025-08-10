@@ -303,7 +303,7 @@ export default function AdminContactSupport() {
       <div className="fixed bottom-6 right-6 z-[9999]">
         <button
           onClick={() => setIsModalOpen(true)}
-          className="relative group w-16 h-16 rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-110 hover:rotate-12 flex items-center justify-center"
+          className="relative group w-12 h-12 rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-110 hover:rotate-12 flex items-center justify-center"
           style={{ 
             background: `linear-gradient(135deg, ${getIconColor()}, ${getIconColor()}dd)`,
             boxShadow: `0 10px 25px ${getIconColor()}40`
@@ -319,7 +319,7 @@ export default function AdminContactSupport() {
           ></div>
           
           {/* Icon */}
-          <FaHeadset className="w-7 h-7 text-white drop-shadow-lg" />
+          <FaHeadset className="w-5 h-5 text-white drop-shadow-lg" />
           
           {/* Unread count badge */}
           {unreadCount > 0 && (
