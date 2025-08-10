@@ -2247,17 +2247,27 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c4.28 0 6.92 1.45 8.84 4.55.23.36.76.09.65-.32C18.31 13.13 15.36 10.36 10 9z"/></svg>
                           </button>
                         )}
-                        {/* Copy */}
-                        {!selectedMessageForHeaderOptions.deleted && (
-                          <button
-                            className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
-                            onClick={() => { copyMessageToClipboard(selectedMessageForHeaderOptions.message); setHeaderOptionsMessageId(null); }}
-                            title="Copy message"
-                            aria-label="Copy message"
-                          >
-                            <FaCopy size={18} />
-                          </button>
-                        )}
+                        {/* Copy - available for all messages including deleted ones */}
+                        <button
+                          className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                          onClick={() => { 
+                            // For deleted messages, copy the original message if available, otherwise show a message
+                            if (selectedMessageForHeaderOptions.deleted) {
+                              if (selectedMessageForHeaderOptions.originalMessage) {
+                                copyMessageToClipboard(selectedMessageForHeaderOptions.originalMessage);
+                              } else {
+                                toast.info("Original message content not available");
+                              }
+                            } else {
+                              copyMessageToClipboard(selectedMessageForHeaderOptions.message);
+                            }
+                            setHeaderOptionsMessageId(null); 
+                          }}
+                          title="Copy message"
+                          aria-label="Copy message"
+                        >
+                          <FaCopy size={18} />
+                        </button>
                         {/* Report (only for received messages, not deleted) */}
                         {(selectedMessageForHeaderOptions.senderEmail !== currentUser.email) && !selectedMessageForHeaderOptions.deleted && (
                           <button
@@ -2533,17 +2543,15 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               <span className={`${isMe ? 'text-blue-200' : 'text-gray-500'} text-[10px]`}>
                                 {new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
                               </span>
-                              {/* Options icon - only visible for non-deleted messages */}
-                              {!c.deleted && (
-                                <button
-                                  className={`${c.senderEmail === currentUser.email ? 'text-blue-200 hover:text-white' : 'text-gray-500 hover:text-gray-700'} transition-all duration-200 hover:scale-110 p-1 rounded-full hover:bg-white hover:bg-opacity-20 ml-1`}
-                                  onClick={(e) => { e.stopPropagation(); setHeaderOptionsMessageId(c._id); }}
-                                  title="Message options"
-                                  aria-label="Message options"
-                                >
-                                  <FaEllipsisV size={12} />
-                                </button>
-                              )}
+                              {/* Options icon - visible for all messages including deleted ones */}
+                              <button
+                                className={`${c.senderEmail === currentUser.email ? 'text-blue-200 hover:text-white' : 'text-gray-500 hover:text-gray-700'} transition-all duration-200 hover:scale-110 p-1 rounded-full hover:bg-white hover:bg-opacity-20 ml-1`}
+                                onClick={(e) => { e.stopPropagation(); setHeaderOptionsMessageId(c._id); }}
+                                title="Message options"
+                                aria-label="Message options"
+                              >
+                                <FaEllipsisV size={12} />
+                              </button>
                               {(c.senderEmail === currentUser.email) && !c.deleted && (
                                 <span className="flex items-center gap-1 ml-1">
                                   {c.readBy?.includes(otherParty?._id)
