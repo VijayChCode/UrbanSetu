@@ -1066,6 +1066,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     setReplyTo(null);
     setSending(true);
 
+    // Refocus the input field to keep keyboard open on mobile
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, 50);
+
     // Scroll to bottom immediately after adding the message
     if (chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -1100,11 +1107,23 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         // Remove the temp message and show error
         setComments(prev => prev.filter(msg => msg._id !== tempId));
         toast.error(data.message || "Failed to send message.");
+        // Refocus input on error
+        setTimeout(() => {
+          if (inputRef.current) {
+            inputRef.current.focus();
+          }
+        }, 100);
       }
     } catch (err) {
       // Remove the temp message and show error
       setComments(prev => prev.filter(msg => msg._id !== tempId));
       toast.error('An error occurred. Please try again.');
+      // Refocus input on error
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      }, 100);
     } finally {
       setSending(false);
     }

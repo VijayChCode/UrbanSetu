@@ -1300,6 +1300,13 @@ function AdminAppointmentRow({
     setReplyTo(null);
     setSending(true);
 
+    // Refocus the input field to keep keyboard open on mobile
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, 50);
+
     // Scroll to bottom immediately after adding the message
     if (chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -1335,12 +1342,24 @@ function AdminAppointmentRow({
         setLocalComments(prev => prev.filter(msg => msg._id !== tempId));
         setNewComment(messageContent); // Restore message
         toast.error(data.message || "Failed to send message.");
+        // Refocus input on error
+        setTimeout(() => {
+          if (inputRef.current) {
+            inputRef.current.focus();
+          }
+        }, 100);
       }
     } catch (err) {
       // Remove the temp message and show error
       setLocalComments(prev => prev.filter(msg => msg._id !== tempId));
       setNewComment(messageContent); // Restore message
       toast.error('An error occurred. Please try again.');
+      // Refocus input on error
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }, 100);
+      }
     } finally {
       setSending(false);
     }
