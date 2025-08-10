@@ -4,7 +4,7 @@ import ListingItem from "../components/ListingItem";
 import GeminiAIWrapper from "../components/GeminiAIWrapper";
 import LocationSelector from "../components/LocationSelector";
 import duckImg from "../assets/duck-go-final.gif";
-
+import ContactSupportWrapper from '../components/ContactSupportWrapper';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function AdminExplore() {
@@ -300,6 +300,7 @@ export default function AdminExplore() {
         </div>
       </div>
       <GeminiAIWrapper />
+      <ContactSupportWrapper />
     </>
   );
 }
