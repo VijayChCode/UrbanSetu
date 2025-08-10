@@ -243,7 +243,7 @@ const GeminiChatbox = () => {
                                 <button
                                     type="submit"
                                     disabled={!inputMessage.trim() || isLoading}
-                                    className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-2 rounded-full hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex-shrink-0"
+                                    className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-2 rounded-full hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex-shrink-0 flex items-center justify-center w-10 h-10"
                                 >
                                     <FaPaperPlane size={16} />
                                 </button>

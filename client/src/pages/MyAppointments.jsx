@@ -2475,6 +2475,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                         socket.emit('typing', { toUserId: otherParty._id, fromUserId: currentUser._id, appointmentId: appt._id });
                       }
                     }}
+                    onClick={() => {
+                      if (headerOptionsMessageId) {
+                        setHeaderOptionsMessageId(null);
+                        toast.info("You can hit reply icon in header to reply");
+                      }
+                    }}
                     onKeyDown={e => { 
                       // Check if this is a desktop device (not mobile/tablet)
                       const isDesktop = window.innerWidth >= 768 && !('ontouchstart' in window || navigator.maxTouchPoints > 0);
