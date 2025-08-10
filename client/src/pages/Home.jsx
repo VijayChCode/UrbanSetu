@@ -140,8 +140,10 @@ export default function Home() {
       </div>
       <GeminiAIWrapper />
     </div>
-    /* Contact Support Wrapper */
+    <div>
+    {/* Contact Support Wrapper */}
       <ContactSupportWrapper />
+    </div>
   );
 }
 
