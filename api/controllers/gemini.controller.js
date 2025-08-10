@@ -32,19 +32,30 @@ export const chatWithGemini = async (req, res) => {
         const conversationContext = history.map(msg => `${msg.role}: ${msg.content}`).join('\n');
         const fullPrompt = `${systemPrompt}\n\nPrevious conversation:\n${conversationContext}\n\nCurrent user message: ${message}`;
 
-        const result = await ai.models.generateContent({
+        console.log('Calling Gemini API with model: gemini-2.0-flash-exp');
+        
+        // Add timeout to ensure we get complete responses
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Request timeout - response taking too long')), 60000); // 60 second timeout
+        });
+        
+        const apiCallPromise = ai.models.generateContent({
             model: "gemini-2.0-flash-exp",
             contents: [{
                 role: 'user',
                 parts: [{ text: fullPrompt }]
             }],
             config: {
-                maxOutputTokens: 500,
+                maxOutputTokens: 2048, // Increased from 500 to allow longer responses
                 temperature: 0.7,
             }
         });
+        
+        const result = await Promise.race([apiCallPromise, timeoutPromise]);
 
         const responseText = result.text;
+        console.log('Gemini API response received, length:', responseText ? responseText.length : 0);
+        console.log('Response preview:', responseText ? responseText.substring(0, 100) + '...' : 'No response');
 
         res.status(200).json({
             success: true,
@@ -54,6 +65,14 @@ export const chatWithGemini = async (req, res) => {
     } catch (error) {
         console.error('Gemini API Error:', error);
         
+        // Handle timeout errors first
+        if (error.message && error.message.includes('timeout')) {
+            return res.status(408).json({
+                success: false,
+                message: 'Request timed out. The response is taking longer than expected. Please try again.'
+            });
+        }
+
         // Handle specific Gemini errors
         if (error.response) {
             const status = error.response.status;

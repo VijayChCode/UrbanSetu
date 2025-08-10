@@ -103,6 +103,8 @@ const GeminiChatbox = () => {
 
         try {
             const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+            console.log('Sending message to Gemini:', userMessage);
+            
             const response = await fetch(`${API_BASE_URL}/api/gemini/chat`, {
                 method: 'POST',
                 headers: {
@@ -114,17 +116,44 @@ const GeminiChatbox = () => {
                 })
             });
 
+            console.log('Response status:', response.status);
+            console.log('Response ok:', response.ok);
+
             if (!response.ok) {
-                throw new Error('Failed to get response');
+                const errorData = await response.json();
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
             }
 
             const data = await response.json();
-            setMessages(prev => [...prev, { role: 'assistant', content: data.response }]);
+            console.log('Response data received:', data);
+            console.log('Response content length:', data.response ? data.response.length : 0);
+            
+            // Validate response structure
+            if (data && data.response && typeof data.response === 'string') {
+                const trimmedResponse = data.response.trim();
+                console.log('Setting message with response length:', trimmedResponse.length);
+                setMessages(prev => [...prev, { role: 'assistant', content: trimmedResponse }]);
+            } else {
+                console.error('Invalid response structure:', data);
+                throw new Error('Invalid response structure from server');
+            }
         } catch (error) {
-            console.error('Error:', error);
+            console.error('Error in handleSubmit:', error);
+            let errorMessage = 'Sorry, I\'m having trouble connecting right now. Please try again later.';
+            
+            if (error.message.includes('timeout')) {
+                errorMessage = 'Request timed out. The response is taking longer than expected. Please try again.';
+            } else if (error.message.includes('HTTP error')) {
+                errorMessage = 'Server error. Please try again later.';
+            } else if (error.message.includes('Invalid response structure')) {
+                errorMessage = 'I received an invalid response. Please try again.';
+            } else if (error.message.includes('Failed to fetch')) {
+                errorMessage = 'Network error. Please check your connection and try again.';
+            }
+            
             setMessages(prev => [...prev, { 
                 role: 'assistant', 
-                content: 'Sorry, I\'m having trouble connecting right now. Please try again later.' 
+                content: errorMessage
             }]);
         } finally {
             setIsLoading(false);
