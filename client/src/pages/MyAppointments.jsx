@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo, FaCommentDots, FaCheckDouble, FaBan, FaPaperPlane, FaCalendar, FaLightbulb, FaCopy, FaEllipsisV, FaFlag } from "react-icons/fa";
+import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo, FaCommentDots, FaCheckDouble, FaBan, FaPaperPlane, FaCalendar, FaLightbulb, FaCopy, FaEllipsisV, FaFlag, FaCircle } from "react-icons/fa";
 import UserAvatar from '../components/UserAvatar';
 import { useSelector } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -775,8 +775,21 @@ export default function MyAppointments() {
                     showBorder={true}
                     className="border-4 border-white shadow-lg"
                   />
-                  <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 border-2 border-white rounded-full flex items-center justify-center">
-                    <FaUser className="w-3 h-3 text-white" />
+                  {/* Online status indicator */}
+                  <div className="absolute -bottom-1 -right-1 w-6 h-6 border-2 border-white rounded-full flex items-center justify-center">
+                    {selectedOtherParty.isTyping ? (
+                      <div className="w-full h-full bg-yellow-500 rounded-full flex items-center justify-center">
+                        <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                      </div>
+                    ) : selectedOtherParty.isOnline ? (
+                      <div className="w-full h-full bg-green-500 rounded-full flex items-center justify-center">
+                        <FaCircle className="w-2 h-2 text-white" />
+                      </div>
+                    ) : (
+                      <div className="w-full h-full bg-gray-400 rounded-full flex items-center justify-center">
+                        <FaCircle className="w-2 h-2 text-white" />
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="text-center">
@@ -789,6 +802,49 @@ export default function MyAppointments() {
                   <p className="text-sm text-gray-600 capitalize font-medium bg-white px-3 py-1 rounded-full shadow-sm">
                     {selectedOtherParty.role || 'User'}
                   </p>
+                  {/* Status text below role */}
+                  {selectedOtherParty.isTyping ? (
+                    <div className="mt-2">
+                      <span className="text-yellow-600 font-medium text-xs bg-yellow-100 px-3 py-1 rounded-full">
+                        Typing...
+                      </span>
+                    </div>
+                  ) : selectedOtherParty.isOnline ? (
+                    <div className="mt-2">
+                      <span className="text-green-600 font-medium text-xs bg-green-100 px-3 py-1 rounded-full">
+                        Online
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="mt-2">
+                      <span className="text-gray-600 font-medium text-xs bg-gray-100 px-3 py-1 rounded-full">
+                        {(() => {
+                          if (!selectedOtherParty.lastSeen) return 'Offline';
+                          
+                          const lastSeenDate = new Date(selectedOtherParty.lastSeen);
+                          const now = new Date();
+                          const diffInMinutes = Math.floor((now - lastSeenDate) / (1000 * 60));
+                          const diffInHours = Math.floor(diffInMinutes / 60);
+                          const diffInDays = Math.floor(diffInHours / 24);
+                          
+                          if (diffInMinutes < 1) {
+                            return 'Last seen just now';
+                          } else if (diffInMinutes < 60) {
+                            return `Last seen ${diffInMinutes} minute${diffInMinutes > 1 ? 's' : ''} ago`;
+                          } else if (diffInHours < 24) {
+                            return `Last seen ${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+                          } else if (diffInDays < 7) {
+                            return `Last seen ${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
+                          } else {
+                            return `Last seen ${lastSeenDate.toLocaleDateString('en-US', { 
+                              month: 'short', 
+                              day: 'numeric' 
+                            })}`;
+                          }
+                        })()}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -1926,7 +1982,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
               <button
                 className="font-semibold text-blue-700 hover:underline text-left"
                 style={{ cursor: 'pointer' }}
-                onClick={() => onShowOtherParty(otherParty)}
+                onClick={() => onShowOtherParty({
+                  ...otherParty,
+                  isOnline: isOtherPartyOnlineInTable,
+                  isTyping: isOtherPartyTyping,
+                  lastSeen: otherPartyLastSeenInTable
+                })}
                 title="Click to view details"
               >
                 {otherParty?.username || 'Unknown'}
@@ -2256,7 +2317,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                     <>
                       <div 
                         className="bg-white rounded-full p-1 sm:p-1.5 shadow-lg flex-shrink-0 cursor-pointer hover:scale-105 transition-transform duration-200"
-                        onClick={() => onShowOtherParty(otherParty)}
+                        onClick={() => onShowOtherParty({
+                          ...otherParty,
+                          isOnline: isOtherPartyOnlineInTable,
+                          isTyping: isOtherPartyTyping,
+                          lastSeen: otherPartyLastSeenInTable
+                        })}
                         title="Click to view user details"
                       >
                         {otherParty?.avatar ? (
@@ -2275,7 +2341,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                         <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
                           <h3 
                             className="text-base sm:text-lg font-bold text-white truncate cursor-pointer hover:underline"
-                            onClick={() => onShowOtherParty(otherParty)}
+                            onClick={() => onShowOtherParty({
+                              ...otherParty,
+                              isOnline: isOtherPartyOnlineInTable,
+                              isTyping: isOtherPartyTyping,
+                              lastSeen: otherPartyLastSeenInTable
+                            })}
                             title="Click to view user details"
                           >
                             {otherParty?.username || 'Unknown User'}
