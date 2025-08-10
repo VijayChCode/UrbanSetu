@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FaComments, FaTimes, FaPaperPlane, FaRobot } from 'react-icons/fa';
+import { FaComments, FaTimes, FaPaperPlane, FaRobot, FaCopy } from 'react-icons/fa';
+import { toast } from 'react-toastify';
 
 const GeminiChatbox = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -137,6 +138,22 @@ const GeminiChatbox = () => {
         }
     };
 
+    const copyToClipboard = async (text) => {
+        try {
+            await navigator.clipboard.writeText(text);
+            toast.success('Message copied to clipboard!');
+        } catch (err) {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            toast.success('Message copied to clipboard!');
+        }
+    };
+
     return (
         <>
             {/* Enhanced Floating AI Chat Button */}
@@ -203,13 +220,25 @@ const GeminiChatbox = () => {
                                     className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                                 >
                                     <div
-                                        className={`max-w-[85%] p-3 rounded-2xl break-words ${
+                                        className={`max-w-[85%] p-3 rounded-2xl break-words relative group ${
                                             message.role === 'user'
                                                 ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
                                                 : 'bg-gray-100 text-gray-800'
                                         }`}
                                     >
-                                        <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                                        <p className="text-sm whitespace-pre-wrap leading-relaxed pr-8">{message.content}</p>
+
+                                        {/* Copy icon for Gemini replies */}
+                                        {message.role === 'assistant' && (
+                                            <button
+                                                onClick={() => copyToClipboard(message.content)}
+                                                className="absolute top-2 right-2 p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded transition-all duration-200 opacity-0 group-hover:opacity-100"
+                                                title="Copy message"
+                                                aria-label="Copy message"
+                                            >
+                                                <FaCopy size={14} />
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             ))}
