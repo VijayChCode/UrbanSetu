@@ -300,14 +300,18 @@ router.post('/:id/comment', verifyToken, async (req, res) => {
       const recipientId = isBuyer ? bookingToComment.sellerId.toString() : bookingToComment.buyerId.toString();
       
       if (onlineUsers.has(recipientId)) {
-        // Recipient is online, mark as delivered
+        // Recipient is online, mark as delivered immediately
         await booking.findOneAndUpdate(
           { _id: id, 'comments._id': newCommentObj._id },
           { $set: { 'comments.$.status': 'delivered' } }
         );
+        // Emit delivery status immediately
         io.emit('commentDelivered', { appointmentId: id, commentId: newCommentObj._id });
+      } else {
+        // Recipient is offline, keep status as "sent"
+        // When they come online, the socket handler will mark it as delivered
+        console.log(`Message sent to offline user ${recipientId}, status remains 'sent'`);
       }
-      // If recipient is offline, message stays as "sent" until they come online
     }
     
     res.status(200).json(updated);
@@ -1351,6 +1355,31 @@ export function registerUserAppointmentsSocket(io) {
         }
       } catch (err) {
         console.error('Error marking comments as delivered:', err);
+      }
+    });
+
+    // Handle message received by online user
+    socket.on('messageReceived', async ({ appointmentId, commentId, userId }) => {
+      try {
+        const appt = await booking.findById(appointmentId);
+        if (!appt) return;
+
+        const comment = appt.comments.id(commentId);
+        if (!comment) return;
+
+        // Only mark as delivered if:
+        // 1. Comment is not from this user
+        // 2. Comment status is "sent"
+        // 3. User is not already in readBy array
+        if (comment.sender.toString() !== userId && 
+            comment.status === 'sent' && 
+            !comment.readBy?.includes(userId)) {
+          comment.status = 'delivered';
+          await appt.save();
+          io.emit('commentDelivered', { appointmentId: appointmentId.toString(), commentId: commentId.toString() });
+        }
+      } catch (err) {
+        console.error('Error marking message as delivered on receive:', err);
       }
     });
   });
