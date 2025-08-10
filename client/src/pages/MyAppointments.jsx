@@ -1066,12 +1066,24 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     setReplyTo(null);
     setSending(true);
 
-    // Refocus the input field to keep keyboard open on mobile
-    setTimeout(() => {
+    // Aggressively refocus the input field to keep keyboard open on mobile
+    const refocusInput = () => {
       if (inputRef.current) {
         inputRef.current.focus();
+        // For mobile devices, ensure the input remains active and set cursor position
+        inputRef.current.setSelectionRange(0, 0);
+        // Force the input to be the active element
+        if (document.activeElement !== inputRef.current) {
+          inputRef.current.click();
+          inputRef.current.focus();
+        }
       }
-    }, 50);
+    };
+    
+    // Multiple attempts to maintain focus for mobile devices
+    refocusInput(); // Immediate focus
+    requestAnimationFrame(refocusInput); // Focus after DOM updates
+    setTimeout(refocusInput, 10); // Final fallback
 
     // Scroll to bottom immediately after adding the message
     if (chatEndRef.current) {
@@ -1107,23 +1119,37 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         // Remove the temp message and show error
         setComments(prev => prev.filter(msg => msg._id !== tempId));
         toast.error(data.message || "Failed to send message.");
-        // Refocus input on error
-        setTimeout(() => {
+        // Refocus input on error - aggressive mobile focus
+        const refocusInput = () => {
           if (inputRef.current) {
             inputRef.current.focus();
+            inputRef.current.setSelectionRange(0, 0);
+            if (document.activeElement !== inputRef.current) {
+              inputRef.current.click();
+              inputRef.current.focus();
+            }
           }
-        }, 100);
+        };
+        refocusInput();
+        requestAnimationFrame(refocusInput);
       }
     } catch (err) {
       // Remove the temp message and show error
       setComments(prev => prev.filter(msg => msg._id !== tempId));
       toast.error('An error occurred. Please try again.');
-      // Refocus input on error
-      setTimeout(() => {
+      // Refocus input on error - aggressive mobile focus
+      const refocusInput = () => {
         if (inputRef.current) {
           inputRef.current.focus();
+          inputRef.current.setSelectionRange(0, 0);
+          if (document.activeElement !== inputRef.current) {
+            inputRef.current.click();
+            inputRef.current.focus();
+          }
         }
-      }, 100);
+      };
+      refocusInput();
+      requestAnimationFrame(refocusInput);
     } finally {
       setSending(false);
     }
@@ -2529,7 +2555,14 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                     ref={inputRef}
                   />
                   <button
-                    onClick={editingComment ? () => handleEditComment(editingComment) : handleCommentSend}
+                    onClick={(e) => {
+      e.preventDefault();
+      if (editingComment) {
+        handleEditComment(editingComment);
+      } else {
+        handleCommentSend();
+      }
+    }}
                     disabled={(editingComment ? savingComment === editingComment : sending) || !comment.trim()}
                     className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-full text-sm font-semibold shadow-lg hover:from-blue-600 hover:to-purple-700 hover:shadow-xl transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:transform-none flex items-center gap-2 min-w-24"
                   >
