@@ -22,6 +22,23 @@ const GeminiChatbox = () => {
         scrollToBottom();
     }, [messages]);
 
+    // Keyboard shortcut Ctrl+F to focus message input
+    useEffect(() => {
+        if (!isOpen) return;
+        
+        const handleKeyDown = (event) => {
+            if (event.ctrlKey && event.key === 'f') {
+                event.preventDefault(); // Prevent browser find dialog
+                inputRef.current?.focus();
+            }
+        };
+        
+        document.addEventListener('keydown', handleKeyDown);
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [isOpen]);
+
     // Enhanced scroll lock for modal with mobile support
     useEffect(() => {
         if (isOpen) {
