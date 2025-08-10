@@ -40,6 +40,14 @@ const GeminiChatbox = () => {
         };
     }, [isOpen]);
 
+    // Dispatch custom event when Gemini chatbot opens/closes
+    useEffect(() => {
+        const event = new CustomEvent('geminiChatboxToggle', { 
+            detail: { isOpen } 
+        });
+        window.dispatchEvent(event);
+    }, [isOpen]);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!inputMessage.trim() || isLoading) return;
