@@ -22,22 +22,48 @@ const GeminiChatbox = () => {
         scrollToBottom();
     }, [messages]);
 
-    // Scroll lock for modal
+    // Enhanced scroll lock for modal with mobile support
     useEffect(() => {
         if (isOpen) {
+            // Store current scroll position
+            const scrollY = window.scrollY;
+            
+            // Apply scroll lock styles
             document.body.style.overflow = 'hidden';
             document.body.style.position = 'fixed';
+            document.body.style.top = `-${scrollY}px`;
             document.body.style.width = '100%';
-        } else {
-            document.body.style.overflow = '';
-            document.body.style.position = '';
-            document.body.style.width = '';
+            document.body.style.height = '100%';
+            
+            // Additional mobile-specific fixes
+            document.documentElement.style.overflow = 'hidden';
+            document.documentElement.style.height = '100%';
+            
+            // Prevent touch events on the body (iOS specific)
+            const preventTouch = (e) => {
+                if (e.target.closest('.gemini-chatbox-modal')) return;
+                e.preventDefault();
+            };
+            
+            document.addEventListener('touchmove', preventTouch, { passive: false });
+            
+            return () => {
+                // Restore scroll position and styles
+                document.body.style.overflow = '';
+                document.body.style.position = '';
+                document.body.style.top = '';
+                document.body.style.width = '';
+                document.body.style.height = '';
+                document.documentElement.style.overflow = '';
+                document.documentElement.style.height = '';
+                
+                // Remove touch event listener
+                document.removeEventListener('touchmove', preventTouch);
+                
+                // Restore scroll position
+                window.scrollTo(0, scrollY);
+            };
         }
-        return () => {
-            document.body.style.overflow = '';
-            document.body.style.position = '';
-            document.body.style.width = '';
-        };
     }, [isOpen]);
 
     // Dispatch custom event when Gemini chatbot opens/closes
@@ -133,7 +159,7 @@ const GeminiChatbox = () => {
 
             {/* Chat Window */}
             {isOpen && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4 md:p-0 md:items-end md:justify-end">
+                <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4 md:p-0 md:items-end md:justify-end gemini-chatbox-modal">
                     <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col w-full max-w-md h-full max-h-[90vh] md:w-96 md:h-[500px] md:mb-32 md:mr-6 md:max-h-[500px]">
                         {/* Header */}
                         <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 rounded-t-2xl flex items-center justify-between flex-shrink-0">
