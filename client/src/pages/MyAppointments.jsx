@@ -5,7 +5,7 @@ import { useSelector } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Appointment from "../components/Appointment";
 import { toast, ToastContainer } from 'react-toastify';
-import { socket } from "../utils/socket";
+import { socket, acknowledgeMessageReceipt } from "../utils/socket";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
