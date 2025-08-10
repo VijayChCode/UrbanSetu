@@ -70,18 +70,44 @@ const GeminiChatbox = () => {
 
     return (
         <>
-            {/* Chat Toggle Button */}
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 rounded-full shadow-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-110"
-                aria-label="Open AI Chat"
-            >
-                {isOpen ? <FaTimes size={24} /> : <FaComments size={24} />}
-            </button>
+            {/* Enhanced Floating AI Chat Button */}
+            <div className="fixed bottom-20 right-6 z-50">
+                <button
+                    onClick={() => setIsOpen(!isOpen)}
+                    className="relative group w-12 h-12 rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-110 hover:rotate-12 flex items-center justify-center"
+                    style={{ 
+                        background: `linear-gradient(135deg, #6366f1, #6366f1dd)`,
+                        boxShadow: `0 10px 25px #6366f140`
+                    }}
+                    aria-label="Open AI Chat"
+                    title="Chat with Gemini AI Assistant!"
+                >
+                    {/* Animated background ring */}
+                    <div
+                        className="absolute inset-0 rounded-full animate-ping"
+                        style={{
+                            border: `3px solid #6366f155`, // semi-transparent color
+                        }}
+                    ></div>
+                    
+                    {/* Icon */}
+                    {isOpen ? <FaTimes className="w-5 h-5 text-white drop-shadow-lg" /> : <FaComments className="w-5 h-5 text-white drop-shadow-lg" />}
+                    
+                    {/* Enhanced Hover Tooltip */}
+                    <div className="absolute bottom-full right-0 mb-3 bg-white text-gray-800 text-sm px-4 py-2 rounded-xl shadow-2xl hidden group-hover:block z-10 whitespace-nowrap border border-gray-100 transform -translate-y-1 transition-all duration-200">
+                        <div className="flex items-center gap-2">
+                            <span className="text-lg">🤖</span>
+                            <span className="font-medium">Chat with AI Assistant!</span>
+                        </div>
+                        {/* Tooltip arrow */}
+                        <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-white"></div>
+                    </div>
+                </button>
+            </div>
 
             {/* Chat Window */}
             {isOpen && (
-                <div className="fixed bottom-24 right-6 z-40 w-96 h-[500px] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col">
+                <div className="fixed bottom-32 right-6 z-40 w-96 h-[500px] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col">
                     {/* Header */}
                     <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 rounded-t-2xl flex items-center justify-between">
                         <div className="flex items-center space-x-3">

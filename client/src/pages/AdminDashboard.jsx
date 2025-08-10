@@ -17,7 +17,7 @@ import {
   FaTrash,
   FaLock
 } from "react-icons/fa";
-import ContactSupportWrapper from "../components/ContactSupportWrapper";
+import GeminiAIWrapper from "../components/GeminiAIWrapper";
 import { toast } from 'react-toastify';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -497,7 +497,7 @@ export default function AdminDashboard() {
           </div>
         )}
       </div>
-      <ContactSupportWrapper />
+      <GeminiAIWrapper />
 
       {/* Reason Modal */}
       {showReasonModal && (

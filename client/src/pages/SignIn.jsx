@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { signInFailure, signInStart, signInSuccess } from "../redux/user/userSlice.js";
 import Oauth from "../components/Oauth.jsx";
-import GeminiChatbox from "../components/GeminiChatbox.jsx";
+
 
 import { reconnectSocket } from "../utils/socket";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
@@ -129,8 +129,6 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
 
     return (
         <div className="min-h-screen flex">
-                    {/* Gemini AI Chatbox */}
-        <GeminiChatbox />
             
             {/* Left Side - Image and Quote */}
             <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 to-purple-700 relative overflow-hidden">
