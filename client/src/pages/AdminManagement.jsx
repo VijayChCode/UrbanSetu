@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { toast } from 'react-toastify';
-import { FaUser, FaUserShield, FaEnvelope, FaCalendarAlt, FaCheckCircle, FaBan, FaTrash, FaUserLock, FaPhone, FaList, FaCalendar, FaArrowDown, FaSearch, FaLock } from "react-icons/fa";
+import { FaUser, FaUserShield, FaEnvelope, FaTimes, FaCalendarAlt, FaCheckCircle, FaBan, FaTrash, FaUserLock, FaPhone, FaList, FaCalendar, FaArrowDown, FaSearch, FaLock } from "react-icons/fa";
 import { socket } from "../utils/socket";
 import { signoutUserStart, signoutUserSuccess, signoutUserFailure } from "../redux/user/userSlice";
 
