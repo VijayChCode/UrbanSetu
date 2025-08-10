@@ -878,12 +878,6 @@ export default function AdminManagement() {
               ) : (
                 <p className="text-red-500">Failed to load details.</p>
               )}
-              <button
-                onClick={() => setShowAccountModal(false)}
-                className="mt-6 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 w-full"
-              >
-                Close
-              </button>
             </div>
           </div>
         </div>
