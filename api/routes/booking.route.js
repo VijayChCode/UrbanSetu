@@ -292,7 +292,6 @@ router.post('/:id/comment', verifyToken, async (req, res) => {
     if (io) {
       // Send only the new comment (last in array)
       const newCommentObj = updated.comments[updated.comments.length - 1];
-      // Emit the message content first so receivers can render it
       io.emit('commentUpdate', { appointmentId: id, comment: newCommentObj });
       
       // Only mark as delivered if the intended recipient is online
@@ -301,14 +300,16 @@ router.post('/:id/comment', verifyToken, async (req, res) => {
       const recipientId = isBuyer ? bookingToComment.sellerId.toString() : bookingToComment.buyerId.toString();
       
       if (onlineUsers.has(recipientId)) {
-        // Recipient is online, mark as delivered immediately in DB and notify
+        // Recipient is online, mark as delivered immediately
         await booking.findOneAndUpdate(
           { _id: id, 'comments._id': newCommentObj._id },
           { $set: { 'comments.$.status': 'delivered' } }
         );
+        // Emit delivery status immediately
         io.emit('commentDelivered', { appointmentId: id, commentId: newCommentObj._id });
       } else {
         // Recipient is offline, keep status as "sent"
+        // When they come online, the socket handler will mark it as delivered
         console.log(`Message sent to offline user ${recipientId}, status remains 'sent'`);
       }
     }
@@ -1332,8 +1333,7 @@ export function registerUserAppointmentsSocket(io) {
     socket.on('userAppointmentsActive', async ({ userId }) => {
       try {
         // Find all bookings where this user is buyer or seller
-        const bookingModel = (await import('../models/booking.model.js')).default;
-        const bookings = await bookingModel.find({
+        const bookings = await booking.find({
           $or: [ { buyerId: userId }, { sellerId: userId } ]
         });
         for (const appt of bookings) {
@@ -1361,8 +1361,7 @@ export function registerUserAppointmentsSocket(io) {
     // Handle message received by online user
     socket.on('messageReceived', async ({ appointmentId, commentId, userId }) => {
       try {
-        const bookingModel = (await import('../models/booking.model.js')).default;
-        const appt = await bookingModel.findById(appointmentId);
+        const appt = await booking.findById(appointmentId);
         if (!appt) return;
 
         const comment = appt.comments.id(commentId);

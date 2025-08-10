@@ -58,16 +58,3 @@ export function reconnectSocket() {
     console.log('[Socket] Connection error:', error);
   });
 } 
-
-// Helper to acknowledge receipt of a message for delivery ticks
-export function acknowledgeMessageReceipt({ appointmentId, comment, currentUserId }) {
-  try {
-    if (!comment || !comment._id || !appointmentId) return;
-    // Only acknowledge messages not sent by current user
-    if (comment.sender && comment.sender.toString && comment.sender.toString() === currentUserId) return;
-    if (comment.sender === currentUserId) return;
-    socket.emit('messageReceived', { appointmentId, commentId: comment._id, userId: currentUserId });
-  } catch (e) {
-    console.warn('[Socket] Failed to acknowledge message receipt', e);
-  }
-} 

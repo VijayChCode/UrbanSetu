@@ -179,8 +179,8 @@ io.on('connection', (socket) => {
     if (wasOffline) {
       try {
         // Find all bookings where this user is buyer or seller
-        const bookingModel = (await import('./models/booking.model.js')).default;
-        const bookings = await bookingModel.find({
+        const booking = require('./models/booking.model.js');
+        const bookings = await booking.find({
           $or: [ { buyerId: userId }, { sellerId: userId } ]
         });
         
