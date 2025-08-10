@@ -1358,8 +1358,8 @@ function AdminAppointmentRow({
       setTimeout(() => {
         if (inputRef.current) {
           inputRef.current.focus();
-        }, 100);
-      }
+        }
+      }, 100);
     } finally {
       setSending(false);
     }
