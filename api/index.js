@@ -136,7 +136,9 @@ app.set('io', io);
 
 // Make onlineUsers available to routes for checking recipient online status
 let onlineUsers = new Set();
+let lastSeenTimes = new Map(); // Track last seen times for users
 app.set('onlineUsers', onlineUsers);
+app.set('lastSeenTimes', lastSeenTimes);
 
 // Register user appointments socket logic for delivered ticks
 registerUserAppointmentsSocket(io);
@@ -169,17 +171,21 @@ io.on('connection', (socket) => {
   socket.on('userAppointmentsActive', ({ userId }) => {
     thisUserId = userId;
     onlineUsers.add(userId);
+    lastSeenTimes.delete(userId); // Remove last seen when user comes online
     io.emit('userOnlineUpdate', { userId, online: true });
     if (socket.onlineTimeout) clearTimeout(socket.onlineTimeout);
     socket.onlineTimeout = setTimeout(() => {
       onlineUsers.delete(userId);
-      io.emit('userOnlineUpdate', { userId, online: false });
+      lastSeenTimes.set(userId, new Date().toISOString()); // Store last seen time
+      io.emit('userOnlineUpdate', { userId, online: false, lastSeen: lastSeenTimes.get(userId) });
     }, 5000); // 5 seconds of inactivity = offline
   });
 
   // Listen for online status checks
   socket.on('checkUserOnline', ({ userId }) => {
-    socket.emit('userOnlineStatus', { userId, online: onlineUsers.has(userId) });
+    const isOnline = onlineUsers.has(userId);
+    const lastSeen = lastSeenTimes.get(userId);
+    socket.emit('userOnlineStatus', { userId, online: isOnline, lastSeen });
   });
 
   socket.on('typing', ({ toUserId, fromUserId, appointmentId }) => {
@@ -190,7 +196,8 @@ io.on('connection', (socket) => {
     console.log('User disconnected:', socket.id, 'UserID:', socket.user?._id?.toString());
     if (thisUserId) {
       onlineUsers.delete(thisUserId);
-      io.emit('userOnlineUpdate', { userId: thisUserId, online: false });
+      lastSeenTimes.set(thisUserId, new Date().toISOString()); // Store last seen time
+      io.emit('userOnlineUpdate', { userId: thisUserId, online: false, lastSeen: lastSeenTimes.get(thisUserId) });
     }
     if (socket.onlineTimeout) clearTimeout(socket.onlineTimeout);
   });

@@ -888,6 +888,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const [isScrolling, setIsScrolling] = useState(false);
   const [isOtherPartyOnline, setIsOtherPartyOnline] = useState(false);
   const [isOtherPartyOnlineInTable, setIsOtherPartyOnlineInTable] = useState(false);
+  const [otherPartyLastSeen, setOtherPartyLastSeen] = useState(null);
+  const [otherPartyLastSeenInTable, setOtherPartyLastSeenInTable] = useState(null);
   const [isOtherPartyTyping, setIsOtherPartyTyping] = useState(false);
   const [showShortcutTip, setShowShortcutTip] = useState(false);
   const [loadingComments, setLoadingComments] = useState(false);
@@ -1731,6 +1733,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     function handleUserOnlineStatus(data) {
       if (data.userId === otherParty._id) {
         setIsOtherPartyOnline(!!data.online);
+        setOtherPartyLastSeen(data.lastSeen || null);
       }
     }
     socket.on('userOnlineStatus', handleUserOnlineStatus);
@@ -1752,6 +1755,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     function handleTableUserOnlineStatus(data) {
       if (data.userId === otherParty._id) {
         setIsOtherPartyOnlineInTable(!!data.online);
+        setOtherPartyLastSeenInTable(data.lastSeen || null);
       }
     }
     
@@ -1804,6 +1808,33 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       el = el.parentElement;
     }
     return el ? el.getAttribute('data-msgid') : null;
+  }
+
+  // Format last seen time like WhatsApp
+  function formatLastSeen(lastSeenTime) {
+    if (!lastSeenTime) return null;
+    
+    const lastSeen = new Date(lastSeenTime);
+    const now = new Date();
+    const diffInMinutes = Math.floor((now - lastSeen) / (1000 * 60));
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    const diffInDays = Math.floor(diffInHours / 24);
+    
+    if (diffInMinutes < 1) {
+      return 'last seen just now';
+    } else if (diffInMinutes < 60) {
+      return `last seen ${diffInMinutes} minute${diffInMinutes > 1 ? 's' : ''} ago`;
+    } else if (diffInHours < 24) {
+      return `last seen ${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+    } else if (diffInDays < 7) {
+      return `last seen ${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
+    } else {
+      return `last seen ${lastSeen.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric',
+        year: lastSeen.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+      })}`;
+    }
   }
 
   // Message selected for header options overlay
@@ -2209,7 +2240,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             ) : isOtherPartyOnline ? (
                               <span className="text-green-100 font-semibold text-xs bg-green-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">Online</span>
                             ) : (
-                              <span className="text-gray-100 font-semibold text-xs bg-gray-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">Offline</span>
+                              <span className="text-gray-100 font-semibold text-xs bg-gray-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">
+                                {formatLastSeen(otherPartyLastSeen) || 'Offline'}
+                              </span>
                             )}
                           </div>
                           {/* Online status indicator - inline on desktop only */}
@@ -2219,7 +2252,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             ) : isOtherPartyOnline ? (
                               <span className="text-green-100 font-semibold text-xs bg-green-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">Online</span>
                             ) : (
-                              <span className="text-gray-100 font-semibold text-xs bg-gray-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">Offline</span>
+                              <span className="text-gray-100 font-semibold text-xs bg-gray-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">
+                                {formatLastSeen(otherPartyLastSeen) || 'Offline'}
+                              </span>
                             )}
                           </div>
                         </div>
