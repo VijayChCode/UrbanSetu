@@ -2575,6 +2575,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                       ) : (
                         'Save'
                       )
+                    ) : sending ? (
+                      <>
+                        <div className="w-4 h-4 border border-white border-t-transparent rounded-full animate-spin"></div>
+                        Sending...
+                      </>
                     ) : (
                       'Send'
                     )}
