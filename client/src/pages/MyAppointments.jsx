@@ -571,7 +571,7 @@ export default function MyAppointments() {
             </h3>
             {!showArchived && (
               <p className="text-sm text-gray-600 mt-1">
-                💡 Outdated appointments (past their scheduled date) are automatically ignored when booking new appointments.
+                💡 Monitor all appointments across the platform. Use the status filter to view appointments.
               </p>
             )}
           </div>
