@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { FaComments, FaTimes, FaPaperPlane, FaRobot } from 'react-icons/fa';
 
-const OpenAIChatbox = () => {
+const GeminiChatbox = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState([
         {
             role: 'assistant',
-            content: 'Hello! I\'m your AI assistant. How can I help you with your real estate needs today?'
+            content: 'Hello! I\'m your AI assistant powered by Gemini. How can I help you with your real estate needs today?'
         }
     ]);
     const [inputMessage, setInputMessage] = useState('');
@@ -33,7 +33,7 @@ const OpenAIChatbox = () => {
 
         try {
             const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-            const response = await fetch(`${API_BASE_URL}/api/openai/chat`, {
+            const response = await fetch(`${API_BASE_URL}/api/gemini/chat`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -87,7 +87,7 @@ const OpenAIChatbox = () => {
                         <div className="flex items-center space-x-3">
                             <FaRobot size={20} />
                             <div>
-                                <h3 className="font-semibold">AI Assistant</h3>
+                                <h3 className="font-semibold">Gemini AI Assistant</h3>
                                 <p className="text-xs opacity-90">Real Estate Helper</p>
                             </div>
                         </div>
@@ -159,4 +159,4 @@ const OpenAIChatbox = () => {
     );
 };
 
-export default OpenAIChatbox;
+export default GeminiChatbox;
