@@ -2341,7 +2341,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           <div
                             ref={el => messageRefs.current[c._id] = el}
                             data-message-id={c._id}
-                            className={`rounded-2xl px-4 sm:px-5 py-3 text-sm shadow-xl max-w-[95%] sm:max-w-[85%] md:max-w-[70%] lg:max-w-[60%] break-all overflow-hidden relative transition-all duration-200 min-h-[60px] ${isMe ? 'pr-24' : 'pr-20'} ${
+                            className={`rounded-2xl px-4 sm:px-5 py-3 text-sm shadow-xl max-w-[95%] sm:max-w-[85%] md:max-w-[70%] lg:max-w-[60%] break-all overflow-hidden relative transition-all duration-200 min-h-[60px] ${isMe ? 'pr-24 sm:pr-28' : 'pr-20 sm:pr-24'} ${
                               isMe 
                                 ? 'bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-500 hover:to-purple-600 text-white shadow-blue-200 hover:shadow-blue-300' 
                                 : 'bg-white hover:bg-gray-50 text-gray-800 border border-gray-200 shadow-gray-200 hover:shadow-lg hover:border-gray-300'
@@ -2369,13 +2369,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             {!isMe && (c.senderEmail !== appt.buyerId?.email) && (c.senderEmail !== appt.sellerId?.email) && (
                               <div className="font-semibold mb-1 text-xs text-purple-600">UrbanSetu</div>
                             )}
-                            <div className="flex items-center gap-1 mb-6">
+                            <div className="flex items-center gap-1 mb-6 sm:mb-8">
                               {c.deleted ? (
                                 <span className="flex items-center gap-1 text-gray-400 italic">
                                   <FaBan className="inline-block text-lg" /> {c.senderEmail === currentUser.email ? "You deleted this message" : "This message was deleted."}
                                 </span>
                               ) : (
-                                <div className={isMe ? 'text-base font-medium' : 'text-sm'}>
+                                <div className={`${isMe ? 'text-base font-medium' : 'text-sm'} pr-2 sm:pr-4`}>
                                   {isEditing ? (
                                     <div className="bg-yellow-100 border-l-4 border-yellow-400 px-2 py-1 rounded">
                                       <span className="text-yellow-800 text-xs font-medium">✏️ Editing this message below...</span>
