@@ -5,7 +5,7 @@ import { Navigation, Autoplay } from "swiper/modules";
 import "swiper/css/bundle";
 import ListingItem from "../components/ListingItem";
 import GeminiAIWrapper from "../components/GeminiAIWrapper";
-
+import ContactSupportWrapper from '../components/ContactSupportWrapper';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -136,6 +136,7 @@ export default function PublicHome() {
         )}
       </div>
       <GeminiAIWrapper />
+      <ContactSupportWrapper />
     </div>
   );
 } 
