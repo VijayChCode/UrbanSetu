@@ -1298,7 +1298,8 @@ function AdminAppointmentRow({
     setLocalComments(prev => [...prev, tempMessage]);
     setNewComment("");
     setReplyTo(null);
-    setSending(true);
+    // Remove the global sending state to allow multiple messages
+    // setSending(true);
 
     // Aggressively refocus the input field to keep keyboard open on mobile
     const refocusInput = () => {
@@ -1324,36 +1325,57 @@ function AdminAppointmentRow({
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
 
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: 'include',
-        body: JSON.stringify({ 
-          message: messageContent, 
-          ...(replyToData ? { replyTo: replyToData._id } : {}) 
-        }),
-      });
-      
-      const data = await res.json();
-      
-      if (res.ok) {
-        // Find the new comment from the response
-        const newCommentFromServer = data.comments[data.comments.length - 1];
+    // Send message in background without blocking UI
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: 'include',
+          body: JSON.stringify({ 
+            message: messageContent, 
+            ...(replyToData ? { replyTo: replyToData._id } : {}) 
+          }),
+        });
         
-        // Replace the temp message with the real one
-        setLocalComments(prev => prev.map(msg => 
-          msg._id === tempId 
-            ? { ...newCommentFromServer } // Use the status from server (could be 'sent' or 'delivered')
-            : msg
-        ));
+        const data = await res.json();
         
-        // Don't show success toast as it's too verbose for chat
-      } else {
+        if (res.ok) {
+          // Find the new comment from the response
+          const newCommentFromServer = data.comments[data.comments.length - 1];
+          
+          // Replace the temp message with the real one
+          setLocalComments(prev => prev.map(msg => 
+            msg._id === tempId 
+              ? { ...newCommentFromServer } // Use the status from server (could be 'sent' or 'delivered')
+              : msg
+          ));
+          
+          // Don't show success toast as it's too verbose for chat
+        } else {
+          // Remove the temp message and show error
+          setLocalComments(prev => prev.filter(msg => msg._id !== tempId));
+          setNewComment(messageContent); // Restore message
+          toast.error(data.message || "Failed to send message.");
+          // Refocus input on error - aggressive mobile focus
+          const refocusInput = () => {
+            if (inputRef.current) {
+              inputRef.current.focus();
+              inputRef.current.setSelectionRange(0, 0);
+              if (document.activeElement !== inputRef.current) {
+                inputRef.current.click();
+                inputRef.current.focus();
+              }
+            }
+          };
+          refocusInput();
+          requestAnimationFrame(refocusInput);
+        }
+      } catch (err) {
         // Remove the temp message and show error
         setLocalComments(prev => prev.filter(msg => msg._id !== tempId));
         setNewComment(messageContent); // Restore message
-        toast.error(data.message || "Failed to send message.");
+        toast.error('An error occurred. Please try again.');
         // Refocus input on error - aggressive mobile focus
         const refocusInput = () => {
           if (inputRef.current) {
@@ -1368,27 +1390,7 @@ function AdminAppointmentRow({
         refocusInput();
         requestAnimationFrame(refocusInput);
       }
-    } catch (err) {
-      // Remove the temp message and show error
-      setLocalComments(prev => prev.filter(msg => msg._id !== tempId));
-      setNewComment(messageContent); // Restore message
-      toast.error('An error occurred. Please try again.');
-      // Refocus input on error - aggressive mobile focus
-      const refocusInput = () => {
-        if (inputRef.current) {
-          inputRef.current.focus();
-          inputRef.current.setSelectionRange(0, 0);
-          if (document.activeElement !== inputRef.current) {
-            inputRef.current.click();
-            inputRef.current.focus();
-          }
-        }
-      };
-      refocusInput();
-      requestAnimationFrame(refocusInput);
-    } finally {
-      setSending(false);
-    }
+    })();
   };
 
   const handleEditComment = async (commentId) => {
@@ -2183,7 +2185,7 @@ function AdminAppointmentRow({
                       handleCommentSend();
                     }
                   }}
-                  disabled={(editingComment ? savingComment === editingComment : sending) || !newComment.trim()}
+                                      disabled={editingComment ? savingComment === editingComment : !newComment.trim()}
                   className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-full text-sm font-semibold shadow-lg hover:from-blue-600 hover:to-purple-700 hover:shadow-xl transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:transform-none flex items-center gap-2 min-w-24"
                 >
                   {editingComment ? (
@@ -2195,11 +2197,6 @@ function AdminAppointmentRow({
                     ) : (
                       'Save'
                     )
-                  ) : sending ? (
-                    <>
-                      <div className="w-4 h-4 border border-white border-t-transparent rounded-full animate-spin"></div>
-                      Sending...
-                    </>
                   ) : (
                     'Send'
                   )}
