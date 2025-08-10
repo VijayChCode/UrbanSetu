@@ -1433,6 +1433,26 @@ function AdminAppointmentRow({
         setEditingComment(null);
         setEditText("");
         setNewComment(""); // Clear the main input
+        
+        // Aggressively refocus the input field to keep keyboard open on mobile
+        const refocusInput = () => {
+          if (inputRef.current) {
+            inputRef.current.focus();
+            // For mobile devices, ensure the input remains active and set cursor position
+            inputRef.current.setSelectionRange(0, 0);
+            // Force the input to be the active element
+            if (document.activeElement !== inputRef.current) {
+              inputRef.current.click();
+              inputRef.current.focus();
+            }
+          }
+        };
+        
+        // Multiple attempts to maintain focus for mobile devices
+        refocusInput(); // Immediate focus
+        requestAnimationFrame(refocusInput); // Focus after DOM updates
+        setTimeout(refocusInput, 10); // Final fallback
+        
         toast.success("Message edited successfully!");
       } else {
         // Revert optimistic update on error
