@@ -4,6 +4,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Autoplay } from "swiper/modules";
 import "swiper/css/bundle";
 import ListingItem from "../components/ListingItem";
+import ContactSupportWrapper from "../components/ContactSupportWrapper";
 import GeminiAIWrapper from "../components/GeminiAIWrapper";
 
 
@@ -139,6 +140,8 @@ export default function Home() {
       </div>
       <GeminiAIWrapper />
     </div>
+    {/* Contact Support Wrapper */}
+      <ContactSupportWrapper />
   );
 }
 
