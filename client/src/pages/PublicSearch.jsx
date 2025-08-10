@@ -5,7 +5,7 @@ import GeminiAIWrapper from "../components/GeminiAIWrapper";
 import LocationSelector from "../components/LocationSelector";
 import data from "../data/countries+states+cities.json";
 import duckImg from "../assets/duck-go-final.gif";
-
+import ContactSupportWrapper from '../components/ContactSupportWrapper';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function PublicSearch() {
@@ -348,6 +348,7 @@ export default function PublicSearch() {
                 </div>
             </div>
             <GeminiAIWrapper />
+            <ContactSupportWrapper />
         </div>
     );
 } 
