@@ -2169,10 +2169,12 @@ function AdminAppointmentRow({
                     }
                   }}
                   onKeyDown={e => { 
-                    // Check if this is a desktop device (not mobile/tablet)
-                    const isDesktop = window.innerWidth >= 768 && !('ontouchstart' in window || navigator.maxTouchPoints > 0);
+                    // Check if this is a desktop viewport only
+                    const isDesktop = window.matchMedia('(min-width: 768px)').matches;
                     
                     if (e.key === 'Enter') {
+                      // Avoid sending while composing (IME)
+                      if (e.isComposing || e.keyCode === 229) return;
                       // For desktop: Enter sends message, Shift+Enter creates new line
                       if (isDesktop && !e.shiftKey) {
                         e.preventDefault();
