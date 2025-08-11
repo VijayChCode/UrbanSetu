@@ -542,8 +542,8 @@ router.patch('/:id/comment/:commentId', verifyToken, async (req, res) => {
     if (comment.sender.toString() !== userId && !isAdmin) {
       return res.status(403).json({ message: "You can only edit your own comments." });
     }
-    // Only update if the message is different
-    if (comment.message !== message) {
+    // Only update if the message is different (trimming whitespace for comparison)
+    if (comment.message.trim() !== message.trim()) {
       comment.message = message;
       comment.edited = true;
       comment.editedAt = new Date();
