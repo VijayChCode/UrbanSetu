@@ -1727,12 +1727,16 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
             updated[idx] = { ...incomingComment, status };
             return updated;
           } else {
-            // Only add if not present and not a temporary message
-            const isTemporaryMessage = prev.some(msg => msg._id.toString().startsWith('temp-'));
-            if (!isTemporaryMessage || data.comment.senderEmail !== currentUser.email) {
-              return [...prev, data.comment];
-            }
-            return prev;
+                    // Only add if not present and not a temporary message
+        const isTemporaryMessage = prev.some(msg => msg._id.toString().startsWith('temp-'));
+        if (!isTemporaryMessage || data.comment.senderEmail !== currentUser.email) {
+          // If this is a new message from another user and chat is not open, increment unread count
+          if (data.comment.senderEmail !== currentUser.email && !showChatModal && !data.comment.readBy?.includes(currentUser._id)) {
+            setUnreadNewMessages(prev => prev + 1);
+          }
+          return [...prev, data.comment];
+        }
+        return prev;
           }
         });
         
@@ -1843,6 +1847,33 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     }
   }, [unreadCount, showChatModal]);
 
+  // Initialize unread count when component mounts or when comments are first loaded
+  useEffect(() => {
+    if (comments.length > 0 && unreadCount > 0 && unreadNewMessages === 0) {
+      setUnreadNewMessages(unreadCount);
+    }
+  }, [comments, unreadCount, unreadNewMessages]);
+
+  // Fetch and restore unread count when component mounts (for page refresh scenarios)
+  useEffect(() => {
+    const restoreUnreadCount = async () => {
+      if (comments.length > 0 && unreadNewMessages === 0) {
+        // Calculate actual unread count from backend data
+        const actualUnreadCount = comments.filter(c => 
+          !c.readBy?.includes(currentUser._id) && 
+          c.senderEmail !== currentUser.email &&
+          !getLocallyRemovedIds(appt._id).includes(c._id)
+        ).length;
+        
+        if (actualUnreadCount > 0) {
+          setUnreadNewMessages(actualUnreadCount);
+        }
+      }
+    };
+
+    restoreUnreadCount();
+  }, [comments, currentUser._id, appt._id, unreadNewMessages]);
+
 
 
   useEffect(() => {
@@ -1850,12 +1881,17 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
-      setUnreadNewMessages(0); // Reset unread count when chat is closed
+      // When chat is closed, restore unread count if there are still unread messages
+      if (unreadCount > 0) {
+        setUnreadNewMessages(unreadCount);
+      } else {
+        setUnreadNewMessages(0);
+      }
     }
     return () => {
       document.body.style.overflow = '';
     };
-  }, [showChatModal]);
+  }, [showChatModal, unreadCount]);
 
   // Get clear time from localStorage
   const clearTimeKey = `chatClearTime_${appt._id}`;
