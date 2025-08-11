@@ -1765,46 +1765,38 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         return prev;
           }
         });
-        
-        // If the message was deleted and was from another user, reduce unread count
-        if (data.comment.deleted && data.comment.senderEmail !== currentUser.email) {
-          // Simple approach: if there's an unread count, reduce it by one
-          if (unreadCount > 0) {
-            setUnreadNewMessages(prev => Math.max(0, prev - 1));
-          }
-        }
-        
-        // Auto-scroll for incoming messages if user is at bottom
-        if (showChatModal && data.comment.senderEmail !== currentUser.email) {
-          // Mark as read if chat is open
-          setTimeout(async () => {
-            try {
-              const response = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/read`, {
-                method: 'PATCH',
-                credentials: 'include'
-              });
-              if (!response.ok) {
-                console.warn('Failed to mark comments as read:', response.status);
-              }
-            } catch (error) {
-              console.warn('Error marking comments as read:', error);
-            }
-          }, 100);
-          
-          // Auto-scroll to show new message if user is near bottom
-          setTimeout(() => {
-            if (chatEndRef.current && isAtBottom) {
-              chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
-            }
-          }, 50);
-        }
       }
     }
+
+    // New: clear chat and remove-for-me events
+    function handleChatClearedForUser({ appointmentId, clearedAt }) {
+      if (appointmentId !== appt._id) return;
+      try {
+        const clearTimeKey = `chatClearTime_${appt._id}`;
+        const localMs = Number(localStorage.getItem(clearTimeKey)) || 0;
+        const serverMs = clearedAt ? new Date(clearedAt).getTime() : 0;
+        const effective = Math.max(localMs, serverMs);
+        localStorage.setItem(clearTimeKey, String(effective));
+      } catch {}
+      setComments([]);
+      setUnreadNewMessages(0);
+    }
+    function handleCommentRemovedForUser({ appointmentId, commentId }) {
+      if (appointmentId !== appt._id) return;
+      setComments(prev => prev.filter(c => c._id !== commentId));
+      // Also record locally to keep UI consistent
+      addLocallyRemovedId(appt._id, commentId);
+    }
+
     socket.on('commentUpdate', handleCommentUpdate);
+    socket.on('chatClearedForUser', handleChatClearedForUser);
+    socket.on('commentRemovedForUser', handleCommentRemovedForUser);
     return () => {
       socket.off('commentUpdate', handleCommentUpdate);
+      socket.off('chatClearedForUser', handleChatClearedForUser);
+      socket.off('commentRemovedForUser', handleCommentRemovedForUser);
     };
-  }, [appt._id, setComments, showChatModal, currentUser.email, isAtBottom]);
+  }, [appt._id, currentUser.email, currentUser._id, showChatModal]);
 
   // Mark all comments as read when chat modal opens and fetch latest if needed
   useEffect(() => {

@@ -1440,6 +1440,12 @@ router.patch('/:id/chat/clear-local', verifyToken, async (req, res) => {
 
     await appointment.save();
 
+    // Notify this user's other sessions immediately
+    const io = req.app.get('io');
+    if (io) {
+      io.to(userId.toString()).emit('chatClearedForUser', { appointmentId: id, clearedAt: now.toISOString() });
+    }
+
     return res.status(200).json({
       message: 'Chat clear persisted.',
       buyerChatClearedAt: appointment.buyerChatClearedAt,
@@ -1485,6 +1491,12 @@ router.patch('/:id/comment/:commentId/remove-for-me', verifyToken, async (req, r
     // Mark modified to ensure Mongoose saves nested changes
     appointment.markModified('comments');
     await appointment.save();
+
+    // Notify this user's other sessions immediately
+    const io = req.app.get('io');
+    if (io) {
+      io.to(userId.toString()).emit('commentRemovedForUser', { appointmentId: id, commentId });
+    }
 
     return res.status(200).json({ message: 'Comment removed for current user.' });
   } catch (err) {
