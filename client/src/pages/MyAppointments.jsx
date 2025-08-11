@@ -1494,6 +1494,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
           });
           
           console.log(`Marked ${unreadMessages.length} messages as read for user ${currentUser._id}`);
+          
+          // Update unreadNewMessages to reflect the actual unread count
+          setUnreadNewMessages(prev => Math.max(0, prev - unreadMessages.length));
         }
       } catch (error) {
         console.error('Error marking messages as read:', error);
@@ -1825,6 +1828,20 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     c.senderEmail !== currentUser.email &&
     !locallyRemovedIds.includes(c._id)
   ).length;
+
+  // Sync unreadNewMessages with actual unread count when chat is opened
+  useEffect(() => {
+    if (showChatModal && unreadNewMessages === 0 && unreadCount > 0) {
+      setUnreadNewMessages(unreadCount);
+    }
+  }, [showChatModal, unreadCount, unreadNewMessages]);
+
+  // Initialize unread count when comments change and user is not in chat
+  useEffect(() => {
+    if (!showChatModal && unreadCount > 0) {
+      setUnreadNewMessages(unreadCount);
+    }
+  }, [unreadCount, showChatModal]);
 
 
 
@@ -2185,18 +2202,18 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
               </span>
             )}
             {/* Unread count when not typing */}
-            {!isOtherPartyTyping && unreadCount > 0 && isChatDisabled && (
+            {!isOtherPartyTyping && unreadNewMessages > 0 && isChatDisabled && (
               <span className="absolute -top-1 -right-1 bg-gray-400 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-bold border-2 border-white">
-                {unreadCount}
+                {unreadNewMessages}
               </span>
             )}
-            {!isOtherPartyTyping && unreadCount > 0 && !isChatDisabled && (
+            {!isOtherPartyTyping && unreadNewMessages > 0 && !isChatDisabled && (
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-bold border-2 border-white">
-                {unreadCount}
+                {unreadNewMessages}
               </span>
             )}
             {/* Online status green dot - show when no typing and no unread count */}
-            {!isOtherPartyTyping && unreadCount === 0 && isOtherPartyOnlineInTable && !isChatDisabled && (
+            {!isOtherPartyTyping && unreadNewMessages === 0 && isOtherPartyOnlineInTable && !isChatDisabled && (
               <span className="absolute -top-1 -right-1 bg-green-500 border-2 border-white rounded-full w-3 h-3"></span>
             )}
           </button>
