@@ -1825,11 +1825,17 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     };
   }, [appt._id, setComments]);
 
-  // Calculate unread messages for the current user (excluding locally removed messages)
+  // Get clear time from localStorage
+  const clearTimeKey = `chatClearTime_${appt._id}`;
+  const clearTime = Number(localStorage.getItem(clearTimeKey)) || 0;
+
+  // Calculate unread messages for the current user (exclude deleted/cleared/locally removed)
   const locallyRemovedIds = getLocallyRemovedIds(appt._id);
   const unreadCount = comments.filter(c => 
     !c.readBy?.includes(currentUser._id) && 
     c.senderEmail !== currentUser.email &&
+    !c.deleted &&
+    new Date(c.timestamp).getTime() > clearTime &&
     !locallyRemovedIds.includes(c._id)
   ).length;
 
@@ -1862,6 +1868,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         const actualUnreadCount = comments.filter(c => 
           !c.readBy?.includes(currentUser._id) && 
           c.senderEmail !== currentUser.email &&
+          !c.deleted &&
+          new Date(c.timestamp).getTime() > clearTime &&
           !getLocallyRemovedIds(appt._id).includes(c._id)
         ).length;
         
@@ -1893,9 +1901,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     };
   }, [showChatModal, unreadCount]);
 
-  // Get clear time from localStorage
-  const clearTimeKey = `chatClearTime_${appt._id}`;
-  const clearTime = Number(localStorage.getItem(clearTimeKey)) || 0;
   // Filter out locally removed deleted messages
   const filteredComments = comments.filter(c => new Date(c.timestamp).getTime() > clearTime && !locallyRemovedIds.includes(c._id));
 
