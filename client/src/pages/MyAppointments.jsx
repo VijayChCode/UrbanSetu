@@ -999,6 +999,19 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const [showAdminCancelModal, setShowAdminCancelModal] = useState(false);
   const [showPermanentDeleteModal, setShowPermanentDeleteModal] = useState(false);
   
+  // Lock body scroll when specific modals are open (Cancel or Remove Appointment)
+  useEffect(() => {
+    const shouldLock = showCancelModal || showPermanentDeleteModal;
+    if (shouldLock) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+    }
+    return () => {
+      document.body.classList.remove('modal-open');
+    };
+  }, [showCancelModal, showPermanentDeleteModal]);
+  
   // Store appointment and reasons for modals
   const [appointmentToHandle, setAppointmentToHandle] = useState(null);
   const [cancelReason, setCancelReason] = useState('');
