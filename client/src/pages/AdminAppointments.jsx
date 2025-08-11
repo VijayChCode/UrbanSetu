@@ -1503,6 +1503,28 @@ function AdminAppointmentRow({
     }, 100);
   };
 
+  const startReply = (comment) => {
+    setReplyTo(comment);
+    // Focus the main input with comprehensive focus handling
+    const refocusInput = () => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+        // For mobile devices, ensure the input remains active and set cursor position
+        inputRef.current.setSelectionRange(0, 0);
+        // Force the input to be the active element
+        if (document.activeElement !== inputRef.current) {
+          inputRef.current.click();
+          inputRef.current.focus();
+        }
+      }
+    };
+    
+    // Multiple attempts to maintain focus for mobile devices
+    setTimeout(refocusInput, 50); // Initial focus
+    setTimeout(refocusInput, 100); // Focus after DOM updates
+    setTimeout(refocusInput, 200); // Final fallback
+  };
+
   // Check if comment is from current admin user
   const isAdminComment = (comment) => {
     return comment.senderEmail === currentUser?.email;
@@ -1792,14 +1814,8 @@ function AdminAppointmentRow({
                         <button
                           className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
                           onClick={() => { 
-                            setReplyTo(selectedMessageForHeaderOptions); 
+                            startReply(selectedMessageForHeaderOptions);
                             setHeaderOptionsMessageId(null);
-                            // Focus input after state update
-                            setTimeout(() => {
-                              if (inputRef.current) {
-                                inputRef.current.focus();
-                              }
-                            }, 50);
                           }}
                           title="Reply"
                           aria-label="Reply"
