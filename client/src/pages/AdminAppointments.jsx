@@ -30,9 +30,22 @@ export default function AdminAppointments() {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showReinitiateModal, setShowReinitiateModal] = useState(false);
   const [showArchiveModal, setShowArchiveModal] = useState(false);
-  const [showUnarchiveModal, setShowUnarchiveModal] = useState(false);
-
-  // Add state to track updated comments for each appointment
+    const [showUnarchiveModal, setShowUnarchiveModal] = useState(false);
+ 
+   // Lock body scroll when admin action modals are open (cancel, reinitiate, archive, unarchive)
+   useEffect(() => {
+     const shouldLock = showCancelModal || showReinitiateModal || showArchiveModal || showUnarchiveModal;
+     if (shouldLock) {
+       document.body.classList.add('modal-open');
+     } else {
+       document.body.classList.remove('modal-open');
+     }
+     return () => {
+       document.body.classList.remove('modal-open');
+     };
+   }, [showCancelModal, showReinitiateModal, showArchiveModal, showUnarchiveModal]);
+ 
+   // Add state to track updated comments for each appointment
   const [updatedComments, setUpdatedComments] = useState({});
 
   // Function to update comments for a specific appointment
