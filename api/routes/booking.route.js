@@ -1451,6 +1451,90 @@ router.patch('/:id/chat/clear-local', verifyToken, async (req, res) => {
   }
 });
 
+// PATCH: Mark a specific comment as removed for the current user ("delete for me")
+router.patch('/:id/comment/:commentId/remove-for-me', verifyToken, async (req, res) => {
+  try {
+    const { id, commentId } = req.params;
+    const userId = req.user.id;
+
+    if (!mongoose.Types.ObjectId.isValid(id) || !mongoose.Types.ObjectId.isValid(commentId)) {
+      return res.status(400).json({ message: 'Invalid appointment or comment ID.' });
+    }
+
+    const appointment = await booking.findById(id);
+    if (!appointment) {
+      return res.status(404).json({ message: 'Appointment not found.' });
+    }
+
+    const isParticipant = appointment.buyerId.toString() === userId || appointment.sellerId.toString() === userId;
+    if (!isParticipant) {
+      return res.status(403).json({ message: 'Not authorized to modify this appointment.' });
+    }
+
+    const comment = appointment.comments.id(commentId);
+    if (!comment) {
+      return res.status(404).json({ message: 'Comment not found.' });
+    }
+
+    comment.removedFor = comment.removedFor || [];
+    const userIdStr = userId.toString();
+    if (!comment.removedFor.map(id => id.toString()).includes(userIdStr)) {
+      comment.removedFor.push(userId);
+    }
+
+    // Mark modified to ensure Mongoose saves nested changes
+    appointment.markModified('comments');
+    await appointment.save();
+
+    return res.status(200).json({ message: 'Comment removed for current user.' });
+  } catch (err) {
+    console.error('Error removing comment for user:', err);
+    return res.status(500).json({ message: 'Failed to remove comment for user.' });
+  }
+});
+
+// POST: Bulk sync locally removed IDs (optional utility)
+router.post('/:id/comments/removed/sync', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { removedIds } = req.body; // array of comment IDs
+    const userId = req.user.id;
+
+    if (!Array.isArray(removedIds)) {
+      return res.status(400).json({ message: 'removedIds must be an array.' });
+    }
+
+    const appointment = await booking.findById(id);
+    if (!appointment) {
+      return res.status(404).json({ message: 'Appointment not found.' });
+    }
+
+    const isParticipant = appointment.buyerId.toString() === userId || appointment.sellerId.toString() === userId;
+    if (!isParticipant) {
+      return res.status(403).json({ message: 'Not authorized to modify this appointment.' });
+    }
+
+    const userIdStr = userId.toString();
+    for (const cid of removedIds) {
+      if (!mongoose.Types.ObjectId.isValid(cid)) continue;
+      const c = appointment.comments.id(cid);
+      if (!c) continue;
+      c.removedFor = c.removedFor || [];
+      if (!c.removedFor.map(id => id.toString()).includes(userIdStr)) {
+        c.removedFor.push(userId);
+      }
+    }
+
+    appointment.markModified('comments');
+    await appointment.save();
+
+    return res.status(200).json({ message: 'Removed comments synced.' });
+  } catch (err) {
+    console.error('Error syncing removed comments:', err);
+    return res.status(500).json({ message: 'Failed to sync removed comments.' });
+  }
+});
+
 export default router;
 
 // --- SOCKET.IO: User Appointments Page Active (for delivered ticks) ---

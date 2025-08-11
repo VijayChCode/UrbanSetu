@@ -1073,7 +1073,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
           toast.error(data.message || 'Failed to delete message.');
         }
       } else {
-        // Delete locally only
+        // Delete locally only (persist server-side for this account)
+        try {
+          await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${messageToDelete._id}/remove-for-me`, {
+            method: 'PATCH',
+            credentials: 'include'
+          });
+        } catch {}
         setComments(prev => prev.filter(msg => msg._id !== messageToDelete._id));
         addLocallyRemovedId(appt._id, messageToDelete._id);
         toast.success("Message deleted for you!");
@@ -1861,6 +1867,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     c.senderEmail !== currentUser.email &&
     !c.deleted &&
     new Date(c.timestamp).getTime() > clearTime &&
+    !(c.removedFor?.includes?.(currentUser._id)) &&
     !locallyRemovedIds.includes(c._id)
   ).length;
 
@@ -1895,6 +1902,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
           c.senderEmail !== currentUser.email &&
           !c.deleted &&
           new Date(c.timestamp).getTime() > clearTime &&
+          !(c.removedFor?.includes?.(currentUser._id)) &&
           !getLocallyRemovedIds(appt._id).includes(c._id)
         ).length;
         
@@ -1927,7 +1935,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   }, [showChatModal, unreadCount]);
 
   // Filter out locally removed deleted messages
-  const filteredComments = comments.filter(c => new Date(c.timestamp).getTime() > clearTime && !locallyRemovedIds.includes(c._id));
+  const filteredComments = comments.filter(c => new Date(c.timestamp).getTime() > clearTime && !locallyRemovedIds.includes(c._id) && !(c.removedFor?.includes?.(currentUser._id)));
 
 
 

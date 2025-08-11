@@ -79,6 +79,8 @@ const bookingSchema = new mongoose.Schema({
       edited: { type: Boolean, default: false },
       editedAt: { type: Date },
       replyTo: { type: mongoose.Schema.Types.ObjectId, default: null },
+      // New: per-user local deletion persistence
+      removedFor: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     }
   ],
   chat: [
