@@ -2317,6 +2317,36 @@ function AdminAppointmentRow({
                        placeholder="Admin password"
                        value={deleteChatPassword}
                        onChange={e => setDeleteChatPassword(e.target.value)}
+                       onKeyDown={e => {
+                         if (e.key === 'Enter' && deleteChatPassword.trim() && !deleteChatLoading) {
+                           e.preventDefault();
+                           // Execute delete chat functionality
+                           (async () => {
+                             try {
+                               setDeleteChatLoading(true);
+                               const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments`, {
+                                 method: 'DELETE',
+                                 headers: { 'Content-Type': 'application/json' },
+                                 credentials: 'include',
+                                 body: JSON.stringify({ password: deleteChatPassword })
+                               });
+                               const data = await res.json();
+                               if (res.ok) {
+                                 setLocalComments([]);
+                                 toast.success('Chat deleted successfully.');
+                                 setShowDeleteChatModal(false);
+                                 setDeleteChatPassword('');
+                               } else {
+                                 toast.error(data.message || 'Failed to delete chat');
+                               }
+                             } catch (e) {
+                               toast.error('An error occurred. Please try again.');
+                             } finally {
+                               setDeleteChatLoading(false);
+                             }
+                           })();
+                         }
+                       }}
                        autoFocus
                      />
                      <div className="flex gap-3 justify-end">
