@@ -106,6 +106,8 @@ const bookingSchema = new mongoose.Schema({
       userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
     }
   ],
+  buyerChatClearedAt: { type: Date, default: null },
+  sellerChatClearedAt: { type: Date, default: null },
 });
 
 const booking = mongoose.model("Booking", bookingSchema);

@@ -1088,11 +1088,26 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     setDeleteForBoth(true);
   };
 
-  const handleClearChat = () => {
-    localStorage.setItem(clearTimeKey, Date.now());
-    setComments([]);
-    toast.success("Chat Cleared");
-    setShowClearChatModal(false);
+  const handleClearChat = async () => {
+    try {
+      // Optimistically update local storage and UI
+      const now = Date.now();
+      localStorage.setItem(clearTimeKey, now);
+      setComments([]);
+
+      // Persist to server so it applies across devices for this user
+      await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/clear-local`, {
+        method: 'PATCH',
+        credentials: 'include'
+      });
+
+      toast.success("Chat Cleared");
+    } catch (err) {
+      console.error('Failed to persist chat clear:', err);
+      toast.error('Cleared locally, but failed to sync with server.');
+    } finally {
+      setShowClearChatModal(false);
+    }
   };
 
   const handleCommentSend = async () => {
@@ -1576,9 +1591,14 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     
     // Filter comments inside the function to avoid dependency on filteredComments
     const clearTimeKey = `chatClearTime_${appt._id}`;
-    const clearTime = Number(localStorage.getItem(clearTimeKey)) || 0;
+    const localClearMs = Number(localStorage.getItem(clearTimeKey)) || 0;
+    const serverClearMs = (() => {
+      const clearedAt = appt.role === 'buyer' ? appt.buyerChatClearedAt : appt.sellerChatClearedAt;
+      return clearedAt ? new Date(clearedAt).getTime() : 0;
+    })();
+    const effectiveClearMs = Math.max(localClearMs, serverClearMs);
     const locallyRemovedIds = getLocallyRemovedIds(appt._id);
-    const filteredComments = comments.filter(c => new Date(c.timestamp).getTime() > clearTime && !locallyRemovedIds.includes(c._id));
+    const filteredComments = comments.filter(c => new Date(c.timestamp).getTime() > effectiveClearMs && !locallyRemovedIds.includes(c._id));
     
     if (filteredComments.length === 0) return;
     
@@ -1827,7 +1847,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
 
   // Get clear time from localStorage
   const clearTimeKey = `chatClearTime_${appt._id}`;
-  const clearTime = Number(localStorage.getItem(clearTimeKey)) || 0;
+  const localClearMs = Number(localStorage.getItem(clearTimeKey)) || 0;
+  const serverClearMs = (() => {
+    const clearedAt = appt.role === 'buyer' ? appt.buyerChatClearedAt : appt.sellerChatClearedAt;
+    return clearedAt ? new Date(clearedAt).getTime() : 0;
+  })();
+  const clearTime = Math.max(localClearMs, serverClearMs);
 
   // Calculate unread messages for the current user (exclude deleted/cleared/locally removed)
   const locallyRemovedIds = getLocallyRemovedIds(appt._id);

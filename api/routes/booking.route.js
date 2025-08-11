@@ -1410,6 +1410,47 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// PATCH: Persist per-user local chat clear for an appointment
+router.patch('/:id/chat/clear-local', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid appointment ID.' });
+    }
+
+    const appointment = await booking.findById(id);
+    if (!appointment) {
+      return res.status(404).json({ message: 'Appointment not found.' });
+    }
+
+    const isBuyer = appointment.buyerId.toString() === userId;
+    const isSeller = appointment.sellerId.toString() === userId;
+    if (!isBuyer && !isSeller) {
+      return res.status(403).json({ message: 'Not authorized to modify this appointment.' });
+    }
+
+    const now = new Date();
+    if (isBuyer) {
+      appointment.buyerChatClearedAt = now;
+    } else if (isSeller) {
+      appointment.sellerChatClearedAt = now;
+    }
+
+    await appointment.save();
+
+    return res.status(200).json({
+      message: 'Chat clear persisted.',
+      buyerChatClearedAt: appointment.buyerChatClearedAt,
+      sellerChatClearedAt: appointment.sellerChatClearedAt,
+    });
+  } catch (err) {
+    console.error('Error persisting chat clear:', err);
+    return res.status(500).json({ message: 'Failed to persist chat clear.' });
+  }
+});
+
 export default router;
 
 // --- SOCKET.IO: User Appointments Page Active (for delivered ticks) ---
