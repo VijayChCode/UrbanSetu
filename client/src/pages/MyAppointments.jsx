@@ -1333,11 +1333,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         ? { ...c, originalMessage: c.message, wasEdited: c.edited }
         : c
     ));
-    // Focus the main input
+    // Focus the main input without selecting text
     setTimeout(() => {
       if (inputRef.current) {
         inputRef.current.focus();
-        inputRef.current.select(); // Select all text for easy editing
+        // Place cursor at end of text instead of selecting all
+        const length = inputRef.current.value.length;
+        inputRef.current.setSelectionRange(length, length);
       }
     }, 100);
   };
@@ -2323,7 +2325,16 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                         {!selectedMessageForHeaderOptions.deleted && (
                           <button
                             className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
-                            onClick={() => { setReplyTo(selectedMessageForHeaderOptions); inputRef.current?.focus(); setHeaderOptionsMessageId(null); }}
+                            onClick={() => { 
+                              setReplyTo(selectedMessageForHeaderOptions); 
+                              setHeaderOptionsMessageId(null);
+                              // Focus input after state update
+                              setTimeout(() => {
+                                if (inputRef.current) {
+                                  inputRef.current.focus();
+                                }
+                              }, 50);
+                            }}
                             title="Reply"
                             aria-label="Reply"
                           >
