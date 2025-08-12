@@ -41,9 +41,22 @@ export default function Listing() {
   const [availableUsers, setAvailableUsers] = useState([]);
   const [assignOwnerLoading, setAssignOwnerLoading] = useState(false);
   const [selectedNewOwner, setSelectedNewOwner] = useState("");
-  const [ownerStatus, setOwnerStatus] = useState({ isActive: false, owner: null });
-
-  // Check if user is admin
+    const [ownerStatus, setOwnerStatus] = useState({ isActive: false, owner: null });
+ 
+   // Lock body scroll when deletion/assign modals are open
+   useEffect(() => {
+     const shouldLock = showReasonModal || showPasswordModal || showAssignOwnerModal;
+     if (shouldLock) {
+       document.body.classList.add('modal-open');
+     } else {
+       document.body.classList.remove('modal-open');
+     }
+     return () => {
+       document.body.classList.remove('modal-open');
+     };
+   }, [showReasonModal, showPasswordModal, showAssignOwnerModal]);
+ 
+   // Check if user is admin
   const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'rootadmin';
   
   // Check if we're in admin context
