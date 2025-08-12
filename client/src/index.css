@@ -259,14 +259,14 @@
 
 /* Smooth highlight when jumping to a replied message */
 @keyframes replyHighlightPulse {
-  0% { box-shadow: 0 0 0 0 rgba(133, 77, 14, 0.60); transform: scale(1); }
-  50% { box-shadow: 0 0 0 8px rgba(133, 77, 14, 0.28), 0 6px 18px rgba(133, 77, 14, 0.35); transform: scale(1.01); }
-  100% { box-shadow: 0 0 0 0 rgba(133, 77, 14, 0); transform: scale(1); }
+  0% { box-shadow: 0 0 0 0 rgba(88, 28, 135, 0.60); transform: scale(1); }
+  50% { box-shadow: 0 0 0 8px rgba(88, 28, 135, 0.28), 0 6px 18px rgba(88, 28, 135, 0.35); transform: scale(1.01); }
+  100% { box-shadow: 0 0 0 0 rgba(88, 28, 135, 0); transform: scale(1); }
 }
 @keyframes replyHighlightFill {
-  0% { background: rgba(133, 77, 14, 0.50); }
-  50% { background: rgba(133, 77, 14, 0.25); }
-  100% { background: rgba(133, 77, 14, 0); }
+  0% { background: rgba(88, 28, 135, 0.50); }
+  50% { background: rgba(88, 28, 135, 0.25); }
+  100% { background: rgba(88, 28, 135, 0); }
 }
 .reply-highlight {
   position: relative;
