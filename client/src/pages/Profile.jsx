@@ -485,10 +485,10 @@ export default function Profile() {
         setOtpSent(false);
         setOtp("");
       } else {
-        // Email is available, show send OTP option
+        // Email is available, show blue tick and send OTP option
         setEmailValidation({ 
           loading: false, 
-          message: "Email is available. Click 'Send OTP' to verify.", 
+          message: "Email is available in database. Click 'Send OTP' to verify.", 
           available: true 
         });
         setEmailVerified(false);
@@ -630,6 +630,12 @@ export default function Profile() {
         toast.success("Email verified successfully!");
         setOtpSent(false);
         setOtp("");
+        // Update validation message to show verification success
+        setEmailValidation({ 
+          loading: false, 
+          message: "Email verified successfully!", 
+          available: true 
+        });
       } else {
         setOtpError(data.message);
       }
@@ -1552,21 +1558,30 @@ export default function Profile() {
                         </svg>
                       </div>
                     )}
-                    {emailValidation.available === true && !emailValidation.loading && !otpSent && formData.email !== originalEmail && (
+                    {/* Show blue tick when email is available in DB but not yet verified */}
+                    {emailValidation.available === true && !emailValidation.loading && !emailVerified && formData.email !== originalEmail && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-600">
+                        <FaCheck className="text-xl" />
+                      </div>
+                    )}
+                    {/* Show Send OTP button only when email is available and not sent yet */}
+                    {emailValidation.available === true && !emailValidation.loading && !otpSent && !emailVerified && formData.email !== originalEmail && (
                       <button
                         type="button"
                         onClick={handleSendOTP}
                         disabled={otpLoading || !canResend || !formData.email}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 px-3 py-1 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="absolute right-12 top-1/2 transform -translate-y-1/2 px-3 py-1 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {otpLoading ? "Sending..." : "Send OTP"}
                       </button>
                     )}
+                    {/* Show green tick only after successful email verification */}
                     {emailVerified && formData.email !== originalEmail && (
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-600">
                         <FaCheck className="text-xl" />
                       </div>
                     )}
+                    {/* Show red X when email is not available */}
                     {emailValidation.available === false && !emailValidation.loading && (
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                         <FaTimes className="h-5 w-5 text-red-500" />
