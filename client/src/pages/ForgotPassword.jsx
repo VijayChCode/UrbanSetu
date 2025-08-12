@@ -444,25 +444,8 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
                     <p className="text-red-500 text-sm mt-2">{otpError}</p>
                   )}
                 </div>
-                
-                <div>
-                  <label htmlFor="mobileNumber" className="block text-sm font-medium text-gray-700 mb-2">
-                    Registered Mobile Number
-                  </label>
-                  <input
-                    type="tel"
-                    placeholder="Enter 10-digit mobile number"
-                    id="mobileNumber"
-                    value={formData.mobileNumber}
-                    onChange={handleChange}
-                    pattern="[0-9]{10}"
-                    maxLength="10"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
-                    required
-                  />
-                </div>
 
-                {/* OTP Verification Field */}
+                {/* OTP Verification Field - Moved here to appear right after email */}
                 {otpSent && !emailVerified && (
                   <div>
                     <label htmlFor="otp" className="block text-sm font-medium text-gray-700 mb-2">
@@ -510,6 +493,25 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
                     </div>
                   </div>
                 )}
+                
+                <div>
+                  <label htmlFor="mobileNumber" className="block text-sm font-medium text-gray-700 mb-2">
+                    Registered Mobile Number
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="Enter 10-digit mobile number"
+                    id="mobileNumber"
+                    value={formData.mobileNumber}
+                    onChange={handleChange}
+                    pattern="[0-9]{10}"
+                    maxLength="10"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
+                    required
+                  />
+                </div>
+
+                {/* Remove the old OTP field that was here */}
 
                 <button
                   disabled={loading || !emailVerified}
