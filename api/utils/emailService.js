@@ -28,7 +28,7 @@ export const sendSignupOTPEmail = async (email, otp) => {
             <p style="color: #6b7280; margin: 10px 0 0 0;">Email Verification</p>
           </div>
           
-          <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+          <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #2563eb;">
             <h2 style="color: #1f2937; margin: 0 0 15px 0; font-size: 20px;">Verify Your Email Address</h2>
             <p style="color: #4b5563; margin: 0 0 15px 0; line-height: 1.6;">
               Thank you for signing up with UrbanSetu! To complete your registration, please use the verification code below:
@@ -76,7 +76,7 @@ export const sendForgotPasswordOTPEmail = async (email, otp) => {
             <p style="color: #6b7280; margin: 10px 0 0 0;">Password Reset Request</p>
           </div>
           
-          <div style="background-color: #fef2f2; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+          <div style="background-color: #fef2f2; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #dc2626;">
             <h2 style="color: #1f2937; margin: 0 0 15px 0; font-size: 20px;">Reset Your Password</h2>
             <p style="color: #4b5563; margin: 0 0 15px 0; line-height: 1.6;">
               We received a request to reset your password for your UrbanSetu account. To proceed with the password reset, please use the verification code below:
