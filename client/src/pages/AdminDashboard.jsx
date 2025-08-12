@@ -64,6 +64,19 @@ export default function AdminDashboard() {
   const [deleteError, setDeleteError] = useState("");
   const [pendingDelete, setPendingDelete] = useState({ id: null, ownerId: null });
 
+  // Lock body scroll when deletion modals are open on dashboard
+  useEffect(() => {
+    const shouldLock = showReasonModal || showPasswordModal;
+    if (shouldLock) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+    }
+    return () => {
+      document.body.classList.remove('modal-open');
+    };
+  }, [showReasonModal, showPasswordModal]);
+
   const navigate = useNavigate();
 
   useEffect(() => {
