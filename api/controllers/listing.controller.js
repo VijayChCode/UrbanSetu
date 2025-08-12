@@ -323,3 +323,61 @@ export const getListings=async (req,res,next)=>{
         return res.status(500).json([]);
     }
 }
+
+export const reassignPropertyOwner = async (req, res, next) => {
+  try {
+    const { listingId } = req.params;
+    const { newOwnerId } = req.body;
+
+    // Check if user is admin or rootadmin
+    if (req.user.role !== 'admin' && req.user.role !== 'rootadmin') {
+      return next(errorHandler(401, 'Only admins can reassign property ownership'));
+    }
+
+    // Validate listing exists
+    const listing = await Listing.findById(listingId);
+    if (!listing) {
+      return next(errorHandler(404, 'Listing not found'));
+    }
+
+    // Validate new owner exists
+    const newOwner = await User.findById(newOwnerId);
+    if (!newOwner) {
+      return next(errorHandler(404, 'New owner not found'));
+    }
+
+    // Update the listing with new owner
+    const updatedListing = await Listing.findByIdAndUpdate(
+      listingId,
+      { userRef: newOwnerId },
+      { new: true }
+    );
+
+    // Create notification for the new owner
+    try {
+      const notification = new Notification({
+        userId: newOwnerId,
+        type: 'property_assigned',
+        title: 'Property Assigned to You',
+        message: `You have been assigned as the owner of property "${listing.name}".`,
+        listingId: listing._id,
+        adminId: req.user.id,
+      });
+      
+      await notification.save();
+    } catch (notificationError) {
+      // Log notification error but don't fail the ownership update
+      console.error('Failed to create notification:', notificationError);
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Property ownership successfully reassigned to ${newOwner.username}`,
+      listing: updatedListing
+    });
+
+  } catch (error) {
+    console.error('Error reassigning property owner:', error);
+    return next(errorHandler(500, 'Failed to reassign property ownership'));
+  }
+};

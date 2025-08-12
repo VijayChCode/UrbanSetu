@@ -5,7 +5,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/navigation";
 import { Navigation } from "swiper/modules";
-import { FaBath, FaBed, FaChair, FaMapMarkerAlt, FaParking, FaShare, FaEdit, FaTrash, FaArrowLeft, FaStar, FaLock, FaHeart, FaExpand } from "react-icons/fa";
+import { FaBath, FaBed, FaChair, FaMapMarkerAlt, FaParking, FaShare, FaEdit, FaTrash, FaArrowLeft, FaStar, FaLock, FaHeart, FaExpand, FaCheckCircle } from "react-icons/fa";
 import ContactSupportWrapper from "../components/ContactSupportWrapper";
 import ReviewForm from "../components/ReviewForm.jsx";
 import ReviewList from "../components/ReviewList.jsx";
@@ -37,6 +37,10 @@ export default function Listing() {
   const [showReviews, setShowReviews] = useState(false);
   const [showImagePreview, setShowImagePreview] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [showAssignOwnerModal, setShowAssignOwnerModal] = useState(false);
+  const [availableUsers, setAvailableUsers] = useState([]);
+  const [assignOwnerLoading, setAssignOwnerLoading] = useState(false);
+  const [selectedNewOwner, setSelectedNewOwner] = useState("");
 
   // Check if user is admin
   const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'rootadmin';
@@ -135,6 +139,58 @@ export default function Listing() {
       setDeleteError('An error occurred while deleting the property.');
     } finally {
       setDeleteLoading(false);
+    }
+  };
+
+  // Function to fetch available users for owner assignment
+  const fetchAvailableUsers = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/user/all-users-autocomplete`, {
+        credentials: 'include'
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAvailableUsers(data);
+      } else {
+        console.error('Failed to fetch available users');
+      }
+    } catch (error) {
+      console.error('Error fetching available users:', error);
+    }
+  };
+
+  // Function to assign new owner
+  const handleAssignNewOwner = async () => {
+    if (!selectedNewOwner) {
+      toast.error('Please select a new owner');
+      return;
+    }
+
+    setAssignOwnerLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/listing/reassign-owner/${listing._id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ newOwnerId: selectedNewOwner }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        toast.success(data.message || 'Property owner assigned successfully!');
+        setShowAssignOwnerModal(false);
+        setSelectedNewOwner("");
+        // Refresh the page to show updated owner details
+        window.location.reload();
+      } else {
+        const errorData = await res.json();
+        toast.error(errorData.message || 'Failed to assign new owner');
+      }
+    } catch (error) {
+      console.error('Error assigning new owner:', error);
+      toast.error('An error occurred while assigning new owner');
+    } finally {
+      setAssignOwnerLoading(false);
     }
   };
 
@@ -488,6 +544,19 @@ export default function Listing() {
                 <h4 className="text-xl font-bold text-green-800 mb-4">Property Owner Details</h4>
                 {ownerLoading ? (
                   <p className="text-gray-500">Loading owner details...</p>
+                ) : ownerError && isAdmin ? (
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
+                    <p className="text-red-500">{ownerError}</p>
+                    <button
+                      onClick={() => {
+                        fetchAvailableUsers();
+                        setShowAssignOwnerModal(true);
+                      }}
+                      className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2"
+                    >
+                      <FaEdit /> Assign New Owner
+                    </button>
+                  </div>
                 ) : ownerError ? (
                   <p className="text-red-500">{ownerError}</p>
                 ) : ownerDetails ? (
@@ -643,6 +712,44 @@ export default function Listing() {
           images={listing.imageUrls}
           initialIndex={selectedImageIndex}
         />
+      )}
+
+      {/* Assign New Owner Modal */}
+      {showAssignOwnerModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md flex flex-col gap-4">
+            <h3 className="text-lg font-bold text-blue-700 flex items-center gap-2"><FaEdit /> Assign New Owner</h3>
+            <p className="text-sm text-gray-600">Select a user to assign as the new owner of this property.</p>
+            <select
+              className="border rounded p-2 w-full"
+              value={selectedNewOwner}
+              onChange={(e) => setSelectedNewOwner(e.target.value)}
+              disabled={assignOwnerLoading}
+            >
+              <option value="">Select a user</option>
+              {availableUsers.map((user) => (
+                <option key={user._id} value={user._id}>
+                  {user.username} ({user.email})
+                </option>
+              ))}
+            </select>
+            {assignOwnerLoading && <p className="text-gray-500">Assigning new owner...</p>}
+            {selectedNewOwner && !assignOwnerLoading && (
+              <button
+                onClick={handleAssignNewOwner}
+                className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2"
+              >
+                <FaCheckCircle /> Confirm Assignment
+              </button>
+            )}
+            <button
+              onClick={() => setShowAssignOwnerModal(false)}
+              className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
       )}
     </>
   );

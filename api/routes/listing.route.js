@@ -1,5 +1,5 @@
 import express from 'express'
-import { createListing,deleteListing,updateListing,getListing,getListings,getUserListings} from '../controllers/listing.controller.js'
+import { createListing,deleteListing,updateListing,getListing,getListings,getUserListings,reassignPropertyOwner } from '../controllers/listing.controller.js'
 import { verifyToken } from '../utils/verify.js'
 import User from '../models/user.model.js'
 import Listing from '../models/listing.model.js'
@@ -30,6 +30,7 @@ router.get("/user/:userId", verifyToken, async (req, res, next) => {
 });
 router.delete("/delete/:id",verifyToken,deleteListing)
 router.post("/update/:id",verifyToken,updateListing)
+router.post("/reassign-owner/:listingId",verifyToken,reassignPropertyOwner)
 router.get("/get/:id",getListing)
 router.get("/get",getListings)
 
