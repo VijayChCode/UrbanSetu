@@ -99,6 +99,19 @@ export default function MyAppointments() {
     };
   }, [showOtherPartyModal]);
 
+  // Prevent body scrolling when reinitiate modal is open
+  useEffect(() => {
+    if (showReinitiateModal) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+    }
+    
+    return () => {
+      document.body.classList.remove('modal-open');
+    };
+  }, [showReinitiateModal]);
+
   // Dynamically update user info in appointments when currentUser changes
   useEffect(() => {
     if (!currentUser) return;
@@ -1003,19 +1016,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       return () => clearTimeout(timer);
     }
   }, [showShortcutTip]);
-
-  // Prevent body scrolling when reinitiate modal is open
-  useEffect(() => {
-    if (showReinitiateModal) {
-      document.body.classList.add('modal-open');
-    } else {
-      document.body.classList.remove('modal-open');
-    }
-    
-    return () => {
-      document.body.classList.remove('modal-open');
-    };
-  }, [showReinitiateModal]);
 
   // Removed handleClickOutside functionality - options now only close when clicking three dots again
 
