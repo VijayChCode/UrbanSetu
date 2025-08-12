@@ -5,7 +5,7 @@ import { errorHandler } from "../utils/error.js";
 // Store OTPs temporarily (in production, use Redis or database)
 const otpStore = new Map();
 
-// Send OTP
+// Send OTP for signup
 export const sendOTP = async (req, res, next) => {
   const { email } = req.body;
   
@@ -33,7 +33,8 @@ export const sendOTP = async (req, res, next) => {
     otpStore.set(emailLower, {
       otp,
       expirationTime,
-      attempts: 0
+      attempts: 0,
+      type: 'signup'
     });
 
     // Send OTP email
@@ -53,6 +54,60 @@ export const sendOTP = async (req, res, next) => {
 
   } catch (error) {
     console.error('Send OTP error:', error);
+    next(error);
+  }
+};
+
+// Send OTP for forgot password
+export const sendForgotPasswordOTP = async (req, res, next) => {
+  const { email, mobileNumber } = req.body;
+  
+  if (!email || !mobileNumber) {
+    return next(errorHandler(400, "Email and mobile number are required"));
+  }
+
+  const emailLower = email.toLowerCase();
+
+  try {
+    // Check if user exists with matching email and mobile number
+    const user = await User.findOne({ email: emailLower, mobileNumber });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "No account found with that email and mobile number."
+      });
+    }
+
+    // Generate OTP
+    const otp = generateOTP();
+    
+    // Store OTP with expiration (10 minutes)
+    const expirationTime = Date.now() + 10 * 60 * 1000; // 10 minutes
+    otpStore.set(emailLower, {
+      otp,
+      expirationTime,
+      attempts: 0,
+      type: 'forgotPassword',
+      userId: user._id
+    });
+
+    // Send OTP email
+    const emailResult = await sendOTPEmail(emailLower, otp);
+    
+    if (!emailResult.success) {
+      return res.status(500).json({
+        success: false,
+        message: "Failed to send OTP. Please try again."
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "OTP sent successfully to your email"
+    });
+
+  } catch (error) {
+    console.error('Send forgot password OTP error:', error);
     next(error);
   }
 };
@@ -107,13 +162,27 @@ export const verifyOTP = async (req, res, next) => {
       });
     }
 
-    // OTP is valid - mark email as verified
-    otpStore.delete(emailLower);
-    
-    res.status(200).json({
-      success: true,
-      message: "Email verified successfully"
-    });
+    // OTP is valid
+    if (storedData.type === 'forgotPassword') {
+      // For forgot password, return success with user ID for password reset
+      const { userId } = storedData;
+      otpStore.delete(emailLower);
+      
+      res.status(200).json({
+        success: true,
+        message: "Email verified successfully",
+        userId: userId,
+        type: 'forgotPassword'
+      });
+    } else {
+      // For signup, just return success
+      otpStore.delete(emailLower);
+      
+      res.status(200).json({
+        success: true,
+        message: "Email verified successfully"
+      });
+    }
 
   } catch (error) {
     console.error('Verify OTP error:', error);

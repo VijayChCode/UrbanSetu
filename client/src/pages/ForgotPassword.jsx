@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaCheck } from "react-icons/fa";
 import ContactSupportWrapper from "../components/ContactSupportWrapper";
 import { useSelector } from "react-redux";
 import NotFound from "./NotFound";
@@ -14,7 +14,7 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
     mobileNumber: "",
     newPassword: "",
     confirmPassword: "",
-    resetToken: ""
+    userId: ""
   });
 
   const [passwordValidity, setPasswordValidity] = useState({
@@ -33,6 +33,14 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { currentUser } = useSelector((state) => state.user);
+
+  // OTP states
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [verifyLoading, setVerifyLoading] = useState(false);
+  const [otpError, setOtpError] = useState("");
+  const [emailVerified, setEmailVerified] = useState(false);
 
   // Check URL parameters on component mount
   useEffect(() => {
@@ -58,11 +66,8 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
     const handlePopState = (e) => {
       const searchParams = new URLSearchParams(location.search);
       const urlStep = searchParams.get('step');
-      // If user navigated back and is still on step 2 without reset token
+      // If user navigated back and is still on step 2 without proper verification
       // Do nothing, NotFound will be rendered by main logic
-      // if (urlStep === '2' && !formData.resetToken) {
-      //   return <NotFound />;
-      // }
     };
 
     // Check if user was interrupted from a previous session
@@ -81,7 +86,7 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       window.removeEventListener('popstate', handlePopState);
     };
-  }, [location.search, formData.resetToken, navigate]);
+  }, [location.search, formData.userId, navigate]);
 
   // Handle component unmounting when on step 2
   useEffect(() => {
@@ -125,13 +130,107 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
       [id]: value,
     });
 
+    // Reset OTP states when email or mobile changes
+    if (id === "email" || id === "mobileNumber") {
+      setOtpSent(false);
+      setOtp("");
+      setOtpError("");
+      setEmailVerified(false);
+    }
+
     if (id === "newPassword") {
       checkPasswordStrength(value);
     }
   };
 
+  // Send OTP for forgot password
+  const handleSendOTP = async () => {
+    if (!formData.email || !formData.mobileNumber) {
+      setOtpError("Please enter both email and mobile number first");
+      return;
+    }
+
+    setOtpLoading(true);
+    setOtpError("");
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/auth/send-forgot-password-otp`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ 
+          email: formData.email,
+          mobileNumber: formData.mobileNumber 
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setOtpSent(true);
+        setSuccess("OTP sent successfully to your email");
+        setTimeout(() => setSuccess(""), 3000);
+      } else {
+        setOtpError(data.message);
+      }
+    } catch (error) {
+      setOtpError("Failed to send OTP. Please try again.");
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  // Verify OTP for forgot password
+  const handleVerifyOTP = async () => {
+    if (!otp) {
+      setOtpError("Please enter the OTP");
+      return;
+    }
+
+    setVerifyLoading(true);
+    setOtpError("");
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/auth/verify-otp`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ 
+          email: formData.email,
+          otp: otp 
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success && data.type === 'forgotPassword') {
+        setEmailVerified(true);
+        setFormData(prev => ({
+          ...prev,
+          userId: data.userId
+        }));
+        setSuccess("Email verified successfully!");
+        setTimeout(() => setSuccess(""), 3000);
+      } else {
+        setOtpError(data.message);
+      }
+    } catch (error) {
+      setOtpError("Failed to verify OTP. Please try again.");
+    } finally {
+      setVerifyLoading(false);
+    }
+  };
+
   const handleVerification = async (e) => {
     e.preventDefault();
+    
+    if (!emailVerified) {
+      setError("Please verify your email with OTP before proceeding.");
+      return;
+    }
+
     setLoading(true);
     setError("");
 
@@ -153,10 +252,6 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
         setError(data.message);
         setLoading(false);
       } else {
-        setFormData(prev => ({
-          ...prev,
-          resetToken: data.resetToken
-        }));
         setStep(2);
         navigate('/forgot-password?step=2', { replace: true });
         setLoading(false);
@@ -185,7 +280,7 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          resetToken: formData.resetToken,
+          userId: formData.userId,
           newPassword: formData.newPassword,
           confirmPassword: formData.confirmPassword,
         }),
@@ -198,10 +293,10 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
         setLoading(false);
       } else {
         setSuccess("Password reset successful. You can now log in.");
-        setLoading(false);
         setTimeout(() => {
           navigate("/sign-in");
         }, 2000);
+        setLoading(false);
       }
     } catch (error) {
       setError("Something went wrong. Please try again.");
@@ -212,7 +307,7 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
   // If user is on step 2 but doesn't have a reset token, show 404
   const searchParams = new URLSearchParams(location.search);
   const urlStep = searchParams.get('step');
-  if (urlStep === '2' && !formData.resetToken) {
+  if (urlStep === '2' && !formData.userId) { // Changed condition to check userId
     return <NotFound />;
   }
 
@@ -274,16 +369,48 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                     Registered Email
+                    {emailVerified && (
+                      <span className="ml-2 text-green-600">
+                        <FaCheck className="inline" />
+                      </span>
+                    )}
                   </label>
-                  <input
-                    type="email"
-                    placeholder="Enter your email"
-                    id="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
-                    required
-                  />
+                  <div className="relative">
+                    <input
+                      type="email"
+                      placeholder="Enter your email"
+                      id="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      className={`w-full px-4 py-3 pr-24 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200 ${
+                        emailVerified ? "border-green-500" : "border-gray-300"
+                      }`}
+                      required
+                    />
+                    {!emailVerified && (
+                      <button
+                        type="button"
+                        onClick={handleSendOTP}
+                        disabled={otpLoading || !formData.email || !formData.mobileNumber}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 bg-orange-600 text-white rounded-md text-sm font-medium hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {otpLoading ? "Sending..." : "Send OTP"}
+                      </button>
+                    )}
+                    {emailVerified && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600">
+                        <FaCheck className="text-xl" />
+                      </div>
+                    )}
+                  </div>
+                  {otpSent && !emailVerified && (
+                    <p className="text-sm text-gray-600 mt-2">
+                      OTP sent to {formData.email}
+                    </p>
+                  )}
+                  {otpError && (
+                    <p className="text-red-500 text-sm mt-2">{otpError}</p>
+                  )}
                 </div>
                 
                 <div>
@@ -303,8 +430,39 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
                   />
                 </div>
 
+                {/* OTP Verification Field */}
+                {otpSent && !emailVerified && (
+                  <div>
+                    <label htmlFor="otp" className="block text-sm font-medium text-gray-700 mb-2">
+                      Enter OTP
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Enter 6-digit OTP"
+                        id="otp"
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value)}
+                        maxLength="6"
+                        className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleVerifyOTP}
+                        disabled={verifyLoading || !otp}
+                        className="px-4 py-3 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                      >
+                        {verifyLoading ? "Verifying..." : "Verify OTP"}
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Enter the 6-digit code sent to your email
+                    </p>
+                  </div>
+                )}
+
                 <button
-                  disabled={loading}
+                  disabled={loading || !emailVerified}
                   className="w-full py-3 px-4 bg-gradient-to-r from-orange-600 to-red-600 text-white font-semibold rounded-lg hover:from-orange-700 hover:to-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105"
                 >
                   {loading ? (

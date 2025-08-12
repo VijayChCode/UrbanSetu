@@ -265,17 +265,9 @@ export const forgotPassword = async (req, res, next) => {
             return next(errorHandler(404, "No account found with that email and mobile number."));
         }
         
-        // Generate a simple reset token (in production, you'd want a more secure token)
-        const resetToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-        
-        // Store reset token in user document (you might want to add a resetToken field to the schema)
-        user.resetToken = resetToken;
-        user.resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour expiry
-        await user.save();
-        
         res.status(200).json({ 
-            message: "Verification successful. You can now reset your password.",
-            resetToken: resetToken // In production, send this via email/SMS
+            message: "User found. Please proceed with OTP verification.",
+            success: true
         });
     } catch (error) {
         next(error);
@@ -285,9 +277,9 @@ export const forgotPassword = async (req, res, next) => {
 // Reset Password
 export const resetPassword = async (req, res, next) => {
     try {
-        const { resetToken, newPassword, confirmPassword } = req.body;
+        const { userId, newPassword, confirmPassword } = req.body;
         
-        if (!resetToken || !newPassword || !confirmPassword) {
+        if (!userId || !newPassword || !confirmPassword) {
             return next(errorHandler(400, "All fields are required"));
         }
         
@@ -301,23 +293,21 @@ export const resetPassword = async (req, res, next) => {
             return next(errorHandler(400, "Password must be at least 8 characters and include uppercase, lowercase, number, and special character"));
         }
         
-        // Find user with valid reset token
-        const user = await User.findOne({ 
-            resetToken: resetToken,
-            resetTokenExpiry: { $gt: new Date() }
-        });
+        // Find user by ID
+        const user = await User.findById(userId);
         
         if (!user) {
-            return next(errorHandler(400, "Invalid or expired reset token"));
+            return next(errorHandler(404, "User not found"));
         }
         
-        // Update password and clear reset token
+        // Update password
         user.password = bcryptjs.hashSync(newPassword, 10);
-        user.resetToken = undefined;
-        user.resetTokenExpiry = undefined;
         await user.save();
         
-        res.status(200).json({ message: "Password reset successful. You can now log in." });
+        res.status(200).json({ 
+            message: "Password reset successful. You can now log in.",
+            success: true
+        });
     } catch (error) {
         next(error);
     }
