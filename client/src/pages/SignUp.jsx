@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { FaEye, FaEyeSlash, FaCheck, FaTimes } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaCheck, FaTimes, FaEdit } from "react-icons/fa";
 import Oauth from "../components/Oauth";
 import ContactSupportWrapper from "../components/ContactSupportWrapper";
 import { useSelector } from "react-redux";
@@ -45,6 +45,7 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
   const [otpLoading, setOtpLoading] = useState(false);
   const [verifyLoading, setVerifyLoading] = useState(false);
   const [otpError, setOtpError] = useState("");
+  const [emailEditMode, setEmailEditMode] = useState(false);
   
   // Timer states for resend OTP
   const [resendTimer, setResendTimer] = useState(0);
@@ -97,12 +98,23 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
 
     // Reset email verification when email changes
     if (id === "email") {
-      setEmailVerified(false);
-      setOtpSent(false);
-      setOtp("");
-      setOtpError("");
-      setResendTimer(0);
-      setCanResend(true);
+      // If email is changed while in edit mode, reset verification state
+      if (emailEditMode) {
+        setEmailVerified(false);
+        setOtpSent(false);
+        setOtp("");
+        setOtpError("");
+        setResendTimer(0);
+        setCanResend(true);
+        setEmailEditMode(false);
+      } else if (!emailVerified) {
+        // Only reset if not verified (to avoid resetting when typing for the first time)
+        setOtpSent(false);
+        setOtp("");
+        setOtpError("");
+        setResendTimer(0);
+        setCanResend(true);
+      }
     }
 
     if (id === "password") {
@@ -366,16 +378,20 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                     type="email"
                     placeholder="Enter your email"
                     id="email"
+                    value={formData.email}
                     onChange={handleChange}
+                    readOnly={emailVerified && !emailEditMode}
                     className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
-                      fieldErrors.email ? "border-red-500" : emailVerified ? "border-green-500" : "border-gray-300"
+                      emailVerified && !emailEditMode
+                        ? "bg-gray-100 cursor-not-allowed border-green-500"
+                        : fieldErrors.email ? "border-red-500" : emailVerified ? "border-green-500" : "border-gray-300"
                     }`}
                     required
                   />
                   {fieldErrors.email && (
                     <p className="text-red-500 text-sm mt-1">{fieldErrors.email}</p>
                   )}
-                  {!emailVerified && !otpSent && (
+                  {!emailVerified && !otpSent && !emailEditMode && (
                     <button
                       type="button"
                       onClick={handleSendOTP}
@@ -385,9 +401,26 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                       {otpLoading ? "Sending..." : "Send OTP"}
                     </button>
                   )}
-                  {emailVerified && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600">
-                      <FaCheck className="text-xl" />
+                  {emailVerified && !emailEditMode && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setEmailEditMode(true)}
+                        className="text-blue-600 hover:text-blue-800 transition-colors duration-200 p-1 rounded hover:bg-blue-50"
+                        title="Edit email"
+                      >
+                        <FaEdit className="text-sm" />
+                      </button>
+                      <div className="text-green-600">
+                        <FaCheck className="text-xl" />
+                      </div>
+                    </div>
+                  )}
+                  {emailVerified && emailEditMode && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <div className="text-green-600">
+                        <FaCheck className="text-xl" />
+                      </div>
                     </div>
                   )}
                 </div>
