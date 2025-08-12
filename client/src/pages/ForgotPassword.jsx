@@ -440,6 +440,10 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
                       OTP sent to {formData.email}
                     </p>
                   )}
+                  {/* OTP Error Message - Show below email field when OTP field is not open */}
+                  {otpError && !otpSent && (
+                    <p className="text-red-500 text-sm mt-2">{otpError}</p>
+                  )}
                 </div>
 
                 {/* OTP Verification Field - Moved here to appear right after email */}
