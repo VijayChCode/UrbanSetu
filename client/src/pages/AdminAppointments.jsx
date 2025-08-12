@@ -600,7 +600,7 @@ export default function AdminAppointments() {
         <p className="text-center text-gray-600 mb-6">
           {showArchived 
             ? "View and manage archived appointments. You can unarchive them to move them back to active appointments."
-            : "Monitor all appointments across the platform. Use the status filter to view pending appointments.💡 High data traffic may cause this page to slow down or stop working. Please refresh to continue using it normally."
+            : "💡 High data traffic may cause this page to slow down or stop working. Please refresh to continue using it normally.⚠️ Chats are encrypted and secure. View only for valid purposes like disputes or fraud checks. Unauthorized access or sharing is prohibited and will be logged."
           }
         </p>
 
