@@ -270,6 +270,19 @@ export default function Profile() {
   const [updatePassword, setUpdatePassword] = useState("");
   const [updatePasswordError, setUpdatePasswordError] = useState("");
   
+  // Lock body scroll when profile modals are open (delete/transfer flows)
+  useEffect(() => {
+    const shouldLock = showPasswordModal || showTransferPasswordModal || showTransferModal || showAdminModal;
+    if (shouldLock) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+    }
+    return () => {
+      document.body.classList.remove('modal-open');
+    };
+  }, [showPasswordModal, showTransferPasswordModal, showTransferModal, showAdminModal]);
+  
   // Real-time validation states
   const [emailValidation, setEmailValidation] = useState({ loading: false, message: "", available: null });
   const [mobileValidation, setMobileValidation] = useState({ loading: false, message: "", available: null });
