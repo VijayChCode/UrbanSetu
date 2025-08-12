@@ -651,8 +651,11 @@ router.patch('/:id/cancel', verifyToken, async (req, res) => {
       if (!canCancel) {
         return res.status(400).json({ message: 'You can only cancel at least 12 hours before the appointment.' });
       }
+      if (!reason) {
+        return res.status(400).json({ message: 'Reason is required for buyer cancellation.' });
+      }
       bookingToCancel.status = 'cancelledByBuyer';
-      bookingToCancel.cancelReason = reason || '';
+      bookingToCancel.cancelReason = reason;
       bookingToCancel.cancelledBy = 'buyer';
       await bookingToCancel.save();
       // Emit socket.io event

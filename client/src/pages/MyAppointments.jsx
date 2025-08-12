@@ -1411,8 +1411,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   };
 
   const confirmUserCancel = async () => {
-    if (isSeller && !cancelReason.trim()) {
-      toast.error('Reason is required for seller cancellation.');
+    if (!cancelReason.trim()) {
+      toast.error('Reason is required for cancellation.');
       return;
     }
     try {
@@ -3149,7 +3149,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
             
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Reason for cancellation {isSeller ? '(required)' : '(optional)'}:
+                Reason for cancellation (required):
               </label>
               <textarea
                 value={cancelReason}
