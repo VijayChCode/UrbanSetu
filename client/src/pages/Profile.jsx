@@ -588,6 +588,13 @@ export default function Profile() {
         setOtpSent(true);
         toast.success("OTP sent successfully to your email");
         
+        // Update validation message to show OTP sent status
+        setEmailValidation({ 
+          loading: false, 
+          message: "OTP sent to your email. Please enter the code below to verify.", 
+          available: true 
+        });
+        
         // Start timer for resend
         setResendTimer(30); // 30 seconds
         setCanResend(false);
