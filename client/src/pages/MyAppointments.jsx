@@ -87,6 +87,18 @@ export default function MyAppointments() {
     };
   }, [currentUser]);
 
+  // Lock background scroll when profile modal is open
+  useEffect(() => {
+    if (showOtherPartyModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showOtherPartyModal]);
+
   // Dynamically update user info in appointments when currentUser changes
   useEffect(() => {
     if (!currentUser) return;
@@ -752,7 +764,7 @@ export default function MyAppointments() {
         )}
       {/* Other Party Details Modal - Enhanced Design */}
       {showOtherPartyModal && selectedOtherParty && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4" style={{ overflow: 'hidden' }}>
                       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-2 sm:mx-4 max-h-[90vh] overflow-y-auto relative animate-fadeIn">
               {/* Close button */}
               <button

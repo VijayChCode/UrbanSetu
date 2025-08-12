@@ -139,6 +139,18 @@ export default function AdminAppointments() {
     };
   }, []);
 
+  // Lock background scroll when user modal is open
+  useEffect(() => {
+    if (showUserModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showUserModal]);
+
   // Dynamically update user info in appointments when currentUser changes
   useEffect(() => {
     if (!currentUser) return;
@@ -762,7 +774,7 @@ export default function AdminAppointments() {
 
       {/* User Modal - Enhanced Design */}
       {showUserModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4" style={{ overflow: 'hidden' }}>
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-2 sm:mx-4 max-h-[90vh] overflow-y-auto relative animate-fadeIn">
             {/* Close button */}
             <button
