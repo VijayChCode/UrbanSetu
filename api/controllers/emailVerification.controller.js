@@ -1,5 +1,5 @@
 import User from "../models/user.model.js";
-import { generateOTP, sendSignupOTPEmail, sendForgotPasswordOTPEmail } from "../utils/emailService.js";
+import { generateOTP, sendSignupOTPEmail, sendForgotPasswordOTPEmail, sendProfileEmailOTPEmail } from "../utils/emailService.js";
 import { errorHandler } from "../utils/error.js";
 
 // Store OTPs temporarily (in production, use Redis or database)
@@ -108,6 +108,59 @@ export const sendForgotPasswordOTP = async (req, res, next) => {
 
   } catch (error) {
     console.error('Send forgot password OTP error:', error);
+    next(error);
+  }
+};
+
+// Send OTP for profile email verification
+export const sendProfileEmailOTP = async (req, res, next) => {
+  const { email } = req.body;
+  
+  if (!email) {
+    return next(errorHandler(400, "Email is required"));
+  }
+
+  const emailLower = email.toLowerCase();
+
+  try {
+    // Check if email already exists (but allow if it's the same user)
+    const existingUser = await User.findOne({ email: emailLower });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: "This email is already in use by another account. Please choose a different email."
+      });
+    }
+
+    // Generate OTP
+    const otp = generateOTP();
+    
+    // Store OTP with expiration (10 minutes)
+    const expirationTime = Date.now() + 10 * 60 * 1000; // 10 minutes
+    otpStore.set(emailLower, {
+      otp,
+      expirationTime,
+      attempts: 0,
+      type: 'profile_email'
+    });
+
+    // Send OTP email for profile email verification
+    const emailResult = await sendProfileEmailOTPEmail(emailLower, otp);
+    
+    if (!emailResult.success) {
+      return res.status(500).json({
+        success: false,
+        message: "Failed to send OTP. Please try again."
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "OTP sent successfully to your email"
+    });
+
+  } catch (error) {
+    console.error('Send profile email OTP error:', error);
     next(error);
   }
 };
