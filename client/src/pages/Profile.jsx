@@ -291,6 +291,18 @@ export default function Profile() {
   const [originalEmail, setOriginalEmail] = useState("");
   const [originalMobile, setOriginalMobile] = useState("");
   
+  // Email verification OTP states
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [verifyLoading, setVerifyLoading] = useState(false);
+  const [otpError, setOtpError] = useState("");
+  
+  // Timer states for resend OTP
+  const [resendTimer, setResendTimer] = useState(0);
+  const [canResend, setCanResend] = useState(true);
+  
   // Animation states
   const [isVisible, setIsVisible] = useState(false);
   const [statsAnimated, setStatsAnimated] = useState(false);
@@ -346,6 +358,25 @@ export default function Profile() {
       }));
     }
   }, [wishlist, currentUser]);
+
+  // Timer effect for resend OTP
+  useEffect(() => {
+    let interval = null;
+    if (resendTimer > 0) {
+      interval = setInterval(() => {
+        setResendTimer((prevTimer) => {
+          if (prevTimer <= 1) {
+            setCanResend(true);
+            return 0;
+          }
+          return prevTimer - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [resendTimer]);
 
   // Cleanup debounce timers on unmount
   useEffect(() => {
@@ -417,33 +448,62 @@ export default function Profile() {
   const validateEmail = async (email) => {
     if (!email.trim()) {
       setEmailValidation({ loading: false, message: "", available: null });
+      setEmailVerified(false);
+      setOtpSent(false);
+      setOtp("");
       return;
     }
     // Show format error if no @
     if (!email.includes('@')) {
       setEmailValidation({ loading: false, message: "Enter a valid email", available: false });
+      setEmailVerified(false);
+      setOtpSent(false);
+      setOtp("");
       return;
     }
     // Skip validation if email hasn't changed
     if (email === originalEmail) {
       setEmailValidation({ loading: false, message: "", available: true });
+      setEmailVerified(true);
+      setOtpSent(false);
+      setOtp("");
       return;
     }
     try {
       setEmailValidation({ loading: true, message: "", available: null });
       const res = await authenticatedFetch(`${API_BASE_URL}/api/user/check-email/${encodeURIComponent(email.trim())}`);
       const data = await res.json();
-      setEmailValidation({ 
-        loading: false, 
-        message: data.message, 
-        available: data.available 
-      });
+      
+      if (data.available === false) {
+        // Email already exists
+        setEmailValidation({ 
+          loading: false, 
+          message: "Email already exists. Please use a different one.", 
+          available: false 
+        });
+        setEmailVerified(false);
+        setOtpSent(false);
+        setOtp("");
+      } else {
+        // Email is available, show send OTP option
+        setEmailValidation({ 
+          loading: false, 
+          message: "Email is available. Click 'Send OTP' to verify.", 
+          available: true 
+        });
+        setEmailVerified(false);
+        setOtpSent(false);
+        setOtp("");
+      }
     } catch (error) {
       setEmailValidation({ 
         loading: false, 
         message: "Error checking email availability", 
         available: false 
       });
+      setEmailVerified(false);
+      setOtpSent(false);
+      setOtp("");
     }
   };
 
@@ -499,6 +559,87 @@ export default function Profile() {
     setMobileDebounceTimer(timer);
   };
 
+  // Send OTP for email verification
+  const handleSendOTP = async () => {
+    if (!formData.email) {
+      setOtpError("Please enter an email address first");
+      return;
+    }
+
+    if (!canResend) {
+      return;
+    }
+
+    setOtpLoading(true);
+    setOtpError("");
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/auth/send-otp`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: formData.email }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setOtpSent(true);
+        toast.success("OTP sent successfully to your email");
+        
+        // Start timer for resend
+        setResendTimer(30); // 30 seconds
+        setCanResend(false);
+      } else {
+        setOtpError(data.message);
+      }
+    } catch (error) {
+      setOtpError("Failed to send OTP. Please try again.");
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  // Verify OTP for email verification
+  const handleVerifyOTP = async () => {
+    if (!otp) {
+      setOtpError("Please enter the OTP");
+      return;
+    }
+
+    setVerifyLoading(true);
+    setOtpError("");
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/auth/verify-otp`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ 
+          email: formData.email,
+          otp: otp 
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setEmailVerified(true);
+        toast.success("Email verified successfully!");
+        setOtpSent(false);
+        setOtp("");
+      } else {
+        setOtpError(data.message);
+      }
+    } catch (error) {
+      setOtpError("Failed to verify OTP. Please try again.");
+    } finally {
+      setVerifyLoading(false);
+    }
+  };
+
   // Enhanced handleChange with validation
   const handleChangeWithValidation = (e) => {
     const { id, value } = e.target;
@@ -550,6 +691,12 @@ export default function Profile() {
     // Validate mobile number format
     if (!formData.mobileNumber || !/^[0-9]{10}$/.test(formData.mobileNumber)) {
       setMobileError("Please provide a valid 10-digit mobile number");
+      return;
+    }
+    
+    // Check if email needs verification (only if email changed)
+    if (formData.email !== originalEmail && !emailVerified) {
+      setEmailError("Please verify your new email with OTP before saving.");
       return;
     }
     
@@ -1405,9 +1552,19 @@ export default function Profile() {
                         </svg>
                       </div>
                     )}
-                    {emailValidation.available === true && !emailValidation.loading && (
-                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                        <FaCheck className="h-5 w-5 text-green-500" />
+                    {emailValidation.available === true && !emailValidation.loading && !otpSent && formData.email !== originalEmail && (
+                      <button
+                        type="button"
+                        onClick={handleSendOTP}
+                        disabled={otpLoading || !canResend || !formData.email}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 px-3 py-1 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {otpLoading ? "Sending..." : "Send OTP"}
+                      </button>
+                    )}
+                    {emailVerified && formData.email !== originalEmail && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-600">
+                        <FaCheck className="text-xl" />
                       </div>
                     )}
                     {emailValidation.available === false && !emailValidation.loading && (
@@ -1416,6 +1573,67 @@ export default function Profile() {
                       </div>
                     )}
                   </div>
+                  
+                  {/* OTP sent message */}
+                  {otpSent && !emailVerified && (
+                    <p className="text-sm text-gray-600 mt-2">
+                      OTP sent to {formData.email}
+                    </p>
+                  )}
+                  
+                  {/* OTP Verification Field */}
+                  {otpSent && !emailVerified && (
+                    <div className="mt-3">
+                      <label htmlFor="otp" className="block text-sm font-medium text-gray-700 mb-2">
+                        Enter OTP
+                      </label>
+                      <div className="flex flex-col sm:flex-row gap-3 sm:gap-2">
+                        <input
+                          type="text"
+                          placeholder="Enter 6-digit OTP"
+                          id="otp"
+                          value={otp}
+                          onChange={(e) => setOtp(e.target.value)}
+                          maxLength="6"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleVerifyOTP}
+                          disabled={verifyLoading || !otp}
+                          className="w-full sm:w-auto px-4 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                        >
+                          {verifyLoading ? "Verifying..." : "Verify OTP"}
+                        </button>
+                      </div>
+                      <div className="flex items-center justify-between mt-2">
+                        <p className="text-xs text-gray-500">
+                          Enter the 6-digit code sent to your email
+                        </p>
+                        <div className="flex items-center gap-2">
+                          {resendTimer > 0 ? (
+                            <span className="text-xs text-gray-500">
+                              Resend in {Math.floor(resendTimer / 60)}:{(resendTimer % 60).toString().padStart(2, '0')}
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={handleSendOTP}
+                              disabled={otpLoading}
+                              className="text-xs text-blue-600 hover:text-blue-800 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {otpLoading ? "Sending..." : "Resend OTP"}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      {/* OTP Error Message */}
+                      {otpError && (
+                        <p className="text-red-500 text-sm mt-2">{otpError}</p>
+                      )}
+                    </div>
+                  )}
+                  
                   {emailError && (
                     <div className="text-red-600 text-sm mt-1">{emailError}</div>
                   )}
@@ -1487,7 +1705,16 @@ export default function Profile() {
               <div className="flex justify-end space-x-4">
                 <button
                   type="button"
-                  onClick={() => setIsEditing(false)}
+                  onClick={() => {
+                    setIsEditing(false);
+                    // Reset OTP states when cancelling edit
+                    setEmailVerified(false);
+                    setOtpSent(false);
+                    setOtp("");
+                    setOtpError("");
+                    setResendTimer(0);
+                    setCanResend(true);
+                  }}
                   className="bg-gradient-to-r from-gray-500 to-gray-600 text-white px-6 py-3 rounded-lg hover:from-gray-600 hover:to-gray-700 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2"
                 >
                   Cancel
@@ -1499,7 +1726,8 @@ export default function Profile() {
                     emailValidation.loading || 
                     mobileValidation.loading || 
                     emailValidation.available === false || 
-                    mobileValidation.available === false 
+                    mobileValidation.available === false ||
+                    (formData.email !== originalEmail && !emailVerified)
                       ? 'opacity-60 cursor-not-allowed transform-none' : ''
                   }`}
                   disabled={
@@ -1507,7 +1735,8 @@ export default function Profile() {
                     emailValidation.loading || 
                     mobileValidation.loading || 
                     emailValidation.available === false || 
-                    mobileValidation.available === false
+                    mobileValidation.available === false ||
+                    (formData.email !== originalEmail && !emailVerified)
                   }
                 >
                   {loading ? (
