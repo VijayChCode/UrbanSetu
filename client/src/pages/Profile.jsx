@@ -488,7 +488,7 @@ export default function Profile() {
         // Email is available, show blue tick and send OTP option
         setEmailValidation({ 
           loading: false, 
-          message: "Email is available in database. Click 'Send OTP' to verify.", 
+          message: "Email is available. Click 'Send OTP' to verify.", 
           available: true 
         });
         setEmailVerified(false);
@@ -591,7 +591,7 @@ export default function Profile() {
         // Update validation message to show OTP sent status
         setEmailValidation({ 
           loading: false, 
-          message: "OTP sent to your email. Please enter the code below to verify.", 
+          message: "OTP sent to given email. Please enter the code above to verify.", 
           available: true 
         });
         
