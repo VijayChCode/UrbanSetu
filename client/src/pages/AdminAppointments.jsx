@@ -1932,6 +1932,14 @@ function AdminAppointmentRow({
                 )}
               </div>
               <div ref={chatContainerRef} className="flex-1 overflow-y-auto space-y-2 mb-4 px-4 pt-4 animate-fadeInChat relative" style={{minHeight: '400px', maxHeight: 'calc(100vh - 200px)'}}>
+                {/* Privacy Notice for Admins */}
+                <div className="px-4 py-3 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg mb-4 transform transition-all duration-500 hover:scale-105 hover:shadow-lg hover:bg-blue-100 hover:border-blue-500 hover:border-l-6">
+                  <p className="text-sm text-blue-700 font-medium text-center flex items-center justify-center gap-2">
+                    <span className="animate-gentlePulse">🔒</span>
+                    Chats are encrypted and secure. View only for valid purposes like disputes or fraud checks. Unauthorized access or sharing is prohibited and will be logged.
+                  </p>
+                </div>
+                
                 {/* Floating Date Indicator */}
                 {currentFloatingDate && localComments.length > 0 && (
                   <div className={`sticky top-0 left-0 right-0 z-30 pointer-events-none transition-all duration-300 ease-in-out ${
