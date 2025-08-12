@@ -329,15 +329,15 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
       </div>
 
       {/* Right Side - Sign Up Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-gray-50">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8 bg-gray-50">
         <div className="w-full max-w-md">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-800 mb-2">Create Account</h2>
-            <p className="text-gray-600">Join thousands of users finding their perfect homes</p>
+          <div className="text-center mb-6 sm:mb-8">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">Create Account</h2>
+            <p className="text-gray-600 text-sm sm:text-base">Join thousands of users finding their perfect homes</p>
           </div>
           
-          <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-            <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-8 border border-gray-100">
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
               <div>
                 <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
                   Full Name
@@ -408,7 +408,7 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                   <label htmlFor="otp" className="block text-sm font-medium text-gray-700 mb-2">
                     Enter OTP
                   </label>
-                  <div className="flex gap-2">
+                  <div className="space-y-3">
                     <input
                       type="text"
                       placeholder="Enter 6-digit OTP"
@@ -416,13 +416,13 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                       value={otp}
                       onChange={(e) => setOtp(e.target.value)}
                       maxLength="6"
-                      className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                     />
                     <button
                       type="button"
                       onClick={handleVerifyOTP}
                       disabled={verifyLoading || !otp}
-                      className="px-4 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                      className="w-full px-4 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                     >
                       {verifyLoading ? "Verifying..." : "Verify OTP"}
                     </button>
