@@ -1,0 +1,132 @@
+import User from "../models/user.model.js";
+import { generateOTP, sendOTPEmail } from "../utils/emailService.js";
+import { errorHandler } from "../utils/error.js";
+
+// Store OTPs temporarily (in production, use Redis or database)
+const otpStore = new Map();
+
+// Send OTP
+export const sendOTP = async (req, res, next) => {
+  const { email } = req.body;
+  
+  if (!email) {
+    return next(errorHandler(400, "Email is required"));
+  }
+
+  const emailLower = email.toLowerCase();
+
+  try {
+    // Check if email already exists
+    const existingUser = await User.findOne({ email: emailLower });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: "An account with this email already exists. Please sign in instead!"
+      });
+    }
+
+    // Generate OTP
+    const otp = generateOTP();
+    
+    // Store OTP with expiration (10 minutes)
+    const expirationTime = Date.now() + 10 * 60 * 1000; // 10 minutes
+    otpStore.set(emailLower, {
+      otp,
+      expirationTime,
+      attempts: 0
+    });
+
+    // Send OTP email
+    const emailResult = await sendOTPEmail(emailLower, otp);
+    
+    if (!emailResult.success) {
+      return res.status(500).json({
+        success: false,
+        message: "Failed to send OTP. Please try again."
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "OTP sent successfully to your email"
+    });
+
+  } catch (error) {
+    console.error('Send OTP error:', error);
+    next(error);
+  }
+};
+
+// Verify OTP
+export const verifyOTP = async (req, res, next) => {
+  const { email, otp } = req.body;
+  
+  if (!email || !otp) {
+    return next(errorHandler(400, "Email and OTP are required"));
+  }
+
+  const emailLower = email.toLowerCase();
+
+  try {
+    // Get stored OTP data
+    const storedData = otpStore.get(emailLower);
+    
+    if (!storedData) {
+      return res.status(400).json({
+        success: false,
+        message: "OTP expired or not found. Please request a new OTP."
+      });
+    }
+
+    // Check if OTP is expired
+    if (Date.now() > storedData.expirationTime) {
+      otpStore.delete(emailLower);
+      return res.status(400).json({
+        success: false,
+        message: "OTP has expired. Please request a new OTP."
+      });
+    }
+
+    // Check if too many attempts
+    if (storedData.attempts >= 3) {
+      otpStore.delete(emailLower);
+      return res.status(400).json({
+        success: false,
+        message: "Too many failed attempts. Please request a new OTP."
+      });
+    }
+
+    // Verify OTP
+    if (storedData.otp !== otp) {
+      storedData.attempts += 1;
+      otpStore.set(emailLower, storedData);
+      
+      return res.status(400).json({
+        success: false,
+        message: "Invalid OTP. Please try again."
+      });
+    }
+
+    // OTP is valid - mark email as verified
+    otpStore.delete(emailLower);
+    
+    res.status(200).json({
+      success: true,
+      message: "Email verified successfully"
+    });
+
+  } catch (error) {
+    console.error('Verify OTP error:', error);
+    next(error);
+  }
+};
+
+// Clean up expired OTPs periodically (optional)
+setInterval(() => {
+  const now = Date.now();
+  for (const [email, data] of otpStore.entries()) {
+    if (now > data.expirationTime) {
+      otpStore.delete(email);
+    }
+  }
+}, 5 * 60 * 1000); // Clean up every 5 minutes

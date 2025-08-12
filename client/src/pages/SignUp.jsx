@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaCheck, FaTimes } from "react-icons/fa";
 import Oauth from "../components/Oauth";
 import ContactSupportWrapper from "../components/ContactSupportWrapper";
 import { useSelector } from "react-redux";
@@ -38,6 +38,14 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
   const { currentUser } = useSelector((state) => state.user);
   const [consent, setConsent] = useState(false);
 
+  // Email verification states
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [verifyLoading, setVerifyLoading] = useState(false);
+  const [otpError, setOtpError] = useState("");
+
   const checkPasswordStrength = (password) => {
     const validity = {
       length: password.length >= 8,
@@ -64,8 +72,89 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
       }));
     }
 
+    // Reset email verification when email changes
+    if (id === "email") {
+      setEmailVerified(false);
+      setOtpSent(false);
+      setOtp("");
+      setOtpError("");
+    }
+
     if (id === "password") {
       checkPasswordStrength(value);
+    }
+  };
+
+  // Send OTP
+  const handleSendOTP = async () => {
+    if (!formData.email) {
+      setOtpError("Please enter an email address first");
+      return;
+    }
+
+    setOtpLoading(true);
+    setOtpError("");
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/auth/send-otp`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: formData.email }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setOtpSent(true);
+        setSuccess("OTP sent successfully to your email");
+        setTimeout(() => setSuccess(""), 3000);
+      } else {
+        setOtpError(data.message);
+      }
+    } catch (error) {
+      setOtpError("Failed to send OTP. Please try again.");
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  // Verify OTP
+  const handleVerifyOTP = async () => {
+    if (!otp) {
+      setOtpError("Please enter the OTP");
+      return;
+    }
+
+    setVerifyLoading(true);
+    setOtpError("");
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/auth/verify-otp`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ 
+          email: formData.email,
+          otp: otp 
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setEmailVerified(true);
+        setSuccess("Email verified successfully!");
+        setTimeout(() => setSuccess(""), 3000);
+      } else {
+        setOtpError(data.message);
+      }
+    } catch (error) {
+      setOtpError("Failed to verify OTP. Please try again.");
+    } finally {
+      setVerifyLoading(false);
     }
   };
 
@@ -75,6 +164,12 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
       setError("You must agree to the Terms of Use and Privacy Policy.");
       return;
     }
+
+    if (!emailVerified) {
+      setError("Please verify your email address before creating an account.");
+      return;
+    }
+
     setLoading(true);
     setError("");
     setSuccess("");
@@ -99,7 +194,10 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          emailVerified: true
+        }),
       };
       const res = await fetch(apiUrl, options);
       const data = await res.json();
@@ -224,21 +322,82 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                   Email Address
+                  {emailVerified && (
+                    <span className="ml-2 text-green-600">
+                      <FaCheck className="inline" />
+                    </span>
+                  )}
                 </label>
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  id="email"
-                  onChange={handleChange}
-                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
-                    fieldErrors.email ? "border-red-500" : "border-gray-300"
-                  }`}
-                  required
-                />
-                {fieldErrors.email && (
-                  <p className="text-red-500 text-sm mt-1">{fieldErrors.email}</p>
+                <div className="relative">
+                  <input
+                    type="email"
+                    placeholder="Enter your email"
+                    id="email"
+                    onChange={handleChange}
+                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
+                      fieldErrors.email ? "border-red-500" : emailVerified ? "border-green-500" : "border-gray-300"
+                    }`}
+                    required
+                  />
+                  {fieldErrors.email && (
+                    <p className="text-red-500 text-sm mt-1">{fieldErrors.email}</p>
+                  )}
+                  {!emailVerified && !otpSent && (
+                    <button
+                      type="button"
+                      onClick={handleSendOTP}
+                      disabled={otpLoading}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 px-3 py-1 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {otpLoading ? "Sending..." : "Send OTP"}
+                    </button>
+                  )}
+                  {emailVerified && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600">
+                      <FaCheck className="text-xl" />
+                    </div>
+                  )}
+                </div>
+                {otpSent && !emailVerified && (
+                  <p className="text-sm text-gray-600 mt-2">
+                    OTP sent to {formData.email}
+                  </p>
+                )}
+                {otpError && (
+                  <p className="text-red-500 text-sm mt-2">{otpError}</p>
                 )}
               </div>
+
+              {/* OTP Verification Field */}
+              {otpSent && !emailVerified && (
+                <div>
+                  <label htmlFor="otp" className="block text-sm font-medium text-gray-700 mb-2">
+                    Enter OTP
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Enter 6-digit OTP"
+                      id="otp"
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value)}
+                      maxLength="6"
+                      className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleVerifyOTP}
+                      disabled={verifyLoading || !otp}
+                      className="px-4 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                    >
+                      {verifyLoading ? "Verifying..." : "Verify OTP"}
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Enter the 6-digit code sent to your email
+                  </p>
+                </div>
+              )}
 
               <div>
                 <label htmlFor="mobileNumber" className="block text-sm font-medium text-gray-700 mb-2">
@@ -380,7 +539,8 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
               <button
                 disabled={
                   loading ||
-                  Object.values(passwordValidity).includes(false)
+                  Object.values(passwordValidity).includes(false) ||
+                  !emailVerified
                 }
                 className="w-full py-3 px-4 bg-gradient-to-r from-green-600 to-blue-600 text-white font-semibold rounded-lg hover:from-green-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105"
               >

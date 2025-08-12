@@ -3,6 +3,7 @@ import { SignUp,SignIn,Google,Signout,verifyAuth,forgotPassword,resetPassword} f
 import bcryptjs from 'bcryptjs';
 import User from '../models/user.model.js';
 import { verifyToken } from '../utils/verify.js';
+import { sendOTP, verifyOTP } from '../controllers/emailVerification.controller.js';
 const router=express.Router()
 
 router.post("/signup",SignUp)
@@ -12,6 +13,10 @@ router.get("/signout",Signout)
 router.get("/verify",verifyAuth)
 router.post("/forgot-password",forgotPassword)
 router.post("/reset-password",resetPassword)
+
+// Email verification routes
+router.post("/send-otp", sendOTP)
+router.post("/verify-otp", verifyOTP)
 
 // POST /api/auth/verify-password
 router.post('/verify-password', verifyToken, async (req, res) => {
