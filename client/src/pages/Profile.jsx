@@ -1594,7 +1594,7 @@ export default function Profile() {
                       </button>
                     )}
                     {/* Show green tick and edit icon after successful email verification */}
-                    {emailVerified && formData.email !== originalEmail && !emailEditMode && (
+                    {emailVerified && formData.email !== originalEmail && !emailEditMode && !emailValidation.loading && (
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
                         <button
                           type="button"
@@ -1610,7 +1610,7 @@ export default function Profile() {
                       </div>
                     )}
                     {/* Show verification flow when in edit mode */}
-                    {emailVerified && formData.email !== originalEmail && emailEditMode && (
+                    {emailVerified && formData.email !== originalEmail && emailEditMode && !emailValidation.loading && (
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                         <div className="text-green-600">
                           <FaCheck className="text-xl" />
