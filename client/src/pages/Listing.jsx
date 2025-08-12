@@ -560,13 +560,13 @@ export default function Listing() {
                   <div>
                     <p className="text-sm text-gray-600">Created Date</p>
                     <p className="font-semibold text-gray-800">
-                      {new Date(listing.createdAt).toLocaleDateString()}
+                      {new Date(listing.createdAt).toLocaleDateString('en-GB')}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Last Updated</p>
                     <p className="font-semibold text-gray-800">
-                      {new Date(listing.updatedAt).toLocaleDateString()}
+                      {new Date(listing.updatedAt).toLocaleDateString('en-GB')}
                     </p>
                   </div>
                   <div>
