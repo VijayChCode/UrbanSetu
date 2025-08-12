@@ -45,7 +45,7 @@ export const sendSignupOTPEmail = async (email, otp) => {
           
           <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
             <p style="color: #9ca3af; margin: 0; font-size: 12px;">
-              © 2024 UrbanSetu. All rights reserved.
+              © 2025 UrbanSetu. All rights reserved.
             </p>
           </div>
         </div>
@@ -97,7 +97,7 @@ export const sendForgotPasswordOTPEmail = async (email, otp) => {
           
           <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
             <p style="color: #9ca3af; margin: 0; font-size: 12px;">
-              © 2024 UrbanSetu. All rights reserved.
+              © 2025 UrbanSetu. All rights reserved.
             </p>
           </div>
         </div>
