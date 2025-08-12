@@ -41,6 +41,10 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
   const [verifyLoading, setVerifyLoading] = useState(false);
   const [otpError, setOtpError] = useState("");
   const [emailVerified, setEmailVerified] = useState(false);
+  
+  // Timer states for resend OTP
+  const [resendTimer, setResendTimer] = useState(0);
+  const [canResend, setCanResend] = useState(true);
 
   // Check URL parameters on component mount
   useEffect(() => {
@@ -50,6 +54,25 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
       setStep(2);
     }
   }, [location.search]);
+
+  // Timer effect for resend OTP
+  useEffect(() => {
+    let interval = null;
+    if (resendTimer > 0) {
+      interval = setInterval(() => {
+        setResendTimer((prevTimer) => {
+          if (prevTimer <= 1) {
+            setCanResend(true);
+            return 0;
+          }
+          return prevTimer - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [resendTimer]);
 
   // Handle browser back button and page refresh
   useEffect(() => {
@@ -136,6 +159,8 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
       setOtp("");
       setOtpError("");
       setEmailVerified(false);
+      setResendTimer(0);
+      setCanResend(true);
     }
 
     if (id === "newPassword") {
@@ -147,6 +172,10 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
   const handleSendOTP = async () => {
     if (!formData.email || !formData.mobileNumber) {
       setOtpError("Please enter both email and mobile number first");
+      return;
+    }
+
+    if (!canResend) {
       return;
     }
 
@@ -171,6 +200,10 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
         setOtpSent(true);
         setSuccess("OTP sent successfully to your email");
         setTimeout(() => setSuccess(""), 3000);
+        
+        // Start timer for resend
+        setResendTimer(120); // 2 minutes = 120 seconds
+        setCanResend(false);
       } else {
         setOtpError(data.message);
       }
@@ -391,7 +424,7 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
                       <button
                         type="button"
                         onClick={handleSendOTP}
-                        disabled={otpLoading || !formData.email || !formData.mobileNumber}
+                        disabled={otpLoading || !formData.email || !formData.mobileNumber || !canResend}
                         className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 bg-orange-600 text-white rounded-md text-sm font-medium hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {otpLoading ? "Sending..." : "Send OTP"}
@@ -455,9 +488,27 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
                         {verifyLoading ? "Verifying..." : "Verify OTP"}
                       </button>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Enter the 6-digit code sent to your email
-                    </p>
+                    <div className="flex items-center justify-between mt-2">
+                      <p className="text-xs text-gray-500">
+                        Enter the 6-digit code sent to your email
+                      </p>
+                      <div className="flex items-center gap-2">
+                        {resendTimer > 0 ? (
+                          <span className="text-xs text-gray-500">
+                            Resend in {Math.floor(resendTimer / 60)}:{(resendTimer % 60).toString().padStart(2, '0')}
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={handleSendOTP}
+                            disabled={otpLoading}
+                            className="text-xs text-orange-600 hover:text-orange-800 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {otpLoading ? "Sending..." : "Resend OTP"}
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 )}
 
