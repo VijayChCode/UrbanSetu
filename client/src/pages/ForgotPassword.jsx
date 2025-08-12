@@ -467,10 +467,6 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
                         {verifyLoading ? "Verifying..." : "Verify OTP"}
                       </button>
                     </div>
-                    {/* OTP Error Message - Moved here to appear below OTP field */}
-                    {otpError && (
-                      <p className="text-red-500 text-sm mt-2">{otpError}</p>
-                    )}
                     <div className="flex items-center justify-between mt-2">
                       <p className="text-xs text-gray-500">
                         Enter the 6-digit code sent to your email
@@ -492,6 +488,10 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
                         )}
                       </div>
                     </div>
+                    {/* OTP Error Message - Moved here to appear below the instruction text */}
+                    {otpError && (
+                      <p className="text-red-500 text-sm mt-2">{otpError}</p>
+                    )}
                   </div>
                 )}
                 
