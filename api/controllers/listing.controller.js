@@ -340,10 +340,29 @@ export const reassignPropertyOwner = async (req, res, next) => {
       return next(errorHandler(404, 'Listing not found'));
     }
 
+    // Check if current owner exists and is active
+    if (listing.userRef) {
+      try {
+        const currentOwner = await User.findById(listing.userRef);
+        if (currentOwner && currentOwner.status !== 'suspended') {
+          return next(errorHandler(400, 'Owner already exists and is active. Cannot reassign property ownership.'));
+        }
+      } catch (error) {
+        // If we can't fetch the current owner, it means the account is deleted/inactive
+        // This is the case where we want to allow reassignment
+        console.log('Current owner account appears to be deleted/inactive, allowing reassignment');
+      }
+    }
+
     // Validate new owner exists
     const newOwner = await User.findById(newOwnerId);
     if (!newOwner) {
       return next(errorHandler(404, 'New owner not found'));
+    }
+
+    // Check if new owner is not suspended
+    if (newOwner.status === 'suspended') {
+      return next(errorHandler(400, 'Cannot assign property to a suspended user'));
     }
 
     // Update the listing with new owner

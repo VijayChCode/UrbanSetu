@@ -41,6 +41,7 @@ export default function Listing() {
   const [availableUsers, setAvailableUsers] = useState([]);
   const [assignOwnerLoading, setAssignOwnerLoading] = useState(false);
   const [selectedNewOwner, setSelectedNewOwner] = useState("");
+  const [ownerStatus, setOwnerStatus] = useState({ isActive: false, owner: null });
 
   // Check if user is admin
   const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'rootadmin';
@@ -142,6 +143,25 @@ export default function Listing() {
     }
   };
 
+  // Function to check if current owner is active
+  const checkOwnerStatus = async () => {
+    if (listing && listing.userRef) {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/user/id/${listing.userRef}`);
+        if (res.ok) {
+          const ownerData = await res.json();
+          if (ownerData && ownerData.status !== 'suspended') {
+            return { isActive: true, owner: ownerData };
+          }
+        }
+      } catch (error) {
+        // Owner account is deleted/inactive
+        return { isActive: false, owner: null };
+      }
+    }
+    return { isActive: false, owner: null };
+  };
+
   // Function to fetch available users for owner assignment
   const fetchAvailableUsers = async () => {
     try {
@@ -155,9 +175,9 @@ export default function Listing() {
         console.error('Failed to fetch available users');
       }
     } catch (error) {
-      console.error('Error fetching available users:', error);
-    }
-  };
+        console.error('Error fetching available users:', error);
+      }
+    };
 
   // Function to assign new owner
   const handleAssignNewOwner = async () => {
@@ -225,14 +245,17 @@ export default function Listing() {
           if (!res.ok) throw new Error("Failed to fetch owner details");
           const data = await res.json();
           setOwnerDetails(data);
+          setOwnerStatus({ isActive: true, owner: data });
         } catch (err) {
           setOwnerError("Could not load owner details");
           setOwnerDetails(null);
+          setOwnerStatus({ isActive: false, owner: null });
         } finally {
           setOwnerLoading(false);
         }
       } else {
         setOwnerDetails(null);
+        setOwnerStatus({ isActive: false, owner: null });
       }
     };
     fetchOwnerDetails();
@@ -544,39 +567,48 @@ export default function Listing() {
                 <h4 className="text-xl font-bold text-green-800 mb-4">Property Owner Details</h4>
                 {ownerLoading ? (
                   <p className="text-gray-500">Loading owner details...</p>
-                ) : ownerError && isAdmin ? (
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
-                    <p className="text-red-500">{ownerError}</p>
-                    <button
-                      onClick={() => {
-                        fetchAvailableUsers();
-                        setShowAssignOwnerModal(true);
-                      }}
-                      className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2"
-                    >
-                      <FaEdit /> Assign New Owner
-                    </button>
+                ) : ownerDetails && ownerStatus.isActive ? (
+                  <div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <p className="text-sm text-gray-600">Owner Name</p>
+                        <p className="font-semibold text-gray-800">{ownerDetails.username}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Owner Email</p>
+                        <p className="font-semibold text-gray-800">{ownerDetails.email}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Mobile Number</p>
+                        <p className="font-semibold text-gray-800">{ownerDetails.mobileNumber}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Owner ID</p>
+                        <p className="font-semibold text-gray-800">{ownerDetails._id}</p>
+                      </div>
+                    </div>
+                    {isAdmin && (
+                      <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p className="text-blue-700 text-sm font-medium">
+                          ℹ️ Owner account is active and accessible. No reassignment needed.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 ) : ownerError ? (
-                  <p className="text-red-500">{ownerError}</p>
-                ) : ownerDetails ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-600">Owner Name</p>
-                      <p className="font-semibold text-gray-800">{ownerDetails.username}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Owner Email</p>
-                      <p className="font-semibold text-gray-800">{ownerDetails.email}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Mobile Number</p>
-                      <p className="font-semibold text-gray-800">{ownerDetails.mobileNumber}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Owner ID</p>
-                      <p className="font-semibold text-gray-800">{ownerDetails._id}</p>
-                    </div>
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
+                    <p className="text-red-500">{ownerError}</p>
+                    {isAdmin && (
+                      <button
+                        onClick={() => {
+                          fetchAvailableUsers();
+                          setShowAssignOwnerModal(true);
+                        }}
+                        className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2"
+                      >
+                        <FaEdit /> Assign New Owner
+                      </button>
+                    )}
                   </div>
                 ) : (
                   <p className="text-gray-500">No owner details found.</p>
