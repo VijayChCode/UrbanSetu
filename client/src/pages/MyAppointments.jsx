@@ -2659,7 +2659,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           <div
                             ref={el => messageRefs.current[c._id] = el}
                             data-message-id={c._id}
-                            className={`rounded-2xl px-4 sm:px-5 py-3 text-sm shadow-xl max-w-[90%] sm:max-w-[80%] md:max-w-[70%] break-all overflow-hidden relative transition-all duration-200 min-h-[60px] ${
+                            className={`rounded-2xl px-4 sm:px-5 py-3 text-sm shadow-xl max-w-[90%] sm:max-w-[80%] md:max-w-[70%] break-words overflow-hidden relative transition-all duration-200 min-h-[60px] ${
                               isMe 
                                 ? 'bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-500 hover:to-purple-600 text-white shadow-blue-200 hover:shadow-blue-300' 
                                 : 'bg-white hover:bg-gray-50 text-gray-800 border border-gray-200 shadow-gray-200 hover:shadow-lg hover:border-gray-300'
@@ -2700,7 +2700,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                     </div>
                                   ) : (
                                     <>
-                                      <span className="whitespace-pre-wrap break-all">{(c.message || '').replace(/\n+$/, '')}</span>
+                                      <span className="whitespace-pre-wrap break-words">{(c.message || '').replace(/\n+$/, '')}</span>
                                       {c.edited && (
                                         <span className="ml-2 text-[10px] italic text-gray-300 whitespace-nowrap">(Edited)</span>
                                       )}
