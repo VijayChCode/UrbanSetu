@@ -153,8 +153,8 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
       [id]: value,
     });
 
-    // Reset OTP states when email or mobile changes
-    if (id === "email" || id === "mobileNumber") {
+    // Reset OTP states only when email changes
+    if (id === "email") {
       setOtpSent(false);
       setOtp("");
       setOtpError("");
