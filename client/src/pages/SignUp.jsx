@@ -379,7 +379,7 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                     <button
                       type="button"
                       onClick={handleSendOTP}
-                      disabled={otpLoading || !canResend}
+                      disabled={otpLoading || !canResend || !formData.email}
                       className="absolute right-3 top-1/2 -translate-y-1/2 px-3 py-1 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {otpLoading ? "Sending..." : "Send OTP"}
