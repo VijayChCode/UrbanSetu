@@ -3,8 +3,17 @@
 @tailwind utilities;
 
 @layer utilities {
+  .animate-fadeIn {
+    animation: fadeIn 0.8s ease-in both;
+  }
   .animate-fade-in {
     animation: fadeIn 0.8s ease-in both;
+  }
+  .animate-slideInFromTop {
+    animation: slideInFromTop 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) both;
+  }
+  .animate-gentlePulse {
+    animation: gentlePulse 3s ease-in-out infinite;
   }
   .animate-fade-in-delay {
     animation: fadeIn 0.8s ease-in 0.3s both;
@@ -80,6 +89,28 @@
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+@keyframes slideInFromTop {
+  from { 
+    opacity: 0; 
+    transform: translateY(-20px) scale(0.95); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0) scale(1); 
+  }
+}
+
+@keyframes gentlePulse {
+  0%, 100% { 
+    transform: scale(1); 
+    opacity: 1; 
+  }
+  50% { 
+    transform: scale(1.02); 
+    opacity: 0.9; 
+  }
 }
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(30px); }

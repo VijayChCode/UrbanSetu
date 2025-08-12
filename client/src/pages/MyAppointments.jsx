@@ -2560,9 +2560,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 
                 <div ref={chatContainerRef} className="flex-1 overflow-y-auto space-y-2 mb-4 px-4 pt-4 animate-fadeInChat relative" style={{minHeight: '400px', maxHeight: 'calc(100vh - 200px)'}}>
                   {/* Privacy Notice - First item in chat */}
-                  <div className="px-4 py-3 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg mb-4">
-                    <p className="text-sm text-blue-700 font-medium text-center">
-                      🔒 Your privacy is our top priority — all your chats and data are fully encrypted for your safety
+                  <div className="px-4 py-3 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg mb-4 animate-slideInFromTop transform transition-all duration-500 hover:scale-105 hover:shadow-lg hover:bg-blue-100 hover:border-blue-500 hover:border-l-6">
+                    <p className="text-sm text-blue-700 font-medium text-center flex items-center justify-center gap-2">
+                      <span className="animate-gentlePulse">🔒</span>
+                      Your privacy is our top priority — all your chats and data are fully encrypted for your safety
                     </p>
                   </div>
                   
