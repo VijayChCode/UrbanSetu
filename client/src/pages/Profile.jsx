@@ -592,7 +592,7 @@ export default function Profile() {
         // Update validation message to show OTP sent status
         setEmailValidation({ 
           loading: false, 
-          message: "OTP sent to given email. Please enter the code above to verify.", 
+           
           available: true 
         });
         
