@@ -992,6 +992,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   
   // New: track which message's options are shown in the header
   const [headerOptionsMessageId, setHeaderOptionsMessageId] = useState(null);
+  const [privacyNoticeHighlighted, setPrivacyNoticeHighlighted] = useState(false);
 
   // Auto-close shortcut tip after 10 seconds
   useEffect(() => {
@@ -1693,6 +1694,16 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         
         // Show floating date when scrolling starts
         setIsScrolling(true);
+        
+        // Check if scrolled to top for privacy notice highlighting
+        if (chatContainer) {
+          const { scrollTop } = chatContainer;
+          if (scrollTop < 50) { // Near the top
+            setPrivacyNoticeHighlighted(true);
+            // Reset highlight after 3 seconds
+            setTimeout(() => setPrivacyNoticeHighlighted(false), 3000);
+          }
+        }
         
         // Clear existing timeout
         if (scrollTimeoutRef.current) {
@@ -2560,11 +2571,23 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 
                 <div ref={chatContainerRef} className="flex-1 overflow-y-auto space-y-2 mb-4 px-4 pt-4 animate-fadeInChat relative" style={{minHeight: '400px', maxHeight: 'calc(100vh - 200px)'}}>
                   {/* Privacy Notice - First item in chat */}
-                  <div className="px-4 py-3 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg mb-4 animate-slideInFromTop transform transition-all duration-500 hover:scale-105 hover:shadow-lg hover:bg-blue-100 hover:border-blue-500 hover:border-l-6">
-                    <p className="text-sm text-blue-700 font-medium text-center flex items-center justify-center gap-2">
-                      <span className="animate-gentlePulse">🔒</span>
-                      Your privacy is our top priority — all your chats and data are fully encrypted for your safety
-                    </p>
+                  <div 
+                    className={`px-4 py-3 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg mb-4 transform transition-all duration-500 hover:scale-105 hover:shadow-lg hover:bg-blue-100 hover:border-blue-500 hover:border-l-6 ${
+                      privacyNoticeHighlighted ? 'animate-attentionGlow shadow-lg border-blue-500 bg-blue-100 scale-105' : 
+                      isAtBottom ? 'animate-slideInFromTop shadow-lg border-blue-500 bg-blue-100 animate-attentionGlow' : 'animate-gentlePulse'
+                    }`}
+                    style={{
+                      animationDelay: privacyNoticeHighlighted ? '0s' : (isAtBottom ? '0s' : '0s'),
+                      transform: privacyNoticeHighlighted ? 'scale(1.05)' : (isAtBottom ? 'scale(1.02)' : 'scale(1)'),
+                      boxShadow: privacyNoticeHighlighted ? '0 15px 35px rgba(59, 130, 246, 0.25)' : (isAtBottom ? '0 10px 25px rgba(59, 130, 246, 0.15)' : 'none')
+                    }}
+                  >
+                                          <p className="text-sm text-blue-700 font-medium text-center flex items-center justify-center gap-2">
+                        <span className={`${privacyNoticeHighlighted ? 'animate-bounce text-blue-600' : isAtBottom ? 'animate-bounce' : 'animate-gentlePulse'}`}>🔒</span>
+                        Your privacy is our top priority — all your chats and data are fully encrypted for your safety
+                        {privacyNoticeHighlighted && <span className="ml-2 animate-pulse text-blue-600">✨</span>}
+                        {isAtBottom && !privacyNoticeHighlighted && <span className="ml-2 animate-pulse text-blue-600">✨</span>}
+                      </p>
                   </div>
                   
                   {/* Floating Date Indicator */}
