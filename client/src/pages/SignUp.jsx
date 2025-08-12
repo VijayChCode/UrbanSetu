@@ -141,7 +141,7 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
         setTimeout(() => setSuccess(""), 3000);
         
         // Start timer for resend
-        setResendTimer(120); // 2 minutes = 120 seconds
+        setResendTimer(30); // 30 seconds
         setCanResend(false);
       } else {
         setOtpError(data.message);
