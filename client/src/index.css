@@ -259,15 +259,15 @@
 
 /* Smooth highlight when jumping to a replied message */
 @keyframes replyHighlightPulse {
-  0% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.45); transform: scale(1); }
-  50% { box-shadow: 0 0 0 8px rgba(139, 92, 246, 0.18), 0 6px 18px rgba(139, 92, 246, 0.25); transform: scale(1.01); }
-  100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); transform: scale(1); }
+  0% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.50); transform: scale(1); }
+  50% { box-shadow: 0 0 0 8px rgba(234, 179, 8, 0.20), 0 6px 18px rgba(234, 179, 8, 0.30); transform: scale(1.01); }
+  100% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0); transform: scale(1); }
 }
 .reply-highlight {
   animation: replyHighlightPulse 1200ms ease-out 2;
-  outline: 2px solid rgba(139, 92, 246, 0.7); /* purple-500 */
+  outline: 2px solid rgba(234, 179, 8, 0.85); /* yellow-500 */
   outline-offset: 2px;
-  border-color: rgba(139, 92, 246, 0.6) !important;
+  border-color: rgba(234, 179, 8, 0.6) !important;
 }
 
 /* Mobile menu specific styles */
