@@ -2700,7 +2700,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                     </div>
                                   ) : (
                                     <>
-                                      <span className="whitespace-pre-wrap">{(c.message || '').replace(/\n+$/, '')}</span>
+                                      <span className="whitespace-pre-wrap break-words">{(c.message || '').replace(/\n+$/, '')}</span>
                                       {c.edited && (
                                         <span className="ml-2 text-[10px] italic text-gray-300 whitespace-nowrap">(Edited)</span>
                                       )}
@@ -2779,7 +2779,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 <div className="flex gap-2 mt-1 px-3 pb-2">
                   <textarea
                     rows={1}
-                    className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-400 shadow-lg transition-all duration-200 bg-white resize-y whitespace-pre-wrap"
+                    className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-400 shadow-lg transition-all duration-200 bg-white resize-y whitespace-pre-wrap break-words"
                     placeholder={editingComment ? "Edit your message..." : "Type a message..."}
                     value={comment}
                     onChange={e => {
