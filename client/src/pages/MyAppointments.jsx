@@ -2558,14 +2558,14 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   )}
                 </div>
                 
-                {/* Privacy Notice */}
-                <div className="px-4 py-3 bg-blue-50 border-l-4 border-blue-400 mx-4 mt-2 rounded-r-lg">
-                  <p className="text-sm text-blue-700 font-medium text-center">
-                    🔒 Your privacy is our top priority — all your chats and data are fully encrypted for your safety
-                  </p>
-                </div>
-                
                 <div ref={chatContainerRef} className="flex-1 overflow-y-auto space-y-2 mb-4 px-4 pt-4 animate-fadeInChat relative" style={{minHeight: '400px', maxHeight: 'calc(100vh - 200px)'}}>
+                  {/* Privacy Notice - First item in chat */}
+                  <div className="px-4 py-3 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg mb-4">
+                    <p className="text-sm text-blue-700 font-medium text-center">
+                      🔒 Your privacy is our top priority — all your chats and data are fully encrypted for your safety
+                    </p>
+                  </div>
+                  
                   {/* Floating Date Indicator */}
                   {currentFloatingDate && filteredComments.length > 0 && (
                     <div className={`sticky top-0 left-0 right-0 z-30 pointer-events-none transition-all duration-300 ease-in-out ${
