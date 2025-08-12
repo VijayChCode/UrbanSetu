@@ -259,18 +259,18 @@
 
 /* Smooth highlight when jumping to a replied message */
 @keyframes replyHighlightPulse {
-  0% { box-shadow: 0 0 0 0 rgba(21, 128, 61, 0.60); transform: scale(1); }
-  50% { box-shadow: 0 0 0 8px rgba(21, 128, 61, 0.28), 0 6px 18px rgba(21, 128, 61, 0.35); transform: scale(1.01); }
+  0% { box-shadow: 0 0 0 0 rgba(21, 128, 61, 0.80); transform: scale(1); }
+  50% { box-shadow: 0 0 0 12px rgba(21, 128, 61, 0.45), 0 8px 22px rgba(21, 128, 61, 0.45); transform: scale(1.01); }
   100% { box-shadow: 0 0 0 0 rgba(21, 128, 61, 0); transform: scale(1); }
 }
 @keyframes replyHighlightFill {
-  0% { background: rgba(21, 128, 61, 0.50); }
-  50% { background: rgba(21, 128, 61, 0.25); }
+  0% { background: rgba(21, 128, 61, 0.70); }
+  50% { background: rgba(21, 128, 61, 0.45); }
   100% { background: rgba(21, 128, 61, 0); }
 }
 .reply-highlight {
   position: relative;
-  animation: replyHighlightPulse 1200ms ease-out 2;
+  animation: replyHighlightPulse 1600ms ease-out 3;
 }
 .reply-highlight::after {
   content: '';
@@ -278,7 +278,7 @@
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
-  animation: replyHighlightFill 1200ms ease-out 2;
+  animation: replyHighlightFill 1600ms ease-out 3;
 }
 
 /* Mobile menu specific styles */
