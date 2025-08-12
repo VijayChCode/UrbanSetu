@@ -396,9 +396,6 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                     OTP sent to {formData.email}
                   </p>
                 )}
-                {otpError && (
-                  <p className="text-red-500 text-sm mt-2">{otpError}</p>
-                )}
               </div>
 
               {/* OTP Verification Field */}
@@ -426,6 +423,10 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                       {verifyLoading ? "Verifying..." : "Verify OTP"}
                     </button>
                   </div>
+                  {/* OTP Error Message - Moved here to appear below OTP field */}
+                  {otpError && (
+                    <p className="text-red-500 text-sm mt-2">{otpError}</p>
+                  )}
                   <div className="flex items-center justify-between mt-2">
                     <p className="text-xs text-gray-500">
                       Enter the 6-digit code sent to your email
