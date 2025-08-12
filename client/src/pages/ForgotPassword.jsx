@@ -170,8 +170,8 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
 
   // Send OTP for forgot password
   const handleSendOTP = async () => {
-    if (!formData.email || !formData.mobileNumber) {
-      setOtpError("Please enter both email and mobile number first");
+    if (!formData.email) {
+      setOtpError("Please enter an email address first");
       return;
     }
 
@@ -189,8 +189,7 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ 
-          email: formData.email,
-          mobileNumber: formData.mobileNumber 
+          email: formData.email
         }),
       });
 
@@ -420,16 +419,16 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
                       }`}
                       required
                     />
-                    {!emailVerified && (
-                      <button
-                        type="button"
-                        onClick={handleSendOTP}
-                        disabled={otpLoading || !formData.email || !formData.mobileNumber || !canResend}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 bg-orange-600 text-white rounded-md text-sm font-medium hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {otpLoading ? "Sending..." : "Send OTP"}
-                      </button>
-                    )}
+                                      {!emailVerified && !otpSent && (
+                    <button
+                      type="button"
+                      onClick={handleSendOTP}
+                      disabled={otpLoading || !formData.email || !canResend}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 bg-orange-600 text-white rounded-md text-sm font-medium hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {otpLoading ? "Sending..." : "Send OTP"}
+                    </button>
+                  )}
                     {emailVerified && (
                       <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600">
                         <FaCheck className="text-xl" />

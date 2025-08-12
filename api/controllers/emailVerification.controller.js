@@ -60,21 +60,21 @@ export const sendOTP = async (req, res, next) => {
 
 // Send OTP for forgot password
 export const sendForgotPasswordOTP = async (req, res, next) => {
-  const { email, mobileNumber } = req.body;
+  const { email } = req.body;
   
-  if (!email || !mobileNumber) {
-    return next(errorHandler(400, "Email and mobile number are required"));
+  if (!email) {
+    return next(errorHandler(400, "Email is required"));
   }
 
   const emailLower = email.toLowerCase();
 
   try {
-    // Check if user exists with matching email and mobile number
-    const user = await User.findOne({ email: emailLower, mobileNumber });
+    // Check if user exists with the email
+    const user = await User.findOne({ email: emailLower });
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "No account found with that email and mobile number."
+        message: "No account found with that email address."
       });
     }
 
