@@ -630,6 +630,27 @@ export default function Listing() {
             </>
           )}
 
+          {/* Additional Details - Only show for owner of this property (non-admin context) */}
+          {currentUser && (listing.sellerId === currentUser._id || listing.userRef === currentUser._id) && !(isAdmin && isAdminContext) && (
+            <div className="p-6 bg-gray-50 shadow-md rounded-lg mb-6">
+              <h4 className="text-xl font-bold text-gray-800 mb-4">Additional Details</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-600">Created Date</p>
+                  <p className="font-semibold text-gray-800">
+                    {new Date(listing.createdAt).toLocaleDateString('en-GB')}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Last Updated</p>
+                  <p className="font-semibold text-gray-800">
+                    {new Date(listing.updatedAt).toLocaleDateString('en-GB')}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Book Appointment Button */}
           <div className="flex justify-center">
             {currentUser && (listing.sellerId === currentUser._id || listing.userRef === currentUser._id) ? (
