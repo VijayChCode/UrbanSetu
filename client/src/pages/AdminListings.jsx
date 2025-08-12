@@ -19,9 +19,22 @@ export default function AdminListings() {
   const [deletePassword, setDeletePassword] = useState("");
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState("");
-  const [pendingDeleteId, setPendingDeleteId] = useState(null);
-
-  useEffect(() => {
+    const [pendingDeleteId, setPendingDeleteId] = useState(null);
+ 
+   // Lock body scroll when deletion modals are open on Admin Listings
+   useEffect(() => {
+     const shouldLock = showReasonModal || showPasswordModal;
+     if (shouldLock) {
+       document.body.classList.add('modal-open');
+     } else {
+       document.body.classList.remove('modal-open');
+     }
+     return () => {
+       document.body.classList.remove('modal-open');
+     };
+   }, [showReasonModal, showPasswordModal]);
+ 
+   useEffect(() => {
     const fetchAllListings = async () => {
       try {
         setLoading(true);
