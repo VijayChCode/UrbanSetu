@@ -2000,10 +2000,10 @@ function AdminAppointmentRow({
                               <div className="border-l-4 border-purple-400 pl-3 mb-2 text-xs bg-gradient-to-r from-purple-50 to-blue-50 hover:from-purple-100 hover:to-blue-100 rounded-lg w-full max-w-full break-words cursor-pointer transition-all duration-200 hover:shadow-sm" onClick={() => {
                                   if (messageRefs.current[c.replyTo]) {
                                     messageRefs.current[c.replyTo].scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                    messageRefs.current[c.replyTo].classList.add('ring-2', 'ring-yellow-400');
-                                    setTimeout(() => {
-                                      messageRefs.current[c.replyTo].classList.remove('ring-2', 'ring-yellow-400');
-                                    }, 1000);
+                                    messageRefs.current[c.replyTo].classList.add('reply-highlight');
+                                     setTimeout(() => {
+                                       messageRefs.current[c.replyTo]?.classList.remove('reply-highlight');
+                                     }, 1600);
                                   }
                                 }} role="button" tabIndex={0} aria-label="Go to replied message">
                                 <span className="text-xs text-gray-700 font-medium truncate max-w-[150px] flex items-center gap-1">
