@@ -1,5 +1,5 @@
 import User from "../models/user.model.js";
-import { generateOTP, sendOTPEmail } from "../utils/emailService.js";
+import { generateOTP, sendSignupOTPEmail, sendForgotPasswordOTPEmail } from "../utils/emailService.js";
 import { errorHandler } from "../utils/error.js";
 
 // Store OTPs temporarily (in production, use Redis or database)
@@ -37,8 +37,8 @@ export const sendOTP = async (req, res, next) => {
       type: 'signup'
     });
 
-    // Send OTP email
-    const emailResult = await sendOTPEmail(emailLower, otp);
+    // Send OTP email for signup
+    const emailResult = await sendSignupOTPEmail(emailLower, otp);
     
     if (!emailResult.success) {
       return res.status(500).json({
@@ -91,8 +91,8 @@ export const sendForgotPasswordOTP = async (req, res, next) => {
       userId: user._id
     });
 
-    // Send OTP email
-    const emailResult = await sendOTPEmail(emailLower, otp);
+    // Send OTP email for forgot password
+    const emailResult = await sendForgotPasswordOTPEmail(emailLower, otp);
     
     if (!emailResult.success) {
       return res.status(500).json({
