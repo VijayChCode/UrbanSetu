@@ -408,7 +408,7 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                   <label htmlFor="otp" className="block text-sm font-medium text-gray-700 mb-2">
                     Enter OTP
                   </label>
-                  <div className="space-y-3">
+                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-2">
                     <input
                       type="text"
                       placeholder="Enter 6-digit OTP"
@@ -422,7 +422,7 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                       type="button"
                       onClick={handleVerifyOTP}
                       disabled={verifyLoading || !otp}
-                      className="w-full px-4 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                      className="w-full sm:w-auto px-4 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                     >
                       {verifyLoading ? "Verifying..." : "Verify OTP"}
                     </button>
