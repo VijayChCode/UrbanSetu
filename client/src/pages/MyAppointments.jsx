@@ -902,25 +902,27 @@ export default function MyAppointments() {
       )}
       {/* Reinitiate Modal */}
       {showReinitiateModal && reinitiateData && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
-            <h3 className="text-xl font-bold mb-4 text-blue-700">Reinitiate Appointment</h3>
-            <form onSubmit={handleReinitiateSubmit} className="space-y-4">
-              <div>
-                <label className="block font-semibold mb-1">Date</label>
-                <input type="date" className="border rounded px-2 py-1 w-full" value={reinitiateData.date} onChange={e => setReinitiateData(d => ({ ...d, date: e.target.value }))} required />
-              </div>
-              <div>
-                <label className="block font-semibold mb-1">Time</label>
-                <input type="time" className="border rounded px-2 py-1 w-full" value={reinitiateData.time} onChange={e => setReinitiateData(d => ({ ...d, time: e.target.value }))} required />
-              </div>
-              <div>
-                <label className="block font-semibold mb-1">Message</label>
-                <textarea className="border rounded px-2 py-1 w-full" value={reinitiateData.message} onChange={e => setReinitiateData(d => ({ ...d, message: e.target.value }))} required />
-              </div>
-              <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 w-full">Submit</button>
-              <button type="button" className="mt-2 w-full bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400" onClick={() => setShowReinitiateModal(false)}>Cancel</button>
-            </form>
+        <div className="modal-backdrop">
+          <div className="modal-content">
+            <div className="p-6">
+              <h3 className="text-xl font-bold mb-4 text-blue-700">Reinitiate Appointment</h3>
+              <form onSubmit={handleReinitiateSubmit} className="space-y-4">
+                <div>
+                  <label className="block font-semibold mb-1">Date</label>
+                  <input type="date" className="border rounded px-2 py-1 w-full" value={reinitiateData.date} onChange={e => setReinitiateData(d => ({ ...d, date: e.target.value }))} required />
+                </div>
+                <div>
+                  <label className="block font-semibold mb-1">Time</label>
+                  <input type="time" className="border rounded px-2 py-1 w-full" value={reinitiateData.time} onChange={e => setReinitiateData(d => ({ ...d, time: e.target.value }))} required />
+                </div>
+                <div>
+                  <label className="block font-semibold mb-1">Message</label>
+                  <textarea className="border rounded px-2 py-1 w-full" value={reinitiateData.message} onChange={e => setReinitiateData(d => ({ ...d, message: e.target.value }))} required />
+                </div>
+                <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 w-full">Submit</button>
+                <button type="button" className="mt-2 w-full bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400" onClick={() => setShowReinitiateModal(false)}>Cancel</button>
+              </form>
+            </div>
           </div>
         </div>
       )}
@@ -997,12 +999,23 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   // Auto-close shortcut tip after 10 seconds
   useEffect(() => {
     if (showShortcutTip) {
-      const timer = setTimeout(() => {
-        setShowShortcutTip(false);
-      }, 10000);
+      const timer = setTimeout(() => setShowShortcutTip(false), 10000);
       return () => clearTimeout(timer);
     }
   }, [showShortcutTip]);
+
+  // Prevent body scrolling when reinitiate modal is open
+  useEffect(() => {
+    if (showReinitiateModal) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+    }
+    
+    return () => {
+      document.body.classList.remove('modal-open');
+    };
+  }, [showReinitiateModal]);
 
   // Removed handleClickOutside functionality - options now only close when clicking three dots again
 

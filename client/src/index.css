@@ -389,6 +389,43 @@ body.mobile-menu-open * {
   box-sizing: border-box;
 }
 
+/* Prevent body scrolling when modals are open */
+body.modal-open {
+  overflow: hidden !important;
+  position: fixed !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Modal backdrop styles */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Modal content styles */
+.modal-content {
+  position: relative;
+  z-index: 50;
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  max-height: 90vh;
+  overflow-y: auto;
+  width: 100%;
+  max-width: 28rem;
+  margin: 0 1rem;
+}
+
 /* Responsive Toastify width for mobile */
 @media (max-width: 600px) {
   /* Position the toast container for bottom-left position */
