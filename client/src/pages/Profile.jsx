@@ -340,6 +340,10 @@ export default function Profile() {
     if (currentUser) {
       setOriginalEmail(currentUser.email || "");
       setOriginalMobile(currentUser.mobileNumber || "");
+      // Set initial email validation state to show green tick for current email
+      if (currentUser.email) {
+        setEmailValidation({ loading: false, message: "", available: true });
+      }
     }
   }, [currentUser]);
 
@@ -1580,6 +1584,22 @@ export default function Profile() {
                     {emailValidation.available === true && !emailValidation.loading && !emailVerified && formData.email !== originalEmail && !emailEditMode && (
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-600">
                         <FaCheck className="text-xl" />
+                      </div>
+                    )}
+                    {/* Show green tick for current user's email (unchanged) */}
+                    {emailValidation.available === true && !emailValidation.loading && formData.email === originalEmail && !emailEditMode && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setEmailEditMode(true)}
+                          className="text-blue-600 hover:text-blue-800 transition-colors duration-200 p-1 rounded hover:bg-blue-50"
+                          title="Edit email"
+                        >
+                          <FaEdit className="text-sm" />
+                        </button>
+                        <div className="text-green-600">
+                          <FaCheck className="text-xl" />
+                        </div>
                       </div>
                     )}
                     {/* Show Send OTP button only when email is available and not sent yet */}
