@@ -11,7 +11,6 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
   const [step, setStep] = useState(1); // 1: verification, 2: reset password
   const [formData, setFormData] = useState({
     email: "",
-    mobileNumber: "",
     newPassword: "",
     confirmPassword: "",
     userId: ""
@@ -275,35 +274,9 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
       return;
     }
 
-    setLoading(true);
-    setError("");
-
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/auth/forgot-password`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          mobileNumber: formData.mobileNumber,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (data.success === false) {
-        setError(data.message);
-        setLoading(false);
-      } else {
-        setStep(2);
-        navigate('/forgot-password?step=2', { replace: true });
-        setLoading(false);
-      }
-    } catch (error) {
-      setError("Something went wrong. Please try again.");
-      setLoading(false);
-    }
+    // If email is verified, proceed directly to step 2
+    setStep(2);
+    navigate('/forgot-password?step=2', { replace: true });
   };
 
   const handleResetPassword = async (e) => {
@@ -405,7 +378,7 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
           <div className="w-full max-w-md">
             <div className="text-center mb-6 sm:mb-8">
               <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">Forgot Password</h2>
-              <p className="text-gray-600 text-sm sm:text-base">Enter your registered email and mobile number to reset your password.</p>
+              <p className="text-gray-600 text-sm sm:text-base">Enter your registered email to reset your password.</p>
             </div>
             
             <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-8 border border-gray-100">
@@ -531,25 +504,6 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
                   </div>
                 )}
                 
-                <div>
-                  <label htmlFor="mobileNumber" className="block text-sm font-medium text-gray-700 mb-2">
-                    Registered Mobile Number
-                  </label>
-                  <input
-                    type="tel"
-                    placeholder="Enter 10-digit mobile number"
-                    id="mobileNumber"
-                    value={formData.mobileNumber}
-                    onChange={handleChange}
-                    pattern="[0-9]{10}"
-                    maxLength="10"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
-                    required
-                  />
-                </div>
-
-                {/* Remove the old OTP field that was here */}
-
                 <button
                   disabled={loading || !emailVerified}
                   className="w-full py-3 px-4 bg-gradient-to-r from-orange-600 to-red-600 text-white font-semibold rounded-lg hover:from-orange-700 hover:to-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105"
@@ -560,7 +514,7 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
                       Verifying...
                     </div>
                   ) : (
-                    "Verify Account"
+                    "Continue to Reset Password"
                   )}
                 </button>
 

@@ -248,21 +248,21 @@ export const verifyAuth = async (req, res, next) => {
     }
 };
 
-// Forgot Password - Verify email and mobile number
+// Forgot Password - Verify email only (mobile number verification removed)
 export const forgotPassword = async (req, res, next) => {
     try {
-        const { email, mobileNumber } = req.body;
+        const { email } = req.body;
         
-        if (!email || !mobileNumber) {
-            return next(errorHandler(400, "Both email and mobile number are required"));
+        if (!email) {
+            return next(errorHandler(400, "Email is required"));
         }
         
         const emailLower = email.toLowerCase();
-        // Find user with matching email and mobile number
-        const user = await User.findOne({ email: emailLower, mobileNumber });
+        // Find user with matching email
+        const user = await User.findOne({ email: emailLower });
         
         if (!user) {
-            return next(errorHandler(404, "No account found with that email and mobile number."));
+            return next(errorHandler(404, "No account found with that email."));
         }
         
         res.status(200).json({ 
