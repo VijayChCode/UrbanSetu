@@ -149,7 +149,11 @@ export default function ContactSupport() {
     } else if (diffInDays < 7) {
       return `${diffInDays}d ago`;
     } else {
-      return date.toLocaleDateString();
+      return date.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
     }
   };
 

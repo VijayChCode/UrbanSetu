@@ -284,10 +284,10 @@ export default function AdminContactSupport() {
     } else if (diffInDays < 7) {
       return `${diffInDays} days ago`;
     } else {
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
+      return date.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
       });
     }
   };
@@ -476,7 +476,14 @@ export default function AdminContactSupport() {
                           <div className="flex items-center justify-between mb-3">
                             <h5 className="font-medium text-gray-900">Full Message</h5>
                             <span className="text-xs text-gray-500">
-                              {new Date(message.createdAt).toLocaleString()}
+                              {new Date(message.createdAt).toLocaleString('en-GB', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                hour12: true
+                              })}
                             </span>
                           </div>
                           <div className="bg-white p-4 rounded-lg border mb-4">
@@ -491,7 +498,14 @@ export default function AdminContactSupport() {
                               <div className="flex items-center justify-between mb-2">
                                 <h6 className="font-medium text-green-700">Admin Reply</h6>
                                 <span className="text-xs text-gray-500">
-                                  {new Date(message.adminReplyAt).toLocaleString()}
+                                  {new Date(message.adminReplyAt).toLocaleString('en-GB', {
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    hour12: true
+                                  })}
                                 </span>
                               </div>
                               <div className="bg-green-50 p-4 rounded-lg border border-green-200">
