@@ -484,7 +484,7 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
                     <label htmlFor="otp" className="block text-sm font-medium text-gray-700 mb-2">
                       Enter OTP
                     </label>
-                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-2">
+                    <div className="flex flex-row gap-2">
                       <input
                         type="text"
                         placeholder="Enter 6-digit OTP"
@@ -492,15 +492,15 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
                         value={otp}
                         onChange={(e) => setOtp(e.target.value)}
                         maxLength="6"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
+                        className="flex-1 px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200 text-sm sm:text-base"
                       />
                       <button
                         type="button"
                         onClick={handleVerifyOTP}
                         disabled={verifyLoading || !otp}
-                        className="w-full sm:w-auto px-4 py-3 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                        className="px-3 py-2 sm:px-4 sm:py-3 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 text-sm sm:text-base whitespace-nowrap"
                       >
-                        {verifyLoading ? "Verifying..." : "Verify OTP"}
+                        {verifyLoading ? "Verifying..." : "Verify"}
                       </button>
                     </div>
                     <div className="flex items-center justify-between mt-2">
