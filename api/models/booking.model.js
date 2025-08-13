@@ -81,6 +81,9 @@ const bookingSchema = new mongoose.Schema({
       replyTo: { type: mongoose.Schema.Types.ObjectId, default: null },
       // New: per-user local deletion persistence
       removedFor: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+      // Message delivery and read timestamps
+      deliveredAt: { type: Date, default: null },
+      readAt: { type: Date, default: null },
     }
   ],
   chat: [

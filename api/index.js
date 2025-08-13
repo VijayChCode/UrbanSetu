@@ -195,6 +195,7 @@ io.on('connection', (socket) => {
                 comment.status === 'sent' && 
                 !comment.readBy?.includes(userId)) {
               comment.status = 'delivered';
+              comment.deliveredAt = new Date();
               updated = true;
               io.emit('commentDelivered', { appointmentId: appt._id.toString(), commentId: comment._id.toString() });
             }

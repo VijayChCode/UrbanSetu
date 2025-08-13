@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo, FaCommentDots, FaCheckDouble, FaBan, FaPaperPlane, FaCalendar, FaLightbulb, FaCopy, FaEllipsisV, FaFlag, FaCircle } from "react-icons/fa";
+import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo, FaCommentDots, FaCheckDouble, FaBan, FaPaperPlane, FaCalendar, FaLightbulb, FaCopy, FaEllipsisV, FaFlag, FaCircle, FaInfoCircle } from "react-icons/fa";
 import UserAvatar from '../components/UserAvatar';
 import { useSelector } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -1021,6 +1021,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   // New: track which message's options are shown in the header
   const [headerOptionsMessageId, setHeaderOptionsMessageId] = useState(null);
   const [privacyNoticeHighlighted, setPrivacyNoticeHighlighted] = useState(false);
+  
+  // Message info modal state
+  const [showMessageInfoModal, setShowMessageInfoModal] = useState(false);
+  const [selectedMessageForInfo, setSelectedMessageForInfo] = useState(null);
 
   // Auto-close shortcut tip after 10 seconds
   useEffect(() => {
@@ -1153,6 +1157,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     } finally {
       setShowClearChatModal(false);
     }
+  };
+
+  const showMessageInfo = (message) => {
+    setSelectedMessageForInfo(message);
+    setShowMessageInfoModal(true);
   };
 
   const handleCommentSend = async () => {
@@ -1891,7 +1900,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         setComments(prev =>
           prev.map(c =>
             c._id === data.commentId
-              ? { ...c, status: c.status === "read" ? "read" : "delivered" }
+              ? { ...c, status: c.status === "read" ? "read" : "delivered", deliveredAt: new Date() }
               : c
           )
         );
@@ -1902,7 +1911,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         setComments(prev =>
           prev.map(c =>
             !c.readBy?.includes(data.userId)
-              ? { ...c, status: "read", readBy: [...(c.readBy || []), data.userId] }
+              ? { ...c, status: "read", readBy: [...(c.readBy || []), data.userId], readAt: new Date() }
               : c
           )
         );
@@ -2415,6 +2424,20 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             aria-label="Copy message"
                           >
                             <FaCopy size={18} />
+                          </button>
+                        )}
+                        {/* Info - show delivery and read times */}
+                        {!selectedMessageForHeaderOptions.deleted && (
+                          <button
+                            className="text-white hover:text-blue-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                            onClick={() => { 
+                              showMessageInfo(selectedMessageForHeaderOptions);
+                              setHeaderOptionsMessageId(null);
+                            }}
+                            title="Message info"
+                            aria-label="Message info"
+                          >
+                            <FaInfoCircle size={18} />
                           </button>
                         )}
                         {/* Report (only for received messages, not deleted) */}
@@ -3363,6 +3386,100 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
               >
                 {submittingReport ? 'Reporting…' : 'Report'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Message Info Modal */}
+      {showMessageInfoModal && selectedMessageForInfo && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+              <FaInfoCircle className="text-blue-500" /> Message Info
+            </h3>
+            <div className="space-y-4">
+              <div className="bg-gray-50 rounded p-3 text-sm text-gray-700">
+                <div className="font-semibold mb-2">Message:</div>
+                <div className="whitespace-pre-wrap break-words">{(selectedMessageForInfo.message || '').slice(0, 200)}{(selectedMessageForInfo.message || '').length > 200 ? '...' : ''}</div>
+              </div>
+              
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-600">Sent:</span>
+                  <span className="text-sm text-gray-800">
+                    {new Date(selectedMessageForInfo.timestamp).toLocaleString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: true
+                    })}
+                  </span>
+                </div>
+                
+                {selectedMessageForInfo.deliveredAt && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-600">Delivered:</span>
+                    <span className="text-sm text-gray-800">
+                      {new Date(selectedMessageForInfo.deliveredAt).toLocaleString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                      })}
+                    </span>
+                  </div>
+                )}
+                
+                {selectedMessageForInfo.readAt && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-600">Read:</span>
+                    <span className="text-sm text-gray-800">
+                      {new Date(selectedMessageForInfo.readAt).toLocaleString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                      })}
+                    </span>
+                  </div>
+                )}
+                
+                {!selectedMessageForInfo.deliveredAt && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-600">Status:</span>
+                    <span className="text-sm text-gray-500">Not delivered yet</span>
+                  </div>
+                )}
+                
+                {selectedMessageForInfo.deliveredAt && !selectedMessageForInfo.readAt && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-600">Status:</span>
+                    <span className="text-sm text-blue-600">Delivered</span>
+                  </div>
+                )}
+                
+                {selectedMessageForInfo.readAt && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-600">Status:</span>
+                    <span className="text-sm text-green-600">Read</span>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => { setShowMessageInfoModal(false); setSelectedMessageForInfo(null); }}
+                className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+              >
+                Close
               </button>
             </div>
           </div>

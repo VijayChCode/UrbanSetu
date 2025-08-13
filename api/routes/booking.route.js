@@ -309,7 +309,7 @@ router.post('/:id/comment', verifyToken, async (req, res) => {
         // Recipient is online, mark as delivered immediately
         await booking.findOneAndUpdate(
           { _id: id, 'comments._id': newCommentObj._id },
-          { $set: { 'comments.$.status': 'delivered' } }
+          { $set: { 'comments.$.status': 'delivered', 'comments.$.deliveredAt': new Date() } }
         );
         // Emit delivery status immediately
         io.emit('commentDelivered', { appointmentId: id, commentId: newCommentObj._id });
@@ -1213,6 +1213,7 @@ router.patch('/:id/comments/read', verifyToken, async (req, res) => {
           if (!readByStrings.includes(userIdStr)) {
             comment.readBy.push(userId);
             comment.status = "read";
+            comment.readAt = new Date();
             updated = true;
           }
         } catch (commentError) {

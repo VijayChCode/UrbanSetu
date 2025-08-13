@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { FaTrash, FaSearch, FaPen, FaUser, FaEnvelope, FaCalendar, FaPhone, FaUserShield, FaArchive, FaUndo, FaCommentDots, FaCheck, FaCheckDouble, FaBan, FaTimes, FaLightbulb, FaCopy, FaEllipsisV } from "react-icons/fa";
+import { FaTrash, FaSearch, FaPen, FaUser, FaEnvelope, FaCalendar, FaPhone, FaUserShield, FaArchive, FaUndo, FaCommentDots, FaCheck, FaCheckDouble, FaBan, FaTimes, FaLightbulb, FaCopy, FaEllipsisV, FaInfoCircle } from "react-icons/fa";
 import UserAvatar from '../components/UserAvatar';
 import { useSelector } from "react-redux";
 import { useState as useLocalState } from "react";
@@ -967,6 +967,10 @@ function AdminAppointmentRow({
   const [showDeleteChatModal, setShowDeleteChatModal] = useLocalState(false);
   const [deleteChatPassword, setDeleteChatPassword] = useLocalState("");
   const [deleteChatLoading, setDeleteChatLoading] = useLocalState(false);
+  
+  // Message info modal state
+  const [showMessageInfoModal, setShowMessageInfoModal] = useLocalState(false);
+  const [selectedMessageForInfo, setSelectedMessageForInfo] = useLocalState(null);
 
   const selectedMessageForHeaderOptions = headerOptionsMessageId ? localComments.find(msg => msg._id === headerOptionsMessageId) : null;
 
@@ -1267,6 +1271,30 @@ function AdminAppointmentRow({
     }
     socket.on('commentUpdate', handleCommentUpdate);
     
+    const handleCommentDelivered = (data) => {
+      if (data.appointmentId === appt._id) {
+        setLocalComments(prev =>
+          prev.map(c =>
+            c._id === data.commentId
+              ? { ...c, status: c.status === "read" ? "read" : "delivered", deliveredAt: new Date() }
+              : c
+          )
+        );
+      }
+    };
+    
+    const handleCommentRead = (data) => {
+      if (data.appointmentId === appt._id) {
+        setLocalComments(prev =>
+          prev.map(c =>
+            !c.readBy?.includes(data.userId)
+              ? { ...c, status: "read", readBy: [...(c.readBy || []), data.userId], readAt: new Date() }
+              : c
+          )
+        );
+      }
+    };
+    
     const handleChatCleared = (data) => {
       if (data.appointmentId === appt._id) {
         setLocalComments([]);
@@ -1274,10 +1302,14 @@ function AdminAppointmentRow({
       }
     };
     socket.on('chatCleared', handleChatCleared);
+    socket.on('commentDelivered', handleCommentDelivered);
+    socket.on('commentRead', handleCommentRead);
     
     return () => {
       socket.off('commentUpdate', handleCommentUpdate);
       socket.off('chatCleared', handleChatCleared);
+      socket.off('commentDelivered', handleCommentDelivered);
+      socket.off('commentRead', handleCommentRead);
     };
   }, [appt._id, setLocalComments, showChatModal, currentUser.email, isAtBottom]);
 
@@ -1548,6 +1580,11 @@ function AdminAppointmentRow({
     setTimeout(refocusInput, 50); // Initial focus
     setTimeout(refocusInput, 100); // Focus after DOM updates
     setTimeout(refocusInput, 200); // Final fallback
+  };
+
+  const showMessageInfo = (message) => {
+    setSelectedMessageForInfo(message);
+    setShowMessageInfoModal(true);
   };
 
   // Check if comment is from current admin user
@@ -1856,6 +1893,20 @@ function AdminAppointmentRow({
                           aria-label="Copy message"
                         >
                           <FaCopy size={18} />
+                        </button>
+                      )}
+                      {/* Info - show delivery and read times */}
+                      {!selectedMessageForHeaderOptions.deleted && (
+                        <button
+                          className="text-white hover:text-blue-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                          onClick={() => { 
+                            showMessageInfo(selectedMessageForHeaderOptions);
+                            setHeaderOptionsMessageId(null);
+                          }}
+                          title="Message info"
+                          aria-label="Message info"
+                        >
+                          <FaInfoCircle size={18} />
                         </button>
                       )}
                       {(selectedMessageForHeaderOptions.senderEmail === currentUser.email) && !selectedMessageForHeaderOptions.deleted && (
@@ -2651,6 +2702,100 @@ function AdminAppointmentRow({
                     Unarchive
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Message Info Modal */}
+        {showMessageInfoModal && selectedMessageForInfo && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <FaInfoCircle className="text-blue-500" /> Message Info
+              </h3>
+              <div className="space-y-4">
+                <div className="bg-gray-50 rounded p-3 text-sm text-gray-700">
+                  <div className="font-semibold mb-2">Message:</div>
+                  <div className="whitespace-pre-wrap break-words">{(selectedMessageForInfo.message || '').slice(0, 200)}{(selectedMessageForInfo.message || '').length > 200 ? '...' : ''}</div>
+                </div>
+                
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-600">Sent:</span>
+                    <span className="text-sm text-gray-800">
+                      {new Date(selectedMessageForInfo.timestamp).toLocaleString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                      })}
+                    </span>
+                  </div>
+                  
+                  {selectedMessageForInfo.deliveredAt && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium text-gray-600">Delivered:</span>
+                      <span className="text-sm text-gray-800">
+                        {new Date(selectedMessageForInfo.deliveredAt).toLocaleString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: true
+                        })}
+                      </span>
+                    </div>
+                  )}
+                  
+                  {selectedMessageForInfo.readAt && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium text-gray-600">Read:</span>
+                      <span className="text-sm text-gray-800">
+                        {new Date(selectedMessageForInfo.readAt).toLocaleString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: true
+                        })}
+                      </span>
+                    </div>
+                  )}
+                  
+                  {!selectedMessageForInfo.deliveredAt && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium text-gray-600">Status:</span>
+                      <span className="text-sm text-gray-500">Not delivered yet</span>
+                    </div>
+                  )}
+                  
+                  {selectedMessageForInfo.deliveredAt && !selectedMessageForInfo.readAt && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium text-gray-600">Status:</span>
+                      <span className="text-sm text-blue-600">Delivered</span>
+                    </div>
+                  )}
+                  
+                  {selectedMessageForInfo.readAt && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium text-gray-600">Status:</span>
+                      <span className="text-sm text-green-600">Read</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end">
+                <button
+                  onClick={() => { setShowMessageInfoModal(false); setSelectedMessageForInfo(null); }}
+                  className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+                >
+                  Close
+                </button>
               </div>
             </div>
           </div>
