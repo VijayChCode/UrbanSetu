@@ -2426,8 +2426,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             <FaCopy size={18} />
                           </button>
                         )}
-                        {/* Info - show delivery and read times */}
-                        {!selectedMessageForHeaderOptions.deleted && (
+                        {/* Info - only for own sent messages (not for received) */}
+                        {(selectedMessageForHeaderOptions.senderEmail === currentUser.email) && !selectedMessageForHeaderOptions.deleted && (
                           <button
                             className="text-white hover:text-blue-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
                             onClick={() => { 
