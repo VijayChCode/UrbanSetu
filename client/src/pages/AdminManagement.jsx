@@ -654,7 +654,11 @@ export default function AdminManagement() {
                               </div>
                             )}
                             <div className="flex items-center gap-2 text-gray-400 text-xs mt-1">
-                              <FaCalendarAlt /> {new Date(user.createdAt).toLocaleDateString()}
+                              <FaCalendarAlt /> {new Date(user.createdAt).toLocaleDateString('en-GB', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric'
+                              })}
                             </div>
                           </div>
                         </div>
@@ -743,7 +747,11 @@ export default function AdminManagement() {
                               </div>
                             )}
                             <div className="flex items-center gap-2 text-gray-400 text-xs mt-1">
-                              <FaCalendarAlt /> {new Date(admin.createdAt).toLocaleDateString()}
+                              <FaCalendarAlt /> {new Date(admin.createdAt).toLocaleDateString('en-GB', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric'
+                              })}
                             </div>
                           </div>
                         </div>
@@ -839,7 +847,11 @@ export default function AdminManagement() {
                     </div>
                     <div className="flex items-center gap-2 text-gray-700 text-sm">
                       <FaCalendarAlt className="text-purple-400" />
-                      <span><strong>Member Since:</strong> {selectedAccount.createdAt ? new Date(selectedAccount.createdAt).toLocaleDateString() : ''}</span>
+                      <span><strong>Member Since:</strong> {selectedAccount.createdAt ? new Date(selectedAccount.createdAt).toLocaleDateString('en-GB', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric'
+                      }) : ''}</span>
                     </div>
                     <div className="flex items-center gap-2 text-gray-700 text-sm">
                       <FaList className="text-green-400" />
@@ -860,13 +872,21 @@ export default function AdminManagement() {
                           <span><strong>Admin Status:</strong> {selectedAccount.adminApprovalStatus}</span>
                         </div>
                         <div className="flex items-center gap-2 text-gray-700 text-sm">
-                          <span><strong>Admin Approval Date:</strong> {selectedAccount.adminApprovalDate ? new Date(selectedAccount.adminApprovalDate).toLocaleDateString() : 'N/A'}</span>
+                          <span><strong>Admin Approval Date:</strong> {selectedAccount.adminApprovalDate ? new Date(selectedAccount.adminApprovalDate).toLocaleDateString('en-GB', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric'
+                          }) : 'N/A'}</span>
                         </div>
                         <div className="flex items-center gap-2 text-gray-700 text-sm">
                           <span><strong>Approved By:</strong> {selectedAccount.approvedBy ? selectedAccount.approvedBy.username || selectedAccount.approvedBy.email || selectedAccount.approvedBy : 'N/A'}</span>
                         </div>
                         <div className="flex items-center gap-2 text-gray-700 text-sm">
-                          <span><strong>Admin Request Date:</strong> {selectedAccount.adminRequestDate ? new Date(selectedAccount.adminRequestDate).toLocaleDateString() : 'N/A'}</span>
+                          <span><strong>Admin Request Date:</strong> {selectedAccount.adminRequestDate ? new Date(selectedAccount.adminRequestDate).toLocaleDateString('en-GB', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric'
+                          }) : 'N/A'}</span>
                         </div>
                         <div className="flex items-center gap-2 text-gray-700 text-sm">
                           <span><strong>Is Default Admin:</strong> {selectedAccount.isDefaultAdmin ? 'Yes' : 'No'}</span>
