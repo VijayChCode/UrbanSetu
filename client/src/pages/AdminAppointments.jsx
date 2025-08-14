@@ -1867,8 +1867,8 @@ function AdminAppointmentRow({
         )}
         {showChatModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-md flex items-center justify-center z-50 p-4">
-            <div className="bg-gradient-to-br from-white via-blue-50 to-purple-50 rounded-3xl shadow-2xl w-full h-full max-w-6xl max-h-full p-0 relative animate-fadeIn flex flex-col border border-gray-200">
-              <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 rounded-t-3xl relative">
+            <div className="bg-gradient-to-br from-white via-blue-50 to-purple-50 rounded-3xl shadow-2xl w-full h-full max-w-6xl max-h-full p-0 relative animate-fadeIn flex flex-col border border-gray-200 transform transition-all duration-500 hover:shadow-3xl">
+              <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 rounded-t-3xl relative shadow-lg">
                 {headerOptionsMessageId && selectedMessageForHeaderOptions ? (
                   <div className="flex items-center justify-between w-full">
                     <div className="flex items-center gap-3">
@@ -1995,9 +1995,9 @@ function AdminAppointmentRow({
                   </>
                 )}
               </div>
-              <div ref={chatContainerRef} className="flex-1 overflow-y-auto space-y-2 mb-4 px-4 pt-4 animate-fadeInChat relative" style={{minHeight: '400px', maxHeight: 'calc(100vh - 200px)'}}>
+              <div ref={chatContainerRef} className="flex-1 overflow-y-auto space-y-2 mb-4 px-4 pt-4 animate-fadeInChat relative bg-gradient-to-b from-transparent to-blue-50/30" style={{minHeight: '400px', maxHeight: 'calc(100vh - 200px)'}}>
                 {/* Privacy Notice for Admins */}
-                <div className="px-4 py-3 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg mb-4 transform transition-all duration-500 hover:scale-105 hover:shadow-lg hover:bg-blue-100 hover:border-blue-500 hover:border-l-6">
+                <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-purple-50 border-l-4 border-blue-400 rounded-r-lg mb-4 transform transition-all duration-500 hover:scale-105 hover:shadow-lg hover:from-blue-100 hover:to-purple-100 hover:border-blue-500 hover:border-l-6 backdrop-blur-sm">
                   <p className="text-sm text-blue-700 font-medium text-center flex items-center justify-center gap-2">
                     <span className="animate-gentlePulse">🔒</span>
                     Chats are encrypted and secure. View only for valid purposes like disputes or fraud checks. Unauthorized access or sharing is prohibited and will be logged.
@@ -2040,10 +2040,10 @@ function AdminAppointmentRow({
                       <div className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-fadeInChatBubble`} style={{ animationDelay: `${0.03 * index}s` }}>
                       <div 
                         ref={el => messageRefs.current[c._id] = el}
-                        className={`rounded-2xl px-4 sm:px-5 py-3 text-sm shadow-xl max-w-[90%] sm:max-w-[80%] md:max-w-[70%] break-words overflow-hidden relative transition-all duration-200 min-h-[60px] ${
+                        className={`rounded-2xl px-4 sm:px-5 py-3 text-sm shadow-xl max-w-[90%] sm:max-w-[80%] md:max-w-[70%] break-words overflow-hidden relative transition-all duration-300 min-h-[60px] transform hover:scale-[1.02] ${
                           isMe 
-                            ? 'bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-500 hover:to-purple-600 text-white shadow-blue-200 hover:shadow-blue-300' 
-                            : 'bg-white hover:bg-gray-50 text-gray-800 border border-gray-200 shadow-gray-200 hover:shadow-lg hover:border-gray-300'
+                            ? 'bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-500 hover:to-purple-600 text-white shadow-blue-200 hover:shadow-blue-300 hover:shadow-2xl' 
+                            : 'bg-white hover:bg-gray-50 text-gray-800 border border-gray-200 shadow-gray-200 hover:shadow-lg hover:border-gray-300 hover:shadow-xl'
                         }`}
                       >
                                                     {/* Reply preview above message if this is a reply */}
@@ -2264,7 +2264,7 @@ function AdminAppointmentRow({
               <div className="flex gap-2 mt-1 px-3 pb-2">
                 <textarea
                   rows={1}
-                  className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-400 shadow-lg transition-all duration-200 bg-white resize-y whitespace-pre-wrap break-all"
+                  className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-400 shadow-lg transition-all duration-300 bg-white resize-y whitespace-pre-wrap break-all hover:border-blue-300 hover:shadow-xl focus:shadow-2xl transform hover:scale-[1.01]"
                   placeholder={editingComment ? "Edit your message..." : "Type a message..."}
                   value={newComment}
                   onChange={(e) => {
@@ -2319,7 +2319,7 @@ function AdminAppointmentRow({
                     }
                   }}
                                       disabled={editingComment ? savingComment === editingComment : !newComment.trim()}
-                  className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-full text-sm font-semibold shadow-lg hover:from-blue-600 hover:to-purple-700 hover:shadow-xl transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:transform-none flex items-center gap-2 min-w-24"
+                  className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-full text-sm font-semibold shadow-lg hover:from-blue-600 hover:to-purple-700 hover:shadow-xl transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:transform-none flex items-center gap-2 min-w-24 hover:shadow-2xl active:scale-95"
                 >
                   {editingComment ? (
                     savingComment === editingComment ? (
@@ -2338,18 +2338,39 @@ function AdminAppointmentRow({
               {/* Animations for chat bubbles */}
               <style jsx>{`
                 @keyframes fadeInChatBubble {
-                  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+                  from { opacity: 0; transform: translateY(20px) scale(0.95); }
                   to { opacity: 1; transform: translateY(0) scale(1); }
                 }
                 .animate-fadeInChatBubble {
-                  animation: fadeInChatBubble 0.4s cubic-bezier(0.4,0,0.2,1) both;
+                  animation: fadeInChatBubble 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
                 }
                 @keyframes fadeInChat {
-                  from { opacity: 0; }
-                  to { opacity: 1; }
+                  from { opacity: 0; transform: translateY(10px); }
+                  to { opacity: 1; transform: translateY(0); }
                 }
                 .animate-fadeInChat {
-                  animation: fadeInChat 0.3s cubic-bezier(0.4,0,0.2,1) both;
+                  animation: fadeInChat 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+                }
+                @keyframes gentlePulse {
+                  0%, 100% { opacity: 1; transform: scale(1); }
+                  50% { opacity: 0.9; transform: scale(1.01); }
+                }
+                .animate-gentlePulse {
+                  animation: gentlePulse 3s ease-in-out infinite;
+                }
+                @keyframes attentionGlow {
+                  0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
+                  50% { box-shadow: 0 0 30px rgba(59, 130, 246, 0.6); }
+                }
+                .animate-attentionGlow {
+                  animation: attentionGlow 2s ease-in-out infinite;
+                }
+                @keyframes slideInFromTop {
+                  from { opacity: 0; transform: translateY(-20px) scale(0.95); }
+                  to { opacity: 1; transform: translateY(0) scale(1); }
+                }
+                .animate-slideInFromTop {
+                  animation: slideInFromTop 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
                 }
               `}</style>
               
