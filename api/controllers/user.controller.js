@@ -57,6 +57,7 @@ export const updateUser=async (req,res,next)=>{
         if ('avatar' in req.body) updateFields.avatar = req.body.avatar || null;
         if (req.body.mobileNumber) updateFields.mobileNumber = req.body.mobileNumber;
         if (req.body.address) updateFields.address = req.body.address.trim();
+        if (req.body.gender) updateFields.gender = req.body.gender;
         // If mobile number is being updated and is different, set isGeneratedMobile to false
         if (req.body.mobileNumber && req.body.mobileNumber !== user.mobileNumber) {
           updateFields.isGeneratedMobile = false;
@@ -89,7 +90,8 @@ export const updateUser=async (req,res,next)=>{
                 avatar: updatedUser.avatar,
                 mobileNumber: updatedUser.mobileNumber,
                 email: updatedUser.email,
-                address: updatedUser.address
+                address: updatedUser.address,
+                gender: updatedUser.gender
             });
         }
         res.status(200).json({ status: "success", updatedUser: userObj });

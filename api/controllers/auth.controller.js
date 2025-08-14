@@ -111,6 +111,9 @@ export const SignIn=async(req,res,next)=>{
             adminApprovalStatus: validUser.adminApprovalStatus,
             status: validUser.status,
             avatar: validUser.avatar,
+            mobileNumber: validUser.mobileNumber,
+            address: validUser.address,
+            gender: validUser.gender,
             token,
         });
     }
@@ -145,6 +148,8 @@ export const Google=async (req,res,next)=>{
                 status: validUser.status,
                 avatar: validUser.avatar,
                 mobileNumber: validUser.mobileNumber,
+                address: validUser.address,
+                gender: validUser.gender,
                 token,
             });
         }
@@ -197,6 +202,8 @@ export const Google=async (req,res,next)=>{
                 avatar: newUser.avatar,
                 mobileNumber: newUser.mobileNumber,
                 isGeneratedMobile: newUser.isGeneratedMobile,
+                address: newUser.address,
+                gender: newUser.gender,
                 token,
             });
         }

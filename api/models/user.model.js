@@ -31,6 +31,11 @@ const userSchema = new mongoose.Schema({
     required: false,
     trim: true
   },
+  gender: {
+    type: String,
+    enum: ["male", "female", "other", "prefer-not-to-say"],
+    required: false
+  },
   isGeneratedMobile: {
     type: Boolean,
     default: false
