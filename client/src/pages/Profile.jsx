@@ -1349,12 +1349,14 @@ export default function Profile() {
                       {currentUser.username}
                     </span>
                     {currentUser.role === 'admin' && (
-                      <span className="bg-purple-100 text-purple-800 text-sm px-3 py-1 rounded-full font-medium transform transition-all duration-300 hover:scale-110 hover:bg-purple-200">
+                      <span className="bg-purple-100 text-purple-800 text-sm px-3 py-1 rounded-full font-medium transform transition-all duration-300 hover:scale-110 hover:bg-purple-200 flex items-center gap-1">
+                        <FaCrown className="w-3 h-3 text-blue-500" />
                         Admin
                       </span>
                     )}
                     {currentUser.isDefaultAdmin && (
-                      <span className="bg-red-100 text-red-800 text-sm px-3 py-1 rounded-full font-medium transform transition-all duration-300 hover:scale-110 hover:bg-red-200 animate-pulse">
+                      <span className="bg-red-100 text-red-800 text-sm px-3 py-1 rounded-full font-medium transform transition-all duration-300 hover:scale-110 hover:bg-red-200 animate-pulse flex items-center gap-1">
+                        <FaCrown className="w-3 h-3 text-red-500" />
                         Default Admin
                       </span>
                     )}
