@@ -223,7 +223,7 @@ export default function AdminHeader() {
       <div className="hidden sm:block">
         <div className="flex items-center gap-2">
           {/* Nav links start with Dashboard */}
-          <AdminNavLinks pendingCount={pendingCount} handleSignout={handleSignout} currentUser={currentUser} navigate={navigate} />
+          <AdminNavLinks pendingCount={pendingCount} handleSignout={handleSignout} currentUser={currentUser} navigate={navigate} searchOpen={searchOpen} setSearchOpen={setSearchOpen} searchTerm={searchTerm} setSearchTerm={setSearchTerm} searchInputRef={searchInputRef} />
         </div>
       </div>
       {/* Mobile nav menu */}
@@ -263,7 +263,7 @@ export default function AdminHeader() {
               
               {/* Navigation links */}
               <div className="flex-1 overflow-y-auto">
-                <AdminNavLinks mobile onNavigate={() => setMobileMenuOpen(false)} pendingCount={pendingCount} handleSignout={handleSignout} currentUser={currentUser} navigate={navigate} />
+                <AdminNavLinks mobile onNavigate={() => setMobileMenuOpen(false)} pendingCount={pendingCount} handleSignout={handleSignout} currentUser={currentUser} navigate={navigate} searchOpen={searchOpen} setSearchOpen={setSearchOpen} searchTerm={searchTerm} setSearchTerm={setSearchTerm} searchInputRef={searchInputRef} />
               </div>
             </div>
           </div>
@@ -273,7 +273,7 @@ export default function AdminHeader() {
   );
 }
 
-function AdminNavLinks({ mobile = false, onNavigate, pendingCount, handleSignout, currentUser, navigate }) {
+function AdminNavLinks({ mobile = false, onNavigate, pendingCount, handleSignout, currentUser, navigate, searchOpen, setSearchOpen, searchTerm, setSearchTerm, searchInputRef }) {
   return (
     <ul className={`${mobile ? 'flex flex-col gap-2 text-gray-800' : 'flex space-x-2 sm:space-x-4 items-center text-white text-base font-normal'}`}>
       {/* Search icon/input first, white color */}
