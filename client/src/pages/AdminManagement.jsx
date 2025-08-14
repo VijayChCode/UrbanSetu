@@ -936,7 +936,7 @@ export default function AdminManagement() {
                     </div>
                     <div className="flex items-center gap-2 text-gray-700 text-sm">
                       <FaCalendarAlt className="text-blue-400" />
-                      <span><strong>Last Visited:</strong> {selectedAccount.updatedAt ? new Date(selectedAccount.updatedAt).toLocaleDateString('en-GB', {
+                      <span><strong>Last Updated Profile:</strong> {selectedAccount.updatedAt ? new Date(selectedAccount.updatedAt).toLocaleDateString('en-GB', {
                         day: '2-digit',
                         month: '2-digit',
                         year: 'numeric'
