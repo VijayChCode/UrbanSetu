@@ -125,6 +125,12 @@ export default function AdminManagement() {
         setSuspendError((prev) => ({ ...prev, [id]: undefined }));
         // Emit socket event
         socket.emit(type === 'user' ? 'user_update' : 'admin_update', { type: 'update', [type]: data });
+        // Emit global signout event for the affected user
+        socket.emit('force_signout', { 
+          userId: id, 
+          action: 'suspend', 
+          message: `Your account has been ${data.status === 'suspended' ? 'suspended' : 'activated'}. You have been signed out.` 
+        });
       } else {
         // Rollback
         fetchData();
@@ -143,6 +149,10 @@ export default function AdminManagement() {
   // Optimistic UI for delete
   const handleDelete = async (id, type) => {
     const performDelete = async () => {
+      // Store original state for rollback
+      const originalUsers = [...users];
+      const originalAdmins = [...admins];
+      
       // Optimistically update UI
       if (type === 'user') {
         setUsers(prev => prev.filter(u => u._id !== id));
@@ -156,16 +166,45 @@ export default function AdminManagement() {
         });
         const data = await res.json();
         if (res.ok) {
-          toast.success(`${type === "user" ? "User" : "Admin"} deleted`);
+          toast.success(`${type === "user" ? "User" : "Admin"} deleted successfully`);
           // Emit socket event
           socket.emit(type === 'user' ? 'user_update' : 'admin_update', { type: 'delete', [type]: { _id: id } });
+          // Emit global signout event for the deleted user
+          socket.emit('force_signout', { 
+            userId: id, 
+            action: 'delete', 
+            message: 'Your account has been deleted. You have been signed out.' 
+          });
         } else {
-          fetchData();
-          toast.error(data.message || "Failed to delete");
+          // Rollback on failure
+          if (type === 'user') {
+            setUsers(originalUsers);
+          } else {
+            setAdmins(originalAdmins);
+          }
+          
+          // Handle specific error cases
+          if (res.status === 404) {
+            toast.error("Account not found. It may have been already deleted or moved.");
+          } else if (data.message && data.message.toLowerCase().includes("not found")) {
+            toast.error("Account not found. It may have been already deleted or moved.");
+          } else {
+            toast.error(data.message || "Failed to delete account");
+          }
         }
       } catch (err) {
-        fetchData();
-        toast.error("Failed to delete");
+        // Rollback on error
+        if (type === 'user') {
+          setUsers(originalUsers);
+        } else {
+          setAdmins(originalAdmins);
+        }
+        
+        if (err.name === 'TypeError' && err.message.includes('fetch')) {
+          toast.error("Network error. Please check your connection and try again.");
+        } else {
+          toast.error("Failed to delete account. Please try again.");
+        }
       }
     };
     
@@ -234,13 +273,17 @@ export default function AdminManagement() {
   // Optimistic UI for promote
   const handlePromote = async (id) => {
     const performPromote = async () => {
+      // Store original state for rollback
+      const originalUsers = [...users];
+      const originalAdmins = [...admins];
+      
       // Optimistically move user to admins
       const user = users.find(u => u._id === id);
       if (user) {
         setUsers(prev => prev.filter(u => u._id !== id));
         setAdmins(prev => [
           { ...user, role: 'admin', adminApprovalStatus: 'approved' },
-          ...admins
+          ...prev
         ]);
       }
       try {
@@ -261,11 +304,15 @@ export default function AdminManagement() {
             message: 'Your account has been promoted to admin. You have been signed out. Please sign in again to access admin features.' 
           });
         } else {
-          fetchData();
+          // Rollback on failure
+          setUsers(originalUsers);
+          setAdmins(originalAdmins);
           toast.error(data.message || "Failed to promote user");
         }
       } catch (err) {
-        fetchData();
+        // Rollback on error
+        setUsers(originalUsers);
+        setAdmins(originalAdmins);
         toast.error("Failed to promote user");
       }
     };
@@ -284,13 +331,17 @@ export default function AdminManagement() {
   // Optimistic UI for demote
   const handleDemote = async (id) => {
     const performDemote = async () => {
+      // Store original state for rollback
+      const originalUsers = [...users];
+      const originalAdmins = [...admins];
+      
       // Optimistically move admin to users
       const admin = admins.find(a => a._id === id);
       if (admin) {
         setAdmins(prev => prev.filter(a => a._id !== id));
         setUsers(prev => [
           { ...admin, role: 'user', adminApprovalStatus: undefined },
-          ...users
+          ...prev
         ]);
       }
       try {
@@ -311,11 +362,15 @@ export default function AdminManagement() {
             message: 'Your admin privileges have been revoked. You have been signed out. Please sign in again as a regular user.' 
           });
         } else {
-          fetchData();
+          // Rollback on failure
+          setUsers(originalUsers);
+          setAdmins(originalAdmins);
           toast.error(data.message || "Failed to demote admin");
         }
       } catch (err) {
-        fetchData();
+        // Rollback on error
+        setUsers(originalUsers);
+        setAdmins(originalAdmins);
         toast.error("Failed to demote admin");
       }
     };
