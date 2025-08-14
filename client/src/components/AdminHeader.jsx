@@ -192,7 +192,7 @@ export default function AdminHeader() {
       setSearchTerm("");
     }
     // Close mobile menu if open
-    //setMobileMenuOpen(false);
+    setMobileMenuOpen(false);
   };
 
   return (
