@@ -653,9 +653,6 @@ export default function AdminManagement() {
                                 <FaPhone /> {highlightMatch(user.mobileNumber)}
                               </div>
                             )}
-                            <div className="flex items-center gap-2 text-gray-500 text-sm mt-1">
-                              <FaUser /> {user.gender || "Gender not provided"}
-                            </div>
                             <div className="flex items-center gap-2 text-gray-400 text-xs mt-1">
                               <FaCalendarAlt /> {new Date(user.createdAt).toLocaleDateString('en-GB', {
                                 day: '2-digit',
@@ -749,9 +746,6 @@ export default function AdminManagement() {
                                 <FaPhone /> {highlightMatch(admin.mobileNumber)}
                               </div>
                             )}
-                            <div className="flex items-center gap-2 text-gray-500 text-sm mt-1">
-                              <FaUser /> {admin.gender || "Gender not provided"}
-                            </div>
                             <div className="flex items-center gap-2 text-gray-400 text-xs mt-1">
                               <FaCalendarAlt /> {new Date(admin.createdAt).toLocaleDateString('en-GB', {
                                 day: '2-digit',
