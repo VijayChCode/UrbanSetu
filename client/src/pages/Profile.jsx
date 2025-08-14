@@ -681,7 +681,7 @@ export default function Profile() {
         setEmailVerified(false);
         setOtpSent(false);
         setOtp("");
-        setEmailEditMode(false);
+        // Don't set emailEditMode to false here - keep it editable
       }
       debouncedEmailValidation(value);
     } else if (id === 'mobileNumber') {
@@ -1566,9 +1566,9 @@ export default function Profile() {
                       placeholder="Enter email address"
                       value={formData.email || ''}
                       onChange={handleChangeWithValidation}
-                      readOnly={!emailEditMode}
+                      readOnly={!emailEditMode || (emailEditMode && otpSent)}
                       className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all ${
-                        !emailEditMode
+                        !emailEditMode || (emailEditMode && otpSent)
                           ? 'bg-gray-100 cursor-not-allowed border-green-500 pr-20'
                           : emailValidation.available === false 
                           ? 'border-red-500 focus:ring-red-500 pr-12'
@@ -1586,7 +1586,7 @@ export default function Profile() {
                       </div>
                     )}
                     {/* Show blue tick when email is available in DB but not yet verified */}
-                    {emailValidation.available === true && !emailValidation.loading && !emailVerified && formData.email !== originalEmail && emailEditMode && (
+                    {emailValidation.available === true && !emailValidation.loading && !emailVerified && formData.email !== originalEmail && (emailEditMode || otpSent) && (
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-600 z-20">
                         <FaCheck className="text-xl" />
                       </div>
@@ -1603,6 +1603,26 @@ export default function Profile() {
                           <FaEdit className="text-sm" />
                         </button>
                         <div className="text-green-600">
+                          <FaCheck className="text-xl" />
+                        </div>
+                      </div>
+                    )}
+                    {/* Show edit icon and blue tick when OTP is sent but not verified */}
+                    {emailValidation.available === true && !emailValidation.loading && !emailVerified && formData.email !== originalEmail && otpSent && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2 z-20">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEmailEditMode(true);
+                            setOtpSent(false);
+                            setEmailVerified(false);
+                          }}
+                          className="text-blue-600 hover:text-blue-800 transition-colors duration-200 p-1 rounded hover:bg-blue-50"
+                          title="Edit email"
+                        >
+                          <FaEdit className="text-sm" />
+                        </button>
+                        <div className="text-blue-600">
                           <FaCheck className="text-xl" />
                         </div>
                       </div>
@@ -1643,7 +1663,7 @@ export default function Profile() {
                       </div>
                     )}
                     {/* Show red X when email is not available */}
-                    {emailValidation.available === false && !emailValidation.loading && emailEditMode && (
+                    {emailValidation.available === false && !emailValidation.loading && emailEditMode && !otpSent && (
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2 z-20">
                         <FaTimes className="h-5 w-5 text-red-500" />
                       </div>
