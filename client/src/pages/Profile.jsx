@@ -642,6 +642,7 @@ export default function Profile() {
         toast.success("Email verified successfully!");
         setOtpSent(false);
         setOtp("");
+        setEmailEditMode(false); // Make field uneditable after verification
         // Update validation message to show verification success
         setEmailValidation({ 
           loading: false, 
