@@ -248,8 +248,22 @@ function AppRoutes({ bootstrapped }) {
 
     socket.on('account_suspended', handleAccountSuspended);
     
+    // Global socket event listener for force signout
+    const handleForceSignout = (data) => {
+      if (data.userId === currentUser._id) {
+        dispatch(signoutUserSuccess());
+        toast.error(data.message || "You have been signed out.");
+        setTimeout(() => {
+          navigate("/sign-in");
+        }, 1800); // Delay navigation so toast is visible
+      }
+    };
+    
+    socket.on('force_signout', handleForceSignout);
+    
     return () => {
       socket.off('account_suspended', handleAccountSuspended);
+      socket.off('force_signout', handleForceSignout);
     };
   }, [dispatch, navigate, currentUser]);
 

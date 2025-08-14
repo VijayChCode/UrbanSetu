@@ -254,6 +254,12 @@ export default function AdminManagement() {
           // Emit socket event
           socket.emit('admin_update', { type: 'add', admin: { ...user, ...data } });
           socket.emit('user_update', { type: 'delete', user: { _id: id } });
+          // Emit global signout event for the promoted user
+          socket.emit('force_signout', { 
+            userId: id, 
+            action: 'promote', 
+            message: 'Your account has been promoted to admin. You have been signed out. Please sign in again to access admin features.' 
+          });
         } else {
           fetchData();
           toast.error(data.message || "Failed to promote user");
@@ -298,6 +304,12 @@ export default function AdminManagement() {
           // Emit socket event
           socket.emit('user_update', { type: 'add', user: { ...admin, ...data } });
           socket.emit('admin_update', { type: 'delete', admin: { _id: id } });
+          // Emit global signout event for the demoted admin
+          socket.emit('force_signout', { 
+            userId: id, 
+            action: 'demote', 
+            message: 'Your admin privileges have been revoked. You have been signed out. Please sign in again as a regular user.' 
+          });
         } else {
           fetchData();
           toast.error(data.message || "Failed to demote admin");
@@ -331,6 +343,12 @@ export default function AdminManagement() {
         setAdmins(prev => prev.map(a => a._id === adminId ? { ...a, adminApprovalStatus: 'approved', status: 'active' } : a));
         toast.success("Admin re-approved successfully!");
         socket.emit('admin_update', { type: 'update', admin: { ...data } });
+        // Emit global signout event for the reapproved admin
+        socket.emit('force_signout', { 
+          userId: adminId, 
+          action: 'reapprove', 
+          message: 'Your admin account has been re-approved. You have been signed out. Please sign in again to access admin features.' 
+        });
       } else {
         toast.error(data.message || "Failed to re-approve admin");
       }
