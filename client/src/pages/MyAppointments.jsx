@@ -1791,9 +1791,29 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     }
   }, [markVisibleMessagesAsRead]);
 
-
-
-
+  // Toast notification for new messages when chat is closed
+  useEffect(() => {
+    function handleCommentUpdateNotify(data) {
+      if (data.appointmentId === appt._id && !showChatModal) {
+        // Don't show notification for deleted messages
+        if (data.comment.deleted) {
+          return;
+        }
+        
+        // Check if sender is admin by checking if senderEmail matches any admin user
+        const isSenderBuyer = data.comment.senderEmail === appt.buyerId?.email;
+        const isSenderSeller = data.comment.senderEmail === appt.sellerId?.email;
+        const isSenderAdmin = !isSenderBuyer && !isSenderSeller;
+        
+        const senderName = isSenderAdmin ? "UrbanSetu" : (data.comment.senderEmail || 'User');
+        toast.info(`New message from ${senderName}`);
+      }
+    }
+    socket.on('commentUpdate', handleCommentUpdateNotify);
+    return () => {
+      socket.off('commentUpdate', handleCommentUpdateNotify);
+    };
+  }, [appt._id, showChatModal]);
 
   // Real-time comment updates via socket.io (for chat sync)
   useEffect(() => {
