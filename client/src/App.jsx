@@ -258,7 +258,8 @@ function AppRoutes({ bootstrapped }) {
     if (!currentUser) return; // Only run if user is logged in
     
     const handleNewMessage = (data) => {
-      // Check if the message is for the current user (not from them)
+      // Since backend now only sends to intended recipients, we can trust this message is for us
+      // Just check if it's not from the current user
       if (data.comment && data.comment.senderEmail !== currentUser.email) {
         // Check if we're not already on the MyAppointments page
         const currentPath = window.location.pathname;

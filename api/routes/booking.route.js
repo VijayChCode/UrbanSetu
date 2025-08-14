@@ -298,12 +298,19 @@ router.post('/:id/comment', verifyToken, async (req, res) => {
     if (io) {
       // Send only the new comment (last in array)
       const newCommentObj = updated.comments[updated.comments.length - 1];
-      io.emit('commentUpdate', { appointmentId: id, comment: newCommentObj });
+      
+      // Determine the recipient of the message
+      const isBuyer = bookingToComment.buyerId.toString() === userId;
+      const recipientId = isBuyer ? bookingToComment.sellerId.toString() : bookingToComment.buyerId.toString();
+      
+      // Emit to the specific recipient only
+      io.to(recipientId).emit('commentUpdate', { appointmentId: id, comment: newCommentObj });
+      
+      // Also emit to the sender for their own message sync
+      io.to(userId).emit('commentUpdate', { appointmentId: id, comment: newCommentObj });
       
       // Only mark as delivered if the intended recipient is online
       const onlineUsers = req.app.get('onlineUsers') || new Set();
-      const isBuyer = bookingToComment.buyerId.toString() === userId;
-      const recipientId = isBuyer ? bookingToComment.sellerId.toString() : bookingToComment.buyerId.toString();
       
       if (onlineUsers.has(recipientId)) {
         // Recipient is online, mark as delivered immediately
@@ -431,7 +438,9 @@ router.delete('/:id/comment/:commentId', verifyToken, async (req, res) => {
     // Emit socket event for real-time update with preserved message content
     const io = req.app.get('io');
     if (io) {
-      io.emit('commentUpdate', { appointmentId: id, comment: commentForEmission });
+      // Emit to both buyer and seller for comment deletion updates
+      io.to(bookingToUpdate.buyerId.toString()).emit('commentUpdate', { appointmentId: id, comment: commentForEmission });
+      io.to(bookingToUpdate.sellerId.toString()).emit('commentUpdate', { appointmentId: id, comment: commentForEmission });
       console.log('📡 Socket emitted with preserved content');
     }
     // Return updated comments array
@@ -551,7 +560,9 @@ router.patch('/:id/comment/:commentId', verifyToken, async (req, res) => {
       // Emit socket event for real-time update
       const io = req.app.get('io');
       if (io) {
-        io.emit('commentUpdate', { appointmentId: id, comment });
+        // Emit to both buyer and seller for comment edit updates
+        io.to(appointment.buyerId.toString()).emit('commentUpdate', { appointmentId: id, comment });
+        io.to(appointment.sellerId.toString()).emit('commentUpdate', { appointmentId: id, comment });
       }
     }
     // Return updated comments array
