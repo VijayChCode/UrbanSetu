@@ -846,6 +846,10 @@ export default function AdminManagement() {
                       <span><strong>Mobile:</strong> {selectedAccount.mobileNumber || 'Not provided'}</span>
                     </div>
                     <div className="flex items-center gap-2 text-gray-700 text-sm">
+                      <FaHome className="text-green-400" />
+                      <span><strong>Address:</strong> {selectedAccount.address || 'Not provided'}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-700 text-sm">
                       <FaCalendarAlt className="text-purple-400" />
                       <span><strong>Member Since:</strong> {selectedAccount.createdAt ? new Date(selectedAccount.createdAt).toLocaleDateString('en-GB', {
                         day: '2-digit',

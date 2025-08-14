@@ -26,6 +26,11 @@ const userSchema = new mongoose.Schema({
       message: props => `${props.value} is not a valid 10-digit mobile number!`
     }
   },
+  address: {
+    type: String,
+    required: true,
+    trim: true
+  },
   isGeneratedMobile: {
     type: Boolean,
     default: false

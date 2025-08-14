@@ -4,12 +4,17 @@ import { errorHandler } from "../utils/error.js";
 import jwt from 'jsonwebtoken'
 
 export const SignUp=async (req,res,next)=>{
-    const {username,email,password,role,mobileNumber,emailVerified}=req.body;
+    const {username,email,password,role,mobileNumber,address,emailVerified}=req.body;
     const emailLower = email.toLowerCase();
     
     // Validate mobile number
     if (!mobileNumber || !/^[0-9]{10}$/.test(mobileNumber)) {
         return next(errorHandler(400, "Please provide a valid 10-digit mobile number"));
+    }
+    
+    // Validate address
+    if (!address || address.trim().length === 0) {
+        return next(errorHandler(400, "Please provide your address"));
     }
     
     // Check if email is verified
@@ -40,6 +45,7 @@ export const SignUp=async (req,res,next)=>{
             email: emailLower,
             password:hashedPassword,
             mobileNumber,
+            address: address.trim(),
             role,
             adminApprovalStatus
         })

@@ -1215,6 +1215,7 @@ export default function Profile() {
         username: currentUser.username || '',
         email: currentUser.email || '',
         mobileNumber: currentUser.mobileNumber ? String(currentUser.mobileNumber) : '',
+        address: currentUser.address || '',
         avatar: currentUser.avatar || "",
       });
       
@@ -1367,6 +1368,10 @@ export default function Profile() {
                   {currentUser.isGeneratedMobile && (
                     <span className="text-xs text-gray-400 ml-2">(Generated for Google signup)</span>
                   )}
+                </p>
+                <p className="text-gray-600 flex flex-wrap items-center justify-center sm:justify-start break-all transition-all duration-300 hover:text-blue-600">
+                  <FaHome className="w-4 h-4 mr-2 transform transition-all duration-300 hover:scale-125" />
+                  {currentUser.address || "Address not provided"}
                 </p>
                 <p className="text-sm text-gray-500 text-center sm:text-left mt-1 transition-all duration-300 hover:text-gray-700">
                   Member since {formatDate(currentUser.createdAt)}
@@ -1770,6 +1775,21 @@ export default function Profile() {
                       {mobileValidation.message}
                     </div>
                   )}
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                    <FaHome className="w-4 h-4 mr-2" />
+                    Address
+                  </label>
+                  <input
+                    type="text"
+                    id="address"
+                    placeholder="Enter your address"
+                    value={formData.address || ''}
+                    onChange={handleChangeWithValidation}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  />
                 </div>
               </div>
               
