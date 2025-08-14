@@ -47,6 +47,19 @@ export const suspendUserOrAdmin = async (req, res, next) => {
       if (!user || user.role !== 'user') return next(errorHandler(404, 'User not found'));
       user.status = user.status === 'active' ? 'suspended' : 'active';
       await user.save();
+      
+      // Emit socket event for account suspension
+      const io = req.app.get('io');
+      if (io) {
+        io.emit('account_suspended', {
+          userId: user._id.toString(),
+          username: user.username,
+          email: user.email,
+          status: user.status,
+          type: 'user'
+        });
+      }
+      
       return res.status(200).json({ message: 'User status updated', status: user.status });
     } else if (type === 'admin') {
       // Only the current default admin can suspend admins
@@ -57,6 +70,19 @@ export const suspendUserOrAdmin = async (req, res, next) => {
       if (!admin || admin.role !== 'admin') return next(errorHandler(404, 'Admin not found'));
       admin.status = admin.status === 'active' ? 'suspended' : 'active';
       await admin.save();
+      
+      // Emit socket event for account suspension
+      const io = req.app.get('io');
+      if (io) {
+        io.emit('account_suspended', {
+          userId: admin._id.toString(),
+          username: admin.username,
+          email: admin.email,
+          status: admin.status,
+          type: 'admin'
+        });
+      }
+      
       return res.status(200).json({ message: 'Admin status updated', status: admin.status });
     } else {
       return next(errorHandler(400, 'Invalid type'));

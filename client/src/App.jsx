@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, useLocation, Navigate, useNavigate } from
 import { useEffect, Suspense, lazy, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { verifyAuthStart, verifyAuthSuccess, verifyAuthFailure, signoutUserSuccess } from "./redux/user/userSlice.js";
+import { socket } from "./utils/socket";
 import Header from './components/Header';
 import AdminHeader from './components/AdminHeader';
 import Private from "./components/Private";
@@ -229,6 +230,28 @@ function AppRoutes({ bootstrapped }) {
       checkSession();
     }
   }, [bootstrapped, dispatch]);
+
+  // Socket event listener for account suspension
+  useEffect(() => {
+    if (!currentUser) return; // Only run if user is logged in
+    
+    const handleAccountSuspended = (data) => {
+      // Check if the suspended account is the current user
+      if (data.userId === currentUser._id) {
+        dispatch(signoutUserSuccess());
+        toast.error("Your account has been suspended. You have been signed out.");
+        setTimeout(() => {
+          navigate("/sign-in");
+        }, 1800); // Delay navigation so toast is visible
+      }
+    };
+
+    socket.on('account_suspended', handleAccountSuspended);
+    
+    return () => {
+      socket.off('account_suspended', handleAccountSuspended);
+    };
+  }, [dispatch, navigate, currentUser]);
 
   // Periodic session check (every 30 seconds)
   useEffect(() => {
