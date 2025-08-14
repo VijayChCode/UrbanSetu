@@ -12,9 +12,9 @@ export const SignUp=async (req,res,next)=>{
         return next(errorHandler(400, "Please provide a valid 10-digit mobile number"));
     }
     
-    // Validate address
-    if (!address || address.trim().length === 0) {
-        return next(errorHandler(400, "Please provide your address"));
+    // Validate address (optional but if provided, should not be empty)
+    if (address && address.trim().length === 0) {
+        return next(errorHandler(400, "Please provide a valid address"));
     }
     
     // Check if email is verified
@@ -45,7 +45,7 @@ export const SignUp=async (req,res,next)=>{
             email: emailLower,
             password:hashedPassword,
             mobileNumber,
-            address: address.trim(),
+            address: address ? address.trim() : undefined,
             role,
             adminApprovalStatus
         })
