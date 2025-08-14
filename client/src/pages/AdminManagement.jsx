@@ -653,11 +653,9 @@ export default function AdminManagement() {
                                 <FaPhone /> {highlightMatch(user.mobileNumber)}
                               </div>
                             )}
-                            {user.gender && (
-                              <div className="flex items-center gap-2 text-gray-500 text-sm mt-1">
-                                <FaUser /> {user.gender}
-                              </div>
-                            )}
+                            <div className="flex items-center gap-2 text-gray-500 text-sm mt-1">
+                              <FaUser /> {user.gender || "Gender not provided"}
+                            </div>
                             <div className="flex items-center gap-2 text-gray-400 text-xs mt-1">
                               <FaCalendarAlt /> {new Date(user.createdAt).toLocaleDateString('en-GB', {
                                 day: '2-digit',
@@ -751,11 +749,9 @@ export default function AdminManagement() {
                                 <FaPhone /> {highlightMatch(admin.mobileNumber)}
                               </div>
                             )}
-                            {admin.gender && (
-                              <div className="flex items-center gap-2 text-gray-500 text-sm mt-1">
-                                <FaUser /> {admin.gender}
-                              </div>
-                            )}
+                            <div className="flex items-center gap-2 text-gray-500 text-sm mt-1">
+                              <FaUser /> {admin.gender || "Gender not provided"}
+                            </div>
                             <div className="flex items-center gap-2 text-gray-400 text-xs mt-1">
                               <FaCalendarAlt /> {new Date(admin.createdAt).toLocaleDateString('en-GB', {
                                 day: '2-digit',
@@ -855,12 +851,10 @@ export default function AdminManagement() {
                       <FaPhone className="text-blue-400" />
                       <span><strong>Mobile:</strong> {selectedAccount.mobileNumber || 'Not provided'}</span>
                     </div>
-                    {selectedAccount.gender && (
-                      <div className="flex items-center gap-2 text-gray-700 text-sm">
-                        <FaUser className="text-purple-400" />
-                        <span><strong>Gender:</strong> {selectedAccount.gender.charAt(0).toUpperCase() + selectedAccount.gender.slice(1)}</span>
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2 text-gray-700 text-sm">
+                      <FaUser className="text-purple-400" />
+                      <span><strong>Gender:</strong> {selectedAccount.gender ? selectedAccount.gender.charAt(0).toUpperCase() + selectedAccount.gender.slice(1) : 'Not provided'}</span>
+                    </div>
                     <div className="flex items-center gap-2 text-gray-700 text-sm">
                       <FaHome className="text-green-400" />
                       <span><strong>Address:</strong> {selectedAccount.address || 'Not provided'}</span>

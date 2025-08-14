@@ -1371,12 +1371,11 @@ export default function Profile() {
                     <span className="text-xs text-gray-400 ml-2">(Generated for Google signup)</span>
                   )}
                 </p>
-                {currentUser.gender && (
-                  <p className="text-gray-600 flex flex-wrap items-center justify-center sm:justify-start break-all transition-all duration-300 hover:text-purple-600">
-                    <FaUser className="w-4 h-4 mr-2 transform transition-all duration-300 hover:scale-125" />
-                    {currentUser.gender.charAt(0).toUpperCase() + currentUser.gender.slice(1)}
-                  </p>
-                )}
+
+                <p className="text-gray-600 flex flex-wrap items-center justify-center sm:justify-start break-all transition-all duration-300 hover:text-purple-600">
+                  <FaUser className="w-4 h-4 mr-2 transform transition-all duration-300 hover:scale-125" />
+                  {currentUser.gender || "Gender not provided"}
+                </p>
                 <p className="text-gray-600 flex flex-wrap items-center justify-center sm:justify-start break-all transition-all duration-300 hover:text-blue-600">
                   <FaHome className="w-4 h-4 mr-2 transform transition-all duration-300 hover:scale-125" />
                   {currentUser.address || "Address not provided"}
@@ -1824,18 +1823,26 @@ export default function Profile() {
                     <FaUser className="w-4 h-4 mr-2" />
                     Gender
                   </label>
-                  <select
-                    id="gender"
-                    value={formData.gender || ''}
-                    onChange={handleChangeWithValidation}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
-                  >
-                    <option value="">Select gender</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="other">Other</option>
-                    <option value="prefer-not-to-say">Prefer not to say</option>
-                  </select>
+                  <div className="relative">
+                    <select
+                      id="gender"
+                      value={formData.gender || ''}
+                      onChange={handleChangeWithValidation}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all pr-12"
+                    >
+                      <option value="">Select gender</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                      <option value="other">Other</option>
+                      <option value="prefer-not-to-say">Prefer not to say</option>
+                    </select>
+                    {/* Show green tick for gender (always accepted) */}
+                    {formData.gender && formData.gender.trim() && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-600 z-20">
+                        <FaCheck className="text-xl" />
+                      </div>
+                    )}
+                  </div>
                 </div>
                 
                 <div>
