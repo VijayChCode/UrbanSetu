@@ -644,7 +644,7 @@ export default function AdminManagement() {
         <div className="mb-6 animate-fadeIn">
           <div className="relative max-w-md">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <FaSearch className="h-5 w-5 text-gray-400" />
+              <FaSearch className="h-5 w-5 text-gray-400 group-hover:text-blue-500 transition-colors duration-200" />
             </div>
             <input
               id="admin-management-search"

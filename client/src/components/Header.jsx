@@ -226,8 +226,8 @@ export default function Header() {
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="px-4 py-3 outline-none w-full text-gray-800 focus:bg-blue-50 transition-colors text-sm"
                 />
-                <button className={`${getSearchButtonColor()} text-white p-3 hover:bg-yellow-400 hover:text-blue-700 transition-all duration-300`} type="submit">
-                  <FaSearch />
+                <button className={`${getSearchButtonColor()} text-white p-3 hover:bg-yellow-400 hover:text-blue-700 transition-all duration-300 transform hover:scale-110 hover:shadow-lg`} type="submit">
+                  <FaSearch className="text-lg" />
                 </button>
               </form>
               
@@ -307,7 +307,7 @@ function UserNavLinks({ mobile = false, onNavigate }) {
         <li className="flex items-center">
           {!searchOpen ? (
             <button
-              className="p-2 text-white hover:text-yellow-300 focus:outline-none transition-all"
+              className="p-2 text-white hover:text-yellow-300 focus:outline-none transition-all transform hover:scale-110 hover:bg-white/10 rounded-full"
               onClick={() => setSearchOpen(true)}
               aria-label="Open search"
             >
@@ -327,8 +327,8 @@ function UserNavLinks({ mobile = false, onNavigate }) {
                 onBlur={() => setSearchOpen(false)}
                 className="px-2 py-1 sm:px-3 sm:py-2 outline-none w-full text-black focus:bg-blue-50 transition-colors text-sm sm:text-base"
               />
-              <button className={`bg-blue-500 hover:bg-blue-600 text-white p-2 hover:bg-yellow-400 hover:text-blue-700 transition-colors`} type="submit">
-                <FaSearch />
+              <button className={`bg-blue-500 hover:bg-blue-600 text-white p-2 hover:bg-yellow-400 hover:text-blue-700 transition-all transform hover:scale-110 hover:shadow-lg`} type="submit">
+                <FaSearch className="text-sm" />
               </button>
             </form>
           )}

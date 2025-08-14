@@ -657,7 +657,7 @@ export default function AdminAppointments() {
             />
           </div>
           <div className="flex items-center gap-2">
-            <FaSearch className="text-gray-500" />
+            <FaSearch className="text-gray-500 hover:text-blue-500 transition-colors duration-200" />
             <input
               type="text"
               className="border rounded px-2 py-1 focus:outline-none focus:ring focus:ring-blue-200"
