@@ -935,6 +935,17 @@ export default function AdminManagement() {
                       }) : ''}</span>
                     </div>
                     <div className="flex items-center gap-2 text-gray-700 text-sm">
+                      <FaCalendarAlt className="text-blue-400" />
+                      <span><strong>Last Visited:</strong> {selectedAccount.updatedAt ? new Date(selectedAccount.updatedAt).toLocaleDateString('en-GB', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric'
+                      }) + ' ' + new Date(selectedAccount.updatedAt).toLocaleTimeString('en-GB', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      }) : 'Never'}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-700 text-sm">
                       <FaList className="text-green-400" />
                       <span><strong>Listings:</strong> {accountStats.listings}</span>
                     </div>
