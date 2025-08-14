@@ -1569,12 +1569,14 @@ export default function Profile() {
                       readOnly={emailVerified && formData.email !== originalEmail && !emailEditMode}
                       className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all ${
                         emailVerified && formData.email !== originalEmail && !emailEditMode
-                          ? 'bg-gray-100 cursor-not-allowed border-green-500'
+                          ? 'bg-gray-100 cursor-not-allowed border-green-500 pr-20'
                           : emailValidation.available === false 
-                          ? 'border-red-500 focus:ring-red-500' 
-                          : emailValidation.available === true 
-                          ? 'border-green-500 focus:ring-green-500' 
-                          : 'border-gray-300 focus:ring-blue-500'
+                          ? 'border-red-500 focus:ring-red-500 pr-12'
+                          : emailValidation.available === true && !otpSent && !emailVerified && formData.email !== originalEmail && !emailEditMode
+                          ? 'border-green-500 focus:ring-green-500 pr-28'
+                          : emailValidation.available === true && formData.email === originalEmail && !emailEditMode
+                          ? 'border-green-500 focus:ring-green-500 pr-20'
+                          : 'border-gray-300 focus:ring-blue-500 pr-12'
                       }`}
                     />
                     {emailValidation.loading && (
@@ -1587,13 +1589,13 @@ export default function Profile() {
                     )}
                     {/* Show blue tick when email is available in DB but not yet verified */}
                     {emailValidation.available === true && !emailValidation.loading && !emailVerified && formData.email !== originalEmail && !emailEditMode && (
-                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-600">
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-600 z-20">
                         <FaCheck className="text-xl" />
                       </div>
                     )}
                     {/* Show green tick for current user's email (unchanged) */}
                     {emailValidation.available === true && !emailValidation.loading && formData.email === originalEmail && !emailEditMode && (
-                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2 z-20">
                         <button
                           type="button"
                           onClick={() => setEmailEditMode(true)}
@@ -1613,14 +1615,14 @@ export default function Profile() {
                         type="button"
                         onClick={handleSendOTP}
                         disabled={otpLoading || !canResend || !formData.email}
-                        className="absolute right-12 top-1/2 transform -translate-y-1/2 px-3 py-1 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="absolute right-16 top-1/2 transform -translate-y-1/2 px-3 py-1 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap z-10"
                       >
                         {otpLoading ? "Sending..." : "Send OTP"}
                       </button>
                     )}
                     {/* Show green tick and edit icon after successful email verification */}
                     {emailVerified && formData.email !== originalEmail && !emailEditMode && !emailValidation.loading && (
-                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2 z-20">
                         <button
                           type="button"
                           onClick={() => setEmailEditMode(true)}
@@ -1636,7 +1638,7 @@ export default function Profile() {
                     )}
                     {/* Show verification flow when in edit mode */}
                     {emailVerified && formData.email !== originalEmail && emailEditMode && !emailValidation.loading && (
-                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 z-20">
                         <div className="text-green-600">
                           <FaCheck className="text-xl" />
                         </div>
@@ -1644,7 +1646,7 @@ export default function Profile() {
                     )}
                     {/* Show red X when email is not available */}
                     {emailValidation.available === false && !emailValidation.loading && (
-                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 z-20">
                         <FaTimes className="h-5 w-5 text-red-500" />
                       </div>
                     )}
