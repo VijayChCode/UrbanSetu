@@ -124,7 +124,7 @@ export default function AdminManagement() {
         toast.success(`${type === "user" ? "User" : "Admin"} status updated`);
         setSuspendError((prev) => ({ ...prev, [id]: undefined }));
         // Emit socket event
-        socket.emit(type === 'user' ? 'user_update' : 'admin_update', { type: 'update', [type]: data });
+        socket.emit(type === 'user' ? 'user_update' : 'admin_update', { type: 'update', [type]: data, userId: id });
         // Emit global signout event for the affected user
         socket.emit('force_signout', { 
           userId: id, 
@@ -168,7 +168,7 @@ export default function AdminManagement() {
         if (res.ok) {
           toast.success(`${type === "user" ? "User" : "Admin"} deleted successfully`);
           // Emit socket event
-          socket.emit(type === 'user' ? 'user_update' : 'admin_update', { type: 'delete', [type]: { _id: id } });
+          socket.emit(type === 'user' ? 'user_update' : 'admin_update', { type: 'delete', [type]: { _id: id }, userId: id });
           // Emit global signout event for the deleted user
           socket.emit('force_signout', { 
             userId: id, 
@@ -295,8 +295,8 @@ export default function AdminManagement() {
         if (res.ok) {
           toast.success("User promoted to admin successfully");
           // Emit socket event
-          socket.emit('admin_update', { type: 'add', admin: { ...user, ...data } });
-          socket.emit('user_update', { type: 'delete', user: { _id: id } });
+          socket.emit('admin_update', { type: 'add', admin: { ...user, ...data }, userId: id });
+          socket.emit('user_update', { type: 'delete', user: { _id: id }, userId: id });
           // Emit global signout event for the promoted user
           socket.emit('force_signout', { 
             userId: id, 
@@ -353,8 +353,8 @@ export default function AdminManagement() {
         if (res.ok) {
           toast.success("Admin demoted to user successfully");
           // Emit socket event
-          socket.emit('user_update', { type: 'add', user: { ...admin, ...data } });
-          socket.emit('admin_update', { type: 'delete', admin: { _id: id } });
+          socket.emit('user_update', { type: 'add', user: { ...admin, ...data }, userId: id });
+          socket.emit('admin_update', { type: 'delete', admin: { _id: id }, userId: id });
           // Emit global signout event for the demoted admin
           socket.emit('force_signout', { 
             userId: id, 
@@ -397,7 +397,7 @@ export default function AdminManagement() {
       if (res.ok) {
         setAdmins(prev => prev.map(a => a._id === adminId ? { ...a, adminApprovalStatus: 'approved', status: 'active' } : a));
         toast.success("Admin re-approved successfully!");
-        socket.emit('admin_update', { type: 'update', admin: { ...data } });
+        socket.emit('admin_update', { type: 'update', admin: { ...data }, userId: adminId });
         // Emit global signout event for the reapproved admin
         socket.emit('force_signout', { 
           userId: adminId, 

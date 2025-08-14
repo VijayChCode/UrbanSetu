@@ -261,9 +261,55 @@ function AppRoutes({ bootstrapped }) {
     
     socket.on('force_signout', handleForceSignout);
     
+    // Global socket event listeners for user and admin updates
+    const handleUserUpdate = (data) => {
+      if (data.userId === currentUser._id || data.user?._id === currentUser._id) {
+        // Update current user data based on the update type
+        if (data.type === 'update') {
+          // Update user information
+          dispatch(updateUserSuccess(data.user));
+        } else if (data.type === 'delete') {
+          // User was deleted, sign them out
+          dispatch(signoutUserSuccess());
+          toast.error("Your account has been deleted. You have been signed out.");
+          setTimeout(() => {
+            navigate("/sign-in");
+          }, 1800);
+        } else if (data.type === 'add') {
+          // User was added (e.g., demoted from admin)
+          dispatch(updateUserSuccess(data.user));
+        }
+      }
+    };
+    
+    const handleAdminUpdate = (data) => {
+      if (data.adminId === currentUser._id || data.admin?._id === currentUser._id) {
+        // Update current user data based on the update type
+        if (data.type === 'update') {
+          // Update admin information
+          dispatch(updateUserSuccess(data.admin));
+        } else if (data.type === 'delete') {
+          // Admin was deleted, sign them out
+          dispatch(signoutUserSuccess());
+          toast.error("Your admin account has been deleted. You have been signed out.");
+          setTimeout(() => {
+            navigate("/sign-in");
+          }, 1800);
+        } else if (data.type === 'add') {
+          // Admin was added (e.g., promoted from user)
+          dispatch(updateUserSuccess(data.admin));
+        }
+      }
+    };
+    
+    socket.on('user_update', handleUserUpdate);
+    socket.on('admin_update', handleAdminUpdate);
+    
     return () => {
       socket.off('account_suspended', handleAccountSuspended);
       socket.off('force_signout', handleForceSignout);
+      socket.off('user_update', handleUserUpdate);
+      socket.off('admin_update', handleAdminUpdate);
     };
   }, [dispatch, navigate, currentUser]);
 
