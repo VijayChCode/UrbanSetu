@@ -1570,9 +1570,9 @@ export default function Profile() {
                       placeholder="Enter email address"
                       value={formData.email || ''}
                       onChange={handleChangeWithValidation}
-                      readOnly={!emailEditMode || (emailEditMode && emailVerified)}
+                      readOnly={!emailEditMode}
                       className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all ${
-                        !emailEditMode || (emailEditMode && emailVerified)
+                        !emailEditMode
                           ? 'bg-gray-100 cursor-not-allowed border-green-500'
                           : emailValidation.available === false 
                           ? 'border-red-500 focus:ring-red-500' 
@@ -1638,25 +1638,9 @@ export default function Profile() {
                         </div>
                       </div>
                     )}
-                    {/* Show verification flow when in edit mode - keep field editable until OTP verification */}
-                    {emailEditMode && !emailValidation.loading && !emailVerified && (
+                    {/* Show verification flow when in edit mode */}
+                    {emailEditMode && !emailValidation.loading && (
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                        <div className="text-green-600">
-                          <FaCheck className="text-xl" />
-                        </div>
-                      </div>
-                    )}
-                    {/* Show green tick when email is verified in edit mode */}
-                    {emailEditMode && !emailValidation.loading && emailVerified && (
-                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setEmailEditMode(false)}
-                          className="text-blue-600 hover:text-blue-800 transition-colors duration-200 p-1 rounded hover:bg-blue-50"
-                          title="Done editing"
-                        >
-                          <FaCheck className="text-sm" />
-                        </button>
                         <div className="text-green-600">
                           <FaCheck className="text-xl" />
                         </div>
