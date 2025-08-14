@@ -1608,6 +1608,12 @@ export default function Profile() {
                         </div>
                       </div>
                     )}
+                    {/* Show green tick when initially clicked edit icon for current user's email */}
+                    {emailValidation.available === true && !emailValidation.loading && formData.email === originalEmail && emailEditMode && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-600 z-20">
+                        <FaCheck className="text-xl" />
+                      </div>
+                    )}
                     {/* Show edit icon and blue tick when OTP is sent but not verified */}
                     {emailValidation.available === true && !emailValidation.loading && !emailVerified && formData.email !== originalEmail && otpSent && (
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2 z-20">
