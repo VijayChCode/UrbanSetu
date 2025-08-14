@@ -1331,7 +1331,7 @@ export default function Profile() {
                   />
                 </div>
                 {currentUser.role === 'admin' && (
-                  <div className={`absolute -top-2 -right-2 bg-blue-500 text-white rounded-full p-3 shadow-lg z-10 ${animationClasses.bounceIn} animation-delay-300 ${animationClasses.float}`}>
+                  <div className={`absolute -top-2 -right-2 bg-blue-500 text-white rounded-full p-3 shadow-xl z-20 ${animationClasses.bounceIn} animation-delay-300 ${animationClasses.float}`}>
                     <FaCrown className="w-5 h-5" />
                   </div>
                 )}
