@@ -1358,6 +1358,11 @@ export default function Profile() {
                         Default Admin
                       </span>
                     )}
+                    {currentUser.role === 'user' && (
+                      <span className="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full font-medium transform transition-all duration-300 hover:scale-110 hover:bg-blue-200">
+                        User
+                      </span>
+                    )}
                   </h1>
                 </div>
 
