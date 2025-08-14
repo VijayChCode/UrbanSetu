@@ -1566,16 +1566,14 @@ export default function Profile() {
                       placeholder="Enter email address"
                       value={formData.email || ''}
                       onChange={handleChangeWithValidation}
-                      readOnly={emailVerified && formData.email !== originalEmail && !emailEditMode}
+                      readOnly={!emailEditMode}
                       className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all ${
-                        emailVerified && formData.email !== originalEmail && !emailEditMode
+                        !emailEditMode
                           ? 'bg-gray-100 cursor-not-allowed border-green-500 pr-20'
                           : emailValidation.available === false 
                           ? 'border-red-500 focus:ring-red-500 pr-12'
-                          : emailValidation.available === true && !otpSent && !emailVerified && formData.email !== originalEmail && !emailEditMode
-                          ? 'border-green-500 focus:ring-green-500 pr-28'
-                          : emailValidation.available === true && formData.email === originalEmail && !emailEditMode
-                          ? 'border-green-500 focus:ring-green-500 pr-20'
+                          : emailValidation.available === true 
+                          ? 'border-green-500 focus:ring-green-500 pr-12'
                           : 'border-gray-300 focus:ring-blue-500 pr-12'
                       }`}
                     />
@@ -1588,7 +1586,7 @@ export default function Profile() {
                       </div>
                     )}
                     {/* Show blue tick when email is available in DB but not yet verified */}
-                    {emailValidation.available === true && !emailValidation.loading && !emailVerified && formData.email !== originalEmail && !emailEditMode && (
+                    {emailValidation.available === true && !emailValidation.loading && !emailVerified && formData.email !== originalEmail && emailEditMode && (
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-600 z-20">
                         <FaCheck className="text-xl" />
                       </div>
@@ -1610,7 +1608,7 @@ export default function Profile() {
                       </div>
                     )}
                     {/* Show Send OTP button only when email is available and not sent yet */}
-                    {emailValidation.available === true && !emailValidation.loading && !otpSent && !emailVerified && formData.email !== originalEmail && !emailEditMode && (
+                    {emailValidation.available === true && !emailValidation.loading && !otpSent && !emailVerified && formData.email !== originalEmail && emailEditMode && (
                       <button
                         type="button"
                         onClick={handleSendOTP}
@@ -1645,7 +1643,7 @@ export default function Profile() {
                       </div>
                     )}
                     {/* Show red X when email is not available */}
-                    {emailValidation.available === false && !emailValidation.loading && (
+                    {emailValidation.available === false && !emailValidation.loading && emailEditMode && (
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2 z-20">
                         <FaTimes className="h-5 w-5 text-red-500" />
                       </div>
