@@ -1065,7 +1065,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   // Check if chat should be disabled (for outdated, pending, rejected, or cancelled by admin appointments)
   const isChatDisabled = !isUpcoming || appt.status === 'pending' || appt.status === 'rejected' || appt.status === 'cancelledByAdmin';
   
-  const canSeeContactInfo = (isAdmin || appt.status === 'accepted') && isUpcoming;
+  const canSeeContactInfo = (isAdmin || appt.status === 'accepted') && isUpcoming && 
+    appt.status !== 'cancelledByBuyer' && appt.status !== 'cancelledBySeller' && 
+    appt.status !== 'cancelledByAdmin' && appt.status !== 'rejected' && 
+    appt.status !== 'deletedByAdmin';
   const otherParty = isSeller ? appt.buyerId : appt.sellerId;
 
   // Handle delete confirmation modal
