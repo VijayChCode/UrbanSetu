@@ -15,7 +15,6 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
     confirmPassword: "",
     role: "",   // 🔥 added role field here
     mobileNumber: "",
-    address: "",
   });
 
   const [passwordValidity, setPasswordValidity] = useState({
@@ -510,19 +509,7 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                 )}
               </div>
 
-              <div>
-                <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
-                  Address
-                </label>
-                <input
-                  type="text"
-                  placeholder="Enter your address"
-                  id="address"
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                  required
-                />
-              </div>
+
 
               <div>
                 <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-2">

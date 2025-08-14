@@ -1217,6 +1217,7 @@ export default function Profile() {
         email: currentUser.email || '',
         mobileNumber: currentUser.mobileNumber ? String(currentUser.mobileNumber) : '',
         address: currentUser.address || '',
+        gender: currentUser.gender || '',
         avatar: currentUser.avatar || "",
       });
       
@@ -1370,6 +1371,12 @@ export default function Profile() {
                     <span className="text-xs text-gray-400 ml-2">(Generated for Google signup)</span>
                   )}
                 </p>
+                {currentUser.gender && (
+                  <p className="text-gray-600 flex flex-wrap items-center justify-center sm:justify-start break-all transition-all duration-300 hover:text-purple-600">
+                    <FaUser className="w-4 h-4 mr-2 transform transition-all duration-300 hover:scale-125" />
+                    {currentUser.gender.charAt(0).toUpperCase() + currentUser.gender.slice(1)}
+                  </p>
+                )}
                 <p className="text-gray-600 flex flex-wrap items-center justify-center sm:justify-start break-all transition-all duration-300 hover:text-blue-600">
                   <FaHome className="w-4 h-4 mr-2 transform transition-all duration-300 hover:scale-125" />
                   {currentUser.address || "Address not provided"}
@@ -1810,6 +1817,25 @@ export default function Profile() {
                       {mobileValidation.message}
                     </div>
                   )}
+                </div>
+                
+                <div>
+                  <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                    <FaUser className="w-4 h-4 mr-2" />
+                    Gender
+                  </label>
+                  <select
+                    id="gender"
+                    value={formData.gender || ''}
+                    onChange={handleChangeWithValidation}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                  >
+                    <option value="">Select gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                    <option value="prefer-not-to-say">Prefer not to say</option>
+                  </select>
                 </div>
                 
                 <div>
