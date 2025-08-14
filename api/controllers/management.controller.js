@@ -45,6 +45,12 @@ export const suspendUserOrAdmin = async (req, res, next) => {
       }
       const user = await User.findById(id);
       if (!user || user.role !== 'user') return next(errorHandler(404, 'User not found'));
+      
+      // Check if user has required fields before updating status
+      if (!user.address || user.address.trim().length === 0) {
+        return next(errorHandler(400, 'Cannot suspend user: Address is required but missing. Please update the user profile first.'));
+      }
+      
       user.status = user.status === 'active' ? 'suspended' : 'active';
       await user.save();
       
@@ -68,6 +74,12 @@ export const suspendUserOrAdmin = async (req, res, next) => {
       }
       const admin = await User.findById(id);
       if (!admin || admin.role !== 'admin') return next(errorHandler(404, 'Admin not found'));
+      
+      // Check if admin has required fields before updating status
+      if (!admin.address || admin.address.trim().length === 0) {
+        return next(errorHandler(400, 'Cannot suspend admin: Address is required but missing. Please update the admin profile first.'));
+      }
+      
       admin.status = admin.status === 'active' ? 'suspended' : 'active';
       await admin.save();
       
