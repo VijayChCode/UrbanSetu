@@ -846,7 +846,6 @@ export default function Profile() {
         
         setUpdateSuccess(true);
         setIsEditing(false);
-        setEmailEditMode(false);
         setLoading(false);
         setShowUpdatePasswordModal(false);
         setUpdatePassword("");
@@ -1220,9 +1219,6 @@ export default function Profile() {
         avatar: currentUser.avatar || "",
       });
       
-      // Reset email edit mode when entering edit mode
-      setEmailEditMode(false);
-      
       // Trigger validation for current values
       if (currentUser.email) {
         validateEmail(currentUser.email);
@@ -1570,9 +1566,9 @@ export default function Profile() {
                       placeholder="Enter email address"
                       value={formData.email || ''}
                       onChange={handleChangeWithValidation}
-                      readOnly={!emailEditMode}
+                      readOnly={emailVerified && formData.email !== originalEmail && !emailEditMode}
                       className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all ${
-                        !emailEditMode
+                        emailVerified && formData.email !== originalEmail && !emailEditMode
                           ? 'bg-gray-100 cursor-not-allowed border-green-500'
                           : emailValidation.available === false 
                           ? 'border-red-500 focus:ring-red-500' 
@@ -1589,8 +1585,14 @@ export default function Profile() {
                         </svg>
                       </div>
                     )}
-                    {/* Show edit icon and green tick for current user's email (unchanged) */}
-                    {!emailEditMode && formData.email === originalEmail && (
+                    {/* Show blue tick when email is available in DB but not yet verified */}
+                    {emailValidation.available === true && !emailValidation.loading && !emailVerified && formData.email !== originalEmail && !emailEditMode && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-600">
+                        <FaCheck className="text-xl" />
+                      </div>
+                    )}
+                    {/* Show green tick for current user's email (unchanged) */}
+                    {emailValidation.available === true && !emailValidation.loading && formData.email === originalEmail && !emailEditMode && (
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
                         <button
                           type="button"
@@ -1603,12 +1605,6 @@ export default function Profile() {
                         <div className="text-green-600">
                           <FaCheck className="text-xl" />
                         </div>
-                      </div>
-                    )}
-                    {/* Show blue tick when email is available in DB but not yet verified */}
-                    {emailValidation.available === true && !emailValidation.loading && !emailVerified && formData.email !== originalEmail && !emailEditMode && (
-                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-600">
-                        <FaCheck className="text-xl" />
                       </div>
                     )}
                     {/* Show Send OTP button only when email is available and not sent yet */}
@@ -1639,7 +1635,7 @@ export default function Profile() {
                       </div>
                     )}
                     {/* Show verification flow when in edit mode */}
-                    {emailEditMode && !emailValidation.loading && (
+                    {emailVerified && formData.email !== originalEmail && emailEditMode && !emailValidation.loading && (
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                         <div className="text-green-600">
                           <FaCheck className="text-xl" />
@@ -1809,7 +1805,6 @@ export default function Profile() {
                     setOtpError("");
                     setResendTimer(0);
                     setCanResend(true);
-                    setEmailEditMode(false);
                   }}
                   className="bg-gradient-to-r from-gray-500 to-gray-600 text-white px-6 py-3 rounded-lg hover:from-gray-600 hover:to-gray-700 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2"
                 >
