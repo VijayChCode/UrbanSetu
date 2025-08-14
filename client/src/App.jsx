@@ -313,26 +313,27 @@ function AppRoutes({ bootstrapped }) {
     };
   }, [dispatch, navigate, currentUser]);
 
-  // Socket event listener for new message notifications
+  // Ensure socket is registered to current user's room and show global new message notifications
   useEffect(() => {
-    if (!currentUser) return; // Only run if user is logged in
-    
+    if (!currentUser) return;
+
+    // On connect or user change, register this socket to the user's personal room
+    const register = () => {
+      try {
+        socket.emit('registerUser', { userId: currentUser._id });
+      } catch {}
+    };
+    register();
+    socket.on('connect', register);
+
     const handleNewMessage = (data) => {
-      // Since backend now only sends to intended recipients, we can trust this message is for us
-      // Just check if it's not from the current user
       if (data.comment && data.comment.senderEmail !== currentUser.email) {
-        // Check if we're not already on the MyAppointments page
         const currentPath = window.location.pathname;
         const isOnMyAppointments = currentPath.includes('/my-appointments') || currentPath.includes('/user/my-appointments');
-        
         if (!isOnMyAppointments) {
-          // Show notification for new message
           const senderName = data.comment.senderEmail || 'User';
           toast.info(`New message from ${senderName}`, {
-            onClick: () => {
-              // Navigate to MyAppointments page when notification is clicked
-              navigate('/user/my-appointments');
-            },
+            onClick: () => navigate('/user/my-appointments'),
             autoClose: 5000,
             closeOnClick: true,
             pauseOnHover: true
@@ -342,11 +343,12 @@ function AppRoutes({ bootstrapped }) {
     };
 
     socket.on('commentUpdate', handleNewMessage);
-    
+
     return () => {
+      socket.off('connect', register);
       socket.off('commentUpdate', handleNewMessage);
     };
-  }, [dispatch, navigate, currentUser]);
+  }, [navigate, currentUser]);
 
   // Periodic session check (every 30 seconds)
   useEffect(() => {

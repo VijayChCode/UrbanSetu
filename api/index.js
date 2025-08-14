@@ -170,6 +170,8 @@ io.on('connection', (socket) => {
   // Listen for presence pings
   socket.on('userAppointmentsActive', async ({ userId }) => {
     thisUserId = userId;
+    // Ensure this socket joins the user's personal room even if auth token was missing
+    try { socket.join(userId); } catch {}
     const wasOffline = !onlineUsers.has(userId);
     onlineUsers.add(userId);
     lastSeenTimes.delete(userId); // Remove last seen when user comes online
@@ -213,6 +215,40 @@ io.on('connection', (socket) => {
       lastSeenTimes.set(userId, new Date().toISOString()); // Store last seen time
       io.emit('userOnlineUpdate', { userId, online: false, lastSeen: lastSeenTimes.get(userId) });
     }, 5000); // 5 seconds of inactivity = offline
+  });
+
+  // Fallback registration to join user room globally (works even if auth token missing)
+  socket.on('registerUser', async ({ userId }) => {
+    try {
+      thisUserId = userId;
+      socket.join(userId);
+      const wasOffline = !onlineUsers.has(userId);
+      onlineUsers.add(userId);
+      lastSeenTimes.delete(userId);
+      io.emit('userOnlineUpdate', { userId, online: true });
+      if (wasOffline) {
+        try {
+          const booking = require('./models/booking.model.js');
+          const bookings = await booking.find({ $or: [ { buyerId: userId }, { sellerId: userId } ] });
+          for (const appt of bookings) {
+            let updated = false;
+            for (const comment of appt.comments) {
+              if (comment.sender.toString() !== userId && comment.status === 'sent' && !comment.readBy?.includes(userId)) {
+                comment.status = 'delivered';
+                comment.deliveredAt = new Date();
+                updated = true;
+                io.emit('commentDelivered', { appointmentId: appt._id.toString(), commentId: comment._id.toString() });
+              }
+            }
+            if (updated) await appt.save();
+          }
+        } catch (err) {
+          console.error('Error marking comments as delivered on registerUser:', err);
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to register user room:', e?.message);
+    }
   });
 
   // Listen for online status checks
