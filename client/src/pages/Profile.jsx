@@ -1380,6 +1380,12 @@ export default function Profile() {
                   <FaHome className="w-4 h-4 mr-2 transform transition-all duration-300 hover:scale-125" />
                   {currentUser.address || "Address not provided"}
                 </p>
+                {/* Show "Complete your profile" message when any field is empty */}
+                {(!currentUser.gender || !currentUser.address || !currentUser.mobileNumber) && (
+                  <p className="text-sm text-amber-600 text-center sm:text-left mt-2 transition-all duration-300 hover:text-amber-700 font-medium">
+                    (Complete your profile)
+                  </p>
+                )}
                 <p className="text-sm text-gray-500 text-center sm:text-left mt-1 transition-all duration-300 hover:text-gray-700">
                   Member since {formatDate(currentUser.createdAt)}
                 </p>
