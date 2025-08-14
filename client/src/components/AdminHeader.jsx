@@ -223,7 +223,7 @@ export default function AdminHeader() {
       <div className="hidden sm:block">
         <div className="flex items-center gap-2">
           {/* Nav links start with Dashboard */}
-          <AdminNavLinks pendingCount={pendingCount} handleSignout={handleSignout} currentUser={currentUser} />
+          <AdminNavLinks pendingCount={pendingCount} handleSignout={handleSignout} currentUser={currentUser} navigate={navigate} />
         </div>
       </div>
       {/* Mobile nav menu */}
@@ -263,7 +263,7 @@ export default function AdminHeader() {
               
               {/* Navigation links */}
               <div className="flex-1 overflow-y-auto">
-                <AdminNavLinks mobile onNavigate={() => setMobileMenuOpen(false)} pendingCount={pendingCount} handleSignout={handleSignout} currentUser={currentUser} />
+                <AdminNavLinks mobile onNavigate={() => setMobileMenuOpen(false)} pendingCount={pendingCount} handleSignout={handleSignout} currentUser={currentUser} navigate={navigate} />
               </div>
             </div>
           </div>
@@ -273,21 +273,46 @@ export default function AdminHeader() {
   );
 }
 
-function AdminNavLinks({ mobile = false, onNavigate, pendingCount, handleSignout, currentUser }) {
-  const navigate = useNavigate();
+function AdminNavLinks({ mobile = false, onNavigate, pendingCount, handleSignout, currentUser, navigate }) {
   return (
     <ul className={`${mobile ? 'flex flex-col gap-2 text-gray-800' : 'flex space-x-2 sm:space-x-4 items-center text-white text-base font-normal'}`}>
       {/* Search icon/input first, white color */}
       {!mobile ? (
         <li className="flex items-center">
           <div className="hidden sm:flex items-center relative">
-            <button
-              className="p-2 text-white hover:text-yellow-300 focus:outline-none transition-all"
-              onClick={() => {/* Search functionality for desktop */}}
-              aria-label="Open search"
-            >
-              <FaSearch className="text-lg" />
-            </button>
+            {!searchOpen ? (
+              <button
+                className="p-2 text-white hover:text-yellow-300 focus:outline-none transition-all"
+                onClick={() => setSearchOpen(true)}
+                aria-label="Open search"
+              >
+                <FaSearch className="text-lg" />
+              </button>
+            ) : (
+              <div className="flex items-center bg-white rounded-lg shadow-lg border-2 border-gray-200 focus-within:ring-2 focus-within:ring-blue-300 focus-within:border-blue-300 transition-all duration-300">
+                <input
+                  type="text"
+                  ref={searchInputRef}
+                  className="px-3 py-2 outline-none w-48 text-gray-800 text-sm rounded-l-lg"
+                  placeholder="Search..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onBlur={() => setSearchOpen(false)}
+                />
+                <button
+                  className="px-3 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors rounded-r-lg"
+                  onClick={() => {
+                    if (searchTerm.trim()) {
+                      navigate(`/admin/explore?searchTerm=${encodeURIComponent(searchTerm)}`);
+                      setSearchTerm("");
+                      setSearchOpen(false);
+                    }
+                  }}
+                >
+                  <FaSearch />
+                </button>
+              </div>
+            )}
           </div>
         </li>
       ) : null}
