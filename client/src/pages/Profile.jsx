@@ -1443,12 +1443,12 @@ export default function Profile() {
             </div>
             <div className="mt-6">
               <button
-              onClick={() => setIsEditing(!isEditing)}
-              className={`bg-gradient-to-r from-blue-500 to-purple-500 text-white px-3 sm:px-6 py-2 sm:py-3 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 hover:rotate-1 shadow-lg font-semibold flex items-center gap-1 sm:gap-2 text-sm sm:text-base w-full sm:w-auto justify-center group ${isVisible ? animationClasses.fadeInRight + ' animation-delay-450' : 'opacity-0 translate-x-8'}`}
-            >
-              <FaEdit className={`w-4 h-4 transition-transform duration-300 ${isEditing ? 'rotate-180' : ''} group-hover:${animationClasses.wiggle}`} />
-              {isEditing ? 'Cancel Edit' : 'Edit Profile'}
-            </button>
+                onClick={() => setIsEditing(!isEditing)}
+                className={`bg-gradient-to-r from-blue-500 to-purple-500 text-white px-5 sm:px-10 py-4 sm:py-5 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 hover:rotate-1 shadow-lg font-semibold flex items-center gap-2 sm:gap-4 text-base sm:text-lg w-full sm:w-auto justify-center group ${isVisible ? animationClasses.fadeInRight + ' animation-delay-450' : 'opacity-0 translate-x-8'}`}
+               >
+                 <FaEdit className={`w-5 h-5 transition-transform duration-300 ${isEditing ? 'rotate-180' : ''} group-hover:${animationClasses.wiggle}`} />
+                 {isEditing ? 'Cancel Edit' : 'Edit Profile'}
+               </button>
             </div>
           </div>
         </div>
