@@ -1791,6 +1791,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     }
   }, [markVisibleMessagesAsRead]);
 
+
+
   // Toast notification for new messages when chat is closed
   useEffect(() => {
     function handleCommentUpdateNotify(data) {
