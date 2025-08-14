@@ -1331,13 +1331,13 @@ export default function Profile() {
                   />
                 </div>
                 {currentUser.role === 'admin' && (
-                  <div className={`absolute -top-2 -right-2 bg-purple-500 text-white rounded-full p-2 ${animationClasses.bounceIn} animation-delay-300 ${animationClasses.float}`}>
-                    <FaCrown className="w-4 h-4" />
+                  <div className={`absolute -top-2 -right-2 bg-blue-500 text-white rounded-full p-3 ${animationClasses.bounceIn} animation-delay-300 ${animationClasses.float}`}>
+                    <FaCrown className="w-5 h-5" />
                   </div>
                 )}
                 {currentUser.isDefaultAdmin && (
-                  <div className={`absolute -bottom-2 -right-2 bg-red-500 text-white rounded-full p-2 ${animationClasses.bounceIn} animation-delay-450 ${animationClasses.pulse}`}>
-                    <FaCrown className="w-3 h-3" />
+                  <div className={`absolute -bottom-2 -right-2 bg-red-500 text-white rounded-full p-3 ${animationClasses.bounceIn} animation-delay-450 ${animationClasses.pulse}`}>
+                    <FaCrown className="w-5 h-5" />
                   </div>
                 )}
               </div>
