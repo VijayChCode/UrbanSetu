@@ -1189,25 +1189,26 @@ function AdminAppointmentRow({
   // Listen for comment updates from parent component (socket events)
   React.useEffect(() => {
     // This effect will run when appt.comments changes (from parent socket updates)
-    if (appt.comments && appt.comments.length > 0) {
-      // Only update localComments if there are actual changes to prevent unnecessary re-renders
-      const commentCountDiff = Math.abs(appt.comments.length - localComments.length);
+    const serverComments = appt.comments || [];
+    
+    // Check if there are actual changes in content, not just count
+    const hasChanges = JSON.stringify(localComments) !== JSON.stringify(serverComments);
+    
+    if (hasChanges) {
+      console.log('🔄 AdminAppointments Chat: Received update from parent:', {
+        appointmentId: appt._id,
+        serverCommentsCount: serverComments.length,
+        localCommentsCount: localComments.length,
+        hasContentChanges: hasChanges
+      });
       
-      if (commentCountDiff > 0) {
-        console.log('🔄 AdminAppointments Chat: Received update from parent:', {
-          appointmentId: appt._id,
-          serverCommentsCount: appt.comments.length,
-          localCommentsCount: localComments.length,
-          difference: commentCountDiff
-        });
-        
-        // Update localComments with the latest from parent
-        setLocalComments(appt.comments);
+      // Update localComments with the latest from parent
+      setLocalComments(serverComments);
         
         // Handle unread message count and auto-scroll for new messages
-        if (commentCountDiff > 0 && appt.comments.length > localComments.length) {
+        if (serverComments.length > localComments.length) {
           // New messages were added
-          const newMessages = appt.comments.slice(localComments.length);
+          const newMessages = serverComments.slice(localComments.length);
           const receivedMessages = newMessages.filter(msg => msg.senderEmail !== currentUser.email);
           
           if (receivedMessages.length > 0) {

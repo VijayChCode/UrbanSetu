@@ -329,6 +329,16 @@ router.post('/:id/comment', verifyToken, async (req, res) => {
         
         // Emit to appointment room for admin access (so admin sees user messages immediately)
         io.to(`appointment_${id}`).emit('commentUpdate', { appointmentId: id, comment: newCommentObj });
+        
+        // ADDITIONAL: Explicitly emit to all connected admin sockets to ensure they receive user messages
+        const adminSockets = Array.from(io.sockets.sockets.values()).filter(s => 
+          s.adminId && (s.adminRole === 'admin' || s.adminRole === 'rootadmin')
+        );
+        
+        for (const adminSocket of adminSockets) {
+          adminSocket.emit('commentUpdate', { appointmentId: id, comment: newCommentObj });
+          console.log(`🔔 User message: Also emitted to admin socket ${adminSocket.adminId}`);
+        }
       }
       
       // Only mark as delivered if the intended recipient is online
