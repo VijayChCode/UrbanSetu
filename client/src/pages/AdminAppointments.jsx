@@ -1038,6 +1038,16 @@ function AdminAppointmentRow({
   confirmUnarchive
 }) {
   const [localComments, setLocalComments] = useLocalState(appt.comments || []);
+  
+  // Debug log when component mounts
+  React.useEffect(() => {
+    console.log('🚀 AdminAppointmentRow mounted:', {
+      appointmentId: appt._id,
+      initialCommentsCount: appt.comments?.length || 0,
+      localCommentsCount: localComments.length,
+      hasComments: !!appt.comments
+    });
+  }, [appt._id, appt.comments?.length, localComments.length]);
   const [newComment, setNewComment] = useLocalState("");
   const [sending, setSending] = useLocalState(false);
   const [editingComment, setEditingComment] = useLocalState(null);
@@ -1114,14 +1124,48 @@ function AdminAppointmentRow({
     }
   }, [localComments, appt._id, updateAppointmentComments]);
 
-  // Preserve local comments when appointment data is refreshed
+  // Initialize localComments with appointment comments when component mounts
   React.useEffect(() => {
-    // Only update localComments if we don't have any local updates
-    // or if the server data has more comments than our local state
-    if (appt.comments && appt.comments.length > localComments.length) {
+    if (appt.comments && localComments.length === 0) {
+      console.log('🚀 AdminAppointments Chat: Initializing localComments:', {
+        appointmentId: appt._id,
+        commentsCount: appt.comments.length
+      });
       setLocalComments(appt.comments);
     }
-  }, [appt.comments]);
+  }, [appt.comments, localComments.length]);
+
+  // Preserve local comments when appointment data is refreshed
+  React.useEffect(() => {
+    // Update localComments when appointment data changes from parent
+    if (appt.comments) {
+      // Only update if the server data is different from our local state
+      const serverCommentIds = appt.comments.map(c => c._id);
+      const localCommentIds = localComments.map(c => c._id);
+      
+      // Check if we have new comments or if comments have been updated
+      const hasNewComments = appt.comments.length > localComments.length;
+      const hasUpdatedComments = appt.comments.some((serverComment, index) => {
+        const localComment = localComments[index];
+        return !localComment || 
+               localComment.message !== serverComment.message ||
+               localComment.status !== serverComment.status ||
+               localComment.deleted !== serverComment.deleted ||
+               localComment.readBy?.length !== serverComment.readBy?.length;
+      });
+      
+      if (hasNewComments || hasUpdatedComments) {
+        console.log('🔄 AdminAppointments: Syncing localComments with server data', {
+          appointmentId: appt._id,
+          serverCommentsCount: appt.comments.length,
+          localCommentsCount: localComments.length,
+          hasNewComments,
+          hasUpdatedComments
+        });
+        setLocalComments(appt.comments);
+      }
+    }
+  }, [appt.comments, localComments]);
 
   // Track new messages and handle auto-scroll/unread count
   const prevCommentsLengthRef = React.useRef(localComments.length);
@@ -1356,11 +1400,22 @@ function AdminAppointmentRow({
 
   React.useEffect(() => {
     function handleCommentUpdate(data) {
+      console.log('🔔 AdminAppointments Chat: Received commentUpdate event:', {
+        appointmentId: data.appointmentId,
+        commentId: data.comment._id,
+        senderEmail: data.comment.senderEmail,
+        message: data.comment.message?.substring(0, 50) + '...',
+        currentAppointmentId: appt._id,
+        matches: data.appointmentId === appt._id
+      });
+      
       if (data.appointmentId === appt._id) {
         // Don't show notification for deleted messages
         if (data.comment.deleted) {
           return;
         }
+        
+        console.log('🔄 AdminAppointments Chat: Updating localComments for appointment:', appt._id);
         
         setLocalComments((prev) => {
           const idx = prev.findIndex(c => c._id === data.comment._id);
@@ -1374,6 +1429,7 @@ function AdminAppointmentRow({
               status = 'read';
             }
             updated[idx] = { ...incomingComment, status };
+            console.log('📝 AdminAppointments Chat: Updated existing comment:', data.comment._id);
             return updated;
           } else {
             // Only add if not present and not a temporary message
@@ -1383,8 +1439,10 @@ function AdminAppointmentRow({
               if (data.comment.senderEmail !== currentUser.email && !showChatModal && !data.comment.readBy?.includes(currentUser._id)) {
                 setUnreadNewMessages(prev => prev + 1);
               }
+              console.log('📝 AdminAppointments Chat: Added new comment:', data.comment._id);
               return [...prev, data.comment];
             }
+            console.log('📝 AdminAppointments Chat: Skipped comment (temporary or own message):', data.comment._id);
             return prev;
           }
         });
@@ -1764,6 +1822,28 @@ function AdminAppointmentRow({
     setAdminPassword("");
   };
 
+  // Fetch latest comments when chat modal opens
+  const fetchLatestComments = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}`, {
+        credentials: 'include'
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.comments && data.comments.length !== localComments.length) {
+          console.log('🔄 AdminAppointments Chat: Fetched latest comments from server:', {
+            appointmentId: appt._id,
+            serverCommentsCount: data.comments.length,
+            localCommentsCount: localComments.length
+          });
+          setLocalComments(data.comments);
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching latest comments:', err);
+    }
+  };
+
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
     setPasswordLoading(true);
@@ -1779,6 +1859,10 @@ function AdminAppointmentRow({
       if (res.ok && data.success) {
         setShowPasswordModal(false);
         setShowChatModal(true);
+        // Fetch latest comments when chat opens
+        setTimeout(() => {
+          fetchLatestComments();
+        }, 100);
       } else {
         toast.error("Incorrect password. Please try again.");
       }
