@@ -2319,19 +2319,18 @@ function AdminAppointmentRow({
                     }
                   }}
                                       disabled={editingComment ? savingComment === editingComment : !newComment.trim()}
-                  className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-full text-sm font-semibold shadow-lg hover:from-blue-600 hover:to-purple-700 hover:shadow-xl transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:transform-none flex items-center gap-2 min-w-24 hover:shadow-2xl active:scale-95"
+                  className="bg-gradient-to-r from-blue-600 to-purple-700 text-white w-12 h-12 rounded-full shadow-lg hover:from-blue-700 hover:to-purple-800 hover:shadow-xl transform hover:scale-110 transition-all duration-300 disabled:opacity-50 disabled:transform-none flex items-center justify-center hover:shadow-2xl active:scale-95 group"
                 >
                   {editingComment ? (
                     savingComment === editingComment ? (
                       <>
                         <div className="w-4 h-4 border border-white border-t-transparent rounded-full animate-spin"></div>
-                        Saving...
                       </>
                     ) : (
-                      'Save'
+                      <FaPen className="text-lg text-white group-hover:scale-110 transition-transform duration-200" />
                     )
                   ) : (
-                    'Send'
+                    <FaPaperPlane className="text-lg text-white group-hover:scale-110 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all duration-300" />
                   )}
                 </button>
               </div>
