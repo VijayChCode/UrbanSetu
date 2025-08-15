@@ -326,24 +326,29 @@ function AppRoutes({ bootstrapped }) {
         const isOnMyAppointments = currentPath.includes('/my-appointments') || currentPath.includes('/user/my-appointments');
         
         if (!isOnMyAppointments) {
-          // Check if sender is admin by making API call to get user info
+          // Use same logic as MyAppointments page to check if sender is admin
           let senderName = data.comment.senderEmail || 'User';
           
           try {
-            const res = await fetch(`${API_BASE_URL}/api/auth/user/${encodeURIComponent(data.comment.senderEmail)}`, {
+            // Fetch appointment data to check buyer and seller emails
+            const res = await fetch(`${API_BASE_URL}/api/appointments/${data.appointmentId}`, {
               credentials: 'include'
             });
             
             if (res.ok) {
-              const userData = await res.json();
-              // Check if sender is admin by checking their role
-              if (userData.role === 'admin' || userData.role === 'rootadmin') {
-                senderName = 'UrbanSetu';
-              }
+              const appointmentData = await res.json();
+              
+              // Check if sender is admin by checking if senderEmail matches any admin user
+              // Same logic as MyAppointments page
+              const isSenderBuyer = data.comment.senderEmail === appointmentData.buyerId?.email;
+              const isSenderSeller = data.comment.senderEmail === appointmentData.sellerId?.email;
+              const isSenderAdmin = !isSenderBuyer && !isSenderSeller;
+              
+              senderName = isSenderAdmin ? "UrbanSetu" : (data.comment.senderEmail || 'User');
             }
           } catch (error) {
             // If API call fails, fallback to email
-            console.error('Failed to fetch sender info:', error);
+            console.error('Failed to fetch appointment info:', error);
           }
           
           // Show notification for new message
