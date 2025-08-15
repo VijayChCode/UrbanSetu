@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { FaTrash, FaSearch, FaPen, FaPaperPlane, FaUser, FaEnvelope, FaCalendar, FaPhone, FaUserShield, FaArchive, FaUndo, FaCommentDots, FaCheck, FaCheckDouble, FaBan, FaTimes, FaLightbulb, FaCopy, FaEllipsisV, FaInfoCircle } from "react-icons/fa";
 import UserAvatar from '../components/UserAvatar';
 import { useSelector } from "react-redux";
@@ -49,12 +49,24 @@ export default function AdminAppointments() {
   const [updatedComments, setUpdatedComments] = useState({});
 
   // Function to update comments for a specific appointment
-  const updateAppointmentComments = (appointmentId, comments) => {
-    setUpdatedComments(prev => ({
-      ...prev,
-      [appointmentId]: comments
-    }));
-  };
+  const updateAppointmentComments = useCallback((appointmentId, comments) => {
+    setUpdatedComments(prev => {
+      const currentComments = prev[appointmentId];
+      // Only update if there are actual changes
+      if (JSON.stringify(currentComments) !== JSON.stringify(comments)) {
+        console.log('🔄 AdminAppointments: Updating appointment comments:', {
+          appointmentId,
+          oldCount: currentComments?.length || 0,
+          newCount: comments.length
+        });
+        return {
+          ...prev,
+          [appointmentId]: comments
+        };
+      }
+      return prev; // No changes needed
+    });
+  }, []);
 
   // Define fetch functions outside useEffect so they can be used in socket handlers
   const fetchAppointments = useCallback(async () => {
@@ -173,10 +185,14 @@ export default function AdminAppointments() {
             // Find if comment already exists
             const existingCommentIndex = appt.comments?.findIndex(c => c._id === data.comment._id);
             if (existingCommentIndex !== -1) {
-              // Update existing comment
-              const updatedComments = [...(appt.comments || [])];
-              updatedComments[existingCommentIndex] = data.comment;
-              return { ...appt, comments: updatedComments };
+              // Update existing comment - only if there are actual changes
+              const existingComment = appt.comments[existingCommentIndex];
+              if (JSON.stringify(existingComment) !== JSON.stringify(data.comment)) {
+                const updatedComments = [...(appt.comments || [])];
+                updatedComments[existingCommentIndex] = data.comment;
+                return { ...appt, comments: updatedComments };
+              }
+              return appt; // No changes needed
             } else {
               // Add new comment
               const updatedComments = [...(appt.comments || []), data.comment];
@@ -193,10 +209,16 @@ export default function AdminAppointments() {
           if (appt._id === data.appointmentId) {
             const existingCommentIndex = appt.comments?.findIndex(c => c._id === data.comment._id);
             if (existingCommentIndex !== -1) {
-              const updatedComments = [...(appt.comments || [])];
-              updatedComments[existingCommentIndex] = data.comment;
-              return { ...appt, comments: updatedComments };
+              // Update existing comment - only if there are actual changes
+              const existingComment = appt.comments[existingCommentIndex];
+              if (JSON.stringify(existingComment) !== JSON.stringify(data.comment)) {
+                const updatedComments = [...(appt.comments || [])];
+                updatedComments[existingCommentIndex] = data.comment;
+                return { ...appt, comments: updatedComments };
+              }
+              return appt; // No changes needed
             } else {
+              // Add new comment
               const updatedComments = [...(appt.comments || []), data.comment];
               return { ...appt, comments: updatedComments };
             }
@@ -512,55 +534,59 @@ export default function AdminAppointments() {
   };
 
   // Filter and search logic
-  const filteredAppointments = appointments.filter((appt) => {
-    const isOutdated = new Date(appt.date) < new Date() || (new Date(appt.date).toDateString() === new Date().toDateString() && appt.time && appt.time < new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-    const matchesStatus =
-      statusFilter === "all" ? true :
-      statusFilter === "outdated" ? isOutdated :
-      appt.status === statusFilter;
-    const matchesSearch =
-      appt.buyerId?.email?.toLowerCase().includes(search.toLowerCase()) ||
-      appt.sellerId?.email?.toLowerCase().includes(search.toLowerCase()) ||
-      appt.propertyName?.toLowerCase().includes(search.toLowerCase()) ||
-      appt.buyerId?.username?.toLowerCase().includes(search.toLowerCase()) ||
-      appt.sellerId?.username?.toLowerCase().includes(search.toLowerCase());
-    let matchesDate = true;
-    if (startDate) {
-      matchesDate = matchesDate && new Date(appt.date) >= new Date(startDate);
-    }
-    if (endDate) {
-      matchesDate = matchesDate && new Date(appt.date) <= new Date(endDate);
-    }
-    return matchesStatus && matchesSearch && matchesDate;
-  }).map((appt) => ({
-    ...appt,
-    comments: updatedComments[appt._id] || appt.comments || []
-  }));
+  const filteredAppointments = useMemo(() => {
+    return appointments.filter((appt) => {
+      const isOutdated = new Date(appt.date) < new Date() || (new Date(appt.date).toDateString() === new Date().toDateString() && appt.time && appt.time < new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+      const matchesStatus =
+        statusFilter === "all" ? true :
+        statusFilter === "outdated" ? isOutdated :
+        appt.status === statusFilter;
+      const matchesSearch =
+        appt.buyerId?.email?.toLowerCase().includes(search.toLowerCase()) ||
+        appt.sellerId?.email?.toLowerCase().includes(search.toLowerCase()) ||
+        appt.propertyName?.toLowerCase().includes(search.toLowerCase()) ||
+        appt.buyerId?.username?.toLowerCase().includes(search.toLowerCase()) ||
+        appt.sellerId?.username?.toLowerCase().includes(search.toLowerCase());
+      let matchesDate = true;
+      if (startDate) {
+        matchesDate = matchesDate && new Date(appt.date) >= new Date(startDate);
+      }
+      if (endDate) {
+        matchesDate = matchesDate && new Date(appt.date) <= new Date(endDate);
+      }
+      return matchesStatus && matchesSearch && matchesDate;
+    }).map((appt) => ({
+      ...appt,
+      comments: updatedComments[appt._id] || appt.comments || []
+    }));
+  }, [appointments, statusFilter, search, startDate, endDate, updatedComments]);
 
-  const filteredArchivedAppointments = archivedAppointments.filter((appt) => {
-    const isOutdated = new Date(appt.date) < new Date() || (new Date(appt.date).toDateString() === new Date().toDateString() && appt.time && appt.time < new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-    const matchesStatus =
-      statusFilter === "all" ? true :
-      statusFilter === "outdated" ? isOutdated :
-      appt.status === statusFilter;
-    const matchesSearch =
-      appt.buyerId?.email?.toLowerCase().includes(search.toLowerCase()) ||
-      appt.sellerId?.email?.toLowerCase().includes(search.toLowerCase()) ||
-      appt.propertyName?.toLowerCase().includes(search.toLowerCase()) ||
-      appt.buyerId?.username?.toLowerCase().includes(search.toLowerCase()) ||
-      appt.sellerId?.username?.toLowerCase().includes(search.toLowerCase());
-    let matchesDate = true;
-    if (startDate) {
-      matchesDate = matchesDate && new Date(appt.date) >= new Date(startDate);
-    }
-    if (endDate) {
-      matchesDate = matchesDate && new Date(appt.date) <= new Date(endDate);
-    }
-    return matchesStatus && matchesSearch && matchesDate;
-  }).map((appt) => ({
-    ...appt,
-    comments: updatedComments[appt._id] || appt.comments || []
-  }));
+  const filteredArchivedAppointments = useMemo(() => {
+    return archivedAppointments.filter((appt) => {
+      const isOutdated = new Date(appt.date) < new Date() || (new Date(appt.date).toDateString() === new Date().toDateString() && appt.time && appt.time < new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+      const matchesStatus =
+        statusFilter === "all" ? true :
+        statusFilter === "outdated" ? isOutdated :
+        appt.status === statusFilter;
+      const matchesSearch =
+        appt.buyerId?.email?.toLowerCase().includes(search.toLowerCase()) ||
+        appt.sellerId?.email?.toLowerCase().includes(search.toLowerCase()) ||
+        appt.propertyName?.toLowerCase().includes(search.toLowerCase()) ||
+        appt.buyerId?.username?.toLowerCase().includes(search.toLowerCase()) ||
+        appt.sellerId?.username?.toLowerCase().includes(search.toLowerCase());
+      let matchesDate = true;
+      if (startDate) {
+        matchesDate = matchesDate && new Date(appt.date) >= new Date(startDate);
+      }
+      if (endDate) {
+        matchesDate = matchesDate && new Date(appt.date) <= new Date(endDate);
+      }
+      return matchesStatus && matchesSearch && matchesDate;
+    }).map((appt) => ({
+      ...appt,
+      comments: updatedComments[appt._id] || appt.comments || []
+    }));
+  }, [archivedAppointments, statusFilter, search, startDate, endDate, updatedComments]);
 
   // Add this function to fetch latest data on demand
   const handleManualRefresh = async () => {
@@ -1117,12 +1143,21 @@ function AdminAppointmentRow({
     }
   }, [showChatModal]);
 
-  // Sync localComments back to parent component whenever they change
+  // Sync localComments back to parent component whenever they change - but only when necessary
   React.useEffect(() => {
-    if (updateAppointmentComments) {
-      updateAppointmentComments(appt._id, localComments);
+    if (updateAppointmentComments && localComments.length > 0) {
+      // Only update if there are actual changes to prevent unnecessary re-renders
+      const currentStoredComments = updatedComments[appt._id] || [];
+      if (JSON.stringify(currentStoredComments) !== JSON.stringify(localComments)) {
+        console.log('🔄 AdminAppointments Chat: Updating parent with localComments:', {
+          appointmentId: appt._id,
+          localCommentsCount: localComments.length,
+          storedCommentsCount: currentStoredComments.length
+        });
+        updateAppointmentComments(appt._id, localComments);
+      }
     }
-  }, [localComments, appt._id, updateAppointmentComments]);
+  }, [localComments, appt._id, updateAppointmentComments, updatedComments]);
 
   // Initialize localComments with appointment comments when component mounts
   React.useEffect(() => {
@@ -1133,39 +1168,25 @@ function AdminAppointmentRow({
       });
       setLocalComments(appt.comments);
     }
-  }, [appt.comments, localComments.length]);
+  }, [appt._id, appt.comments?.length]);
 
-  // Preserve local comments when appointment data is refreshed
+  // Preserve local comments when appointment data is refreshed - only when necessary
   React.useEffect(() => {
-    // Update localComments when appointment data changes from parent
-    if (appt.comments) {
-      // Only update if the server data is different from our local state
-      const serverCommentIds = appt.comments.map(c => c._id);
-      const localCommentIds = localComments.map(c => c._id);
+    if (appt.comments && localComments.length > 0) {
+      // Only update if we have significantly different comment counts or if comments are missing
+      const commentCountDiff = Math.abs(appt.comments.length - localComments.length);
       
-      // Check if we have new comments or if comments have been updated
-      const hasNewComments = appt.comments.length > localComments.length;
-      const hasUpdatedComments = appt.comments.some((serverComment, index) => {
-        const localComment = localComments[index];
-        return !localComment || 
-               localComment.message !== serverComment.message ||
-               localComment.status !== serverComment.status ||
-               localComment.deleted !== serverComment.deleted ||
-               localComment.readBy?.length !== serverComment.readBy?.length;
-      });
-      
-      if (hasNewComments || hasUpdatedComments) {
-        console.log('🔄 AdminAppointments: Syncing localComments with server data', {
+      if (commentCountDiff > 1) {
+        console.log('🔄 AdminAppointments: Syncing localComments due to significant count difference', {
           appointmentId: appt._id,
           serverCommentsCount: appt.comments.length,
           localCommentsCount: localComments.length,
-          hasNewComments,
-          hasUpdatedComments
+          difference: commentCountDiff
         });
         setLocalComments(appt.comments);
       }
     }
-  }, [appt.comments, localComments]);
+  }, [appt._id, appt.comments?.length]);
 
   // Track new messages and handle auto-scroll/unread count
   const prevCommentsLengthRef = React.useRef(localComments.length);
@@ -1421,13 +1442,21 @@ function AdminAppointmentRow({
           const idx = prev.findIndex(c => c._id === data.comment._id);
           if (idx !== -1) {
             // Update the existing comment in place, but do not downgrade 'read' to 'delivered'
-            const updated = [...prev];
             const localComment = prev[idx];
             const incomingComment = data.comment;
+            
+            // Check if there are actual changes to prevent unnecessary updates
+            if (JSON.stringify(localComment) === JSON.stringify(incomingComment)) {
+              console.log('📝 AdminAppointments Chat: No changes needed for comment:', data.comment._id);
+              return prev;
+            }
+            
             let status = incomingComment.status;
             if (localComment.status === 'read' && incomingComment.status !== 'read') {
               status = 'read';
             }
+            
+            const updated = [...prev];
             updated[idx] = { ...incomingComment, status };
             console.log('📝 AdminAppointments Chat: Updated existing comment:', data.comment._id);
             return updated;
