@@ -317,7 +317,7 @@ function AppRoutes({ bootstrapped }) {
   useEffect(() => {
     if (!currentUser) return; // Only run if user is logged in
     
-    const handleNewMessage = (data) => {
+    const handleNewMessage = async (data) => {
       // Since backend now only sends to intended recipients, we can trust this message is for us
       // Just check if it's not from the current user
       if (data.comment && data.comment.senderEmail !== currentUser.email) {
@@ -326,8 +326,27 @@ function AppRoutes({ bootstrapped }) {
         const isOnMyAppointments = currentPath.includes('/my-appointments') || currentPath.includes('/user/my-appointments');
         
         if (!isOnMyAppointments) {
+          // Check if sender is admin by making API call to get user info
+          let senderName = data.comment.senderEmail || 'User';
+          
+          try {
+            const res = await fetch(`${API_BASE_URL}/api/auth/user/${encodeURIComponent(data.comment.senderEmail)}`, {
+              credentials: 'include'
+            });
+            
+            if (res.ok) {
+              const userData = await res.json();
+              // Check if sender is admin by checking their role
+              if (userData.role === 'admin' || userData.role === 'rootadmin') {
+                senderName = 'UrbanSetu';
+              }
+            }
+          } catch (error) {
+            // If API call fails, fallback to email
+            console.error('Failed to fetch sender info:', error);
+          }
+          
           // Show notification for new message
-          const senderName = data.comment.senderEmail || 'User';
           toast.info(`New message from ${senderName}`, {
             onClick: () => {
               // Navigate to MyAppointments page when notification is clicked
