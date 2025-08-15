@@ -328,6 +328,14 @@ export default function AdminAppointments() {
     // Listen for socket connection events
     const handleConnect = () => {
       console.log('🔌 AdminAppointments: Socket connected');
+      // Re-join admin appointments rooms on reconnect to receive real-time updates
+      if (currentUser) {
+        socket.emit('adminAppointmentsActive', { 
+          adminId: currentUser._id,
+          role: currentUser.role 
+        });
+        console.log('🔌 AdminAppointments: Re-joined admin appointments rooms on connect');
+      }
     };
     const handleDisconnect = () => {
       console.log('🔌 AdminAppointments: Socket disconnected');
@@ -344,7 +352,7 @@ export default function AdminAppointments() {
       socket.off('connect', handleConnect);
       socket.off('disconnect', handleDisconnect);
     };
-  }, [fetchAppointments, fetchArchivedAppointments]);
+  }, [fetchAppointments, fetchArchivedAppointments, currentUser]);
 
   // Lock background scroll when user modal is open
   useEffect(() => {
