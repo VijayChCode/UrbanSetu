@@ -1026,6 +1026,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const [showMessageInfoModal, setShowMessageInfoModal] = useState(false);
   const [selectedMessageForInfo, setSelectedMessageForInfo] = useState(null);
   const [sendIconAnimating, setSendIconAnimating] = useState(false);
+  const [sendIconSent, setSendIconSent] = useState(false);
 
   // Auto-close shortcut tip after 10 seconds
   useEffect(() => {
@@ -1038,7 +1039,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   // Reset send icon animation after completion
   useEffect(() => {
     if (sendIconAnimating) {
-      const timer = setTimeout(() => setSendIconAnimating(false), 800);
+      const timer = setTimeout(() => {
+        setSendIconAnimating(false);
+        setSendIconSent(true);
+        // Reset sent state after showing success animation
+        const sentTimer = setTimeout(() => setSendIconSent(false), 1000);
+        return () => clearTimeout(sentTimer);
+      }, 800);
       return () => clearTimeout(timer);
     }
   }, [sendIconAnimating]);
@@ -2884,7 +2891,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                         <FaPen className="text-lg text-white group-hover:scale-110 transition-transform duration-200" />
                       )
                     ) : (
-                      <FaPaperPlane className={`text-lg text-white group-hover:scale-110 transition-all duration-300 send-icon ${sendIconAnimating ? 'animate-fly' : ''}`} />
+                      <div className="relative">
+                        {sendIconSent ? (
+                          <FaCheck className="text-lg text-white group-hover:scale-110 transition-all duration-300 send-icon animate-sent" />
+                        ) : (
+                          <FaPaperPlane className={`text-lg text-white group-hover:scale-110 transition-all duration-300 send-icon ${sendIconAnimating ? 'animate-fly' : ''}`} />
+                        )}
+                      </div>
                     )}
                   </button>
                 </div>
@@ -2953,6 +2966,23 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   }
                   .send-icon.animate-fly {
                     animation: sendIconFly 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+                  }
+                  @keyframes sentSuccess {
+                    0% { 
+                      transform: scale(0.8); 
+                      opacity: 0;
+                    }
+                    50% { 
+                      transform: scale(1.2); 
+                      opacity: 1;
+                    }
+                    100% { 
+                      transform: scale(1); 
+                      opacity: 1;
+                    }
+                  }
+                  .send-icon.animate-sent {
+                    animation: sentSuccess 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
                   }
                 `}</style>
               </>
