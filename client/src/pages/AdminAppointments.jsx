@@ -1088,16 +1088,6 @@ function AdminAppointmentRow({
   confirmUnarchive
 }) {
   const [localComments, setLocalComments] = useLocalState(appt.comments || []);
-  
-  // Debug log when component mounts
-  React.useEffect(() => {
-    console.log('🚀 AdminAppointmentRow mounted:', {
-      appointmentId: appt._id,
-      initialCommentsCount: appt.comments?.length || 0,
-      localCommentsCount: localComments.length,
-      hasComments: !!appt.comments
-    });
-  }, [appt._id, appt.comments?.length, localComments.length]);
   const [newComment, setNewComment] = useLocalState("");
   const [sending, setSending] = useLocalState(false);
   const [editingComment, setEditingComment] = useLocalState(null);
@@ -1172,10 +1162,6 @@ function AdminAppointmentRow({
     if (updateAppointmentComments && localComments.length > 0) {
       try {
         // Update parent with local comments to maintain synchronization
-        console.log('🔄 AdminAppointments Chat: Updating parent with localComments:', {
-          appointmentId: appt._id,
-          localCommentsCount: localComments.length
-        });
         updateAppointmentComments(appt._id, localComments);
       } catch (error) {
         console.error('Error updating parent with localComments:', error);
@@ -1240,10 +1226,6 @@ function AdminAppointmentRow({
    // Initialize localComments with appointment comments when component mounts
   React.useEffect(() => {
     if (appt.comments && localComments.length === 0) {
-      console.log('🚀 AdminAppointments Chat: Initializing localComments:', {
-        appointmentId: appt._id,
-        commentsCount: appt.comments.length
-      });
       setLocalComments(appt.comments);
     }
   }, [appt._id, appt.comments?.length]);
@@ -1255,12 +1237,6 @@ function AdminAppointmentRow({
       const commentCountDiff = Math.abs(appt.comments.length - localComments.length);
       
       if (commentCountDiff > 1) {
-        console.log('🔄 AdminAppointments: Syncing localComments due to significant count difference', {
-          appointmentId: appt._id,
-          serverCommentsCount: appt.comments.length,
-          localCommentsCount: localComments.length,
-          difference: commentCountDiff
-        });
         setLocalComments(appt.comments);
       }
     }
