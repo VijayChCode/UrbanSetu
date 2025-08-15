@@ -330,8 +330,8 @@ function AppRoutes({ bootstrapped }) {
           let senderName = data.comment.senderEmail || 'User';
           
           try {
-            // Check if sender is admin by fetching user info
-            const res = await fetch(`${API_BASE_URL}/api/auth/user/${encodeURIComponent(data.comment.senderEmail)}`, {
+            // Check if sender is admin by fetching user info using the correct endpoint
+            const res = await fetch(`${API_BASE_URL}/api/user/check-email/${encodeURIComponent(data.comment.senderEmail)}`, {
               credentials: 'include'
             });
             
