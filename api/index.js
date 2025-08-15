@@ -174,10 +174,7 @@ io.on('connection', (socket) => {
     onlineUsers.add(userId);
     lastSeenTimes.delete(userId); // Remove last seen when user comes online
     io.emit('userOnlineUpdate', { userId, online: true });
-
-    console.log(`🔌 User ${userId} connected to socket room: ${userId}`);
-    console.log(`🔌 User ${userId} socket ID: ${socket.id}`);
-    console.log(`🔌 User ${userId} joined room: ${userId}`);
+    
     // If user was offline and just came online, mark all pending messages as delivered
     if (wasOffline) {
       try {
@@ -240,10 +237,7 @@ io.on('connection', (socket) => {
       // Store admin socket reference for future use
       socket.adminId = adminId;
       socket.adminRole = role;
-
-        console.log(`🔌 Admin ${adminId} socket ID: ${socket.id}`);
-        console.log(`🔌 Admin ${adminId} joined ${allBookings.length} appointment rooms`);
-        
+      
     } catch (err) {
       console.error('Error joining admin to appointment rooms:', err);
     }
