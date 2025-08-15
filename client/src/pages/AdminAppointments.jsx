@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { FaTrash, FaSearch, FaPen, FaPaperPlane, FaUser, FaEnvelope, FaCalendar, FaPhone, FaUserShield, FaArchive, FaUndo, FaCommentDots, FaCheck, FaCheckDouble, FaBan, FaTimes, FaLightbulb, FaCopy, FaEllipsisV, FaInfoCircle } from "react-icons/fa";
 import UserAvatar from '../components/UserAvatar';
 import { useSelector } from "react-redux";
@@ -56,29 +56,36 @@ export default function AdminAppointments() {
     }));
   };
 
+  // Define fetch functions outside useEffect so they can be used in socket handlers
+  const fetchAppointments = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/bookings`, { credentials: 'include' });
+      const data = await res.json();
+      setAppointments(data);
+      setLoading(false);
+    } catch (err) {
+      console.error("Failed to fetch appointments", err);
+      setLoading(false);
+    }
+  }, []);
+
+  const fetchArchivedAppointments = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/archived`, {
+        credentials: 'include'
+      });
+      const data = await res.json();
+      setArchivedAppointments(data);
+    } catch (err) {
+      console.error("Failed to fetch archived appointments", err);
+    }
+  }, []);
+
   useEffect(() => {
-    const fetchAppointments = async () => {
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/bookings`, { credentials: 'include' });
-        const data = await res.json();
-        setAppointments(data);
-        setLoading(false);
-      } catch (err) {
-        console.error("Failed to fetch appointments", err);
-        setLoading(false);
-      }
-    };
-    const fetchArchivedAppointments = async () => {
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/bookings/archived`, {
-          credentials: 'include'
-        });
-        const data = await res.json();
-        setArchivedAppointments(data);
-      } catch (err) {
-        console.error("Failed to fetch archived appointments", err);
-      }
-    };
+    // Check socket connection status
+    console.log('🔌 AdminAppointments: Socket connected:', socket.connected);
+    console.log('🔌 AdminAppointments: Socket ID:', socket.id);
+    
     fetchAppointments();
     fetchArchivedAppointments();
     const interval = setInterval(() => {
@@ -145,12 +152,94 @@ export default function AdminAppointments() {
       }));
     };
     socket.on('profileUpdated', handleProfileUpdate);
+
+    // Listen for real-time comment updates to refresh appointments
+    const handleCommentUpdate = (data) => {
+      console.log('🔔 AdminAppointments: Received commentUpdate event:', data);
+      
+      // Update the specific appointment's comments in real-time
+      setAppointments(prev => 
+        prev.map(appt => {
+          if (appt._id === data.appointmentId) {
+            // Find if comment already exists
+            const existingCommentIndex = appt.comments?.findIndex(c => c._id === data.comment._id);
+            if (existingCommentIndex !== -1) {
+              // Update existing comment
+              const updatedComments = [...(appt.comments || [])];
+              updatedComments[existingCommentIndex] = data.comment;
+              return { ...appt, comments: updatedComments };
+            } else {
+              // Add new comment
+              const updatedComments = [...(appt.comments || []), data.comment];
+              return { ...appt, comments: updatedComments };
+            }
+          }
+          return appt;
+        })
+      );
+      
+      // Also update archived appointments if needed
+      setArchivedAppointments(prev => 
+        prev.map(appt => {
+          if (appt._id === data.appointmentId) {
+            const existingCommentIndex = appt.comments?.findIndex(c => c._id === data.comment._id);
+            if (existingCommentIndex !== -1) {
+              const updatedComments = [...(appt.comments || [])];
+              updatedComments[existingCommentIndex] = data.comment;
+              return { ...appt, comments: updatedComments };
+            } else {
+              const updatedComments = [...(appt.comments || []), data.comment];
+              return { ...appt, comments: updatedComments };
+            }
+          }
+          return appt;
+        })
+      );
+    };
+    socket.on('commentUpdate', handleCommentUpdate);
+
+    // Listen for appointment updates
+    const handleAppointmentUpdate = (data) => {
+      setAppointments(prev => 
+        prev.map(appt => 
+          appt._id === data.appointmentId ? { ...appt, ...data.updatedAppointment } : appt
+        )
+      );
+      setArchivedAppointments(prev => 
+        prev.map(appt => 
+          appt._id === data.appointmentId ? { ...appt, ...data.updatedAppointment } : appt
+        )
+      );
+    };
+    socket.on('appointmentUpdate', handleAppointmentUpdate);
+
+    // Listen for new appointments
+    const handleAppointmentCreated = (data) => {
+      const newAppt = data.appointment;
+      setAppointments(prev => [newAppt, ...prev]);
+    };
+    socket.on('appointmentCreated', handleAppointmentCreated);
+
+    // Listen for socket connection events
+    const handleConnect = () => {
+      console.log('🔌 AdminAppointments: Socket connected');
+    };
+    const handleDisconnect = () => {
+      console.log('🔌 AdminAppointments: Socket disconnected');
+    };
+    socket.on('connect', handleConnect);
+    socket.on('disconnect', handleDisconnect);
     
     return () => {
       clearInterval(interval);
       socket.off('profileUpdated', handleProfileUpdate);
+      socket.off('commentUpdate', handleCommentUpdate);
+      socket.off('appointmentUpdate', handleAppointmentUpdate);
+      socket.off('appointmentCreated', handleAppointmentCreated);
+      socket.off('connect', handleConnect);
+      socket.off('disconnect', handleDisconnect);
     };
-  }, []);
+  }, [fetchAppointments, fetchArchivedAppointments]);
 
   // Lock background scroll when user modal is open
   useEffect(() => {
