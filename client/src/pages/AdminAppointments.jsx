@@ -971,6 +971,7 @@ function AdminAppointmentRow({
   // Message info modal state
   const [showMessageInfoModal, setShowMessageInfoModal] = useLocalState(false);
   const [selectedMessageForInfo, setSelectedMessageForInfo] = useLocalState(null);
+  const [sendIconAnimating, setSendIconAnimating] = useLocalState(false);
 
   const selectedMessageForHeaderOptions = headerOptionsMessageId ? localComments.find(msg => msg._id === headerOptionsMessageId) : null;
 
@@ -983,6 +984,14 @@ function AdminAppointmentRow({
       return () => clearTimeout(timer);
     }
   }, [showShortcutTip]);
+
+  // Reset send icon animation after completion
+  React.useEffect(() => {
+    if (sendIconAnimating) {
+      const timer = setTimeout(() => setSendIconAnimating(false), 600);
+      return () => clearTimeout(timer);
+    }
+  }, [sendIconAnimating]);
 
   // Removed handleClickOutside functionality - options now only close when clicking three dots again
 
@@ -1332,6 +1341,9 @@ function AdminAppointmentRow({
 
   const handleCommentSend = async () => {
     if (!newComment.trim()) return;
+    
+    // Trigger send icon animation
+    setSendIconAnimating(true);
     
     // Store the message content and reply before clearing the input
     const messageContent = newComment.trim();
@@ -2330,7 +2342,7 @@ function AdminAppointmentRow({
                       <FaPen className="text-lg text-white group-hover:scale-110 transition-transform duration-200" />
                     )
                   ) : (
-                    <FaPaperPlane className="text-lg text-white group-hover:scale-110 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all duration-300" />
+                    <FaPaperPlane className={`text-lg text-white group-hover:scale-110 transition-all duration-300 send-icon ${sendIconAnimating ? 'animate-fly' : ''}`} />
                   )}
                 </button>
               </div>
@@ -2368,10 +2380,18 @@ function AdminAppointmentRow({
                   from { opacity: 0; transform: translateY(-20px) scale(0.95); }
                   to { opacity: 1; transform: translateY(0) scale(1); }
                 }
-                .animate-slideInFromTop {
-                  animation: slideInFromTop 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
-                }
-              `}</style>
+                                  .animate-slideInFromTop {
+                    animation: slideInFromTop 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+                  }
+                  @keyframes sendIconFly {
+                    0% { transform: translate(0, 0) scale(1); }
+                    50% { transform: translate(8px, -8px) scale(1.1); }
+                    100% { transform: translate(0, 0) scale(1); }
+                  }
+                  .send-icon.animate-fly {
+                    animation: sendIconFly 0.6s ease-in-out;
+                  }
+                `}</style>
               
                              {/* Floating Scroll to bottom button - WhatsApp style */}
                {!isAtBottom && !editingComment && !replyTo && (

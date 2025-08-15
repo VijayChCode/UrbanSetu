@@ -1025,6 +1025,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   // Message info modal state
   const [showMessageInfoModal, setShowMessageInfoModal] = useState(false);
   const [selectedMessageForInfo, setSelectedMessageForInfo] = useState(null);
+  const [sendIconAnimating, setSendIconAnimating] = useState(false);
 
   // Auto-close shortcut tip after 10 seconds
   useEffect(() => {
@@ -1033,6 +1034,14 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       return () => clearTimeout(timer);
     }
   }, [showShortcutTip]);
+
+  // Reset send icon animation after completion
+  useEffect(() => {
+    if (sendIconAnimating) {
+      const timer = setTimeout(() => setSendIconAnimating(false), 600);
+      return () => clearTimeout(timer);
+    }
+  }, [sendIconAnimating]);
 
   // Removed handleClickOutside functionality - options now only close when clicking three dots again
 
@@ -1169,6 +1178,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
 
   const handleCommentSend = async () => {
     if (!comment.trim()) return;
+    
+    // Trigger send icon animation
+    setSendIconAnimating(true);
     
     // Store the message content and reply before clearing the input
     const messageContent = comment.trim();
@@ -2872,7 +2884,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                         <FaPen className="text-lg text-white group-hover:scale-110 transition-transform duration-200" />
                       )
                     ) : (
-                      <FaPaperPlane className="text-lg text-white group-hover:scale-110 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all duration-300" />
+                      <FaPaperPlane className={`text-lg text-white group-hover:scale-110 transition-all duration-300 send-icon ${sendIconAnimating ? 'animate-fly' : ''}`} />
                     )}
                   </button>
                 </div>
@@ -2912,6 +2924,14 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   }
                   .animate-slideInFromTop {
                     animation: slideInFromTop 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+                  }
+                  @keyframes sendIconFly {
+                    0% { transform: translate(0, 0) scale(1); }
+                    50% { transform: translate(8px, -8px) scale(1.1); }
+                    100% { transform: translate(0, 0) scale(1); }
+                  }
+                  .send-icon.animate-fly {
+                    animation: sendIconFly 0.6s ease-in-out;
                   }
                 `}</style>
               </>
