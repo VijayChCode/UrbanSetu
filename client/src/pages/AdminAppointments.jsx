@@ -86,6 +86,15 @@ export default function AdminAppointments() {
     console.log('🔌 AdminAppointments: Socket connected:', socket.connected);
     console.log('🔌 AdminAppointments: Socket ID:', socket.id);
     
+    // Join admin appointments room to receive real-time updates
+    if (socket.connected && currentUser) {
+      socket.emit('adminAppointmentsActive', { 
+        adminId: currentUser._id,
+        role: currentUser.role 
+      });
+      console.log('🔌 AdminAppointments: Joined admin appointments room');
+    }
+    
     fetchAppointments();
     fetchArchivedAppointments();
     const interval = setInterval(() => {

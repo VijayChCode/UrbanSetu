@@ -215,6 +215,34 @@ io.on('connection', (socket) => {
     }, 5000); // 5 seconds of inactivity = offline
   });
 
+  // Listen for admin appointments active
+  socket.on('adminAppointmentsActive', async ({ adminId, role }) => {
+    console.log('Admin appointments active:', adminId, role);
+    
+    // Join admin to all appointment rooms to receive real-time updates
+    try {
+      const booking = require('./models/booking.model.js');
+      const allBookings = await booking.find({});
+      
+      for (const appt of allBookings) {
+        // Join admin to each appointment room
+        socket.join(`appointment_${appt._id}`);
+        console.log(`Admin ${adminId} joined appointment room: appointment_${appt._id}`);
+      }
+      
+      // Also join admin to a general admin room
+      socket.join(`admin_${adminId}`);
+      console.log(`Admin ${adminId} joined admin room: admin_${adminId}`);
+      
+      // Store admin socket reference for future use
+      socket.adminId = adminId;
+      socket.adminRole = role;
+      
+    } catch (err) {
+      console.error('Error joining admin to appointment rooms:', err);
+    }
+  });
+
   // Listen for online status checks
   socket.on('checkUserOnline', ({ userId }) => {
     const isOnline = onlineUsers.has(userId);
@@ -233,12 +261,43 @@ io.on('connection', (socket) => {
       lastSeenTimes.set(thisUserId, new Date().toISOString()); // Store last seen time
       io.emit('userOnlineUpdate', { userId: thisUserId, online: false, lastSeen: lastSeenTimes.get(thisUserId) });
     }
+    
+    // Clean up admin room memberships
+    if (socket.adminId) {
+      console.log(`Admin ${socket.adminId} disconnected, cleaning up room memberships`);
+      // Leave all appointment rooms
+      const booking = require('./models/booking.model.js');
+      booking.find({}).then(bookings => {
+        for (const appt of bookings) {
+          socket.leave(`appointment_${appt._id}`);
+        }
+      }).catch(err => {
+        console.error('Error cleaning up admin appointment rooms:', err);
+      });
+      
+      // Leave admin room
+      socket.leave(`admin_${socket.adminId}`);
+    }
+    
     if (socket.onlineTimeout) clearTimeout(socket.onlineTimeout);
   });
 
   // Example: Listen for a new comment event from client (optional)
   socket.on('newComment', (data) => {
     io.emit('commentUpdate', data);
+  });
+
+  // Listen for new appointments to join admin to new appointment rooms
+  socket.on('appointmentCreated', (data) => {
+    // Find all admin sockets and join them to the new appointment room
+    const adminSockets = Array.from(io.sockets.sockets.values()).filter(s => 
+      s.user && (s.user.role === 'admin' || s.user.role === 'rootadmin')
+    );
+    
+    for (const adminSocket of adminSockets) {
+      adminSocket.join(`appointment_${data.appointment._id}`);
+      console.log(`Admin ${adminSocket.user._id} joined new appointment room: appointment_${data.appointment._id}`);
+    }
   });
 });
 

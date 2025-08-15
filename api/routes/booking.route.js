@@ -89,6 +89,8 @@ router.post("/", verifyToken, async (req, res) => {
     const io = req.app.get('io');
     if (io) {
       io.emit('appointmentCreated', { appointment: newBooking });
+      // Also emit to admin rooms for real-time updates
+      io.to('admin_*').emit('appointmentCreated', { appointment: newBooking });
     }
     // Notify seller
     try {
@@ -239,6 +241,8 @@ router.patch('/:id/status', verifyToken, async (req, res) => {
     const io = req.app.get('io');
     if (io) {
       io.emit('appointmentUpdate', { appointmentId: id, updatedAppointment: updated });
+      // Also emit to admin rooms for real-time updates
+      io.to('admin_*').emit('appointmentUpdate', { appointmentId: id, updatedAppointment: updated });
     }
 
     res.status(200).json(updated);
@@ -308,6 +312,9 @@ router.post('/:id/comment', verifyToken, async (req, res) => {
       
       // Also emit to the sender for their own message sync
       io.to(userId).emit('commentUpdate', { appointmentId: id, comment: newCommentObj });
+      
+      // Emit to appointment room for admin access
+      io.to(`appointment_${id}`).emit('commentUpdate', { appointmentId: id, comment: newCommentObj });
       
       // Only mark as delivered if the intended recipient is online
       const onlineUsers = req.app.get('onlineUsers') || new Set();
@@ -439,8 +446,10 @@ router.delete('/:id/comment/:commentId', verifyToken, async (req, res) => {
     const io = req.app.get('io');
     if (io) {
       // Emit to both buyer and seller for comment deletion updates
-      io.to(bookingToUpdate.buyerId.toString()).emit('commentUpdate', { appointmentId: id, comment: commentForEmission });
-      io.to(bookingToUpdate.sellerId.toString()).emit('commentUpdate', { appointmentId: id, comment: commentForEmission });
+              io.to(bookingToUpdate.buyerId.toString()).emit('commentUpdate', { appointmentId: id, comment: commentForEmission });
+        io.to(bookingToUpdate.sellerId.toString()).emit('commentUpdate', { appointmentId: id, comment: commentForEmission });
+        // Emit to appointment room for admin access
+        io.to(`appointment_${id}`).emit('commentUpdate', { appointmentId: id, comment: commentForEmission });
       console.log('📡 Socket emitted with preserved content');
     }
     // Return updated comments array
@@ -563,6 +572,8 @@ router.patch('/:id/comment/:commentId', verifyToken, async (req, res) => {
         // Emit to both buyer and seller for comment edit updates
         io.to(appointment.buyerId.toString()).emit('commentUpdate', { appointmentId: id, comment });
         io.to(appointment.sellerId.toString()).emit('commentUpdate', { appointmentId: id, comment });
+        // Emit to appointment room for admin access
+        io.to(`appointment_${id}`).emit('commentUpdate', { appointmentId: id, comment });
       }
     }
     // Return updated comments array
@@ -1372,6 +1383,8 @@ router.post("/admin", verifyToken, async (req, res) => {
     const io = req.app.get('io');
     if (io) {
       io.emit('appointmentCreated', { appointment: newBooking });
+      // Also emit to admin rooms for real-time updates
+      io.to('admin_*').emit('appointmentCreated', { appointment: newBooking });
     }
     // Notify buyer
     try {
