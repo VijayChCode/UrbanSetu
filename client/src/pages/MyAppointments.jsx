@@ -681,7 +681,7 @@ export default function MyAppointments() {
             </select>
           </div>
           <div className="flex items-center gap-2">
-            <FaSearch className="text-gray-500" />
+            <FaSearch className="text-gray-500 hover:text-blue-500 transition-colors duration-200" />
             <input
               type="text"
               className="border rounded px-2 py-1 focus:outline-none focus:ring focus:ring-blue-200"
@@ -1025,6 +1025,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   // Message info modal state
   const [showMessageInfoModal, setShowMessageInfoModal] = useState(false);
   const [selectedMessageForInfo, setSelectedMessageForInfo] = useState(null);
+  const [sendIconAnimating, setSendIconAnimating] = useState(false);
+  const [sendIconSent, setSendIconSent] = useState(false);
 
   // Auto-close shortcut tip after 10 seconds
   useEffect(() => {
@@ -1033,6 +1035,20 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       return () => clearTimeout(timer);
     }
   }, [showShortcutTip]);
+
+  // Reset send icon animation after completion
+  useEffect(() => {
+    if (sendIconAnimating) {
+      const timer = setTimeout(() => {
+        setSendIconAnimating(false);
+        setSendIconSent(true);
+        // Reset sent state after showing success animation
+        const sentTimer = setTimeout(() => setSendIconSent(false), 1000);
+        return () => clearTimeout(sentTimer);
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+  }, [sendIconAnimating]);
 
   // Removed handleClickOutside functionality - options now only close when clicking three dots again
 
@@ -1065,7 +1081,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   // Check if chat should be disabled (for outdated, pending, rejected, or cancelled by admin appointments)
   const isChatDisabled = !isUpcoming || appt.status === 'pending' || appt.status === 'rejected' || appt.status === 'cancelledByAdmin';
   
-  const canSeeContactInfo = (isAdmin || appt.status === 'accepted') && isUpcoming;
+  const canSeeContactInfo = (isAdmin || appt.status === 'accepted') && isUpcoming && 
+    appt.status !== 'cancelledByBuyer' && appt.status !== 'cancelledBySeller' && 
+    appt.status !== 'cancelledByAdmin' && appt.status !== 'rejected' && 
+    appt.status !== 'deletedByAdmin';
   const otherParty = isSeller ? appt.buyerId : appt.sellerId;
 
   // Handle delete confirmation modal
@@ -1166,6 +1185,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
 
   const handleCommentSend = async () => {
     if (!comment.trim()) return;
+    
+    // Trigger send icon animation
+    setSendIconAnimating(true);
     
     // Store the message content and reply before clearing the input
     const messageContent = comment.trim();
@@ -2367,7 +2389,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       </tr>
       {showChatModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-md flex items-center justify-center z-50 p-4">
-          <div className="bg-gradient-to-br from-white via-blue-50 to-purple-50 rounded-3xl shadow-2xl w-full h-full max-w-6xl max-h-full p-0 relative animate-fadeIn flex flex-col border border-gray-200">
+          <div className="bg-gradient-to-br from-white via-blue-50 to-purple-50 rounded-3xl shadow-2xl w-full h-full max-w-6xl max-h-full p-0 relative animate-fadeIn flex flex-col border border-gray-200 transform transition-all duration-500 hover:shadow-3xl">
             { isChatDisabled ? (
               <div className="flex flex-col items-center justify-center flex-1 p-8 min-h-96">
                 <FaCommentDots className="text-6xl text-gray-400 mb-6" />
@@ -2394,7 +2416,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
               </div>
             ) : (
               <>
-                <div className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 rounded-t-3xl relative">
+                <div className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-4 border-b-2 border-blue-700 bg-gradient-to-r from-blue-700 via-purple-700 to-blue-900 rounded-t-3xl relative shadow-2xl">
                   {headerOptionsMessageId && selectedMessageForHeaderOptions ? (
                     // Header-level options overlay (options + close icon only)
                     <div className="flex items-center justify-between w-full">
@@ -2616,12 +2638,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   )}
                 </div>
                 
-                <div ref={chatContainerRef} className="flex-1 overflow-y-auto space-y-2 mb-4 px-4 pt-4 animate-fadeInChat relative" style={{minHeight: '400px', maxHeight: 'calc(100vh - 200px)'}}>
+                <div ref={chatContainerRef} className="flex-1 overflow-y-auto space-y-2 mb-4 px-4 pt-4 animate-fadeInChat relative bg-gradient-to-b from-transparent to-blue-50/30" style={{minHeight: '400px', maxHeight: 'calc(100vh - 200px)'}}>
                   {/* Privacy Notice - First item in chat */}
                   <div 
-                    className={`px-4 py-3 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg mb-4 transform transition-all duration-500 hover:scale-105 hover:shadow-lg hover:bg-blue-100 hover:border-blue-500 hover:border-l-6 ${
-                      privacyNoticeHighlighted ? 'animate-attentionGlow shadow-lg border-blue-500 bg-blue-100 scale-105' : 
-                      isAtBottom ? 'animate-slideInFromTop shadow-lg border-blue-500 bg-blue-100 animate-attentionGlow' : 'animate-gentlePulse'
+                    className={`px-4 py-3 bg-gradient-to-r from-blue-50 to-purple-50 border-l-4 border-blue-400 rounded-r-lg mb-4 transform transition-all duration-500 hover:scale-105 hover:shadow-lg hover:from-blue-100 hover:to-purple-100 hover:border-blue-500 hover:border-l-6 backdrop-blur-sm ${
+                      privacyNoticeHighlighted ? 'animate-attentionGlow shadow-lg border-blue-500 bg-gradient-to-r from-blue-100 to-purple-100 scale-105' : 
+                      isAtBottom ? 'animate-slideInFromTop shadow-lg border-blue-500 bg-gradient-to-r from-blue-100 to-purple-100 animate-attentionGlow' : 'animate-gentlePulse'
                     }`}
                     style={{
                       animationDelay: privacyNoticeHighlighted ? '0s' : (isAtBottom ? '0s' : '0s'),
@@ -2680,10 +2702,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           <div
                             ref={el => messageRefs.current[c._id] = el}
                             data-message-id={c._id}
-                            className={`rounded-2xl px-4 sm:px-5 py-3 text-sm shadow-xl max-w-[90%] sm:max-w-[80%] md:max-w-[70%] break-words overflow-hidden relative transition-all duration-200 min-h-[60px] ${
+                            className={`rounded-2xl px-4 sm:px-5 py-3 text-sm shadow-xl max-w-[90%] sm:max-w-[80%] md:max-w-[70%] break-words overflow-hidden relative transition-all duration-300 min-h-[60px] transform hover:scale-[1.02] ${
                               isMe 
-                                ? 'bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-500 hover:to-purple-600 text-white shadow-blue-200 hover:shadow-blue-300' 
-                                : 'bg-white hover:bg-gray-50 text-gray-800 border border-gray-200 shadow-gray-200 hover:shadow-lg hover:border-gray-300'
+                                ? 'bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-500 hover:to-purple-600 text-white shadow-blue-200 hover:shadow-blue-300 hover:shadow-2xl' 
+                                : 'bg-white hover:bg-gray-50 text-gray-800 border border-gray-200 shadow-gray-200 hover:shadow-lg hover:border-gray-300 hover:shadow-xl'
                             }`}
                             style={{ animationDelay: `${0.03 * index}s` }}
                           >
@@ -2800,7 +2822,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 <div className="flex gap-2 mt-1 px-3 pb-2">
                   <textarea
                     rows={1}
-                    className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-400 shadow-lg transition-all duration-200 bg-white resize-y whitespace-pre-wrap break-all"
+                    className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-400 shadow-lg transition-all duration-300 bg-white resize-y whitespace-pre-wrap break-all hover:border-blue-300 hover:shadow-xl focus:shadow-2xl transform hover:scale-[1.01]"
                     placeholder={editingComment ? "Edit your message..." : "Type a message..."}
                     value={comment}
                     onChange={e => {
@@ -2858,37 +2880,109 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       }
     }}
                     disabled={editingComment ? savingComment === editingComment : !comment.trim()}
-                    className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-full text-sm font-semibold shadow-lg hover:from-blue-600 hover:to-purple-700 hover:shadow-xl transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:transform-none flex items-center gap-2 min-w-24"
+                    className="bg-gradient-to-r from-blue-600 to-purple-700 text-white w-12 h-12 rounded-full shadow-lg hover:from-blue-700 hover:to-purple-800 hover:shadow-xl transform hover:scale-110 transition-all duration-300 disabled:opacity-50 disabled:transform-none flex items-center justify-center hover:shadow-2xl active:scale-95 group"
                   >
                     {editingComment ? (
                       savingComment === editingComment ? (
                         <>
                           <div className="w-4 h-4 border border-white border-t-transparent rounded-full animate-spin"></div>
-                          Saving...
                         </>
                       ) : (
-                        'Save'
+                        <FaPen className="text-lg text-white group-hover:scale-110 transition-transform duration-200" />
                       )
                     ) : (
-                      'Send'
+                      <div className="relative">
+                        {sendIconSent ? (
+                          <FaCheck className="text-lg text-white group-hover:scale-110 transition-all duration-300 send-icon animate-sent" />
+                        ) : (
+                          <FaPaperPlane className={`text-lg text-white group-hover:scale-110 transition-all duration-300 send-icon ${sendIconAnimating ? 'animate-fly' : ''}`} />
+                        )}
+                      </div>
                     )}
                   </button>
                 </div>
                 {/* Animations for chat bubbles */}
                 <style jsx>{`
                   @keyframes fadeInChatBubble {
-                    from { opacity: 0; transform: translateY(10px) scale(0.98); }
+                    from { opacity: 0; transform: translateY(20px) scale(0.95); }
                     to { opacity: 1; transform: translateY(0) scale(1); }
                   }
                   .animate-fadeInChatBubble {
-                    animation: fadeInChatBubble 0.4s cubic-bezier(0.4,0,0.2,1) both;
+                    animation: fadeInChatBubble 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
                   }
                   @keyframes fadeInChat {
-                    from { opacity: 0; }
-                    to { opacity: 1; }
+                    from { opacity: 0; transform: translateY(10px); }
+                    to { opacity: 1; transform: translateY(0); }
                   }
                   .animate-fadeInChat {
-                    animation: fadeInChat 0.3s cubic-bezier(0.4,0,0.2,1) both;
+                    animation: fadeInChat 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+                  }
+                  @keyframes gentlePulse {
+                    0%, 100% { opacity: 1; transform: scale(1); }
+                    50% { opacity: 0.9; transform: scale(1.01); }
+                  }
+                  .animate-gentlePulse {
+                    animation: gentlePulse 3s ease-in-out infinite;
+                  }
+                  @keyframes attentionGlow {
+                    0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
+                    50% { box-shadow: 0 0 30px rgba(59, 130, 246, 0.6); }
+                  }
+                  .animate-attentionGlow {
+                    animation: attentionGlow 2s ease-in-out infinite;
+                  }
+                  @keyframes slideInFromTop {
+                    from { opacity: 0; transform: translateY(-20px) scale(0.95); }
+                    to { opacity: 1; transform: translateY(0) scale(1); }
+                  }
+                  .animate-slideInFromTop {
+                    animation: slideInFromTop 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+                  }
+                  @keyframes sendIconFly {
+                    0% { 
+                      transform: translate(0, 0) scale(1); 
+                      opacity: 1;
+                    }
+                    20% { 
+                      transform: translate(0, 0) scale(1.2); 
+                      opacity: 1;
+                    }
+                    40% { 
+                      transform: translate(15px, -20px) scale(1.3); 
+                      opacity: 0.8;
+                    }
+                    60% { 
+                      transform: translate(25px, -35px) scale(1.4); 
+                      opacity: 0.6;
+                    }
+                    80% { 
+                      transform: translate(15px, -20px) scale(1.2); 
+                      opacity: 0.8;
+                    }
+                    100% { 
+                      transform: translate(0, 0) scale(1); 
+                      opacity: 1;
+                    }
+                  }
+                  .send-icon.animate-fly {
+                    animation: sendIconFly 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+                  }
+                  @keyframes sentSuccess {
+                    0% { 
+                      transform: scale(0.8); 
+                      opacity: 0;
+                    }
+                    50% { 
+                      transform: scale(1.2); 
+                      opacity: 1;
+                    }
+                    100% { 
+                      transform: scale(1); 
+                      opacity: 1;
+                    }
+                  }
+                  .send-icon.animate-sent {
+                    animation: sentSuccess 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
                   }
                 `}</style>
               </>
