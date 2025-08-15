@@ -47,18 +47,65 @@ export default function AdminAppointments() {
  
    // Add state to track updated comments for each appointment
   const [updatedComments, setUpdatedComments] = useState({});
+  
+  // Add ref to prevent infinite loops in comment updates
+  const isUpdatingCommentsRef = useRef(false);
 
   // Function to update comments for a specific appointment
   const updateAppointmentComments = useCallback((appointmentId, comments) => {
+    // Prevent infinite loops
+    if (isUpdatingCommentsRef.current) {
+      return;
+    }
+    
     setUpdatedComments(prev => {
       const currentComments = prev[appointmentId];
-      // Only update if there are actual changes
-      if (JSON.stringify(currentComments) !== JSON.stringify(comments)) {
+      // Only update if there are actual changes and the change is not just a count difference
+      if (currentComments && comments) {
+        // Check if this is just a count update or actual content change
+        const hasContentChanges = comments.some((comment, index) => {
+          const currentComment = currentComments[index];
+          return !currentComment || JSON.stringify(currentComment) !== JSON.stringify(comment);
+        });
+        
+        if (hasContentChanges) {
+          // Set flag to prevent infinite loops
+          isUpdatingCommentsRef.current = true;
+          
+          console.log('🔄 AdminAppointments: Updating appointment comments:', {
+            appointmentId,
+            oldCount: currentComments?.length || 0,
+            newCount: comments.length,
+            hasContentChanges: true
+          });
+          
+          // Reset flag after a short delay
+          setTimeout(() => {
+            isUpdatingCommentsRef.current = false;
+          }, 100);
+          
+          return {
+            ...prev,
+            [appointmentId]: comments
+          };
+        }
+      } else if (JSON.stringify(currentComments) !== JSON.stringify(comments)) {
+        // Handle case where one of them is null/undefined
+        // Set flag to prevent infinite loops
+        isUpdatingCommentsRef.current = true;
+        
         console.log('🔄 AdminAppointments: Updating appointment comments:', {
           appointmentId,
           oldCount: currentComments?.length || 0,
-          newCount: comments.length
+          newCount: comments?.length || 0,
+          hasContentChanges: true
         });
+        
+        // Reset flag after a short delay
+        setTimeout(() => {
+          isUpdatingCommentsRef.current = false;
+        }, 100);
+        
         return {
           ...prev,
           [appointmentId]: comments
@@ -1121,6 +1168,9 @@ function AdminAppointmentRow({
   const [selectedMessageForInfo, setSelectedMessageForInfo] = useLocalState(null);
   const [sendIconAnimating, setSendIconAnimating] = useLocalState(false);
   const [sendIconSent, setSendIconSent] = useLocalState(false);
+  
+  // Add ref to prevent infinite loops
+  const isUpdatingRef = React.useRef(false);
 
   const selectedMessageForHeaderOptions = headerOptionsMessageId ? localComments.find(msg => msg._id === headerOptionsMessageId) : null;
 
@@ -1159,18 +1209,41 @@ function AdminAppointmentRow({
 
   // Sync localComments back to parent component whenever they change - but only when necessary
   React.useEffect(() => {
-    if (updateAppointmentComments && localComments.length > 0) {
+    if (updateAppointmentComments && localComments.length > 0 && !isUpdatingRef.current) {
       try {
-        // Update parent with local comments to maintain synchronization
-        updateAppointmentComments(appt._id, localComments);
+        // Only update parent if there are actual content changes, not just count updates
+        const currentParentComments = appt.comments || [];
+        const hasContentChanges = localComments.some((comment, index) => {
+          const parentComment = currentParentComments[index];
+          return !parentComment || JSON.stringify(parentComment) !== JSON.stringify(comment);
+        });
+        
+        if (hasContentChanges) {
+          // Set flag to prevent infinite loops
+          isUpdatingRef.current = true;
+          
+          // Update parent with local comments to maintain synchronization
+          updateAppointmentComments(appt._id, localComments);
+          
+          // Reset flag after a short delay
+          setTimeout(() => {
+            isUpdatingRef.current = false;
+          }, 100);
+        }
       } catch (error) {
         console.error('Error updating parent with localComments:', error);
+        isUpdatingRef.current = false;
       }
     }
-  }, [localComments, appt._id, updateAppointmentComments]);
+  }, [localComments, appt._id, updateAppointmentComments, appt.comments]);
 
   // Listen for comment updates from parent component (socket events)
   React.useEffect(() => {
+    // Skip if we're currently updating to prevent infinite loops
+    if (isUpdatingRef.current) {
+      return;
+    }
+    
     // This effect will run when appt.comments changes (from parent socket updates)
     const serverComments = appt.comments || [];
     
@@ -1185,9 +1258,19 @@ function AdminAppointmentRow({
         hasContentChanges: hasChanges
       });
       
-      // Update localComments with the latest from parent
-      setLocalComments(serverComments);
+      // Only update if the changes are from external sources (not from our own local updates)
+      const hasExternalChanges = serverComments.some(serverComment => {
+        const localComment = localComments.find(local => local._id === serverComment._id);
+        return !localComment || JSON.stringify(localComment) !== JSON.stringify(serverComment);
+      });
+      
+      if (hasExternalChanges) {
+        // Set flag to prevent infinite loops
+        isUpdatingRef.current = true;
         
+        // Update localComments with the latest from parent
+        setLocalComments(serverComments);
+          
         // Handle unread message count and auto-scroll for new messages
         if (serverComments.length > localComments.length) {
           // New messages were added
@@ -1215,13 +1298,19 @@ function AdminAppointmentRow({
                 fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/read`, {
                   method: 'PATCH',
                   credentials: 'include'
-                                });
-               }, 100);
+                });
+              }, 100);
             }
           }
         }
+        
+        // Reset flag after a short delay
+        setTimeout(() => {
+          isUpdatingRef.current = false;
+        }, 100);
       }
-    }, [appt.comments, appt._id, showChatModal, isAtBottom, currentUser.email]);
+    }
+  }, [appt.comments, appt._id, showChatModal, isAtBottom, currentUser.email]);
  
    // Initialize localComments with appointment comments when component mounts
   React.useEffect(() => {
