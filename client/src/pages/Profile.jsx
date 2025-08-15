@@ -1331,73 +1331,125 @@ export default function Profile() {
                   />
                 </div>
                 {currentUser.role === 'admin' && (
-                  <div className={`absolute -top-2 -right-2 bg-purple-500 text-white rounded-full p-2 ${animationClasses.bounceIn} animation-delay-300 ${animationClasses.float}`}>
-                    <FaCrown className="w-4 h-4" />
+                  <div className={`absolute -top-2 -right-2 bg-blue-500 text-white rounded-full p-3 shadow-xl z-20 ${animationClasses.bounceIn} animation-delay-300 ${animationClasses.float}`}>
+                    <FaCrown className="w-5 h-5" />
                   </div>
                 )}
                 {currentUser.isDefaultAdmin && (
-                  <div className={`absolute -bottom-2 -right-2 bg-red-500 text-white rounded-full p-2 ${animationClasses.bounceIn} animation-delay-450 ${animationClasses.pulse}`}>
-                    <FaCrown className="w-3 h-3" />
+                  <div className={`absolute -bottom-2 -right-2 bg-red-500 text-white rounded-full p-3 ${animationClasses.bounceIn} animation-delay-450 ${animationClasses.pulse}`}>
+                    <FaCrown className="w-5 h-5" />
                   </div>
                 )}
               </div>
               <div className={`mt-4 sm:mt-0 w-full ${isVisible ? animationClasses.fadeInLeft + ' animation-delay-300' : 'opacity-0 -translate-x-8'}`}>
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 flex flex-wrap items-center justify-center sm:justify-start">
-                  <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                    {currentUser.username}
-                  </span>
-                  {currentUser.role === 'admin' && (
-                    <span className="ml-2 bg-purple-100 text-purple-800 text-sm px-3 py-1 rounded-full font-medium transform transition-all duration-300 hover:scale-110 hover:bg-purple-200">
-                      Admin
+                {/* Name and Role Section */}
+                <div className="text-center sm:text-left mb-4">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                    <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                      {currentUser.username}
                     </span>
-                  )}
-                  {currentUser.isDefaultAdmin && (
-                    <span className="ml-2 bg-red-100 text-red-800 text-sm px-3 py-1 rounded-full font-medium transform transition-all duration-300 hover:scale-110 hover:bg-red-200 animate-pulse">
-                      Default Admin
-                    </span>
-                  )}
-                </h1>
-                <p className="text-gray-600 flex flex-wrap items-center justify-center sm:justify-start break-all transition-all duration-300 hover:text-blue-600">
-                  <FaEnvelope className="w-4 h-4 mr-2 transform transition-all duration-300 hover:scale-125" />
-                  {currentUser.email}
-                </p>
-                <p className="text-gray-600 flex flex-wrap items-center justify-center sm:justify-start break-all transition-all duration-300 hover:text-green-600">
-                  <FaPhone className="w-4 h-4 mr-2 transform transition-all duration-300 hover:scale-125" />
-                  {currentUser.mobileNumber && currentUser.mobileNumber !== "0000000000" 
-                    ? `+91 ${currentUser.mobileNumber.slice(0, 5)} ${currentUser.mobileNumber.slice(5)}`
-                    : "Mobile number not provided"
-                  }
-                  {currentUser.isGeneratedMobile && (
-                    <span className="text-xs text-gray-400 ml-2">(Generated for Google signup)</span>
-                  )}
-                </p>
+                    {currentUser.role === 'admin' && (
+                      <span className="bg-purple-100 text-purple-800 text-sm px-3 py-1 rounded-full font-medium transform transition-all duration-300 hover:scale-110 hover:bg-purple-200 flex items-center gap-1">
+                        <FaCrown className="w-3 h-3 text-blue-500" />
+                        Admin
+                      </span>
+                    )}
+                    {currentUser.isDefaultAdmin && (
+                      <span className="bg-red-100 text-red-800 text-sm px-3 py-1 rounded-full font-medium transform transition-all duration-300 hover:scale-110 hover:bg-red-200 animate-pulse flex items-center gap-1">
+                        <FaCrown className="w-3 h-3 text-red-500" />
+                        Default Admin
+                      </span>
+                    )}
+                    {currentUser.role === 'user' && (
+                      <span className="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full font-medium transform transition-all duration-300 hover:scale-110 hover:bg-blue-200">
+                        User
+                      </span>
+                    )}
+                  </h1>
+                </div>
 
-                <p className="text-gray-600 flex flex-wrap items-center justify-center sm:justify-start break-all transition-all duration-300 hover:text-purple-600">
-                  <FaUser className="w-4 h-4 mr-2 transform transition-all duration-300 hover:scale-125" />
-                  {currentUser.gender || "Gender not provided"}
-                </p>
-                <p className="text-gray-600 flex flex-wrap items-center justify-center sm:justify-start break-all transition-all duration-300 hover:text-blue-600">
-                  <FaHome className="w-4 h-4 mr-2 transform transition-all duration-300 hover:scale-125" />
-                  {currentUser.address || "Address not provided"}
-                </p>
-                {/* Show "Complete your profile" message when any field is empty */}
+                {/* Contact Information Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                  {/* Email */}
+                  <div className="bg-gray-50 rounded-lg p-3 border border-gray-200 hover:border-blue-300 transition-all duration-300 hover:shadow-md">
+                    <div className="flex items-center">
+                      <FaEnvelope className="w-4 h-4 mr-3 text-blue-500 flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs text-gray-500 font-medium mb-1">Email</p>
+                        <p className="text-gray-700 text-sm break-all">{currentUser.email}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Mobile */}
+                  <div className="bg-gray-50 rounded-lg p-3 border border-gray-200 hover:border-green-300 transition-all duration-300 hover:shadow-md">
+                    <div className="flex items-center">
+                      <FaPhone className="w-4 h-4 mr-3 text-green-500 flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs text-gray-500 font-medium mb-1">Mobile</p>
+                        <p className="text-gray-700 text-sm">
+                          {currentUser.mobileNumber && currentUser.mobileNumber !== "0000000000" 
+                            ? `+91 ${currentUser.mobileNumber.slice(0, 5)} ${currentUser.mobileNumber.slice(5)}`
+                            : "Not provided"
+                          }
+                          {currentUser.isGeneratedMobile && (
+                            <span className="text-xs text-gray-400 block">(Generated for Google signup)</span>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Gender */}
+                  <div className="bg-gray-50 rounded-lg p-3 border border-gray-200 hover:border-purple-300 transition-all duration-300 hover:shadow-md">
+                    <div className="flex items-center">
+                      <FaUser className="w-4 h-4 mr-3 text-purple-500 flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs text-gray-500 font-medium mb-1">Gender</p>
+                        <p className="text-gray-700 text-sm capitalize">{currentUser.gender || "Not provided"}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Address */}
+                  <div className="bg-gray-50 rounded-lg p-3 border border-gray-200 hover:border-blue-300 transition-all duration-300 hover:shadow-md">
+                    <div className="flex items-start">
+                      <FaHome className="w-4 h-4 mr-3 text-blue-500 flex-shrink-0 mt-0.5" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs text-gray-500 font-medium mb-1">Address</p>
+                        <p className="text-gray-700 text-sm break-words">{currentUser.address || "Not provided"}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Profile Completion Status */}
                 {(!currentUser.gender || !currentUser.address || !currentUser.mobileNumber) && (
-                  <p className="text-sm text-amber-600 text-center sm:text-left mt-2 transition-all duration-300 hover:text-amber-700 font-medium">
-                    (Complete your profile)
-                  </p>
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
+                    <p className="text-sm text-amber-700 font-medium text-center sm:text-left">
+                      ⚠️ Complete your profile for better experience
+                    </p>
+                  </div>
                 )}
-                <p className="text-sm text-gray-500 text-center sm:text-left mt-1 transition-all duration-300 hover:text-gray-700">
-                  Member since {formatDate(currentUser.createdAt)}
-                </p>
+
+                {/* Member Since */}
+                <div className="text-center sm:text-left">
+                  <p className="text-sm text-gray-500 transition-all duration-300 hover:text-gray-700">
+                    <FaCalendarAlt className="w-3 h-3 inline mr-1" />
+                    Member since {formatDate(currentUser.createdAt)}
+                  </p>
+                </div>
               </div>
             </div>
-            <button
-              onClick={() => setIsEditing(!isEditing)}
-              className={`bg-gradient-to-r from-blue-500 to-purple-500 text-white px-3 sm:px-6 py-2 sm:py-3 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 hover:rotate-1 shadow-lg font-semibold flex items-center gap-1 sm:gap-2 text-sm sm:text-base w-full sm:w-auto justify-center group ${isVisible ? animationClasses.fadeInRight + ' animation-delay-450' : 'opacity-0 translate-x-8'}`}
-            >
-              <FaEdit className={`w-4 h-4 transition-transform duration-300 ${isEditing ? 'rotate-180' : ''} group-hover:${animationClasses.wiggle}`} />
-              {isEditing ? 'Cancel Edit' : 'Edit Profile'}
-            </button>
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => setIsEditing(!isEditing)}
+                className={`bg-gradient-to-r from-blue-500 to-purple-500 text-white px-5 sm:px-4 py-4 sm:py-2 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 hover:rotate-1 shadow-lg font-semibold flex items-center gap-2 sm:gap-2 text-base sm:text-sm w-full sm:w-auto justify-center group ${isVisible ? animationClasses.fadeInRight + ' animation-delay-450' : 'opacity-0 translate-x-8'}`}
+               >
+                 <FaEdit className={`w-5 h-5 transition-transform duration-300 ${isEditing ? 'rotate-180' : ''} group-hover:${animationClasses.wiggle}`} />
+                 {isEditing ? 'Cancel Edit' : 'Edit Profile'}
+               </button>
+            </div>
           </div>
         </div>
 
@@ -1710,7 +1762,7 @@ export default function Profile() {
                       <label htmlFor="otp" className="block text-sm font-medium text-gray-700 mb-2">
                         Enter OTP
                       </label>
-                      <div className="flex flex-col sm:flex-row gap-3 sm:gap-2">
+                      <div className="flex flex-row gap-2">
                         <input
                           type="text"
                           placeholder="Enter 6-digit OTP"
@@ -1718,15 +1770,15 @@ export default function Profile() {
                           value={otp}
                           onChange={(e) => setOtp(e.target.value)}
                           maxLength="6"
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                          className="flex-1 px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm sm:text-base"
                         />
                         <button
                           type="button"
                           onClick={handleVerifyOTP}
                           disabled={verifyLoading || !otp}
-                          className="w-full sm:w-auto px-4 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                          className="px-3 py-2 sm:px-4 sm:py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 text-sm sm:text-base whitespace-nowrap"
                         >
-                          {verifyLoading ? "Verifying..." : "Verify OTP"}
+                          {verifyLoading ? "Verifying..." : "Verify"}
                         </button>
                       </div>
                       <div className="flex items-center justify-between mt-2">
