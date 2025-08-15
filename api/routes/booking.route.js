@@ -305,10 +305,21 @@ router.post('/:id/comment', verifyToken, async (req, res) => {
       
       // Determine the recipient of the message
       const isBuyer = bookingToComment.buyerId.toString() === userId;
-      const recipientId = isBuyer ? bookingToComment.sellerId.toString() : bookingToComment.buyerId.toString();
+
+      const isSeller = bookingToComment.sellerId.toString() === userId;
+      const isAdmin = !isBuyer && !isSeller;
       
-      // Emit to the specific recipient only
-      io.to(recipientId).emit('commentUpdate', { appointmentId: id, comment: newCommentObj });
+      if (isAdmin) {
+        // If admin is sending, emit to both buyer and seller
+        console.log(`🔔 Admin message: Emitting to buyer ${bookingToComment.buyerId.toString()} and seller ${bookingToComment.sellerId.toString()}`);
+        io.to(bookingToComment.buyerId.toString()).emit('commentUpdate', { appointmentId: id, comment: newCommentObj });
+        io.to(bookingToComment.sellerId.toString()).emit('commentUpdate', { appointmentId: id, comment: newCommentObj });
+      } else {
+        // If buyer or seller is sending, emit to the other party
+        const recipientId = isBuyer ? bookingToComment.sellerId.toString() : bookingToComment.buyerId.toString();
+        console.log(`🔔 User message: Emitting to recipient ${recipientId}`);
+        io.to(recipientId).emit('commentUpdate', { appointmentId: id, comment: newCommentObj });
+      }
       
       // Also emit to the sender for their own message sync
       io.to(userId).emit('commentUpdate', { appointmentId: id, comment: newCommentObj });
@@ -318,19 +329,40 @@ router.post('/:id/comment', verifyToken, async (req, res) => {
       
       // Only mark as delivered if the intended recipient is online
       const onlineUsers = req.app.get('onlineUsers') || new Set();
-      
-      if (onlineUsers.has(recipientId)) {
-        // Recipient is online, mark as delivered immediately
-        await booking.findOneAndUpdate(
-          { _id: id, 'comments._id': newCommentObj._id },
-          { $set: { 'comments.$.status': 'delivered', 'comments.$.deliveredAt': new Date() } }
-        );
-        // Emit delivery status immediately
-        io.emit('commentDelivered', { appointmentId: id, commentId: newCommentObj._id });
+
+      if (isAdmin) {
+        // If admin is sending, check if both buyer and seller are online
+        const buyerOnline = onlineUsers.has(bookingToComment.buyerId.toString());
+        const sellerOnline = onlineUsers.has(bookingToComment.sellerId.toString());
+        
+        if (buyerOnline || sellerOnline) {
+          // Mark as delivered if at least one recipient is online
+          await booking.findOneAndUpdate(
+            { _id: id, 'comments._id': newCommentObj._id },
+            { $set: { 'comments.$.status': 'delivered', 'comments.$.deliveredAt': new Date() } }
+          );
+          // Emit delivery status immediately
+          io.emit('commentDelivered', { appointmentId: id, commentId: newCommentObj._id });
+        } else {
+          console.log(`Message sent to offline users, status remains 'sent'`);
+        }
       } else {
-        // Recipient is offline, keep status as "sent"
-        // When they come online, the socket handler will mark it as delivered
-        console.log(`Message sent to offline user ${recipientId}, status remains 'sent'`);
+        // If buyer or seller is sending, check if the other party is online
+        const recipientId = isBuyer ? bookingToComment.sellerId.toString() : bookingToComment.buyerId.toString();
+        
+        if (onlineUsers.has(recipientId)) {
+          // Recipient is online, mark as delivered immediately
+          await booking.findOneAndUpdate(
+            { _id: id, 'comments._id': newCommentObj._id },
+            { $set: { 'comments.$.status': 'delivered', 'comments.$.deliveredAt': new Date() } }
+          );
+          // Emit delivery status immediately
+          io.emit('commentDelivered', { appointmentId: id, commentId: newCommentObj._id });
+        } else {
+          // Recipient is offline, keep status as "sent"
+          // When they come online, the socket handler will mark it as delivered
+          console.log(`Message sent to offline user ${recipientId}, status remains 'sent'`);
+        }
       }
     }
     
