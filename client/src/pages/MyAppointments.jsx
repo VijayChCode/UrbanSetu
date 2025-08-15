@@ -1038,7 +1038,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   // Reset send icon animation after completion
   useEffect(() => {
     if (sendIconAnimating) {
-      const timer = setTimeout(() => setSendIconAnimating(false), 600);
+      const timer = setTimeout(() => setSendIconAnimating(false), 800);
       return () => clearTimeout(timer);
     }
   }, [sendIconAnimating]);
@@ -2926,12 +2926,33 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                     animation: slideInFromTop 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
                   }
                   @keyframes sendIconFly {
-                    0% { transform: translate(0, 0) scale(1); }
-                    50% { transform: translate(8px, -8px) scale(1.1); }
-                    100% { transform: translate(0, 0) scale(1); }
+                    0% { 
+                      transform: translate(0, 0) scale(1); 
+                      opacity: 1;
+                    }
+                    20% { 
+                      transform: translate(0, 0) scale(1.2); 
+                      opacity: 1;
+                    }
+                    40% { 
+                      transform: translate(15px, -20px) scale(1.3); 
+                      opacity: 0.8;
+                    }
+                    60% { 
+                      transform: translate(25px, -35px) scale(1.4); 
+                      opacity: 0.6;
+                    }
+                    80% { 
+                      transform: translate(15px, -20px) scale(1.2); 
+                      opacity: 0.8;
+                    }
+                    100% { 
+                      transform: translate(0, 0) scale(1); 
+                      opacity: 1;
+                    }
                   }
                   .send-icon.animate-fly {
-                    animation: sendIconFly 0.6s ease-in-out;
+                    animation: sendIconFly 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
                   }
                 `}</style>
               </>
