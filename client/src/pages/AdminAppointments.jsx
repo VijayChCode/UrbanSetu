@@ -1868,7 +1868,7 @@ function AdminAppointmentRow({
         {showChatModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-md flex items-center justify-center z-50 p-4">
             <div className="bg-gradient-to-br from-white via-blue-50 to-purple-50 rounded-3xl shadow-2xl w-full h-full max-w-6xl max-h-full p-0 relative animate-fadeIn flex flex-col border border-gray-200 transform transition-all duration-500 hover:shadow-3xl">
-              <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 rounded-t-3xl relative shadow-lg">
+              <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-700 via-purple-700 to-blue-900 rounded-t-3xl relative shadow-2xl ring-2 ring-blue-800">
                 {headerOptionsMessageId && selectedMessageForHeaderOptions ? (
                   <div className="flex items-center justify-between w-full">
                     <div className="flex items-center gap-3">
