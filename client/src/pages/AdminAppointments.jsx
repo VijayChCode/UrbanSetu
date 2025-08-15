@@ -638,8 +638,6 @@ export default function AdminAppointments() {
 
   // Function to copy message to clipboard
   const copyMessageToClipboard = (messageText) => {
-    console.log('Copy button clicked, message:', messageText);
-    
     if (!messageText) {
       toast.error('No message to copy');
       return;
@@ -679,7 +677,6 @@ export default function AdminAppointments() {
       document.body.removeChild(textArea);
       
       if (success) {
-        console.log('Copy successful via fallback method');
         toast.success('Copied', {
           autoClose: 2000,
           position: 'bottom-center'
