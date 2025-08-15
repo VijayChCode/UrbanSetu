@@ -644,7 +644,7 @@ export default function AdminManagement() {
         <div className="mb-6 animate-fadeIn">
           <div className="relative max-w-md">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <FaSearch className="h-5 w-5 text-gray-400" />
+              <FaSearch className="h-5 w-5 text-gray-400 group-hover:text-blue-500 transition-colors duration-200" />
             </div>
             <input
               id="admin-management-search"
@@ -933,6 +933,17 @@ export default function AdminManagement() {
                         month: '2-digit',
                         year: 'numeric'
                       }) : ''}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-700 text-sm">
+                      <FaCalendarAlt className="text-blue-400" />
+                      <span><strong>Last Updated Profile:</strong> {selectedAccount.updatedAt ? new Date(selectedAccount.updatedAt).toLocaleDateString('en-GB', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric'
+                      }) + ' ' + new Date(selectedAccount.updatedAt).toLocaleTimeString('en-GB', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      }) : 'Never'}</span>
                     </div>
                     <div className="flex items-center gap-2 text-gray-700 text-sm">
                       <FaList className="text-green-400" />
