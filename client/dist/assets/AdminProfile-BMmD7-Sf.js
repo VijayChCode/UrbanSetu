@@ -1,0 +1,1 @@
+import{j as r}from"./index-CcTWR4Jy.js";import e from"./Profile-ChXSkzMv.js";import"./ContactSupportWrapper-Bxh4QkJ6.js";function m(){return r.jsx("div",{className:"min-h-screen bg-gradient-to-br from-blue-50 to-purple-100 py-10 px-2 md:px-8",children:r.jsx(e,{})})}export{m as default};

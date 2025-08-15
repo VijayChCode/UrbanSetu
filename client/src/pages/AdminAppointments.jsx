@@ -1232,16 +1232,15 @@ function AdminAppointmentRow({
                 fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/read`, {
                   method: 'PATCH',
                   credentials: 'include'
-                });
-              }, 100);
+                                });
+               }, 100);
             }
           }
         }
       }
-    }
-  }, [appt.comments, appt._id, showChatModal, isAtBottom, currentUser.email]);
-
-  // Initialize localComments with appointment comments when component mounts
+    }, [appt.comments, appt._id, showChatModal, isAtBottom, currentUser.email]);
+ 
+   // Initialize localComments with appointment comments when component mounts
   React.useEffect(() => {
     if (appt.comments && localComments.length === 0) {
       console.log('🚀 AdminAppointments Chat: Initializing localComments:', {
