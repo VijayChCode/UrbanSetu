@@ -226,6 +226,26 @@ export default function AdminAppointments() {
           return appt;
         })
       );
+
+      // Update the updatedComments state to trigger child component updates
+      setUpdatedComments(prev => {
+        const currentComments = prev[data.appointmentId] || [];
+        const newComments = [...currentComments];
+        
+        const existingCommentIndex = newComments.findIndex(c => c._id === data.comment._id);
+        if (existingCommentIndex !== -1) {
+          // Update existing comment
+          newComments[existingCommentIndex] = data.comment;
+        } else {
+          // Add new comment
+          newComments.push(data.comment);
+        }
+        
+        return {
+          ...prev,
+          [data.appointmentId]: newComments
+        };
+      });
     };
     socket.on('commentUpdate', handleCommentUpdate);
 
@@ -1159,6 +1179,60 @@ function AdminAppointmentRow({
     }
   }, [localComments, appt._id, updateAppointmentComments]);
 
+  // Listen for comment updates from parent component (socket events)
+  React.useEffect(() => {
+    // This effect will run when appt.comments changes (from parent socket updates)
+    if (appt.comments && appt.comments.length > 0) {
+      // Only update localComments if there are actual changes to prevent unnecessary re-renders
+      const commentCountDiff = Math.abs(appt.comments.length - localComments.length);
+      
+      if (commentCountDiff > 0) {
+        console.log('🔄 AdminAppointments Chat: Received update from parent:', {
+          appointmentId: appt._id,
+          serverCommentsCount: appt.comments.length,
+          localCommentsCount: localComments.length,
+          difference: commentCountDiff
+        });
+        
+        // Update localComments with the latest from parent
+        setLocalComments(appt.comments);
+        
+        // Handle unread message count and auto-scroll for new messages
+        if (commentCountDiff > 0 && appt.comments.length > localComments.length) {
+          // New messages were added
+          const newMessages = appt.comments.slice(localComments.length);
+          const receivedMessages = newMessages.filter(msg => msg.senderEmail !== currentUser.email);
+          
+          if (receivedMessages.length > 0) {
+            // Increment unread count for messages from other users
+            if (!showChatModal) {
+              setUnreadNewMessages(prev => prev + receivedMessages.length);
+            }
+            
+            // Auto-scroll if chat is open and user is at bottom
+            if (showChatModal && isAtBottom) {
+              setTimeout(() => {
+                if (chatEndRef.current) {
+                  chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+                }
+              }, 100);
+            }
+            
+            // Mark messages as read if chat is open
+            if (showChatModal) {
+              setTimeout(() => {
+                fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/read`, {
+                  method: 'PATCH',
+                  credentials: 'include'
+                });
+              }, 100);
+            }
+          }
+        }
+      }
+    }
+  }, [appt.comments, appt._id, showChatModal, isAtBottom, currentUser.email]);
+
   // Initialize localComments with appointment comments when component mounts
   React.useEffect(() => {
     if (appt.comments && localComments.length === 0) {
@@ -1420,100 +1494,6 @@ function AdminAppointmentRow({
   }, [appt._id, showChatModal]);
 
   React.useEffect(() => {
-    function handleCommentUpdate(data) {
-      try {
-        console.log('🔔 AdminAppointments Chat: Received commentUpdate event:', {
-          appointmentId: data.appointmentId,
-          commentId: data.comment._id,
-          senderEmail: data.comment.senderEmail,
-          message: data.comment.message?.substring(0, 50) + '...',
-          currentAppointmentId: appt._id,
-          matches: data.appointmentId === appt._id
-        });
-        
-        if (data.appointmentId === appt._id) {
-          // Don't show notification for deleted messages
-          if (data.comment.deleted) {
-            return;
-          }
-          
-          console.log('🔄 AdminAppointments Chat: Updating localComments for appointment:', appt._id);
-          
-          setLocalComments((prev) => {
-            try {
-              const idx = prev.findIndex(c => c._id === data.comment._id);
-              if (idx !== -1) {
-                // Update the existing comment in place, but do not downgrade 'read' to 'delivered'
-                const localComment = prev[idx];
-                const incomingComment = data.comment;
-                
-                // Check if there are actual changes to prevent unnecessary updates
-                if (JSON.stringify(localComment) === JSON.stringify(incomingComment)) {
-                  console.log('📝 AdminAppointments Chat: No changes needed for comment:', data.comment._id);
-                  return prev;
-                }
-                
-                let status = incomingComment.status;
-                if (localComment.status === 'read' && incomingComment.status !== 'read') {
-                  status = 'read';
-                }
-                
-                const updated = [...prev];
-                updated[idx] = { ...incomingComment, status };
-                console.log('📝 AdminAppointments Chat: Updated existing comment:', data.comment._id);
-                return updated;
-              } else {
-                // Only add if not present and not a temporary message
-                const isTemporaryMessage = prev.some(msg => msg._id.toString().startsWith('temp-'));
-                if (!isTemporaryMessage || data.comment.senderEmail !== currentUser.email) {
-                  // If this is a new message from another user and chat is not open, increment unread count
-                  if (data.comment.senderEmail !== currentUser.email && !showChatModal && !data.comment.readBy?.includes(currentUser._id)) {
-                    setUnreadNewMessages(prev => prev + 1);
-                  }
-                  console.log('📝 AdminAppointments Chat: Added new comment:', data.comment._id);
-                  return [...prev, data.comment];
-                }
-                console.log('📝 AdminAppointments Chat: Skipped comment (temporary or own message):', data.comment._id);
-                return prev;
-              }
-            } catch (error) {
-              console.error('Error updating localComments:', error);
-              return prev;
-            }
-          });
-          
-          // If the message was deleted and was from another user, reduce unread count
-          if (data.comment.deleted && data.comment.senderEmail !== currentUser.email) {
-            // Simple approach: if there's an unread count, reduce it by one
-            if (unreadNewMessages > 0) {
-              setUnreadNewMessages(prev => Math.max(0, prev - 1));
-            }
-          }
-          
-          // Auto-scroll for incoming messages if user is at bottom
-          if (showChatModal && data.comment.senderEmail !== currentUser.email) {
-            // Mark as read if chat is open
-            setTimeout(() => {
-              fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/read`, {
-                method: 'PATCH',
-                credentials: 'include'
-              });
-            }, 100);
-            
-            // Auto-scroll to show new message if user is near bottom
-            setTimeout(() => {
-              if (chatEndRef.current && isAtBottom) {
-                chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
-              }
-            }, 50);
-          }
-        }
-      } catch (error) {
-        console.error('Error in handleCommentUpdate:', error);
-      }
-    }
-    socket.on('commentUpdate', handleCommentUpdate);
-    
     const handleCommentDelivered = (data) => {
       if (data.appointmentId === appt._id) {
         setLocalComments(prev =>
@@ -1549,12 +1529,11 @@ function AdminAppointmentRow({
     socket.on('commentRead', handleCommentRead);
     
     return () => {
-      socket.off('commentUpdate', handleCommentUpdate);
       socket.off('chatCleared', handleChatCleared);
       socket.off('commentDelivered', handleCommentDelivered);
       socket.off('commentRead', handleCommentRead);
     };
-  }, [appt._id, setLocalComments, showChatModal, currentUser.email, isAtBottom]);
+  }, [appt._id, showChatModal, currentUser.email, isAtBottom]);
 
   // Keyboard shortcut Ctrl+F to focus message input
   React.useEffect(() => {
