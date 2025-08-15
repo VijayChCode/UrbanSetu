@@ -178,6 +178,13 @@ export default function AdminAppointments() {
     const handleCommentUpdate = (data) => {
       console.log('🔔 AdminAppointments: Received commentUpdate event:', data);
       
+      // Skip handling if this is a message sent by current admin user to prevent duplicates
+      // Admin messages are already added locally in handleCommentSend
+      if (data.comment.senderEmail === currentUser?.email) {
+        console.log('🔔 AdminAppointments: Skipping own message to prevent duplicate');
+        return;
+      }
+      
       // Update the specific appointment's comments in real-time
       setAppointments(prev => 
         prev.map(appt => {
@@ -194,7 +201,7 @@ export default function AdminAppointments() {
               }
               return appt; // No changes needed
             } else {
-              // Add new comment
+              // Add new comment only if it's not from current user (to prevent duplicates)
               const updatedComments = [...(appt.comments || []), data.comment];
               return { ...appt, comments: updatedComments };
             }
@@ -218,7 +225,7 @@ export default function AdminAppointments() {
               }
               return appt; // No changes needed
             } else {
-              // Add new comment
+              // Add new comment only if it's not from current user (to prevent duplicates)
               const updatedComments = [...(appt.comments || []), data.comment];
               return { ...appt, comments: updatedComments };
             }
@@ -237,7 +244,7 @@ export default function AdminAppointments() {
           // Update existing comment
           newComments[existingCommentIndex] = data.comment;
         } else {
-          // Add new comment
+          // Add new comment only if it's not from current user (to prevent duplicates)
           newComments.push(data.comment);
         }
         

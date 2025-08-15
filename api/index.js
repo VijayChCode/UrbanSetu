@@ -173,6 +173,10 @@ io.on('connection', (socket) => {
     const wasOffline = !onlineUsers.has(userId);
     onlineUsers.add(userId);
     lastSeenTimes.delete(userId); // Remove last seen when user comes online
+    
+    // IMPORTANT: Join user to their personal room for direct messaging
+    socket.join(userId);
+    
     io.emit('userOnlineUpdate', { userId, online: true });
     
     // If user was offline and just came online, mark all pending messages as delivered
@@ -218,6 +222,10 @@ io.on('connection', (socket) => {
   // Listen for admin appointments active
   socket.on('adminAppointmentsActive', async ({ adminId, role }) => {
     console.log('Admin appointments active:', adminId, role);
+    thisUserId = adminId;
+    
+    // IMPORTANT: Join admin to their personal room for direct messaging
+    socket.join(adminId);
     
     // Join admin to all appointment rooms to receive real-time updates
     try {

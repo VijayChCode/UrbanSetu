@@ -314,18 +314,22 @@ router.post('/:id/comment', verifyToken, async (req, res) => {
         console.log(`🔔 Admin message: Emitting to buyer ${bookingToComment.buyerId.toString()} and seller ${bookingToComment.sellerId.toString()}`);
         io.to(bookingToComment.buyerId.toString()).emit('commentUpdate', { appointmentId: id, comment: newCommentObj });
         io.to(bookingToComment.sellerId.toString()).emit('commentUpdate', { appointmentId: id, comment: newCommentObj });
+        
+        // For admin, only emit to appointment room (not personal room) to avoid duplicates
+        // Admin will receive the message through appointment room since they're joined to all appointment rooms
+        io.to(`appointment_${id}`).emit('commentUpdate', { appointmentId: id, comment: newCommentObj });
       } else {
         // If buyer or seller is sending, emit to the other party
         const recipientId = isBuyer ? bookingToComment.sellerId.toString() : bookingToComment.buyerId.toString();
         console.log(`🔔 User message: Emitting to recipient ${recipientId}`);
         io.to(recipientId).emit('commentUpdate', { appointmentId: id, comment: newCommentObj });
+        
+        // Also emit to the sender for their own message sync
+        io.to(userId).emit('commentUpdate', { appointmentId: id, comment: newCommentObj });
+        
+        // Emit to appointment room for admin access (so admin sees user messages immediately)
+        io.to(`appointment_${id}`).emit('commentUpdate', { appointmentId: id, comment: newCommentObj });
       }
-      
-      // Also emit to the sender for their own message sync
-      io.to(userId).emit('commentUpdate', { appointmentId: id, comment: newCommentObj });
-      
-      // Emit to appointment room for admin access
-      io.to(`appointment_${id}`).emit('commentUpdate', { appointmentId: id, comment: newCommentObj });
       
       // Only mark as delivered if the intended recipient is online
       const onlineUsers = req.app.get('onlineUsers') || new Set();
