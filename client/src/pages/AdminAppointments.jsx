@@ -1232,9 +1232,38 @@ function AdminAppointmentRow({
     };
   }, [showChatModal]);
 
+  // Toast notification for new messages when chat is closed
+  React.useEffect(() => {
+    function handleCommentUpdateNotify(data) {
+      if (data.appointmentId === appt._id && !showChatModal) {
+        // Don't show notification for deleted messages
+        if (data.comment.deleted) {
+          return;
+        }
+        
+        // Check if sender is admin by checking if senderEmail matches any admin user
+        const isSenderBuyer = data.comment.senderEmail === appt.buyerId?.email;
+        const isSenderSeller = data.comment.senderEmail === appt.sellerId?.email;
+        const isSenderAdmin = !isSenderBuyer && !isSenderSeller;
+        
+        const senderName = isSenderAdmin ? "UrbanSetu" : (data.comment.senderEmail || 'User');
+        toast.info(`New message from ${senderName}`);
+      }
+    }
+    socket.on('commentUpdate', handleCommentUpdateNotify);
+    return () => {
+      socket.off('commentUpdate', handleCommentUpdateNotify);
+    };
+  }, [appt._id, showChatModal]);
+
   React.useEffect(() => {
     function handleCommentUpdate(data) {
       if (data.appointmentId === appt._id) {
+        // Don't show notification for deleted messages
+        if (data.comment.deleted) {
+          return;
+        }
+        
         setLocalComments((prev) => {
           const idx = prev.findIndex(c => c._id === data.comment._id);
           if (idx !== -1) {
@@ -1252,6 +1281,10 @@ function AdminAppointmentRow({
             // Only add if not present and not a temporary message
             const isTemporaryMessage = prev.some(msg => msg._id.toString().startsWith('temp-'));
             if (!isTemporaryMessage || data.comment.senderEmail !== currentUser.email) {
+              // If this is a new message from another user and chat is not open, increment unread count
+              if (data.comment.senderEmail !== currentUser.email && !showChatModal && !data.comment.readBy?.includes(currentUser._id)) {
+                setUnreadNewMessages(prev => prev + 1);
+              }
               return [...prev, data.comment];
             }
             return prev;
@@ -1849,6 +1882,12 @@ function AdminAppointmentRow({
         >
           <FaCommentDots size={22} className="group-hover:animate-pulse" />
           <div className="absolute inset-0 bg-white rounded-full opacity-0 group-hover:opacity-20 transition-opacity duration-200"></div>
+          {/* Unread message indicator */}
+          {unreadNewMessages > 0 && (
+            <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold animate-pulse">
+              {unreadNewMessages > 9 ? '9+' : unreadNewMessages}
+            </div>
+          )}
         </button>
         {showPasswordModal && (
           <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
@@ -1975,6 +2014,11 @@ function AdminAppointmentRow({
                       <FaCommentDots className="text-blue-600 text-lg" />
                     </div>
                     <h3 className="text-lg font-bold text-white">Live Chat</h3>
+                    {unreadNewMessages > 0 && (
+                      <div className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold animate-pulse">
+                        {unreadNewMessages} new message{unreadNewMessages > 1 ? 's' : ''}
+                      </div>
+                    )}
                     <div className="flex items-center gap-3 ml-auto">
                       {localComments.length > 0 && (
                         <button
@@ -2002,6 +2046,17 @@ function AdminAppointmentRow({
                           </div>
                         )}
                       </div>
+                      {/* Scroll to bottom button when there are unread messages */}
+                      {unreadNewMessages > 0 && !isAtBottom && (
+                        <button
+                          className="text-blue-500 hover:text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-full p-2 transition-colors shadow animate-bounce"
+                          onClick={scrollToBottom}
+                          title="Scroll to latest messages"
+                          aria-label="Scroll to latest messages"
+                        >
+                          <FaCommentDots className="text-sm" />
+                        </button>
+                      )}
                       <button
                         className="text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors z-10 shadow"
                         onClick={() => setShowChatModal(false)}
