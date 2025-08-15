@@ -338,13 +338,30 @@ function AppRoutes({ bootstrapped }) {
             if (res.ok) {
               const appointmentData = await res.json();
               
+              // Debug logging to see what we're getting
+              console.log('App.jsx - Appointment data:', {
+                appointmentId: data.appointmentId,
+                senderEmail: data.comment.senderEmail,
+                buyerEmail: appointmentData.buyerId?.email,
+                sellerEmail: appointmentData.sellerId?.email
+              });
+              
               // Check if sender is admin by checking if senderEmail matches any admin user
               // Same logic as MyAppointments page
               const isSenderBuyer = data.comment.senderEmail === appointmentData.buyerId?.email;
               const isSenderSeller = data.comment.senderEmail === appointmentData.sellerId?.email;
               const isSenderAdmin = !isSenderBuyer && !isSenderSeller;
               
+              console.log('App.jsx - Admin detection:', {
+                isSenderBuyer,
+                isSenderSeller,
+                isSenderAdmin,
+                finalSenderName: isSenderAdmin ? "UrbanSetu" : (data.comment.senderEmail || 'User')
+              });
+              
               senderName = isSenderAdmin ? "UrbanSetu" : (data.comment.senderEmail || 'User');
+            } else {
+              console.log('App.jsx - Failed to fetch appointment, status:', res.status);
             }
           } catch (error) {
             // If API call fails, fallback to email
