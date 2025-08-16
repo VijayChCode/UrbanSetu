@@ -120,6 +120,8 @@ export default function AdminAppointments() {
     try {
       const res = await fetch(`${API_BASE_URL}/api/bookings`, { credentials: 'include' });
       const data = await res.json();
+      console.log('🔔 AdminAppointments: Fetched appointments:', data);
+      console.log('🔔 AdminAppointments: First appointment comments:', data[0]?.comments);
       setAppointments(data);
       setLoading(false);
     } catch (err) {
@@ -153,6 +155,16 @@ export default function AdminAppointments() {
       });
       console.log('🔌 AdminAppointments: Joined admin appointments room');
     }
+
+    // Emit adminAppointmentsActive periodically to stay subscribed (like MyAppointments)
+    const adminInterval = setInterval(() => {
+      if (currentUser) {
+        socket.emit('adminAppointmentsActive', { 
+          adminId: currentUser._id,
+          role: currentUser.role 
+        });
+      }
+    }, 1000);
     
     fetchAppointments();
     fetchArchivedAppointments();
@@ -224,6 +236,7 @@ export default function AdminAppointments() {
     // Listen for real-time comment updates to refresh appointments
     const handleCommentUpdate = (data) => {
       console.log('🔔 AdminAppointments: Received commentUpdate event:', data);
+      console.log('🔔 AdminAppointments: Current user email:', currentUser?.email);
       
       // Skip handling if this is a message sent by current admin user to prevent duplicates
       // Admin messages are already added locally in handleCommentSend
@@ -345,6 +358,7 @@ export default function AdminAppointments() {
     
     return () => {
       clearInterval(interval);
+      clearInterval(adminInterval);
       socket.off('profileUpdated', handleProfileUpdate);
       socket.off('commentUpdate', handleCommentUpdate);
       socket.off('appointmentUpdate', handleAppointmentUpdate);
@@ -1184,7 +1198,6 @@ function AdminAppointmentRow({
 
   // Sync localComments with parent appt.comments when parent receives socket updates
   React.useEffect(() => {
-    console.log(`🔄 AdminAppointmentRow ${appt._id}: Syncing localComments with parent appt.comments`, appt.comments);
     setLocalComments(appt.comments || []);
   }, [appt.comments]);
 
