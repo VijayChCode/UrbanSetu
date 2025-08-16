@@ -3070,7 +3070,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                         <div className="relative">
                           <button
                             className="text-white hover:text-gray-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors shadow"
-                            onClick={() => setShowChatOptionsMenu(!showChatOptionsMenu)}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setShowChatOptionsMenu(!showChatOptionsMenu);
+                            }}
                             title="Chat options"
                             aria-label="Chat options"
                           >
@@ -3081,7 +3085,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               {/* Refresh option */}
                               <button
                                 className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
                                   fetchLatestComments();
                                   setShowChatOptionsMenu(false);
                                 }}
@@ -3093,7 +3099,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               {/* Starred Messages option */}
                               <button
                                 className="w-full px-4 py-2 text-left text-sm text-yellow-600 hover:bg-yellow-50 flex items-center gap-2"
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
                                   setShowStarredModal(true);
                                   setShowChatOptionsMenu(false);
                                 }}
@@ -3104,7 +3112,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               {/* Keyboard shortcut tip option */}
                               <button
                                 className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
                                   setShowShortcutTip(!showShortcutTip);
                                   setShowChatOptionsMenu(false);
                                 }}
@@ -3116,7 +3126,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               {!isChatLocked ? (
                                 <button
                                   className="w-full px-4 py-2 text-left text-sm text-blue-600 hover:bg-blue-50 flex items-center gap-2"
-                                  onClick={() => {
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
                                     handleChatLock();
                                     setShowChatOptionsMenu(false);
                                   }}
@@ -3129,7 +3141,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                   {!isChatAccessGranted && (
                                     <button
                                       className="w-full px-4 py-2 text-left text-sm text-green-600 hover:bg-green-50 flex items-center gap-2"
-                                      onClick={() => {
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
                                         handleChatUnlock();
                                         setShowChatOptionsMenu(false);
                                       }}
@@ -3140,7 +3154,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                   )}
                                   <button
                                     className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                                    onClick={() => {
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
                                       handleRemoveChatLock();
                                       setShowChatOptionsMenu(false);
                                     }}
@@ -3153,7 +3169,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               {/* Report Chat option */}
                               <button
                                 className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
                                   setShowReportChatModal(true);
                                   setShowChatOptionsMenu(false);
                                 }}
@@ -3165,7 +3183,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               {filteredComments.length > 0 && (
                                 <button
                                   className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                                  onClick={() => {
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
                                     setShowClearChatModal(true);
                                     setShowChatOptionsMenu(false);
                                   }}
