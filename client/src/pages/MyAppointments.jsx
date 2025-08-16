@@ -2756,25 +2756,25 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
             {!isChatDisabled && (
               <div className="absolute inset-0 bg-white rounded-full opacity-0 group-hover:opacity-20 transition-opacity duration-200"></div>
             )}
-            {/* Typing indicator - highest priority */}
-            {isOtherPartyTyping && !isChatDisabled && (
+            {/* Typing indicator - highest priority - only show when chat is not locked */}
+            {isOtherPartyTyping && !isChatDisabled && !(isChatLocked && !isChatAccessGranted) && (
               <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-bold border-2 border-white animate-pulse">
                 ...
               </span>
             )}
-            {/* Unread count when not typing */}
-            {!isOtherPartyTyping && unreadNewMessages > 0 && isChatDisabled && (
+            {/* Unread count when not typing - only show when chat is not locked */}
+            {!isOtherPartyTyping && unreadNewMessages > 0 && isChatDisabled && !(isChatLocked && !isChatAccessGranted) && (
               <span className="absolute -top-1 -right-1 bg-gray-400 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-bold border-2 border-white">
                 {unreadNewMessages}
               </span>
             )}
-            {!isOtherPartyTyping && unreadNewMessages > 0 && !isChatDisabled && (
+            {!isOtherPartyTyping && unreadNewMessages > 0 && !isChatDisabled && !(isChatLocked && !isChatAccessGranted) && (
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-bold border-2 border-white">
                 {unreadNewMessages}
               </span>
             )}
-            {/* Online status green dot - show when no typing and no unread count */}
-            {!isOtherPartyTyping && unreadNewMessages === 0 && isOtherPartyOnlineInTable && !isChatDisabled && (
+            {/* Online status green dot - only show when chat is not locked */}
+            {!isOtherPartyTyping && unreadNewMessages === 0 && isOtherPartyOnlineInTable && !isChatDisabled && !(isChatLocked && !isChatAccessGranted) && (
               <span className="absolute -top-1 -right-1 bg-green-500 border-2 border-white rounded-full w-3 h-3"></span>
             )}
           </button>
