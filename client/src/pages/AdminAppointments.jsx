@@ -237,6 +237,7 @@ export default function AdminAppointments() {
     const handleCommentUpdate = (data) => {
       console.log('🔔 AdminAppointments: Received commentUpdate event:', data);
       console.log('🔔 AdminAppointments: Current user email:', currentUser?.email);
+      console.log('🔔 AdminAppointments: Comment sender email:', data.comment.senderEmail);
       
       // Skip handling if this is a message sent by current admin user to prevent duplicates
       // Admin messages are already added locally in handleCommentSend
@@ -245,10 +246,13 @@ export default function AdminAppointments() {
         return;
       }
       
+      console.log('🔔 AdminAppointments: Processing user message for real-time update');
+      
       // Update the specific appointment's comments in real-time
       setAppointments(prev => 
         prev.map(appt => {
           if (appt._id === data.appointmentId) {
+            console.log('🔔 AdminAppointments: Found appointment to update:', appt._id);
             // Find if comment already exists
             const existingCommentIndex = appt.comments?.findIndex(c => c._id === data.comment._id);
             if (existingCommentIndex !== -1) {
@@ -257,12 +261,14 @@ export default function AdminAppointments() {
               if (JSON.stringify(existingComment) !== JSON.stringify(data.comment)) {
                 const updatedComments = [...(appt.comments || [])];
                 updatedComments[existingCommentIndex] = data.comment;
+                console.log('🔔 AdminAppointments: Updated existing comment');
                 return { ...appt, comments: updatedComments };
               }
               return appt; // No changes needed
             } else {
-              // Add new comment only if it's not from current user (to prevent duplicates)
+              // Add new comment - this is a new user message
               const updatedComments = [...(appt.comments || []), data.comment];
+              console.log('🔔 AdminAppointments: Added new comment, total comments:', updatedComments.length);
               return { ...appt, comments: updatedComments };
             }
           }
@@ -285,7 +291,7 @@ export default function AdminAppointments() {
               }
               return appt; // No changes needed
             } else {
-              // Add new comment only if it's not from current user (to prevent duplicates)
+              // Add new comment
               const updatedComments = [...(appt.comments || []), data.comment];
               return { ...appt, comments: updatedComments };
             }
@@ -304,7 +310,7 @@ export default function AdminAppointments() {
           // Update existing comment
           newComments[existingCommentIndex] = data.comment;
         } else {
-          // Add new comment only if it's not from current user (to prevent duplicates)
+          // Add new comment
           newComments.push(data.comment);
         }
         
@@ -1198,6 +1204,12 @@ function AdminAppointmentRow({
 
   // Sync localComments with parent appt.comments when parent receives socket updates
   React.useEffect(() => {
+    console.log('🔄 AdminAppointments Chat: Syncing localComments with parent appt.comments:', {
+      appointmentId: appt._id,
+      parentCommentsLength: appt.comments?.length || 0,
+      localCommentsLength: localComments.length,
+      showChatModal
+    });
     setLocalComments(appt.comments || []);
   }, [appt.comments]);
 
@@ -1234,110 +1246,69 @@ function AdminAppointmentRow({
     }
   }, [showChatModal]);
 
-  // Sync localComments back to parent component whenever they change - but only when necessary
+  // Sync localComments back to parent component whenever they change - simplified for real-time sync
   React.useEffect(() => {
-    if (updateAppointmentComments && localComments.length > 0 && !isUpdatingRef.current) {
-      try {
-        // Only update parent if there are actual content changes, not just count updates
-        const currentParentComments = appt.comments || [];
-        const hasContentChanges = localComments.some((comment, index) => {
-          const parentComment = currentParentComments[index];
-          return !parentComment || JSON.stringify(parentComment) !== JSON.stringify(comment);
-        });
-        
-        if (hasContentChanges) {
-          // Set flag to prevent infinite loops
-          isUpdatingRef.current = true;
-          
-          // Update parent with local comments to maintain synchronization
-          updateAppointmentComments(appt._id, localComments);
-          
-          // Reset flag after a short delay
-          setTimeout(() => {
-            isUpdatingRef.current = false;
-          }, 100);
-        }
-      } catch (error) {
-        console.error('Error updating parent with localComments:', error);
-        isUpdatingRef.current = false;
+    if (updateAppointmentComments && localComments.length > 0) {
+      // Only update parent if there are actual content changes
+      const currentParentComments = appt.comments || [];
+      if (JSON.stringify(currentParentComments) !== JSON.stringify(localComments)) {
+        console.log('🔄 AdminAppointments Chat: Syncing localComments back to parent');
+        updateAppointmentComments(appt._id, localComments);
       }
     }
   }, [localComments, appt._id, updateAppointmentComments, appt.comments]);
 
   // Listen for comment updates from parent component (socket events)
   React.useEffect(() => {
-    // Skip if we're currently updating to prevent infinite loops
-    if (isUpdatingRef.current) {
-      return;
-    }
-    
     // This effect will run when appt.comments changes (from parent socket updates)
     const serverComments = appt.comments || [];
     
-    // Check if there are actual changes in content, not just count
-    const hasChanges = JSON.stringify(localComments) !== JSON.stringify(serverComments);
-    
-    if (hasChanges) {
-      console.log('🔄 AdminAppointments Chat: Received update from parent:', {
+    // Always update localComments to match server state - simplified logic for real-time sync
+    if (JSON.stringify(localComments) !== JSON.stringify(serverComments)) {
+      console.log('🔄 AdminAppointments Chat: Updating localComments from parent (real-time):', {
         appointmentId: appt._id,
-        serverCommentsCount: serverComments.length,
-        localCommentsCount: localComments.length,
-        hasContentChanges: hasChanges
+        serverCommentsLength: serverComments.length,
+        localCommentsLength: localComments.length,
+        showChatModal
       });
       
-      // Only update if the changes are from external sources (not from our own local updates)
-      const hasExternalChanges = serverComments.some(serverComment => {
-        const localComment = localComments.find(local => local._id === serverComment._id);
-        return !localComment || JSON.stringify(localComment) !== JSON.stringify(serverComment);
-      });
-      
-      if (hasExternalChanges) {
-        // Set flag to prevent infinite loops
-        isUpdatingRef.current = true;
+      setLocalComments(serverComments);
         
-        // Update localComments with the latest from parent
-        setLocalComments(serverComments);
+      // Handle unread message count and auto-scroll for new messages
+      if (serverComments.length > localComments.length) {
+        // New messages were added
+        const newMessages = serverComments.slice(localComments.length);
+        const receivedMessages = newMessages.filter(msg => msg.senderEmail !== currentUser.email);
+        
+        if (receivedMessages.length > 0) {
+          console.log('🔄 AdminAppointments Chat: Processing new received messages:', receivedMessages.length);
+          // Increment unread count for messages from other users
+          if (!showChatModal) {
+            setUnreadNewMessages(prev => prev + receivedMessages.length);
+          }
           
-        // Handle unread message count and auto-scroll for new messages
-        if (serverComments.length > localComments.length) {
-          // New messages were added
-          const newMessages = serverComments.slice(localComments.length);
-          const receivedMessages = newMessages.filter(msg => msg.senderEmail !== currentUser.email);
+          // Auto-scroll if chat is open and user is at bottom
+          if (showChatModal && isAtBottom) {
+            setTimeout(() => {
+              if (chatEndRef.current) {
+                chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+              }
+            }, 100);
+          }
           
-          if (receivedMessages.length > 0) {
-            // Increment unread count for messages from other users
-            if (!showChatModal) {
-              setUnreadNewMessages(prev => prev + receivedMessages.length);
-            }
-            
-            // Auto-scroll if chat is open and user is at bottom
-            if (showChatModal && isAtBottom) {
-              setTimeout(() => {
-                if (chatEndRef.current) {
-                  chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
-                }
-              }, 100);
-            }
-            
-            // Mark messages as read if chat is open
-            if (showChatModal) {
-              setTimeout(() => {
-                fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/read`, {
-                  method: 'PATCH',
-                  credentials: 'include'
-                });
-              }, 100);
-            }
+          // Mark messages as read if chat is open
+          if (showChatModal) {
+            setTimeout(() => {
+              fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/read`, {
+                method: 'PATCH',
+                credentials: 'include'
+              });
+            }, 100);
           }
         }
-        
-        // Reset flag after a short delay
-        setTimeout(() => {
-          isUpdatingRef.current = false;
-        }, 100);
       }
     }
-  }, [appt.comments, appt._id, showChatModal, isAtBottom, currentUser.email]);
+  }, [appt.comments, appt._id, showChatModal, isAtBottom, currentUser.email, localComments]);
  
    // Initialize localComments with appointment comments when component mounts
   React.useEffect(() => {
