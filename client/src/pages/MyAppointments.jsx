@@ -3081,7 +3081,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             <FaEllipsisV className="text-sm" />
                           </button>
                           {showChatOptionsMenu && (
-                            <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-20 min-w-[160px] chat-options-menu">
+                            <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-50 min-w-[160px] chat-options-menu pointer-events-auto">
                               {/* Refresh option */}
                               <button
                                 className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
@@ -3102,8 +3102,21 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                 onClick={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
+                                  e.nativeEvent.stopImmediatePropagation();
+                                  console.log('Starred Messages clicked');
                                   setShowStarredModal(true);
                                   setShowChatOptionsMenu(false);
+                                  return false;
+                                }}
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  return false;
+                                }}
+                                onMouseUp={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  return false;
                                 }}
                               >
                                 <FaStar className="text-sm" />
