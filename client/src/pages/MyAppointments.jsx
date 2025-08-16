@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo, FaCommentDots, FaCheckDouble, FaBan, FaPaperPlane, FaCalendar, FaLightbulb, FaCopy, FaEllipsisV, FaFlag, FaCircle, FaInfoCircle } from "react-icons/fa";
+import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo, FaCommentDots, FaCheckDouble, FaBan, FaPaperPlane, FaCalendar, FaLightbulb, FaCopy, FaEllipsisV, FaFlag, FaCircle, FaInfoCircle, FaSync } from "react-icons/fa";
 import UserAvatar from '../components/UserAvatar';
 import { useSelector } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -1077,6 +1077,28 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       localStorage.setItem(`removedDeletedMsgs_${apptId}`, JSON.stringify(updated));
     }
   }
+
+  // Fetch latest comments when refresh button is clicked
+  const fetchLatestComments = async () => {
+    try {
+      setLoadingComments(true);
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}`, {
+        credentials: 'include'
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.comments && data.comments.length !== comments.length) {
+          setComments(data.comments);
+          setUnreadNewMessages(0); // Reset unread count after refresh
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching latest comments:', err);
+      toast.error('Failed to refresh messages');
+    } finally {
+      setLoadingComments(false);
+    }
+  };
 
 
 
@@ -2610,6 +2632,22 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                         </div>
                       </div>
                       <div className="flex items-center gap-2 sm:gap-4 ml-auto flex-shrink-0">
+                        {/* Unread message count */}
+                        {unreadNewMessages > 0 && (
+                          <div className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold animate-pulse">
+                            {unreadNewMessages} new message{unreadNewMessages > 1 ? 's' : ''}
+                          </div>
+                        )}
+                        {/* Refresh button */}
+                        <button
+                          className="text-blue-100 hover:text-white bg-blue-500/30 hover:bg-blue-500/50 rounded-full p-2 transition-colors shadow flex items-center gap-2"
+                          onClick={fetchLatestComments}
+                          title="Refresh messages"
+                          aria-label="Refresh messages"
+                          disabled={loadingComments}
+                        >
+                          <FaSync className={`text-sm ${loadingComments ? 'animate-spin' : ''}`} />
+                        </button>
                         {filteredComments.length > 0 && (
                           <button
                             className="text-xs text-red-600 hover:underline"
