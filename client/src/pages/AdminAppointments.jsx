@@ -1226,7 +1226,7 @@ function AdminAppointmentRow({
     }
   }, [showChatModal]);
 
-  // Sync localComments back to parent component whenever they change - simplified for real-time sync
+  // Sync localComments back to parent component whenever they change
   React.useEffect(() => {
     if (updateAppointmentComments && localComments.length > 0) {
       // Only update parent if there are actual content changes
@@ -1242,15 +1242,14 @@ function AdminAppointmentRow({
     // This effect will run when appt.comments changes (from parent socket updates)
     const serverComments = appt.comments || [];
     
-    // Always update localComments to match server state - simplified logic for real-time sync
+    // Only update localComments if there are actual differences
     if (JSON.stringify(localComments) !== JSON.stringify(serverComments)) {
-      const prevLocalCommentsLength = localComments.length;
       setLocalComments(serverComments);
         
       // Handle unread message count and auto-scroll for new messages
-      if (serverComments.length > prevLocalCommentsLength) {
+      if (serverComments.length > localComments.length) {
         // New messages were added
-        const newMessages = serverComments.slice(prevLocalCommentsLength);
+        const newMessages = serverComments.slice(localComments.length);
         const receivedMessages = newMessages.filter(msg => msg.senderEmail !== currentUser.email);
         
         if (receivedMessages.length > 0) {
@@ -1280,7 +1279,7 @@ function AdminAppointmentRow({
         }
       }
     }
-  }, [appt.comments, appt._id, showChatModal, isAtBottom, currentUser.email]);
+  }, [appt.comments, appt._id, showChatModal, isAtBottom, currentUser.email, localComments]);
  
 
 
