@@ -1144,6 +1144,25 @@ function AdminAppointmentRow({
 }) {
   const [localComments, setLocalComments] = useLocalState(appt.comments || []);
   const [newComment, setNewComment] = useLocalState("");
+
+  // Sync localComments with parent appt.comments when parent receives socket updates
+  React.useEffect(() => {
+    console.log(`🔄 AdminAppointmentRow ${appt._id}: Syncing localComments with parent appt.comments`, appt.comments);
+    const prevCommentsLength = localComments.length;
+    setLocalComments(appt.comments || []);
+    
+    // If new comments were added from parent, check if we need to update unread count
+    const newCommentsLength = (appt.comments || []).length;
+    if (newCommentsLength > prevCommentsLength && !showChatModal) {
+      const newComments = (appt.comments || []).slice(prevCommentsLength);
+      const newUnreadCount = newComments.filter(c => 
+        c.senderEmail !== currentUser.email && !c.readBy?.includes(currentUser._id)
+      ).length;
+      if (newUnreadCount > 0) {
+        setUnreadNewMessages(prev => prev + newUnreadCount);
+      }
+    }
+  }, [appt.comments, localComments.length, showChatModal, currentUser.email, currentUser._id]);
   const [sending, setSending] = useLocalState(false);
   const [editingComment, setEditingComment] = useLocalState(null);
   const [editText, setEditText] = useLocalState("");
@@ -1570,40 +1589,8 @@ function AdminAppointmentRow({
     };
   }, [appt._id, showChatModal]);
 
-  // Real-time comment updates for AdminAppointmentRow chat
+  // Chat clearing and message removal events (keeping only these, parent handles commentUpdate)
   React.useEffect(() => {
-    function handleCommentUpdate(data) {
-      if (data.appointmentId === appt._id) {
-        setLocalComments((prev) => {
-          const idx = prev.findIndex(c => c._id === data.comment._id);
-          if (idx !== -1) {
-            // Update existing comment, but preserve local read status
-            const updated = [...prev];
-            const localComment = prev[idx];
-            const incomingComment = data.comment;
-            let status = incomingComment.status;
-            if (localComment.status === 'read' && incomingComment.status !== 'read') {
-              status = 'read';
-            }
-            updated[idx] = { ...incomingComment, status };
-            return updated;
-          } else {
-            // Add new comment - check if it's not a temporary message
-            const isTemporaryMessage = prev.some(msg => msg._id.toString().startsWith('temp-'));
-            if (!isTemporaryMessage || data.comment.senderEmail !== currentUser.email) {
-              // If this is a new message from another user and chat is not open, increment unread count
-              if (data.comment.senderEmail !== currentUser.email && !showChatModal && !data.comment.readBy?.includes(currentUser._id)) {
-                setUnreadNewMessages(prev => prev + 1);
-              }
-              return [...prev, data.comment];
-            }
-            return prev;
-          }
-        });
-      }
-    }
-
-    // Chat clearing and message removal events
     function handleChatClearedForUser({ appointmentId, clearedAt }) {
       if (appointmentId !== appt._id) return;
       setLocalComments([]);
@@ -1615,15 +1602,13 @@ function AdminAppointmentRow({
       setLocalComments(prev => prev.filter(c => c._id !== commentId));
     }
 
-    socket.on('commentUpdate', handleCommentUpdate);
     socket.on('chatClearedForUser', handleChatClearedForUser);
     socket.on('commentRemovedForUser', handleCommentRemovedForUser);
     return () => {
-      socket.off('commentUpdate', handleCommentUpdate);
       socket.off('chatClearedForUser', handleChatClearedForUser);
       socket.off('commentRemovedForUser', handleCommentRemovedForUser);
     };
-  }, [appt._id, currentUser.email, currentUser._id, showChatModal]);
+  }, [appt._id]);
 
   React.useEffect(() => {
     const handleCommentDelivered = (data) => {
