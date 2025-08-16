@@ -1933,6 +1933,44 @@ router.get('/:id/chat/lock-status', verifyToken, async (req, res) => {
   }
 });
 
+// PATCH: Reset chat access (called when chat modal is closed)
+router.patch('/:id/chat/reset-access', verifyToken, async (req, res) => {
+  try {
+    const appointmentId = req.params.id;
+    const userId = req.user.id;
+
+    const appointment = await booking.findById(appointmentId);
+    if (!appointment) {
+      return res.status(404).json({ message: 'Appointment not found.' });
+    }
+
+    // Check if user is buyer or seller
+    const isBuyer = appointment.buyerId.toString() === userId;
+    const isSeller = appointment.sellerId.toString() === userId;
+
+    if (!isBuyer && !isSeller) {
+      return res.status(403).json({ message: 'Not authorized to reset access for this chat.' });
+    }
+
+    // Reset access granted state
+    if (isBuyer) {
+      appointment.buyerChatAccessGranted = false;
+    } else {
+      appointment.sellerChatAccessGranted = false;
+    }
+
+    await appointment.save();
+
+    return res.status(200).json({ 
+      message: 'Chat access reset.',
+      accessGranted: false
+    });
+  } catch (err) {
+    console.error('Error resetting chat access:', err);
+    return res.status(500).json({ message: 'Failed to reset chat access.' });
+  }
+});
+
 export default router;
 
 // --- SOCKET.IO: User Appointments Page Active (for delivered ticks) ---

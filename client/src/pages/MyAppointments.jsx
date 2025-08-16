@@ -2273,6 +2273,17 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
+      // Auto-lock chat when closed: reset access granted state if chat was locked
+      if (isChatLocked && isChatAccessGranted) {
+        setIsChatAccessGranted(false);
+        // Also reset access on backend
+        fetch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/reset-access`, {
+          method: 'PATCH',
+          credentials: 'include'
+        }).catch(err => {
+          console.error('Error resetting chat access:', err);
+        });
+      }
       // When chat is closed, restore unread count if there are still unread messages
       if (unreadCount > 0) {
         setUnreadNewMessages(unreadCount);
@@ -2283,7 +2294,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     return () => {
       document.body.style.overflow = '';
     };
-  }, [showChatModal, unreadCount]);
+  }, [showChatModal, unreadCount, isChatLocked, isChatAccessGranted]);
 
   // Filter out locally removed deleted messages
   const filteredComments = comments.filter(c => new Date(c.timestamp).getTime() > clearTime && !locallyRemovedIds.includes(c._id) && !(c.removedFor?.includes?.(currentUser._id)));
