@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
-import { FaTrash, FaSearch, FaPen, FaPaperPlane, FaUser, FaEnvelope, FaCalendar, FaPhone, FaUserShield, FaArchive, FaUndo, FaCommentDots, FaCheck, FaCheckDouble, FaBan, FaTimes, FaLightbulb, FaCopy, FaEllipsisV, FaInfoCircle } from "react-icons/fa";
+import React, { useEffect, useState } from "react";
+import { FaTrash, FaSearch, FaPen, FaUser, FaEnvelope, FaCalendar, FaPhone, FaUserShield, FaArchive, FaUndo, FaCommentDots, FaCheck, FaCheckDouble, FaBan, FaTimes, FaLightbulb, FaCopy, FaEllipsisV } from "react-icons/fa";
 import UserAvatar from '../components/UserAvatar';
 import { useSelector } from "react-redux";
 import { useState as useLocalState } from "react";
@@ -47,114 +47,38 @@ export default function AdminAppointments() {
  
    // Add state to track updated comments for each appointment
   const [updatedComments, setUpdatedComments] = useState({});
-  
-  // Add ref to prevent infinite loops in comment updates
-  const isUpdatingCommentsRef = useRef(false);
 
   // Function to update comments for a specific appointment
-  const updateAppointmentComments = useCallback((appointmentId, comments) => {
-    // Prevent infinite loops
-    if (isUpdatingCommentsRef.current) {
-      return;
-    }
-    
-    setUpdatedComments(prev => {
-      const currentComments = prev[appointmentId];
-      // Only update if there are actual changes and the change is not just a count difference
-      if (currentComments && comments) {
-        // Check if this is just a count update or actual content change
-        const hasContentChanges = comments.some((comment, index) => {
-          const currentComment = currentComments[index];
-          return !currentComment || JSON.stringify(currentComment) !== JSON.stringify(comment);
-        });
-        
-        if (hasContentChanges) {
-          // Set flag to prevent infinite loops
-          isUpdatingCommentsRef.current = true;
-          
-
-          
-          // Reset flag after a short delay
-          setTimeout(() => {
-            isUpdatingCommentsRef.current = false;
-          }, 100);
-          
-          return {
-            ...prev,
-            [appointmentId]: comments
-          };
-        }
-      } else if (JSON.stringify(currentComments) !== JSON.stringify(comments)) {
-        // Handle case where one of them is null/undefined
-        // Set flag to prevent infinite loops
-        isUpdatingCommentsRef.current = true;
-        
-
-        
-        // Reset flag after a short delay
-        setTimeout(() => {
-          isUpdatingCommentsRef.current = false;
-        }, 100);
-        
-        return {
-          ...prev,
-          [appointmentId]: comments
-        };
-      }
-      return prev; // No changes needed
-    });
-  }, []);
-
-  // Define fetch functions outside useEffect so they can be used in socket handlers
-  const fetchAppointments = useCallback(async () => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings`, { credentials: 'include' });
-      const data = await res.json();
-
-      setAppointments(data);
-      setLoading(false);
-    } catch (err) {
-      console.error("Failed to fetch appointments", err);
-      setLoading(false);
-    }
-  }, []);
-
-  const fetchArchivedAppointments = useCallback(async () => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings/archived`, {
-        credentials: 'include'
-      });
-      const data = await res.json();
-      setArchivedAppointments(data);
-    } catch (err) {
-      console.error("Failed to fetch archived appointments", err);
-    }
-  }, []);
+  const updateAppointmentComments = (appointmentId, comments) => {
+    setUpdatedComments(prev => ({
+      ...prev,
+      [appointmentId]: comments
+    }));
+  };
 
   useEffect(() => {
-    // Check socket connection status
-    console.log('🔌 AdminAppointments: Socket connected:', socket.connected);
-    console.log('🔌 AdminAppointments: Socket ID:', socket.id);
-    
-    // Join admin appointments room to receive real-time updates
-    if (socket.connected && currentUser) {
-      socket.emit('adminAppointmentsActive', { 
-        adminId: currentUser._id,
-        role: currentUser.role 
-      });
-      console.log('🔌 AdminAppointments: Joined admin appointments room');
-    }
-
-    // Emit adminAppointmentsActive periodically to stay subscribed (like MyAppointments)
-    const adminInterval = setInterval(() => {
-      if (currentUser) {
-        socket.emit('adminAppointmentsActive', { 
-          adminId: currentUser._id,
-          role: currentUser.role 
-        });
+    const fetchAppointments = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/bookings`, { credentials: 'include' });
+        const data = await res.json();
+        setAppointments(data);
+        setLoading(false);
+      } catch (err) {
+        console.error("Failed to fetch appointments", err);
+        setLoading(false);
       }
-    }, 1000);
-    
+    };
+    const fetchArchivedAppointments = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/bookings/archived`, {
+          credentials: 'include'
+        });
+        const data = await res.json();
+        setArchivedAppointments(data);
+      } catch (err) {
+        console.error("Failed to fetch archived appointments", err);
+      }
+    };
     fetchAppointments();
     fetchArchivedAppointments();
     const interval = setInterval(() => {
@@ -221,137 +145,12 @@ export default function AdminAppointments() {
       }));
     };
     socket.on('profileUpdated', handleProfileUpdate);
-
-    // Listen for real-time comment updates to refresh appointments
-    const handleCommentUpdate = (data) => {
-      // Skip handling if this is a message sent by current admin user to prevent duplicates
-      // Admin messages are already added locally in handleCommentSend
-      if (data.comment.senderEmail === currentUser?.email) {
-        return;
-      }
-      
-      // Update the specific appointment's comments in real-time
-      setAppointments(prev => 
-        prev.map(appt => {
-          if (appt._id === data.appointmentId) {
-            // Find if comment already exists
-            const existingCommentIndex = appt.comments?.findIndex(c => c._id === data.comment._id);
-            if (existingCommentIndex !== -1) {
-              // Update existing comment - only if there are actual changes
-              const existingComment = appt.comments[existingCommentIndex];
-              if (JSON.stringify(existingComment) !== JSON.stringify(data.comment)) {
-                const updatedComments = [...(appt.comments || [])];
-                updatedComments[existingCommentIndex] = data.comment;
-                return { ...appt, comments: updatedComments };
-              }
-              return appt; // No changes needed
-            } else {
-              // Add new comment - this is a new user message
-              const updatedComments = [...(appt.comments || []), data.comment];
-              return { ...appt, comments: updatedComments };
-            }
-          }
-          return appt;
-        })
-      );
-      
-      // Also update archived appointments if needed
-      setArchivedAppointments(prev => 
-        prev.map(appt => {
-          if (appt._id === data.appointmentId) {
-            const existingCommentIndex = appt.comments?.findIndex(c => c._id === data.comment._id);
-            if (existingCommentIndex !== -1) {
-              // Update existing comment - only if there are actual changes
-              const existingComment = appt.comments[existingCommentIndex];
-              if (JSON.stringify(existingComment) !== JSON.stringify(data.comment)) {
-                const updatedComments = [...(appt.comments || [])];
-                updatedComments[existingCommentIndex] = data.comment;
-                return { ...appt, comments: updatedComments };
-              }
-              return appt; // No changes needed
-            } else {
-              // Add new comment
-              const updatedComments = [...(appt.comments || []), data.comment];
-              return { ...appt, comments: updatedComments };
-            }
-          }
-          return appt;
-        })
-      );
-
-      // Update the updatedComments state to trigger child component updates
-      setUpdatedComments(prev => {
-        const currentComments = prev[data.appointmentId] || [];
-        const newComments = [...currentComments];
-        
-        const existingCommentIndex = newComments.findIndex(c => c._id === data.comment._id);
-        if (existingCommentIndex !== -1) {
-          // Update existing comment
-          newComments[existingCommentIndex] = data.comment;
-        } else {
-          // Add new comment
-          newComments.push(data.comment);
-        }
-        
-        return {
-          ...prev,
-          [data.appointmentId]: newComments
-        };
-      });
-    };
-    socket.on('commentUpdate', handleCommentUpdate);
-
-    // Listen for appointment updates
-    const handleAppointmentUpdate = (data) => {
-      setAppointments(prev => 
-        prev.map(appt => 
-          appt._id === data.appointmentId ? { ...appt, ...data.updatedAppointment } : appt
-        )
-      );
-      setArchivedAppointments(prev => 
-        prev.map(appt => 
-          appt._id === data.appointmentId ? { ...appt, ...data.updatedAppointment } : appt
-        )
-      );
-    };
-    socket.on('appointmentUpdate', handleAppointmentUpdate);
-
-    // Listen for new appointments
-    const handleAppointmentCreated = (data) => {
-      const newAppt = data.appointment;
-      setAppointments(prev => [newAppt, ...prev]);
-    };
-    socket.on('appointmentCreated', handleAppointmentCreated);
-
-    // Listen for socket connection events
-    const handleConnect = () => {
-      console.log('🔌 AdminAppointments: Socket connected');
-      // Re-join admin appointments rooms on reconnect to receive real-time updates
-      if (currentUser) {
-        socket.emit('adminAppointmentsActive', { 
-          adminId: currentUser._id,
-          role: currentUser.role 
-        });
-        console.log('🔌 AdminAppointments: Re-joined admin appointments rooms on connect');
-      }
-    };
-    const handleDisconnect = () => {
-      console.log('🔌 AdminAppointments: Socket disconnected');
-    };
-    socket.on('connect', handleConnect);
-    socket.on('disconnect', handleDisconnect);
     
     return () => {
       clearInterval(interval);
-      clearInterval(adminInterval);
       socket.off('profileUpdated', handleProfileUpdate);
-      socket.off('commentUpdate', handleCommentUpdate);
-      socket.off('appointmentUpdate', handleAppointmentUpdate);
-      socket.off('appointmentCreated', handleAppointmentCreated);
-      socket.off('connect', handleConnect);
-      socket.off('disconnect', handleDisconnect);
     };
-  }, [fetchAppointments, fetchArchivedAppointments, currentUser]);
+  }, []);
 
   // Lock background scroll when user modal is open
   useEffect(() => {
@@ -615,59 +414,55 @@ export default function AdminAppointments() {
   };
 
   // Filter and search logic
-  const filteredAppointments = useMemo(() => {
-    return appointments.filter((appt) => {
-      const isOutdated = new Date(appt.date) < new Date() || (new Date(appt.date).toDateString() === new Date().toDateString() && appt.time && appt.time < new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-      const matchesStatus =
-        statusFilter === "all" ? true :
-        statusFilter === "outdated" ? isOutdated :
-        appt.status === statusFilter;
-      const matchesSearch =
-        appt.buyerId?.email?.toLowerCase().includes(search.toLowerCase()) ||
-        appt.sellerId?.email?.toLowerCase().includes(search.toLowerCase()) ||
-        appt.propertyName?.toLowerCase().includes(search.toLowerCase()) ||
-        appt.buyerId?.username?.toLowerCase().includes(search.toLowerCase()) ||
-        appt.sellerId?.username?.toLowerCase().includes(search.toLowerCase());
-      let matchesDate = true;
-      if (startDate) {
-        matchesDate = matchesDate && new Date(appt.date) >= new Date(startDate);
-      }
-      if (endDate) {
-        matchesDate = matchesDate && new Date(appt.date) <= new Date(endDate);
-      }
-      return matchesStatus && matchesSearch && matchesDate;
-    }).map((appt) => ({
-      ...appt,
-      comments: updatedComments[appt._id] || appt.comments || []
-    }));
-  }, [appointments, statusFilter, search, startDate, endDate, updatedComments]);
+  const filteredAppointments = appointments.filter((appt) => {
+    const isOutdated = new Date(appt.date) < new Date() || (new Date(appt.date).toDateString() === new Date().toDateString() && appt.time && appt.time < new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    const matchesStatus =
+      statusFilter === "all" ? true :
+      statusFilter === "outdated" ? isOutdated :
+      appt.status === statusFilter;
+    const matchesSearch =
+      appt.buyerId?.email?.toLowerCase().includes(search.toLowerCase()) ||
+      appt.sellerId?.email?.toLowerCase().includes(search.toLowerCase()) ||
+      appt.propertyName?.toLowerCase().includes(search.toLowerCase()) ||
+      appt.buyerId?.username?.toLowerCase().includes(search.toLowerCase()) ||
+      appt.sellerId?.username?.toLowerCase().includes(search.toLowerCase());
+    let matchesDate = true;
+    if (startDate) {
+      matchesDate = matchesDate && new Date(appt.date) >= new Date(startDate);
+    }
+    if (endDate) {
+      matchesDate = matchesDate && new Date(appt.date) <= new Date(endDate);
+    }
+    return matchesStatus && matchesSearch && matchesDate;
+  }).map((appt) => ({
+    ...appt,
+    comments: updatedComments[appt._id] || appt.comments || []
+  }));
 
-  const filteredArchivedAppointments = useMemo(() => {
-    return archivedAppointments.filter((appt) => {
-      const isOutdated = new Date(appt.date) < new Date() || (new Date(appt.date).toDateString() === new Date().toDateString() && appt.time && appt.time < new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-      const matchesStatus =
-        statusFilter === "all" ? true :
-        statusFilter === "outdated" ? isOutdated :
-        appt.status === statusFilter;
-      const matchesSearch =
-        appt.buyerId?.email?.toLowerCase().includes(search.toLowerCase()) ||
-        appt.sellerId?.email?.toLowerCase().includes(search.toLowerCase()) ||
-        appt.propertyName?.toLowerCase().includes(search.toLowerCase()) ||
-        appt.buyerId?.username?.toLowerCase().includes(search.toLowerCase()) ||
-        appt.sellerId?.username?.toLowerCase().includes(search.toLowerCase());
-      let matchesDate = true;
-      if (startDate) {
-        matchesDate = matchesDate && new Date(appt.date) >= new Date(startDate);
-      }
-      if (endDate) {
-        matchesDate = matchesDate && new Date(appt.date) <= new Date(endDate);
-      }
-      return matchesStatus && matchesSearch && matchesDate;
-    }).map((appt) => ({
-      ...appt,
-      comments: updatedComments[appt._id] || appt.comments || []
-    }));
-  }, [archivedAppointments, statusFilter, search, startDate, endDate, updatedComments]);
+  const filteredArchivedAppointments = archivedAppointments.filter((appt) => {
+    const isOutdated = new Date(appt.date) < new Date() || (new Date(appt.date).toDateString() === new Date().toDateString() && appt.time && appt.time < new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    const matchesStatus =
+      statusFilter === "all" ? true :
+      statusFilter === "outdated" ? isOutdated :
+      appt.status === statusFilter;
+    const matchesSearch =
+      appt.buyerId?.email?.toLowerCase().includes(search.toLowerCase()) ||
+      appt.sellerId?.email?.toLowerCase().includes(search.toLowerCase()) ||
+      appt.propertyName?.toLowerCase().includes(search.toLowerCase()) ||
+      appt.buyerId?.username?.toLowerCase().includes(search.toLowerCase()) ||
+      appt.sellerId?.username?.toLowerCase().includes(search.toLowerCase());
+    let matchesDate = true;
+    if (startDate) {
+      matchesDate = matchesDate && new Date(appt.date) >= new Date(startDate);
+    }
+    if (endDate) {
+      matchesDate = matchesDate && new Date(appt.date) <= new Date(endDate);
+    }
+    return matchesStatus && matchesSearch && matchesDate;
+  }).map((appt) => ({
+    ...appt,
+    comments: updatedComments[appt._id] || appt.comments || []
+  }));
 
   // Add this function to fetch latest data on demand
   const handleManualRefresh = async () => {
@@ -692,6 +487,8 @@ export default function AdminAppointments() {
 
   // Function to copy message to clipboard
   const copyMessageToClipboard = (messageText) => {
+    console.log('Copy button clicked, message:', messageText);
+    
     if (!messageText) {
       toast.error('No message to copy');
       return;
@@ -731,6 +528,7 @@ export default function AdminAppointments() {
       document.body.removeChild(textArea);
       
       if (success) {
+        console.log('Copy successful via fallback method');
         toast.success('Copied', {
           autoClose: 2000,
           position: 'bottom-center'
@@ -859,7 +657,7 @@ export default function AdminAppointments() {
             />
           </div>
           <div className="flex items-center gap-2">
-            <FaSearch className="text-gray-500 hover:text-blue-500 transition-colors duration-200" />
+            <FaSearch className="text-gray-500" />
             <input
               type="text"
               className="border rounded px-2 py-1 focus:outline-none focus:ring focus:ring-blue-200"
@@ -1169,29 +967,8 @@ function AdminAppointmentRow({
   const [showDeleteChatModal, setShowDeleteChatModal] = useLocalState(false);
   const [deleteChatPassword, setDeleteChatPassword] = useLocalState("");
   const [deleteChatLoading, setDeleteChatLoading] = useLocalState(false);
-  
-  // Message info modal state
-  const [showMessageInfoModal, setShowMessageInfoModal] = useLocalState(false);
-  const [selectedMessageForInfo, setSelectedMessageForInfo] = useLocalState(null);
-  const [sendIconAnimating, setSendIconAnimating] = useLocalState(false);
-  const [sendIconSent, setSendIconSent] = useLocalState(false);
-  
-  // Add ref to prevent infinite loops
-  const isUpdatingRef = React.useRef(false);
 
   const selectedMessageForHeaderOptions = headerOptionsMessageId ? localComments.find(msg => msg._id === headerOptionsMessageId) : null;
-
-  // Reset unread count when chat modal opens
-  React.useEffect(() => {
-    if (showChatModal) {
-      setUnreadNewMessages(0);
-      // Mark messages as read when chat is opened
-      fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/read`, {
-        method: 'PATCH',
-        credentials: 'include'
-      });
-    }
-  }, [showChatModal, appt._id]);
 
   // Auto-close shortcut tip after 10 seconds
   React.useEffect(() => {
@@ -1202,20 +979,6 @@ function AdminAppointmentRow({
       return () => clearTimeout(timer);
     }
   }, [showShortcutTip]);
-
-  // Reset send icon animation after completion
-  React.useEffect(() => {
-    if (sendIconAnimating) {
-      const timer = setTimeout(() => {
-        setSendIconAnimating(false);
-        setSendIconSent(true);
-        // Reset sent state after showing success animation
-        const sentTimer = setTimeout(() => setSendIconSent(false), 1000);
-        return () => clearTimeout(sentTimer);
-      }, 800);
-      return () => clearTimeout(timer);
-    }
-  }, [sendIconAnimating]);
 
   // Removed handleClickOutside functionality - options now only close when clicking three dots again
 
@@ -1228,60 +991,19 @@ function AdminAppointmentRow({
 
   // Sync localComments back to parent component whenever they change
   React.useEffect(() => {
-    if (updateAppointmentComments && localComments.length > 0) {
-      // Only update parent if there are actual content changes
-      const currentParentComments = appt.comments || [];
-      if (JSON.stringify(currentParentComments) !== JSON.stringify(localComments)) {
-        updateAppointmentComments(appt._id, localComments);
-      }
+    if (updateAppointmentComments) {
+      updateAppointmentComments(appt._id, localComments);
     }
   }, [localComments, appt._id, updateAppointmentComments]);
 
-  // Listen for comment updates from parent component (socket events)
+  // Preserve local comments when appointment data is refreshed
   React.useEffect(() => {
-    // This effect will run when appt.comments changes (from parent socket updates)
-    const serverComments = appt.comments || [];
-    
-    // Only update localComments if there are actual differences
-    if (JSON.stringify(localComments) !== JSON.stringify(serverComments)) {
-      setLocalComments(serverComments);
-        
-      // Handle unread message count and auto-scroll for new messages
-      if (serverComments.length > localComments.length) {
-        // New messages were added
-        const newMessages = serverComments.slice(localComments.length);
-        const receivedMessages = newMessages.filter(msg => msg.senderEmail !== currentUser.email);
-        
-        if (receivedMessages.length > 0) {
-          // Increment unread count for messages from other users
-          if (!showChatModal) {
-            setUnreadNewMessages(prev => prev + receivedMessages.length);
-          }
-          
-          // Auto-scroll if chat is open and user is at bottom
-          if (showChatModal && isAtBottom) {
-            setTimeout(() => {
-              if (chatEndRef.current) {
-                chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
-              }
-            }, 100);
-          }
-          
-          // Mark messages as read if chat is open
-          if (showChatModal) {
-            setTimeout(() => {
-              fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/read`, {
-                method: 'PATCH',
-                credentials: 'include'
-              });
-            }, 100);
-          }
-        }
-      }
+    // Only update localComments if we don't have any local updates
+    // or if the server data has more comments than our local state
+    if (appt.comments && appt.comments.length > localComments.length) {
+      setLocalComments(appt.comments);
     }
-  }, [appt.comments, appt._id, showChatModal, isAtBottom, currentUser.email, localComments]);
- 
-
+  }, [appt.comments]);
 
   // Track new messages and handle auto-scroll/unread count
   const prevCommentsLengthRef = React.useRef(localComments.length);
@@ -1490,75 +1212,60 @@ function AdminAppointmentRow({
     };
   }, [showChatModal]);
 
-  // Toast notification for new messages when chat is closed
   React.useEffect(() => {
-    function handleCommentUpdateNotify(data) {
-      if (data.appointmentId === appt._id && !showChatModal) {
-        // Don't show notification for deleted messages
-        if (data.comment.deleted) {
-          return;
+    function handleCommentUpdate(data) {
+      if (data.appointmentId === appt._id) {
+        setLocalComments((prev) => {
+          const idx = prev.findIndex(c => c._id === data.comment._id);
+          if (idx !== -1) {
+            // Update the existing comment in place, but do not downgrade 'read' to 'delivered'
+            const updated = [...prev];
+            const localComment = prev[idx];
+            const incomingComment = data.comment;
+            let status = incomingComment.status;
+            if (localComment.status === 'read' && incomingComment.status !== 'read') {
+              status = 'read';
+            }
+            updated[idx] = { ...incomingComment, status };
+            return updated;
+          } else {
+            // Only add if not present and not a temporary message
+            const isTemporaryMessage = prev.some(msg => msg._id.toString().startsWith('temp-'));
+            if (!isTemporaryMessage || data.comment.senderEmail !== currentUser.email) {
+              return [...prev, data.comment];
+            }
+            return prev;
+          }
+        });
+        
+        // If the message was deleted and was from another user, reduce unread count
+        if (data.comment.deleted && data.comment.senderEmail !== currentUser.email) {
+          // Simple approach: if there's an unread count, reduce it by one
+          if (unreadNewMessages > 0) {
+            setUnreadNewMessages(prev => Math.max(0, prev - 1));
+          }
         }
         
-        // Check if sender is admin by checking if senderEmail matches any admin user
-        const isSenderBuyer = data.comment.senderEmail === appt.buyerId?.email;
-        const isSenderSeller = data.comment.senderEmail === appt.sellerId?.email;
-        const isSenderAdmin = !isSenderBuyer && !isSenderSeller;
-        
-        const senderName = isSenderAdmin ? "UrbanSetu" : (data.comment.senderEmail || 'User');
-        toast.info(`New message from ${senderName}`);
+        // Auto-scroll for incoming messages if user is at bottom
+        if (showChatModal && data.comment.senderEmail !== currentUser.email) {
+          // Mark as read if chat is open
+          setTimeout(() => {
+            fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/read`, {
+              method: 'PATCH',
+              credentials: 'include'
+            });
+          }, 100);
+          
+          // Auto-scroll to show new message if user is near bottom
+          setTimeout(() => {
+            if (chatEndRef.current && isAtBottom) {
+              chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+            }
+          }, 50);
+        }
       }
     }
-    socket.on('commentUpdate', handleCommentUpdateNotify);
-    return () => {
-      socket.off('commentUpdate', handleCommentUpdateNotify);
-    };
-  }, [appt._id, showChatModal]);
-
-  // Chat clearing and message removal events (keeping only these, parent handles commentUpdate)
-  React.useEffect(() => {
-    function handleChatClearedForUser({ appointmentId, clearedAt }) {
-      if (appointmentId !== appt._id) return;
-      setLocalComments([]);
-      setUnreadNewMessages(0);
-    }
-    
-    function handleCommentRemovedForUser({ appointmentId, commentId }) {
-      if (appointmentId !== appt._id) return;
-      setLocalComments(prev => prev.filter(c => c._id !== commentId));
-    }
-
-    socket.on('chatClearedForUser', handleChatClearedForUser);
-    socket.on('commentRemovedForUser', handleCommentRemovedForUser);
-    return () => {
-      socket.off('chatClearedForUser', handleChatClearedForUser);
-      socket.off('commentRemovedForUser', handleCommentRemovedForUser);
-    };
-  }, [appt._id]);
-
-  React.useEffect(() => {
-    const handleCommentDelivered = (data) => {
-      if (data.appointmentId === appt._id) {
-        setLocalComments(prev =>
-          prev.map(c =>
-            c._id === data.commentId
-              ? { ...c, status: c.status === "read" ? "read" : "delivered", deliveredAt: new Date() }
-              : c
-          )
-        );
-      }
-    };
-    
-    const handleCommentRead = (data) => {
-      if (data.appointmentId === appt._id) {
-        setLocalComments(prev =>
-          prev.map(c =>
-            !c.readBy?.includes(data.userId)
-              ? { ...c, status: "read", readBy: [...(c.readBy || []), data.userId], readAt: new Date() }
-              : c
-          )
-        );
-      }
-    };
+    socket.on('commentUpdate', handleCommentUpdate);
     
     const handleChatCleared = (data) => {
       if (data.appointmentId === appt._id) {
@@ -1567,15 +1274,12 @@ function AdminAppointmentRow({
       }
     };
     socket.on('chatCleared', handleChatCleared);
-    socket.on('commentDelivered', handleCommentDelivered);
-    socket.on('commentRead', handleCommentRead);
     
     return () => {
+      socket.off('commentUpdate', handleCommentUpdate);
       socket.off('chatCleared', handleChatCleared);
-      socket.off('commentDelivered', handleCommentDelivered);
-      socket.off('commentRead', handleCommentRead);
     };
-  }, [appt._id, showChatModal, currentUser.email, isAtBottom]);
+  }, [appt._id, setLocalComments, showChatModal, currentUser.email, isAtBottom]);
 
   // Keyboard shortcut Ctrl+F to focus message input
   React.useEffect(() => {
@@ -1596,9 +1300,6 @@ function AdminAppointmentRow({
 
   const handleCommentSend = async () => {
     if (!newComment.trim()) return;
-    
-    // Trigger send icon animation
-    setSendIconAnimating(true);
     
     // Store the message content and reply before clearing the input
     const messageContent = newComment.trim();
@@ -1849,11 +1550,6 @@ function AdminAppointmentRow({
     setTimeout(refocusInput, 200); // Final fallback
   };
 
-  const showMessageInfo = (message) => {
-    setSelectedMessageForInfo(message);
-    setShowMessageInfoModal(true);
-  };
-
   // Check if comment is from current admin user
   const isAdminComment = (comment) => {
     return comment.senderEmail === currentUser?.email;
@@ -1881,24 +1577,6 @@ function AdminAppointmentRow({
     setAdminPassword("");
   };
 
-  // Fetch latest comments when chat modal opens
-  const fetchLatestComments = async () => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}`, {
-        credentials: 'include'
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.comments && data.comments.length !== localComments.length) {
-
-          setLocalComments(data.comments);
-        }
-      }
-    } catch (err) {
-      console.error('Error fetching latest comments:', err);
-    }
-  };
-
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
     setPasswordLoading(true);
@@ -1914,10 +1592,6 @@ function AdminAppointmentRow({
       if (res.ok && data.success) {
         setShowPasswordModal(false);
         setShowChatModal(true);
-        // Fetch latest comments when chat opens
-        setTimeout(() => {
-          fetchLatestComments();
-        }, 100);
       } else {
         toast.error("Incorrect password. Please try again.");
       }
@@ -2119,12 +1793,6 @@ function AdminAppointmentRow({
         >
           <FaCommentDots size={22} className="group-hover:animate-pulse" />
           <div className="absolute inset-0 bg-white rounded-full opacity-0 group-hover:opacity-20 transition-opacity duration-200"></div>
-          {/* Unread message indicator */}
-          {unreadNewMessages > 0 && (
-            <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold animate-pulse">
-              {unreadNewMessages > 9 ? '9+' : unreadNewMessages}
-            </div>
-          )}
         </button>
         {showPasswordModal && (
           <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
@@ -2162,8 +1830,8 @@ function AdminAppointmentRow({
         )}
         {showChatModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-md flex items-center justify-center z-50 p-4">
-            <div className="bg-gradient-to-br from-white via-blue-50 to-purple-50 rounded-3xl shadow-2xl w-full h-full max-w-6xl max-h-full p-0 relative animate-fadeIn flex flex-col border border-gray-200 transform transition-all duration-500 hover:shadow-3xl">
-              <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-700 via-purple-700 to-blue-900 rounded-t-3xl relative shadow-2xl ring-2 ring-blue-800">
+            <div className="bg-gradient-to-br from-white via-blue-50 to-purple-50 rounded-3xl shadow-2xl w-full h-full max-w-6xl max-h-full p-0 relative animate-fadeIn flex flex-col border border-gray-200">
+              <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 rounded-t-3xl relative">
                 {headerOptionsMessageId && selectedMessageForHeaderOptions ? (
                   <div className="flex items-center justify-between w-full">
                     <div className="flex items-center gap-3">
@@ -2188,20 +1856,6 @@ function AdminAppointmentRow({
                           aria-label="Copy message"
                         >
                           <FaCopy size={18} />
-                        </button>
-                      )}
-                      {/* Info - show delivery and read times */}
-                      {!selectedMessageForHeaderOptions.deleted && (
-                        <button
-                          className="text-white hover:text-blue-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
-                          onClick={() => { 
-                            showMessageInfo(selectedMessageForHeaderOptions);
-                            setHeaderOptionsMessageId(null);
-                          }}
-                          title="Message info"
-                          aria-label="Message info"
-                        >
-                          <FaInfoCircle size={18} />
                         </button>
                       )}
                       {(selectedMessageForHeaderOptions.senderEmail === currentUser.email) && !selectedMessageForHeaderOptions.deleted && (
@@ -2251,11 +1905,6 @@ function AdminAppointmentRow({
                       <FaCommentDots className="text-blue-600 text-lg" />
                     </div>
                     <h3 className="text-lg font-bold text-white">Live Chat</h3>
-                    {unreadNewMessages > 0 && (
-                      <div className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold animate-pulse">
-                        {unreadNewMessages} new message{unreadNewMessages > 1 ? 's' : ''}
-                      </div>
-                    )}
                     <div className="flex items-center gap-3 ml-auto">
                       {localComments.length > 0 && (
                         <button
@@ -2283,17 +1932,6 @@ function AdminAppointmentRow({
                           </div>
                         )}
                       </div>
-                      {/* Scroll to bottom button when there are unread messages */}
-                      {unreadNewMessages > 0 && !isAtBottom && (
-                        <button
-                          className="text-blue-500 hover:text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-full p-2 transition-colors shadow animate-bounce"
-                          onClick={scrollToBottom}
-                          title="Scroll to latest messages"
-                          aria-label="Scroll to latest messages"
-                        >
-                          <FaCommentDots className="text-sm" />
-                        </button>
-                      )}
                       <button
                         className="text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors z-10 shadow"
                         onClick={() => setShowChatModal(false)}
@@ -2306,9 +1944,9 @@ function AdminAppointmentRow({
                   </>
                 )}
               </div>
-              <div ref={chatContainerRef} className="flex-1 overflow-y-auto space-y-2 mb-4 px-4 pt-4 animate-fadeInChat relative bg-gradient-to-b from-transparent to-blue-50/30" style={{minHeight: '400px', maxHeight: 'calc(100vh - 200px)'}}>
+              <div ref={chatContainerRef} className="flex-1 overflow-y-auto space-y-2 mb-4 px-4 pt-4 animate-fadeInChat relative" style={{minHeight: '400px', maxHeight: 'calc(100vh - 200px)'}}>
                 {/* Privacy Notice for Admins */}
-                <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-purple-50 border-l-4 border-blue-400 rounded-r-lg mb-4 transform transition-all duration-500 hover:scale-105 hover:shadow-lg hover:from-blue-100 hover:to-purple-100 hover:border-blue-500 hover:border-l-6 backdrop-blur-sm">
+                <div className="px-4 py-3 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg mb-4 transform transition-all duration-500 hover:scale-105 hover:shadow-lg hover:bg-blue-100 hover:border-blue-500 hover:border-l-6">
                   <p className="text-sm text-blue-700 font-medium text-center flex items-center justify-center gap-2">
                     <span className="animate-gentlePulse">🔒</span>
                     Chats are encrypted and secure. View only for valid purposes like disputes or fraud checks. Unauthorized access or sharing is prohibited and will be logged.
@@ -2351,10 +1989,10 @@ function AdminAppointmentRow({
                       <div className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-fadeInChatBubble`} style={{ animationDelay: `${0.03 * index}s` }}>
                       <div 
                         ref={el => messageRefs.current[c._id] = el}
-                        className={`rounded-2xl px-4 sm:px-5 py-3 text-sm shadow-xl max-w-[90%] sm:max-w-[80%] md:max-w-[70%] lg:max-w-[60%] xl:max-w-[50%] break-words overflow-hidden relative transition-all duration-300 min-h-[60px] ${
+                        className={`rounded-2xl px-4 sm:px-5 py-3 text-sm shadow-xl max-w-[90%] sm:max-w-[80%] md:max-w-[70%] break-all overflow-hidden relative transition-all duration-200 min-h-[60px] ${
                           isMe 
-                            ? 'bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-500 hover:to-purple-600 text-white shadow-blue-200 hover:shadow-blue-300 hover:shadow-2xl' 
-                            : 'bg-white hover:bg-gray-50 text-gray-800 border border-gray-200 shadow-gray-200 hover:shadow-lg hover:border-gray-300 hover:shadow-xl'
+                            ? 'bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-500 hover:to-purple-600 text-white shadow-blue-200 hover:shadow-blue-300' 
+                            : 'bg-white hover:bg-gray-50 text-gray-800 border border-gray-200 shadow-gray-200 hover:shadow-lg hover:border-gray-300'
                         }`}
                       >
                                                     {/* Reply preview above message if this is a reply */}
@@ -2443,9 +2081,9 @@ function AdminAppointmentRow({
                                         }
                                         
                                         if (c.originalMessage) {
-                                          return <span className="whitespace-pre-wrap break-words">{c.originalMessage}</span>;
+                                          return <span className="whitespace-pre-wrap">{c.originalMessage}</span>;
                                         } else if (c.message) {
-                                          return <span className="whitespace-pre-wrap break-words">{c.message}</span>;
+                                          return <span className="whitespace-pre-wrap">{c.message}</span>;
                                         } else {
                                           return (
                                             <span className="text-gray-500 italic">
@@ -2489,7 +2127,7 @@ function AdminAppointmentRow({
                                 </div>
                               ) : (
                                                                   <>
-                                    <span className="whitespace-pre-wrap break-words">{(c.message || '').replace(/\n+$/, '')}</span>
+                                    <span className="whitespace-pre-wrap">{(c.message || '').replace(/\n+$/, '')}</span>
                                     {c.edited && (
                                       <span className="ml-2 text-[10px] italic text-gray-300 whitespace-nowrap">(Edited)</span>
                                     )}
@@ -2575,7 +2213,7 @@ function AdminAppointmentRow({
               <div className="flex gap-2 mt-1 px-3 pb-2">
                 <textarea
                   rows={1}
-                  className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-400 shadow-lg transition-all duration-300 bg-white resize-y whitespace-pre-wrap break-all hover:border-blue-300 hover:shadow-xl focus:shadow-2xl transform hover:scale-[1.01]"
+                  className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-400 shadow-lg transition-all duration-200 bg-white resize-y whitespace-pre-wrap"
                   placeholder={editingComment ? "Edit your message..." : "Type a message..."}
                   value={newComment}
                   onChange={(e) => {
@@ -2630,111 +2268,39 @@ function AdminAppointmentRow({
                     }
                   }}
                                       disabled={editingComment ? savingComment === editingComment : !newComment.trim()}
-                  className="bg-gradient-to-r from-blue-600 to-purple-700 text-white w-12 h-12 rounded-full shadow-lg hover:from-blue-700 hover:to-purple-800 hover:shadow-xl transform hover:scale-110 transition-all duration-300 disabled:opacity-50 disabled:transform-none flex items-center justify-center hover:shadow-2xl active:scale-95 group"
+                  className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-full text-sm font-semibold shadow-lg hover:from-blue-600 hover:to-purple-700 hover:shadow-xl transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:transform-none flex items-center gap-2 min-w-24"
                 >
                   {editingComment ? (
                     savingComment === editingComment ? (
                       <>
                         <div className="w-4 h-4 border border-white border-t-transparent rounded-full animate-spin"></div>
+                        Saving...
                       </>
                     ) : (
-                      <FaPen className="text-lg text-white group-hover:scale-110 transition-transform duration-200" />
+                      'Save'
                     )
-                                      ) : (
-                      <div className="relative">
-                        {sendIconSent ? (
-                          <FaCheck className="text-lg text-white group-hover:scale-110 transition-all duration-300 send-icon animate-sent" />
-                        ) : (
-                          <FaPaperPlane className={`text-lg text-white group-hover:scale-110 transition-all duration-300 send-icon ${sendIconAnimating ? 'animate-fly' : ''}`} />
-                        )}
-                      </div>
-                    )}
+                  ) : (
+                    'Send'
+                  )}
                 </button>
               </div>
               {/* Animations for chat bubbles */}
               <style jsx>{`
                 @keyframes fadeInChatBubble {
-                  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+                  from { opacity: 0; transform: translateY(10px) scale(0.98); }
                   to { opacity: 1; transform: translateY(0) scale(1); }
                 }
                 .animate-fadeInChatBubble {
-                  animation: fadeInChatBubble 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+                  animation: fadeInChatBubble 0.4s cubic-bezier(0.4,0,0.2,1) both;
                 }
                 @keyframes fadeInChat {
-                  from { opacity: 0; transform: translateY(10px); }
-                  to { opacity: 1; transform: translateY(0); }
+                  from { opacity: 0; }
+                  to { opacity: 1; }
                 }
                 .animate-fadeInChat {
-                  animation: fadeInChat 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+                  animation: fadeInChat 0.3s cubic-bezier(0.4,0,0.2,1) both;
                 }
-                @keyframes gentlePulse {
-                  0%, 100% { opacity: 1; transform: scale(1); }
-                  50% { opacity: 0.9; transform: scale(1.01); }
-                }
-                .animate-gentlePulse {
-                  animation: gentlePulse 3s ease-in-out infinite;
-                }
-                @keyframes attentionGlow {
-                  0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
-                  50% { box-shadow: 0 0 30px rgba(59, 130, 246, 0.6); }
-                }
-                .animate-attentionGlow {
-                  animation: attentionGlow 2s ease-in-out infinite;
-                }
-                @keyframes slideInFromTop {
-                  from { opacity: 0; transform: translateY(-20px) scale(0.95); }
-                  to { opacity: 1; transform: translateY(0) scale(1); }
-                }
-                                  .animate-slideInFromTop {
-                    animation: slideInFromTop 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
-                  }
-                  @keyframes sendIconFly {
-                    0% { 
-                      transform: translate(0, 0) scale(1); 
-                      opacity: 1;
-                    }
-                    20% { 
-                      transform: translate(0, 0) scale(1.2); 
-                      opacity: 1;
-                    }
-                    40% { 
-                      transform: translate(15px, -20px) scale(1.3); 
-                      opacity: 0.8;
-                    }
-                    60% { 
-                      transform: translate(25px, -35px) scale(1.4); 
-                      opacity: 0.6;
-                    }
-                    80% { 
-                      transform: translate(15px, -20px) scale(1.2); 
-                      opacity: 0.8;
-                    }
-                    100% { 
-                      transform: translate(0, 0) scale(1); 
-                      opacity: 1;
-                    }
-                  }
-                  .send-icon.animate-fly {
-                    animation: sendIconFly 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-                  }
-                  @keyframes sentSuccess {
-                    0% { 
-                      transform: scale(0.8); 
-                      opacity: 0;
-                    }
-                    50% { 
-                      transform: scale(1.2); 
-                      opacity: 1;
-                    }
-                    100% { 
-                      transform: scale(1); 
-                      opacity: 1;
-                    }
-                  }
-                  .send-icon.animate-sent {
-                    animation: sentSuccess 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-                  }
-                `}</style>
+              `}</style>
               
                              {/* Floating Scroll to bottom button - WhatsApp style */}
                {!isAtBottom && !editingComment && !replyTo && (
@@ -3085,100 +2651,6 @@ function AdminAppointmentRow({
                     Unarchive
                   </button>
                 </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Message Info Modal */}
-        {showMessageInfoModal && selectedMessageForInfo && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <FaInfoCircle className="text-blue-500" /> Message Info
-              </h3>
-              <div className="space-y-4">
-                <div className="bg-gray-50 rounded p-3 text-sm text-gray-700">
-                  <div className="font-semibold mb-2">Message:</div>
-                  <div className="whitespace-pre-wrap break-words">{(selectedMessageForInfo.message || '').slice(0, 200)}{(selectedMessageForInfo.message || '').length > 200 ? '...' : ''}</div>
-                </div>
-                
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-gray-600">Sent:</span>
-                    <span className="text-sm text-gray-800">
-                      {new Date(selectedMessageForInfo.timestamp).toLocaleString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: true
-                      })}
-                    </span>
-                  </div>
-                  
-                  {selectedMessageForInfo.deliveredAt && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-gray-600">Delivered:</span>
-                      <span className="text-sm text-gray-800">
-                        {new Date(selectedMessageForInfo.deliveredAt).toLocaleString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          hour12: true
-                        })}
-                      </span>
-                    </div>
-                  )}
-                  
-                  {selectedMessageForInfo.readAt && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-gray-600">Read:</span>
-                      <span className="text-sm text-gray-800">
-                        {new Date(selectedMessageForInfo.readAt).toLocaleString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          hour12: true
-                        })}
-                      </span>
-                    </div>
-                  )}
-                  
-                  {!selectedMessageForInfo.deliveredAt && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-gray-600">Status:</span>
-                      <span className="text-sm text-gray-500">Not delivered yet</span>
-                    </div>
-                  )}
-                  
-                  {selectedMessageForInfo.deliveredAt && !selectedMessageForInfo.readAt && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-gray-600">Status:</span>
-                      <span className="text-sm text-blue-600">Delivered</span>
-                    </div>
-                  )}
-                  
-                  {selectedMessageForInfo.readAt && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-gray-600">Status:</span>
-                      <span className="text-sm text-green-600">Read</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="mt-6 flex justify-end">
-                <button
-                  onClick={() => { setShowMessageInfoModal(false); setSelectedMessageForInfo(null); }}
-                  className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
-                >
-                  Close
-                </button>
               </div>
             </div>
           </div>
