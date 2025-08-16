@@ -99,17 +99,7 @@ export default function MyAppointments() {
     };
   }, [showOtherPartyModal]);
 
-  // Lock background scroll when password modals are open
-  useEffect(() => {
-    if (showPasswordModal || showForgotPasswordModal) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [showPasswordModal, showForgotPasswordModal]);
+
 
   // Prevent body scrolling when reinitiate modal is open
   useEffect(() => {
@@ -1297,6 +1287,18 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       resetChatAccess();
     }
   }, [showChatModal, isChatAccessGranted, isChatLocked]);
+
+  // Lock background scroll when password modals are open
+  useEffect(() => {
+    if (showPasswordModal || showForgotPasswordModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showPasswordModal, showForgotPasswordModal]);
 
   // Auto-close shortcut tip after 10 seconds
   useEffect(() => {
