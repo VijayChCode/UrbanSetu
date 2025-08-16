@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo, FaCommentDots, FaCheckDouble, FaBan, FaPaperPlane, FaCalendar, FaLightbulb, FaCopy, FaEllipsisV, FaFlag, FaCircle, FaInfoCircle, FaSync, FaStar, FaRegStar, FaLock, FaUnlock, FaEye, FaEyeSlash } from "react-icons/fa";
 import UserAvatar from '../components/UserAvatar';
 import { useSelector } from "react-redux";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import Appointment from "../components/Appointment";
 import { toast, ToastContainer } from 'react-toastify';
 import { socket } from "../utils/socket";
@@ -28,6 +28,8 @@ export default function MyAppointments() {
   const [showArchived, setShowArchived] = useState(false);
   const navigate = useNavigate();
   const [swipedMsgId, setSwipedMsgId] = useState(null);
+  const [searchParams] = useSearchParams();
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -210,6 +212,49 @@ export default function MyAppointments() {
       socket.off('profileUpdated', handleProfileUpdate);
     };
   }, [currentUser]);
+
+  // Handle URL parameters and custom events for opening chats
+  useEffect(() => {
+    // Check if we should open a specific chat from URL parameters
+    const appointmentId = searchParams.get('appointmentId');
+    const shouldOpenChat = searchParams.get('openChat');
+    
+    if (appointmentId && shouldOpenChat === 'true' && appointments.length > 0) {
+      // Find the appointment
+      const targetAppointment = appointments.find(appt => appt._id === appointmentId);
+      if (targetAppointment) {
+        // Set the selected appointment and open chat
+        setSelectedAppointment(targetAppointment);
+        setShowChatModal(true);
+        
+        // Clear the URL parameters
+        navigate('/user/my-appointments', { replace: true });
+      }
+    }
+  }, [searchParams, appointments, navigate]);
+
+  // Listen for custom events to open chat for specific appointment
+  useEffect(() => {
+    const handleOpenChatForAppointment = (event) => {
+      const { appointmentId } = event.detail;
+      
+      if (appointmentId && appointments.length > 0) {
+        // Find the appointment
+        const targetAppointment = appointments.find(appt => appt._id === appointmentId);
+        if (targetAppointment) {
+          // Set the selected appointment and open chat
+          setSelectedAppointment(targetAppointment);
+          setShowChatModal(true);
+        }
+      }
+    };
+
+    window.addEventListener('openChatForAppointment', handleOpenChatForAppointment);
+    
+    return () => {
+      window.removeEventListener('openChatForAppointment', handleOpenChatForAppointment);
+    };
+  }, [appointments]);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -1279,6 +1324,17 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         console.error('Error resetting chat access:', err);
       }
     }
+  };
+
+  // Handle opening chat for a specific appointment
+  const handleOpenChat = (appointment) => {
+    setSelectedAppointment(appointment);
+    setShowChatModal(true);
+  };
+
+  // Get the current appointment for chat (either selected or current row)
+  const getCurrentChatAppointment = () => {
+    return selectedAppointment || appt;
   };
 
   // Reset chat access when chat modal is closed
@@ -2745,7 +2801,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                     ? "Chat not available for rejected appointments"
                     : "Chat not available for appointments cancelled by admin"
             ) : (isChatLocked && !isChatAccessGranted) ? "Chat is locked - click to unlock" : "Open Chat"}
-            onClick={isChatDisabled ? undefined : (isChatLocked && !isChatAccessGranted) ? handleChatUnlock : () => setShowChatModal(true)}
+            onClick={isChatDisabled ? undefined : (isChatLocked && !isChatAccessGranted) ? handleChatUnlock : () => handleOpenChat(appt)}
             disabled={isChatDisabled}
           >
             {(isChatLocked && !isChatAccessGranted) ? (
@@ -2789,9 +2845,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 <div className="text-xl font-semibold text-gray-500 text-center">
                   {!isUpcoming 
                     ? "Chat not available for outdated appointments"
-                    : appt.status === 'pending'
+                    : getCurrentChatAppointment().status === 'pending'
                       ? "Chat not available for pending appointments"
-                      : appt.status === 'rejected'
+                      : getCurrentChatAppointment().status === 'rejected'
                         ? "Chat not available for rejected appointments"
                         : "Chat not available for appointments cancelled by admin"
                   }
@@ -2799,9 +2855,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 <div className="text-gray-400 text-center mt-2">
                   {!isUpcoming 
                     ? "This appointment has already passed"
-                    : appt.status === 'pending'
+                    : selectedAppointment.status === 'pending'
                       ? "Chat will be enabled once the appointment is accepted"
-                      : appt.status === 'rejected'
+                      : selectedAppointment.status === 'rejected'
                         ? "This appointment has been rejected"
                         : "This appointment has been cancelled by admin"
                   }
@@ -2861,7 +2917,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               const isStarred = selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id);
                               setStarringSaving(true);
                               try {
-                                const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${selectedMessageForHeaderOptions._id}/star`, {
+                                const res = await fetch(`${API_BASE_URL}/api/bookings/${getCurrentChatAppointment()._id}/comment/${selectedMessageForHeaderOptions._id}/star`, {
                                   method: 'PATCH',
                                   headers: { 'Content-Type': 'application/json' },
                                   credentials: 'include',
