@@ -1144,25 +1144,6 @@ function AdminAppointmentRow({
 }) {
   const [localComments, setLocalComments] = useLocalState(appt.comments || []);
   const [newComment, setNewComment] = useLocalState("");
-
-  // Sync localComments with parent appt.comments when parent receives socket updates
-  React.useEffect(() => {
-    console.log(`🔄 AdminAppointmentRow ${appt._id}: Syncing localComments with parent appt.comments`, appt.comments);
-    const prevCommentsLength = localComments.length;
-    setLocalComments(appt.comments || []);
-    
-    // If new comments were added from parent, check if we need to update unread count
-    const newCommentsLength = (appt.comments || []).length;
-    if (newCommentsLength > prevCommentsLength && !showChatModal) {
-      const newComments = (appt.comments || []).slice(prevCommentsLength);
-      const newUnreadCount = newComments.filter(c => 
-        c.senderEmail !== currentUser.email && !c.readBy?.includes(currentUser._id)
-      ).length;
-      if (newUnreadCount > 0) {
-        setUnreadNewMessages(prev => prev + newUnreadCount);
-      }
-    }
-  }, [appt.comments, localComments.length, showChatModal, currentUser.email, currentUser._id]);
   const [sending, setSending] = useLocalState(false);
   const [editingComment, setEditingComment] = useLocalState(null);
   const [editText, setEditText] = useLocalState("");
@@ -1200,6 +1181,12 @@ function AdminAppointmentRow({
   const isUpdatingRef = React.useRef(false);
 
   const selectedMessageForHeaderOptions = headerOptionsMessageId ? localComments.find(msg => msg._id === headerOptionsMessageId) : null;
+
+  // Sync localComments with parent appt.comments when parent receives socket updates
+  React.useEffect(() => {
+    console.log(`🔄 AdminAppointmentRow ${appt._id}: Syncing localComments with parent appt.comments`, appt.comments);
+    setLocalComments(appt.comments || []);
+  }, [appt.comments]);
 
   // Auto-close shortcut tip after 10 seconds
   React.useEffect(() => {
