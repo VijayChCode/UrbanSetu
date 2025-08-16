@@ -1150,6 +1150,9 @@ function AdminAppointmentRow({
   const [selectedMessageForInfo, setSelectedMessageForInfo] = useLocalState(null);
   const [sendIconAnimating, setSendIconAnimating] = useLocalState(false);
   const [sendIconSent, setSendIconSent] = useLocalState(false);
+  
+  // Chat options menu state
+  const [showChatOptionsMenu, setShowChatOptionsMenu] = useLocalState(false);
 
   const selectedMessageForHeaderOptions = headerOptionsMessageId ? localComments.find(msg => msg._id === headerOptionsMessageId) : null;
 
@@ -1174,6 +1177,20 @@ function AdminAppointmentRow({
       return () => clearTimeout(timer);
     }
   }, [showShortcutTip]);
+
+  // Close chat options menu when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showChatOptionsMenu && !event.target.closest('.chat-options-menu')) {
+        setShowChatOptionsMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showChatOptionsMenu]);
 
   // Reset send icon animation after completion
   React.useEffect(() => {
@@ -2218,61 +2235,85 @@ function AdminAppointmentRow({
                       </div>
                     )}
                     <div className="flex items-center gap-3 ml-auto">
-                      {/* Refresh button */}
-                      <button
-                        className="text-blue-100 hover:text-white bg-blue-500/30 hover:bg-blue-500/50 rounded-full p-2 transition-colors shadow flex items-center gap-2"
-                        onClick={fetchLatestComments}
-                        title="Refresh messages"
-                        aria-label="Refresh messages"
-                      >
-                        <FaSync className="text-sm" />
-                      </button>
-                      {/* User details button for buyer */}
-                      <button
-                        className="text-green-100 hover:text-white bg-green-500/30 hover:bg-green-500/50 rounded-full p-2 transition-colors shadow flex items-center gap-2"
-                        onClick={() => onUserClick(appt.buyerId?._id)}
-                        title="View buyer details"
-                        aria-label="View buyer details"
-                      >
-                        <FaUser className="text-sm" />
-                        <span className="text-xs hidden sm:inline">Buyer</span>
-                      </button>
-                      {/* User details button for seller */}
-                      <button
-                        className="text-purple-100 hover:text-white bg-purple-500/30 hover:bg-purple-500/50 rounded-full p-2 transition-colors shadow flex items-center gap-2"
-                        onClick={() => onUserClick(appt.sellerId?._id)}
-                        title="View seller details"
-                        aria-label="View seller details"
-                      >
-                        <FaUser className="text-sm" />
-                        <span className="text-xs hidden sm:inline">Seller</span>
-                      </button>
-                      {localComments.length > 0 && (
-                        <button
-                          className="text-red-100 hover:text-white bg-red-500/30 hover:bg-red-500/50 rounded-full p-2 transition-colors shadow flex items-center gap-2"
-                          onClick={() => setShowDeleteChatModal(true)}
-                          title="Delete entire chat"
-                          aria-label="Delete chat"
-                        >
-                          <FaTrash className="text-sm" />
-                        </button>
-                      )}
+                      {/* Chat options menu */}
                       <div className="relative">
                         <button
-                          className="text-yellow-500 hover:text-yellow-600 bg-yellow-50 hover:bg-yellow-100 rounded-full p-2 transition-colors shadow"
-                          onClick={() => setShowShortcutTip(!showShortcutTip)}
-                          title="Keyboard shortcut tip"
-                          aria-label="Show keyboard shortcut tip"
+                          className="text-white hover:text-gray-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors shadow"
+                          onClick={() => setShowChatOptionsMenu(!showChatOptionsMenu)}
+                          title="Chat options"
+                          aria-label="Chat options"
                         >
-                          <FaLightbulb className="text-sm" />
+                          <FaEllipsisV className="text-sm" />
                         </button>
-                        {showShortcutTip && (
-                          <div className="absolute top-full right-0 mt-2 bg-gray-800 text-white text-xs rounded-lg px-3 py-2 shadow-lg z-20 whitespace-nowrap">
-                            Press Ctrl + F to quickly focus and type your message.
-                            <div className="absolute -top-1 right-4 w-2 h-2 bg-gray-800 transform rotate-45"></div>
+                        {showChatOptionsMenu && (
+                          <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-20 min-w-[180px] chat-options-menu">
+                            {/* Refresh option */}
+                            <button
+                              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                              onClick={() => {
+                                fetchLatestComments();
+                                setShowChatOptionsMenu(false);
+                              }}
+                            >
+                              <FaSync className="text-sm" />
+                              Refresh Messages
+                            </button>
+                            {/* User details option for buyer */}
+                            <button
+                              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                              onClick={() => {
+                                onUserClick(appt.buyerId?._id);
+                                setShowChatOptionsMenu(false);
+                              }}
+                            >
+                              <FaUser className="text-sm" />
+                              View Buyer Details
+                            </button>
+                            {/* User details option for seller */}
+                            <button
+                              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                              onClick={() => {
+                                onUserClick(appt.sellerId?._id);
+                                setShowChatOptionsMenu(false);
+                              }}
+                            >
+                              <FaUser className="text-sm" />
+                              View Seller Details
+                            </button>
+                            {/* Delete chat option */}
+                            {localComments.length > 0 && (
+                              <button
+                                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                onClick={() => {
+                                  setShowDeleteChatModal(true);
+                                  setShowChatOptionsMenu(false);
+                                }}
+                              >
+                                <FaTrash className="text-sm" />
+                                Delete Entire Chat
+                              </button>
+                            )}
+                            {/* Keyboard shortcut tip option */}
+                            <button
+                              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                              onClick={() => {
+                                setShowShortcutTip(!showShortcutTip);
+                                setShowChatOptionsMenu(false);
+                              }}
+                            >
+                              <FaLightbulb className="text-sm" />
+                              Keyboard Shortcuts
+                            </button>
                           </div>
                         )}
                       </div>
+                      {/* Keyboard shortcut tip popup */}
+                      {showShortcutTip && (
+                        <div className="absolute top-full right-0 mt-2 bg-gray-800 text-white text-xs rounded-lg px-3 py-2 shadow-lg z-20 whitespace-nowrap">
+                          Press Ctrl + F to quickly focus and type your message.
+                          <div className="absolute -top-1 right-4 w-2 h-2 bg-gray-800 transform rotate-45"></div>
+                        </div>
+                      )}
                       {/* Scroll to bottom button when there are unread messages */}
                       {unreadNewMessages > 0 && !isAtBottom && (
                         <button
