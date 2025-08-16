@@ -2393,6 +2393,28 @@ function AdminAppointmentRow({
                               <FaSync className="text-sm" />
                               Refresh Messages
                             </button>
+                            {/* Starred Messages option */}
+                            <button
+                              className="w-full px-4 py-2 text-left text-sm text-yellow-600 hover:bg-yellow-50 flex items-center gap-2"
+                              onClick={() => {
+                                setShowStarredModal(true);
+                                setShowChatOptionsMenu(false);
+                              }}
+                            >
+                              <FaStar className="text-sm" />
+                              Starred Messages
+                            </button>
+                            {/* Keyboard shortcut tip option */}
+                            <button
+                              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                              onClick={() => {
+                                setShowShortcutTip(!showShortcutTip);
+                                setShowChatOptionsMenu(false);
+                              }}
+                            >
+                              <FaLightbulb className="text-sm" />
+                              Keyboard Shortcuts
+                            </button>
                             {/* User details option for buyer */}
                             <button
                               className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
@@ -2428,28 +2450,6 @@ function AdminAppointmentRow({
                                 Delete Entire Chat
                               </button>
                             )}
-                            {/* Starred Messages option */}
-                            <button
-                              className="w-full px-4 py-2 text-left text-sm text-yellow-600 hover:bg-yellow-50 flex items-center gap-2"
-                              onClick={() => {
-                                setShowStarredModal(true);
-                                setShowChatOptionsMenu(false);
-                              }}
-                            >
-                              <FaStar className="text-sm" />
-                              Starred Messages
-                            </button>
-                            {/* Keyboard shortcut tip option */}
-                            <button
-                              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                              onClick={() => {
-                                setShowShortcutTip(!showShortcutTip);
-                                setShowChatOptionsMenu(false);
-                              }}
-                            >
-                              <FaLightbulb className="text-sm" />
-                              Keyboard Shortcuts
-                            </button>
                           </div>
                         )}
                       </div>
