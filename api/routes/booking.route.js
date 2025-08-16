@@ -1971,6 +1971,54 @@ router.patch('/:id/chat/reset-access', verifyToken, async (req, res) => {
   }
 });
 
+// PATCH: Forgot password - clear chat and remove lock
+router.patch('/:id/chat/forgot-password', verifyToken, async (req, res) => {
+  try {
+    const appointmentId = req.params.id;
+    const userId = req.user.id;
+
+    const appointment = await booking.findById(appointmentId);
+    if (!appointment) {
+      return res.status(404).json({ message: 'Appointment not found.' });
+    }
+
+    // Check if user is buyer or seller
+    const isBuyer = appointment.buyerId.toString() === userId;
+    const isSeller = appointment.sellerId.toString() === userId;
+
+    if (!isBuyer && !isSeller) {
+      return res.status(403).json({ message: 'Not authorized to unlock this chat.' });
+    }
+
+    // Clear chat and remove lock for the current user
+    if (isBuyer) {
+      appointment.buyerChatLocked = false;
+      appointment.buyerChatPassword = null;
+      appointment.buyerChatAccessGranted = false;
+      appointment.buyerChatClearedAt = new Date();
+    } else {
+      appointment.sellerChatLocked = false;
+      appointment.sellerChatPassword = null;
+      appointment.sellerChatAccessGranted = false;
+      appointment.sellerChatClearedAt = new Date();
+    }
+
+    // Clear all chat messages
+    appointment.comments = [];
+
+    await appointment.save();
+
+    return res.status(200).json({ 
+      message: 'Chat unlocked and cleared successfully.',
+      chatLocked: false,
+      accessGranted: false
+    });
+  } catch (err) {
+    console.error('Error unlocking chat via forgot password:', err);
+    return res.status(500).json({ message: 'Failed to unlock chat.' });
+  }
+});
+
 export default router;
 
 // --- SOCKET.IO: User Appointments Page Active (for delivered ticks) ---

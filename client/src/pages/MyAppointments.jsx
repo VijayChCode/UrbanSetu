@@ -1071,6 +1071,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
 
   // Chat lock functions
   const handleChatLock = () => {
@@ -1199,6 +1200,44 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     setPasswordAction('');
     setShowPassword(false);
     setShowConfirmPassword(false);
+  };
+
+  // Forgot password functions
+  const handleForgotPassword = () => {
+    setShowForgotPasswordModal(true);
+    setShowPasswordModal(false);
+  };
+
+  const handleForgotPasswordCancel = () => {
+    setShowForgotPasswordModal(false);
+    setShowPasswordModal(true);
+  };
+
+  const handleForgotPasswordContinue = async () => {
+    try {
+      // Clear chat and remove lock via API
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/forgot-password`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+      });
+      
+      const data = await res.json();
+      
+      if (res.ok) {
+        setIsChatLocked(false);
+        setIsChatAccessGranted(false);
+        setShowForgotPasswordModal(false);
+        setShowPasswordModal(false);
+        toast.success('Chat unlocked and cleared successfully!');
+        // Refresh chat lock status
+        fetchChatLockStatus();
+      } else {
+        toast.error(data.message || 'Failed to unlock chat');
+      }
+    } catch (err) {
+        toast.error('An error occurred. Please try again.');
+    }
   };
 
   // Fetch chat lock status from backend
@@ -4401,6 +4440,19 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 </div>
               </div>
             )}
+
+            {/* Forgot Password link - only for unlock action */}
+            {passwordAction === 'unlock' && (
+              <div className="mb-4 text-center">
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                >
+                  Forgot Password?
+                </button>
+              </div>
+            )}
             
             {passwordError && (
               <p className="text-red-500 text-sm mt-2">{passwordError}</p>
@@ -4431,6 +4483,62 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 {passwordAction === 'lock' ? 'Lock Chat' 
                  : passwordAction === 'unlock' ? 'Unlock Chat'
                  : 'Remove Lock'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Forgot Password Modal */}
+      {showForgotPasswordModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+              <FaUnlock className="text-orange-500" />
+              Forgot Password
+            </h3>
+            
+            <div className="mb-6">
+              <div className="bg-orange-50 border-l-4 border-orange-400 p-4 mb-4">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-orange-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm text-orange-700">
+                      <strong>Warning:</strong> This action will:
+                    </p>
+                    <ul className="mt-2 text-sm text-orange-700 list-disc list-inside">
+                      <li>Clear all chat messages</li>
+                      <li>Remove the chat lock</li>
+                      <li>Clear the passcode if set</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              
+              <p className="text-gray-600 text-sm">
+                Are you sure you want to continue? This action cannot be undone.
+              </p>
+            </div>
+            
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={handleForgotPasswordCancel}
+                className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleForgotPasswordContinue}
+                className="px-4 py-2 rounded bg-orange-600 text-white font-semibold hover:bg-orange-700 transition-colors flex items-center gap-2"
+              >
+                <FaUnlock size={12} />
+                Continue
               </button>
             </div>
           </div>
