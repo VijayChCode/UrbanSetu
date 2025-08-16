@@ -1135,6 +1135,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
           setShowPasswordModal(false);
           setPassword('');
           toast.success('Chat access granted!');
+          // Automatically open the chat after successful unlock
+          setShowChatModal(true);
         } else {
           setPasswordError(data.message || 'Failed to grant chat access');
         }
@@ -1187,6 +1189,31 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       console.error('Error fetching chat lock status:', err);
     }
   };
+
+  // Reset chat access when chat modal is closed
+  const resetChatAccess = async () => {
+    if (isChatAccessGranted && isChatLocked) {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/reset-access`, {
+          method: 'PATCH',
+          credentials: 'include'
+        });
+        
+        if (res.ok) {
+          setIsChatAccessGranted(false);
+        }
+      } catch (err) {
+        console.error('Error resetting chat access:', err);
+      }
+    }
+  };
+
+  // Reset chat access when chat modal is closed
+  useEffect(() => {
+    if (!showChatModal && isChatAccessGranted && isChatLocked) {
+      resetChatAccess();
+    }
+  }, [showChatModal, isChatAccessGranted, isChatLocked]);
 
   // Auto-close shortcut tip after 10 seconds
   useEffect(() => {
@@ -3074,7 +3101,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                         )}
                         <button
                           className="text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors z-10 shadow"
-                          onClick={() => setShowChatModal(false)}
+                          onClick={() => {
+                            setShowChatModal(false);
+                            resetChatAccess();
+                          }}
                           title="Close"
                           aria-label="Close"
                         >
