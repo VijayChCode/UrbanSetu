@@ -1069,6 +1069,125 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const [password, setPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
 
+  // Chat lock functions
+  const handleChatLock = () => {
+    setPasswordAction('lock');
+    setPassword('');
+    setPasswordError('');
+    setShowPasswordModal(true);
+  };
+
+  const handleChatUnlock = () => {
+    setPasswordAction('unlock');
+    setPassword('');
+    setPasswordError('');
+    setShowPasswordModal(true);
+  };
+
+  const handleRemoveChatLock = () => {
+    setPasswordAction('remove-lock');
+    setPassword('');
+    setPasswordError('');
+    setShowPasswordModal(true);
+  };
+
+  const handlePasswordSubmit = async () => {
+    if (!password.trim()) {
+      setPasswordError('Password is required');
+      return;
+    }
+
+    try {
+      if (passwordAction === 'lock') {
+        // Lock chat via API
+        const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/lock`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ password }),
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok) {
+          setIsChatLocked(true);
+          setIsChatAccessGranted(false);
+          setShowPasswordModal(false);
+          setPassword('');
+          setShowChatModal(false); // Close chat when locking
+          toast.success('Chat locked successfully!');
+        } else {
+          setPasswordError(data.message || 'Failed to lock chat');
+        }
+      } else if (passwordAction === 'unlock') {
+        // Grant access to chat (chat remains locked)
+        const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/unlock`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ password }),
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok) {
+          setIsChatAccessGranted(true);
+          setShowPasswordModal(false);
+          setPassword('');
+          toast.success('Chat access granted!');
+        } else {
+          setPasswordError(data.message || 'Failed to grant chat access');
+        }
+      } else if (passwordAction === 'remove-lock') {
+        // Remove chat lock completely
+        const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/remove-lock`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ password }),
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok) {
+          setIsChatLocked(false);
+          setIsChatAccessGranted(false);
+          setShowPasswordModal(false);
+          setPassword('');
+          toast.success('Chat lock removed successfully!');
+        } else {
+          setPasswordError(data.message || 'Failed to remove chat lock');
+        }
+      }
+    } catch (err) {
+      setPasswordError('An error occurred. Please try again.');
+    }
+  };
+
+  const handlePasswordCancel = () => {
+    setShowPasswordModal(false);
+    setPassword('');
+    setPasswordError('');
+    setPasswordAction('');
+  };
+
+  // Fetch chat lock status from backend
+  const fetchChatLockStatus = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/lock-status`, {
+        credentials: 'include'
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        setIsChatLocked(data.chatLocked);
+        setIsChatAccessGranted(data.accessGranted || false);
+      }
+    } catch (err) {
+      console.error('Error fetching chat lock status:', err);
+    }
+  };
+
   // Auto-close shortcut tip after 10 seconds
   useEffect(() => {
     if (showShortcutTip) {
@@ -1277,124 +1396,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     setShowMessageInfoModal(true);
   };
 
-  // Chat lock functions
-  const handleChatLock = () => {
-    setPasswordAction('lock');
-    setPassword('');
-    setPasswordError('');
-    setShowPasswordModal(true);
-  };
 
-  const handleChatUnlock = () => {
-    setPasswordAction('unlock');
-    setPassword('');
-    setPasswordError('');
-    setShowPasswordModal(true);
-  };
 
-  const handleRemoveChatLock = () => {
-    setPasswordAction('remove-lock');
-    setPassword('');
-    setPasswordError('');
-    setShowPasswordModal(true);
-  };
 
-  const handlePasswordSubmit = async () => {
-    if (!password.trim()) {
-      setPasswordError('Password is required');
-      return;
-    }
-
-    try {
-      if (passwordAction === 'lock') {
-        // Lock chat via API
-        const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/lock`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ password }),
-        });
-        
-        const data = await res.json();
-        
-        if (res.ok) {
-          setIsChatLocked(true);
-          setIsChatAccessGranted(false);
-          setShowPasswordModal(false);
-          setPassword('');
-          setShowChatModal(false); // Close chat when locking
-          toast.success('Chat locked successfully!');
-        } else {
-          setPasswordError(data.message || 'Failed to lock chat');
-        }
-      } else if (passwordAction === 'unlock') {
-        // Grant access to chat (chat remains locked)
-        const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/unlock`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ password }),
-        });
-        
-        const data = await res.json();
-        
-        if (res.ok) {
-          setIsChatAccessGranted(true);
-          setShowPasswordModal(false);
-          setPassword('');
-          toast.success('Chat access granted!');
-        } else {
-          setPasswordError(data.message || 'Failed to grant chat access');
-        }
-      } else if (passwordAction === 'remove-lock') {
-        // Remove chat lock completely
-        const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/remove-lock`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ password }),
-        });
-        
-        const data = await res.json();
-        
-        if (res.ok) {
-          setIsChatLocked(false);
-          setIsChatAccessGranted(false);
-          setShowPasswordModal(false);
-          setPassword('');
-          toast.success('Chat lock removed successfully!');
-        } else {
-          setPasswordError(data.message || 'Failed to remove chat lock');
-        }
-      }
-    } catch (err) {
-      setPasswordError('An error occurred. Please try again.');
-    }
-  };
-
-  const handlePasswordCancel = () => {
-    setShowPasswordModal(false);
-    setPassword('');
-    setPasswordError('');
-    setPasswordAction('');
-  };
-
-  // Fetch chat lock status from backend
-  const fetchChatLockStatus = async () => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/lock-status`, {
-        credentials: 'include'
-      });
-      
-      if (res.ok) {
-        const data = await res.json();
-        setIsChatLocked(data.chatLocked);
-        setIsChatAccessGranted(data.accessGranted || false);
-      }
-    } catch (err) {
-      console.error('Error fetching chat lock status:', err);
-    }
-  };
 
   const handleCommentSend = async () => {
     if (!comment.trim()) return;
