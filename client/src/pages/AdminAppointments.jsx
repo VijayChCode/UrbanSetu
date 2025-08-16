@@ -1821,8 +1821,9 @@ function AdminAppointmentRow({
     const refocusInput = () => {
       if (inputRef.current) {
         inputRef.current.focus();
-        // For mobile devices, ensure the input remains active and set cursor position
-        inputRef.current.setSelectionRange(0, 0);
+        // Place cursor at end of text instead of start
+        const length = inputRef.current.value.length;
+        inputRef.current.setSelectionRange(length, length);
         // Force the input to be the active element
         if (document.activeElement !== inputRef.current) {
           inputRef.current.click();
@@ -2469,14 +2470,24 @@ function AdminAppointmentRow({
                                       <FaBan className="inline-block" />
                                       Message deleted by {c.deletedBy || 'user'} (Admin view - preserved for records)
                                     </div>
-                                    <div className="text-gray-800 bg-white p-2 rounded border-l-4 border-red-400">
+                                    <div className="text-gray-800 bg-white p-2 rounded border-l-4 border-red-400 relative group">
                                       {(() => {
-
-                                        
-                                        if (c.originalMessage) {
-                                          return <span className="whitespace-pre-wrap break-words">{c.originalMessage}</span>;
-                                        } else if (c.message) {
-                                          return <span className="whitespace-pre-wrap break-words">{c.message}</span>;
+                                        const messageContent = c.originalMessage || c.message;
+                                        if (messageContent) {
+                                          return (
+                                            <>
+                                              <span className="whitespace-pre-wrap break-words">{messageContent}</span>
+                                              {/* Copy icon - visible on hover */}
+                                              <button
+                                                className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-gray-500 hover:text-gray-700 bg-white rounded p-1 shadow-sm"
+                                                onClick={() => copyMessageToClipboard(messageContent)}
+                                                title="Copy deleted message content"
+                                                aria-label="Copy deleted message content"
+                                              >
+                                                <FaCopy className="text-xs" />
+                                              </button>
+                                            </>
+                                          );
                                         } else {
                                           return (
                                             <span className="text-gray-500 italic">

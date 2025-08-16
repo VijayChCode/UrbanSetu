@@ -1478,8 +1478,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     const refocusInput = () => {
       if (inputRef.current) {
         inputRef.current.focus();
-        // For mobile devices, ensure the input remains active and set cursor position
-        inputRef.current.setSelectionRange(0, 0);
+        // Place cursor at end of text instead of start
+        const length = inputRef.current.value.length;
+        inputRef.current.setSelectionRange(length, length);
         // Force the input to be the active element
         if (document.activeElement !== inputRef.current) {
           inputRef.current.click();
