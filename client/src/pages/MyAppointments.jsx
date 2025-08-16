@@ -4133,7 +4133,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 />
               </div>
             </div>
-            <div className="flex gap-2 mt-6">
+            <div className="flex gap-2 mt-6 justify-end">
               <button
                 onClick={() => {
                   setShowReportChatModal(false);
