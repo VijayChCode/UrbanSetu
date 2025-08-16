@@ -115,6 +115,11 @@ const bookingSchema = new mongoose.Schema({
   ],
   buyerChatClearedAt: { type: Date, default: null },
   sellerChatClearedAt: { type: Date, default: null },
+  // Chat lock functionality
+  buyerChatLocked: { type: Boolean, default: false },
+  sellerChatLocked: { type: Boolean, default: false },
+  buyerChatPassword: { type: String, default: null },
+  sellerChatPassword: { type: String, default: null },
 });
 
 const booking = mongoose.model("Booking", bookingSchema);

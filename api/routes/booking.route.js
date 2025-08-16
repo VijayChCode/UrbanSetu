@@ -1730,6 +1730,144 @@ router.get('/:id/starred-messages', verifyToken, async (req, res) => {
   }
 });
 
+// PATCH: Lock chat with password
+router.patch('/:id/chat/lock', verifyToken, async (req, res) => {
+  try {
+    const { password } = req.body;
+    const appointmentId = req.params.id;
+    const userId = req.user.id;
+
+    if (!password || password.trim().length === 0) {
+      return res.status(400).json({ message: 'Password is required to lock chat.' });
+    }
+
+    const appointment = await booking.findById(appointmentId);
+    if (!appointment) {
+      return res.status(404).json({ message: 'Appointment not found.' });
+    }
+
+    // Check if user is buyer or seller
+    const isBuyer = appointment.buyerId.toString() === userId;
+    const isSeller = appointment.sellerId.toString() === userId;
+
+    if (!isBuyer && !isSeller) {
+      return res.status(403).json({ message: 'Not authorized to lock this chat.' });
+    }
+
+    // Hash the password for security
+    const hashedPassword = bcryptjs.hashSync(password, 10);
+
+    // Update the appropriate lock fields
+    if (isBuyer) {
+      appointment.buyerChatLocked = true;
+      appointment.buyerChatPassword = hashedPassword;
+    } else {
+      appointment.sellerChatLocked = true;
+      appointment.sellerChatPassword = hashedPassword;
+    }
+
+    await appointment.save();
+
+    return res.status(200).json({ 
+      message: 'Chat locked successfully.',
+      chatLocked: true
+    });
+  } catch (err) {
+    console.error('Error locking chat:', err);
+    return res.status(500).json({ message: 'Failed to lock chat.' });
+  }
+});
+
+// PATCH: Unlock chat with password
+router.patch('/:id/chat/unlock', verifyToken, async (req, res) => {
+  try {
+    const { password } = req.body;
+    const appointmentId = req.params.id;
+    const userId = req.user.id;
+
+    if (!password || password.trim().length === 0) {
+      return res.status(400).json({ message: 'Password is required to unlock chat.' });
+    }
+
+    const appointment = await booking.findById(appointmentId);
+    if (!appointment) {
+      return res.status(404).json({ message: 'Appointment not found.' });
+    }
+
+    // Check if user is buyer or seller
+    const isBuyer = appointment.buyerId.toString() === userId;
+    const isSeller = appointment.sellerId.toString() === userId;
+
+    if (!isBuyer && !isSeller) {
+      return res.status(403).json({ message: 'Not authorized to unlock this chat.' });
+    }
+
+    // Get the stored password hash
+    const storedPasswordHash = isBuyer ? appointment.buyerChatPassword : appointment.sellerChatPassword;
+    
+    if (!storedPasswordHash) {
+      return res.status(400).json({ message: 'No password set for this chat.' });
+    }
+
+    // Verify the password
+    const isPasswordValid = bcryptjs.compareSync(password, storedPasswordHash);
+    
+    if (!isPasswordValid) {
+      return res.status(400).json({ message: 'Incorrect password.' });
+    }
+
+    // Unlock the chat
+    if (isBuyer) {
+      appointment.buyerChatLocked = false;
+    } else {
+      appointment.sellerChatLocked = false;
+    }
+
+    await appointment.save();
+
+    return res.status(200).json({ 
+      message: 'Chat unlocked successfully.',
+      chatLocked: false
+    });
+  } catch (err) {
+    console.error('Error unlocking chat:', err);
+    return res.status(500).json({ message: 'Failed to unlock chat.' });
+  }
+});
+
+// GET: Get chat lock status
+router.get('/:id/chat/lock-status', verifyToken, async (req, res) => {
+  try {
+    const appointmentId = req.params.id;
+    const userId = req.user.id;
+
+    const appointment = await booking.findById(appointmentId);
+    if (!appointment) {
+      return res.status(404).json({ message: 'Appointment not found.' });
+    }
+
+    // Check if user is buyer or seller
+    const isBuyer = appointment.buyerId.toString() === userId;
+    const isSeller = appointment.sellerId.toString() === userId;
+
+    if (!isBuyer && !isSeller) {
+      return res.status(403).json({ message: 'Not authorized to view this chat.' });
+    }
+
+    // Return the lock status for the current user
+    const chatLocked = isBuyer ? appointment.buyerChatLocked : appointment.sellerChatLocked;
+    const hasPassword = isBuyer ? !!appointment.buyerChatPassword : !!appointment.sellerChatPassword;
+
+    return res.status(200).json({ 
+      chatLocked,
+      hasPassword
+    });
+  } catch (err) {
+    console.error('Error getting chat lock status:', err);
+    return res.status(500).json({ message: 'Failed to get chat lock status.' });
+  }
+});
+
 export default router;
 
 // --- SOCKET.IO: User Appointments Page Active (for delivered ticks) ---

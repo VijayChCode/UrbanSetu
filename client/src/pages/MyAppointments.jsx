@@ -1066,7 +1066,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordAction, setPasswordAction] = useState(''); // 'lock' or 'unlock'
   const [password, setPassword] = useState('');
-  const [chatPassword, setChatPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
 
   // Auto-close shortcut tip after 10 seconds
@@ -1292,30 +1291,55 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     setShowPasswordModal(true);
   };
 
-  const handlePasswordSubmit = () => {
+  const handlePasswordSubmit = async () => {
     if (!password.trim()) {
       setPasswordError('Password is required');
       return;
     }
 
-    if (passwordAction === 'lock') {
-      // Save password and lock chat
-      setChatPassword(password);
-      setIsChatLocked(true);
-      setShowPasswordModal(false);
-      setPassword('');
-      setShowChatModal(false); // Close chat when locking
-      toast.success('Chat locked successfully!');
-    } else if (passwordAction === 'unlock') {
-      // Verify password and unlock chat
-      if (password === chatPassword) {
-        setIsChatLocked(false);
-        setShowPasswordModal(false);
-        setPassword('');
-        toast.success('Chat unlocked successfully!');
-      } else {
-        setPasswordError('Incorrect password');
+    try {
+      if (passwordAction === 'lock') {
+        // Lock chat via API
+        const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/lock`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ password }),
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok) {
+          setIsChatLocked(true);
+          setShowPasswordModal(false);
+          setPassword('');
+          setShowChatModal(false); // Close chat when locking
+          toast.success('Chat locked successfully!');
+        } else {
+          setPasswordError(data.message || 'Failed to lock chat');
+        }
+      } else if (passwordAction === 'unlock') {
+        // Unlock chat via API
+        const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/unlock`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ password }),
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok) {
+          setIsChatLocked(false);
+          setShowPasswordModal(false);
+          setPassword('');
+          toast.success('Chat unlocked successfully!');
+        } else {
+          setPasswordError(data.message || 'Failed to unlock chat');
+        }
       }
+    } catch (err) {
+      setPasswordError('An error occurred. Please try again.');
     }
   };
 
@@ -1324,6 +1348,22 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     setPassword('');
     setPasswordError('');
     setPasswordAction('');
+  };
+
+  // Fetch chat lock status from backend
+  const fetchChatLockStatus = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/lock-status`, {
+        credentials: 'include'
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        setIsChatLocked(data.chatLocked);
+      }
+    } catch (err) {
+      console.error('Error fetching chat lock status:', err);
+    }
   };
 
   const handleCommentSend = async () => {
@@ -2085,6 +2125,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         console.warn('Error marking comments as read on modal open:', error);
       });
       
+      // Fetch chat lock status when chat opens
+      fetchChatLockStatus();
+      
       // Sync starred messages when chat opens
       if (starredMessages.length > 0) {
         // Update starred messages list with current comment states
@@ -2200,10 +2243,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
-      // Auto-lock chat when closed if a password was set
-      if (!isChatLocked && chatPassword) {
-        setIsChatLocked(true);
-      }
       // When chat is closed, restore unread count if there are still unread messages
       if (unreadCount > 0) {
         setUnreadNewMessages(unreadCount);
@@ -2214,7 +2253,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     return () => {
       document.body.style.overflow = '';
     };
-  }, [showChatModal, unreadCount, isChatLocked, chatPassword]);
+  }, [showChatModal, unreadCount]);
 
   // Filter out locally removed deleted messages
   const filteredComments = comments.filter(c => new Date(c.timestamp).getTime() > clearTime && !locallyRemovedIds.includes(c._id) && !(c.removedFor?.includes?.(currentUser._id)));
@@ -2263,6 +2302,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       socket.off('userOnlineUpdate', handleTableUserOnlineStatus);
     };
   }, [otherParty?._id]);
+
+  // Fetch chat lock status when component mounts
+  useEffect(() => {
+    fetchChatLockStatus();
+  }, [appt._id]);
 
   // Listen for typing events from the other party
   useEffect(() => {
