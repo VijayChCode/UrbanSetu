@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo, FaCommentDots, FaCheckDouble, FaBan, FaPaperPlane, FaCalendar, FaLightbulb, FaCopy, FaEllipsisV, FaFlag, FaCircle, FaInfoCircle, FaSync, FaStar, FaRegStar } from "react-icons/fa";
+import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo, FaCommentDots, FaCheckDouble, FaBan, FaPaperPlane, FaCalendar, FaLightbulb, FaCopy, FaEllipsisV, FaFlag, FaCircle, FaInfoCircle, FaSync, FaStar, FaRegStar, FaLock, FaUnlock } from "react-icons/fa";
 import UserAvatar from '../components/UserAvatar';
 import { useSelector } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -1060,6 +1060,14 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   
   // Chat options menu state
   const [showChatOptionsMenu, setShowChatOptionsMenu] = useState(false);
+  
+  // Chat lock states
+  const [isChatLocked, setIsChatLocked] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordAction, setPasswordAction] = useState(''); // 'lock' or 'unlock'
+  const [password, setPassword] = useState('');
+  const [chatPassword, setChatPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
 
   // Auto-close shortcut tip after 10 seconds
   useEffect(() => {
@@ -1267,6 +1275,55 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const showMessageInfo = (message) => {
     setSelectedMessageForInfo(message);
     setShowMessageInfoModal(true);
+  };
+
+  // Chat lock functions
+  const handleChatLock = () => {
+    setPasswordAction('lock');
+    setPassword('');
+    setPasswordError('');
+    setShowPasswordModal(true);
+  };
+
+  const handleChatUnlock = () => {
+    setPasswordAction('unlock');
+    setPassword('');
+    setPasswordError('');
+    setShowPasswordModal(true);
+  };
+
+  const handlePasswordSubmit = () => {
+    if (!password.trim()) {
+      setPasswordError('Password is required');
+      return;
+    }
+
+    if (passwordAction === 'lock') {
+      // Save password and lock chat
+      setChatPassword(password);
+      setIsChatLocked(true);
+      setShowPasswordModal(false);
+      setPassword('');
+      setShowChatModal(false); // Close chat when locking
+      toast.success('Chat locked successfully!');
+    } else if (passwordAction === 'unlock') {
+      // Verify password and unlock chat
+      if (password === chatPassword) {
+        setIsChatLocked(false);
+        setShowPasswordModal(false);
+        setPassword('');
+        toast.success('Chat unlocked successfully!');
+      } else {
+        setPasswordError('Incorrect password');
+      }
+    }
+  };
+
+  const handlePasswordCancel = () => {
+    setShowPasswordModal(false);
+    setPassword('');
+    setPasswordError('');
+    setPasswordAction('');
   };
 
   const handleCommentSend = async () => {
@@ -2143,6 +2200,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
+      // Auto-lock chat when closed if a password was set
+      if (!isChatLocked && chatPassword) {
+        setIsChatLocked(true);
+      }
       // When chat is closed, restore unread count if there are still unread messages
       if (unreadCount > 0) {
         setUnreadNewMessages(unreadCount);
@@ -2153,7 +2214,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     return () => {
       document.body.style.overflow = '';
     };
-  }, [showChatModal, unreadCount]);
+  }, [showChatModal, unreadCount, isChatLocked, chatPassword]);
 
   // Filter out locally removed deleted messages
   const filteredComments = comments.filter(c => new Date(c.timestamp).getTime() > clearTime && !locallyRemovedIds.includes(c._id) && !(c.removedFor?.includes?.(currentUser._id)));
@@ -2482,11 +2543,15 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   : appt.status === 'rejected'
                     ? "Chat not available for rejected appointments"
                     : "Chat not available for appointments cancelled by admin"
-            ) : "Open Chat"}
-            onClick={isChatDisabled ? undefined : () => setShowChatModal(true)}
+            ) : isChatLocked ? "Chat is locked - click to unlock" : "Open Chat"}
+            onClick={isChatDisabled ? undefined : isChatLocked ? handleChatUnlock : () => setShowChatModal(true)}
             disabled={isChatDisabled}
           >
-            <FaCommentDots size={22} className={!isChatDisabled ? "group-hover:animate-pulse" : ""} />
+            {isChatLocked ? (
+              <FaLock size={22} className="text-yellow-400" />
+            ) : (
+              <FaCommentDots size={22} className={!isChatDisabled ? "group-hover:animate-pulse" : ""} />
+            )}
             {!isChatDisabled && (
               <div className="absolute inset-0 bg-white rounded-full opacity-0 group-hover:opacity-20 transition-opacity duration-200"></div>
             )}
@@ -2787,6 +2852,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                         </div>
                       </div>
                       <div className="flex items-center gap-2 sm:gap-4 ml-auto flex-shrink-0">
+                        {/* Chat lock indicator */}
+                        {isChatLocked && (
+                          <div className="bg-yellow-500 text-white text-xs px-2 py-1 rounded-full font-bold flex items-center gap-1">
+                            <FaLock size={10} />
+                            Locked
+                          </div>
+                        )}
                         {/* Unread message count */}
                         {unreadNewMessages > 0 && (
                           <div className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold animate-pulse">
@@ -2851,6 +2923,17 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               >
                                 <FaStar className="text-sm" />
                                 Starred Messages
+                              </button>
+                              {/* Chat Lock option */}
+                              <button
+                                className="w-full px-4 py-2 text-left text-sm text-blue-600 hover:bg-blue-50 flex items-center gap-2"
+                                onClick={() => {
+                                  isChatLocked ? handleChatUnlock() : handleChatLock();
+                                  setShowChatOptionsMenu(false);
+                                }}
+                              >
+                                {isChatLocked ? <FaUnlock className="text-sm" /> : <FaLock className="text-sm" />}
+                                {isChatLocked ? 'Unlock Chat' : 'Lock Chat'}
                               </button>
                               {/* Report Chat option */}
                               <button
@@ -4053,6 +4136,72 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Password Modal for Chat Lock/Unlock */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+              {passwordAction === 'lock' ? <FaLock className="text-blue-500" /> : <FaUnlock className="text-green-500" />}
+              {passwordAction === 'lock' ? 'Lock Chat' : 'Unlock Chat'}
+            </h3>
+            
+            <p className="text-gray-600 mb-4">
+              {passwordAction === 'lock' 
+                ? 'Set a password to lock this chat. You will need this password to unlock it later.'
+                : 'Enter the password to unlock this chat.'
+              }
+            </p>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {passwordAction === 'lock' ? 'Set Password:' : 'Enter Password:'}
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setPasswordError('');
+                }}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder={passwordAction === 'lock' ? 'Create a password...' : 'Enter password...'}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handlePasswordSubmit();
+                  }
+                }}
+                autoFocus
+              />
+              {passwordError && (
+                <p className="text-red-500 text-sm mt-2">{passwordError}</p>
+              )}
+            </div>
+            
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={handlePasswordCancel}
+                className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handlePasswordSubmit}
+                className={`px-4 py-2 rounded font-semibold transition-colors flex items-center gap-2 ${
+                  passwordAction === 'lock'
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-green-600 text-white hover:bg-green-700'
+                }`}
+              >
+                {passwordAction === 'lock' ? <FaLock size={12} /> : <FaUnlock size={12} />}
+                {passwordAction === 'lock' ? 'Lock Chat' : 'Unlock Chat'}
               </button>
             </div>
           </div>
