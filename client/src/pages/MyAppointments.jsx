@@ -954,6 +954,14 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const [replyTo, setReplyTo] = useState(null);
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState(appt.comments || []);
+  
+  // Initialize starred messages when comments are loaded
+  useEffect(() => {
+    if (comments.length > 0) {
+      const starredMsgs = comments.filter(c => c.starredBy && c.starredBy.includes(currentUser._id));
+      setStarredMessages(starredMsgs);
+    }
+  }, [comments, currentUser._id]);
   const [sending, setSending] = useState(false);
   const [editingComment, setEditingComment] = useState(null);
   const [editText, setEditText] = useState("");
@@ -1125,8 +1133,16 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       });
       if (res.ok) {
         const data = await res.json();
-        if (data.comments && data.comments.length !== comments.length) {
-          setComments(data.comments);
+        if (data.comments) {
+          // Preserve starred status from current state
+          const updatedComments = data.comments.map(newComment => {
+            const existingComment = comments.find(c => c._id === newComment._id);
+            if (existingComment && existingComment.starredBy) {
+              return { ...newComment, starredBy: existingComment.starredBy };
+            }
+            return newComment;
+          });
+          setComments(updatedComments);
           setUnreadNewMessages(0); // Reset unread count after refresh
         }
       }
@@ -1733,22 +1749,26 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   useEffect(() => {
     if (showStarredModal) {
       setLoadingStarredMessages(true);
-      fetch(`${API_BASE_URL}/api/bookings/${appt._id}/starred-messages`, {
-        credentials: 'include'
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (data.starredMessages) {
-            setStarredMessages(data.starredMessages);
-          }
+      // First, sync comments to ensure we have the latest starred status
+      fetchLatestComments().then(() => {
+        // Then fetch starred messages from backend
+        fetch(`${API_BASE_URL}/api/bookings/${appt._id}/starred-messages`, {
+          credentials: 'include'
         })
-        .catch(err => {
-          console.error('Error fetching starred messages:', err);
-          toast.error('Failed to load starred messages');
-        })
-        .finally(() => {
-          setLoadingStarredMessages(false);
-        });
+          .then(res => res.json())
+          .then(data => {
+            if (data.starredMessages) {
+              setStarredMessages(data.starredMessages);
+            }
+          })
+          .catch(err => {
+            console.error('Error fetching starred messages:', err);
+            toast.error('Failed to load starred messages');
+          })
+          .finally(() => {
+            setLoadingStarredMessages(false);
+          });
+      });
     }
   }, [showStarredModal, appt._id]);
 
@@ -1939,6 +1959,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
           const idx = prev.findIndex(c => c._id === data.comment._id);
           if (idx !== -1) {
             // Update the existing comment in place, but do not downgrade 'read' to 'delivered'
+            // and preserve starred status
             const updated = [...prev];
             const localComment = prev[idx];
             const incomingComment = data.comment;
@@ -1946,19 +1967,21 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
             if (localComment.status === 'read' && incomingComment.status !== 'read') {
               status = 'read';
             }
-            updated[idx] = { ...incomingComment, status };
+            // Preserve starred status from local state
+            const starredBy = localComment.starredBy || [];
+            updated[idx] = { ...incomingComment, status, starredBy };
             return updated;
           } else {
-                    // Only add if not present and not a temporary message
-        const isTemporaryMessage = prev.some(msg => msg._id.toString().startsWith('temp-'));
-        if (!isTemporaryMessage || data.comment.senderEmail !== currentUser.email) {
-          // If this is a new message from another user and chat is not open, increment unread count
-          if (data.comment.senderEmail !== currentUser.email && !showChatModal && !data.comment.readBy?.includes(currentUser._id)) {
-            setUnreadNewMessages(prev => prev + 1);
-          }
-          return [...prev, data.comment];
-        }
-        return prev;
+            // Only add if not present and not a temporary message
+            const isTemporaryMessage = prev.some(msg => msg._id.toString().startsWith('temp-'));
+            if (!isTemporaryMessage || data.comment.senderEmail !== currentUser.email) {
+              // If this is a new message from another user and chat is not open, increment unread count
+              if (data.comment.senderEmail !== currentUser.email && !showChatModal && !data.comment.readBy?.includes(currentUser._id)) {
+                setUnreadNewMessages(prev => prev + 1);
+              }
+              return [...prev, data.comment];
+            }
+            return prev;
           }
         });
       }
@@ -2004,8 +2027,18 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       }).catch(error => {
         console.warn('Error marking comments as read on modal open:', error);
       });
+      
+      // Sync starred messages when chat opens
+      if (starredMessages.length > 0) {
+        // Update starred messages list with current comment states
+        const updatedStarredMessages = starredMessages.map(starredMsg => {
+          const currentComment = comments.find(c => c._id === starredMsg._id);
+          return currentComment ? { ...starredMsg, starredBy: currentComment.starredBy || [] } : starredMsg;
+        }).filter(msg => msg.starredBy && msg.starredBy.includes(currentUser._id));
+        setStarredMessages(updatedStarredMessages);
+      }
     }
-  }, [showChatModal, appt._id]);
+  }, [showChatModal, appt._id, starredMessages.length, comments, currentUser._id]);
 
   // Listen for commentDelivered and commentRead events
   useEffect(() => {
@@ -2580,6 +2613,16 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                         }
                                       : c
                                   ));
+                                  
+                                  // Update starred messages list
+                                  if (isStarred) {
+                                    // Remove from starred messages
+                                    setStarredMessages(prev => prev.filter(m => m._id !== selectedMessageForHeaderOptions._id));
+                                  } else {
+                                    // Add to starred messages
+                                    setStarredMessages(prev => [...prev, selectedMessageForHeaderOptions]);
+                                  }
+                                  
                                   toast.success(isStarred ? 'Message unstarred' : 'Message starred');
                                 } else {
                                   toast.error('Failed to update star status');

@@ -233,10 +233,12 @@ export default function AdminAppointments() {
             const existingCommentIndex = appt.comments?.findIndex(c => c._id === data.comment._id);
             if (existingCommentIndex !== -1) {
               // Update existing comment - only if there are actual changes
+              // and preserve starred status
               const existingComment = appt.comments[existingCommentIndex];
-              if (JSON.stringify(existingComment) !== JSON.stringify(data.comment)) {
+              const updatedComment = { ...data.comment, starredBy: existingComment.starredBy || [] };
+              if (JSON.stringify(existingComment) !== JSON.stringify(updatedComment)) {
                 const updatedComments = [...(appt.comments || [])];
-                updatedComments[existingCommentIndex] = data.comment;
+                updatedComments[existingCommentIndex] = updatedComment;
                 return { ...appt, comments: updatedComments };
               }
               return appt; // No changes needed
@@ -257,10 +259,12 @@ export default function AdminAppointments() {
             const existingCommentIndex = appt.comments?.findIndex(c => c._id === data.comment._id);
             if (existingCommentIndex !== -1) {
               // Update existing comment - only if there are actual changes
+              // and preserve starred status
               const existingComment = appt.comments[existingCommentIndex];
-              if (JSON.stringify(existingComment) !== JSON.stringify(data.comment)) {
+              const updatedComment = { ...data.comment, starredBy: existingComment.starredBy || [] };
+              if (JSON.stringify(existingComment) !== JSON.stringify(updatedComment)) {
                 const updatedComments = [...(appt.comments || [])];
-                updatedComments[existingCommentIndex] = data.comment;
+                updatedComments[existingCommentIndex] = updatedComment;
                 return { ...appt, comments: updatedComments };
               }
               return appt; // No changes needed
@@ -281,8 +285,10 @@ export default function AdminAppointments() {
         
         const existingCommentIndex = newComments.findIndex(c => c._id === data.comment._id);
         if (existingCommentIndex !== -1) {
-          // Update existing comment
-          newComments[existingCommentIndex] = data.comment;
+          // Update existing comment and preserve starred status
+          const existingComment = newComments[existingCommentIndex];
+          const updatedComment = { ...data.comment, starredBy: existingComment.starredBy || [] };
+          newComments[existingCommentIndex] = updatedComment;
         } else {
           // Add new comment
           newComments.push(data.comment);
@@ -1117,6 +1123,14 @@ function AdminAppointmentRow({
 }) {
   // Use parent comments directly for real-time sync, with local state for UI interactions
   const [localComments, setLocalComments] = React.useState(appt.comments || []);
+  
+  // Initialize starred messages when comments are loaded
+  React.useEffect(() => {
+    if (localComments.length > 0) {
+      const starredMsgs = localComments.filter(c => c.starredBy && c.starredBy.includes(currentUser._id));
+      setStarredMessages(starredMsgs);
+    }
+  }, [localComments, currentUser._id]);
   const [newComment, setNewComment] = useLocalState("");
   const [sending, setSending] = useLocalState(false);
   const [editingComment, setEditingComment] = useLocalState(null);
@@ -1171,8 +1185,18 @@ function AdminAppointmentRow({
         method: 'PATCH',
         credentials: 'include'
       });
+      
+      // Sync starred messages when chat opens
+      if (starredMessages.length > 0) {
+        // Update starred messages list with current comment states
+        const updatedStarredMessages = starredMessages.map(starredMsg => {
+          const currentComment = localComments.find(c => c._id === starredMsg._id);
+          return currentComment ? { ...starredMsg, starredBy: currentComment.starredBy || [] } : starredMsg;
+        }).filter(msg => msg.starredBy && msg.starredBy.includes(currentUser._id));
+        setStarredMessages(updatedStarredMessages);
+      }
     }
-  }, [showChatModal, appt._id]);
+  }, [showChatModal, appt._id, starredMessages.length, localComments, currentUser._id]);
 
   // Auto-close shortcut tip after 10 seconds
   React.useEffect(() => {
@@ -1188,22 +1212,26 @@ function AdminAppointmentRow({
   React.useEffect(() => {
     if (showStarredModal) {
       setLoadingStarredMessages(true);
-      fetch(`${API_BASE_URL}/api/bookings/${appt._id}/starred-messages`, {
-        credentials: 'include'
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (data.starredMessages) {
-            setStarredMessages(data.starredMessages);
-          }
+      // First, sync comments to ensure we have the latest starred status
+      fetchLatestComments().then(() => {
+        // Then fetch starred messages from backend
+        fetch(`${API_BASE_URL}/api/bookings/${appt._id}/starred-messages`, {
+          credentials: 'include'
         })
-        .catch(err => {
-          console.error('Error fetching starred messages:', err);
-          toast.error('Failed to load starred messages');
-        })
-        .finally(() => {
-          setLoadingStarredMessages(false);
-        });
+          .then(res => res.json())
+          .then(data => {
+            if (data.starredMessages) {
+              setStarredMessages(data.starredMessages);
+            }
+          })
+          .catch(err => {
+            console.error('Error fetching starred messages:', err);
+            toast.error('Failed to load starred messages');
+          })
+          .finally(() => {
+            setLoadingStarredMessages(false);
+          });
+      });
     }
   }, [showStarredModal, appt._id]);
 
@@ -1907,9 +1935,16 @@ function AdminAppointmentRow({
       });
       if (res.ok) {
         const data = await res.json();
-        if (data.comments && data.comments.length !== localComments.length) {
-
-          setLocalComments(data.comments);
+        if (data.comments) {
+          // Preserve starred status from current state
+          const updatedComments = data.comments.map(newComment => {
+            const existingComment = localComments.find(c => c._id === newComment._id);
+            if (existingComment && existingComment.starredBy) {
+              return { ...newComment, starredBy: existingComment.starredBy };
+            }
+            return newComment;
+          });
+          setLocalComments(updatedComments);
         }
       }
     } catch (err) {
@@ -2248,6 +2283,16 @@ function AdminAppointmentRow({
                                       }
                                     : c
                                 ));
+                                
+                                // Update starred messages list
+                                if (isStarred) {
+                                  // Remove from starred messages
+                                  setStarredMessages(prev => prev.filter(m => m._id !== selectedMessageForHeaderOptions._id));
+                                } else {
+                                  // Add to starred messages
+                                  setStarredMessages(prev => [...prev, selectedMessageForHeaderOptions]);
+                                }
+                                
                                 toast.success(isStarred ? 'Message unstarred' : 'Message starred');
                               } else {
                                 toast.error('Failed to update star status');

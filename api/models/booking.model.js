@@ -84,6 +84,8 @@ const bookingSchema = new mongoose.Schema({
       // Message delivery and read timestamps
       deliveredAt: { type: Date, default: null },
       readAt: { type: Date, default: null },
+      // Starred messages tracking
+      starredBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     }
   ],
   chat: [
