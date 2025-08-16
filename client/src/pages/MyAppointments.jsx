@@ -3090,30 +3090,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                 <FaSync className={`text-sm ${loadingComments ? 'animate-spin' : ''}`} />
                                 Refresh Messages
                               </button>
-                              {/* Clear chat option */}
-                              {filteredComments.length > 0 && (
-                                <button
-                                  className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                                  onClick={() => {
-                                    setShowClearChatModal(true);
-                                    setShowChatOptionsMenu(false);
-                                  }}
-                                >
-                                  <FaTrash className="text-sm" />
-                                  Clear Chat
-                                </button>
-                              )}
-                              {/* Keyboard shortcut tip option */}
-                              <button
-                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                                onClick={() => {
-                                  setShowShortcutTip(!showShortcutTip);
-                                  setShowChatOptionsMenu(false);
-                                }}
-                              >
-                                <FaLightbulb className="text-sm" />
-                                Keyboard Shortcuts
-                              </button>
                               {/* Starred Messages option */}
                               <button
                                 className="w-full px-4 py-2 text-left text-sm text-yellow-600 hover:bg-yellow-50 flex items-center gap-2"
@@ -3124,6 +3100,17 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               >
                                 <FaStar className="text-sm" />
                                 Starred Messages
+                              </button>
+                              {/* Keyboard shortcut tip option */}
+                              <button
+                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                                onClick={() => {
+                                  setShowShortcutTip(!showShortcutTip);
+                                  setShowChatOptionsMenu(false);
+                                }}
+                              >
+                                <FaLightbulb className="text-sm" />
+                                Keyboard Shortcuts
                               </button>
                               {/* Chat Lock options */}
                               {!isChatLocked ? (
@@ -3165,7 +3152,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               )}
                               {/* Report Chat option */}
                               <button
-                                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 border-t border-gray-200"
+                                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
                                 onClick={() => {
                                   setShowReportChatModal(true);
                                   setShowChatOptionsMenu(false);
@@ -3174,6 +3161,19 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                 <FaFlag className="text-sm" />
                                 Report Chat
                               </button>
+                              {/* Clear chat option */}
+                              {filteredComments.length > 0 && (
+                                <button
+                                  className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                  onClick={() => {
+                                    setShowClearChatModal(true);
+                                    setShowChatOptionsMenu(false);
+                                  }}
+                                >
+                                  <FaTrash className="text-sm" />
+                                  Clear Chat
+                                </button>
+                              )}
                             </div>
                           )}
                         </div>
