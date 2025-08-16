@@ -326,41 +326,31 @@ function AppRoutes({ bootstrapped }) {
         const isOnMyAppointments = currentPath.includes('/my-appointments') || currentPath.includes('/user/my-appointments');
         
         if (!isOnMyAppointments) {
-          // Use same logic as MyAppointments page to check if sender is admin
-          let senderName = data.comment.senderEmail || 'User';
-          
+                  // Use same logic as MyAppointments page to check if sender is admin
+        let senderName = data.comment.senderEmail || 'User';
+        
+        // Check if sender is admin by comparing with buyer and seller emails from the appointment data
+        // This is the same logic used in MyAppointments.jsx
+        const isSenderAdmin = data.comment.senderEmail !== data.buyerEmail && data.comment.senderEmail !== data.sellerEmail;
+        
+        if (isSenderAdmin) {
+          senderName = "UrbanSetu";
+        } else {
+          // For regular users, try to get a better name if available
           try {
-            // Check if sender is admin by fetching user info using the correct endpoint
             const res = await fetch(`${API_BASE_URL}/api/user/check-email/${encodeURIComponent(data.comment.senderEmail)}`, {
               credentials: 'include'
             });
             
             if (res.ok) {
               const userData = await res.json();
-              
-              // Debug logging to see what we're getting
-              console.log('App.jsx - User data:', {
-                senderEmail: data.comment.senderEmail,
-                userRole: userData.role,
-                username: userData.username
-              });
-              
-              // Check if sender is admin by checking their role
-              const isSenderAdmin = userData.role === 'admin' || userData.role === 'rootadmin';
-              
-              console.log('App.jsx - Admin detection:', {
-                isSenderAdmin,
-                finalSenderName: isSenderAdmin ? "UrbanSetu" : (data.comment.senderEmail || 'User')
-              });
-              
-              senderName = isSenderAdmin ? "UrbanSetu" : (data.comment.senderEmail || 'User');
-            } else {
-              console.log('App.jsx - Failed to fetch user info, status:', res.status);
+              senderName = userData.username || data.comment.senderEmail;
             }
           } catch (error) {
-            // If API call fails, fallback to email
-            console.error('Failed to fetch user info:', error);
+            // If API call fails, use email as fallback
+            senderName = data.comment.senderEmail;
           }
+        }
           
           // Show notification for new message
           toast.info(`New message from ${senderName}`, {
