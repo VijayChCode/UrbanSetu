@@ -2769,23 +2769,27 @@ function AdminAppointmentRow({
                   }
                   @keyframes editSaving {
                     0% { 
-                      transform: scale(1) rotate(0deg); 
+                      transform: scale(1) rotate(0deg) translate(0, 0); 
                       opacity: 1;
                     }
-                    25% { 
-                      transform: scale(1.1) rotate(-5deg); 
-                      opacity: 0.8;
+                    20% { 
+                      transform: scale(1.15) rotate(-8deg) translate(-1px, -1px); 
+                      opacity: 0.9;
                     }
-                    50% { 
-                      transform: scale(1.2) rotate(0deg); 
+                    40% { 
+                      transform: scale(1.25) rotate(0deg) translate(0, -2px); 
                       opacity: 1;
                     }
-                    75% { 
-                      transform: scale(1.1) rotate(5deg); 
-                      opacity: 0.8;
+                    60% { 
+                      transform: scale(1.15) rotate(8deg) translate(1px, -1px); 
+                      opacity: 0.9;
+                    }
+                    80% { 
+                      transform: scale(1.1) rotate(-4deg) translate(-1px, 0); 
+                      opacity: 0.95;
                     }
                     100% { 
-                      transform: scale(1) rotate(0deg); 
+                      transform: scale(1) rotate(0deg) translate(0, 0); 
                       opacity: 1;
                     }
                   }
