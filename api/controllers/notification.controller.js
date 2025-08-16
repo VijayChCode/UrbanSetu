@@ -106,6 +106,85 @@ export const reportChatMessage = async (req, res, next) => {
   }
 };
 
+// Report entire chat conversation: create notifications for all admins/rootadmins
+export const reportChatConversation = async (req, res, next) => {
+  try {
+    const { appointmentId, reason, details } = req.body;
+    if (!appointmentId || !reason) {
+      return res.status(400).json({ success: false, message: 'appointmentId and reason are required' });
+    }
+
+    // Load appointment and related data
+    const appointment = await Booking.findById(appointmentId)
+      .populate('buyerId', 'username email')
+      .populate('sellerId', 'username email')
+      .populate('listingId', 'name address');
+    if (!appointment) {
+      return res.status(404).json({ success: false, message: 'Appointment not found' });
+    }
+
+    // Build a clear notification text for admins
+    const reporterName = req.user?.username || 'Unknown';
+    const reporterEmail = req.user?.email || '';
+    const buyer = appointment.buyerId;
+    const seller = appointment.sellerId;
+    const listing = appointment.listingId;
+    const messageCount = appointment.comments ? appointment.comments.length : 0;
+    const appointmentDate = appointment.date ? new Date(appointment.date).toLocaleDateString() : 'Unknown';
+
+    const title = `Chat conversation reported`;
+    const lines = [
+      `Reason: ${reason}`,
+      `Reporter: ${reporterName} (${reporterEmail})`,
+      `Appointment: ${appointment._id.toString()}${listing ? ` — ${listing.name}` : ''}`,
+      `Appointment Date: ${appointmentDate}`,
+      `Between: ${buyer?.username || 'Buyer'} (${buyer?.email || 'n/a'}) ↔ ${seller?.username || 'Seller'} (${seller?.email || 'n/a'})`,
+      `Total Messages: ${messageCount}`,
+      `Property: ${listing?.name || 'N/A'}${listing?.address ? ` - ${listing.address}` : ''}`,
+      details ? `Additional details: ${details}` : null,
+      ``,
+      `Action required: Review the full chat conversation in the appointment details.`,
+    ].filter(Boolean);
+    const message = lines.join('\n');
+
+    // Find all admins and root admins (active, approved)
+    const admins = await User.find({
+      status: { $ne: 'suspended' },
+      $or: [
+        { role: 'rootadmin' },
+        { role: 'admin', adminApprovalStatus: 'approved' },
+      ],
+    }, '_id');
+
+    if (admins.length === 0) {
+      return res.status(200).json({ success: true, message: 'No admins found to notify' });
+    }
+
+    // Create notifications for each admin
+    const notifications = admins.map(a => ({
+      userId: a._id,
+      type: 'admin_message',
+      title,
+      message,
+      adminId: null,
+    }));
+
+    const created = await Notification.insertMany(notifications);
+
+    // Emit socket event to each admin for real-time updates
+    const io = req.app.get('io');
+    if (io) {
+      created.forEach(n => {
+        io.to(n.userId.toString()).emit('notificationCreated', n);
+      });
+    }
+
+    return res.status(201).json({ success: true, count: created.length });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Get user notifications
 export const getUserNotifications = async (req, res, next) => {
   try {

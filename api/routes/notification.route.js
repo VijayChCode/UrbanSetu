@@ -11,6 +11,7 @@ import {
   getAllUsersForNotifications,
   adminSendNotificationToAll,
   reportChatMessage,
+  reportChatConversation,
 } from '../controllers/notification.controller.js';
 import { verifyToken } from '../utils/verify.js';
 
@@ -44,5 +45,8 @@ router.get('/admin/users', verifyToken, getAllUsersForNotifications);
 
 // Report chat message (any authenticated user)
 router.post('/report-chat', verifyToken, reportChatMessage);
+
+// Report entire chat conversation (any authenticated user)
+router.post('/report-chat-conversation', verifyToken, reportChatConversation);
 
 export default router; 

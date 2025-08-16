@@ -988,6 +988,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const [reportingMessage, setReportingMessage] = useState(null);
   const [submittingReport, setSubmittingReport] = useState(false);
   
+  // Report chat modal states
+  const [showReportChatModal, setShowReportChatModal] = useState(false);
+  const [reportChatReason, setReportChatReason] = useState('');
+  const [reportChatDetails, setReportChatDetails] = useState('');
+  const [submittingChatReport, setSubmittingChatReport] = useState(false);
+  
   // New modal states for various confirmations
   const [showDeleteAppointmentModal, setShowDeleteAppointmentModal] = useState(false);
   const [showArchiveModal, setShowArchiveModal] = useState(false);
@@ -2713,6 +2719,17 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                 <FaLightbulb className="text-sm" />
                                 Keyboard Shortcuts
                               </button>
+                              {/* Report Chat option */}
+                              <button
+                                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 border-t border-gray-200"
+                                onClick={() => {
+                                  setShowReportChatModal(true);
+                                  setShowChatOptionsMenu(false);
+                                }}
+                              >
+                                <FaFlag className="text-sm" />
+                                Report Chat
+                              </button>
                             </div>
                           )}
                         </div>
@@ -3603,6 +3620,96 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
               >
                 {submittingReport ? 'Reporting…' : 'Report'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Report Chat Modal */}
+      {showReportChatModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+              <FaFlag className="text-red-500" /> Report Chat
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Reason</label>
+                <select
+                  value={reportChatReason}
+                  onChange={(e) => setReportChatReason(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-red-500 text-gray-900"
+                >
+                  <option value="">Select a reason</option>
+                  <option value="harassment">Harassment or bullying</option>
+                  <option value="spam">Spam or unwanted messages</option>
+                  <option value="inappropriate">Inappropriate content</option>
+                  <option value="scam">Scam or fraud</option>
+                  <option value="threats">Threats or violence</option>
+                  <option value="privacy">Privacy violation</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Additional details (optional)</label>
+                <textarea
+                  value={reportChatDetails}
+                  onChange={(e) => setReportChatDetails(e.target.value)}
+                  rows={4}
+                  placeholder="Provide more context to help admins review this chat..."
+                  className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-red-500 text-gray-900"
+                />
+              </div>
+            </div>
+            <div className="flex gap-2 mt-6">
+              <button
+                onClick={() => {
+                  setShowReportChatModal(false);
+                  setReportChatReason('');
+                  setReportChatDetails('');
+                }}
+                className="px-4 py-2 rounded bg-gray-200 text-gray-800 hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (!reportChatReason) { 
+                    toast.error('Please select a reason'); 
+                    return; 
+                  }
+                  setSubmittingChatReport(true);
+                  try {
+                    const res = await fetch(`${API_BASE_URL}/api/notifications/report-chat-conversation`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      credentials: 'include',
+                      body: JSON.stringify({
+                        appointmentId: appt._id,
+                        reason: reportChatReason,
+                        details: reportChatDetails,
+                      }),
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                      toast.info('Thank you for reporting.');
+                      setShowReportChatModal(false);
+                      setReportChatReason('');
+                      setReportChatDetails('');
+                    } else {
+                      toast.error(data.message || 'Failed to submit report');
+                    }
+                  } catch (err) {
+                    toast.error('Network error while reporting');
+                  } finally {
+                    setSubmittingChatReport(false);
+                  }
+                }}
+                disabled={submittingChatReport || !reportChatReason}
+                className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {submittingChatReport ? 'Reporting…' : 'Report'}
               </button>
             </div>
           </div>
