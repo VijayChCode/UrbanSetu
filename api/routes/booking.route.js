@@ -2003,10 +2003,17 @@ router.patch('/:id/chat/forgot-password', verifyToken, async (req, res) => {
       appointment.sellerChatClearedAt = new Date();
     }
 
-    // Clear all chat messages
-    appointment.comments = [];
+    // Clear all chat messages using Mongoose methods
+    appointment.comments.splice(0, appointment.comments.length);
+    
+    // Mark the comments field as modified to ensure Mongoose saves it
+    appointment.markModified('comments');
+
+    console.log(`Clearing chat for appointment ${appointmentId}. Comments before clear: ${appointment.comments.length}`);
 
     await appointment.save();
+
+    console.log(`Chat cleared successfully. Comments after clear: ${appointment.comments.length}`);
 
     return res.status(200).json({ 
       message: 'Chat unlocked and cleared successfully.',

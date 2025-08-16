@@ -1232,6 +1232,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         toast.success('Chat unlocked and cleared successfully!');
         // Refresh chat lock status
         fetchChatLockStatus();
+        // Clear comments from local state and refresh from backend
+        setComments([]);
+        // Fetch latest comments to ensure sync with backend
+        fetchLatestComments();
       } else {
         toast.error(data.message || 'Failed to unlock chat');
       }
