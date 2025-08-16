@@ -1570,6 +1570,61 @@ function AdminAppointmentRow({
     };
   }, [appt._id, showChatModal]);
 
+  // Real-time comment updates for AdminAppointmentRow chat
+  React.useEffect(() => {
+    function handleCommentUpdate(data) {
+      if (data.appointmentId === appt._id) {
+        setLocalComments((prev) => {
+          const idx = prev.findIndex(c => c._id === data.comment._id);
+          if (idx !== -1) {
+            // Update existing comment, but preserve local read status
+            const updated = [...prev];
+            const localComment = prev[idx];
+            const incomingComment = data.comment;
+            let status = incomingComment.status;
+            if (localComment.status === 'read' && incomingComment.status !== 'read') {
+              status = 'read';
+            }
+            updated[idx] = { ...incomingComment, status };
+            return updated;
+          } else {
+            // Add new comment - check if it's not a temporary message
+            const isTemporaryMessage = prev.some(msg => msg._id.toString().startsWith('temp-'));
+            if (!isTemporaryMessage || data.comment.senderEmail !== currentUser.email) {
+              // If this is a new message from another user and chat is not open, increment unread count
+              if (data.comment.senderEmail !== currentUser.email && !showChatModal && !data.comment.readBy?.includes(currentUser._id)) {
+                setUnreadNewMessages(prev => prev + 1);
+              }
+              return [...prev, data.comment];
+            }
+            return prev;
+          }
+        });
+      }
+    }
+
+    // Chat clearing and message removal events
+    function handleChatClearedForUser({ appointmentId, clearedAt }) {
+      if (appointmentId !== appt._id) return;
+      setLocalComments([]);
+      setUnreadNewMessages(0);
+    }
+    
+    function handleCommentRemovedForUser({ appointmentId, commentId }) {
+      if (appointmentId !== appt._id) return;
+      setLocalComments(prev => prev.filter(c => c._id !== commentId));
+    }
+
+    socket.on('commentUpdate', handleCommentUpdate);
+    socket.on('chatClearedForUser', handleChatClearedForUser);
+    socket.on('commentRemovedForUser', handleCommentRemovedForUser);
+    return () => {
+      socket.off('commentUpdate', handleCommentUpdate);
+      socket.off('chatClearedForUser', handleChatClearedForUser);
+      socket.off('commentRemovedForUser', handleCommentRemovedForUser);
+    };
+  }, [appt._id, currentUser.email, currentUser._id, showChatModal]);
+
   React.useEffect(() => {
     const handleCommentDelivered = (data) => {
       if (data.appointmentId === appt._id) {
