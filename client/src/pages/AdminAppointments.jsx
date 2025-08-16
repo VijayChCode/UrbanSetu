@@ -2669,13 +2669,11 @@ function AdminAppointmentRow({
                 >
                   {editingComment ? (
                     savingComment === editingComment ? (
-                      <>
-                        <div className="w-4 h-4 border border-white border-t-transparent rounded-full animate-spin"></div>
-                      </>
+                      <FaPen className="text-lg text-white animate-editSaving" />
                     ) : (
                       <FaPen className="text-lg text-white group-hover:scale-110 transition-transform duration-200" />
                     )
-                                      ) : (
+                  ) : (
                       <div className="relative">
                         {sendIconSent ? (
                           <FaCheck className="text-lg text-white group-hover:scale-110 transition-all duration-300 send-icon animate-sent" />
@@ -2768,6 +2766,31 @@ function AdminAppointmentRow({
                   }
                   .send-icon.animate-sent {
                     animation: sentSuccess 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+                  }
+                  @keyframes editSaving {
+                    0% { 
+                      transform: scale(1) rotate(0deg); 
+                      opacity: 1;
+                    }
+                    25% { 
+                      transform: scale(1.1) rotate(-5deg); 
+                      opacity: 0.8;
+                    }
+                    50% { 
+                      transform: scale(1.2) rotate(0deg); 
+                      opacity: 1;
+                    }
+                    75% { 
+                      transform: scale(1.1) rotate(5deg); 
+                      opacity: 0.8;
+                    }
+                    100% { 
+                      transform: scale(1) rotate(0deg); 
+                      opacity: 1;
+                    }
+                  }
+                  .animate-editSaving {
+                    animation: editSaving 1.2s ease-in-out infinite;
                   }
                 `}</style>
               
