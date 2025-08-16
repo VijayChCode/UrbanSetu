@@ -1612,12 +1612,38 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     }
   };
 
-  // Auto-scroll to bottom only when chat modal opens or when user is at bottom
+  // Auto-scroll to first unread message when chat modal opens, or bottom if no unread messages
   useEffect(() => {
-    if (showChatModal && chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    if (showChatModal) {
+      // Find the first unread message
+      const firstUnreadMessage = comments.find(c => 
+        !c.readBy?.includes(currentUser._id) && 
+        c.senderEmail !== currentUser.email &&
+        !c.deleted &&
+        new Date(c.timestamp).getTime() > clearTime &&
+        !(c.removedFor?.includes?.(currentUser._id)) &&
+        !locallyRemovedIds.includes(c._id)
+      );
+
+      if (firstUnreadMessage && messageRefs.current[firstUnreadMessage._id]) {
+        // Scroll to first unread message with some offset to show context
+        setTimeout(() => {
+          const messageElement = messageRefs.current[firstUnreadMessage._id];
+          if (messageElement) {
+            messageElement.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'start' 
+            });
+          }
+        }, 100);
+      } else if (chatEndRef.current) {
+        // No unread messages, scroll to bottom as usual
+        setTimeout(() => {
+          chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }
     }
-  }, [showChatModal]);
+  }, [showChatModal, comments, currentUser._id, clearTime, locallyRemovedIds]);
 
   // Mark messages as read when user can actually see them at the bottom of chat
 
@@ -1852,12 +1878,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     }
   }, [showChatModal, checkIfAtBottom, updateFloatingDate]);
 
-  // Auto-scroll when modal opens  
-  useEffect(() => {
-    if (showChatModal && chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [showChatModal]);
+  // Auto-scroll functionality is handled by the main useEffect above
 
   // Function to scroll to bottom
   const scrollToBottom = useCallback(() => {
@@ -2789,11 +2810,42 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                     const isNewDay = previousDate ? currentDate.toDateString() !== previousDate.toDateString() : true;
                     const formattedDate = currentDate.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric' });
 
+                    // Check if this is the first unread message
+                    const isFirstUnreadMessage = !isMe && 
+                      !c.readBy?.includes(currentUser._id) && 
+                      !c.deleted &&
+                      !(c.removedFor?.includes?.(currentUser._id)) &&
+                      !locallyRemovedIds.includes(c._id) &&
+                      !filteredComments.slice(0, index).some(prevMsg => 
+                        !prevMsg.readBy?.includes(currentUser._id) && 
+                        prevMsg.senderEmail !== currentUser.email &&
+                        !prevMsg.deleted &&
+                        !(prevMsg.removedFor?.includes?.(currentUser._id)) &&
+                        !locallyRemovedIds.includes(prevMsg._id)
+                      );
+
+                    // Count unread messages for the indicator
+                    const unreadMessagesCount = filteredComments.filter(msg => 
+                      !msg.readBy?.includes(currentUser._id) && 
+                      msg.senderEmail !== currentUser.email &&
+                      !msg.deleted &&
+                      !(msg.removedFor?.includes?.(currentUser._id)) &&
+                      !locallyRemovedIds.includes(msg._id)
+                    ).length;
+
                     return (
                       <React.Fragment key={c._id || index}>
                         {isNewDay && (
                           <div className="w-full flex justify-center my-2">
                             <span className="bg-blue-600 text-white text-xs px-4 py-2 rounded-full shadow-lg border-2 border-white">{getDateLabel(currentDate)}</span>
+                          </div>
+                        )}
+                        {/* Unread messages indicator - shown above first unread message */}
+                        {isFirstUnreadMessage && unreadMessagesCount > 0 && (
+                          <div className="w-full flex justify-center my-3">
+                            <div className="bg-red-500 text-white text-xs px-4 py-2 rounded-full shadow-lg border-2 border-white animate-pulse">
+                              {unreadMessagesCount} unread message{unreadMessagesCount > 1 ? 's' : ''}
+                            </div>
                           </div>
                         )}
                         <div className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-fadeInChatBubble`} style={{ animationDelay: `${0.03 * index}s` }}>
