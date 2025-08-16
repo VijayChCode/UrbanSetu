@@ -1621,6 +1621,115 @@ router.post('/:id/comments/removed/sync', verifyToken, async (req, res) => {
   }
 });
 
+// PATCH: Star/unstar a comment
+router.patch('/:id/comment/:commentId/star', verifyToken, async (req, res) => {
+  try {
+    const { id, commentId } = req.params;
+    const { starred } = req.body; // true to star, false to unstar
+    const userId = req.user.id;
+
+    if (!mongoose.Types.ObjectId.isValid(id) || !mongoose.Types.ObjectId.isValid(commentId)) {
+      return res.status(400).json({ message: 'Invalid ID format.' });
+    }
+
+    const appointment = await booking.findById(id);
+    if (!appointment) {
+      return res.status(404).json({ message: 'Appointment not found.' });
+    }
+
+    // Check if user is authorized (buyer, seller, or admin)
+    const isBuyer = appointment.buyerId.toString() === userId;
+    const isSeller = appointment.sellerId.toString() === userId;
+    const isAdmin = req.user.role === 'admin' || req.user.role === 'rootadmin';
+
+    if (!isBuyer && !isSeller && !isAdmin) {
+      return res.status(403).json({ message: 'Not authorized to star messages in this appointment.' });
+    }
+
+    const comment = appointment.comments.id(commentId);
+    if (!comment) {
+      return res.status(404).json({ message: 'Comment not found.' });
+    }
+
+    // Initialize starredBy array if it doesn't exist
+    if (!comment.starredBy) {
+      comment.starredBy = [];
+    }
+
+    const userIdStr = userId.toString();
+    const isCurrentlyStarred = comment.starredBy.map(id => id.toString()).includes(userIdStr);
+
+    if (starred && !isCurrentlyStarred) {
+      // Star the message
+      comment.starredBy.push(userId);
+    } else if (!starred && isCurrentlyStarred) {
+      // Unstar the message
+      comment.starredBy = comment.starredBy.filter(id => id.toString() !== userIdStr);
+    }
+
+    appointment.markModified('comments');
+    await appointment.save();
+
+    return res.status(200).json({ 
+      message: starred ? 'Message starred successfully' : 'Message unstarred successfully',
+      starred: starred && comment.starredBy.map(id => id.toString()).includes(userIdStr)
+    });
+  } catch (err) {
+    console.error('Error starring/unstarring comment:', err);
+    return res.status(500).json({ message: 'Failed to update star status.' });
+  }
+});
+
+// GET: Get all starred messages for user in an appointment
+router.get('/:id/starred-messages', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid appointment ID format.' });
+    }
+
+    const appointment = await booking.findById(id)
+      .populate('buyerId', 'username email')
+      .populate('sellerId', 'username email')
+      .populate('listingId', 'name address');
+    
+    if (!appointment) {
+      return res.status(404).json({ message: 'Appointment not found.' });
+    }
+
+    // Check if user is authorized (buyer, seller, or admin)
+    const isBuyer = appointment.buyerId._id.toString() === userId;
+    const isSeller = appointment.sellerId._id.toString() === userId;
+    const isAdmin = req.user.role === 'admin' || req.user.role === 'rootadmin';
+
+    if (!isBuyer && !isSeller && !isAdmin) {
+      return res.status(403).json({ message: 'Not authorized to view starred messages in this appointment.' });
+    }
+
+    // Filter starred messages for this user
+    const starredMessages = appointment.comments.filter(comment => 
+      comment.starredBy && comment.starredBy.map(id => id.toString()).includes(userId.toString())
+    );
+
+    return res.status(200).json({ 
+      starredMessages,
+      appointmentInfo: {
+        _id: appointment._id,
+        propertyName: appointment.propertyName,
+        date: appointment.date,
+        buyer: appointment.buyerId,
+        seller: appointment.sellerId,
+        listing: appointment.listingId
+      }
+    });
+  } catch (err) {
+    console.error('Error fetching starred messages:', err);
+    return res.status(500).json({ message: 'Failed to fetch starred messages.' });
+  }
+});
+
 export default router;
 
 // --- SOCKET.IO: User Appointments Page Active (for delivered ticks) ---
