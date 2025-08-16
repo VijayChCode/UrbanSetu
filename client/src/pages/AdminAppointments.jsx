@@ -132,17 +132,12 @@ export default function AdminAppointments() {
   }, []);
 
   useEffect(() => {
-    // Check socket connection status
-    console.log('🔌 AdminAppointments: Socket connected:', socket.connected);
-    console.log('🔌 AdminAppointments: Socket ID:', socket.id);
-    
     // Join admin appointments room to receive real-time updates
     if (socket.connected && currentUser) {
       socket.emit('adminAppointmentsActive', { 
         adminId: currentUser._id,
         role: currentUser.role 
       });
-      console.log('🔌 AdminAppointments: Joined admin appointments room');
     }
 
     // Emit adminAppointmentsActive periodically to stay subscribed (like MyAppointments)
@@ -325,18 +320,16 @@ export default function AdminAppointments() {
 
     // Listen for socket connection events
     const handleConnect = () => {
-      console.log('🔌 AdminAppointments: Socket connected');
       // Re-join admin appointments rooms on reconnect to receive real-time updates
       if (currentUser) {
         socket.emit('adminAppointmentsActive', { 
           adminId: currentUser._id,
           role: currentUser.role 
         });
-        console.log('🔌 AdminAppointments: Re-joined admin appointments rooms on connect');
       }
     };
     const handleDisconnect = () => {
-      console.log('🔌 AdminAppointments: Socket disconnected');
+      // Socket disconnected - will auto-reconnect
     };
     socket.on('connect', handleConnect);
     socket.on('disconnect', handleDisconnect);
@@ -438,19 +431,6 @@ export default function AdminAppointments() {
     }
     
     try {
-      console.log('Attempting to cancel appointment:', appointmentToHandle);
-      console.log('Current user:', currentUser);
-      console.log('User role:', currentUser.role);
-      console.log('Admin approval status:', currentUser.adminApprovalStatus);
-      
-      // Find the appointment to check its current status
-      const appointment = appointments.find(appt => appt._id === appointmentToHandle);
-      if (appointment) {
-        console.log('Current appointment status:', appointment.status);
-        console.log('Appointment date:', appointment.date);
-        console.log('Appointment time:', appointment.time);
-      }
-      
       const res = await fetch(`${API_BASE_URL}/api/bookings/${appointmentToHandle}/cancel`, { 
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -458,9 +438,7 @@ export default function AdminAppointments() {
         body: JSON.stringify({ reason: cancelReason }),
       });
       
-      console.log('Response status:', res.status);
       const data = await res.json();
-      console.log('Response data:', data);
       
       if (res.ok) {
         setAppointments((prev) =>
@@ -488,17 +466,13 @@ export default function AdminAppointments() {
 
   const confirmReinitiate = async () => {
     try {
-      console.log('Attempting to reinitiate appointment:', appointmentToHandle);
-      
       const res = await fetch(`${API_BASE_URL}/api/bookings/${appointmentToHandle}/reinitiate`, { 
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
       });
       
-      console.log('Response status:', res.status);
       const data = await res.json();
-      console.log('Response data:', data);
       
       if (res.ok) {
         setAppointments((prev) =>
@@ -1141,7 +1115,8 @@ function AdminAppointmentRow({
   confirmArchive,
   confirmUnarchive
 }) {
-  const [localComments, setLocalComments] = useLocalState(appt.comments || []);
+  // Use parent comments directly for real-time sync, with local state for UI interactions
+  const [localComments, setLocalComments] = React.useState(appt.comments || []);
   const [newComment, setNewComment] = useLocalState("");
   const [sending, setSending] = useLocalState(false);
   const [editingComment, setEditingComment] = useLocalState(null);
@@ -1175,9 +1150,6 @@ function AdminAppointmentRow({
   const [selectedMessageForInfo, setSelectedMessageForInfo] = useLocalState(null);
   const [sendIconAnimating, setSendIconAnimating] = useLocalState(false);
   const [sendIconSent, setSendIconSent] = useLocalState(false);
-  
-  // Add ref to prevent infinite loops
-  const isUpdatingRef = React.useRef(false);
 
   const selectedMessageForHeaderOptions = headerOptionsMessageId ? localComments.find(msg => msg._id === headerOptionsMessageId) : null;
 
@@ -1219,44 +1191,17 @@ function AdminAppointmentRow({
 
   // Removed handleClickOutside functionality - options now only close when clicking three dots again
 
-  // Initialize localComments with parent comments when component mounts or appointment changes
+  // Sync localComments with parent comments for real-time updates
   React.useEffect(() => {
-    setLocalComments(appt.comments || []);
-  }, [appt._id]); // Only re-initialize when appointment ID changes
-
-  // Auto-scroll to bottom only when chat modal opens
-  React.useEffect(() => {
-    if (showChatModal && chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [showChatModal]);
-
-  // Sync localComments back to parent component whenever they change - but only for user actions
-  const syncToParentRef = React.useRef(false);
-  React.useEffect(() => {
-    if (updateAppointmentComments && localComments.length > 0 && syncToParentRef.current) {
-      // Only update parent if there are actual content changes
-      const currentParentComments = appt.comments || [];
-      if (JSON.stringify(currentParentComments) !== JSON.stringify(localComments)) {
-        updateAppointmentComments(appt._id, localComments);
-      }
-      syncToParentRef.current = false;
-    }
-  }, [localComments, appt._id, updateAppointmentComments]);
-
-  // Listen for comment updates from parent component (socket events)
-  React.useEffect(() => {
-    // This effect will run when appt.comments changes (from parent socket updates)
     const serverComments = appt.comments || [];
     
-    // Only update localComments if there are actual differences
+    // Always update localComments when parent changes (real-time sync)
     if (JSON.stringify(localComments) !== JSON.stringify(serverComments)) {
       const prevLength = localComments.length;
       setLocalComments(serverComments);
         
       // Handle unread message count and auto-scroll for new messages
       if (serverComments.length > prevLength) {
-        // New messages were added
         const newMessages = serverComments.slice(prevLength);
         const receivedMessages = newMessages.filter(msg => msg.senderEmail !== currentUser.email);
         
@@ -1288,6 +1233,13 @@ function AdminAppointmentRow({
       }
     }
   }, [appt.comments, appt._id, showChatModal, isAtBottom, currentUser.email]);
+
+  // Auto-scroll to bottom when chat modal opens
+  React.useEffect(() => {
+    if (showChatModal && chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [showChatModal]);
  
 
 
@@ -1628,7 +1580,6 @@ function AdminAppointmentRow({
 
     // Immediately update UI - this makes the message appear instantly
     setLocalComments(prev => [...prev, tempMessage]);
-    syncToParentRef.current = true; // Flag that this is a user action that should sync to parent
     setNewComment("");
     setReplyTo(null);
     // Remove the global sending state to allow multiple messages
@@ -1683,7 +1634,6 @@ function AdminAppointmentRow({
               ? { ...newCommentFromServer } // Use the status from server (could be 'sent' or 'delivered')
               : msg
           ));
-          syncToParentRef.current = true; // Sync the updated message to parent
           
           // Don't show success toast as it's too verbose for chat
         } else {
@@ -1739,7 +1689,6 @@ function AdminAppointmentRow({
         : c
     );
     setLocalComments(optimisticUpdate);
-    syncToParentRef.current = true; // Flag that this is a user action
     
     try {
       const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${commentId}`, {
@@ -2442,17 +2391,7 @@ function AdminAppointmentRow({
                                     </div>
                                     <div className="text-gray-800 bg-white p-2 rounded border-l-4 border-red-400">
                                       {(() => {
-                                        // Debug logging for deleted messages
-                                        if (process.env.NODE_ENV === 'development') {
-                                          console.log('🔍 Deleted message render debug:', {
-                                            messageId: c._id,
-                                            hasOriginalMessage: !!c.originalMessage,
-                                            originalMessage: c.originalMessage,
-                                            hasMessage: !!c.message,
-                                            message: c.message,
-                                            deletedBy: c.deletedBy
-                                          });
-                                        }
+
                                         
                                         if (c.originalMessage) {
                                           return <span className="whitespace-pre-wrap break-words">{c.originalMessage}</span>;
@@ -2467,14 +2406,7 @@ function AdminAppointmentRow({
                                         }
                                       })()}
                                     </div>
-                                    {/* Debug info for development */}
-                                    {process.env.NODE_ENV === 'development' && (
-                                      <div className="mt-1 text-xs text-gray-500 font-mono">
-                                        Debug: originalMessage={c.originalMessage ? 'exists' : 'null'}, 
-                                        message={c.message ? 'exists' : 'empty'}, 
-                                        deleted={c.deleted ? 'true' : 'false'}
-                                      </div>
-                                    )}
+
                                     <button
                                       className="mt-2 text-xs text-red-500 hover:text-red-700 underline"
                                       onClick={() => hideMessage(c._id)}
