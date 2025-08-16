@@ -1724,6 +1724,7 @@ function AdminAppointmentRow({
         body: JSON.stringify({ message: editText }),
       });
       const data = await res.json();
+      console.log('Edit response:', { status: res.status, data });
       if (res.ok) {
         // Update with server response
         setLocalComments(prev => prev.map(c => {
@@ -1740,7 +1741,6 @@ function AdminAppointmentRow({
           }
           return c;
         }));
-        syncToParentRef.current = true; // Sync the updated message to parent
         setEditingComment(null);
         setEditText("");
         setNewComment(""); // Clear the main input
@@ -1778,6 +1778,7 @@ function AdminAppointmentRow({
         toast.error(data.message || "Failed to edit message.");
       }
     } catch (err) {
+      console.error('Error editing comment:', err);
       // Revert optimistic update on error
       setLocalComments(prev => prev.map(c => 
         c._id === commentId 
