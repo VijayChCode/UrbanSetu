@@ -1260,12 +1260,57 @@ function AdminAppointmentRow({
     }
   }, [appt.comments, appt._id, showChatModal, isAtBottom, currentUser.email]);
 
-  // Auto-scroll to bottom when chat modal opens
+  // Auto-scroll to first unread message when chat modal opens, or bottom if no unread messages
   React.useEffect(() => {
-    if (showChatModal && chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    if (showChatModal) {
+      // Get clear time from localStorage and server
+      const clearTimeKey = `chatClearTime_${appt._id}`;
+      const localClearMs = Number(localStorage.getItem(clearTimeKey)) || 0;
+      const serverClearMs = (() => {
+        const clearedAt = appt.role === 'buyer' ? appt.buyerChatClearedAt : appt.sellerChatClearedAt;
+        return clearedAt ? new Date(clearedAt).getTime() : 0;
+      })();
+      const clearTime = Math.max(localClearMs, serverClearMs);
+      
+      // Get locally removed IDs
+      const getLocallyRemovedIds = (apptId) => {
+        try {
+          return JSON.parse(localStorage.getItem(`removedDeletedMsgs_${apptId}`)) || [];
+        } catch {
+          return [];
+        }
+      };
+      const locallyRemovedIds = getLocallyRemovedIds(appt._id);
+
+      // Find the first unread message
+      const firstUnreadMessage = localComments.find(c => 
+        !c.readBy?.includes(currentUser._id) && 
+        c.senderEmail !== currentUser.email &&
+        !c.deleted &&
+        new Date(c.timestamp).getTime() > clearTime &&
+        !(c.removedFor?.includes?.(currentUser._id)) &&
+        !locallyRemovedIds.includes(c._id)
+      );
+
+      if (firstUnreadMessage && messageRefs.current[firstUnreadMessage._id]) {
+        // Scroll to first unread message with some offset to show context
+        setTimeout(() => {
+          const messageElement = messageRefs.current[firstUnreadMessage._id];
+          if (messageElement) {
+            messageElement.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'start' 
+            });
+          }
+        }, 100);
+      } else if (chatEndRef.current) {
+        // No unread messages, scroll to bottom as usual
+        setTimeout(() => {
+          chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }
     }
-  }, [showChatModal]);
+  }, [showChatModal, localComments, currentUser._id, appt._id, appt.role, appt.buyerChatClearedAt, appt.sellerChatClearedAt]);
  
 
 
@@ -2383,11 +2428,63 @@ function AdminAppointmentRow({
                   const previousDate = index > 0 ? new Date(localComments[index - 1].timestamp) : null;
                   const isNewDay = previousDate ? currentDate.toDateString() !== previousDate.toDateString() : true;
 
+                  // Get clear time and locally removed IDs
+                  const clearTimeKey = `chatClearTime_${appt._id}`;
+                  const localClearMs = Number(localStorage.getItem(clearTimeKey)) || 0;
+                  const serverClearMs = (() => {
+                    const clearedAt = appt.role === 'buyer' ? appt.buyerChatClearedAt : appt.sellerChatClearedAt;
+                    return clearedAt ? new Date(clearedAt).getTime() : 0;
+                  })();
+                  const clearTime = Math.max(localClearMs, serverClearMs);
+                  
+                  const getLocallyRemovedIds = (apptId) => {
+                    try {
+                      return JSON.parse(localStorage.getItem(`removedDeletedMsgs_${apptId}`)) || [];
+                    } catch {
+                      return [];
+                    }
+                  };
+                  const locallyRemovedIds = getLocallyRemovedIds(appt._id);
+
+                  // Check if this is the first unread message
+                  const isFirstUnreadMessage = !isMe && 
+                    !c.readBy?.includes(currentUser._id) && 
+                    !c.deleted &&
+                    new Date(c.timestamp).getTime() > clearTime &&
+                    !(c.removedFor?.includes?.(currentUser._id)) &&
+                    !locallyRemovedIds.includes(c._id) &&
+                    !localComments.slice(0, index).some(prevMsg => 
+                      !prevMsg.readBy?.includes(currentUser._id) && 
+                      prevMsg.senderEmail !== currentUser.email &&
+                      !prevMsg.deleted &&
+                      new Date(prevMsg.timestamp).getTime() > clearTime &&
+                      !(prevMsg.removedFor?.includes?.(currentUser._id)) &&
+                      !locallyRemovedIds.includes(prevMsg._id)
+                    );
+
+                  // Count unread messages for the indicator
+                  const unreadMessagesCount = localComments.filter(msg => 
+                    !msg.readBy?.includes(currentUser._id) && 
+                    msg.senderEmail !== currentUser.email &&
+                    !msg.deleted &&
+                    new Date(msg.timestamp).getTime() > clearTime &&
+                    !(msg.removedFor?.includes?.(currentUser._id)) &&
+                    !locallyRemovedIds.includes(msg._id)
+                  ).length;
+
                   return (
                     <React.Fragment key={c._id || index}>
                       {isNewDay && (
                         <div className="w-full flex justify-center my-2">
                                                       <span className="bg-blue-600 text-white text-xs px-4 py-2 rounded-full shadow-lg border-2 border-white">{getDateLabel(currentDate)}</span>
+                        </div>
+                      )}
+                      {/* Unread messages indicator - shown above first unread message */}
+                      {isFirstUnreadMessage && unreadMessagesCount > 0 && (
+                        <div className="w-full flex justify-center my-3">
+                          <div className="bg-red-500 text-white text-xs px-4 py-2 rounded-full shadow-lg border-2 border-white animate-pulse">
+                            {unreadMessagesCount} unread message{unreadMessagesCount > 1 ? 's' : ''}
+                          </div>
                         </div>
                       )}
                       <div className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-fadeInChatBubble`} style={{ animationDelay: `${0.03 * index}s` }}>
