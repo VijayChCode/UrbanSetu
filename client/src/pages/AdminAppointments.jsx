@@ -1219,6 +1219,11 @@ function AdminAppointmentRow({
 
   // Removed handleClickOutside functionality - options now only close when clicking three dots again
 
+  // Initialize localComments with parent comments when component mounts or appointment changes
+  React.useEffect(() => {
+    setLocalComments(appt.comments || []);
+  }, [appt._id]); // Only re-initialize when appointment ID changes
+
   // Auto-scroll to bottom only when chat modal opens
   React.useEffect(() => {
     if (showChatModal && chatEndRef.current) {
@@ -1226,14 +1231,16 @@ function AdminAppointmentRow({
     }
   }, [showChatModal]);
 
-  // Sync localComments back to parent component whenever they change
+  // Sync localComments back to parent component whenever they change - but only for user actions
+  const syncToParentRef = React.useRef(false);
   React.useEffect(() => {
-    if (updateAppointmentComments && localComments.length > 0) {
+    if (updateAppointmentComments && localComments.length > 0 && syncToParentRef.current) {
       // Only update parent if there are actual content changes
       const currentParentComments = appt.comments || [];
       if (JSON.stringify(currentParentComments) !== JSON.stringify(localComments)) {
         updateAppointmentComments(appt._id, localComments);
       }
+      syncToParentRef.current = false;
     }
   }, [localComments, appt._id, updateAppointmentComments]);
 
@@ -1244,12 +1251,13 @@ function AdminAppointmentRow({
     
     // Only update localComments if there are actual differences
     if (JSON.stringify(localComments) !== JSON.stringify(serverComments)) {
+      const prevLength = localComments.length;
       setLocalComments(serverComments);
         
       // Handle unread message count and auto-scroll for new messages
-      if (serverComments.length > localComments.length) {
+      if (serverComments.length > prevLength) {
         // New messages were added
-        const newMessages = serverComments.slice(localComments.length);
+        const newMessages = serverComments.slice(prevLength);
         const receivedMessages = newMessages.filter(msg => msg.senderEmail !== currentUser.email);
         
         if (receivedMessages.length > 0) {
@@ -1279,7 +1287,7 @@ function AdminAppointmentRow({
         }
       }
     }
-  }, [appt.comments, appt._id, showChatModal, isAtBottom, currentUser.email, localComments]);
+  }, [appt.comments, appt._id, showChatModal, isAtBottom, currentUser.email]);
  
 
 
@@ -1620,6 +1628,7 @@ function AdminAppointmentRow({
 
     // Immediately update UI - this makes the message appear instantly
     setLocalComments(prev => [...prev, tempMessage]);
+    syncToParentRef.current = true; // Flag that this is a user action that should sync to parent
     setNewComment("");
     setReplyTo(null);
     // Remove the global sending state to allow multiple messages
@@ -1674,6 +1683,7 @@ function AdminAppointmentRow({
               ? { ...newCommentFromServer } // Use the status from server (could be 'sent' or 'delivered')
               : msg
           ));
+          syncToParentRef.current = true; // Sync the updated message to parent
           
           // Don't show success toast as it's too verbose for chat
         } else {
@@ -1729,6 +1739,7 @@ function AdminAppointmentRow({
         : c
     );
     setLocalComments(optimisticUpdate);
+    syncToParentRef.current = true; // Flag that this is a user action
     
     try {
       const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${commentId}`, {
@@ -1754,6 +1765,7 @@ function AdminAppointmentRow({
           }
           return c;
         }));
+        syncToParentRef.current = true; // Sync the updated message to parent
         setEditingComment(null);
         setEditText("");
         setNewComment(""); // Clear the main input
