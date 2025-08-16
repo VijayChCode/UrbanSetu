@@ -3112,6 +3112,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                 <FaLightbulb className="text-sm" />
                                 Keyboard Shortcuts
                               </button>
+                              {/* Divider line */}
+                              <div className="border-t border-gray-200 my-1"></div>
                               {/* Chat Lock options */}
                               {!isChatLocked ? (
                                 <button
