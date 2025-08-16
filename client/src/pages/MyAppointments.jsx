@@ -99,6 +99,18 @@ export default function MyAppointments() {
     };
   }, [showOtherPartyModal]);
 
+  // Lock background scroll when password modals are open
+  useEffect(() => {
+    if (showPasswordModal || showForgotPasswordModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showPasswordModal, showForgotPasswordModal]);
+
   // Prevent body scrolling when reinitiate modal is open
   useEffect(() => {
     if (showReinitiateModal) {
