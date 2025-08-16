@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo, FaCommentDots, FaCheckDouble, FaBan, FaPaperPlane, FaCalendar, FaLightbulb, FaCopy, FaEllipsisV, FaFlag, FaCircle, FaInfoCircle, FaSync, FaStar, FaRegStar, FaLock, FaUnlock } from "react-icons/fa";
+import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo, FaCommentDots, FaCheckDouble, FaBan, FaPaperPlane, FaCalendar, FaLightbulb, FaCopy, FaEllipsisV, FaFlag, FaCircle, FaInfoCircle, FaSync, FaStar, FaRegStar, FaLock, FaUnlock, FaEye, FaEyeSlash } from "react-icons/fa";
 import UserAvatar from '../components/UserAvatar';
 import { useSelector } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -1068,26 +1068,38 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const [passwordAction, setPasswordAction] = useState(''); // 'lock', 'unlock', or 'remove-lock'
   const [password, setPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Chat lock functions
   const handleChatLock = () => {
     setPasswordAction('lock');
     setPassword('');
+    setConfirmPassword('');
     setPasswordError('');
+    setShowPassword(false);
+    setShowConfirmPassword(false);
     setShowPasswordModal(true);
   };
 
   const handleChatUnlock = () => {
     setPasswordAction('unlock');
     setPassword('');
+    setConfirmPassword('');
     setPasswordError('');
+    setShowPassword(false);
+    setShowConfirmPassword(false);
     setShowPasswordModal(true);
   };
 
   const handleRemoveChatLock = () => {
     setPasswordAction('remove-lock');
     setPassword('');
+    setConfirmPassword('');
     setPasswordError('');
+    setShowPassword(false);
+    setShowConfirmPassword(false);
     setShowPasswordModal(true);
   };
 
@@ -1095,6 +1107,18 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     if (!password.trim()) {
       setPasswordError('Password is required');
       return;
+    }
+
+    // For lock action, validate confirm password
+    if (passwordAction === 'lock') {
+      if (!confirmPassword.trim()) {
+        setPasswordError('Please confirm your password');
+        return;
+      }
+      if (password !== confirmPassword) {
+        setPasswordError('Passwords do not match');
+        return;
+      }
     }
 
     try {
@@ -1114,6 +1138,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
           setIsChatAccessGranted(false);
           setShowPasswordModal(false);
           setPassword('');
+          setConfirmPassword('');
           setShowChatModal(false); // Close chat when locking
           toast.success('Chat locked successfully!');
         } else {
@@ -1169,8 +1194,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const handlePasswordCancel = () => {
     setShowPasswordModal(false);
     setPassword('');
+    setConfirmPassword('');
     setPasswordError('');
     setPasswordAction('');
+    setShowPassword(false);
+    setShowConfirmPassword(false);
   };
 
   // Fetch chat lock status from backend
@@ -4314,26 +4342,69 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 {passwordAction === 'lock' ? 'Set Password:' : 'Enter Password:'}
               </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  setPasswordError('');
-                }}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder={passwordAction === 'lock' ? 'Create a password...' : 'Enter password...'}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handlePasswordSubmit();
-                  }
-                }}
-                autoFocus
-              />
-              {passwordError && (
-                <p className="text-red-500 text-sm mt-2">{passwordError}</p>
-              )}
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    setPasswordError('');
+                  }}
+                  className="w-full p-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder={passwordAction === 'lock' ? 'Create a password...' : 'Enter password...'}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handlePasswordSubmit();
+                    }
+                  }}
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                >
+                  {showPassword ? <FaEye size={16} /> : <FaEyeSlash size={16} />}
+                </button>
+              </div>
             </div>
+
+            {/* Confirm Password field - only for lock action */}
+            {passwordAction === 'lock' && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Confirm Password:
+                </label>
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => {
+                      setConfirmPassword(e.target.value);
+                      setPasswordError('');
+                    }}
+                    className="w-full p-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Confirm your password..."
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handlePasswordSubmit();
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  >
+                    {showConfirmPassword ? <FaEye size={16} /> : <FaEyeSlash size={16} />}
+                  </button>
+                </div>
+              </div>
+            )}
+            
+            {passwordError && (
+              <p className="text-red-500 text-sm mt-2">{passwordError}</p>
+            )}
             
             <div className="flex gap-3 justify-end">
               <button
