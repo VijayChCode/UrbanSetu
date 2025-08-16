@@ -1778,7 +1778,7 @@ router.patch('/:id/chat/lock', verifyToken, async (req, res) => {
   }
 });
 
-// PATCH: Unlock chat with password
+// PATCH: Unlock chat with password (grants temporary access, doesn't remove lock)
 router.patch('/:id/chat/unlock', verifyToken, async (req, res) => {
   try {
     const { password } = req.body;
@@ -1786,7 +1786,7 @@ router.patch('/:id/chat/unlock', verifyToken, async (req, res) => {
     const userId = req.user.id;
 
     if (!password || password.trim().length === 0) {
-      return res.status(400).json({ message: 'Password is required to unlock chat.' });
+      return res.status(400).json({ message: 'Password is required to access chat.' });
     }
 
     const appointment = await booking.findById(appointmentId);
@@ -1799,7 +1799,7 @@ router.patch('/:id/chat/unlock', verifyToken, async (req, res) => {
     const isSeller = appointment.sellerId.toString() === userId;
 
     if (!isBuyer && !isSeller) {
-      return res.status(403).json({ message: 'Not authorized to unlock this chat.' });
+      return res.status(403).json({ message: 'Not authorized to access this chat.' });
     }
 
     // Get the stored password hash
@@ -1816,22 +1816,85 @@ router.patch('/:id/chat/unlock', verifyToken, async (req, res) => {
       return res.status(400).json({ message: 'Incorrect password.' });
     }
 
-    // Unlock the chat
+    // Grant temporary access (chat remains locked, but user can access it)
     if (isBuyer) {
-      appointment.buyerChatLocked = false;
+      appointment.buyerChatAccessGranted = true;
     } else {
-      appointment.sellerChatLocked = false;
+      appointment.sellerChatAccessGranted = true;
     }
 
     await appointment.save();
 
     return res.status(200).json({ 
-      message: 'Chat unlocked successfully.',
-      chatLocked: false
+      message: 'Chat access granted.',
+      chatLocked: true, // Chat is still locked
+      accessGranted: true
     });
   } catch (err) {
-    console.error('Error unlocking chat:', err);
-    return res.status(500).json({ message: 'Failed to unlock chat.' });
+    console.error('Error granting chat access:', err);
+    return res.status(500).json({ message: 'Failed to grant chat access.' });
+  }
+});
+
+// PATCH: Remove chat lock (permanently removes the lock)
+router.patch('/:id/chat/remove-lock', verifyToken, async (req, res) => {
+  try {
+    const { password } = req.body;
+    const appointmentId = req.params.id;
+    const userId = req.user.id;
+
+    if (!password || password.trim().length === 0) {
+      return res.status(400).json({ message: 'Password is required to remove chat lock.' });
+    }
+
+    const appointment = await booking.findById(appointmentId);
+    if (!appointment) {
+      return res.status(404).json({ message: 'Appointment not found.' });
+    }
+
+    // Check if user is buyer or seller
+    const isBuyer = appointment.buyerId.toString() === userId;
+    const isSeller = appointment.sellerId.toString() === userId;
+
+    if (!isBuyer && !isSeller) {
+      return res.status(403).json({ message: 'Not authorized to remove lock from this chat.' });
+    }
+
+    // Get the stored password hash
+    const storedPasswordHash = isBuyer ? appointment.buyerChatPassword : appointment.sellerChatPassword;
+    
+    if (!storedPasswordHash) {
+      return res.status(400).json({ message: 'No password set for this chat.' });
+    }
+
+    // Verify the password
+    const isPasswordValid = bcryptjs.compareSync(password, storedPasswordHash);
+    
+    if (!isPasswordValid) {
+      return res.status(400).json({ message: 'Incorrect password.' });
+    }
+
+    // Remove the chat lock completely
+    if (isBuyer) {
+      appointment.buyerChatLocked = false;
+      appointment.buyerChatPassword = null;
+      appointment.buyerChatAccessGranted = false;
+    } else {
+      appointment.sellerChatLocked = false;
+      appointment.sellerChatPassword = null;
+      appointment.sellerChatAccessGranted = false;
+    }
+
+    await appointment.save();
+
+    return res.status(200).json({ 
+      message: 'Chat lock removed successfully.',
+      chatLocked: false,
+      accessGranted: false
+    });
+  } catch (err) {
+    console.error('Error removing chat lock:', err);
+    return res.status(500).json({ message: 'Failed to remove chat lock.' });
   }
 });
 
@@ -1854,13 +1917,15 @@ router.get('/:id/chat/lock-status', verifyToken, async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to view this chat.' });
     }
 
-    // Return the lock status for the current user
+    // Return the lock status and access status for the current user
     const chatLocked = isBuyer ? appointment.buyerChatLocked : appointment.sellerChatLocked;
     const hasPassword = isBuyer ? !!appointment.buyerChatPassword : !!appointment.sellerChatPassword;
+    const accessGranted = isBuyer ? appointment.buyerChatAccessGranted : appointment.sellerChatAccessGranted;
 
     return res.status(200).json({ 
       chatLocked,
-      hasPassword
+      hasPassword,
+      accessGranted
     });
   } catch (err) {
     console.error('Error getting chat lock status:', err);

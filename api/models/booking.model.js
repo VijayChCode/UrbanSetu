@@ -120,6 +120,9 @@ const bookingSchema = new mongoose.Schema({
   sellerChatLocked: { type: Boolean, default: false },
   buyerChatPassword: { type: String, default: null },
   sellerChatPassword: { type: String, default: null },
+  // Temporary access tracking (doesn't persist - only for current session)
+  buyerChatAccessGranted: { type: Boolean, default: false },
+  sellerChatAccessGranted: { type: Boolean, default: false },
 });
 
 const booking = mongoose.model("Booking", bookingSchema);
