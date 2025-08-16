@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
-import { FaTrash, FaSearch, FaPen, FaPaperPlane, FaUser, FaEnvelope, FaCalendar, FaPhone, FaUserShield, FaArchive, FaUndo, FaCommentDots, FaCheck, FaCheckDouble, FaBan, FaTimes, FaLightbulb, FaCopy, FaEllipsisV, FaInfoCircle } from "react-icons/fa";
+import { FaTrash, FaSearch, FaPen, FaPaperPlane, FaUser, FaEnvelope, FaCalendar, FaPhone, FaUserShield, FaArchive, FaUndo, FaCommentDots, FaCheck, FaCheckDouble, FaBan, FaTimes, FaLightbulb, FaCopy, FaEllipsisV, FaInfoCircle, FaSync } from "react-icons/fa";
 import UserAvatar from '../components/UserAvatar';
 import { useSelector } from "react-redux";
 import { useState as useLocalState } from "react";
@@ -2218,6 +2218,35 @@ function AdminAppointmentRow({
                       </div>
                     )}
                     <div className="flex items-center gap-3 ml-auto">
+                      {/* Refresh button */}
+                      <button
+                        className="text-blue-100 hover:text-white bg-blue-500/30 hover:bg-blue-500/50 rounded-full p-2 transition-colors shadow flex items-center gap-2"
+                        onClick={fetchLatestComments}
+                        title="Refresh messages"
+                        aria-label="Refresh messages"
+                      >
+                        <FaSync className="text-sm" />
+                      </button>
+                      {/* User details button for buyer */}
+                      <button
+                        className="text-green-100 hover:text-white bg-green-500/30 hover:bg-green-500/50 rounded-full p-2 transition-colors shadow flex items-center gap-2"
+                        onClick={() => onUserClick(appt.buyerId?._id)}
+                        title="View buyer details"
+                        aria-label="View buyer details"
+                      >
+                        <FaUser className="text-sm" />
+                        <span className="text-xs hidden sm:inline">Buyer</span>
+                      </button>
+                      {/* User details button for seller */}
+                      <button
+                        className="text-purple-100 hover:text-white bg-purple-500/30 hover:bg-purple-500/50 rounded-full p-2 transition-colors shadow flex items-center gap-2"
+                        onClick={() => onUserClick(appt.sellerId?._id)}
+                        title="View seller details"
+                        aria-label="View seller details"
+                      >
+                        <FaUser className="text-sm" />
+                        <span className="text-xs hidden sm:inline">Seller</span>
+                      </button>
                       {localComments.length > 0 && (
                         <button
                           className="text-red-100 hover:text-white bg-red-500/30 hover:bg-red-500/50 rounded-full p-2 transition-colors shadow flex items-center gap-2"
