@@ -2594,7 +2594,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                       <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 min-w-0 flex-1">
                         <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
                           <h3 
-                            className="text-base sm:text-lg font-bold text-white truncate cursor-pointer hover:underline"
+                            className="text-sm sm:text-lg font-bold text-white truncate cursor-pointer hover:underline"
                             onClick={() => onShowOtherParty({
                               ...otherParty,
                               isOnline: isOtherPartyOnlineInTable,
@@ -2608,11 +2608,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           {/* Online status indicator - below name on mobile, inline on desktop */}
                           <div className="flex items-center gap-1 sm:hidden">
                             {isOtherPartyTyping ? (
-                              <span className="text-yellow-100 font-semibold text-xs bg-yellow-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">Typing...</span>
+                              <span className="text-yellow-100 font-semibold text-[10px] bg-yellow-500 bg-opacity-80 px-1.5 py-0.5 rounded-full whitespace-nowrap">Typing...</span>
                             ) : isOtherPartyOnline ? (
-                              <span className="text-green-100 font-semibold text-xs bg-green-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">Online</span>
+                              <span className="text-green-100 font-semibold text-[10px] bg-green-500 bg-opacity-80 px-1.5 py-0.5 rounded-full whitespace-nowrap">Online</span>
                             ) : (
-                              <span className="text-gray-100 font-semibold text-xs bg-gray-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">
+                              <span className="text-gray-100 font-semibold text-[10px] bg-gray-500 bg-opacity-80 px-1.5 py-0.5 rounded-full whitespace-nowrap">
                                 {formatLastSeen(otherPartyLastSeen) || 'Offline'}
                               </span>
                             )}
