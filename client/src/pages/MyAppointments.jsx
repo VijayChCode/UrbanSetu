@@ -1049,7 +1049,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     }
   }, [showShortcutTip]);
 
-  // Close chat options menu when clicking outside
+  // Close chat options menu when clicking outside or scrolling
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (showChatOptionsMenu && !event.target.closest('.chat-options-menu')) {
@@ -1057,9 +1057,18 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       }
     };
 
+    const handleScroll = () => {
+      if (showChatOptionsMenu) {
+        setShowChatOptionsMenu(false);
+      }
+    };
+
     document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('scroll', handleScroll, true); // Use capture phase to catch all scroll events
+    
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('scroll', handleScroll, true);
     };
   }, [showChatOptionsMenu]);
 

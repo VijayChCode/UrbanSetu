@@ -1178,7 +1178,7 @@ function AdminAppointmentRow({
     }
   }, [showShortcutTip]);
 
-  // Close chat options menu when clicking outside
+  // Close chat options menu when clicking outside or scrolling
   React.useEffect(() => {
     const handleClickOutside = (event) => {
       if (showChatOptionsMenu && !event.target.closest('.chat-options-menu')) {
@@ -1186,9 +1186,18 @@ function AdminAppointmentRow({
       }
     };
 
+    const handleScroll = () => {
+      if (showChatOptionsMenu) {
+        setShowChatOptionsMenu(false);
+      }
+    };
+
     document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('scroll', handleScroll, true); // Use capture phase to catch all scroll events
+    
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('scroll', handleScroll, true);
     };
   }, [showChatOptionsMenu]);
 
