@@ -2437,6 +2437,8 @@ function AdminAppointmentRow({
                               <FaUser className="text-sm" />
                               View Seller Details
                             </button>
+                            {/* Divider line */}
+                            <div className="border-t border-gray-200 my-1"></div>
                             {/* Delete chat option */}
                             {localComments.length > 0 && (
                               <button
