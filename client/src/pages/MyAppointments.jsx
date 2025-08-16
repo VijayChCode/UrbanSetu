@@ -1019,6 +1019,19 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const [headerOptionsMessageId, setHeaderOptionsMessageId] = useState(null);
   const [privacyNoticeHighlighted, setPrivacyNoticeHighlighted] = useState(false);
   
+  // Check if device is mobile for conditional animation
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  
+  // Update mobile state on window resize
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  
   // Message info modal state
   const [showMessageInfoModal, setShowMessageInfoModal] = useState(false);
   const [selectedMessageForInfo, setSelectedMessageForInfo] = useState(null);
@@ -1749,8 +1762,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         // Show floating date when scrolling starts
         setIsScrolling(true);
         
-        // Check if scrolled to top for privacy notice highlighting
-        if (chatContainer) {
+        // Check if scrolled to top for privacy notice highlighting (mobile only)
+        if (chatContainer && isMobile) {
           const { scrollTop } = chatContainer;
           if (scrollTop < 50) { // Near the top
             setPrivacyNoticeHighlighted(true);
@@ -2639,20 +2652,20 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   {/* Privacy Notice - First item in chat */}
                   <div 
                     className={`px-4 py-3 bg-gradient-to-r from-blue-50 to-purple-50 border-l-4 border-blue-400 rounded-r-lg mb-4 transform transition-all duration-500 hover:scale-105 hover:shadow-lg hover:from-blue-100 hover:to-purple-100 hover:border-blue-500 hover:border-l-6 backdrop-blur-sm ${
-                      privacyNoticeHighlighted ? 'animate-attentionGlow shadow-lg border-blue-500 bg-gradient-to-r from-blue-100 to-purple-100 scale-105' : 
-                      isAtBottom ? 'animate-slideInFromTop shadow-lg border-blue-500 bg-gradient-to-r from-blue-100 to-purple-100 animate-attentionGlow' : 'animate-gentlePulse'
+                      isMobile && privacyNoticeHighlighted ? 'animate-attentionGlow shadow-lg border-blue-500 bg-gradient-to-r from-blue-100 to-purple-100 scale-105' : 
+                      isMobile && isAtBottom ? 'animate-slideInFromTop shadow-lg border-blue-500 bg-gradient-to-r from-blue-100 to-purple-100 animate-attentionGlow' : 'animate-gentlePulse'
                     }`}
                     style={{
-                      animationDelay: privacyNoticeHighlighted ? '0s' : (isAtBottom ? '0s' : '0s'),
-                      transform: privacyNoticeHighlighted ? 'scale(1.05)' : (isAtBottom ? 'scale(1.02)' : 'scale(1)'),
-                      boxShadow: privacyNoticeHighlighted ? '0 15px 35px rgba(59, 130, 246, 0.25)' : (isAtBottom ? '0 10px 25px rgba(59, 130, 246, 0.15)' : 'none')
+                      animationDelay: isMobile && privacyNoticeHighlighted ? '0s' : (isMobile && isAtBottom ? '0s' : '0s'),
+                      transform: isMobile && privacyNoticeHighlighted ? 'scale(1.05)' : (isMobile && isAtBottom ? 'scale(1.02)' : 'scale(1)'),
+                      boxShadow: isMobile && privacyNoticeHighlighted ? '0 15px 35px rgba(59, 130, 246, 0.25)' : (isMobile && isAtBottom ? '0 10px 25px rgba(59, 130, 246, 0.15)' : 'none')
                     }}
                   >
                                           <p className="text-sm text-blue-700 font-medium text-center flex items-center justify-center gap-2">
-                        <span className={`${privacyNoticeHighlighted ? 'animate-bounce text-blue-600' : isAtBottom ? 'animate-bounce' : 'animate-gentlePulse'}`}>🔒</span>
+                        <span className={`${isMobile && privacyNoticeHighlighted ? 'animate-bounce text-blue-600' : isMobile && isAtBottom ? 'animate-bounce' : 'animate-gentlePulse'}`}>🔒</span>
                         Your privacy is our top priority — all your chats and data are fully encrypted for your safety
-                        {privacyNoticeHighlighted && <span className="ml-2 animate-pulse text-blue-600">✨</span>}
-                        {isAtBottom && !privacyNoticeHighlighted && <span className="ml-2 animate-pulse text-blue-600">✨</span>}
+                        {isMobile && privacyNoticeHighlighted && <span className="ml-2 animate-pulse text-blue-600">✨</span>}
+                        {isMobile && isAtBottom && !privacyNoticeHighlighted && <span className="ml-2 animate-pulse text-blue-600">✨</span>}
                       </p>
                   </div>
                   
