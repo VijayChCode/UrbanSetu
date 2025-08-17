@@ -1682,6 +1682,133 @@ router.patch('/:id/comment/:commentId/star', verifyToken, async (req, res) => {
   }
 });
 
+// PATCH: Pin/unpin a comment
+router.patch('/:id/comment/:commentId/pin', verifyToken, async (req, res) => {
+  try {
+    const { id, commentId } = req.params;
+    const { pinned, pinDuration, customHours } = req.body;
+    const userId = req.user.id;
+
+    if (!mongoose.Types.ObjectId.isValid(id) || !mongoose.Types.ObjectId.isValid(commentId)) {
+      return res.status(400).json({ message: 'Invalid ID format.' });
+    }
+
+    const appointment = await booking.findById(id);
+    if (!appointment) {
+      return res.status(404).json({ message: 'Appointment not found.' });
+    }
+
+    // Check if user is authorized (buyer, seller, or admin)
+    const isBuyer = appointment.buyerId.toString() === userId;
+    const isSeller = appointment.sellerId.toString() === userId;
+    const isAdmin = req.user.role === 'admin' || req.user.role === 'rootadmin';
+
+    if (!isBuyer && !isSeller && !isAdmin) {
+      return res.status(403).json({ message: 'Not authorized to pin messages in this appointment.' });
+    }
+
+    const comment = appointment.comments.id(commentId);
+    if (!comment) {
+      return res.status(404).json({ message: 'Comment not found.' });
+    }
+
+    if (pinned) {
+      // Pin the message
+      comment.pinned = true;
+      comment.pinnedBy = userId;
+      comment.pinnedAt = new Date();
+      comment.pinDuration = pinDuration;
+
+      // Calculate expiration time based on duration
+      let expirationTime;
+      switch (pinDuration) {
+        case '24hrs':
+          expirationTime = new Date(Date.now() + 24 * 60 * 60 * 1000);
+          break;
+        case '7days':
+          expirationTime = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+          break;
+        case '30days':
+          expirationTime = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+          break;
+        case 'custom':
+          if (customHours && customHours > 0) {
+            expirationTime = new Date(Date.now() + customHours * 60 * 60 * 1000);
+          } else {
+            return res.status(400).json({ message: 'Custom hours must be provided for custom duration.' });
+          }
+          break;
+        default:
+          return res.status(400).json({ message: 'Invalid pin duration.' });
+      }
+      comment.pinExpiresAt = expirationTime;
+    } else {
+      // Unpin the message
+      comment.pinned = false;
+      comment.pinnedBy = null;
+      comment.pinnedAt = null;
+      comment.pinExpiresAt = null;
+      comment.pinDuration = null;
+    }
+
+    appointment.markModified('comments');
+    await appointment.save();
+
+    return res.status(200).json({ 
+      message: pinned ? 'Message pinned successfully' : 'Message unpinned successfully',
+      pinned: comment.pinned,
+      pinExpiresAt: comment.pinExpiresAt
+    });
+  } catch (err) {
+    console.error('Error pinning/unpinning comment:', err);
+    return res.status(500).json({ message: 'Failed to update pin status.' });
+  }
+});
+
+// GET: Get all pinned messages for an appointment
+router.get('/:id/pinned-messages', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid appointment ID format.' });
+    }
+
+    const appointment = await booking.findById(id)
+      .populate('buyerId', 'username email')
+      .populate('sellerId', 'username email')
+      .populate('listingId', 'name address');
+    
+    if (!appointment) {
+      return res.status(404).json({ message: 'Appointment not found.' });
+    }
+
+    // Check if user is authorized (buyer, seller, or admin)
+    const isBuyer = appointment.buyerId._id.toString() === userId;
+    const isSeller = appointment.sellerId._id.toString() === userId;
+    const isAdmin = req.user.role === 'admin' || req.user.role === 'rootadmin';
+
+    if (!isBuyer && !isSeller && !isAdmin) {
+      return res.status(403).json({ message: 'Not authorized to view pinned messages in this appointment.' });
+    }
+
+    // Filter pinned messages and check if they're expired
+    const now = new Date();
+    const pinnedMessages = appointment.comments.filter(comment => 
+      comment.pinned && comment.pinExpiresAt && comment.pinExpiresAt > now
+    );
+
+    return res.status(200).json({ 
+      pinnedMessages,
+      totalPinned: pinnedMessages.length
+    });
+  } catch (err) {
+    console.error('Error fetching pinned messages:', err);
+    return res.status(500).json({ message: 'Failed to fetch pinned messages.' });
+  }
+});
+
 // GET: Get all starred messages for user in an appointment
 router.get('/:id/starred-messages', verifyToken, async (req, res) => {
   try {

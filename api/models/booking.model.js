@@ -89,6 +89,12 @@ const bookingSchema = new mongoose.Schema({
       // Image message support
       imageUrl: { type: String, default: null },
       type: { type: String, enum: ['text', 'image'], default: 'text' },
+      // Message pinning functionality
+      pinned: { type: Boolean, default: false },
+      pinnedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      pinnedAt: { type: Date, default: null },
+      pinExpiresAt: { type: Date, default: null },
+      pinDuration: { type: String, enum: ['24hrs', '7days', '30days', 'custom'], default: null },
     }
   ],
   chat: [

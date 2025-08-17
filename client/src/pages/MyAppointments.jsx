@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo, FaCommentDots, FaCheckDouble, FaBan, FaPaperPlane, FaCalendar, FaLightbulb, FaCopy, FaEllipsisV, FaFlag, FaCircle, FaInfoCircle, FaSync, FaStar, FaRegStar } from "react-icons/fa";
+import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo, FaCommentDots, FaCheckDouble, FaBan, FaPaperPlane, FaCalendar, FaLightbulb, FaCopy, FaEllipsisV, FaFlag, FaCircle, FaInfoCircle, FaSync, FaStar, FaRegStar, FaThumbtack } from "react-icons/fa";
 import UserAvatar from '../components/UserAvatar';
 import ImagePreview from '../components/ImagePreview';
 import { useSelector } from "react-redux";
@@ -1085,6 +1085,16 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const [loadingStarredMessages, setLoadingStarredMessages] = useState(false);
   const [unstarringMessageId, setUnstarringMessageId] = useState(null);
   
+  // Pinned messages states
+  const [pinnedMessages, setPinnedMessages] = useState([]);
+  const [loadingPinnedMessages, setLoadingPinnedMessages] = useState(false);
+  const [pinningSaving, setPinningSaving] = useState(false);
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [messageToPin, setMessageToPin] = useState(null);
+  const [pinDuration, setPinDuration] = useState('24hrs');
+  const [customHours, setCustomHours] = useState(24);
+  const [highlightedPinnedMessage, setHighlightedPinnedMessage] = useState(null);
+  
   // Chat options menu state
   const [showChatOptionsMenu, setShowChatOptionsMenu] = useState(false);
   
@@ -1443,6 +1453,15 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     }
   }, [comments, currentUser._id]);
 
+  // Initialize pinned messages when comments are loaded
+  useEffect(() => {
+    if (comments.length > 0) {
+      const now = new Date();
+      const pinnedMsgs = comments.filter(c => c.pinned && c.pinExpiresAt && c.pinExpiresAt > now);
+      setPinnedMessages(pinnedMsgs);
+    }
+  }, [comments]);
+
   // Auto-close shortcut tip after 10 seconds
   useEffect(() => {
     if (showShortcutTip) {
@@ -1549,6 +1568,93 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       toast.error('Failed to refresh messages');
     } finally {
       setLoadingComments(false);
+    }
+  };
+
+  // Fetch pinned messages from backend
+  const fetchPinnedMessages = async () => {
+    if (!appt?._id) return;
+    
+    setLoadingPinnedMessages(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/pinned-messages`, {
+        credentials: 'include'
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPinnedMessages(data.pinnedMessages || []);
+      } else {
+        toast.error('Failed to fetch pinned messages');
+      }
+    } catch (err) {
+      toast.error('Failed to fetch pinned messages');
+    } finally {
+      setLoadingPinnedMessages(false);
+    }
+  };
+
+  // Pin/unpin a message
+  const handlePinMessage = async (message, pinned, duration = '24hrs', customHrs = 24) => {
+    if (!appt?._id) return;
+    
+    setPinningSaving(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${message._id}/pin`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ 
+          pinned, 
+          pinDuration: duration, 
+          customHours: duration === 'custom' ? customHrs : undefined 
+        }),
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        
+        // Update the local state
+        setComments(prev => prev.map(c => 
+          c._id === message._id 
+            ? { 
+                ...c, 
+                pinned: data.pinned,
+                pinnedBy: data.pinned ? currentUser._id : null,
+                pinnedAt: data.pinned ? new Date() : null,
+                pinExpiresAt: data.pinExpiresAt,
+                pinDuration: data.pinned ? duration : null
+              }
+            : c
+        ));
+        
+        // Update pinned messages list
+        if (pinned) {
+          // Add to pinned messages
+          const pinnedMsg = { 
+            ...message, 
+            pinned: true, 
+            pinnedBy: currentUser._id, 
+            pinnedAt: new Date(),
+            pinExpiresAt: data.pinExpiresAt,
+            pinDuration: duration
+          };
+          setPinnedMessages(prev => [...prev, pinnedMsg]);
+        } else {
+          // Remove from pinned messages
+          setPinnedMessages(prev => prev.filter(m => m._id !== message._id));
+        }
+        
+        toast.success(data.message);
+        setShowPinModal(false);
+        setMessageToPin(null);
+      } else {
+        const errorData = await res.json();
+        toast.error(errorData.message || 'Failed to update pin status');
+      }
+    } catch (err) {
+      toast.error('Failed to update pin status');
+    } finally {
+      setPinningSaving(false);
     }
   };
 
@@ -3017,6 +3123,36 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             )}
                           </button>
                         )}
+                        {/* Pin/Unpin - for all messages (sent and received) */}
+                        {!selectedMessageForHeaderOptions.deleted && (
+                          <button
+                            className={`text-white rounded-full p-2 transition-colors ${
+                              selectedMessageForHeaderOptions.pinned 
+                                ? 'bg-red-500 hover:bg-red-600' 
+                                : 'bg-white/10 hover:bg-white/20'
+                            }`}
+                            onClick={() => {
+                              if (selectedMessageForHeaderOptions.pinned) {
+                                // Unpin the message
+                                handlePinMessage(selectedMessageForHeaderOptions, false);
+                              } else {
+                                // Show pin modal
+                                setMessageToPin(selectedMessageForHeaderOptions);
+                                setShowPinModal(true);
+                              }
+                              setHeaderOptionsMessageId(null);
+                            }}
+                            title={selectedMessageForHeaderOptions.pinned ? "Unpin message" : "Pin message"}
+                            aria-label={selectedMessageForHeaderOptions.pinned ? "Unpin message" : "Pin message"}
+                            disabled={pinningSaving}
+                          >
+                            {pinningSaving ? (
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            ) : (
+                              <FaThumbtack size={18} />
+                            )}
+                          </button>
+                        )}
                         {/* Report (only for received messages, not deleted) */}
                         {(selectedMessageForHeaderOptions.senderEmail !== currentUser.email) && !selectedMessageForHeaderOptions.deleted && (
                           <button
@@ -3200,17 +3336,28 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                 <FaSync className={`text-sm ${loadingComments ? 'animate-spin' : ''}`} />
                                 Refresh Messages
                               </button>
-                              {/* Starred Messages option */}
-                              <button
-                                className="w-full px-4 py-2 text-left text-sm text-yellow-600 hover:bg-yellow-50 flex items-center gap-2"
-                                onClick={() => {
-                                  setShowStarredModal(true);
-                                  setShowChatOptionsMenu(false);
-                                }}
-                              >
-                                <FaStar className="text-sm" />
-                                Starred Messages
-                              </button>
+                                                          {/* Starred Messages option */}
+                            <button
+                              className="w-full px-4 py-2 text-left text-sm text-yellow-600 hover:bg-yellow-50 flex items-center gap-2"
+                              onClick={() => {
+                                setShowStarredModal(true);
+                                setShowChatOptionsMenu(false);
+                              }}
+                            >
+                              <FaStar className="text-sm" />
+                              Starred Messages
+                            </button>
+                            {/* Pinned Messages option */}
+                            <button
+                              className="w-full px-4 py-2 text-left text-sm text-purple-600 hover:bg-purple-50 flex items-center gap-2"
+                              onClick={() => {
+                                fetchPinnedMessages();
+                                setShowChatOptionsMenu(false);
+                              }}
+                            >
+                              <FaThumbtack className="text-sm" />
+                              Pinned Messages ({pinnedMessages.length})
+                            </button>
                               {/* Keyboard shortcuts and file upload guidelines */}
                               <button
                                 className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
@@ -3309,6 +3456,70 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   )}
                 </div>
                 
+                {/* Pinned Messages Section */}
+                {pinnedMessages.length > 0 && (
+                  <div className="bg-gradient-to-r from-purple-50 to-blue-50 border-b border-purple-200 px-4 py-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <FaThumbtack className="text-purple-600 text-sm" />
+                      <span className="text-purple-700 font-semibold text-sm">Pinned Messages</span>
+                      <span className="text-purple-600 text-xs">({pinnedMessages.length})</span>
+                    </div>
+                    <div className="space-y-2 max-h-32 overflow-y-auto">
+                      {pinnedMessages.map((pinnedMsg) => (
+                        <div
+                          key={pinnedMsg._id}
+                          className={`bg-white rounded-lg p-3 border-l-4 border-purple-500 cursor-pointer transition-all duration-200 hover:shadow-md ${
+                            highlightedPinnedMessage === pinnedMsg._id ? 'ring-2 ring-purple-400 shadow-lg' : ''
+                          }`}
+                          onClick={() => {
+                            // Highlight the pinned message and scroll to it
+                            setHighlightedPinnedMessage(pinnedMsg._id);
+                            const messageElement = document.getElementById(`message-${pinnedMsg._id}`);
+                            if (messageElement) {
+                              messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                              // Remove highlight after 3 seconds
+                              setTimeout(() => setHighlightedPinnedMessage(null), 3000);
+                            }
+                          }}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-xs text-purple-600 font-medium">
+                                  {pinnedMsg.senderEmail === currentUser.email ? 'You' : otherParty?.username || 'Other'}
+                                </span>
+                                <span className="text-xs text-gray-500">
+                                  {pinnedMsg.pinDuration === 'custom' 
+                                    ? `${Math.round((pinnedMsg.pinExpiresAt - new Date()) / (1000 * 60 * 60))}h left`
+                                    : pinnedMsg.pinDuration === '24hrs' 
+                                      ? '24h left'
+                                      : pinnedMsg.pinDuration === '7days' 
+                                        ? '7d left'
+                                        : '30d left'
+                                  }
+                                </span>
+                              </div>
+                              <div className="text-sm text-gray-800 line-clamp-2">
+                                {pinnedMsg.message}
+                              </div>
+                            </div>
+                            <button
+                              className="text-purple-600 hover:text-purple-800 p-1 rounded-full hover:bg-purple-100 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handlePinMessage(pinnedMsg, false);
+                              }}
+                              title="Unpin message"
+                            >
+                              <FaThumbtack size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
                 <div ref={chatContainerRef} className="flex-1 overflow-y-auto space-y-2 mb-4 px-4 pt-4 animate-fadeInChat relative bg-gradient-to-b from-transparent to-blue-50/30" style={{minHeight: '400px', maxHeight: 'calc(100vh - 200px)'}}>
                   {/* Privacy Notice - First item in chat */}
                   <div 
@@ -3372,11 +3583,14 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                         <div className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-fadeInChatBubble`} style={{ animationDelay: `${0.03 * index}s` }}>
                           <div
                             ref={el => messageRefs.current[c._id] = el}
+                            id={`message-${c._id}`}
                             data-message-id={c._id}
                             className={`rounded-2xl px-4 sm:px-5 py-3 text-sm shadow-xl max-w-[90%] sm:max-w-[80%] md:max-w-[70%] lg:max-w-[60%] xl:max-w-[50%] break-words overflow-hidden relative transition-all duration-300 min-h-[60px] ${
                               isMe 
                                 ? 'bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-500 hover:to-purple-600 text-white shadow-blue-200 hover:shadow-blue-300 hover:shadow-2xl' 
                                 : 'bg-white hover:bg-gray-50 text-gray-800 border border-gray-200 shadow-gray-200 hover:shadow-lg hover:border-gray-300 hover:shadow-xl'
+                            } ${
+                              highlightedPinnedMessage === c._id ? 'ring-4 ring-purple-400 shadow-2xl scale-105' : ''
                             }`}
                             style={{ animationDelay: `${0.03 * index}s` }}
                           >
@@ -3443,6 +3657,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               )}
                             </div>
                             <div className="flex items-center gap-1 justify-end mt-2" data-message-actions>
+                              {/* Pin indicator for pinned messages */}
+                              {c.pinned && (
+                                <FaThumbtack className={`${isMe ? 'text-purple-300' : 'text-purple-500'} text-[10px]`} title="Pinned message" />
+                              )}
                               {/* Star indicator for starred messages */}
                               {c.starredBy?.includes(currentUser._id) && (
                                 <FaStar className={`${isMe ? 'text-yellow-300' : 'text-yellow-500'} text-[10px]`} title="Starred message" />
@@ -4984,6 +5202,150 @@ You can lock this chat again at any time from the options.</p>
                   Close
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pin Message Modal */}
+      {showPinModal && messageToPin && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center p-6 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-blue-50">
+              <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <FaThumbtack className="text-purple-500" />
+                Pin Message
+              </h3>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              <div className="mb-4">
+                <p className="text-gray-600 mb-4">Choose how long to pin this message:</p>
+                
+                {/* Pin Duration Options */}
+                <div className="space-y-3">
+                  <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                    <input
+                      type="radio"
+                      name="pinDuration"
+                      value="24hrs"
+                      checked={pinDuration === '24hrs'}
+                      onChange={(e) => setPinDuration(e.target.value)}
+                      className="text-purple-600"
+                    />
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-800">24 Hours</div>
+                      <div className="text-sm text-gray-500">Pin for 24 hours</div>
+                    </div>
+                  </label>
+                  
+                  <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                    <input
+                      type="radio"
+                      name="pinDuration"
+                      value="7days"
+                      checked={pinDuration === '7days'}
+                      onChange={(e) => setPinDuration(e.target.value)}
+                      className="text-purple-600"
+                    />
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-800">7 Days</div>
+                      <div className="text-sm text-gray-500">Pin for 7 days</div>
+                    </div>
+                  </label>
+                  
+                  <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                    <input
+                      type="radio"
+                      name="pinDuration"
+                      value="30days"
+                      checked={pinDuration === '30days'}
+                      onChange={(e) => setPinDuration(e.target.value)}
+                      className="text-purple-600"
+                    />
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-800">30 Days</div>
+                      <div className="text-sm text-gray-500">Pin for 30 days</div>
+                    </div>
+                  </label>
+                  
+                  <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                    <input
+                      type="radio"
+                      name="pinDuration"
+                      value="custom"
+                      checked={pinDuration === 'custom'}
+                      onChange={(e) => setPinDuration(e.target.value)}
+                      className="text-purple-600"
+                    />
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-800">Custom</div>
+                      <div className="text-sm text-gray-500">Pin for custom hours</div>
+                    </div>
+                  </label>
+                </div>
+                
+                {/* Custom Hours Input */}
+                {pinDuration === 'custom' && (
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Custom Hours
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="8760"
+                      value={customHours}
+                      onChange={(e) => setCustomHours(Math.max(1, parseInt(e.target.value) || 1))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      placeholder="Enter hours (1-8760)"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Maximum: 8760 hours (1 year)
+                    </p>
+                  </div>
+                )}
+                
+                {/* Message Preview */}
+                <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                  <div className="text-sm text-gray-600 mb-2">Message to pin:</div>
+                  <div className="text-sm text-gray-800 bg-white p-2 rounded border">
+                    {messageToPin.message?.substring(0, 100)}
+                    {messageToPin.message?.length > 100 ? '...' : ''}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-6 border-t border-gray-200 bg-gray-50 flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowPinModal(false);
+                  setMessageToPin(null);
+                  setPinDuration('24hrs');
+                  setCustomHours(24);
+                }}
+                className="px-4 py-2 text-gray-600 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handlePinMessage(messageToPin, true, pinDuration, customHours)}
+                disabled={pinningSaving}
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {pinningSaving ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Pinning...
+                  </div>
+                ) : (
+                  'Pin Message'
+                )}
+              </button>
             </div>
           </div>
         </div>

@@ -90,6 +90,9 @@
   .animate-search-expand {
     animation: searchExpand 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
   }
+  .animate-pinned-highlight {
+    animation: pinnedHighlight 0.6s ease-in-out both;
+  }
 }
 
 @keyframes fadeIn {
@@ -534,4 +537,20 @@ body.modal-open {
 /* Ensure progress bar works properly */
 .Toastify__progress-bar {
   pointer-events: none !important;
+}
+
+/* Pinned message highlight animation */
+@keyframes pinnedHighlight {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(147, 51, 234, 0.7);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 10px rgba(147, 51, 234, 0.4);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(147, 51, 234, 0);
+  }
 }
