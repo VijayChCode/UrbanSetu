@@ -1212,12 +1212,12 @@ function AdminAppointmentRow({
     }
   }, [showChatModal, appt._id, starredMessages.length, localComments, currentUser._id]);
 
-  // Auto-close shortcut tip after 20 seconds
+  // Auto-close shortcut tip after 10 seconds
   React.useEffect(() => {
     if (showShortcutTip) {
       const timer = setTimeout(() => {
         setShowShortcutTip(false);
-      }, 20000);
+      }, 10000);
       return () => clearTimeout(timer);
     }
   }, [showShortcutTip]);
