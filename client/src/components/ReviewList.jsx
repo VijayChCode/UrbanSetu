@@ -30,6 +30,7 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
   const [editingOwnerResponse, setEditingOwnerResponse] = useState(false);
   const [ownerResponseEdit, setOwnerResponseEdit] = useState('');
   const [reportingReview, setReportingReview] = useState(null);
+  const [reportCategory, setReportCategory] = useState('');
   const [reportReason, setReportReason] = useState('');
   const [reportLoading, setReportLoading] = useState(false);
   const [replyLikeLoading, setReplyLikeLoading] = useState({});
@@ -595,14 +596,15 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
 
   const handleReportReview = (review) => {
     setReportingReview(review);
+    setReportCategory('');
     setReportReason('');
     // Prevent body scroll when modal is open
     document.body.style.overflow = 'hidden';
   };
 
   const handleSubmitReport = async () => {
-    if (!reportReason.trim()) {
-      toast.info('Please provide a reason for reporting.');
+    if (!reportCategory) {
+      toast.info('Please select a category for reporting.');
       return;
     }
     setReportLoading(true);
@@ -611,12 +613,16 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ reason: reportReason }),
+        body: JSON.stringify({ 
+          category: reportCategory,
+          reason: reportReason.trim() 
+        }),
       });
       const data = await res.json();
       if (res.ok) {
         toast.success('Thank you for reporting. Our team will review this issue.');
         setReportingReview(null);
+        setReportCategory('');
         setReportReason('');
         // Restore body scroll when modal is closed
         document.body.style.overflow = 'unset';
@@ -1042,19 +1048,44 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-yellow-700">
               <FaExclamationTriangle /> Report an Issue
             </h3>
-            <p className="mb-2 text-gray-700">Please describe the issue with this review:</p>
-            <textarea
-              className="w-full border border-yellow-300 rounded-md p-2 text-sm mb-2"
-              rows="3"
-              value={reportReason}
-              onChange={e => setReportReason(e.target.value)}
-              placeholder="Enter reason (required)"
-            />
-            <div className="flex justify-end gap-2 mt-2">
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Issue Category *</label>
+                <select
+                  value={reportCategory}
+                  onChange={(e) => setReportCategory(e.target.value)}
+                  className="w-full p-2 border border-yellow-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 text-gray-900"
+                >
+                  <option value="">Select a category</option>
+                  <option value="inappropriate">Inappropriate Content</option>
+                  <option value="spam">Spam or Unwanted Content</option>
+                  <option value="harassment">Harassment or Bullying</option>
+                  <option value="fake">Fake or Misleading Review</option>
+                  <option value="offensive">Offensive Language</option>
+                  <option value="irrelevant">Irrelevant to Property</option>
+                  <option value="duplicate">Duplicate Review</option>
+                  <option value="personal">Personal Information Exposure</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Additional Details (Optional)</label>
+                <textarea
+                  className="w-full border border-yellow-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                  rows="3"
+                  value={reportReason}
+                  onChange={e => setReportReason(e.target.value)}
+                  placeholder="Provide additional context to help us understand the issue..."
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-6">
               <button
-                className="bg-gray-400 text-white px-3 py-1 rounded hover:bg-gray-600 text-sm"
+                className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-600 text-sm"
                 onClick={() => {
                   setReportingReview(null);
+                  setReportCategory('');
+                  setReportReason('');
                   // Restore body scroll when modal is closed
                   document.body.style.overflow = 'unset';
                 }}
@@ -1063,9 +1094,9 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
                 Cancel
               </button>
               <button
-                className="bg-yellow-600 text-white px-3 py-1 rounded hover:bg-yellow-700 text-sm"
+                className="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700 text-sm"
                 onClick={handleSubmitReport}
-                disabled={reportLoading}
+                disabled={reportLoading || !reportCategory}
               >
                 {reportLoading ? 'Reporting...' : 'Submit Report'}
               </button>
