@@ -2325,12 +2325,6 @@ function AdminAppointmentRow({
         >
           <FaCommentDots size={22} className="group-hover:animate-pulse" />
           <div className="absolute inset-0 bg-white rounded-full opacity-0 group-hover:opacity-20 transition-opacity duration-200"></div>
-          {/* Unread message indicator */}
-          {unreadNewMessages > 0 && (
-            <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold animate-pulse">
-              {unreadNewMessages > 9 ? '9+' : unreadNewMessages}
-            </div>
-          )}
         </button>
         {showPasswordModal && (
           <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
