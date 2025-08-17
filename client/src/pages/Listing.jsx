@@ -5,7 +5,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/navigation";
 import { Navigation } from "swiper/modules";
-import { FaBath, FaBed, FaChair, FaMapMarkerAlt, FaParking, FaShare, FaEdit, FaTrash, FaArrowLeft, FaStar, FaLock, FaHeart, FaExpand, FaCheckCircle } from "react-icons/fa";
+import { FaBath, FaBed, FaChair, FaMapMarkerAlt, FaParking, FaShare, FaEdit, FaTrash, FaArrowLeft, FaStar, FaLock, FaHeart, FaExpand, FaCheckCircle, FaFlag } from "react-icons/fa";
 import ContactSupportWrapper from "../components/ContactSupportWrapper";
 import ReviewForm from "../components/ReviewForm.jsx";
 import ReviewList from "../components/ReviewList.jsx";
@@ -41,11 +41,17 @@ export default function Listing() {
   const [availableUsers, setAvailableUsers] = useState([]);
   const [assignOwnerLoading, setAssignOwnerLoading] = useState(false);
   const [selectedNewOwner, setSelectedNewOwner] = useState("");
-    const [ownerStatus, setOwnerStatus] = useState({ isActive: false, owner: null });
+  const [ownerStatus, setOwnerStatus] = useState({ isActive: false, owner: null });
+  
+  // Report property states
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportCategory, setReportCategory] = useState('');
+  const [reportDetails, setReportDetails] = useState('');
+  const [reportLoading, setReportLoading] = useState(false);
  
-   // Lock body scroll when deletion/assign modals are open
+   // Lock body scroll when deletion/assign/report modals are open
    useEffect(() => {
-     const shouldLock = showReasonModal || showPasswordModal || showAssignOwnerModal;
+     const shouldLock = showReasonModal || showPasswordModal || showAssignOwnerModal || showReportModal;
      if (shouldLock) {
        document.body.classList.add('modal-open');
      } else {
@@ -54,7 +60,7 @@ export default function Listing() {
      return () => {
        document.body.classList.remove('modal-open');
      };
-   }, [showReasonModal, showPasswordModal, showAssignOwnerModal]);
+   }, [showReasonModal, showPasswordModal, showAssignOwnerModal, showReportModal]);
  
    // Check if user is admin
   const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'rootadmin';
@@ -191,6 +197,41 @@ export default function Listing() {
         console.error('Error fetching available users:', error);
       }
     };
+
+  // Function to handle property report
+  const handleReportProperty = async () => {
+    if (!reportCategory) {
+      toast.error('Please select a report category');
+      return;
+    }
+    
+    setReportLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/listing/report/${listing._id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          category: reportCategory,
+          details: reportDetails.trim()
+        }),
+      });
+      
+      const data = await res.json();
+      if (res.ok) {
+        toast.success('Property reported successfully. Our team will review it.');
+        setShowReportModal(false);
+        setReportCategory('');
+        setReportDetails('');
+      } else {
+        toast.error(data.message || 'Failed to report property');
+      }
+    } catch (error) {
+      toast.error('Network error. Please try again.');
+    } finally {
+      setReportLoading(false);
+    }
+  };
 
   // Function to assign new owner
   const handleAssignNewOwner = async () => {
@@ -407,8 +448,19 @@ export default function Listing() {
             </Swiper>
           </div>
 
-          {/* Share Button */}
+          {/* Share and Report Buttons */}
           <div className="flex justify-end items-center space-x-4 mb-4 pr-2">
+            {/* Report Button - Only for logged-in users who are not the owner */}
+            {currentUser && !isAdmin && currentUser._id !== listing.userRef && (
+              <button
+                onClick={() => setShowReportModal(true)}
+                className="flex items-center gap-2 text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-2 rounded-lg transition-colors"
+                title="Report this property"
+              >
+                <FaFlag className="text-sm" />
+                <span className="text-sm font-medium">Report</span>
+              </button>
+            )}
             <FaShare
               className="cursor-pointer text-gray-500 hover:text-gray-700 text-xl"
               onClick={() => {
@@ -778,6 +830,81 @@ export default function Listing() {
           images={listing.imageUrls}
           initialIndex={selectedImageIndex}
         />
+      )}
+
+      {/* Report Property Modal */}
+      {showReportModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md flex flex-col gap-4">
+            <h3 className="text-lg font-bold text-red-700 flex items-center gap-2">
+              <FaFlag /> Report Property
+            </h3>
+            <p className="text-sm text-gray-600">Help us maintain quality by reporting any issues with this property.</p>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Report Category *</label>
+                <select
+                  value={reportCategory}
+                  onChange={(e) => setReportCategory(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 text-gray-900"
+                >
+                  <option value="">Select a category</option>
+                  <option value="fake">Fake / misleading listing</option>
+                  <option value="wrong_info">Wrong information</option>
+                  <option value="inappropriate">Inappropriate images/content</option>
+                  <option value="scam">Scam / suspicious activity</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              
+              {(reportCategory === 'other' || reportCategory) && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {reportCategory === 'other' ? 'Additional Details *' : 'Additional Details (Optional)'}
+                  </label>
+                  <textarea
+                    value={reportDetails}
+                    onChange={(e) => setReportDetails(e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 text-gray-900"
+                    rows={4}
+                    placeholder={reportCategory === 'other' ? 'Please provide details about the issue...' : 'Provide additional context (optional)...'}
+                  />
+                </div>
+              )}
+            </div>
+            
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => {
+                  setShowReportModal(false);
+                  setReportCategory('');
+                  setReportDetails('');
+                }}
+                className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleReportProperty}
+                disabled={reportLoading || !reportCategory || (reportCategory === 'other' && !reportDetails.trim())}
+                className="px-4 py-2 rounded bg-red-600 text-white font-semibold hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {reportLoading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Reporting...
+                  </>
+                ) : (
+                  <>
+                    <FaFlag className="text-sm" />
+                    Submit Report
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Assign New Owner Modal */}
