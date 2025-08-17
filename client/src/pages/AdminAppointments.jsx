@@ -1175,6 +1175,9 @@ function AdminAppointmentRow({
   // Chat options menu state
   const [showChatOptionsMenu, setShowChatOptionsMenu] = useLocalState(false);
 
+  // Starred message preview state
+  const [starredMessagePreview, setStarredMessagePreview] = useLocalState(null);
+
   const selectedMessageForHeaderOptions = headerOptionsMessageId ? localComments.find(msg => msg._id === headerOptionsMessageId) : null;
 
   // Reset unread count when chat modal opens
@@ -2727,6 +2730,20 @@ function AdminAppointmentRow({
                     </div>
                   </div>
                 )}
+
+                {/* Starred message preview indicator */}
+                {starredMessagePreview && (
+                  <div className="px-4 mb-2">
+                    <div className="flex items-center bg-yellow-50 border-l-4 border-yellow-400 px-2 py-1 rounded">
+                      <FaStar className="text-yellow-500 text-xs mr-2" />
+                      <span className="text-xs text-gray-700 font-semibold mr-2">Starred message:</span>
+                      <span className="text-xs text-gray-600 truncate max-w-[200px]">{starredMessagePreview.message?.substring(0, 40)}{starredMessagePreview.message?.length > 40 ? '...' : ''}</span>
+                      <button className="ml-auto text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-1 transition-colors" onClick={() => setStarredMessagePreview(null)} title="Close preview">
+                        <FaTimes className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                )}
               
               {/* Edit indicator */}
               {editingComment && (
@@ -3339,7 +3356,17 @@ function AdminAppointmentRow({
                             <div className={`flex items-center gap-2 mb-1 ${isMe ? 'justify-end' : 'justify-start'}`}>
                               <FaStar className="text-yellow-500 text-xs" />
                               <span className={`text-xs font-medium ${isMe ? 'text-blue-600' : 'text-green-600'}`}>
-                                {isMe ? 'You' : (message.senderName || 'Other Party')}
+                                {isMe ? 'You' : (() => {
+                                  // Find the sender name based on senderEmail
+                                  if (message.senderEmail === appt.buyerId?.email) {
+                                    return appt.buyerId?.username || 'Buyer';
+                                  } else if (message.senderEmail === appt.sellerId?.email) {
+                                    return appt.sellerId?.username || 'Seller';
+                                  } else {
+                                    // For admin messages or other cases
+                                    return message.senderName || 'UrbanSetu';
+                                  }
+                                })()}
                               </span>
                               <span className="text-xs text-gray-500">
                                 {messageDate.toLocaleDateString('en-US', {
@@ -3393,11 +3420,26 @@ function AdminAppointmentRow({
                             </div>
                             
                             {/* Message bubble - styled like chatbox */}
-                            <div className={`rounded-2xl px-4 py-3 text-sm shadow-lg break-words relative group ${
-                              isMe 
-                                ? 'bg-gradient-to-r from-blue-600 to-purple-700 text-white' 
-                                : 'bg-white text-gray-800 border border-gray-200'
-                            }`}>
+                            <div 
+                              className={`rounded-2xl px-4 py-3 text-sm shadow-lg break-words relative group cursor-pointer hover:shadow-xl transition-all duration-200 ${
+                                isMe 
+                                  ? 'bg-gradient-to-r from-blue-600 to-purple-700 text-white hover:from-blue-500 hover:to-purple-600' 
+                                  : 'bg-white text-gray-800 border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
+                              }`}
+                              onClick={() => {
+                                setStarredMessagePreview(message);
+                                setShowStarredModal(false);
+                                // Scroll to the message in the main chat if it exists
+                                const messageElement = document.querySelector(`[data-message-id="${message._id}"]`);
+                                if (messageElement) {
+                                  messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                  messageElement.classList.add('reply-highlight');
+                                  setTimeout(() => {
+                                    messageElement.classList.remove('reply-highlight');
+                                  }, 1600);
+                                }
+                              }}
+                            >
                               <div className="whitespace-pre-wrap break-words">
                                 {message.deleted ? (
                                   <span className="italic text-gray-500">This message was deleted</span>
