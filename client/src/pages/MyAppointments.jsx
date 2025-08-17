@@ -1457,10 +1457,27 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   useEffect(() => {
     if (comments.length > 0) {
       const now = new Date();
-      const pinnedMsgs = comments.filter(c => c.pinned && c.pinExpiresAt && c.pinExpiresAt > now);
+      const pinnedMsgs = comments.filter(c => {
+        if (!c.pinned || !c.pinExpiresAt) return false;
+        // Ensure pinExpiresAt is a Date object
+        const expiryDate = new Date(c.pinExpiresAt);
+        return expiryDate > now;
+      });
+      console.log('Initializing pinned messages:', { 
+        totalComments: comments.length, 
+        pinnedCount: pinnedMsgs.length,
+        pinnedMsgs: pinnedMsgs.map(m => ({ id: m._id, message: m.message?.substring(0, 30), pinned: m.pinned, pinExpiresAt: m.pinExpiresAt }))
+      });
       setPinnedMessages(pinnedMsgs);
     }
   }, [comments]);
+
+  // Fetch pinned messages when comments are loaded
+  useEffect(() => {
+    if (appt?._id && comments.length > 0) {
+      fetchPinnedMessages();
+    }
+  }, [appt._id, comments.length]);
 
   // Auto-close shortcut tip after 10 seconds
   useEffect(() => {
@@ -1582,6 +1599,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       });
       if (res.ok) {
         const data = await res.json();
+        console.log('Fetched pinned messages from API:', data);
         setPinnedMessages(data.pinnedMessages || []);
       } else {
         toast.error('Failed to fetch pinned messages');
@@ -1621,7 +1639,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 pinned: data.pinned,
                 pinnedBy: data.pinned ? currentUser._id : null,
                 pinnedAt: data.pinned ? new Date() : null,
-                pinExpiresAt: data.pinExpiresAt,
+                pinExpiresAt: data.pinned ? new Date(data.pinExpiresAt) : null,
                 pinDuration: data.pinned ? duration : null
               }
             : c
@@ -1635,10 +1653,20 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
             pinned: true, 
             pinnedBy: currentUser._id, 
             pinnedAt: new Date(),
-            pinExpiresAt: data.pinExpiresAt,
+            pinExpiresAt: new Date(data.pinExpiresAt),
             pinDuration: duration
           };
-          setPinnedMessages(prev => [...prev, pinnedMsg]);
+          console.log('Adding pinned message:', { 
+            messageId: pinnedMsg._id, 
+            pinExpiresAt: pinnedMsg.pinExpiresAt,
+            pinDuration: duration,
+            apiResponse: data
+          });
+          setPinnedMessages(prev => {
+            const newPinned = [...prev, pinnedMsg];
+            console.log('Updated pinned messages:', newPinned.length);
+            return newPinned;
+          });
         } else {
           // Remove from pinned messages
           setPinnedMessages(prev => prev.filter(m => m._id !== message._id));
@@ -3490,7 +3518,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                 </span>
                                 <span className="text-xs text-gray-500">
                                   {pinnedMsg.pinDuration === 'custom' 
-                                    ? `${Math.round((pinnedMsg.pinExpiresAt - new Date()) / (1000 * 60 * 60))}h left`
+                                    ? `${Math.round((new Date(pinnedMsg.pinExpiresAt) - new Date()) / (1000 * 60 * 60))}h left`
                                     : pinnedMsg.pinDuration === '24hrs' 
                                       ? '24h left'
                                       : pinnedMsg.pinDuration === '7days' 
