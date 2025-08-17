@@ -1073,26 +1073,23 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   useEffect(() => {
     if (showStarredModal) {
       setLoadingStarredMessages(true);
-      // First, sync comments to ensure we have the latest starred status
-      fetchLatestComments().then(() => {
-        // Then fetch starred messages from backend
-        fetch(`${API_BASE_URL}/api/bookings/${appt._id}/starred-messages`, {
-          credentials: 'include'
+      // Fetch starred messages from backend
+      fetch(`${API_BASE_URL}/api/bookings/${appt._id}/starred-messages`, {
+        credentials: 'include'
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.starredMessages) {
+            setStarredMessages(data.starredMessages);
+          }
         })
-          .then(res => res.json())
-          .then(data => {
-            if (data.starredMessages) {
-              setStarredMessages(data.starredMessages);
-            }
-          })
-          .catch(err => {
-            console.error('Error fetching starred messages:', err);
-            toast.error('Failed to load starred messages');
-          })
-          .finally(() => {
-            setLoadingStarredMessages(false);
-          });
-      });
+        .catch(err => {
+          console.error('Error fetching starred messages:', err);
+          toast.error('Failed to load starred messages');
+        })
+        .finally(() => {
+          setLoadingStarredMessages(false);
+        });
     }
   }, [showStarredModal, appt._id]);
 
