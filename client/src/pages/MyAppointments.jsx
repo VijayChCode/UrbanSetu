@@ -1033,6 +1033,19 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       document.body.classList.remove('modal-open');
     };
   }, [showCancelModal, showPermanentDeleteModal]);
+
+  // Lock body scroll when chat lock modals are open
+  useEffect(() => {
+    const shouldLock = showChatLockModal || showChatUnlockModal || showForgotPasswordModal || showRemoveLockModal;
+    if (shouldLock) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showChatLockModal, showChatUnlockModal, showForgotPasswordModal, showRemoveLockModal]);
   
   // Store appointment and reasons for modals
   const [appointmentToHandle, setAppointmentToHandle] = useState(null);
@@ -3002,6 +3015,15 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                         </div>
                       </div>
                       <div className="flex items-center gap-2 sm:gap-4 ml-auto flex-shrink-0">
+                        {/* Lock indicator */}
+                        {chatLocked && (
+                          <div className="flex items-center gap-1 bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+                            <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M18 10v-4c0-3.313-2.687-6-6-6s-6 2.687-6 6v4H4v10h16V10h-2zM8 6c0-2.206 1.794-4 4-4s4 1.794 4 4v4H8V6z"/>
+                            </svg>
+                            Locked
+                          </div>
+                        )}
                         {/* Unread message count */}
                         {unreadNewMessages > 0 && (
                           <div className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold animate-pulse">

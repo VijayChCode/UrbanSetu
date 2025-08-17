@@ -1211,6 +1211,18 @@ function AdminAppointmentRow({
     }
   }, [showShortcutTip]);
 
+  // Lock body scroll when admin password modal is open
+  React.useEffect(() => {
+    if (showPasswordModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showPasswordModal]);
+
   // Fetch starred messages when modal opens
   React.useEffect(() => {
     if (showStarredModal) {
