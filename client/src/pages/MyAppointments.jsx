@@ -3958,35 +3958,90 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                     const messageDate = new Date(message.timestamp);
                     
                     return (
-                      <div
-                        key={message._id}
-                        className="bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-lg p-4 hover:shadow-md transition-shadow"
-                      >
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <FaStar className="text-yellow-500 text-sm flex-shrink-0 mt-1" />
-                            <span className={`font-semibold text-sm ${isMe ? 'text-blue-600' : 'text-green-600'}`}>
+                      <div key={message._id} className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} mb-4`}>
+                        <div className={`relative max-w-[80%] ${isMe ? 'ml-12' : 'mr-12'}`}>
+                          {/* Star indicator and remove button */}
+                          <div className={`flex items-center gap-2 mb-1 ${isMe ? 'justify-end' : 'justify-start'}`}>
+                            <FaStar className="text-yellow-500 text-xs" />
+                            <span className={`text-xs font-medium ${isMe ? 'text-blue-600' : 'text-green-600'}`}>
                               {isMe ? 'You' : (message.senderName || 'Other Party')}
                             </span>
+                            <span className="text-xs text-gray-500">
+                              {messageDate.toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                hour12: true
+                              })}
+                            </span>
+                            {/* Remove star button */}
+                            <button
+                              onClick={async () => {
+                                setStarringSaving(true);
+                                try {
+                                  const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${message._id}/star`, {
+                                    method: 'PATCH',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    credentials: 'include',
+                                    body: JSON.stringify({ starred: false }),
+                                  });
+                                  if (res.ok) {
+                                    // Update the local comments state
+                                    setComments(prev => prev.map(c => 
+                                      c._id === message._id 
+                                        ? { ...c, starredBy: (c.starredBy || []).filter(id => id !== currentUser._id) }
+                                        : c
+                                    ));
+                                    
+                                    // Remove from starred messages list
+                                    setStarredMessages(prev => prev.filter(m => m._id !== message._id));
+                                    
+                                    toast.success('Message unstarred');
+                                  } else {
+                                    toast.error('Failed to unstar message');
+                                  }
+                                } catch (err) {
+                                  toast.error('Failed to unstar message');
+                                } finally {
+                                  setStarringSaving(false);
+                                }
+                              }}
+                              className="text-red-500 hover:text-red-700 text-xs p-1 rounded-full hover:bg-red-50 transition-colors"
+                              title="Remove from starred messages"
+                              disabled={starringSaving}
+                            >
+                              {starringSaving ? (
+                                <div className="w-3 h-3 border border-red-500 border-t-transparent rounded-full animate-spin"></div>
+                              ) : (
+                                <FaTimes className="w-3 h-3" />
+                              )}
+                            </button>
                           </div>
-                          <span className="text-xs text-gray-500">
-                            {messageDate.toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                              hour12: true
-                            })}
-                          </span>
+                          
+                          {/* Message bubble - styled like chatbox */}
+                          <div className={`rounded-2xl px-4 py-3 text-sm shadow-lg break-words ${
+                            isMe 
+                              ? 'bg-gradient-to-r from-blue-600 to-purple-700 text-white' 
+                              : 'bg-white text-gray-800 border border-gray-200'
+                          }`}>
+                            <div className="whitespace-pre-wrap break-words">
+                              {message.message}
+                            </div>
+                            
+                            {/* Time and edited indicator at bottom */}
+                            <div className={`flex items-center justify-end gap-2 mt-2 text-xs ${
+                              isMe ? 'text-blue-200' : 'text-gray-500'
+                            }`}>
+                              <span>
+                                {messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
+                              </span>
+                              {message.edited && (
+                                <span className="italic">(Edited)</span>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                        
-                        <div className="text-gray-800 text-sm whitespace-pre-wrap break-words bg-white rounded-lg p-3 border border-yellow-100">
-                          {message.message}
-                        </div>
-                        
-                        {message.edited && (
-                          <div className="text-xs text-gray-500 italic mt-2">Edited</div>
-                        )}
                       </div>
                     );
                   })}
