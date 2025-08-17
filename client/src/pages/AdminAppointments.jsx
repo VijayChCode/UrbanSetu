@@ -3084,30 +3084,20 @@ function AdminAppointmentRow({
                         {imageCaption.length}/500
                       </div>
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex justify-end">
                       <button
                         onClick={handleSendImageWithCaption}
                         disabled={uploadingFile}
-                        className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition-colors"
+                        className="bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition-colors"
                       >
                         {uploadingFile ? (
                           <div className="flex items-center justify-center">
-                            <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                            <div className="animate-spin w-3 h-3 border-2 border-white border-t-transparent rounded-full mr-1"></div>
                             Sending...
                           </div>
                         ) : (
-                          'Send Image'
+                          'Send'
                         )}
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedFile(null);
-                          setImageCaption('');
-                          setShowImagePreviewModal(false);
-                        }}
-                        className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm transition-colors"
-                      >
-                        Cancel
                       </button>
                     </div>
                   </div>
