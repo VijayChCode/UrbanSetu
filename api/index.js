@@ -13,6 +13,7 @@ import wishlistRouter from "./routes/wishlist.route.js";
 import notificationRouter from "./routes/notification.route.js";
 import reviewRouter from "./routes/review.route.js";
 import geminiRouter from "./routes/gemini.route.js";
+import uploadRouter from "./routes/upload.route.js";
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import http from 'http';
@@ -336,6 +337,7 @@ app.use("/api/wishlist", wishlistRouter);
 app.use("/api/notifications", notificationRouter);
 app.use("/api/review", reviewRouter);
 app.use("/api/gemini", geminiRouter);
+app.use("/api/upload", uploadRouter);
 
 // Global error handler (should be after all routes)
 app.use((err, req, res, next) => {

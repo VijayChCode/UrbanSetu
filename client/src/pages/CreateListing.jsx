@@ -33,6 +33,7 @@ export default function CreateListing() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [imageErrors, setImageErrors] = useState({});
+  const [uploadingImages, setUploadingImages] = useState({});
   const { currentUser } = useSelector((state) => state.user);
   const navigate = useNavigate();
   const location = useLocation();
@@ -96,6 +97,51 @@ export default function CreateListing() {
     setImageErrors(newImageErrors);
   };
 
+  const handleFileUpload = async (index, file) => {
+    if (!file) return;
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setImageErrors(prev => ({ ...prev, [index]: 'Please select an image file' }));
+      return;
+    }
+    
+    // Validate file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      setImageErrors(prev => ({ ...prev, [index]: 'File size must be less than 5MB' }));
+      return;
+    }
+    
+    setUploadingImages(prev => ({ ...prev, [index]: true }));
+    setImageErrors(prev => ({ ...prev, [index]: '' }));
+    
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      const res = await fetch(`${API_BASE_URL}/api/upload/image`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+      
+      const data = await res.json();
+      
+      if (res.ok) {
+        // Update the image URL with the uploaded image URL
+        const newImageUrls = [...formData.imageUrls];
+        newImageUrls[index] = data.imageUrl;
+        setFormData(prev => ({ ...prev, imageUrls: newImageUrls }));
+      } else {
+        setImageErrors(prev => ({ ...prev, [index]: data.message || 'Upload failed' }));
+      }
+    } catch (error) {
+      setImageErrors(prev => ({ ...prev, [index]: 'Upload failed. Please try again.' }));
+    } finally {
+      setUploadingImages(prev => ({ ...prev, [index]: false }));
+    }
+  };
+
   const onHandleRemoveImage = (index) => {
     setFormData({
       ...formData,
@@ -106,6 +152,11 @@ export default function CreateListing() {
     const newImageErrors = { ...imageErrors };
     delete newImageErrors[index];
     setImageErrors(newImageErrors);
+    
+    // Clear uploading state
+    const newUploadingImages = { ...uploadingImages };
+    delete newUploadingImages[index];
+    setUploadingImages(newUploadingImages);
   };
 
   const onHandleChanges = (e) => {
@@ -371,33 +422,45 @@ export default function CreateListing() {
           <div className="bg-gray-50 p-4 rounded-lg">
             <h4 className="font-semibold text-gray-800 mb-3">Property Images</h4>
             <p className="text-gray-600 text-sm mb-3">
-              Add as many image URLs as you want. Use direct links to images (ending in .jpg, .png, .gif, etc.)
-            </p>
-            <p className="text-gray-500 text-xs mb-3">
-              💡 Tip: You can upload images to services like Imgur, Google Drive (with sharing enabled), or use any public image URL
+              Upload images directly or add image URLs. Supported formats: JPG, PNG, GIF, WebP, SVG (max 5MB each)
             </p>
             <div className="space-y-3">
               {formData.imageUrls.map((url, index) => (
-                <div key={index} className="flex gap-2 items-center">
-                  <input
-                    type="text"
-                    placeholder={`Image URL ${index + 1} (e.g., https://example.com/image.jpg)`}
-                    value={url || ""}
-                    onChange={(e) => handleImageChange(index, e.target.value)}
-                    className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      imageErrors[index] ? 'border-red-500' : ''
-                    }`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => onHandleRemoveImage(index)}
-                    className="bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition"
-                    title="Remove this photo"
-                  >
-                    ×
-                  </button>
+                <div key={index} className="space-y-2">
+                  <div className="flex gap-2 items-center">
+                    <input
+                      type="text"
+                      placeholder={`Image URL ${index + 1} (e.g., https://example.com/image.jpg)`}
+                      value={url || ""}
+                      onChange={(e) => handleImageChange(index, e.target.value)}
+                      className={`flex-1 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        imageErrors[index] ? 'border-red-500' : ''
+                      }`}
+                    />
+                    <label className="bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 transition cursor-pointer">
+                      {uploadingImages[index] ? 'Uploading...' : 'Upload File'}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleFileUpload(index, e.target.files[0])}
+                        className="hidden"
+                        disabled={uploadingImages[index]}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => onHandleRemoveImage(index)}
+                      className="bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition"
+                      title="Remove this photo"
+                    >
+                      ×
+                    </button>
+                  </div>
                   {imageErrors[index] && (
-                    <p className="text-red-500 text-sm mt-1">{imageErrors[index]}</p>
+                    <p className="text-red-500 text-sm">{imageErrors[index]}</p>
+                  )}
+                  {uploadingImages[index] && (
+                    <p className="text-blue-500 text-sm">⏳ Uploading image...</p>
                   )}
                 </div>
               ))}
