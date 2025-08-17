@@ -1108,7 +1108,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         setShowChatLockModal(false);
         setLockPassword('');
         setLockConfirmPassword('');
-        toast.success('Chat locked successfully');
+        toast.success('Chat locked successfully.');
       } else {
         toast.error(data.message || 'Failed to lock chat');
       }
@@ -1139,7 +1139,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         setChatAccessGranted(true);
         setShowChatUnlockModal(false);
         setUnlockPassword('');
-        toast.success('Chat access granted');
+        toast.success('Chat access granted.');
         // Open chat modal after successful unlock
         setShowChatModal(true);
       } else {
@@ -1173,7 +1173,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         setChatAccessGranted(false);
         setShowChatUnlockModal(false);
         setUnlockPassword('');
-        toast.success('Chat lock removed successfully');
+        toast.success('Chat lock removed successfully.');
       } else {
         toast.error(data.message || 'Incorrect password');
       }
@@ -1206,7 +1206,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         setShowRemoveLockModal(false);
         setRemoveLockPassword('');
         setShowRemoveLockPassword(false);
-        toast.success('Chat lock removed permanently');
+        toast.success('Chat lock removed.');
       } else {
         toast.error(data.message || 'Incorrect password');
       }
@@ -1231,7 +1231,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         setChatAccessGranted(false);
         setShowForgotPasswordModal(false);
         setComments([]); // Clear chat messages locally
-        toast.success('Chat unlocked and cleared successfully');
+        toast.success('Chat lock removed and cleared successfully.');
       } else {
         toast.error(data.message || 'Failed to reset chat');
       }
@@ -1498,7 +1498,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         credentials: 'include'
       });
 
-      toast.success("Chat Cleared");
+      toast.success("Chat Cleared.");
     } catch (err) {
       console.error('Failed to persist chat clear:', err);
       toast.error('Cleared locally, but failed to sync with server.');
@@ -1872,7 +1872,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         if (typeof window !== 'undefined') {
           const event = new CustomEvent('removeAppointmentRow', { detail: appt._id });
           window.dispatchEvent(event);
-          toast.success("Appointment removed from your table successfully");
+          toast.success("Appointment removed from your table successfully.");
         }
       } else {
         toast.error('Failed to remove appointment from table.');
@@ -2838,7 +2838,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                     setStarredMessages(prev => [...prev, selectedMessageForHeaderOptions]);
                                   }
                                   
-                                  toast.success(isStarred ? 'Message unstarred' : 'Message starred');
+                                  toast.success(isStarred ? 'Message unstarred.' : 'Message starred.');
                                 } else {
                                   toast.error('Failed to update star status');
                                 }
@@ -4599,7 +4599,7 @@ You can lock this chat again at any time from the options.</p>
                                     // Remove from starred messages list
                                     setStarredMessages(prev => prev.filter(m => m._id !== message._id));
                                     
-                                    toast.success('Message unstarred');
+                                    toast.success('Message unstarred.');
                                   } else {
                                     toast.error('Failed to unstar message');
                                   }
