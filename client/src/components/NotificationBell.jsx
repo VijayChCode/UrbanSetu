@@ -424,14 +424,14 @@ export default function NotificationBell({ mobile = false }) {
       <button
         ref={bellRef}
         onClick={() => setIsOpen(!isOpen)}
-        className={`relative p-2 text-yellow-400 hover:text-yellow-300 transition-all duration-300 hover:scale-110 ${
+        className={`relative p-3 text-yellow-500 hover:text-yellow-400 transition-all duration-300 hover:scale-110 bg-yellow-50 hover:bg-yellow-100 rounded-full ${
           isRinging ? 'animate-bell-ring' : ''
-        }`}
+        } ${isOpen ? 'bg-yellow-100 text-yellow-600' : ''}`}
         title="Notifications"
       >
         <FaBell className="w-5 h-5 drop-shadow-lg" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold shadow-lg animate-pulse">
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
@@ -443,28 +443,31 @@ export default function NotificationBell({ mobile = false }) {
           // Mobile: Fullscreen Modal with Portal
           createPortal(
             <div 
-              className="fixed inset-0 z-[99999] flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm"
+              className="fixed inset-0 z-[99999] flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-md"
               onClick={(e) => {
                 if (e.target === e.currentTarget) {
                   setIsOpen(false);
                 }
               }}
             >
-              <div className="w-full max-w-md mx-auto bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl shadow-2xl border border-gray-200 max-h-[80vh] mt-8 mb-8 overflow-hidden relative animate-fade-in notification-popup"
-                   style={{ marginTop: '2rem', marginBottom: '2rem' }}>
+              <div className="w-full max-w-md mx-auto bg-gradient-to-br from-white via-blue-50 to-purple-50 rounded-3xl shadow-2xl border border-gray-200 max-h-[85vh] overflow-hidden relative animate-fade-in notification-popup transform transition-all duration-300"
+                   style={{ marginTop: '1rem', marginBottom: '1rem' }}>
                 {/* Close Button */}
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 z-10"
+                  className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 z-10 bg-white rounded-full p-2 shadow-lg hover:shadow-xl transition-all duration-200"
                   aria-label="Close notifications"
                 >
-                  <FaTimes className="w-5 h-5" />
+                  <FaTimes className="w-4 h-4" />
                 </button>
                 {/* Content */}
-                <div className="pt-8 pb-4 px-4">
+                <div className="pt-12 pb-6 px-6">
                   {/* Header with Tabs */}
-                  <div className="border-b border-gray-100 mb-4">
-                    <h3 className="text-xl font-extrabold text-blue-700 text-center tracking-wide drop-shadow animate-fade-in">Notifications</h3>
+                  <div className="border-b border-gray-200 mb-6">
+                    <h3 className="text-2xl font-bold text-gray-800 text-center tracking-wide mb-2">Notifications</h3>
+                    <div className="flex justify-center">
+                      <div className="w-16 h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
+                    </div>
                     {isAdmin() && (
                       <div className="flex border-b border-gray-200 mt-2">
                         <button
@@ -529,10 +532,10 @@ export default function NotificationBell({ mobile = false }) {
                             {notifications.map((notification) => (
                               <div
                                 key={notification._id}
-                                className={`relative group p-4 my-2 rounded-xl shadow-md bg-white border border-gray-100 transition-all duration-200 flex flex-col gap-1 animate-fadeInNotification
-                                  ${!notification.isRead ? 'border-l-4 border-blue-500 bg-gradient-to-r from-blue-50 to-white' : 'border-l-4 border-transparent'}
-                                  hover:shadow-lg hover:-translate-y-1 hover:bg-blue-50/60 active:scale-[0.98]`}
-                                style={{ animationDelay: `${0.03 * notifications.indexOf(notification)}s` }}
+                                className={`relative group p-5 my-3 rounded-2xl shadow-lg bg-white border transition-all duration-300 flex flex-col gap-2 animate-fadeInNotification
+                                  ${!notification.isRead ? 'border-l-4 border-blue-500 bg-gradient-to-r from-blue-50 to-white shadow-blue-100' : 'border border-gray-200 hover:border-gray-300'}
+                                  hover:shadow-xl hover:-translate-y-1 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 active:scale-[0.98]`}
+                                style={{ animationDelay: `${0.05 * notifications.indexOf(notification)}s` }}
                               >
                                 <div className="flex items-start gap-3">
                                   <div className="flex-shrink-0 mt-1">
@@ -812,33 +815,40 @@ export default function NotificationBell({ mobile = false }) {
         ) : (
           // Desktop: Dropdown
           createPortal(
-                                      <div 
-              className="fixed inset-0 z-[9998] bg-black bg-opacity-20"
+            <div 
+              className="fixed inset-0 z-[9998] bg-black bg-opacity-30 backdrop-blur-sm"
               onClick={() => setIsOpen(false)}
               style={{ pointerEvents: 'auto' }}
             >
-
               <div 
-                className="fixed w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-[9999] max-h-96 overflow-hidden notification-popup" 
+                className="fixed w-96 bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-2xl border border-gray-200 z-[9999] max-h-96 overflow-hidden notification-popup transform transition-all duration-300" 
                 onClick={(e) => e.stopPropagation()}
                 style={{ 
                   top: '80px',
                   right: '20px',
                   maxHeight: 'calc(100vh - 120px)',
-                  backgroundColor: 'white',
-                  border: '2px solid #e5e7eb',
-                  boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05)',
                   position: 'fixed',
                   zIndex: 9999
                 }}
               >
           {/* Header with Tabs */}
-          <div className="border-b border-gray-100">
-            <div className="flex items-center justify-between p-4">
-              <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
+          <div className="border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+            <div className="flex items-center justify-between p-5">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                  <FaBell className="w-4 h-4 text-white" />
+                </div>
+                <h3 className="text-lg font-bold text-gray-800">Notifications</h3>
+                {unreadCount > 0 && (
+                  <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1 font-bold">
+                    {unreadCount}
+                  </span>
+                )}
+              </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors"
               >
                 <FaTimes className="w-4 h-4" />
               </button>
@@ -910,8 +920,8 @@ export default function NotificationBell({ mobile = false }) {
                     {notifications.map((notification) => (
                       <div
                         key={notification._id}
-                        className={`p-4 hover:bg-gray-50 transition-colors ${
-                          !notification.isRead ? 'bg-blue-50' : ''
+                        className={`p-4 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-200 border-l-4 ${
+                          !notification.isRead ? 'bg-blue-50 border-blue-500' : 'border-transparent hover:border-gray-200'
                         }`}
                       >
                         <div className="flex items-start gap-3">
@@ -1190,14 +1200,92 @@ export default function NotificationBell({ mobile = false }) {
         )
       )
       )}
-      {/* Animations for notification entry */}
+      {/* Enhanced Animations */}
       <style jsx>{`
         @keyframes fadeInNotification {
-          from { opacity: 0; transform: translateY(10px) scale(0.98); }
-          to { opacity: 1; transform: translateY(0) scale(1); }
+          from { 
+            opacity: 0; 
+            transform: translateY(20px) scale(0.95); 
+          }
+          to { 
+            opacity: 1; 
+            transform: translateY(0) scale(1); 
+          }
         }
+        
+        @keyframes slideInFromTop {
+          from { 
+            opacity: 0; 
+            transform: translateY(-20px) scale(0.95); 
+          }
+          to { 
+            opacity: 1; 
+            transform: translateY(0) scale(1); 
+          }
+        }
+        
+        @keyframes bellRing {
+          0%, 100% { transform: rotate(0deg); }
+          10%, 30%, 50%, 70%, 90% { transform: rotate(10deg); }
+          20%, 40%, 60%, 80% { transform: rotate(-10deg); }
+        }
+        
         .animate-fadeInNotification {
-          animation: fadeInNotification 0.4s cubic-bezier(0.4,0,0.2,1) both;
+          animation: fadeInNotification 0.5s cubic-bezier(0.4,0,0.2,1) both;
+        }
+        
+        .animate-fade-in {
+          animation: slideInFromTop 0.4s cubic-bezier(0.4,0,0.2,1) both;
+        }
+        
+        .animate-bell-ring {
+          animation: bellRing 0.5s ease-in-out;
+        }
+        
+        .notification-popup {
+          backdrop-filter: blur(10px);
+        }
+        
+        .notification-scroll-area-mobile {
+          max-height: calc(85vh - 200px);
+          overflow-y: auto;
+          scrollbar-width: thin;
+          scrollbar-color: #cbd5e0 #f7fafc;
+        }
+        
+        .notification-scroll-area-mobile::-webkit-scrollbar {
+          width: 6px;
+        }
+        
+        .notification-scroll-area-mobile::-webkit-scrollbar-track {
+          background: #f7fafc;
+          border-radius: 3px;
+        }
+        
+        .notification-scroll-area-mobile::-webkit-scrollbar-thumb {
+          background: #cbd5e0;
+          border-radius: 3px;
+        }
+        
+        .notification-scroll-area-desktop {
+          max-height: calc(100vh - 200px);
+          overflow-y: auto;
+          scrollbar-width: thin;
+          scrollbar-color: #cbd5e0 #f7fafc;
+        }
+        
+        .notification-scroll-area-desktop::-webkit-scrollbar {
+          width: 6px;
+        }
+        
+        .notification-scroll-area-desktop::-webkit-scrollbar-track {
+          background: #f7fafc;
+          border-radius: 3px;
+        }
+        
+        .notification-scroll-area-desktop::-webkit-scrollbar-thumb {
+          background: #cbd5e0;
+          border-radius: 3px;
         }
       `}</style>
     </div>
