@@ -238,7 +238,7 @@ export default function AdminHeader() {
             ) : (
               <form
                 onSubmit={handleSearch}
-                className="flex items-center border rounded-lg overflow-hidden bg-white mx-2 sm:mx-4 focus-within:ring-2 focus-within:ring-blue-300 transition-all w-28 xs:w-40 sm:w-64 animate-fade-in"
+                className="flex items-center border rounded-lg overflow-hidden bg-white mx-2 sm:mx-4 focus-within:ring-2 focus-within:ring-blue-300 transition-all w-28 xs:w-40 sm:w-64 animate-search-expand"
               >
                 <input
                   ref={searchInputRef}

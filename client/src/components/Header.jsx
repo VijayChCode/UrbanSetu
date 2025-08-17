@@ -316,7 +316,7 @@ function UserNavLinks({ mobile = false, onNavigate }) {
           ) : (
             <form
               onSubmit={handleSubmit}
-              className="flex items-center border rounded-lg overflow-hidden bg-white mx-2 sm:mx-4 focus-within:ring-2 focus-within:ring-yellow-300 transition-all w-28 xs:w-40 sm:w-64 animate-fade-in"
+              className="flex items-center border rounded-lg overflow-hidden bg-white mx-2 sm:mx-4 focus-within:ring-2 focus-within:ring-yellow-300 transition-all w-28 xs:w-40 sm:w-64 animate-search-expand"
             >
               <input
                 ref={searchInputRef}
