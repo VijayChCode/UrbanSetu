@@ -1069,13 +1069,15 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Additional Details (Optional)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {reportCategory === 'other' ? 'Additional Details *' : 'Additional Details (Optional)'}
+                </label>
                 <textarea
                   className="w-full border border-yellow-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
                   rows="3"
                   value={reportReason}
                   onChange={e => setReportReason(e.target.value)}
-                  placeholder="Provide additional context to help us understand the issue..."
+                  placeholder={reportCategory === 'other' ? 'Please provide details about the issue...' : 'Provide additional context to help us understand the issue...'}
                 />
               </div>
             </div>
@@ -1096,7 +1098,7 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
               <button
                 className="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700 text-sm"
                 onClick={handleSubmitReport}
-                disabled={reportLoading || !reportCategory}
+                disabled={reportLoading || !reportCategory || (reportCategory === 'other' && !reportReason.trim())}
               >
                 {reportLoading ? 'Reporting...' : 'Submit Report'}
               </button>

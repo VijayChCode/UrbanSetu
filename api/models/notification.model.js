@@ -13,6 +13,7 @@ const notificationSchema = new mongoose.Schema(
       enum: [
         'property_edited',
         'property_deleted',
+        'property_reported',
         'appointment_updated',
         'admin_message',
         'new_review',
