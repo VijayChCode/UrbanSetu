@@ -4552,18 +4552,11 @@ You can lock this chat again at any time from the options.</p>
         <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-yellow-50 to-amber-50">
+            <div className="flex items-center p-6 border-b border-gray-200 bg-gradient-to-r from-yellow-50 to-amber-50">
               <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
                 <FaStar className="text-yellow-500" />
                 Starred Messages
               </h3>
-              <button
-                onClick={() => setShowStarredModal(false)}
-                className="text-gray-400 hover:text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors"
-                title="Close"
-              >
-                <FaTimes className="w-5 h-5" />
-              </button>
             </div>
 
             {/* Content */}
