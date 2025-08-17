@@ -1049,6 +1049,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const [starredMessages, setStarredMessages] = useState([]);
   const [starringSaving, setStarringSaving] = useState(false);
   const [loadingStarredMessages, setLoadingStarredMessages] = useState(false);
+  const [unstarringMessageId, setUnstarringMessageId] = useState(null);
   
   // Chat options menu state
   const [showChatOptionsMenu, setShowChatOptionsMenu] = useState(false);
@@ -3978,7 +3979,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             {/* Remove star button */}
                             <button
                               onClick={async () => {
-                                setStarringSaving(true);
+                                setUnstarringMessageId(message._id);
                                 try {
                                   const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${message._id}/star`, {
                                     method: 'PATCH',
@@ -4004,14 +4005,14 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                 } catch (err) {
                                   toast.error('Failed to unstar message');
                                 } finally {
-                                  setStarringSaving(false);
+                                  setUnstarringMessageId(null);
                                 }
                               }}
                               className="text-red-500 hover:text-red-700 text-xs p-1 rounded-full hover:bg-red-50 transition-colors"
                               title="Remove from starred messages"
-                              disabled={starringSaving}
+                              disabled={unstarringMessageId === message._id}
                             >
-                              {starringSaving ? (
+                              {unstarringMessageId === message._id ? (
                                 <div className="w-3 h-3 border border-red-500 border-t-transparent rounded-full animate-spin"></div>
                               ) : (
                                 <FaTimes className="w-3 h-3" />
@@ -4029,17 +4030,14 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               {message.message}
                             </div>
                             
-                            {/* Time and edited indicator at bottom */}
-                            <div className={`flex items-center justify-end gap-2 mt-2 text-xs ${
-                              isMe ? 'text-blue-200' : 'text-gray-500'
-                            }`}>
-                              <span>
-                                {messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
-                              </span>
-                              {message.edited && (
+                            {/* Edited indicator only (no time display) */}
+                            {message.edited && (
+                              <div className={`flex justify-end mt-2 text-xs ${
+                                isMe ? 'text-blue-200' : 'text-gray-500'
+                              }`}>
                                 <span className="italic">(Edited)</span>
-                              )}
-                            </div>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
