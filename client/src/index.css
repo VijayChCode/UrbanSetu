@@ -281,6 +281,30 @@
   animation: replyHighlightFill 1600ms ease-out 3;
 }
 
+/* Yellow highlight for starred messages */
+@keyframes starredHighlightPulse {
+  0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.80); transform: scale(1); }
+  50% { box-shadow: 0 0 0 12px rgba(245, 158, 11, 0.45), 0 8px 22px rgba(245, 158, 11, 0.45); transform: scale(1.01); }
+  100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); transform: scale(1); }
+}
+@keyframes starredHighlightFill {
+  0% { background: rgba(245, 158, 11, 0.70); }
+  50% { background: rgba(245, 158, 11, 0.45); }
+  100% { background: rgba(245, 158, 11, 0); }
+}
+.starred-highlight {
+  position: relative;
+  animation: starredHighlightPulse 1600ms ease-out 3;
+}
+.starred-highlight::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  animation: starredHighlightFill 1600ms ease-out 3;
+}
+
 /* Mobile menu specific styles */
 .mobile-menu-backdrop {
   backdrop-filter: blur(8px);

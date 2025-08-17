@@ -1069,8 +1069,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   // Chat options menu state
   const [showChatOptionsMenu, setShowChatOptionsMenu] = useState(false);
 
-  // Starred message preview state
-  const [starredMessagePreview, setStarredMessagePreview] = useState(null);
+
 
   // Chat lock handler functions
   const handleChatLock = async () => {
@@ -3257,19 +3256,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   </div>
                 )}
 
-                {/* Starred message preview indicator */}
-                {starredMessagePreview && (
-                  <div className="px-4 mb-2">
-                    <div className="flex items-center bg-yellow-50 border-l-4 border-yellow-400 px-2 py-1 rounded">
-                      <FaStar className="text-yellow-500 text-xs mr-2" />
-                      <span className="text-xs text-gray-700 font-semibold mr-2">Starred message:</span>
-                      <span className="text-xs text-gray-600 truncate max-w-[200px]">{starredMessagePreview.message?.substring(0, 40)}{starredMessagePreview.message?.length > 40 ? '...' : ''}</span>
-                      <button className="ml-auto text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-1 transition-colors" onClick={() => setStarredMessagePreview(null)} title="Close preview">
-                        <FaTimes className="w-3 h-3" />
-                      </button>
-                    </div>
-                  </div>
-                )}
+
                 
                 {/* Edit indicator */}
                 {editingComment && (
@@ -4528,15 +4515,14 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                 : 'bg-white text-gray-800 border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
                             }`}
                             onClick={() => {
-                              setStarredMessagePreview(message);
                               setShowStarredModal(false);
                               // Scroll to the message in the main chat if it exists
                               const messageElement = document.querySelector(`[data-message-id="${message._id}"]`);
                               if (messageElement) {
                                 messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                messageElement.classList.add('reply-highlight');
+                                messageElement.classList.add('starred-highlight');
                                 setTimeout(() => {
-                                  messageElement.classList.remove('reply-highlight');
+                                  messageElement.classList.remove('starred-highlight');
                                 }, 1600);
                               }
                             }}
@@ -4547,7 +4533,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             
                             {/* Copy button - appears on hover */}
                             <button
-                              onClick={() => copyMessageToClipboard(message.message)}
+                              onClick={(e) => { e.stopPropagation(); copyMessageToClipboard(message.message); }}
                               className={`absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1.5 rounded-full ${
                                 isMe 
                                   ? 'bg-white/20 hover:bg-white/30 text-white' 
