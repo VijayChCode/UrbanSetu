@@ -116,13 +116,13 @@ export default function CreateListing() {
     setImageErrors(prev => ({ ...prev, [index]: '' }));
     
     try {
-      const formData = new FormData();
-      formData.append('image', file);
+      const uploadFormData = new FormData();
+      uploadFormData.append('image', file);
       
       const res = await fetch(`${API_BASE_URL}/api/upload/image`, {
         method: 'POST',
         credentials: 'include',
-        body: formData,
+        body: uploadFormData,
       });
       
       const data = await res.json();
@@ -136,6 +136,7 @@ export default function CreateListing() {
         setImageErrors(prev => ({ ...prev, [index]: data.message || 'Upload failed' }));
       }
     } catch (error) {
+      console.error('Upload error:', error);
       setImageErrors(prev => ({ ...prev, [index]: 'Upload failed. Please try again.' }));
     } finally {
       setUploadingImages(prev => ({ ...prev, [index]: false }));

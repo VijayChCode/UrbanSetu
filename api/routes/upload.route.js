@@ -44,10 +44,18 @@ const upload = multer({
 // Upload single image
 router.post('/image', upload.single('image'), async (req, res) => {
   try {
+    console.log('Upload request received:', req.file ? 'File present' : 'No file');
+    console.log('Cloudinary config:', {
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY ? 'Set' : 'Not set',
+      api_secret: process.env.CLOUDINARY_API_SECRET ? 'Set' : 'Not set'
+    });
+    
     if (!req.file) {
       return res.status(400).json({ message: 'No image file provided' });
     }
 
+    console.log('File uploaded successfully:', req.file.path);
     res.status(200).json({
       message: 'Image uploaded successfully',
       imageUrl: req.file.path,
@@ -57,6 +65,17 @@ router.post('/image', upload.single('image'), async (req, res) => {
     console.error('Upload error:', error);
     res.status(500).json({ message: 'Error uploading image', error: error.message });
   }
+});
+
+// Error handling middleware for multer
+router.use((error, req, res, next) => {
+  if (error instanceof multer.MulterError) {
+    if (error.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ message: 'File size too large. Maximum size is 5MB.' });
+    }
+    return res.status(400).json({ message: 'File upload error', error: error.message });
+  }
+  next(error);
 });
 
 // Upload multiple images
