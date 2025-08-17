@@ -3019,7 +3019,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             <FaEllipsisV className="text-sm" />
                           </button>
                           {showChatOptionsMenu && (
-                            <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-20 min-w-[160px] chat-options-menu">
+                            <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-20 min-w-[180px] chat-options-menu">
                               {/* Refresh option */}
                               <button
                                 className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
@@ -3034,13 +3034,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               </button>
                               {/* Starred Messages option */}
                               <button
-                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                                className="w-full px-4 py-2 text-left text-sm text-yellow-600 hover:bg-yellow-50 flex items-center gap-2"
                                 onClick={() => {
                                   setShowStarredModal(true);
                                   setShowChatOptionsMenu(false);
                                 }}
                               >
-                                <FaStar className="text-sm text-yellow-500" />
+                                <FaStar className="text-sm" />
                                 Starred Messages
                               </button>
                               {/* Keyboard shortcut tip option */}
