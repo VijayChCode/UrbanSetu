@@ -219,7 +219,7 @@ export default function Listing() {
       
       const data = await res.json();
       if (res.ok) {
-        toast.success('Property reported successfully. Our team will review it.');
+        toast.info("Thank you for reporting. Our team will review this property.");
         setShowReportModal(false);
         setReportCategory('');
         setReportDetails('');
