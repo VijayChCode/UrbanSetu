@@ -1168,6 +1168,7 @@ function AdminAppointmentRow({
   const [starredMessages, setStarredMessages] = useLocalState([]);
   const [starringSaving, setStarringSaving] = useLocalState(false);
   const [loadingStarredMessages, setLoadingStarredMessages] = useLocalState(false);
+  const [unstarringMessageId, setUnstarringMessageId] = useLocalState(null);
   const [sendIconAnimating, setSendIconAnimating] = useLocalState(false);
   const [sendIconSent, setSendIconSent] = useLocalState(false);
   
@@ -3295,111 +3296,161 @@ function AdminAppointmentRow({
 
         {/* Starred Messages Modal */}
         {showStarredModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 shadow-xl max-h-[80vh] overflow-y-auto">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <FaStar className="text-yellow-500" /> Starred Messages
-              </h3>
-              <div className="space-y-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+              {/* Header */}
+              <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-yellow-50 to-amber-50">
+                <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                  <FaStar className="text-yellow-500" />
+                  Starred Messages
+                </h3>
+                <button
+                  onClick={() => setShowStarredModal(false)}
+                  className="text-gray-400 hover:text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors"
+                  title="Close"
+                >
+                  <FaTimes className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 overflow-y-auto p-6">
                 {loadingStarredMessages ? (
-                  <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-500 mx-auto mb-4"></div>
-                    <p className="text-gray-500">Loading starred messages...</p>
+                  <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-500"></div>
+                    <span className="ml-3 text-gray-600">Loading starred messages...</span>
                   </div>
                 ) : starredMessages.length === 0 ? (
-                  <div className="text-center py-8">
-                    <FaRegStar className="mx-auto text-4xl text-gray-400 mb-4" />
-                    <p className="text-gray-500">No starred messages in this conversation</p>
-                    <p className="text-sm text-gray-400 mt-2">Star important messages to find them easily later</p>
+                  <div className="text-center py-12">
+                    <FaRegStar className="mx-auto text-6xl text-gray-300 mb-4" />
+                    <h4 className="text-xl font-semibold text-gray-600 mb-2">No Starred Messages</h4>
+                    <p className="text-gray-500">Star important messages to find them easily later.</p>
                   </div>
                 ) : (
-                  starredMessages.map((message) => {
-                    const isMe = message.senderEmail === currentUser.email;
-                    return (
-                      <div key={message._id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                        <div
-                          className={`max-w-[85%] p-3 rounded-2xl break-words relative ${
-                            isMe
-                              ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
-                              : 'bg-gray-100 text-gray-800'
-                          }`}
-                        >
-                          <div className="flex items-start gap-2">
-                            <div className="flex-1">
-                              <div className="text-sm whitespace-pre-wrap leading-relaxed">
+                  <div className="space-y-4">
+                    {starredMessages.map((message, index) => {
+                      const isMe = message.senderEmail === currentUser.email;
+                      const messageDate = new Date(message.timestamp);
+                      
+                      return (
+                        <div key={message._id} className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} mb-4`}>
+                          <div className={`relative max-w-[80%] ${isMe ? 'ml-12' : 'mr-12'}`}>
+                            {/* Star indicator and remove button */}
+                            <div className={`flex items-center gap-2 mb-1 ${isMe ? 'justify-end' : 'justify-start'}`}>
+                              <FaStar className="text-yellow-500 text-xs" />
+                              <span className={`text-xs font-medium ${isMe ? 'text-blue-600' : 'text-green-600'}`}>
+                                {isMe ? 'You' : (message.senderName || 'Other Party')}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                {messageDate.toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                  hour12: true
+                                })}
+                              </span>
+                              {/* Remove star button */}
+                              <button
+                                onClick={async () => {
+                                  setUnstarringMessageId(message._id);
+                                  try {
+                                    const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${message._id}/star`, {
+                                      method: 'PATCH',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      credentials: 'include',
+                                      body: JSON.stringify({ starred: false }),
+                                    });
+                                    if (res.ok) {
+                                      // Remove from starred messages list
+                                      setStarredMessages(prev => prev.filter(m => m._id !== message._id));
+                                      // Update the main comments state
+                                      updateAppointmentComments(appt._id, localComments.map(c => 
+                                        c._id === message._id 
+                                          ? { ...c, starredBy: (c.starredBy || []).filter(id => id !== currentUser._id) }
+                                          : c
+                                      ));
+                                      toast.success('Message unstarred');
+                                    } else {
+                                      toast.error('Failed to unstar message');
+                                    }
+                                  } catch (err) {
+                                    toast.error('Failed to unstar message');
+                                  } finally {
+                                    setUnstarringMessageId(null);
+                                  }
+                                }}
+                                className="text-red-500 hover:text-red-700 text-xs p-1 rounded-full hover:bg-red-50 transition-colors"
+                                title="Remove from starred messages"
+                                disabled={unstarringMessageId === message._id}
+                              >
+                                {unstarringMessageId === message._id ? (
+                                  <div className="w-3 h-3 border border-red-500 border-t-transparent rounded-full animate-spin"></div>
+                                ) : (
+                                  <FaTimes className="w-3 h-3" />
+                                )}
+                              </button>
+                            </div>
+                            
+                            {/* Message bubble - styled like chatbox */}
+                            <div className={`rounded-2xl px-4 py-3 text-sm shadow-lg break-words relative group ${
+                              isMe 
+                                ? 'bg-gradient-to-r from-blue-600 to-purple-700 text-white' 
+                                : 'bg-white text-gray-800 border border-gray-200'
+                            }`}>
+                              <div className="whitespace-pre-wrap break-words">
                                 {message.deleted ? (
                                   <span className="italic text-gray-500">This message was deleted</span>
                                 ) : (
                                   message.message
                                 )}
                               </div>
-                              <div className="flex items-center gap-2 justify-between mt-2">
-                                <div className="flex items-center gap-1">
-                                  <FaStar className={`${isMe ? 'text-yellow-300' : 'text-yellow-500'} text-xs`} />
-                                  <span className={`${isMe ? 'text-blue-200' : 'text-gray-500'} text-xs`}>
-                                    {new Date(message.timestamp).toLocaleString('en-US', {
-                                      month: 'short',
-                                      day: 'numeric',
-                                      hour: '2-digit',
-                                      minute: '2-digit',
-                                    })}
-                                  </span>
-                                </div>
+                              
+                              {/* Copy button - appears on hover */}
+                              {!message.deleted && (
                                 <button
-                                  className={`${isMe ? 'text-blue-200 hover:text-red-300' : 'text-gray-500 hover:text-red-600'} transition-colors`}
-                                  onClick={async () => {
-                                    setStarringSaving(true);
-                                    try {
-                                      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${message._id}/star`, {
-                                        method: 'PATCH',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        credentials: 'include',
-                                        body: JSON.stringify({ starred: false }),
-                                      });
-                                      if (res.ok) {
-                                        // Remove from starred messages list
-                                        setStarredMessages(prev => prev.filter(m => m._id !== message._id));
-                                        // Update the main comments state
-                                        updateAppointmentComments(appt._id, localComments.map(c => 
-                                          c._id === message._id 
-                                            ? { ...c, starredBy: (c.starredBy || []).filter(id => id !== currentUser._id) }
-                                            : c
-                                        ));
-                                        toast.success('Message unstarred');
-                                      } else {
-                                        toast.error('Failed to unstar message');
-                                      }
-                                    } catch (err) {
-                                      toast.error('Failed to unstar message');
-                                    } finally {
-                                      setStarringSaving(false);
-                                    }
-                                  }}
-                                  title="Unstar message"
-                                  disabled={starringSaving}
+                                  onClick={() => copyMessageToClipboard(message.message)}
+                                  className={`absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1.5 rounded-full ${
+                                    isMe 
+                                      ? 'bg-white/20 hover:bg-white/30 text-white' 
+                                      : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                                  }`}
+                                  title="Copy message"
                                 >
-                                  {starringSaving ? (
-                                    <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin"></div>
-                                  ) : (
-                                    <FaTimes size={12} />
-                                  )}
+                                  <FaCopy className="w-3 h-3" />
                                 </button>
-                              </div>
+                              )}
+                              
+                              {/* Edited indicator only (no time display) */}
+                              {message.edited && (
+                                <div className={`flex justify-end mt-2 text-xs ${
+                                  isMe ? 'text-blue-200' : 'text-gray-500'
+                                }`}>
+                                  <span className="italic">(Edited)</span>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })
+                      );
+                    })}
+                  </div>
                 )}
               </div>
-              <div className="flex justify-end mt-6">
-                <button
-                  onClick={() => setShowStarredModal(false)}
-                  className="px-4 py-2 rounded bg-gray-200 text-gray-800 hover:bg-gray-300"
-                >
-                  Close
-                </button>
+
+              {/* Footer */}
+              <div className="p-6 border-t border-gray-200 bg-gray-50">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">
+                    {starredMessages.length} starred message{starredMessages.length !== 1 ? 's' : ''}
+                  </span>
+                  <button
+                    onClick={() => setShowStarredModal(false)}
+                    className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors font-medium"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
             </div>
           </div>

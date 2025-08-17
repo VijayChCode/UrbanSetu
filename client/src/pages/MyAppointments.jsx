@@ -4500,7 +4500,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           </div>
                           
                           {/* Message bubble - styled like chatbox */}
-                          <div className={`rounded-2xl px-4 py-3 text-sm shadow-lg break-words ${
+                          <div className={`rounded-2xl px-4 py-3 text-sm shadow-lg break-words relative group ${
                             isMe 
                               ? 'bg-gradient-to-r from-blue-600 to-purple-700 text-white' 
                               : 'bg-white text-gray-800 border border-gray-200'
@@ -4508,6 +4508,19 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             <div className="whitespace-pre-wrap break-words">
                               {message.message}
                             </div>
+                            
+                            {/* Copy button - appears on hover */}
+                            <button
+                              onClick={() => copyMessageToClipboard(message.message)}
+                              className={`absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1.5 rounded-full ${
+                                isMe 
+                                  ? 'bg-white/20 hover:bg-white/30 text-white' 
+                                  : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                              }`}
+                              title="Copy message"
+                            >
+                              <FaCopy className="w-3 h-3" />
+                            </button>
                             
                             {/* Edited indicator only (no time display) */}
                             {message.edited && (
