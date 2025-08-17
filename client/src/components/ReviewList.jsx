@@ -620,7 +620,7 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
       });
       const data = await res.json();
       if (res.ok) {
-        toast.success('Thank you for reporting. Our team will review this issue.');
+        toast.info('Thank you for reporting. Our team will review this issue.');
         setReportingReview(null);
         setReportCategory('');
         setReportReason('');
