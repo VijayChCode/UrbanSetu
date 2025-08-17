@@ -4377,7 +4377,7 @@ You can lock this chat again at any time from the options.</p>
                 />
               </div>
             </div>
-            <div className="flex gap-2 mt-6">
+            <div className="flex gap-2 justify-end mt-6">
               <button
                 onClick={() => {
                   setShowReportChatModal(false);
