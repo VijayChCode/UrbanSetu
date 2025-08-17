@@ -4299,16 +4299,20 @@ You can lock this chat again at any time from the options.</p>
                   <option value="Other">Other</option>
                 </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Additional details (optional)</label>
-                <textarea
-                  value={reportDetails}
-                  onChange={(e) => setReportDetails(e.target.value)}
-                  rows={4}
-                  placeholder="Add any context to help admins review..."
-                  className="w-full p-2 border border-gray-300 rounded resize-y focus:outline-none focus:ring-2 focus:ring-red-500 text-gray-900"
-                />
-              </div>
+              {reportReason && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {reportReason === 'Other' ? 'Additional details *' : 'Additional details (optional)'}
+                  </label>
+                  <textarea
+                    value={reportDetails}
+                    onChange={(e) => setReportDetails(e.target.value)}
+                    rows={4}
+                    placeholder={reportReason === 'Other' ? 'Please provide details about the issue...' : 'Add any context to help admins review...'}
+                    className="w-full p-2 border border-gray-300 rounded resize-y focus:outline-none focus:ring-2 focus:ring-red-500 text-gray-900"
+                  />
+                </div>
+              )}
               <div className="bg-gray-50 rounded p-3 text-sm text-gray-700">
                 <div className="font-semibold mb-1">Message excerpt:</div>
                 <div className="line-clamp-4 whitespace-pre-wrap">{(reportingMessage.message || '').slice(0, 300)}</div>
@@ -4353,7 +4357,7 @@ You can lock this chat again at any time from the options.</p>
                     setSubmittingReport(false);
                   }
                 }}
-                disabled={submittingReport || !reportReason}
+                disabled={submittingReport || !reportReason || (reportReason === 'Other' && !reportDetails.trim())}
                 className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
               >
                 {submittingReport ? 'Reporting…' : 'Report'}
@@ -4388,16 +4392,20 @@ You can lock this chat again at any time from the options.</p>
                   <option value="other">Other</option>
                 </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Additional details (optional)</label>
-                <textarea
-                  value={reportChatDetails}
-                  onChange={(e) => setReportChatDetails(e.target.value)}
-                  rows={4}
-                  placeholder="Provide more context to help admins review this chat..."
-                  className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-red-500 text-gray-900"
-                />
-              </div>
+              {reportChatReason && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {reportChatReason === 'other' ? 'Additional details *' : 'Additional details (optional)'}
+                  </label>
+                  <textarea
+                    value={reportChatDetails}
+                    onChange={(e) => setReportChatDetails(e.target.value)}
+                    rows={4}
+                    placeholder={reportChatReason === 'other' ? 'Please provide details about the issue...' : 'Provide more context to help admins review this chat...'}
+                    className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-red-500 text-gray-900"
+                  />
+                </div>
+              )}
             </div>
             <div className="flex gap-2 justify-end mt-6">
               <button
@@ -4443,7 +4451,7 @@ You can lock this chat again at any time from the options.</p>
                     setSubmittingChatReport(false);
                   }
                 }}
-                disabled={submittingChatReport || !reportChatReason}
+                disabled={submittingChatReport || !reportChatReason || (reportChatReason === 'other' && !reportChatDetails.trim())}
                 className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
               >
                 {submittingChatReport ? 'Reporting…' : 'Report'}
