@@ -889,16 +889,26 @@ router.post('/respond/like/:reviewId', verifyToken, async (req, res, next) => {
 router.post('/report/:reviewId', verifyToken, async (req, res, next) => {
   try {
     const { reviewId } = req.params;
-    const { reason } = req.body;
-    if (!reason || !reason.trim()) {
-      return res.status(400).json({ message: 'Reason is required.' });
+    const { category, reason } = req.body;
+    
+    // Validate required fields
+    if (!category || !category.trim()) {
+      return res.status(400).json({ message: 'Category is required.' });
     }
+    
     const review = await Review.findById(reviewId);
     if (!review) {
       return res.status(404).json({ message: 'Review not found.' });
     }
+    
     const listing = await Listing.findById(review.listingId);
     const reporter = await User.findById(req.user.id);
+    
+    // Create notification message with category and optional reason
+    const categoryText = category.charAt(0).toUpperCase() + category.slice(1).replace(/([A-Z])/g, ' $1');
+    const reasonText = reason && reason.trim() ? ` - ${reason.trim()}` : '';
+    const notificationMessage = `A review for property "${listing?.name || 'Unknown'}" was reported by ${reporter?.username || 'a user'} for: ${categoryText}${reasonText}`;
+    
     // Find all admins
     const admins = await User.find({ role: { $in: ['admin', 'rootadmin'] } });
     const notifications = await Promise.all(admins.map(async (admin) => {
@@ -906,12 +916,18 @@ router.post('/report/:reviewId', verifyToken, async (req, res, next) => {
         userId: admin._id,
         type: 'review_reported',
         title: 'Review Reported',
-        message: `A review for property "${listing?.name || 'Unknown'}" was reported by ${reporter?.username || 'a user'}: ${reason}`,
+        message: notificationMessage,
         listingId: review.listingId,
         adminId: req.user.id,
-        meta: { reviewId: review._id, reporterId: reporter?._id }
+        meta: { 
+          reviewId: review._id, 
+          reporterId: reporter?._id,
+          category: category,
+          reason: reason || ''
+        }
       });
     }));
+    
     // Emit socket event for real-time admin notification
     const io = req.app.get('io');
     if (io) {
@@ -919,6 +935,7 @@ router.post('/report/:reviewId', verifyToken, async (req, res, next) => {
         io.emit('notificationCreated', notification);
       });
     }
+    
     res.status(200).json({ message: 'Report submitted successfully.' });
   } catch (error) {
     next(error);
