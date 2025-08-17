@@ -1432,7 +1432,7 @@ function AdminAppointmentRow({
     if (visibleDate && visibleDate !== currentFloatingDate) {
       setCurrentFloatingDate(visibleDate);
     }
-  }, [localComments, currentFloatingDate]);
+  }, [localComments, currentFloatingDate, appt._id]);
 
   // Mark messages as read when user can see them
   const markingReadRef = React.useRef(false);
@@ -1530,6 +1530,7 @@ function AdminAppointmentRow({
         chatContainer.removeEventListener('scroll', handleScroll);
         if (scrollTimeoutRef.current) {
           clearTimeout(scrollTimeoutRef.current);
+          scrollTimeoutRef.current = null;
         }
       };
     }
@@ -1553,6 +1554,9 @@ function AdminAppointmentRow({
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
+      // Reset floating date indicator when modal closes
+      setIsScrolling(false);
+      setCurrentFloatingDate('');
     }
     return () => {
       document.body.style.overflow = '';
