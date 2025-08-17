@@ -3020,7 +3020,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       </tr>
       {showChatModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-md flex items-center justify-center z-50 p-4">
-          <div className="bg-gradient-to-br from-white via-blue-50 to-purple-50 rounded-3xl shadow-2xl w-full h-full max-w-6xl max-h-full p-0 relative animate-fadeIn flex flex-col border border-gray-200 transform transition-all duration-500 hover:shadow-3xl">
+          <div className="bg-gradient-to-br from-white via-blue-50 to-purple-50 rounded-3xl shadow-2xl w-full h-full max-w-6xl max-h-full p-0 relative animate-fadeIn flex flex-col border border-gray-200 transform transition-all duration-500 hover:shadow-3xl overflow-hidden">
             { isChatDisabled ? (
               <div className="flex flex-col items-center justify-center flex-1 p-8 min-h-96">
                 <FaCommentDots className="text-6xl text-gray-400 mb-6" />
@@ -3047,7 +3047,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
               </div>
             ) : (
               <>
-                <div className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-4 border-b-2 border-blue-700 bg-gradient-to-r from-blue-700 via-purple-700 to-blue-900 rounded-t-3xl relative shadow-2xl">
+                {/* Chat Header */}
+                <div className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-4 border-b-2 border-blue-700 bg-gradient-to-r from-blue-700 via-purple-700 to-blue-900 rounded-t-3xl relative shadow-2xl flex-shrink-0">
                   {headerOptionsMessageId && selectedMessageForHeaderOptions ? (
                     // Header-level options overlay (options + close icon only)
                     <div className="flex items-center justify-between w-full">
@@ -3484,71 +3485,74 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   )}
                 </div>
                 
-                {/* Pinned Messages Section */}
-                {pinnedMessages.length > 0 && (
-                  <div className="bg-gradient-to-r from-purple-50 to-blue-50 border-b border-purple-200 px-4 py-3">
-                    <div className="flex items-center gap-2 mb-2">
-                      <FaThumbtack className="text-purple-600 text-sm" />
-                      <span className="text-purple-700 font-semibold text-sm">Pinned Messages</span>
-                      <span className="text-purple-600 text-xs">({pinnedMessages.length})</span>
-                    </div>
-                    <div className="space-y-2 max-h-32 overflow-y-auto">
-                      {pinnedMessages.map((pinnedMsg) => (
-                        <div
-                          key={pinnedMsg._id}
-                          className={`bg-white rounded-lg p-3 border-l-4 border-purple-500 cursor-pointer transition-all duration-200 hover:shadow-md ${
-                            highlightedPinnedMessage === pinnedMsg._id ? 'ring-2 ring-purple-400 shadow-lg' : ''
-                          }`}
-                          onClick={() => {
-                            // Highlight the pinned message and scroll to it
-                            setHighlightedPinnedMessage(pinnedMsg._id);
-                            const messageElement = document.getElementById(`message-${pinnedMsg._id}`);
-                            if (messageElement) {
-                              messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                              // Remove highlight after 3 seconds
-                              setTimeout(() => setHighlightedPinnedMessage(null), 3000);
-                            }
-                          }}
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="text-xs text-purple-600 font-medium">
-                                  {pinnedMsg.senderEmail === currentUser.email ? 'You' : otherParty?.username || 'Other'}
-                                </span>
-                                <span className="text-xs text-gray-500">
-                                  {pinnedMsg.pinDuration === 'custom' 
-                                    ? `${Math.round((new Date(pinnedMsg.pinExpiresAt) - new Date()) / (1000 * 60 * 60))}h left`
-                                    : pinnedMsg.pinDuration === '24hrs' 
-                                      ? '24h left'
-                                      : pinnedMsg.pinDuration === '7days' 
-                                        ? '7d left'
-                                        : '30d left'
-                                  }
-                                </span>
+                {/* Chat Content Area */}
+                <div className="flex-1 flex flex-col min-h-0">
+                  {/* Pinned Messages Section */}
+                  {pinnedMessages.length > 0 && (
+                    <div className="bg-gradient-to-r from-purple-50 to-blue-50 border-b border-purple-200 px-4 py-3 flex-shrink-0">
+                      <div className="flex items-center gap-2 mb-2">
+                        <FaThumbtack className="text-purple-600 text-sm" />
+                        <span className="text-purple-700 font-semibold text-sm">Pinned Messages</span>
+                        <span className="text-purple-600 text-xs">({pinnedMessages.length})</span>
+                      </div>
+                      <div className="space-y-2 max-h-24 overflow-y-auto">
+                        {pinnedMessages.map((pinnedMsg) => (
+                          <div
+                            key={pinnedMsg._id}
+                            className={`bg-white rounded-lg p-2 border-l-4 border-purple-500 cursor-pointer transition-all duration-200 hover:shadow-md ${
+                              highlightedPinnedMessage === pinnedMsg._id ? 'ring-2 ring-purple-400 shadow-lg' : ''
+                            }`}
+                            onClick={() => {
+                              // Highlight the pinned message and scroll to it
+                              setHighlightedPinnedMessage(pinnedMsg._id);
+                              const messageElement = document.getElementById(`message-${pinnedMsg._id}`);
+                              if (messageElement) {
+                                messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                // Remove highlight after 3 seconds
+                                setTimeout(() => setHighlightedPinnedMessage(null), 3000);
+                              }
+                            }}
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="text-xs text-purple-600 font-medium">
+                                    {pinnedMsg.senderEmail === currentUser.email ? 'You' : otherParty?.username || 'Other'}
+                                  </span>
+                                  <span className="text-xs text-gray-500">
+                                    {pinnedMsg.pinDuration === 'custom' 
+                                      ? `${Math.round((new Date(pinnedMsg.pinExpiresAt) - new Date()) / (1000 * 60 * 60))}h left`
+                                      : pinnedMsg.pinDuration === '24hrs' 
+                                        ? '24h left'
+                                        : pinnedMsg.pinDuration === '7days' 
+                                          ? '7d left'
+                                          : '30d left'
+                                    }
+                                  </span>
+                                </div>
+                                <div className="text-sm text-gray-800 line-clamp-2">
+                                  {pinnedMsg.message}
+                                </div>
                               </div>
-                              <div className="text-sm text-gray-800 line-clamp-2">
-                                {pinnedMsg.message}
-                              </div>
+                              <button
+                                className="text-purple-600 hover:text-purple-800 p-1 rounded-full hover:bg-purple-100 transition-colors"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handlePinMessage(pinnedMsg, false);
+                                }}
+                                title="Unpin message"
+                              >
+                                <FaThumbtack size={14} />
+                              </button>
                             </div>
-                            <button
-                              className="text-purple-600 hover:text-purple-800 p-1 rounded-full hover:bg-purple-100 transition-colors"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handlePinMessage(pinnedMsg, false);
-                              }}
-                              title="Unpin message"
-                            >
-                              <FaThumbtack size={14} />
-                            </button>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
-                
-                <div ref={chatContainerRef} className="flex-1 overflow-y-auto space-y-2 mb-4 px-4 pt-4 animate-fadeInChat relative bg-gradient-to-b from-transparent to-blue-50/30" style={{minHeight: '400px', maxHeight: 'calc(100vh - 200px)'}}>
+                  )}
+                  
+                  {/* Messages Container */}
+                  <div ref={chatContainerRef} className="flex-1 overflow-y-auto space-y-2 px-4 pt-4 animate-fadeInChat relative bg-gradient-to-b from-transparent to-blue-50/30">
                   {/* Privacy Notice - First item in chat */}
                   <div 
                     className={`px-4 py-3 bg-gradient-to-r from-blue-50 to-purple-50 border-l-4 border-blue-400 rounded-r-lg mb-4 transform transition-all duration-500 hover:scale-105 hover:shadow-lg hover:from-blue-100 hover:to-purple-100 hover:border-blue-500 hover:border-l-6 backdrop-blur-sm ${
@@ -3725,6 +3729,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   
                   <div ref={chatEndRef} />
                 </div>
+                </div>
                 {/* Reply indicator */}
                 {replyTo && (
                   <div className="px-4 mb-2">
@@ -3761,7 +3766,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   </div>
                 )}
                 
-                <div className="flex gap-2 mt-1 px-3 pb-2">
+                {/* Message Input Footer - Sticky */}
+                <div className="flex gap-2 mt-1 px-3 pb-2 flex-shrink-0 bg-gradient-to-b from-transparent to-white pt-2">
                   {/* File Upload Button */}
                   <label className={`flex items-center justify-center w-12 h-12 rounded-full shadow-lg transition-all duration-300 cursor-pointer ${
                     uploadingFile 
