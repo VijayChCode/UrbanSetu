@@ -86,6 +86,9 @@ const bookingSchema = new mongoose.Schema({
       readAt: { type: Date, default: null },
       // Starred messages tracking
       starredBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+      // Image message support
+      imageUrl: { type: String, default: null },
+      type: { type: String, enum: ['text', 'image'], default: 'text' },
     }
   ],
   chat: [

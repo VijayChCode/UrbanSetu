@@ -254,7 +254,7 @@ router.patch('/:id/status', verifyToken, async (req, res) => {
 // POST: Add a comment to an appointment
 router.post('/:id/comment', verifyToken, async (req, res) => {
   try {
-    const { message, replyTo } = req.body;
+    const { message, replyTo, imageUrl, type } = req.body;
     const { id } = req.params;
     const userId = req.user.id;
     
@@ -287,6 +287,8 @@ router.post('/:id/comment', verifyToken, async (req, res) => {
       status: "sent",
       readBy: [userId],
       ...(replyTo ? { replyTo } : {}),
+      ...(imageUrl ? { imageUrl } : {}),
+      ...(type ? { type } : {}),
     };
     
     const updated = await booking.findByIdAndUpdate(

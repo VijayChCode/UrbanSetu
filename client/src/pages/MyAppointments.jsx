@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo, FaCommentDots, FaCheckDouble, FaBan, FaPaperPlane, FaCalendar, FaLightbulb, FaCopy, FaEllipsisV, FaFlag, FaCircle, FaInfoCircle, FaSync, FaStar, FaRegStar } from "react-icons/fa";
 import UserAvatar from '../components/UserAvatar';
+import ImagePreview from '../components/ImagePreview';
 import { useSelector } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Appointment from "../components/Appointment";
@@ -1086,8 +1087,125 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   
   // Chat options menu state
   const [showChatOptionsMenu, setShowChatOptionsMenu] = useState(false);
+  
+  // File upload states
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const [fileUploadError, setFileUploadError] = useState('');
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [showImagePreview, setShowImagePreview] = useState(false);
+  const [previewImages, setPreviewImages] = useState([]);
+  const [previewIndex, setPreviewIndex] = useState(0);
 
 
+
+  // File upload handler
+  const handleFileUpload = async (file) => {
+    if (!file) return;
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setFileUploadError('Please select an image file');
+      return;
+    }
+    
+    // Validate file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      setFileUploadError('File size must be less than 5MB');
+      return;
+    }
+    
+    setUploadingFile(true);
+    setFileUploadError('');
+    
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append('image', file);
+      
+      const res = await fetch(`${API_BASE_URL}/api/upload/image`, {
+        method: 'POST',
+        credentials: 'include',
+        body: uploadFormData,
+      });
+      
+      const data = await res.json();
+      
+      if (res.ok) {
+        // Send the image as a message
+        await sendImageMessage(data.imageUrl, file.name);
+        setSelectedFile(null);
+      } else {
+        setFileUploadError(data.message || 'Upload failed');
+        toast.error(data.message || 'Upload failed');
+      }
+    } catch (error) {
+      console.error('File upload error:', error);
+      setFileUploadError('Upload failed. Please try again.');
+      toast.error('Upload failed. Please try again.');
+    } finally {
+      setUploadingFile(false);
+    }
+  };
+
+  const sendImageMessage = async (imageUrl, fileName) => {
+    // Create a temporary message object with immediate display
+    const tempId = `temp-${Date.now()}`;
+    const tempMessage = {
+      _id: tempId,
+      sender: currentUser._id,
+      senderEmail: currentUser.email,
+      senderName: currentUser.username,
+      message: `📷 ${fileName}`,
+      imageUrl: imageUrl,
+      status: "sending",
+      timestamp: new Date().toISOString(),
+      readBy: [currentUser._id],
+      type: "image"
+    };
+
+    // Immediately update UI
+    setComments(prev => [...prev, tempMessage]);
+    
+    // Scroll to bottom
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Send message in background
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: 'include',
+        body: JSON.stringify({ 
+          message: `📷 ${fileName}`,
+          imageUrl: imageUrl,
+          type: "image"
+        }),
+      });
+      
+      const data = await res.json();
+      
+      if (res.ok) {
+        // Find the new comment from the response
+        const newComment = data.comments[data.comments.length - 1];
+        
+        // Replace the temp message with the real one
+        setComments(prev => prev.map(msg => 
+          msg._id === tempId 
+            ? { ...newComment }
+            : msg
+        ));
+      } else {
+        // Remove the temp message and show error
+        setComments(prev => prev.filter(msg => msg._id !== tempId));
+        toast.error(data.message || "Failed to send image.");
+      }
+    } catch (error) {
+      console.error('Send image error:', error);
+      setComments(prev => prev.filter(msg => msg._id !== tempId));
+      toast.error("Failed to send image.");
+    }
+  };
 
   // Chat lock handler functions
   const handleChatLock = async () => {
@@ -3268,6 +3386,25 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                     </div>
                                   ) : (
                                     <>
+                                      {/* Image Message */}
+                                      {c.imageUrl && (
+                                        <div className="mb-2">
+                                          <img
+                                            src={c.imageUrl}
+                                            alt="Shared image"
+                                            className="max-w-full max-h-64 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                            onClick={() => {
+                                              setPreviewImages([c.imageUrl]);
+                                              setPreviewIndex(0);
+                                              setShowImagePreview(true);
+                                            }}
+                                            onError={(e) => {
+                                              e.target.src = "https://via.placeholder.com/300x200?text=Image+Not+Found";
+                                              e.target.className = "max-w-full max-h-64 rounded-lg opacity-50";
+                                            }}
+                                          />
+                                        </div>
+                                      )}
                                       <span className="whitespace-pre-wrap break-words">{(c.message || '').replace(/\n+$/, '')}</span>
                                       {c.edited && (
                                         <span className="ml-2 text-[10px] italic text-gray-300 whitespace-nowrap">(Edited)</span>
@@ -3351,6 +3488,35 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 )}
                 
                 <div className="flex gap-2 mt-1 px-3 pb-2">
+                  {/* File Upload Button */}
+                  <label className={`flex items-center justify-center w-12 h-12 rounded-full shadow-lg transition-all duration-300 cursor-pointer ${
+                    uploadingFile 
+                      ? 'bg-gray-400 cursor-not-allowed' 
+                      : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 hover:shadow-xl transform hover:scale-110 active:scale-95'
+                  }`}>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          handleFileUpload(file);
+                        }
+                        // Reset the input
+                        e.target.value = '';
+                      }}
+                      disabled={uploadingFile}
+                    />
+                    {uploadingFile ? (
+                      <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full"></div>
+                    ) : (
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                      </svg>
+                    )}
+                  </label>
+                  
                   <textarea
                     rows={1}
                     className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-400 shadow-lg transition-all duration-300 bg-white resize-y whitespace-pre-wrap break-all hover:border-blue-300 hover:shadow-xl focus:shadow-2xl transform hover:scale-[1.01]"
@@ -3430,6 +3596,16 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                     )}
                   </button>
                 </div>
+                
+                {/* File Upload Error */}
+                {fileUploadError && (
+                  <div className="px-3 pb-2">
+                    <div className="text-red-500 text-sm bg-red-50 p-2 rounded-lg border border-red-200">
+                      {fileUploadError}
+                    </div>
+                  </div>
+                )}
+                
                 {/* Animations for chat bubbles */}
                 <style jsx>{`
                   @keyframes fadeInChatBubble {
@@ -4727,6 +4903,14 @@ You can lock this chat again at any time from the options.</p>
           </div>
         </div>
       )}
+
+      {/* Image Preview Modal */}
+      <ImagePreview
+        isOpen={showImagePreview}
+        onClose={() => setShowImagePreview(false)}
+        images={previewImages}
+        initialIndex={previewIndex}
+      />
 
     </>
   );
