@@ -3376,17 +3376,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               <FaStar className="text-sm" />
                               Starred Messages
                             </button>
-                            {/* Pinned Messages option */}
-                            <button
-                              className="w-full px-4 py-2 text-left text-sm text-purple-600 hover:bg-purple-50 flex items-center gap-2"
-                              onClick={() => {
-                                fetchPinnedMessages();
-                                setShowChatOptionsMenu(false);
-                              }}
-                            >
-                              <FaThumbtack className="text-sm" />
-                              Pinned Messages ({pinnedMessages.length})
-                            </button>
+
                               {/* Keyboard shortcuts and file upload guidelines */}
                               <button
                                 className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
