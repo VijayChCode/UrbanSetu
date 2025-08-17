@@ -5180,6 +5180,26 @@ You can lock this chat again at any time from the options.</p>
                             }}
                           >
                             <div className="whitespace-pre-wrap break-words">
+                              {/* Image Message */}
+                              {message.imageUrl && (
+                                <div className="mb-2">
+                                  <img
+                                    src={message.imageUrl}
+                                    alt="Shared image"
+                                    className="max-w-full max-h-64 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setPreviewImages([message.imageUrl]);
+                                      setPreviewIndex(0);
+                                      setShowImagePreview(true);
+                                    }}
+                                    onError={(e) => {
+                                      e.target.src = "https://via.placeholder.com/300x200?text=Image+Not+Found";
+                                      e.target.className = "max-w-full max-h-64 rounded-lg opacity-50";
+                                    }}
+                                  />
+                                </div>
+                              )}
                               {message.message}
                             </div>
                             
