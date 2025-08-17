@@ -1005,6 +1005,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   // Chat lock states
   const [chatLocked, setChatLocked] = useState(false);
   const [chatAccessGranted, setChatAccessGranted] = useState(false);
+  const [chatLockStatusLoading, setChatLockStatusLoading] = useState(true);
   const [showChatLockModal, setShowChatLockModal] = useState(false);
   const [showChatUnlockModal, setShowChatUnlockModal] = useState(false);
   const [showRemoveLockModal, setShowRemoveLockModal] = useState(false);
@@ -1276,6 +1277,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   // Fetch chat lock status when component mounts
   useEffect(() => {
     const fetchChatLockStatus = async () => {
+      setChatLockStatusLoading(true);
       try {
         const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/lock-status`, {
           credentials: 'include'
@@ -1287,6 +1289,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         }
       } catch (err) {
         console.error('Error fetching chat lock status:', err);
+      } finally {
+        setChatLockStatusLoading(false);
       }
     };
     
@@ -2700,7 +2704,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                     : "Chat not available for appointments cancelled by admin"
             ) : "Open Chat"}
             onClick={isChatDisabled ? undefined : () => {
-              if (chatLocked && !chatAccessGranted) {
+              if ((chatLocked || chatLockStatusLoading) && !chatAccessGranted) {
                 setShowChatUnlockModal(true);
               } else {
                 setShowChatModal(true);
@@ -2712,31 +2716,31 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
             {!isChatDisabled && (
               <div className="absolute inset-0 bg-white rounded-full opacity-0 group-hover:opacity-20 transition-opacity duration-200"></div>
             )}
-            {/* Show lock icon if chat is locked */}
-            {chatLocked && !chatAccessGranted && !isChatDisabled && (
+            {/* Show lock icon if chat is locked or loading */}
+            {(chatLocked || chatLockStatusLoading) && !chatAccessGranted && !isChatDisabled && (
               <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-bold border-2 border-white">
-                🔒
+                {chatLockStatusLoading ? '⏳' : '🔒'}
               </span>
             )}
-            {/* Typing indicator - highest priority (hide if locked) */}
-            {isOtherPartyTyping && !isChatDisabled && !(chatLocked && !chatAccessGranted) && (
+            {/* Typing indicator - highest priority (hide if locked or loading) */}
+            {isOtherPartyTyping && !isChatDisabled && !((chatLocked || chatLockStatusLoading) && !chatAccessGranted) && (
               <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-bold border-2 border-white animate-pulse">
                 ...
               </span>
             )}
-            {/* Unread count when not typing (hide if locked) */}
-            {!isOtherPartyTyping && unreadNewMessages > 0 && isChatDisabled && !(chatLocked && !chatAccessGranted) && (
+            {/* Unread count when not typing (hide if locked or loading) */}
+            {!isOtherPartyTyping && unreadNewMessages > 0 && isChatDisabled && !((chatLocked || chatLockStatusLoading) && !chatAccessGranted) && (
               <span className="absolute -top-1 -right-1 bg-gray-400 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-bold border-2 border-white">
                 {unreadNewMessages}
               </span>
             )}
-            {!isOtherPartyTyping && unreadNewMessages > 0 && !isChatDisabled && !(chatLocked && !chatAccessGranted) && (
+            {!isOtherPartyTyping && unreadNewMessages > 0 && !isChatDisabled && !((chatLocked || chatLockStatusLoading) && !chatAccessGranted) && (
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-bold border-2 border-white">
                 {unreadNewMessages}
               </span>
             )}
-            {/* Online status green dot - show when no typing and no unread count (hide if locked) */}
-            {!isOtherPartyTyping && unreadNewMessages === 0 && isOtherPartyOnlineInTable && !isChatDisabled && !(chatLocked && !chatAccessGranted) && (
+            {/* Online status green dot - show when no typing and no unread count (hide if locked or loading) */}
+            {!isOtherPartyTyping && unreadNewMessages === 0 && isOtherPartyOnlineInTable && !isChatDisabled && !((chatLocked || chatLockStatusLoading) && !chatAccessGranted) && (
               <span className="absolute -top-1 -right-1 bg-green-500 border-2 border-white rounded-full w-3 h-3"></span>
             )}
           </button>
@@ -3016,12 +3020,16 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                       </div>
                       <div className="flex items-center gap-2 sm:gap-4 ml-auto flex-shrink-0">
                         {/* Lock indicator */}
-                        {chatLocked && (
+                        {(chatLocked || chatLockStatusLoading) && (
                           <div className="flex items-center gap-1 bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-bold">
-                            <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M18 10v-4c0-3.313-2.687-6-6-6s-6 2.687-6 6v4H4v10h16V10h-2zM8 6c0-2.206 1.794-4 4-4s4 1.794 4 4v4H8V6z"/>
-                            </svg>
-                            Locked
+                            {chatLockStatusLoading ? (
+                              <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            ) : (
+                              <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M18 10v-4c0-3.313-2.687-6-6-6s-6 2.687-6 6v4H4v10h16V10h-2zM8 6c0-2.206 1.794-4 4-4s4 1.794 4 4v4H8V6z"/>
+                              </svg>
+                            )}
+                            {chatLockStatusLoading ? 'Loading...' : 'Locked'}
                           </div>
                         )}
                         {/* Unread message count */}
@@ -3081,7 +3089,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               <div className="border-t border-gray-200 my-1"></div>
                               
                               {/* Chat Lock/Unlock option */}
-                              {chatLocked ? (
+                              {(chatLocked || chatLockStatusLoading) ? (
                                 <button
                                   className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
                                   onClick={() => {
