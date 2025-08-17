@@ -2914,6 +2914,25 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
             ) : (
               <>
                 <div className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-4 border-b-2 border-blue-700 bg-gradient-to-r from-blue-700 via-purple-700 to-blue-900 rounded-t-3xl relative shadow-2xl">
+                  {/* File Upload Info Bulb */}
+                  <div className="relative group">
+                    <button
+                      className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                      title="File upload guidelines"
+                      aria-label="File upload guidelines"
+                    >
+                      <FaLightbulb className="text-sm" />
+                    </button>
+                    {/* Tooltip */}
+                    <div className="absolute bottom-full left-0 mb-2 bg-gray-800 text-white text-xs rounded-lg px-3 py-2 shadow-lg z-30 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                      <div className="font-semibold mb-1">📎 File Upload Guidelines:</div>
+                      <div>• Images only (JPG, PNG, GIF, WebP)</div>
+                      <div>• Maximum size: 5MB per file</div>
+                      <div>• Add captions to images</div>
+                      <div>• Other file types coming soon</div>
+                      <div className="absolute top-full left-4 w-2 h-2 bg-gray-800 transform rotate-45"></div>
+                    </div>
+                  </div>
                   {headerOptionsMessageId && selectedMessageForHeaderOptions ? (
                     // Header-level options overlay (options + close icon only)
                     <div className="flex items-center justify-between w-full">
