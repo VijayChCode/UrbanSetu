@@ -1001,6 +1001,21 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showAdminCancelModal, setShowAdminCancelModal] = useState(false);
   const [showPermanentDeleteModal, setShowPermanentDeleteModal] = useState(false);
+
+  // Chat lock states
+  const [chatLocked, setChatLocked] = useState(false);
+  const [chatAccessGranted, setChatAccessGranted] = useState(false);
+  const [showChatLockModal, setShowChatLockModal] = useState(false);
+  const [showChatUnlockModal, setShowChatUnlockModal] = useState(false);
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
+  const [lockPassword, setLockPassword] = useState('');
+  const [lockConfirmPassword, setLockConfirmPassword] = useState('');
+  const [unlockPassword, setUnlockPassword] = useState('');
+  const [showLockPassword, setShowLockPassword] = useState(false);
+  const [showUnlockPassword, setShowUnlockPassword] = useState(false);
+  const [lockingChat, setLockingChat] = useState(false);
+  const [unlockingChat, setUnlockingChat] = useState(false);
+  const [forgotPasswordProcessing, setForgotPasswordProcessing] = useState(false);
   
   // Lock body scroll when specific modals are open (Cancel or Remove Appointment)
   useEffect(() => {
@@ -1053,6 +1068,178 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   
   // Chat options menu state
   const [showChatOptionsMenu, setShowChatOptionsMenu] = useState(false);
+
+  // Chat lock handler functions
+  const handleChatLock = async () => {
+    if (!lockPassword || !lockConfirmPassword) {
+      toast.error('Please fill in both password fields');
+      return;
+    }
+    
+    if (lockPassword !== lockConfirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+    
+    if (lockPassword.length < 4) {
+      toast.error('Password must be at least 4 characters long');
+      return;
+    }
+    
+    setLockingChat(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/lock`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ password: lockPassword })
+      });
+      
+      const data = await res.json();
+      if (res.ok) {
+        setChatLocked(true);
+        setChatAccessGranted(false);
+        setShowChatLockModal(false);
+        setLockPassword('');
+        setLockConfirmPassword('');
+        toast.success('Chat locked successfully');
+      } else {
+        toast.error(data.message || 'Failed to lock chat');
+      }
+    } catch (err) {
+      toast.error('An error occurred while locking chat');
+    } finally {
+      setLockingChat(false);
+    }
+  };
+
+  const handleChatUnlock = async () => {
+    if (!unlockPassword) {
+      toast.error('Please enter your password');
+      return;
+    }
+    
+    setUnlockingChat(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/unlock`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ password: unlockPassword })
+      });
+      
+      const data = await res.json();
+      if (res.ok) {
+        setChatAccessGranted(true);
+        setShowChatUnlockModal(false);
+        setUnlockPassword('');
+        toast.success('Chat access granted');
+        // Open chat modal after successful unlock
+        setShowChatModal(true);
+      } else {
+        toast.error(data.message || 'Incorrect password');
+      }
+    } catch (err) {
+      toast.error('An error occurred while unlocking chat');
+    } finally {
+      setUnlockingChat(false);
+    }
+  };
+
+  const handleRemoveChatLock = async () => {
+    if (!unlockPassword) {
+      toast.error('Please enter your password');
+      return;
+    }
+    
+    setUnlockingChat(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/remove-lock`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ password: unlockPassword })
+      });
+      
+      const data = await res.json();
+      if (res.ok) {
+        setChatLocked(false);
+        setChatAccessGranted(false);
+        setShowChatUnlockModal(false);
+        setUnlockPassword('');
+        toast.success('Chat lock removed successfully');
+      } else {
+        toast.error(data.message || 'Incorrect password');
+      }
+    } catch (err) {
+      toast.error('An error occurred while removing chat lock');
+    } finally {
+      setUnlockingChat(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    setForgotPasswordProcessing(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/forgot-password`, {
+        method: 'PATCH',
+        credentials: 'include'
+      });
+      
+      const data = await res.json();
+      if (res.ok) {
+        setChatLocked(false);
+        setChatAccessGranted(false);
+        setShowForgotPasswordModal(false);
+        setComments([]); // Clear chat messages locally
+        toast.success('Chat unlocked and cleared successfully');
+      } else {
+        toast.error(data.message || 'Failed to reset chat');
+      }
+    } catch (err) {
+      toast.error('An error occurred while resetting chat');
+    } finally {
+      setForgotPasswordProcessing(false);
+    }
+  };
+
+  // Reset chat access when chat modal is closed
+  const handleChatModalClose = async () => {
+    setShowChatModal(false);
+    
+    // Reset chat access if it was temporarily granted
+    if (chatLocked && chatAccessGranted) {
+      try {
+        await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/reset-access`, {
+          method: 'PATCH',
+          credentials: 'include'
+        });
+        setChatAccessGranted(false);
+      } catch (err) {
+        console.error('Error resetting chat access:', err);
+      }
+    }
+  };
+
+  // Fetch chat lock status when component mounts
+  useEffect(() => {
+    const fetchChatLockStatus = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/lock-status`, {
+          credentials: 'include'
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setChatLocked(data.chatLocked);
+          setChatAccessGranted(data.accessGranted);
+        }
+      } catch (err) {
+        console.error('Error fetching chat lock status:', err);
+      }
+    };
+    
+    fetchChatLockStatus();
+  }, [appt._id]);
 
   // Initialize starred messages when comments are loaded
   useEffect(() => {
@@ -2460,32 +2647,44 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                     ? "Chat not available for rejected appointments"
                     : "Chat not available for appointments cancelled by admin"
             ) : "Open Chat"}
-            onClick={isChatDisabled ? undefined : () => setShowChatModal(true)}
+            onClick={isChatDisabled ? undefined : () => {
+              if (chatLocked && !chatAccessGranted) {
+                setShowChatUnlockModal(true);
+              } else {
+                setShowChatModal(true);
+              }
+            }}
             disabled={isChatDisabled}
           >
             <FaCommentDots size={22} className={!isChatDisabled ? "group-hover:animate-pulse" : ""} />
             {!isChatDisabled && (
               <div className="absolute inset-0 bg-white rounded-full opacity-0 group-hover:opacity-20 transition-opacity duration-200"></div>
             )}
-            {/* Typing indicator - highest priority */}
-            {isOtherPartyTyping && !isChatDisabled && (
+            {/* Show lock icon if chat is locked */}
+            {chatLocked && !chatAccessGranted && !isChatDisabled && (
+              <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-bold border-2 border-white">
+                🔒
+              </span>
+            )}
+            {/* Typing indicator - highest priority (hide if locked) */}
+            {isOtherPartyTyping && !isChatDisabled && !(chatLocked && !chatAccessGranted) && (
               <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-bold border-2 border-white animate-pulse">
                 ...
               </span>
             )}
-            {/* Unread count when not typing */}
-            {!isOtherPartyTyping && unreadNewMessages > 0 && isChatDisabled && (
+            {/* Unread count when not typing (hide if locked) */}
+            {!isOtherPartyTyping && unreadNewMessages > 0 && isChatDisabled && !(chatLocked && !chatAccessGranted) && (
               <span className="absolute -top-1 -right-1 bg-gray-400 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-bold border-2 border-white">
                 {unreadNewMessages}
               </span>
             )}
-            {!isOtherPartyTyping && unreadNewMessages > 0 && !isChatDisabled && (
+            {!isOtherPartyTyping && unreadNewMessages > 0 && !isChatDisabled && !(chatLocked && !chatAccessGranted) && (
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-bold border-2 border-white">
                 {unreadNewMessages}
               </span>
             )}
-            {/* Online status green dot - show when no typing and no unread count */}
-            {!isOtherPartyTyping && unreadNewMessages === 0 && isOtherPartyOnlineInTable && !isChatDisabled && (
+            {/* Online status green dot - show when no typing and no unread count (hide if locked) */}
+            {!isOtherPartyTyping && unreadNewMessages === 0 && isOtherPartyOnlineInTable && !isChatDisabled && !(chatLocked && !chatAccessGranted) && (
               <span className="absolute -top-1 -right-1 bg-green-500 border-2 border-white rounded-full w-3 h-3"></span>
             )}
           </button>
@@ -2782,6 +2981,34 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           </button>
                           {showChatOptionsMenu && (
                             <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-20 min-w-[160px] chat-options-menu">
+                              {/* Chat Lock/Unlock option */}
+                              {chatLocked ? (
+                                <button
+                                  className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                  onClick={() => {
+                                    setShowChatUnlockModal(true);
+                                    setShowChatOptionsMenu(false);
+                                  }}
+                                >
+                                  <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M18 10v-4c0-3.313-2.687-6-6-6s-6 2.687-6 6v4H4v10h16V10h-2zM8 6c0-2.206 1.794-4 4-4s4 1.794 4 4v4H8V6z"/>
+                                  </svg>
+                                  Remove Chat Lock
+                                </button>
+                              ) : (
+                                <button
+                                  className="w-full px-4 py-2 text-left text-sm text-blue-600 hover:bg-blue-50 flex items-center gap-2"
+                                  onClick={() => {
+                                    setShowChatLockModal(true);
+                                    setShowChatOptionsMenu(false);
+                                  }}
+                                >
+                                  <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M18 10v-4c0-3.313-2.687-6-6-6s-6 2.687-6 6v4H4v10h16V10h-2zM8 6c0-2.206 1.794-4 4-4s4 1.794 4 4v4H8V6z"/>
+                                  </svg>
+                                  Lock Chat
+                                </button>
+                              )}
                               {/* Starred Messages option */}
                               <button
                                 className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
@@ -2852,7 +3079,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                         )}
                         <button
                           className="text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors z-10 shadow"
-                          onClick={() => setShowChatModal(false)}
+                          onClick={handleChatModalClose}
                           title="Close"
                           aria-label="Close"
                         >
@@ -3266,6 +3493,258 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 </button>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Chat Lock Modal */}
+      {showChatLockModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+              <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" className="text-blue-600">
+                <path d="M18 10v-4c0-3.313-2.687-6-6-6s-6 2.687-6 6v4H4v10h16V10h-2zM8 6c0-2.206 1.794-4 4-4s4 1.794 4 4v4H8V6z"/>
+              </svg>
+              Lock Chat
+            </h3>
+            
+            <p className="text-gray-600 mb-4">
+              Create a password to lock your chat. You'll need this password to access the chat later.
+            </p>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Password (minimum 4 characters)
+                </label>
+                <div className="relative">
+                  <input
+                    type={showLockPassword ? "text" : "password"}
+                    value={lockPassword}
+                    onChange={(e) => setLockPassword(e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10"
+                    placeholder="Enter password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowLockPassword(!showLockPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showLockPassword ? '👁️' : '👁️‍🗨️'}
+                  </button>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Confirm Password
+                </label>
+                <input
+                  type={showLockPassword ? "text" : "password"}
+                  value={lockConfirmPassword}
+                  onChange={(e) => setLockConfirmPassword(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Confirm password"
+                />
+              </div>
+            </div>
+            
+            <div className="flex gap-3 justify-end mt-6">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowChatLockModal(false);
+                  setLockPassword('');
+                  setLockConfirmPassword('');
+                  setShowLockPassword(false);
+                }}
+                className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleChatLock}
+                disabled={lockingChat}
+                className="px-4 py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-50"
+              >
+                {lockingChat ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Locking...
+                  </>
+                ) : (
+                  <>
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M18 10v-4c0-3.313-2.687-6-6-6s-6 2.687-6 6v4H4v10h16V10h-2zM8 6c0-2.206 1.794-4 4-4s4 1.794 4 4v4H8V6z"/>
+                    </svg>
+                    Lock Chat
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Chat Unlock Modal */}
+      {showChatUnlockModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+              <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" className="text-orange-600">
+                <path d="M18 10v-4c0-3.313-2.687-6-6-6s-6 2.687-6 6v4H4v10h16V10h-2zM8 6c0-2.206 1.794-4 4-4s4 1.794 4 4v4H8V6z"/>
+              </svg>
+              Chat is Locked
+            </h3>
+            
+            <p className="text-gray-600 mb-4">
+              This chat is protected with a password. Enter your password to access the chat.
+            </p>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Password
+              </label>
+              <div className="relative">
+                <input
+                  type={showUnlockPassword ? "text" : "password"}
+                  value={unlockPassword}
+                  onChange={(e) => setUnlockPassword(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 pr-10"
+                  placeholder="Enter password"
+                  onKeyPress={(e) => e.key === 'Enter' && handleChatUnlock()}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowUnlockPassword(!showUnlockPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showUnlockPassword ? '👁️' : '👁️‍🗨️'}
+                </button>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between mb-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowChatUnlockModal(false);
+                  setShowForgotPasswordModal(true);
+                }}
+                className="text-sm text-blue-600 hover:text-blue-800 underline"
+              >
+                Forgot password?
+              </button>
+            </div>
+            
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowChatUnlockModal(false);
+                  setUnlockPassword('');
+                  setShowUnlockPassword(false);
+                }}
+                className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleChatUnlock}
+                disabled={unlockingChat}
+                className="px-4 py-2 rounded bg-orange-600 text-white font-semibold hover:bg-orange-700 transition-colors flex items-center gap-2 disabled:opacity-50"
+              >
+                {unlockingChat ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Unlocking...
+                  </>
+                ) : (
+                  'Unlock Chat'
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={handleRemoveChatLock}
+                disabled={unlockingChat}
+                className="px-4 py-2 rounded bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors flex items-center gap-2 disabled:opacity-50"
+              >
+                {unlockingChat ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Removing...
+                  </>
+                ) : (
+                  'Remove Lock'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Forgot Password Modal */}
+      {showForgotPasswordModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+              <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" className="text-red-600">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/>
+              </svg>
+              Forgot Password
+            </h3>
+            
+            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-yellow-800">Warning</h3>
+                  <div className="mt-2 text-sm text-yellow-700">
+                    <p>This action will permanently:</p>
+                    <ul className="list-disc list-inside mt-1">
+                      <li>Clear all chat messages</li>
+                      <li>Remove the chat lock</li>
+                      <li>Clear the passcode if set</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <p className="text-gray-600 mb-6">
+              This action cannot be undone. Are you sure you want to proceed?
+            </p>
+            
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => setShowForgotPasswordModal(false)}
+                className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                disabled={forgotPasswordProcessing}
+                className="px-4 py-2 rounded bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors flex items-center gap-2 disabled:opacity-50"
+              >
+                {forgotPasswordProcessing ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Processing...
+                  </>
+                ) : (
+                  'Continue'
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}
