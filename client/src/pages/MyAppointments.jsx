@@ -3787,7 +3787,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
               <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" className="text-red-600">
                 <path d="M18 10v-4c0-3.313-2.687-6-6-6s-6 2.687-6 6v4H4v10h16V10h-2zM8 6c0-2.206 1.794-4 4-4s4 1.794 4 4v4H8V6z"/>
               </svg>
-              Remove Chat Lock Permanently
+              Remove Chat Lock
             </h3>
             
             <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
@@ -3800,7 +3800,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 <div className="ml-3">
                   <h3 className="text-sm font-medium text-red-800">Permanent Action</h3>
                   <div className="mt-2 text-sm text-red-700">
-                    <p>This will permanently remove the chat lock and disable it for this conversation.</p>
+                    <p>This will remove the chat lock and disable password protection for this conversation.
+You can lock this chat again at any time from the options.</p>
                   </div>
                 </div>
               </div>
@@ -3861,7 +3862,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                     <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M18 10v-4c0-3.313-2.687-6-6-6s-6 2.687-6 6v4H4v10h16V10h-2zM8 6c0-2.206 1.794-4 4-4s4 1.794 4 4v4H8V6z"/>
                     </svg>
-                    Remove Lock Permanently
+                    Remove Lock
                   </>
                 )}
               </button>
