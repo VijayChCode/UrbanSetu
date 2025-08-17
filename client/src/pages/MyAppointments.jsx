@@ -5180,41 +5180,51 @@ You can lock this chat again at any time from the options.</p>
                             }}
                           >
                             <div className="whitespace-pre-wrap break-words">
-                              {/* Image Message */}
-                              {message.imageUrl && (
-                                <div className="mb-2">
-                                  <img
-                                    src={message.imageUrl}
-                                    alt="Shared image"
-                                    className="max-w-full max-h-64 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setPreviewImages([message.imageUrl]);
-                                      setPreviewIndex(0);
-                                      setShowImagePreview(true);
-                                    }}
-                                    onError={(e) => {
-                                      e.target.src = "https://via.placeholder.com/300x200?text=Image+Not+Found";
-                                      e.target.className = "max-w-full max-h-64 rounded-lg opacity-50";
-                                    }}
-                                  />
-                                </div>
+                              {message.deleted ? (
+                                <span className="flex items-center gap-1 text-gray-400 italic">
+                                  <FaBan className="inline-block text-lg" /> {message.senderEmail === currentUser.email ? "You deleted this message" : "This message was deleted."}
+                                </span>
+                              ) : (
+                                <>
+                                  {/* Image Message - Only show for non-deleted messages */}
+                                  {message.imageUrl && (
+                                    <div className="mb-2">
+                                      <img
+                                        src={message.imageUrl}
+                                        alt="Shared image"
+                                        className="max-w-full max-h-64 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setPreviewImages([message.imageUrl]);
+                                          setPreviewIndex(0);
+                                          setShowImagePreview(true);
+                                        }}
+                                        onError={(e) => {
+                                          e.target.src = "https://via.placeholder.com/300x200?text=Image+Not+Found";
+                                          e.target.className = "max-w-full max-h-64 rounded-lg opacity-50";
+                                        }}
+                                      />
+                                    </div>
+                                  )}
+                                  {message.message}
+                                </>
                               )}
-                              {message.message}
                             </div>
                             
-                            {/* Copy button - appears on hover */}
-                            <button
-                              onClick={(e) => { e.stopPropagation(); copyMessageToClipboard(message.message); }}
-                              className={`absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1.5 rounded-full ${
-                                isMe 
-                                  ? 'bg-white/20 hover:bg-white/30 text-white' 
-                                  : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
-                              }`}
-                              title="Copy message"
-                            >
-                              <FaCopy className="w-3 h-3" />
-                            </button>
+                            {/* Copy button - appears on hover, only for non-deleted messages */}
+                            {!message.deleted && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); copyMessageToClipboard(message.message); }}
+                                className={`absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1.5 rounded-full ${
+                                  isMe 
+                                    ? 'bg-white/20 hover:bg-white/30 text-white' 
+                                    : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                                }`}
+                                title="Copy message"
+                              >
+                                <FaCopy className="w-3 h-3" />
+                              </button>
+                            )}
                             
                             {/* Edited indicator only (no time display) */}
                             {message.edited && (
