@@ -447,10 +447,22 @@ router.delete('/:id/comment/:commentId', verifyToken, async (req, res) => {
       console.log('ℹ️ Original message already preserved:', comment.originalMessage);
     }
     
+    // Preserve original image URL before marking as deleted
+    if (!comment.originalImageUrl && comment.imageUrl) {
+      comment.originalImageUrl = comment.imageUrl; // Only preserve if not already preserved
+      console.log('✅ Preserved original image URL:', comment.originalImageUrl);
+    } else if (!comment.originalImageUrl && !comment.imageUrl) {
+      console.log('ℹ️ No image to preserve');
+    } else if (comment.originalImageUrl) {
+      console.log('ℹ️ Original image URL already preserved:', comment.originalImageUrl);
+    }
+    
     console.log('📋 Comment deletion state:', {
       messageLength: comment.message ? comment.message.length : 0,
       hasOriginalMessage: !!comment.originalMessage,
       originalMessageLength: comment.originalMessage ? comment.originalMessage.length : 0,
+      hasImageUrl: !!comment.imageUrl,
+      hasOriginalImageUrl: !!comment.originalImageUrl,
       deletedBy: req.user.email
     });
     
@@ -464,6 +476,8 @@ router.delete('/:id/comment/:commentId', verifyToken, async (req, res) => {
       senderEmail: comment.senderEmail,
       message: comment.message, // Keep current message for socket before clearing
       originalMessage: comment.originalMessage,
+      imageUrl: comment.imageUrl, // Keep current image URL for socket before clearing
+      originalImageUrl: comment.originalImageUrl,
       deleted: true,
       deletedBy: req.user.email,
       deletedAt: comment.deletedAt,
@@ -487,6 +501,8 @@ router.delete('/:id/comment/:commentId', verifyToken, async (req, res) => {
       messageIsEmpty: savedComment.message === '',
       hasOriginalMessage: !!savedComment.originalMessage,
       originalMessage: savedComment.originalMessage,
+      hasOriginalImageUrl: !!savedComment.originalImageUrl,
+      originalImageUrl: savedComment.originalImageUrl,
       deletedBy: savedComment.deletedBy
     });
     

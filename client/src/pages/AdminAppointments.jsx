@@ -2763,6 +2763,27 @@ function AdminAppointmentRow({
                                       <FaBan className="inline-block" />
                                       Message deleted by {c.deletedBy || 'user'} (Admin view - preserved for records)
                                     </div>
+                                    
+                                    {/* Show preserved image if exists */}
+                                    {(c.originalImageUrl || c.imageUrl) && (
+                                      <div className="mb-2">
+                                        <img
+                                          src={c.originalImageUrl || c.imageUrl}
+                                          alt="Preserved image from deleted message"
+                                          className="max-w-full max-h-64 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                          onClick={() => {
+                                            setPreviewImages([c.originalImageUrl || c.imageUrl]);
+                                            setPreviewIndex(0);
+                                            setShowImagePreview(true);
+                                          }}
+                                          onError={(e) => {
+                                            e.target.src = "https://via.placeholder.com/300x200?text=Image+Not+Found";
+                                            e.target.className = "max-w-full max-h-64 rounded-lg opacity-50";
+                                          }}
+                                        />
+                                      </div>
+                                    )}
+                                    
                                     <div className="text-gray-800 bg-white p-2 rounded border-l-4 border-red-400 relative group">
                                       {(() => {
                                         const messageContent = c.originalMessage || c.message;
@@ -2809,40 +2830,40 @@ function AdminAppointmentRow({
                                 );
                               }
                             })()
-                          ) : (
-                            <div>
-                              {isEditing ? (
-                                <div className="bg-yellow-100 border-l-4 border-yellow-400 px-2 py-1 rounded">
-                                  <span className="text-yellow-800 text-xs font-medium">✏️ Editing this message below...</span>
+                                                        ) : (
+                                <div>
+                                  {isEditing ? (
+                                    <div className="bg-yellow-100 border-l-4 border-yellow-400 px-2 py-1 rounded">
+                                      <span className="text-yellow-800 text-xs font-medium">✏️ Editing this message below...</span>
+                                    </div>
+                                  ) : (
+                                    <>
+                                      {/* Image Message - Show preserved image if message is deleted */}
+                                      {(c.originalImageUrl || c.imageUrl) && (
+                                        <div className="mb-2">
+                                          <img
+                                            src={c.originalImageUrl || c.imageUrl}
+                                            alt="Shared image"
+                                            className="max-w-full max-h-64 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                            onClick={() => {
+                                              setPreviewImages([c.originalImageUrl || c.imageUrl]);
+                                              setPreviewIndex(0);
+                                              setShowImagePreview(true);
+                                            }}
+                                            onError={(e) => {
+                                              e.target.src = "https://via.placeholder.com/300x200?text=Image+Not+Found";
+                                              e.target.className = "max-w-full max-h-64 rounded-lg opacity-50";
+                                            }}
+                                          />
+                                        </div>
+                                      )}
+                                      <span className="whitespace-pre-wrap break-words">{(c.message || '').replace(/\n+$/, '')}</span>
+                                      {c.edited && (
+                                        <span className="ml-2 text-[10px] italic text-gray-300 whitespace-nowrap">(Edited)</span>
+                                      )}
+                                    </>
+                                  )}
                                 </div>
-                              ) : (
-                                                                  <>
-                                    {/* Image Message */}
-                                    {c.imageUrl && (
-                                      <div className="mb-2">
-                                        <img
-                                          src={c.imageUrl}
-                                          alt="Shared image"
-                                          className="max-w-full max-h-64 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                                          onClick={() => {
-                                            setPreviewImages([c.imageUrl]);
-                                            setPreviewIndex(0);
-                                            setShowImagePreview(true);
-                                          }}
-                                          onError={(e) => {
-                                            e.target.src = "https://via.placeholder.com/300x200?text=Image+Not+Found";
-                                            e.target.className = "max-w-full max-h-64 rounded-lg opacity-50";
-                                          }}
-                                        />
-                                      </div>
-                                    )}
-                                    <span className="whitespace-pre-wrap break-words">{(c.message || '').replace(/\n+$/, '')}</span>
-                                    {c.edited && (
-                                      <span className="ml-2 text-[10px] italic text-gray-300 whitespace-nowrap">(Edited)</span>
-                                    )}
-                                  </>
-                              )}
-                            </div>
                           )}
                         </div>
                         <div className="flex items-center gap-1 justify-end mt-2" data-message-actions>
@@ -3688,32 +3709,32 @@ function AdminAppointmentRow({
                               }}
                             >
                               <div className="whitespace-pre-wrap break-words">
+                                {/* Image Message - Always show if exists, even for deleted messages */}
+                                {(message.originalImageUrl || message.imageUrl) && (
+                                  <div className="mb-2">
+                                    <img
+                                      src={message.originalImageUrl || message.imageUrl}
+                                      alt="Shared image"
+                                      className="max-w-full max-h-64 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setPreviewImages([message.originalImageUrl || message.imageUrl]);
+                                        setPreviewIndex(0);
+                                        setShowImagePreview(true);
+                                      }}
+                                      onError={(e) => {
+                                        e.target.src = "https://via.placeholder.com/300x200?text=Image+Not+Found";
+                                        e.target.className = "max-w-full max-h-64 rounded-lg opacity-50";
+                                      }}
+                                    />
+                                  </div>
+                                )}
+                                
+                                {/* Message content - Show deletion status if deleted */}
                                 {message.deleted ? (
                                   <span className="italic text-gray-500">This message was deleted</span>
                                 ) : (
-                                  <>
-                                    {/* Image Message */}
-                                    {message.imageUrl && (
-                                      <div className="mb-2">
-                                        <img
-                                          src={message.imageUrl}
-                                          alt="Shared image"
-                                          className="max-w-full max-h-64 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            setPreviewImages([message.imageUrl]);
-                                            setPreviewIndex(0);
-                                            setShowImagePreview(true);
-                                          }}
-                                          onError={(e) => {
-                                            e.target.src = "https://via.placeholder.com/300x200?text=Image+Not+Found";
-                                            e.target.className = "max-w-full max-h-64 rounded-lg opacity-50";
-                                          }}
-                                        />
-                                      </div>
-                                    )}
-                                    {message.message}
-                                  </>
+                                  message.message
                                 )}
                               </div>
                               

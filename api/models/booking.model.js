@@ -70,6 +70,7 @@ const bookingSchema = new mongoose.Schema({
       senderEmail: String,
       message: String,
       originalMessage: String, // Preserve original content when deleted
+      originalImageUrl: String, // Preserve original image URL when deleted
       timestamp: { type: Date, default: Date.now },
       status: { type: String, default: "sent" },
       readBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
