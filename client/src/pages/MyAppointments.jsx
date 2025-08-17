@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo, FaCommentDots, FaCheckDouble, FaBan, FaPaperPlane, FaCalendar, FaLightbulb, FaCopy, FaEllipsisV, FaFlag, FaCircle, FaInfoCircle } from "react-icons/fa";
+import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo, FaCommentDots, FaCheckDouble, FaBan, FaPaperPlane, FaCalendar, FaLightbulb, FaCopy, FaEllipsisV, FaFlag, FaCircle, FaInfoCircle, FaSync, FaStar, FaRegStar } from "react-icons/fa";
 import UserAvatar from '../components/UserAvatar';
 import { useSelector } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -954,6 +954,14 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const [replyTo, setReplyTo] = useState(null);
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState(appt.comments || []);
+  
+  // Initialize starred messages when comments are loaded
+  useEffect(() => {
+    if (comments.length > 0) {
+      const starredMsgs = comments.filter(c => c.starredBy && c.starredBy.includes(currentUser._id));
+      setStarredMessages(starredMsgs);
+    }
+  }, [comments, currentUser._id]);
   const [sending, setSending] = useState(false);
   const [editingComment, setEditingComment] = useState(null);
   const [editText, setEditText] = useState("");
@@ -987,6 +995,18 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const [reportDetails, setReportDetails] = useState('');
   const [reportingMessage, setReportingMessage] = useState(null);
   const [submittingReport, setSubmittingReport] = useState(false);
+  
+  // Report chat modal states
+  const [showReportChatModal, setShowReportChatModal] = useState(false);
+  const [reportChatReason, setReportChatReason] = useState('');
+  const [reportChatDetails, setReportChatDetails] = useState('');
+  const [submittingChatReport, setSubmittingChatReport] = useState(false);
+  
+  // Starred messages states
+  const [showStarredModal, setShowStarredModal] = useState(false);
+  const [starredMessages, setStarredMessages] = useState([]);
+  const [starringSaving, setStarringSaving] = useState(false);
+  const [loadingStarredMessages, setLoadingStarredMessages] = useState(false);
   
   // New modal states for various confirmations
   const [showDeleteAppointmentModal, setShowDeleteAppointmentModal] = useState(false);
@@ -1037,6 +1057,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const [selectedMessageForInfo, setSelectedMessageForInfo] = useState(null);
   const [sendIconAnimating, setSendIconAnimating] = useState(false);
   const [sendIconSent, setSendIconSent] = useState(false);
+  
+  // Chat options menu state
+  const [showChatOptionsMenu, setShowChatOptionsMenu] = useState(false);
 
   // Auto-close shortcut tip after 10 seconds
   useEffect(() => {
@@ -1045,6 +1068,29 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       return () => clearTimeout(timer);
     }
   }, [showShortcutTip]);
+
+  // Close chat options menu when clicking outside or scrolling
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showChatOptionsMenu && !event.target.closest('.chat-options-menu')) {
+        setShowChatOptionsMenu(false);
+      }
+    };
+
+    const handleScroll = () => {
+      if (showChatOptionsMenu) {
+        setShowChatOptionsMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('scroll', handleScroll, true); // Use capture phase to catch all scroll events
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('scroll', handleScroll, true);
+    };
+  }, [showChatOptionsMenu]);
 
   // Reset send icon animation after completion
   useEffect(() => {
@@ -1077,6 +1123,36 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       localStorage.setItem(`removedDeletedMsgs_${apptId}`, JSON.stringify(updated));
     }
   }
+
+  // Fetch latest comments when refresh button is clicked
+  const fetchLatestComments = async () => {
+    try {
+      setLoadingComments(true);
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}`, {
+        credentials: 'include'
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.comments) {
+          // Preserve starred status from current state
+          const updatedComments = data.comments.map(newComment => {
+            const existingComment = comments.find(c => c._id === newComment._id);
+            if (existingComment && existingComment.starredBy) {
+              return { ...newComment, starredBy: existingComment.starredBy };
+            }
+            return newComment;
+          });
+          setComments(updatedComments);
+          setUnreadNewMessages(0); // Reset unread count after refresh
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching latest comments:', err);
+      toast.error('Failed to refresh messages');
+    } finally {
+      setLoadingComments(false);
+    }
+  };
 
 
 
@@ -1430,8 +1506,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     const refocusInput = () => {
       if (inputRef.current) {
         inputRef.current.focus();
-        // For mobile devices, ensure the input remains active and set cursor position
-        inputRef.current.setSelectionRange(0, 0);
+        // Place cursor at end of text instead of start
+        const length = inputRef.current.value.length;
+        inputRef.current.setSelectionRange(length, length);
         // Force the input to be the active element
         if (document.activeElement !== inputRef.current) {
           inputRef.current.click();
@@ -1668,6 +1745,33 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     }
   }, [comments.length, isAtBottom, showChatModal, currentUser.email, markVisibleMessagesAsRead]);
 
+  // Fetch starred messages when modal opens
+  useEffect(() => {
+    if (showStarredModal) {
+      setLoadingStarredMessages(true);
+      // First, sync comments to ensure we have the latest starred status
+      fetchLatestComments().then(() => {
+        // Then fetch starred messages from backend
+        fetch(`${API_BASE_URL}/api/bookings/${appt._id}/starred-messages`, {
+          credentials: 'include'
+        })
+          .then(res => res.json())
+          .then(data => {
+            if (data.starredMessages) {
+              setStarredMessages(data.starredMessages);
+            }
+          })
+          .catch(err => {
+            console.error('Error fetching starred messages:', err);
+            toast.error('Failed to load starred messages');
+          })
+          .finally(() => {
+            setLoadingStarredMessages(false);
+          });
+      });
+    }
+  }, [showStarredModal, appt._id]);
+
   // Check if user is at the bottom of chat
   const checkIfAtBottom = useCallback(() => {
     if (chatContainerRef.current) {
@@ -1855,6 +1959,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
           const idx = prev.findIndex(c => c._id === data.comment._id);
           if (idx !== -1) {
             // Update the existing comment in place, but do not downgrade 'read' to 'delivered'
+            // and preserve starred status
             const updated = [...prev];
             const localComment = prev[idx];
             const incomingComment = data.comment;
@@ -1862,19 +1967,21 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
             if (localComment.status === 'read' && incomingComment.status !== 'read') {
               status = 'read';
             }
-            updated[idx] = { ...incomingComment, status };
+            // Preserve starred status from local state
+            const starredBy = localComment.starredBy || [];
+            updated[idx] = { ...incomingComment, status, starredBy };
             return updated;
           } else {
-                    // Only add if not present and not a temporary message
-        const isTemporaryMessage = prev.some(msg => msg._id.toString().startsWith('temp-'));
-        if (!isTemporaryMessage || data.comment.senderEmail !== currentUser.email) {
-          // If this is a new message from another user and chat is not open, increment unread count
-          if (data.comment.senderEmail !== currentUser.email && !showChatModal && !data.comment.readBy?.includes(currentUser._id)) {
-            setUnreadNewMessages(prev => prev + 1);
-          }
-          return [...prev, data.comment];
-        }
-        return prev;
+            // Only add if not present and not a temporary message
+            const isTemporaryMessage = prev.some(msg => msg._id.toString().startsWith('temp-'));
+            if (!isTemporaryMessage || data.comment.senderEmail !== currentUser.email) {
+              // If this is a new message from another user and chat is not open, increment unread count
+              if (data.comment.senderEmail !== currentUser.email && !showChatModal && !data.comment.readBy?.includes(currentUser._id)) {
+                setUnreadNewMessages(prev => prev + 1);
+              }
+              return [...prev, data.comment];
+            }
+            return prev;
           }
         });
       }
@@ -1920,8 +2027,18 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       }).catch(error => {
         console.warn('Error marking comments as read on modal open:', error);
       });
+      
+      // Sync starred messages when chat opens
+      if (starredMessages.length > 0) {
+        // Update starred messages list with current comment states
+        const updatedStarredMessages = starredMessages.map(starredMsg => {
+          const currentComment = comments.find(c => c._id === starredMsg._id);
+          return currentComment ? { ...starredMsg, starredBy: currentComment.starredBy || [] } : starredMsg;
+        }).filter(msg => msg.starredBy && msg.starredBy.includes(currentUser._id));
+        setStarredMessages(updatedStarredMessages);
+      }
     }
-  }, [showChatModal, appt._id]);
+  }, [showChatModal, appt._id, starredMessages.length, comments, currentUser._id]);
 
   // Listen for commentDelivered and commentRead events
   useEffect(() => {
@@ -2470,6 +2587,66 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             <FaInfoCircle size={18} />
                           </button>
                         )}
+                        {/* Star/Unstar - for all messages (sent and received) */}
+                        {!selectedMessageForHeaderOptions.deleted && (
+                          <button
+                            className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                            onClick={async () => { 
+                              const isStarred = selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id);
+                              setStarringSaving(true);
+                              try {
+                                const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${selectedMessageForHeaderOptions._id}/star`, {
+                                  method: 'PATCH',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  credentials: 'include',
+                                  body: JSON.stringify({ starred: !isStarred }),
+                                });
+                                if (res.ok) {
+                                  // Update the local state
+                                  setComments(prev => prev.map(c => 
+                                    c._id === selectedMessageForHeaderOptions._id 
+                                      ? { 
+                                          ...c, 
+                                          starredBy: isStarred 
+                                            ? (c.starredBy || []).filter(id => id !== currentUser._id)
+                                            : [...(c.starredBy || []), currentUser._id]
+                                        }
+                                      : c
+                                  ));
+                                  
+                                  // Update starred messages list
+                                  if (isStarred) {
+                                    // Remove from starred messages
+                                    setStarredMessages(prev => prev.filter(m => m._id !== selectedMessageForHeaderOptions._id));
+                                  } else {
+                                    // Add to starred messages
+                                    setStarredMessages(prev => [...prev, selectedMessageForHeaderOptions]);
+                                  }
+                                  
+                                  toast.success(isStarred ? 'Message unstarred' : 'Message starred');
+                                } else {
+                                  toast.error('Failed to update star status');
+                                }
+                              } catch (err) {
+                                toast.error('Failed to update star status');
+                              } finally {
+                                setStarringSaving(false);
+                              }
+                              setHeaderOptionsMessageId(null);
+                            }}
+                            title={selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id) ? "Unstar message" : "Star message"}
+                            aria-label={selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id) ? "Unstar message" : "Star message"}
+                            disabled={starringSaving}
+                          >
+                            {starringSaving ? (
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            ) : selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id) ? (
+                              <FaStar size={18} />
+                            ) : (
+                              <FaRegStar size={18} />
+                            )}
+                          </button>
+                        )}
                         {/* Report (only for received messages, not deleted) */}
                         {(selectedMessageForHeaderOptions.senderEmail !== currentUser.email) && !selectedMessageForHeaderOptions.deleted && (
                           <button
@@ -2572,7 +2749,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                       <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 min-w-0 flex-1">
                         <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
                           <h3 
-                            className="text-base sm:text-lg font-bold text-white truncate cursor-pointer hover:underline"
+                            className="text-sm sm:text-lg font-bold text-white truncate cursor-pointer hover:underline"
                             onClick={() => onShowOtherParty({
                               ...otherParty,
                               isOnline: isOtherPartyOnlineInTable,
@@ -2586,11 +2763,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           {/* Online status indicator - below name on mobile, inline on desktop */}
                           <div className="flex items-center gap-1 sm:hidden">
                             {isOtherPartyTyping ? (
-                              <span className="text-yellow-100 font-semibold text-xs bg-yellow-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">Typing...</span>
+                              <span className="text-yellow-100 font-semibold text-[10px] bg-yellow-500 bg-opacity-80 px-1.5 py-0.5 rounded-full whitespace-nowrap">Typing...</span>
                             ) : isOtherPartyOnline ? (
-                              <span className="text-green-100 font-semibold text-xs bg-green-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">Online</span>
+                              <span className="text-green-100 font-semibold text-[10px] bg-green-500 bg-opacity-80 px-1.5 py-0.5 rounded-full whitespace-nowrap">Online</span>
                             ) : (
-                              <span className="text-gray-100 font-semibold text-xs bg-gray-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">
+                              <span className="text-gray-100 font-semibold text-[10px] bg-gray-500 bg-opacity-80 px-1.5 py-0.5 rounded-full whitespace-nowrap">
                                 {formatLastSeen(otherPartyLastSeen) || 'Offline'}
                               </span>
                             )}
@@ -2610,31 +2787,92 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                         </div>
                       </div>
                       <div className="flex items-center gap-2 sm:gap-4 ml-auto flex-shrink-0">
-                        {filteredComments.length > 0 && (
-                          <button
-                            className="text-xs text-red-600 hover:underline"
-                            onClick={() => setShowClearChatModal(true)}
-                            title="Clear chat locally"
-                          >
-                            Clear Chat
-                          </button>
+                        {/* Unread message count */}
+                        {unreadNewMessages > 0 && (
+                          <div className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold animate-pulse">
+                            {unreadNewMessages} new message{unreadNewMessages > 1 ? 's' : ''}
+                          </div>
                         )}
+                        {/* Chat options menu */}
                         <div className="relative">
                           <button
-                            className="text-yellow-500 hover:text-yellow-600 bg-yellow-50 hover:bg-yellow-100 rounded-full p-2 transition-colors shadow"
-                            onClick={() => setShowShortcutTip(!showShortcutTip)}
-                            title="Keyboard shortcut tip"
-                            aria-label="Show keyboard shortcut tip"
+                            className="text-white hover:text-gray-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors shadow"
+                            onClick={() => setShowChatOptionsMenu(!showChatOptionsMenu)}
+                            title="Chat options"
+                            aria-label="Chat options"
                           >
-                            <FaLightbulb className="text-sm" />
+                            <FaEllipsisV className="text-sm" />
                           </button>
-                          {showShortcutTip && (
-                            <div className="absolute top-full right-0 mt-2 bg-gray-800 text-white text-xs rounded-lg px-3 py-2 shadow-lg z-20 whitespace-nowrap">
-                              Press Ctrl + F to quickly focus and type your message.
-                              <div className="absolute -top-1 right-4 w-2 h-2 bg-gray-800 transform rotate-45"></div>
+                          {showChatOptionsMenu && (
+                            <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-20 min-w-[160px] chat-options-menu">
+                              {/* Refresh option */}
+                              <button
+                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                                onClick={() => {
+                                  fetchLatestComments();
+                                  setShowChatOptionsMenu(false);
+                                }}
+                                disabled={loadingComments}
+                              >
+                                <FaSync className={`text-sm ${loadingComments ? 'animate-spin' : ''}`} />
+                                Refresh Messages
+                              </button>
+                              {/* Clear chat option */}
+                              {filteredComments.length > 0 && (
+                                <button
+                                  className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                  onClick={() => {
+                                    setShowClearChatModal(true);
+                                    setShowChatOptionsMenu(false);
+                                  }}
+                                >
+                                  <FaTrash className="text-sm" />
+                                  Clear Chat
+                                </button>
+                              )}
+                              {/* Keyboard shortcut tip option */}
+                              <button
+                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                                onClick={() => {
+                                  setShowShortcutTip(!showShortcutTip);
+                                  setShowChatOptionsMenu(false);
+                                }}
+                              >
+                                <FaLightbulb className="text-sm" />
+                                Keyboard Shortcuts
+                              </button>
+                              {/* Starred Messages option */}
+                              <button
+                                className="w-full px-4 py-2 text-left text-sm text-yellow-600 hover:bg-yellow-50 flex items-center gap-2"
+                                onClick={() => {
+                                  setShowStarredModal(true);
+                                  setShowChatOptionsMenu(false);
+                                }}
+                              >
+                                <FaStar className="text-sm" />
+                                Starred Messages
+                              </button>
+                              {/* Report Chat option */}
+                              <button
+                                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 border-t border-gray-200"
+                                onClick={() => {
+                                  setShowReportChatModal(true);
+                                  setShowChatOptionsMenu(false);
+                                }}
+                              >
+                                <FaFlag className="text-sm" />
+                                Report Chat
+                              </button>
                             </div>
                           )}
                         </div>
+                        {/* Keyboard shortcut tip popup */}
+                        {showShortcutTip && (
+                          <div className="absolute top-full right-0 mt-2 bg-gray-800 text-white text-xs rounded-lg px-3 py-2 shadow-lg z-20 whitespace-nowrap">
+                            Press Ctrl + F to quickly focus and type your message.
+                            <div className="absolute -top-1 right-4 w-2 h-2 bg-gray-800 transform rotate-45"></div>
+                          </div>
+                        )}
                         <button
                           className="text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors z-10 shadow"
                           onClick={() => setShowChatModal(false)}
@@ -2763,6 +3001,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               )}
                             </div>
                             <div className="flex items-center gap-1 justify-end mt-2" data-message-actions>
+                              {/* Star icon for starred messages */}
+                              {c.starredBy && c.starredBy.includes(currentUser._id) && (
+                                <FaStar className={`${isMe ? 'text-yellow-300' : 'text-yellow-500'} text-[10px]`} />
+                              )}
                               <span className={`${isMe ? 'text-blue-200' : 'text-gray-500'} text-[10px]`}>
                                 {new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
                               </span>
@@ -2894,9 +3136,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   >
                     {editingComment ? (
                       savingComment === editingComment ? (
-                        <>
-                          <div className="w-4 h-4 border border-white border-t-transparent rounded-full animate-spin"></div>
-                        </>
+                        <FaPen className="text-lg text-white animate-editSaving" />
                       ) : (
                         <FaPen className="text-lg text-white group-hover:scale-110 transition-transform duration-200" />
                       )
@@ -2993,6 +3233,35 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   }
                   .send-icon.animate-sent {
                     animation: sentSuccess 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+                  }
+                  @keyframes editSaving {
+                    0% { 
+                      transform: scale(1) rotate(0deg) translate(0, 0); 
+                      opacity: 1;
+                    }
+                    20% { 
+                      transform: scale(1.15) rotate(-8deg) translate(-1px, -1px); 
+                      opacity: 0.9;
+                    }
+                    40% { 
+                      transform: scale(1.25) rotate(0deg) translate(0, -2px); 
+                      opacity: 1;
+                    }
+                    60% { 
+                      transform: scale(1.15) rotate(8deg) translate(1px, -1px); 
+                      opacity: 0.9;
+                    }
+                    80% { 
+                      transform: scale(1.1) rotate(-4deg) translate(-1px, 0); 
+                      opacity: 0.95;
+                    }
+                    100% { 
+                      transform: scale(1) rotate(0deg) translate(0, 0); 
+                      opacity: 1;
+                    }
+                  }
+                  .animate-editSaving {
+                    animation: editSaving 1.2s ease-in-out infinite;
                   }
                 `}</style>
               </>
@@ -3488,6 +3757,208 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
               >
                 {submittingReport ? 'Reporting…' : 'Report'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Report Chat Modal */}
+      {showReportChatModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+              <FaFlag className="text-red-500" /> Report Chat
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Reason</label>
+                <select
+                  value={reportChatReason}
+                  onChange={(e) => setReportChatReason(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-red-500 text-gray-900"
+                >
+                  <option value="">Select a reason</option>
+                  <option value="harassment">Harassment or bullying</option>
+                  <option value="spam">Spam or unwanted messages</option>
+                  <option value="inappropriate">Inappropriate content</option>
+                  <option value="scam">Scam or fraud</option>
+                  <option value="threats">Threats or violence</option>
+                  <option value="privacy">Privacy violation</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Additional details (optional)</label>
+                <textarea
+                  value={reportChatDetails}
+                  onChange={(e) => setReportChatDetails(e.target.value)}
+                  rows={4}
+                  placeholder="Provide more context to help admins review this chat..."
+                  className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-red-500 text-gray-900"
+                />
+              </div>
+            </div>
+            <div className="flex gap-2 mt-6">
+              <button
+                onClick={() => {
+                  setShowReportChatModal(false);
+                  setReportChatReason('');
+                  setReportChatDetails('');
+                }}
+                className="px-4 py-2 rounded bg-gray-200 text-gray-800 hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (!reportChatReason) { 
+                    toast.error('Please select a reason'); 
+                    return; 
+                  }
+                  setSubmittingChatReport(true);
+                  try {
+                    const res = await fetch(`${API_BASE_URL}/api/notifications/report-chat-conversation`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      credentials: 'include',
+                      body: JSON.stringify({
+                        appointmentId: appt._id,
+                        reason: reportChatReason,
+                        details: reportChatDetails,
+                      }),
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                      toast.info('Thank you for reporting.');
+                      setShowReportChatModal(false);
+                      setReportChatReason('');
+                      setReportChatDetails('');
+                    } else {
+                      toast.error(data.message || 'Failed to submit report');
+                    }
+                  } catch (err) {
+                    toast.error('Network error while reporting');
+                  } finally {
+                    setSubmittingChatReport(false);
+                  }
+                }}
+                disabled={submittingChatReport || !reportChatReason}
+                className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {submittingChatReport ? 'Reporting…' : 'Report'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Starred Messages Modal */}
+      {showStarredModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 shadow-xl max-h-[80vh] overflow-y-auto">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+              <FaStar className="text-yellow-500" /> Starred Messages
+            </h3>
+            <div className="space-y-4">
+              {loadingStarredMessages ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-500 mx-auto mb-4"></div>
+                  <p className="text-gray-500">Loading starred messages...</p>
+                </div>
+              ) : starredMessages.length === 0 ? (
+                <div className="text-center py-8">
+                  <FaRegStar className="mx-auto text-4xl text-gray-400 mb-4" />
+                  <p className="text-gray-500">No starred messages in this conversation</p>
+                  <p className="text-sm text-gray-400 mt-2">Star important messages to find them easily later</p>
+                </div>
+              ) : (
+                starredMessages.map((message) => {
+                  const isMe = message.senderEmail === currentUser.email;
+                  return (
+                    <div key={message._id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                      <div
+                        className={`max-w-[85%] p-3 rounded-2xl break-words relative ${
+                          isMe
+                            ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
+                            : 'bg-gray-100 text-gray-800'
+                        }`}
+                      >
+                        <div className="flex items-start gap-2">
+                          <div className="flex-1">
+                            <div className="text-sm whitespace-pre-wrap leading-relaxed">
+                              {message.deleted ? (
+                                <span className="italic text-gray-500">This message was deleted</span>
+                              ) : (
+                                message.message
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 justify-between mt-2">
+                              <div className="flex items-center gap-1">
+                                <FaStar className={`${isMe ? 'text-yellow-300' : 'text-yellow-500'} text-xs`} />
+                                <span className={`${isMe ? 'text-blue-200' : 'text-gray-500'} text-xs`}>
+                                  {new Date(message.timestamp).toLocaleString('en-US', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })}
+                                </span>
+                              </div>
+                              <button
+                                className={`${isMe ? 'text-blue-200 hover:text-red-300' : 'text-gray-500 hover:text-red-600'} transition-colors`}
+                                onClick={async () => {
+                                  setStarringSaving(true);
+                                  try {
+                                    const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${message._id}/star`, {
+                                      method: 'PATCH',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      credentials: 'include',
+                                      body: JSON.stringify({ starred: false }),
+                                    });
+                                    if (res.ok) {
+                                      // Remove from starred messages list
+                                      setStarredMessages(prev => prev.filter(m => m._id !== message._id));
+                                      // Update the main comments state
+                                      setComments(prev => prev.map(c => 
+                                        c._id === message._id 
+                                          ? { ...c, starredBy: (c.starredBy || []).filter(id => id !== currentUser._id) }
+                                          : c
+                                      ));
+                                      toast.success('Message unstarred');
+                                    } else {
+                                      toast.error('Failed to unstar message');
+                                    }
+                                  } catch (err) {
+                                    toast.error('Failed to unstar message');
+                                  } finally {
+                                    setStarringSaving(false);
+                                  }
+                                }}
+                                title="Unstar message"
+                                disabled={starringSaving}
+                              >
+                                {starringSaving ? (
+                                  <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin"></div>
+                                ) : (
+                                  <FaTimes size={12} />
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+            <div className="flex justify-end mt-6">
+              <button
+                onClick={() => setShowStarredModal(false)}
+                className="px-4 py-2 rounded bg-gray-200 text-gray-800 hover:bg-gray-300"
+              >
+                Close
               </button>
             </div>
           </div>
