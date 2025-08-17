@@ -1007,14 +1007,18 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const [chatAccessGranted, setChatAccessGranted] = useState(false);
   const [showChatLockModal, setShowChatLockModal] = useState(false);
   const [showChatUnlockModal, setShowChatUnlockModal] = useState(false);
+  const [showRemoveLockModal, setShowRemoveLockModal] = useState(false);
   const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
   const [lockPassword, setLockPassword] = useState('');
   const [lockConfirmPassword, setLockConfirmPassword] = useState('');
   const [unlockPassword, setUnlockPassword] = useState('');
+  const [removeLockPassword, setRemoveLockPassword] = useState('');
   const [showLockPassword, setShowLockPassword] = useState(false);
   const [showUnlockPassword, setShowUnlockPassword] = useState(false);
+  const [showRemoveLockPassword, setShowRemoveLockPassword] = useState(false);
   const [lockingChat, setLockingChat] = useState(false);
   const [unlockingChat, setUnlockingChat] = useState(false);
+  const [removingLock, setRemovingLock] = useState(false);
   const [forgotPasswordProcessing, setForgotPasswordProcessing] = useState(false);
   
   // Lock body scroll when specific modals are open (Cancel or Remove Appointment)
@@ -1177,6 +1181,39 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       toast.error('An error occurred while removing chat lock');
     } finally {
       setUnlockingChat(false);
+    }
+  };
+
+  const handleRemoveLockFromMenu = async () => {
+    if (!removeLockPassword) {
+      toast.error('Please enter your password');
+      return;
+    }
+    
+    setRemovingLock(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/remove-lock`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ password: removeLockPassword })
+      });
+      
+      const data = await res.json();
+      if (res.ok) {
+        setChatLocked(false);
+        setChatAccessGranted(false);
+        setShowRemoveLockModal(false);
+        setRemoveLockPassword('');
+        setShowRemoveLockPassword(false);
+        toast.success('Chat lock removed permanently');
+      } else {
+        toast.error(data.message || 'Incorrect password');
+      }
+    } catch (err) {
+      toast.error('An error occurred while removing chat lock');
+    } finally {
+      setRemovingLock(false);
     }
   };
 
@@ -2988,7 +3025,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                 <button
                                   className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
                                   onClick={() => {
-                                    setShowChatUnlockModal(true);
+                                    setShowRemoveLockModal(true);
                                     setShowChatOptionsMenu(false);
                                   }}
                                 >
@@ -3673,21 +3710,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   'Unlock Chat'
                 )}
               </button>
-              <button
-                type="button"
-                onClick={handleRemoveChatLock}
-                disabled={unlockingChat}
-                className="px-4 py-2 rounded bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors flex items-center gap-2 disabled:opacity-50"
-              >
-                {unlockingChat ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Removing...
-                  </>
-                ) : (
-                  'Remove Lock'
-                )}
-              </button>
             </div>
           </div>
         </div>
@@ -3750,6 +3772,97 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   </>
                 ) : (
                   'Continue'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Remove Lock Modal */}
+      {showRemoveLockModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+              <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" className="text-red-600">
+                <path d="M18 10v-4c0-3.313-2.687-6-6-6s-6 2.687-6 6v4H4v10h16V10h-2zM8 6c0-2.206 1.794-4 4-4s4 1.794 4 4v4H8V6z"/>
+              </svg>
+              Remove Chat Lock Permanently
+            </h3>
+            
+            <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-red-800">Permanent Action</h3>
+                  <div className="mt-2 text-sm text-red-700">
+                    <p>This will permanently remove the chat lock and disable it for this conversation.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <p className="text-gray-600 mb-4">
+              Enter your chat lock password to confirm this action.
+            </p>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Password
+              </label>
+              <div className="relative">
+                <input
+                  type={showRemoveLockPassword ? "text" : "password"}
+                  value={removeLockPassword}
+                  onChange={(e) => setRemoveLockPassword(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 pr-10"
+                  placeholder="Enter your chat lock password"
+                  onKeyPress={(e) => e.key === 'Enter' && handleRemoveLockFromMenu()}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowRemoveLockPassword(!showRemoveLockPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showRemoveLockPassword ? '👁️' : '👁️‍🗨️'}
+                </button>
+              </div>
+            </div>
+            
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowRemoveLockModal(false);
+                  setRemoveLockPassword('');
+                  setShowRemoveLockPassword(false);
+                }}
+                className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleRemoveLockFromMenu}
+                disabled={removingLock}
+                className="px-4 py-2 rounded bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors flex items-center gap-2 disabled:opacity-50"
+              >
+                {removingLock ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Removing...
+                  </>
+                ) : (
+                  <>
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M18 10v-4c0-3.313-2.687-6-6-6s-6 2.687-6 6v4H4v10h16V10h-2zM8 6c0-2.206 1.794-4 4-4s4 1.794 4 4v4H8V6z"/>
+                    </svg>
+                    Remove Lock Permanently
+                  </>
                 )}
               </button>
             </div>
