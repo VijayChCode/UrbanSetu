@@ -3020,6 +3020,44 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           </button>
                           {showChatOptionsMenu && (
                             <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-20 min-w-[160px] chat-options-menu">
+                              {/* Refresh option */}
+                              <button
+                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                                onClick={() => {
+                                  fetchLatestComments();
+                                  setShowChatOptionsMenu(false);
+                                }}
+                                disabled={loadingComments}
+                              >
+                                <FaSync className={`text-sm ${loadingComments ? 'animate-spin' : ''}`} />
+                                Refresh Messages
+                              </button>
+                              {/* Starred Messages option */}
+                              <button
+                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                                onClick={() => {
+                                  setShowStarredModal(true);
+                                  setShowChatOptionsMenu(false);
+                                }}
+                              >
+                                <FaStar className="text-sm text-yellow-500" />
+                                Starred Messages
+                              </button>
+                              {/* Keyboard shortcut tip option */}
+                              <button
+                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                                onClick={() => {
+                                  setShowShortcutTip(!showShortcutTip);
+                                  setShowChatOptionsMenu(false);
+                                }}
+                              >
+                                <FaLightbulb className="text-sm" />
+                                Keyboard Shortcuts
+                              </button>
+                              
+                              {/* Line divider */}
+                              <div className="border-t border-gray-200 my-1"></div>
+                              
                               {/* Chat Lock/Unlock option */}
                               {chatLocked ? (
                                 <button
@@ -3048,28 +3086,16 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                   Lock Chat
                                 </button>
                               )}
-                              {/* Starred Messages option */}
+                              {/* Report Chat option */}
                               <button
-                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
                                 onClick={() => {
-                                  setShowStarredModal(true);
+                                  setShowReportChatModal(true);
                                   setShowChatOptionsMenu(false);
                                 }}
                               >
-                                <FaStar className="text-sm text-yellow-500" />
-                                Starred Messages
-                              </button>
-                              {/* Refresh option */}
-                              <button
-                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                                onClick={() => {
-                                  fetchLatestComments();
-                                  setShowChatOptionsMenu(false);
-                                }}
-                                disabled={loadingComments}
-                              >
-                                <FaSync className={`text-sm ${loadingComments ? 'animate-spin' : ''}`} />
-                                Refresh Messages
+                                <FaFlag className="text-sm" />
+                                Report Chat
                               </button>
                               {/* Clear chat option */}
                               {filteredComments.length > 0 && (
@@ -3084,28 +3110,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                   Clear Chat
                                 </button>
                               )}
-                              {/* Keyboard shortcut tip option */}
-                              <button
-                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                                onClick={() => {
-                                  setShowShortcutTip(!showShortcutTip);
-                                  setShowChatOptionsMenu(false);
-                                }}
-                              >
-                                <FaLightbulb className="text-sm" />
-                                Keyboard Shortcuts
-                              </button>
-                              {/* Report Chat option */}
-                              <button
-                                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 border-t border-gray-200"
-                                onClick={() => {
-                                  setShowReportChatModal(true);
-                                  setShowChatOptionsMenu(false);
-                                }}
-                              >
-                                <FaFlag className="text-sm" />
-                                Report Chat
-                              </button>
                             </div>
                           )}
                         </div>
