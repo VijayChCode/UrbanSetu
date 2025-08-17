@@ -1287,14 +1287,55 @@ export default function Profile() {
     }
   }, [isEditing, loading]);
 
-  const handleAvatarUpload = (e) => {
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarError, setAvatarError] = useState('');
+
+  const handleAvatarUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      setFormData(prev => ({ ...prev, avatar: ev.target.result }));
-    };
-    reader.readAsDataURL(file);
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setAvatarError('Please select an image file');
+      return;
+    }
+
+    // Validate file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      setAvatarError('File size must be less than 5MB');
+      return;
+    }
+
+    setUploadingAvatar(true);
+    setAvatarError('');
+
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append('image', file);
+
+      const res = await fetch(`${API_BASE_URL}/api/upload/image`, {
+        method: 'POST',
+        credentials: 'include',
+        body: uploadFormData,
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        // Update the avatar with the uploaded image URL
+        setFormData(prev => ({ ...prev, avatar: data.imageUrl }));
+        toast.success('Avatar uploaded successfully!');
+      } else {
+        setAvatarError(data.message || 'Upload failed');
+        toast.error(data.message || 'Upload failed');
+      }
+    } catch (error) {
+      console.error('Avatar upload error:', error);
+      setAvatarError('Upload failed. Please try again.');
+      toast.error('Upload failed. Please try again.');
+    } finally {
+      setUploadingAvatar(false);
+    }
   };
 
   const [dicebearAvatar, setDicebearAvatar] = useState({
@@ -1488,9 +1529,19 @@ export default function Profile() {
                           />
                         </button>
                       ))}
-                      <label className={`w-12 h-12 rounded-full border-2 border-gray-300 flex items-center justify-center cursor-pointer bg-gray-100 hover:bg-gray-200 transition-all duration-300 transform hover:scale-110 hover:shadow-lg hover:border-blue-400 group ${animationClasses.bounceIn} animation-delay-${defaultAvatars.length * 50}`}>
-                        <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
-                        <FaEdit className={`text-gray-500 group-hover:text-blue-500 transition-colors duration-300 group-hover:${animationClasses.wiggle}`} />
+                      <label className={`w-12 h-12 rounded-full border-2 border-gray-300 flex items-center justify-center cursor-pointer bg-gray-100 hover:bg-gray-200 transition-all duration-300 transform hover:scale-110 hover:shadow-lg hover:border-blue-400 group ${animationClasses.bounceIn} animation-delay-${defaultAvatars.length * 50} ${uploadingAvatar ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          className="hidden" 
+                          onChange={handleAvatarUpload}
+                          disabled={uploadingAvatar}
+                        />
+                        {uploadingAvatar ? (
+                          <div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+                        ) : (
+                          <FaEdit className={`text-gray-500 group-hover:text-blue-500 transition-colors duration-300 group-hover:${animationClasses.wiggle}`} title="Upload custom avatar" />
+                        )}
                       </label>
                       <button 
                         type="button" 
@@ -1601,7 +1652,12 @@ export default function Profile() {
                     </div>
                   </>
                 )}
-                <div className="text-xs text-gray-500 mt-2 text-center">Note: Please upload a profile image below 75KB only for best performance.</div>
+                <div className="text-xs text-gray-500 mt-2 text-center">Note: Please upload a profile image below 5MB for best performance.</div>
+                {avatarError && (
+                  <div className="text-red-500 text-sm mt-2 text-center bg-red-50 p-2 rounded-lg border border-red-200">
+                    {avatarError}
+                  </div>
+                )}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
