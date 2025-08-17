@@ -1443,10 +1443,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     }
   }, [comments, currentUser._id]);
 
-  // Auto-close shortcut tip after 20 seconds
+  // Auto-close shortcut tip after 10 seconds
   useEffect(() => {
     if (showShortcutTip) {
-      const timer = setTimeout(() => setShowShortcutTip(false), 20000);
+      const timer = setTimeout(() => setShowShortcutTip(false), 10000);
       return () => clearTimeout(timer);
     }
   }, [showShortcutTip]);
