@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo, FaCommentDots, FaCheckDouble, FaBan, FaPaperPlane, FaCalendar, FaLightbulb, FaCopy, FaEllipsisV, FaFlag, FaCircle, FaInfoCircle, FaSync } from "react-icons/fa";
+import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo, FaCommentDots, FaCheckDouble, FaBan, FaPaperPlane, FaCalendar, FaLightbulb, FaCopy, FaEllipsisV, FaFlag, FaCircle, FaInfoCircle, FaSync, FaStar, FaRegStar } from "react-icons/fa";
 import UserAvatar from '../components/UserAvatar';
 import { useSelector } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -1044,8 +1044,22 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const [sendIconAnimating, setSendIconAnimating] = useState(false);
   const [sendIconSent, setSendIconSent] = useState(false);
   
+  // Starred messages states
+  const [showStarredModal, setShowStarredModal] = useState(false);
+  const [starredMessages, setStarredMessages] = useState([]);
+  const [starringSaving, setStarringSaving] = useState(false);
+  const [loadingStarredMessages, setLoadingStarredMessages] = useState(false);
+  
   // Chat options menu state
   const [showChatOptionsMenu, setShowChatOptionsMenu] = useState(false);
+
+  // Initialize starred messages when comments are loaded
+  useEffect(() => {
+    if (comments.length > 0) {
+      const starredMsgs = comments.filter(c => c.starredBy && c.starredBy.includes(currentUser._id));
+      setStarredMessages(starredMsgs);
+    }
+  }, [comments, currentUser._id]);
 
   // Auto-close shortcut tip after 10 seconds
   useEffect(() => {
@@ -1054,6 +1068,33 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       return () => clearTimeout(timer);
     }
   }, [showShortcutTip]);
+
+  // Fetch starred messages when modal opens
+  useEffect(() => {
+    if (showStarredModal) {
+      setLoadingStarredMessages(true);
+      // First, sync comments to ensure we have the latest starred status
+      fetchLatestComments().then(() => {
+        // Then fetch starred messages from backend
+        fetch(`${API_BASE_URL}/api/bookings/${appt._id}/starred-messages`, {
+          credentials: 'include'
+        })
+          .then(res => res.json())
+          .then(data => {
+            if (data.starredMessages) {
+              setStarredMessages(data.starredMessages);
+            }
+          })
+          .catch(err => {
+            console.error('Error fetching starred messages:', err);
+            toast.error('Failed to load starred messages');
+          })
+          .finally(() => {
+            setLoadingStarredMessages(false);
+          });
+      });
+    }
+  }, [showStarredModal, appt._id]);
 
   // Close chat options menu when clicking outside or scrolling
   useEffect(() => {
@@ -2525,6 +2566,66 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             <FaInfoCircle size={18} />
                           </button>
                         )}
+                        {/* Star/Unstar - for all messages (sent and received) */}
+                        {!selectedMessageForHeaderOptions.deleted && (
+                          <button
+                            className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                            onClick={async () => { 
+                              const isStarred = selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id);
+                              setStarringSaving(true);
+                              try {
+                                const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${selectedMessageForHeaderOptions._id}/star`, {
+                                  method: 'PATCH',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  credentials: 'include',
+                                  body: JSON.stringify({ starred: !isStarred }),
+                                });
+                                if (res.ok) {
+                                  // Update the local state
+                                  setComments(prev => prev.map(c => 
+                                    c._id === selectedMessageForHeaderOptions._id 
+                                      ? { 
+                                          ...c, 
+                                          starredBy: isStarred 
+                                            ? (c.starredBy || []).filter(id => id !== currentUser._id)
+                                            : [...(c.starredBy || []), currentUser._id]
+                                        }
+                                      : c
+                                  ));
+                                  
+                                  // Update starred messages list
+                                  if (isStarred) {
+                                    // Remove from starred messages
+                                    setStarredMessages(prev => prev.filter(m => m._id !== selectedMessageForHeaderOptions._id));
+                                  } else {
+                                    // Add to starred messages
+                                    setStarredMessages(prev => [...prev, selectedMessageForHeaderOptions]);
+                                  }
+                                  
+                                  toast.success(isStarred ? 'Message unstarred' : 'Message starred');
+                                } else {
+                                  toast.error('Failed to update star status');
+                                }
+                              } catch (err) {
+                                toast.error('Failed to update star status');
+                              } finally {
+                                setStarringSaving(false);
+                              }
+                              setHeaderOptionsMessageId(null);
+                            }}
+                            title={selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id) ? "Unstar message" : "Star message"}
+                            aria-label={selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id) ? "Unstar message" : "Star message"}
+                            disabled={starringSaving}
+                          >
+                            {starringSaving ? (
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            ) : selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id) ? (
+                              <FaStar size={18} />
+                            ) : (
+                              <FaRegStar size={18} />
+                            )}
+                          </button>
+                        )}
                         {/* Report (only for received messages, not deleted) */}
                         {(selectedMessageForHeaderOptions.senderEmail !== currentUser.email) && !selectedMessageForHeaderOptions.deleted && (
                           <button
@@ -2683,6 +2784,17 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           </button>
                           {showChatOptionsMenu && (
                             <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-20 min-w-[160px] chat-options-menu">
+                              {/* Starred Messages option */}
+                              <button
+                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                                onClick={() => {
+                                  setShowStarredModal(true);
+                                  setShowChatOptionsMenu(false);
+                                }}
+                              >
+                                <FaStar className="text-sm text-yellow-500" />
+                                Starred Messages
+                              </button>
                               {/* Refresh option */}
                               <button
                                 className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
@@ -3805,6 +3917,99 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
               >
                 Close
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Starred Messages Modal */}
+      {showStarredModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-yellow-50 to-amber-50">
+              <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <FaStar className="text-yellow-500" />
+                Starred Messages
+              </h3>
+              <button
+                onClick={() => setShowStarredModal(false)}
+                className="text-gray-400 hover:text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors"
+                title="Close"
+              >
+                <FaTimes className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {loadingStarredMessages ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-500"></div>
+                  <span className="ml-3 text-gray-600">Loading starred messages...</span>
+                </div>
+              ) : starredMessages.length === 0 ? (
+                <div className="text-center py-12">
+                  <FaRegStar className="mx-auto text-6xl text-gray-300 mb-4" />
+                  <h4 className="text-xl font-semibold text-gray-600 mb-2">No Starred Messages</h4>
+                  <p className="text-gray-500">Star important messages to find them easily later.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {starredMessages.map((message, index) => {
+                    const isMe = message.senderEmail === currentUser.email;
+                    const messageDate = new Date(message.timestamp);
+                    
+                    return (
+                      <div
+                        key={message._id}
+                        className="bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <FaStar className="text-yellow-500 text-sm flex-shrink-0 mt-1" />
+                            <span className={`font-semibold text-sm ${isMe ? 'text-blue-600' : 'text-green-600'}`}>
+                              {isMe ? 'You' : (message.senderName || 'Other Party')}
+                            </span>
+                          </div>
+                          <span className="text-xs text-gray-500">
+                            {messageDate.toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              hour12: true
+                            })}
+                          </span>
+                        </div>
+                        
+                        <div className="text-gray-800 text-sm whitespace-pre-wrap break-words bg-white rounded-lg p-3 border border-yellow-100">
+                          {message.message}
+                        </div>
+                        
+                        {message.edited && (
+                          <div className="text-xs text-gray-500 italic mt-2">Edited</div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-6 border-t border-gray-200 bg-gray-50">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">
+                  {starredMessages.length} starred message{starredMessages.length !== 1 ? 's' : ''}
+                </span>
+                <button
+                  onClick={() => setShowStarredModal(false)}
+                  className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors font-medium"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         </div>
