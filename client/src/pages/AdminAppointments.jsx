@@ -1183,6 +1183,8 @@ function AdminAppointmentRow({
   const [showImagePreview, setShowImagePreview] = useLocalState(false);
   const [previewImages, setPreviewImages] = useLocalState([]);
   const [previewIndex, setPreviewIndex] = useLocalState(0);
+  const [imageCaption, setImageCaption] = useLocalState('');
+  const [showImagePreviewModal, setShowImagePreviewModal] = useLocalState(false);
 
 
 
@@ -1668,48 +1670,26 @@ function AdminAppointmentRow({
     // Validate file type
     if (!file.type.startsWith('image/')) {
       setFileUploadError('Please select an image file');
+      // Auto-hide error message after 3 seconds
+      setTimeout(() => setFileUploadError(''), 3000);
       return;
     }
     
     // Validate file size (5MB limit)
     if (file.size > 5 * 1024 * 1024) {
       setFileUploadError('File size must be less than 5MB');
+      // Auto-hide error message after 3 seconds
+      setTimeout(() => setFileUploadError(''), 3000);
       return;
     }
     
-    setUploadingFile(true);
+    // Show preview with caption input instead of directly sending
+    setSelectedFile(file);
+    setShowImagePreviewModal(true);
     setFileUploadError('');
-    
-    try {
-      const uploadFormData = new FormData();
-      uploadFormData.append('image', file);
-      
-      const res = await fetch(`${API_BASE_URL}/api/upload/image`, {
-        method: 'POST',
-        credentials: 'include',
-        body: uploadFormData,
-      });
-      
-      const data = await res.json();
-      
-      if (res.ok) {
-        // Send the image as a message
-        await sendImageMessage(data.imageUrl, file.name);
-        setSelectedFile(null);
-      } else {
-        setFileUploadError(data.message || 'Upload failed');
-        toast.error(data.message || 'Upload failed');
-      }
-    } catch (error) {
-      console.error('File upload error:', error);
-      setFileUploadError('Upload failed. Please try again.');
-      toast.error('Upload failed. Please try again.');
-    } finally {
-      setUploadingFile(false);
-    }
   };
 
-  const sendImageMessage = async (imageUrl, fileName) => {
+  const sendImageMessage = async (imageUrl, fileName, caption = '') => {
     // Create a temporary message object with immediate display
     const tempId = `temp-${Date.now()}`;
     const tempMessage = {
@@ -1717,7 +1697,7 @@ function AdminAppointmentRow({
       sender: currentUser._id,
       senderEmail: currentUser.email,
       senderName: currentUser.username,
-      message: `📷 ${fileName}`,
+      message: caption || `📷 ${fileName}`,
       imageUrl: imageUrl,
       status: "sending",
       timestamp: new Date().toISOString(),
@@ -1740,7 +1720,7 @@ function AdminAppointmentRow({
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
         body: JSON.stringify({ 
-          message: `📷 ${fileName}`,
+          message: caption || `📷 ${fileName}`,
           imageUrl: imageUrl,
           type: "image"
         }),
@@ -1767,6 +1747,46 @@ function AdminAppointmentRow({
       console.error('Send image error:', error);
       setLocalComments(prev => prev.filter(msg => msg._id !== tempId));
       toast.error("Failed to send image.");
+    }
+  };
+
+  const handleSendImageWithCaption = async () => {
+    if (!selectedFile) return;
+    
+    setUploadingFile(true);
+    
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append('image', selectedFile);
+      
+      const res = await fetch(`${API_BASE_URL}/api/upload/image`, {
+        method: 'POST',
+        credentials: 'include',
+        body: uploadFormData,
+      });
+      
+      const data = await res.json();
+      
+      if (res.ok) {
+        // Send the image as a message with caption
+        await sendImageMessage(data.imageUrl, selectedFile.name, imageCaption);
+        setSelectedFile(null);
+        setImageCaption('');
+        setShowImagePreviewModal(false);
+      } else {
+        setFileUploadError(data.message || 'Upload failed');
+        toast.error(data.message || 'Upload failed');
+        // Auto-hide error message after 3 seconds
+        setTimeout(() => setFileUploadError(''), 3000);
+      }
+    } catch (error) {
+      console.error('File upload error:', error);
+      setFileUploadError('Upload failed. Please try again.');
+      toast.error('Upload failed. Please try again.');
+      // Auto-hide error message after 3 seconds
+      setTimeout(() => setFileUploadError(''), 3000);
+    } finally {
+      setUploadingFile(false);
     }
   };
 
@@ -3015,6 +3035,73 @@ function AdminAppointmentRow({
                 <div className="px-3 pb-2">
                   <div className="text-red-500 text-sm bg-red-50 p-2 rounded-lg border border-red-200">
                     {fileUploadError}
+                  </div>
+                </div>
+              )}
+              
+              {/* Image Preview Modal */}
+              {showImagePreviewModal && selectedFile && (
+                <div className="px-3 pb-2">
+                  <div className="bg-white border-2 border-gray-200 rounded-lg p-3 shadow-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-gray-700">Image Preview</span>
+                      <button
+                        onClick={() => {
+                          setSelectedFile(null);
+                          setImageCaption('');
+                          setShowImagePreviewModal(false);
+                        }}
+                        className="text-gray-400 hover:text-gray-600"
+                      >
+                        <FaTimes className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="mb-3">
+                      <img
+                        src={URL.createObjectURL(selectedFile)}
+                        alt="Preview"
+                        className="max-w-full max-h-48 rounded-lg"
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <textarea
+                        placeholder="Add a caption..."
+                        value={imageCaption}
+                        onChange={(e) => setImageCaption(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none"
+                        rows={2}
+                        maxLength={500}
+                      />
+                      <div className="text-xs text-gray-500 mt-1 text-right">
+                        {imageCaption.length}/500
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleSendImageWithCaption}
+                        disabled={uploadingFile}
+                        className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                      >
+                        {uploadingFile ? (
+                          <div className="flex items-center justify-center">
+                            <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                            Sending...
+                          </div>
+                        ) : (
+                          'Send'
+                        )}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedFile(null);
+                          setImageCaption('');
+                          setShowImagePreviewModal(false);
+                        }}
+                        className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm"
+                      >
+                        Cancel
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
