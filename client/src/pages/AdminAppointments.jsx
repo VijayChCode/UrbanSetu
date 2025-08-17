@@ -1431,13 +1431,8 @@ function AdminAppointmentRow({
     
     if (visibleDate && visibleDate !== currentFloatingDate) {
       setCurrentFloatingDate(visibleDate);
-      
-      // Auto-hide floating date after 3 seconds
-      setTimeout(() => {
-        setCurrentFloatingDate('');
-      }, 3000);
     }
-  }, [localComments, currentFloatingDate, getDateLabel]);
+  }, [localComments, currentFloatingDate]);
 
   // Mark messages as read when user can see them
   const markingReadRef = React.useRef(false);
@@ -1521,10 +1516,6 @@ function AdminAppointmentRow({
         // Hide floating date after scrolling stops (1 second of inactivity)
         scrollTimeoutRef.current = setTimeout(() => {
           setIsScrolling(false);
-          // Also hide the floating date when scrolling stops
-          setTimeout(() => {
-            setCurrentFloatingDate('');
-          }, 500);
         }, 1000);
       };
       
