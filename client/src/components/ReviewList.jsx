@@ -1068,18 +1068,20 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
                   <option value="other">Other</option>
                 </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {reportCategory === 'other' ? 'Additional Details *' : 'Additional Details (Optional)'}
-                </label>
-                <textarea
-                  className="w-full border border-yellow-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                  rows="3"
-                  value={reportReason}
-                  onChange={e => setReportReason(e.target.value)}
-                  placeholder={reportCategory === 'other' ? 'Please provide details about the issue...' : 'Provide additional context to help us understand the issue...'}
-                />
-              </div>
+              {reportCategory && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {reportCategory === 'other' ? 'Additional Details *' : 'Additional Details (Optional)'}
+                  </label>
+                  <textarea
+                    className="w-full border border-yellow-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                    rows="3"
+                    value={reportReason}
+                    onChange={e => setReportReason(e.target.value)}
+                    placeholder={reportCategory === 'other' ? 'Please provide details about the issue...' : 'Provide additional context to help us understand the issue...'}
+                  />
+                </div>
+              )}
             </div>
             <div className="flex justify-end gap-2 mt-6">
               <button

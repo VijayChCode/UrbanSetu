@@ -461,16 +461,27 @@ export default function Listing() {
                 <span className="text-sm font-medium">Report</span>
               </button>
             )}
-            <FaShare
-              className="cursor-pointer text-gray-500 hover:text-gray-700 text-xl"
+            <button
               onClick={() => {
                 navigator.clipboard.writeText(window.location.href);
                 setCopied(true);
                 setTimeout(() => setCopied(false), 2000);
               }}
-            />
+              className="flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-2 rounded-lg transition-colors"
+              title="Share this property"
+            >
+              <FaShare className="text-sm" />
+              <span className="text-sm font-medium">Share</span>
+            </button>
           </div>
-          {copied && <p className="text-green-500 text-sm text-center mb-4">Link copied!</p>}
+          {copied && (
+            <div className="flex justify-center mb-4">
+              <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded-lg flex items-center gap-2">
+                <FaCheckCircle className="text-sm" />
+                <span className="text-sm font-medium">Link copied to clipboard!</span>
+              </div>
+            </div>
+          )}
 
           {/* Details Card */}
           <div className="p-3 sm:p-6 bg-gray-50 shadow-md rounded-lg mb-6">
