@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo, FaCommentDots, FaCheckDouble, FaBan, FaPaperPlane, FaCalendar, FaLightbulb, FaCopy, FaEllipsisV, FaFlag, FaCircle, FaInfoCircle, FaSync, FaStar, FaRegStar, FaLock, FaUnlock, FaEye, FaEyeSlash } from "react-icons/fa";
+import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo, FaCommentDots, FaCheckDouble, FaBan, FaPaperPlane, FaCalendar, FaLightbulb, FaCopy, FaEllipsisV, FaFlag, FaCircle, FaInfoCircle } from "react-icons/fa";
 import UserAvatar from '../components/UserAvatar';
 import { useSelector } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Appointment from "../components/Appointment";
 import { toast, ToastContainer } from 'react-toastify';
-import { socket } from "../utils/socket";
+import { socket, acknowledgeMessageReceipt } from "../utils/socket";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -98,8 +98,6 @@ export default function MyAppointments() {
       document.body.style.overflow = '';
     };
   }, [showOtherPartyModal]);
-
-
 
   // Prevent body scrolling when reinitiate modal is open
   useEffect(() => {
@@ -512,6 +510,8 @@ export default function MyAppointments() {
 
   // Function to copy message to clipboard
   const copyMessageToClipboard = (messageText) => {
+    console.log('Copy button clicked, message:', messageText);
+    
     if (!messageText) {
       toast.error('No message to copy');
       return;
@@ -551,6 +551,7 @@ export default function MyAppointments() {
       document.body.removeChild(textArea);
       
       if (success) {
+        console.log('Copy successful via fallback method');
         toast.success('Copied', {
           autoClose: 2000,
           position: 'bottom-center'
@@ -956,14 +957,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const [replyTo, setReplyTo] = useState(null);
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState(appt.comments || []);
-  
-  // Initialize starred messages when comments are loaded
-  useEffect(() => {
-    if (comments.length > 0) {
-      const starredMsgs = comments.filter(c => c.starredBy && c.starredBy.includes(currentUser._id));
-      setStarredMessages(starredMsgs);
-    }
-  }, [comments, currentUser._id]);
   const [sending, setSending] = useState(false);
   const [editingComment, setEditingComment] = useState(null);
   const [editText, setEditText] = useState("");
@@ -998,18 +991,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const [reportingMessage, setReportingMessage] = useState(null);
   const [submittingReport, setSubmittingReport] = useState(false);
   
-  // Report chat modal states
-  const [showReportChatModal, setShowReportChatModal] = useState(false);
-  const [reportChatReason, setReportChatReason] = useState('');
-  const [reportChatDetails, setReportChatDetails] = useState('');
-  const [submittingChatReport, setSubmittingChatReport] = useState(false);
-  
-  // Starred messages states
-  const [showStarredModal, setShowStarredModal] = useState(false);
-  const [starredMessages, setStarredMessages] = useState([]);
-  const [starringSaving, setStarringSaving] = useState(false);
-  const [loadingStarredMessages, setLoadingStarredMessages] = useState(false);
-  
   // New modal states for various confirmations
   const [showDeleteAppointmentModal, setShowDeleteAppointmentModal] = useState(false);
   const [showArchiveModal, setShowArchiveModal] = useState(false);
@@ -1041,264 +1022,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const [headerOptionsMessageId, setHeaderOptionsMessageId] = useState(null);
   const [privacyNoticeHighlighted, setPrivacyNoticeHighlighted] = useState(false);
   
-  // Check if device is mobile for conditional animation
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  
-  // Update mobile state on window resize
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-    
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-  
   // Message info modal state
   const [showMessageInfoModal, setShowMessageInfoModal] = useState(false);
   const [selectedMessageForInfo, setSelectedMessageForInfo] = useState(null);
   const [sendIconAnimating, setSendIconAnimating] = useState(false);
   const [sendIconSent, setSendIconSent] = useState(false);
-  
-  // Chat options menu state
-  const [showChatOptionsMenu, setShowChatOptionsMenu] = useState(false);
-  
-  // Chat lock states
-  const [isChatLocked, setIsChatLocked] = useState(false);
-  const [isChatAccessGranted, setIsChatAccessGranted] = useState(false);
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [passwordAction, setPasswordAction] = useState(''); // 'lock', 'unlock', or 'remove-lock'
-  const [password, setPassword] = useState('');
-  const [passwordError, setPasswordError] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
-
-  // Chat lock functions
-  const handleChatLock = () => {
-    setPasswordAction('lock');
-    setPassword('');
-    setConfirmPassword('');
-    setPasswordError('');
-    setShowPassword(false);
-    setShowConfirmPassword(false);
-    setShowPasswordModal(true);
-  };
-
-  const handleChatUnlock = () => {
-    setPasswordAction('unlock');
-    setPassword('');
-    setConfirmPassword('');
-    setPasswordError('');
-    setShowPassword(false);
-    setShowConfirmPassword(false);
-    setShowPasswordModal(true);
-  };
-
-  const handleRemoveChatLock = () => {
-    setPasswordAction('remove-lock');
-    setPassword('');
-    setConfirmPassword('');
-    setPasswordError('');
-    setShowPassword(false);
-    setShowConfirmPassword(false);
-    setShowPasswordModal(true);
-  };
-
-  const handlePasswordSubmit = async () => {
-    if (!password.trim()) {
-      setPasswordError('Password is required');
-      return;
-    }
-
-    // For lock action, validate confirm password
-    if (passwordAction === 'lock') {
-      if (!confirmPassword.trim()) {
-        setPasswordError('Please confirm your password');
-        return;
-      }
-      if (password !== confirmPassword) {
-        setPasswordError('Passwords do not match');
-        return;
-      }
-    }
-
-    try {
-      if (passwordAction === 'lock') {
-        // Lock chat via API
-        const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/lock`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ password }),
-        });
-        
-        const data = await res.json();
-        
-        if (res.ok) {
-          setIsChatLocked(true);
-          setIsChatAccessGranted(false);
-          setShowPasswordModal(false);
-          setPassword('');
-          setConfirmPassword('');
-          setShowChatModal(false); // Close chat when locking
-          toast.success('Chat locked successfully!');
-        } else {
-          setPasswordError(data.message || 'Failed to lock chat');
-        }
-      } else if (passwordAction === 'unlock') {
-        // Grant access to chat (chat remains locked)
-        const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/unlock`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ password }),
-        });
-        
-        const data = await res.json();
-        
-        if (res.ok) {
-          setIsChatAccessGranted(true);
-          setShowPasswordModal(false);
-          setPassword('');
-          toast.success('Chat access granted!');
-          // Automatically open the chat after successful unlock
-          setShowChatModal(true);
-        } else {
-          setPasswordError(data.message || 'Failed to grant chat access');
-        }
-      } else if (passwordAction === 'remove-lock') {
-        // Remove chat lock completely
-        const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/remove-lock`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ password }),
-        });
-        
-        const data = await res.json();
-        
-        if (res.ok) {
-          setIsChatLocked(false);
-          setIsChatAccessGranted(false);
-          setShowPasswordModal(false);
-          setPassword('');
-          toast.success('Chat lock removed successfully!');
-        } else {
-          setPasswordError(data.message || 'Failed to remove chat lock');
-        }
-      }
-    } catch (err) {
-      setPasswordError('An error occurred. Please try again.');
-    }
-  };
-
-  const handlePasswordCancel = () => {
-    setShowPasswordModal(false);
-    setPassword('');
-    setConfirmPassword('');
-    setPasswordError('');
-    setPasswordAction('');
-    setShowPassword(false);
-    setShowConfirmPassword(false);
-  };
-
-  // Forgot password functions
-  const handleForgotPassword = () => {
-    setShowForgotPasswordModal(true);
-    setShowPasswordModal(false);
-  };
-
-  const handleForgotPasswordCancel = () => {
-    setShowForgotPasswordModal(false);
-    setShowPasswordModal(true);
-  };
-
-  const handleForgotPasswordContinue = async () => {
-    try {
-      // Clear chat and remove lock via API
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/forgot-password`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-      });
-      
-      const data = await res.json();
-      
-      if (res.ok) {
-        setIsChatLocked(false);
-        setIsChatAccessGranted(false);
-        setShowForgotPasswordModal(false);
-        setShowPasswordModal(false);
-        toast.success('Chat unlocked and cleared successfully!');
-        // Refresh chat lock status
-        fetchChatLockStatus();
-        // Clear comments from local state and refresh from backend
-        setComments([]);
-        // Fetch latest comments to ensure sync with backend
-        fetchLatestComments();
-      } else {
-        toast.error(data.message || 'Failed to unlock chat');
-      }
-    } catch (err) {
-        toast.error('An error occurred. Please try again.');
-    }
-  };
-
-  // Fetch chat lock status from backend
-  const fetchChatLockStatus = async () => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/lock-status`, {
-        credentials: 'include'
-      });
-      
-      if (res.ok) {
-        const data = await res.json();
-        setIsChatLocked(data.chatLocked);
-        setIsChatAccessGranted(data.accessGranted || false);
-      }
-    } catch (err) {
-      console.error('Error fetching chat lock status:', err);
-    }
-  };
-
-  // Reset chat access when chat modal is closed
-  const resetChatAccess = async () => {
-    if (isChatAccessGranted && isChatLocked) {
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/reset-access`, {
-          method: 'PATCH',
-          credentials: 'include'
-        });
-        
-        if (res.ok) {
-          setIsChatAccessGranted(false);
-        }
-      } catch (err) {
-        console.error('Error resetting chat access:', err);
-      }
-    }
-  };
-
-  // Reset chat access when chat modal is closed
-  useEffect(() => {
-    if (!showChatModal && isChatAccessGranted && isChatLocked) {
-      resetChatAccess();
-    }
-  }, [showChatModal, isChatAccessGranted, isChatLocked]);
-
-  // Lock background scroll when password modals are open
-  useEffect(() => {
-    if (showPasswordModal || showForgotPasswordModal) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [showPasswordModal, showForgotPasswordModal]);
 
   // Auto-close shortcut tip after 10 seconds
   useEffect(() => {
@@ -1307,29 +1035,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       return () => clearTimeout(timer);
     }
   }, [showShortcutTip]);
-
-  // Close chat options menu when clicking outside or scrolling
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (showChatOptionsMenu && !event.target.closest('.chat-options-menu')) {
-        setShowChatOptionsMenu(false);
-      }
-    };
-
-    const handleScroll = () => {
-      if (showChatOptionsMenu) {
-        setShowChatOptionsMenu(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('scroll', handleScroll, true); // Use capture phase to catch all scroll events
-    
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('scroll', handleScroll, true);
-    };
-  }, [showChatOptionsMenu]);
 
   // Reset send icon animation after completion
   useEffect(() => {
@@ -1362,36 +1067,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       localStorage.setItem(`removedDeletedMsgs_${apptId}`, JSON.stringify(updated));
     }
   }
-
-  // Fetch latest comments when refresh button is clicked
-  const fetchLatestComments = async () => {
-    try {
-      setLoadingComments(true);
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}`, {
-        credentials: 'include'
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.comments) {
-          // Preserve starred status from current state
-          const updatedComments = data.comments.map(newComment => {
-            const existingComment = comments.find(c => c._id === newComment._id);
-            if (existingComment && existingComment.starredBy) {
-              return { ...newComment, starredBy: existingComment.starredBy };
-            }
-            return newComment;
-          });
-          setComments(updatedComments);
-          setUnreadNewMessages(0); // Reset unread count after refresh
-        }
-      }
-    } catch (err) {
-      console.error('Error fetching latest comments:', err);
-      toast.error('Failed to refresh messages');
-    } finally {
-      setLoadingComments(false);
-    }
-  };
 
 
 
@@ -1507,10 +1182,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     setSelectedMessageForInfo(message);
     setShowMessageInfoModal(true);
   };
-
-
-
-
 
   const handleCommentSend = async () => {
     if (!comment.trim()) return;
@@ -1749,9 +1420,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     const refocusInput = () => {
       if (inputRef.current) {
         inputRef.current.focus();
-        // Place cursor at end of text instead of start
-        const length = inputRef.current.value.length;
-        inputRef.current.setSelectionRange(length, length);
+        // For mobile devices, ensure the input remains active and set cursor position
+        inputRef.current.setSelectionRange(0, 0);
         // Force the input to be the active element
         if (document.activeElement !== inputRef.current) {
           inputRef.current.click();
@@ -1988,30 +1658,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     }
   }, [comments.length, isAtBottom, showChatModal, currentUser.email, markVisibleMessagesAsRead]);
 
-  // Fetch starred messages when modal opens
-  useEffect(() => {
-    if (showStarredModal) {
-      setLoadingStarredMessages(true);
-      // Fetch starred messages from backend
-      fetch(`${API_BASE_URL}/api/bookings/${appt._id}/starred-messages`, {
-        credentials: 'include'
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (data.starredMessages) {
-            setStarredMessages(data.starredMessages);
-          }
-        })
-        .catch(err => {
-          console.error('Error fetching starred messages:', err);
-          toast.error('Failed to load starred messages');
-        })
-        .finally(() => {
-          setLoadingStarredMessages(false);
-        });
-    }
-  }, [showStarredModal, appt._id]);
-
   // Check if user is at the bottom of chat
   const checkIfAtBottom = useCallback(() => {
     if (chatContainerRef.current) {
@@ -2106,8 +1752,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         // Show floating date when scrolling starts
         setIsScrolling(true);
         
-        // Check if scrolled to top for privacy notice highlighting (mobile only)
-        if (chatContainer && isMobile) {
+        // Check if scrolled to top for privacy notice highlighting
+        if (chatContainer) {
           const { scrollTop } = chatContainer;
           if (scrollTop < 50) { // Near the top
             setPrivacyNoticeHighlighted(true);
@@ -2199,7 +1845,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
           const idx = prev.findIndex(c => c._id === data.comment._id);
           if (idx !== -1) {
             // Update the existing comment in place, but do not downgrade 'read' to 'delivered'
-            // and preserve starred status
             const updated = [...prev];
             const localComment = prev[idx];
             const incomingComment = data.comment;
@@ -2207,21 +1852,19 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
             if (localComment.status === 'read' && incomingComment.status !== 'read') {
               status = 'read';
             }
-            // Preserve starred status from local state
-            const starredBy = localComment.starredBy || [];
-            updated[idx] = { ...incomingComment, status, starredBy };
+            updated[idx] = { ...incomingComment, status };
             return updated;
           } else {
-            // Only add if not present and not a temporary message
-            const isTemporaryMessage = prev.some(msg => msg._id.toString().startsWith('temp-'));
-            if (!isTemporaryMessage || data.comment.senderEmail !== currentUser.email) {
-              // If this is a new message from another user and chat is not open, increment unread count
-              if (data.comment.senderEmail !== currentUser.email && !showChatModal && !data.comment.readBy?.includes(currentUser._id)) {
-                setUnreadNewMessages(prev => prev + 1);
-              }
-              return [...prev, data.comment];
-            }
-            return prev;
+                    // Only add if not present and not a temporary message
+        const isTemporaryMessage = prev.some(msg => msg._id.toString().startsWith('temp-'));
+        if (!isTemporaryMessage || data.comment.senderEmail !== currentUser.email) {
+          // If this is a new message from another user and chat is not open, increment unread count
+          if (data.comment.senderEmail !== currentUser.email && !showChatModal && !data.comment.readBy?.includes(currentUser._id)) {
+            setUnreadNewMessages(prev => prev + 1);
+          }
+          return [...prev, data.comment];
+        }
+        return prev;
           }
         });
       }
@@ -2267,21 +1910,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       }).catch(error => {
         console.warn('Error marking comments as read on modal open:', error);
       });
-      
-      // Fetch chat lock status when chat opens
-      fetchChatLockStatus();
-      
-      // Sync starred messages when chat opens
-      if (starredMessages.length > 0) {
-        // Update starred messages list with current comment states
-        const updatedStarredMessages = starredMessages.map(starredMsg => {
-          const currentComment = comments.find(c => c._id === starredMsg._id);
-          return currentComment ? { ...starredMsg, starredBy: currentComment.starredBy || [] } : starredMsg;
-        }).filter(msg => msg.starredBy && msg.starredBy.includes(currentUser._id));
-        setStarredMessages(updatedStarredMessages);
-      }
     }
-  }, [showChatModal, appt._id, starredMessages.length, comments, currentUser._id]);
+  }, [showChatModal, appt._id]);
 
   // Listen for commentDelivered and commentRead events
   useEffect(() => {
@@ -2386,17 +2016,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
-      // Auto-lock chat when closed: reset access granted state if chat was locked
-      if (isChatLocked && isChatAccessGranted) {
-        setIsChatAccessGranted(false);
-        // Also reset access on backend
-        fetch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/reset-access`, {
-          method: 'PATCH',
-          credentials: 'include'
-        }).catch(err => {
-          console.error('Error resetting chat access:', err);
-        });
-      }
       // When chat is closed, restore unread count if there are still unread messages
       if (unreadCount > 0) {
         setUnreadNewMessages(unreadCount);
@@ -2407,7 +2026,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     return () => {
       document.body.style.overflow = '';
     };
-  }, [showChatModal, unreadCount, isChatLocked, isChatAccessGranted]);
+  }, [showChatModal, unreadCount]);
 
   // Filter out locally removed deleted messages
   const filteredComments = comments.filter(c => new Date(c.timestamp).getTime() > clearTime && !locallyRemovedIds.includes(c._id) && !(c.removedFor?.includes?.(currentUser._id)));
@@ -2456,11 +2075,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       socket.off('userOnlineUpdate', handleTableUserOnlineStatus);
     };
   }, [otherParty?._id]);
-
-  // Fetch chat lock status when component mounts
-  useEffect(() => {
-    fetchChatLockStatus();
-  }, [appt._id]);
 
   // Listen for typing events from the other party
   useEffect(() => {
@@ -2741,37 +2355,33 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   : appt.status === 'rejected'
                     ? "Chat not available for rejected appointments"
                     : "Chat not available for appointments cancelled by admin"
-            ) : (isChatLocked && !isChatAccessGranted) ? "Chat is locked - click to unlock" : "Open Chat"}
-            onClick={isChatDisabled ? undefined : (isChatLocked && !isChatAccessGranted) ? handleChatUnlock : () => setShowChatModal(true)}
+            ) : "Open Chat"}
+            onClick={isChatDisabled ? undefined : () => setShowChatModal(true)}
             disabled={isChatDisabled}
           >
-            {(isChatLocked && !isChatAccessGranted) ? (
-              <FaLock size={22} className="text-yellow-400" />
-            ) : (
-              <FaCommentDots size={22} className={!isChatDisabled ? "group-hover:animate-pulse" : ""} />
-            )}
+            <FaCommentDots size={22} className={!isChatDisabled ? "group-hover:animate-pulse" : ""} />
             {!isChatDisabled && (
               <div className="absolute inset-0 bg-white rounded-full opacity-0 group-hover:opacity-20 transition-opacity duration-200"></div>
             )}
-            {/* Typing indicator - highest priority - only show when chat is not locked */}
-            {isOtherPartyTyping && !isChatDisabled && !(isChatLocked && !isChatAccessGranted) && (
+            {/* Typing indicator - highest priority */}
+            {isOtherPartyTyping && !isChatDisabled && (
               <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-bold border-2 border-white animate-pulse">
                 ...
               </span>
             )}
-            {/* Unread count when not typing - only show when chat is not locked */}
-            {!isOtherPartyTyping && unreadNewMessages > 0 && isChatDisabled && !(isChatLocked && !isChatAccessGranted) && (
+            {/* Unread count when not typing */}
+            {!isOtherPartyTyping && unreadNewMessages > 0 && isChatDisabled && (
               <span className="absolute -top-1 -right-1 bg-gray-400 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-bold border-2 border-white">
                 {unreadNewMessages}
               </span>
             )}
-            {!isOtherPartyTyping && unreadNewMessages > 0 && !isChatDisabled && !(isChatLocked && !isChatAccessGranted) && (
+            {!isOtherPartyTyping && unreadNewMessages > 0 && !isChatDisabled && (
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-bold border-2 border-white">
                 {unreadNewMessages}
               </span>
             )}
-            {/* Online status green dot - only show when chat is not locked */}
-            {!isOtherPartyTyping && unreadNewMessages === 0 && isOtherPartyOnlineInTable && !isChatDisabled && !(isChatLocked && !isChatAccessGranted) && (
+            {/* Online status green dot - show when no typing and no unread count */}
+            {!isOtherPartyTyping && unreadNewMessages === 0 && isOtherPartyOnlineInTable && !isChatDisabled && (
               <span className="absolute -top-1 -right-1 bg-green-500 border-2 border-white rounded-full w-3 h-3"></span>
             )}
           </button>
@@ -2848,66 +2458,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             aria-label="Message info"
                           >
                             <FaInfoCircle size={18} />
-                          </button>
-                        )}
-                        {/* Star/Unstar - for all messages (sent and received) */}
-                        {!selectedMessageForHeaderOptions.deleted && (
-                          <button
-                            className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
-                            onClick={async () => { 
-                              const isStarred = selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id);
-                              setStarringSaving(true);
-                              try {
-                                const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${selectedMessageForHeaderOptions._id}/star`, {
-                                  method: 'PATCH',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  credentials: 'include',
-                                  body: JSON.stringify({ starred: !isStarred }),
-                                });
-                                if (res.ok) {
-                                  // Update the local state
-                                  setComments(prev => prev.map(c => 
-                                    c._id === selectedMessageForHeaderOptions._id 
-                                      ? { 
-                                          ...c, 
-                                          starredBy: isStarred 
-                                            ? (c.starredBy || []).filter(id => id !== currentUser._id)
-                                            : [...(c.starredBy || []), currentUser._id]
-                                        }
-                                      : c
-                                  ));
-                                  
-                                  // Update starred messages list
-                                  if (isStarred) {
-                                    // Remove from starred messages
-                                    setStarredMessages(prev => prev.filter(m => m._id !== selectedMessageForHeaderOptions._id));
-                                  } else {
-                                    // Add to starred messages
-                                    setStarredMessages(prev => [...prev, selectedMessageForHeaderOptions]);
-                                  }
-                                  
-                                  toast.success(isStarred ? 'Message unstarred' : 'Message starred');
-                                } else {
-                                  toast.error('Failed to update star status');
-                                }
-                              } catch (err) {
-                                toast.error('Failed to update star status');
-                              } finally {
-                                setStarringSaving(false);
-                              }
-                              setHeaderOptionsMessageId(null);
-                            }}
-                            title={selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id) ? "Unstar message" : "Star message"}
-                            aria-label={selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id) ? "Unstar message" : "Star message"}
-                            disabled={starringSaving}
-                          >
-                            {starringSaving ? (
-                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                            ) : selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id) ? (
-                              <FaStar size={18} />
-                            ) : (
-                              <FaRegStar size={18} />
-                            )}
                           </button>
                         )}
                         {/* Report (only for received messages, not deleted) */}
@@ -3012,7 +2562,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                       <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 min-w-0 flex-1">
                         <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
                           <h3 
-                            className="text-sm sm:text-lg font-bold text-white truncate cursor-pointer hover:underline"
+                            className="text-base sm:text-lg font-bold text-white truncate cursor-pointer hover:underline"
                             onClick={() => onShowOtherParty({
                               ...otherParty,
                               isOnline: isOtherPartyOnlineInTable,
@@ -3026,11 +2576,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           {/* Online status indicator - below name on mobile, inline on desktop */}
                           <div className="flex items-center gap-1 sm:hidden">
                             {isOtherPartyTyping ? (
-                              <span className="text-yellow-100 font-semibold text-[10px] bg-yellow-500 bg-opacity-80 px-1.5 py-0.5 rounded-full whitespace-nowrap">Typing...</span>
+                              <span className="text-yellow-100 font-semibold text-xs bg-yellow-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">Typing...</span>
                             ) : isOtherPartyOnline ? (
-                              <span className="text-green-100 font-semibold text-[10px] bg-green-500 bg-opacity-80 px-1.5 py-0.5 rounded-full whitespace-nowrap">Online</span>
+                              <span className="text-green-100 font-semibold text-xs bg-green-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">Online</span>
                             ) : (
-                              <span className="text-gray-100 font-semibold text-[10px] bg-gray-500 bg-opacity-80 px-1.5 py-0.5 rounded-full whitespace-nowrap">
+                              <span className="text-gray-100 font-semibold text-xs bg-gray-500 bg-opacity-80 px-2 py-1 rounded-full whitespace-nowrap">
                                 {formatLastSeen(otherPartyLastSeen) || 'Offline'}
                               </span>
                             )}
@@ -3050,145 +2600,34 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                         </div>
                       </div>
                       <div className="flex items-center gap-2 sm:gap-4 ml-auto flex-shrink-0">
-                        {/* Chat lock indicator */}
-                        {isChatLocked && (
-                          <div className="bg-yellow-500 text-white text-xs px-2 py-1 rounded-full font-bold flex items-center gap-1">
-                            <FaLock size={10} />
-                            Locked
-                          </div>
+                        {filteredComments.length > 0 && (
+                          <button
+                            className="text-xs text-red-600 hover:underline"
+                            onClick={() => setShowClearChatModal(true)}
+                            title="Clear chat locally"
+                          >
+                            Clear Chat
+                          </button>
                         )}
-                        {/* Unread message count */}
-                        {unreadNewMessages > 0 && (
-                          <div className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold animate-pulse">
-                            {unreadNewMessages} new message{unreadNewMessages > 1 ? 's' : ''}
-                          </div>
-                        )}
-                        {/* Chat options menu */}
                         <div className="relative">
                           <button
-                            className="text-white hover:text-gray-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors shadow"
-                            onClick={() => setShowChatOptionsMenu(!showChatOptionsMenu)}
-                            title="Chat options"
-                            aria-label="Chat options"
+                            className="text-yellow-500 hover:text-yellow-600 bg-yellow-50 hover:bg-yellow-100 rounded-full p-2 transition-colors shadow"
+                            onClick={() => setShowShortcutTip(!showShortcutTip)}
+                            title="Keyboard shortcut tip"
+                            aria-label="Show keyboard shortcut tip"
                           >
-                            <FaEllipsisV className="text-sm" />
+                            <FaLightbulb className="text-sm" />
                           </button>
-                          {showChatOptionsMenu && (
-                            <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-20 min-w-[180px] chat-options-menu">
-                              {/* Refresh option */}
-                              <button
-                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                                onClick={() => {
-                                  fetchLatestComments();
-                                  setShowChatOptionsMenu(false);
-                                }}
-                                disabled={loadingComments}
-                              >
-                                <FaSync className={`text-sm ${loadingComments ? 'animate-spin' : ''}`} />
-                                Refresh Messages
-                              </button>
-                              {/* Starred Messages option */}
-                              <button
-                                className="w-full px-4 py-2 text-left text-sm text-yellow-600 hover:bg-yellow-50 flex items-center gap-2"
-                                onClick={() => {
-                                  setShowStarredModal(true);
-                                  setShowChatOptionsMenu(false);
-                                }}
-                              >
-                                <FaStar className="text-sm" />
-                                Starred Messages
-                              </button>
-                              {/* Keyboard shortcut tip option */}
-                              <button
-                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                                onClick={() => {
-                                  setShowShortcutTip(!showShortcutTip);
-                                  setShowChatOptionsMenu(false);
-                                }}
-                              >
-                                <FaLightbulb className="text-sm" />
-                                Keyboard Shortcuts
-                              </button>
-                              {/* Divider line */}
-                              <div className="border-t border-gray-200 my-1"></div>
-                              {/* Chat Lock options */}
-                              {!isChatLocked ? (
-                                <button
-                                  className="w-full px-4 py-2 text-left text-sm text-blue-600 hover:bg-blue-50 flex items-center gap-2"
-                                  onClick={() => {
-                                    handleChatLock();
-                                    setShowChatOptionsMenu(false);
-                                  }}
-                                >
-                                  <FaLock className="text-sm" />
-                                  Lock Chat
-                                </button>
-                              ) : (
-                                <>
-                                  {!isChatAccessGranted && (
-                                    <button
-                                      className="w-full px-4 py-2 text-left text-sm text-green-600 hover:bg-green-50 flex items-center gap-2"
-                                      onClick={() => {
-                                        handleChatUnlock();
-                                        setShowChatOptionsMenu(false);
-                                      }}
-                                    >
-                                      <FaUnlock className="text-sm" />
-                                      Unlock Chat
-                                    </button>
-                                  )}
-                                  <button
-                                    className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                                    onClick={() => {
-                                      handleRemoveChatLock();
-                                      setShowChatOptionsMenu(false);
-                                    }}
-                                  >
-                                    <FaTimes className="text-sm" />
-                                    Remove Chat Lock
-                                  </button>
-                                </>
-                              )}
-                              {/* Report Chat option */}
-                              <button
-                                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                                onClick={() => {
-                                  setShowReportChatModal(true);
-                                  setShowChatOptionsMenu(false);
-                                }}
-                              >
-                                <FaFlag className="text-sm" />
-                                Report Chat
-                              </button>
-                              {/* Clear chat option */}
-                              {filteredComments.length > 0 && (
-                                <button
-                                  className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                                  onClick={() => {
-                                    setShowClearChatModal(true);
-                                    setShowChatOptionsMenu(false);
-                                  }}
-                                >
-                                  <FaTrash className="text-sm" />
-                                  Clear Chat
-                                </button>
-                              )}
+                          {showShortcutTip && (
+                            <div className="absolute top-full right-0 mt-2 bg-gray-800 text-white text-xs rounded-lg px-3 py-2 shadow-lg z-20 whitespace-nowrap">
+                              Press Ctrl + F to quickly focus and type your message.
+                              <div className="absolute -top-1 right-4 w-2 h-2 bg-gray-800 transform rotate-45"></div>
                             </div>
                           )}
                         </div>
-                        {/* Keyboard shortcut tip popup */}
-                        {showShortcutTip && (
-                          <div className="absolute top-full right-0 mt-2 bg-gray-800 text-white text-xs rounded-lg px-3 py-2 shadow-lg z-20 whitespace-nowrap">
-                            Press Ctrl + F to quickly focus and type your message.
-                            <div className="absolute -top-1 right-4 w-2 h-2 bg-gray-800 transform rotate-45"></div>
-                          </div>
-                        )}
                         <button
                           className="text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors z-10 shadow"
-                          onClick={() => {
-                            setShowChatModal(false);
-                            resetChatAccess();
-                          }}
+                          onClick={() => setShowChatModal(false)}
                           title="Close"
                           aria-label="Close"
                         >
@@ -3203,20 +2642,20 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   {/* Privacy Notice - First item in chat */}
                   <div 
                     className={`px-4 py-3 bg-gradient-to-r from-blue-50 to-purple-50 border-l-4 border-blue-400 rounded-r-lg mb-4 transform transition-all duration-500 hover:scale-105 hover:shadow-lg hover:from-blue-100 hover:to-purple-100 hover:border-blue-500 hover:border-l-6 backdrop-blur-sm ${
-                      isMobile && privacyNoticeHighlighted ? 'animate-attentionGlow shadow-lg border-blue-500 bg-gradient-to-r from-blue-100 to-purple-100 scale-105' : 
-                      isMobile && isAtBottom ? 'animate-slideInFromTop shadow-lg border-blue-500 bg-gradient-to-r from-blue-100 to-purple-100 animate-attentionGlow' : 'animate-gentlePulse'
+                      privacyNoticeHighlighted ? 'animate-attentionGlow shadow-lg border-blue-500 bg-gradient-to-r from-blue-100 to-purple-100 scale-105' : 
+                      isAtBottom ? 'animate-slideInFromTop shadow-lg border-blue-500 bg-gradient-to-r from-blue-100 to-purple-100 animate-attentionGlow' : 'animate-gentlePulse'
                     }`}
                     style={{
-                      animationDelay: isMobile && privacyNoticeHighlighted ? '0s' : (isMobile && isAtBottom ? '0s' : '0s'),
-                      transform: isMobile && privacyNoticeHighlighted ? 'scale(1.05)' : (isMobile && isAtBottom ? 'scale(1.02)' : 'scale(1)'),
-                      boxShadow: isMobile && privacyNoticeHighlighted ? '0 15px 35px rgba(59, 130, 246, 0.25)' : (isMobile && isAtBottom ? '0 10px 25px rgba(59, 130, 246, 0.15)' : 'none')
+                      animationDelay: privacyNoticeHighlighted ? '0s' : (isAtBottom ? '0s' : '0s'),
+                      transform: privacyNoticeHighlighted ? 'scale(1.05)' : (isAtBottom ? 'scale(1.02)' : 'scale(1)'),
+                      boxShadow: privacyNoticeHighlighted ? '0 15px 35px rgba(59, 130, 246, 0.25)' : (isAtBottom ? '0 10px 25px rgba(59, 130, 246, 0.15)' : 'none')
                     }}
                   >
                                           <p className="text-sm text-blue-700 font-medium text-center flex items-center justify-center gap-2">
-                        <span className={`${isMobile && privacyNoticeHighlighted ? 'animate-bounce text-blue-600' : isMobile && isAtBottom ? 'animate-bounce' : 'animate-gentlePulse'}`}>🔒</span>
+                        <span className={`${privacyNoticeHighlighted ? 'animate-bounce text-blue-600' : isAtBottom ? 'animate-bounce' : 'animate-gentlePulse'}`}>🔒</span>
                         Your privacy is our top priority — all your chats and data are fully encrypted for your safety
-                        {isMobile && privacyNoticeHighlighted && <span className="ml-2 animate-pulse text-blue-600">✨</span>}
-                        {isMobile && isAtBottom && !privacyNoticeHighlighted && <span className="ml-2 animate-pulse text-blue-600">✨</span>}
+                        {privacyNoticeHighlighted && <span className="ml-2 animate-pulse text-blue-600">✨</span>}
+                        {isAtBottom && !privacyNoticeHighlighted && <span className="ml-2 animate-pulse text-blue-600">✨</span>}
                       </p>
                   </div>
                   
@@ -3263,7 +2702,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           <div
                             ref={el => messageRefs.current[c._id] = el}
                             data-message-id={c._id}
-                            className={`rounded-2xl px-4 sm:px-5 py-3 text-sm shadow-xl max-w-[90%] sm:max-w-[80%] md:max-w-[70%] lg:max-w-[60%] xl:max-w-[50%] break-words overflow-hidden relative transition-all duration-300 min-h-[60px] ${
+                            className={`rounded-2xl px-4 sm:px-5 py-3 text-sm shadow-xl max-w-[90%] sm:max-w-[80%] md:max-w-[70%] break-words overflow-hidden relative transition-all duration-300 min-h-[60px] transform hover:scale-[1.02] ${
                               isMe 
                                 ? 'bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-500 hover:to-purple-600 text-white shadow-blue-200 hover:shadow-blue-300 hover:shadow-2xl' 
                                 : 'bg-white hover:bg-gray-50 text-gray-800 border border-gray-200 shadow-gray-200 hover:shadow-lg hover:border-gray-300 hover:shadow-xl'
@@ -3314,10 +2753,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               )}
                             </div>
                             <div className="flex items-center gap-1 justify-end mt-2" data-message-actions>
-                              {/* Star icon for starred messages */}
-                              {c.starredBy && c.starredBy.includes(currentUser._id) && (
-                                <FaStar className={`${isMe ? 'text-yellow-300' : 'text-yellow-500'} text-[10px]`} />
-                              )}
                               <span className={`${isMe ? 'text-blue-200' : 'text-gray-500'} text-[10px]`}>
                                 {new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
                               </span>
@@ -3449,7 +2884,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   >
                     {editingComment ? (
                       savingComment === editingComment ? (
-                        <FaPen className="text-lg text-white animate-editSaving" />
+                        <>
+                          <div className="w-4 h-4 border border-white border-t-transparent rounded-full animate-spin"></div>
+                        </>
                       ) : (
                         <FaPen className="text-lg text-white group-hover:scale-110 transition-transform duration-200" />
                       )
@@ -3546,35 +2983,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   }
                   .send-icon.animate-sent {
                     animation: sentSuccess 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-                  }
-                  @keyframes editSaving {
-                    0% { 
-                      transform: scale(1) rotate(0deg) translate(0, 0); 
-                      opacity: 1;
-                    }
-                    20% { 
-                      transform: scale(1.15) rotate(-8deg) translate(-1px, -1px); 
-                      opacity: 0.9;
-                    }
-                    40% { 
-                      transform: scale(1.25) rotate(0deg) translate(0, -2px); 
-                      opacity: 1;
-                    }
-                    60% { 
-                      transform: scale(1.15) rotate(8deg) translate(1px, -1px); 
-                      opacity: 0.9;
-                    }
-                    80% { 
-                      transform: scale(1.1) rotate(-4deg) translate(-1px, 0); 
-                      opacity: 0.95;
-                    }
-                    100% { 
-                      transform: scale(1) rotate(0deg) translate(0, 0); 
-                      opacity: 1;
-                    }
-                  }
-                  .animate-editSaving {
-                    animation: editSaving 1.2s ease-in-out infinite;
                   }
                 `}</style>
               </>
@@ -4076,208 +3484,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         </div>
       )}
 
-      {/* Report Chat Modal */}
-      {showReportChatModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-              <FaFlag className="text-red-500" /> Report Chat
-            </h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Reason</label>
-                <select
-                  value={reportChatReason}
-                  onChange={(e) => setReportChatReason(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-red-500 text-gray-900"
-                >
-                  <option value="">Select a reason</option>
-                  <option value="harassment">Harassment or bullying</option>
-                  <option value="spam">Spam or unwanted messages</option>
-                  <option value="inappropriate">Inappropriate content</option>
-                  <option value="scam">Scam or fraud</option>
-                  <option value="threats">Threats or violence</option>
-                  <option value="privacy">Privacy violation</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Additional details (optional)</label>
-                <textarea
-                  value={reportChatDetails}
-                  onChange={(e) => setReportChatDetails(e.target.value)}
-                  rows={4}
-                  placeholder="Provide more context to help admins review this chat..."
-                  className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-red-500 text-gray-900"
-                />
-              </div>
-            </div>
-            <div className="flex gap-2 mt-6 justify-end">
-              <button
-                onClick={() => {
-                  setShowReportChatModal(false);
-                  setReportChatReason('');
-                  setReportChatDetails('');
-                }}
-                className="px-4 py-2 rounded bg-gray-200 text-gray-800 hover:bg-gray-300"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={async () => {
-                  if (!reportChatReason) { 
-                    toast.error('Please select a reason'); 
-                    return; 
-                  }
-                  setSubmittingChatReport(true);
-                  try {
-                    const res = await fetch(`${API_BASE_URL}/api/notifications/report-chat-conversation`, {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      credentials: 'include',
-                      body: JSON.stringify({
-                        appointmentId: appt._id,
-                        reason: reportChatReason,
-                        details: reportChatDetails,
-                      }),
-                    });
-                    const data = await res.json();
-                    if (res.ok) {
-                      toast.info('Thank you for reporting.');
-                      setShowReportChatModal(false);
-                      setReportChatReason('');
-                      setReportChatDetails('');
-                    } else {
-                      toast.error(data.message || 'Failed to submit report');
-                    }
-                  } catch (err) {
-                    toast.error('Network error while reporting');
-                  } finally {
-                    setSubmittingChatReport(false);
-                  }
-                }}
-                disabled={submittingChatReport || !reportChatReason}
-                className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
-              >
-                {submittingChatReport ? 'Reporting…' : 'Report'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Starred Messages Modal */}
-      {showStarredModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 shadow-xl max-h-[80vh] overflow-y-auto">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-              <FaStar className="text-yellow-500" /> Starred Messages
-            </h3>
-            <div className="space-y-4">
-              {loadingStarredMessages ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-500 mx-auto mb-4"></div>
-                  <p className="text-gray-500">Loading starred messages...</p>
-                </div>
-              ) : starredMessages.length === 0 ? (
-                <div className="text-center py-8">
-                  <FaRegStar className="mx-auto text-4xl text-gray-400 mb-4" />
-                  <p className="text-gray-500">No starred messages in this conversation</p>
-                  <p className="text-sm text-gray-400 mt-2">Star important messages to find them easily later</p>
-                </div>
-              ) : (
-                starredMessages.map((message) => {
-                  const isMe = message.senderEmail === currentUser.email;
-                  return (
-                    <div key={message._id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                      <div
-                        className={`max-w-[85%] p-3 rounded-2xl break-words relative ${
-                          isMe
-                            ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}
-                      >
-                        <div className="flex items-start gap-2">
-                          <div className="flex-1">
-                            <div className="text-sm whitespace-pre-wrap leading-relaxed">
-                              {message.deleted ? (
-                                <span className="italic text-gray-500">This message was deleted</span>
-                              ) : (
-                                message.message
-                              )}
-                            </div>
-                            <div className="flex items-center gap-2 justify-between mt-2">
-                              <div className="flex items-center gap-1">
-                                <FaStar className={`${isMe ? 'text-yellow-300' : 'text-yellow-500'} text-xs`} />
-                                <span className={`${isMe ? 'text-blue-200' : 'text-gray-500'} text-xs`}>
-                                  {new Date(message.timestamp).toLocaleString('en-US', {
-                                    month: 'short',
-                                    day: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                  })}
-                                </span>
-                              </div>
-                              <button
-                                className={`${isMe ? 'text-blue-200 hover:text-red-300' : 'text-gray-500 hover:text-red-600'} transition-colors`}
-                                onClick={async () => {
-                                  setStarringSaving(true);
-                                  try {
-                                    const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${message._id}/star`, {
-                                      method: 'PATCH',
-                                      headers: { 'Content-Type': 'application/json' },
-                                      credentials: 'include',
-                                      body: JSON.stringify({ starred: false }),
-                                    });
-                                    if (res.ok) {
-                                      // Remove from starred messages list
-                                      setStarredMessages(prev => prev.filter(m => m._id !== message._id));
-                                      // Update the main comments state
-                                      setComments(prev => prev.map(c => 
-                                        c._id === message._id 
-                                          ? { ...c, starredBy: (c.starredBy || []).filter(id => id !== currentUser._id) }
-                                          : c
-                                      ));
-                                      toast.success('Message unstarred');
-                                    } else {
-                                      toast.error('Failed to unstar message');
-                                    }
-                                  } catch (err) {
-                                    toast.error('Failed to unstar message');
-                                  } finally {
-                                    setStarringSaving(false);
-                                  }
-                                }}
-                                title="Unstar message"
-                                disabled={starringSaving}
-                              >
-                                {starringSaving ? (
-                                  <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin"></div>
-                                ) : (
-                                  <FaTimes size={12} />
-                                )}
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-            <div className="flex justify-end mt-6">
-              <button
-                onClick={() => setShowStarredModal(false)}
-                className="px-4 py-2 rounded bg-gray-200 text-gray-800 hover:bg-gray-300"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Message Info Modal */}
       {showMessageInfoModal && selectedMessageForInfo && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -4366,196 +3572,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
               >
                 Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Password Modal for Chat Lock/Unlock */}
-      {showPasswordModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-              {passwordAction === 'lock' ? <FaLock className="text-blue-500" /> 
-               : passwordAction === 'unlock' ? <FaUnlock className="text-green-500" />
-               : <FaTimes className="text-red-500" />}
-              {passwordAction === 'lock' ? 'Lock Chat' 
-               : passwordAction === 'unlock' ? 'Unlock Chat'
-               : 'Remove Chat Lock'}
-            </h3>
-            
-            <p className="text-gray-600 mb-4">
-              {passwordAction === 'lock' 
-                ? 'Set a password to lock this chat. You will need this password to access it later.'
-                : passwordAction === 'unlock'
-                ? 'Enter the password to access this chat. The chat will remain locked after you close it.'
-                : 'Enter the password to permanently remove the chat lock. This will disable all chat protection.'
-              }
-            </p>
-            
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                {passwordAction === 'lock' ? 'Set Password:' : 'Enter Password:'}
-              </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    setPasswordError('');
-                  }}
-                  className="w-full p-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder={passwordAction === 'lock' ? 'Create a password...' : 'Enter password...'}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      handlePasswordSubmit();
-                    }
-                  }}
-                  autoFocus
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                >
-                  {showPassword ? <FaEye size={16} /> : <FaEyeSlash size={16} />}
-                </button>
-              </div>
-            </div>
-
-            {/* Confirm Password field - only for lock action */}
-            {passwordAction === 'lock' && (
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Confirm Password:
-                </label>
-                <div className="relative">
-                  <input
-                    type={showConfirmPassword ? "text" : "password"}
-                    value={confirmPassword}
-                    onChange={(e) => {
-                      setConfirmPassword(e.target.value);
-                      setPasswordError('');
-                    }}
-                    className="w-full p-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Confirm your password..."
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        handlePasswordSubmit();
-                      }
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                  >
-                    {showConfirmPassword ? <FaEye size={16} /> : <FaEyeSlash size={16} />}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Forgot Password link - only for unlock action */}
-            {passwordAction === 'unlock' && (
-              <div className="mb-4 text-center">
-                <button
-                  type="button"
-                  onClick={handleForgotPassword}
-                  className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
-                >
-                  Forgot Password?
-                </button>
-              </div>
-            )}
-            
-            {passwordError && (
-              <p className="text-red-500 text-sm mt-2">{passwordError}</p>
-            )}
-            
-            <div className="flex gap-3 justify-end">
-              <button
-                type="button"
-                onClick={handlePasswordCancel}
-                className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handlePasswordSubmit}
-                className={`px-4 py-2 rounded font-semibold transition-colors flex items-center gap-2 ${
-                  passwordAction === 'lock'
-                    ? 'bg-blue-600 text-white hover:bg-blue-700'
-                    : passwordAction === 'unlock'
-                    ? 'bg-green-600 text-white hover:bg-green-700'
-                    : 'bg-red-600 text-white hover:bg-red-700'
-                }`}
-              >
-                {passwordAction === 'lock' ? <FaLock size={12} /> 
-                 : passwordAction === 'unlock' ? <FaUnlock size={12} />
-                 : <FaTimes size={12} />}
-                {passwordAction === 'lock' ? 'Lock Chat' 
-                 : passwordAction === 'unlock' ? 'Unlock Chat'
-                 : 'Remove Lock'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Forgot Password Modal */}
-      {showForgotPasswordModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-              <FaUnlock className="text-orange-500" />
-              Forgot Password
-            </h3>
-            
-            <div className="mb-6">
-              <div className="bg-orange-50 border-l-4 border-orange-400 p-4 mb-4">
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-orange-400" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm text-orange-700">
-                      <strong>Warning:</strong> This action will:
-                    </p>
-                    <ul className="mt-2 text-sm text-orange-700 list-disc list-inside">
-                      <li>Clear all chat messages</li>
-                      <li>Remove the chat lock</li>
-                      <li>Clear the passcode if set</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-              
-              <p className="text-gray-600 text-sm">
-                Are you sure you want to continue? This action cannot be undone.
-              </p>
-            </div>
-            
-            <div className="flex gap-3 justify-end">
-              <button
-                type="button"
-                onClick={handleForgotPasswordCancel}
-                className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleForgotPasswordContinue}
-                className="px-4 py-2 rounded bg-orange-600 text-white font-semibold hover:bg-orange-700 transition-colors flex items-center gap-2"
-              >
-                <FaUnlock size={12} />
-                Continue
               </button>
             </div>
           </div>
