@@ -3634,48 +3634,48 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   </div>
                 )}
                 
-                {/* Image Preview Modal */}
+                {/* Image Preview Modal - Positioned as overlay */}
                 {showImagePreviewModal && selectedFile && (
-                  <div className="px-3 pb-2">
-                    <div className="bg-white border-2 border-gray-200 rounded-lg p-3 shadow-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-gray-700">Image Preview</span>
+                  <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white border-2 border-gray-200 rounded-lg p-4 shadow-2xl max-w-md w-full max-h-[80vh] overflow-y-auto">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-lg font-medium text-gray-700">Image Preview</span>
                         <button
                           onClick={() => {
                             setSelectedFile(null);
                             setImageCaption('');
                             setShowImagePreviewModal(false);
                           }}
-                          className="text-gray-400 hover:text-gray-600"
+                          className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-2 transition-colors"
                         >
-                          <FaTimes className="w-4 h-4" />
+                          <FaTimes className="w-5 h-5" />
                         </button>
                       </div>
-                      <div className="mb-3">
+                      <div className="mb-4">
                         <img
                           src={URL.createObjectURL(selectedFile)}
                           alt="Preview"
-                          className="max-w-full max-h-48 rounded-lg"
+                          className="w-full max-h-64 object-contain rounded-lg border"
                         />
                       </div>
-                      <div className="mb-3">
+                      <div className="mb-4">
                         <textarea
                           placeholder="Add a caption..."
                           value={imageCaption}
                           onChange={(e) => setImageCaption(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none"
-                          rows={2}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          rows={3}
                           maxLength={500}
                         />
                         <div className="text-xs text-gray-500 mt-1 text-right">
                           {imageCaption.length}/500
                         </div>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-3">
                         <button
                           onClick={handleSendImageWithCaption}
                           disabled={uploadingFile}
-                          className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                          className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition-colors"
                         >
                           {uploadingFile ? (
                             <div className="flex items-center justify-center">
@@ -3683,7 +3683,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               Sending...
                             </div>
                           ) : (
-                            'Send'
+                            'Send Image'
                           )}
                         </button>
                         <button
@@ -3692,7 +3692,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             setImageCaption('');
                             setShowImagePreviewModal(false);
                           }}
-                          className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm"
+                          className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm transition-colors"
                         >
                           Cancel
                         </button>
