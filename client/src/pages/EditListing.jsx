@@ -89,7 +89,11 @@ export default function EditListing() {
     try { new URL(url); } catch { return false; }
     const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
     const hasImageExtension = imageExtensions.some(ext => url.toLowerCase().includes(ext));
-    return hasImageExtension || url.includes('images') || url.includes('img');
+    
+    // Check for Cloudinary URLs (they contain 'cloudinary.com')
+    const isCloudinaryUrl = url.includes('cloudinary.com');
+    
+    return hasImageExtension || url.includes('images') || url.includes('img') || isCloudinaryUrl;
   };
 
   const handleImageChange = (index, url) => {
@@ -155,6 +159,13 @@ export default function EditListing() {
         const newImageUrls = [...formData.imageUrls];
         newImageUrls[index] = data.imageUrl;
         setFormData(prev => ({ ...prev, imageUrls: newImageUrls }));
+        
+        // Clear any existing errors for this image
+        setImageErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors[index];
+          return newErrors;
+        });
       } else {
         setImageErrors(prev => ({ ...prev, [index]: data.message || 'Upload failed' }));
       }
