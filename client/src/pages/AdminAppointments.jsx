@@ -3730,15 +3730,47 @@ function AdminAppointmentRow({
                                   </div>
                                 )}
                                 
-                                {/* Message content - Show deletion status if deleted */}
+                                {/* Message content - Show preserved content for deleted messages */}
                                 {message.deleted ? (
-                                  <span className="italic text-gray-500">This message was deleted</span>
+                                  <div className="border border-red-300 bg-red-50 rounded p-2 mb-2">
+                                    <div className="flex items-center gap-2 text-red-600 text-xs font-semibold mb-1">
+                                      <FaBan className="inline-block" />
+                                      Message deleted by {message.deletedBy || 'user'} (Admin view - preserved for records)
+                                    </div>
+                                    <div className="text-gray-800 bg-white p-2 rounded border-l-4 border-red-400 relative group">
+                                      {(() => {
+                                        const messageContent = message.originalMessage || message.message;
+                                        if (messageContent) {
+                                          return (
+                                            <>
+                                              <span className="whitespace-pre-wrap break-words">{messageContent}</span>
+                                              {/* Copy icon - visible on hover */}
+                                              <button
+                                                className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-gray-500 hover:text-gray-700 bg-white rounded p-1 shadow-sm"
+                                                onClick={(e) => { e.stopPropagation(); copyMessageToClipboard(messageContent); }}
+                                                title="Copy deleted message content"
+                                                aria-label="Copy deleted message content"
+                                              >
+                                                <FaCopy className="w-3 h-3" />
+                                              </button>
+                                            </>
+                                          );
+                                        } else {
+                                          return (
+                                            <span className="text-gray-500 italic">
+                                              [Message content not preserved - this message was deleted before content preservation was implemented]
+                                            </span>
+                                          );
+                                        }
+                                      })()}
+                                    </div>
+                                  </div>
                                 ) : (
                                   message.message
                                 )}
                               </div>
                               
-                              {/* Copy button - appears on hover */}
+                              {/* Copy button - appears on hover for non-deleted messages */}
                               {!message.deleted && (
                                 <button
                                   onClick={(e) => { e.stopPropagation(); copyMessageToClipboard(message.message); }}
