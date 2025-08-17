@@ -1212,12 +1212,12 @@ function AdminAppointmentRow({
     }
   }, [showChatModal, appt._id, starredMessages.length, localComments, currentUser._id]);
 
-  // Auto-close shortcut tip after 10 seconds
+  // Auto-close shortcut tip after 20 seconds
   React.useEffect(() => {
     if (showShortcutTip) {
       const timer = setTimeout(() => {
         setShowShortcutTip(false);
-      }, 10000);
+      }, 20000);
       return () => clearTimeout(timer);
     }
   }, [showShortcutTip]);
@@ -2369,26 +2369,7 @@ function AdminAppointmentRow({
         {showChatModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-md flex items-center justify-center z-50 p-4">
             <div className="bg-gradient-to-br from-white via-blue-50 to-purple-50 rounded-3xl shadow-2xl w-full h-full max-w-6xl max-h-full p-0 relative animate-fadeIn flex flex-col border border-gray-200 transform transition-all duration-500 hover:shadow-3xl">
-                              <div className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-4 border-b-2 border-blue-700 bg-gradient-to-r from-blue-700 via-purple-700 to-blue-900 rounded-t-3xl relative shadow-2xl">
-                                {/* File Upload Info Bulb */}
-                                <div className="relative group">
-                                  <button
-                                    className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
-                                    title="File upload guidelines"
-                                    aria-label="File upload guidelines"
-                                  >
-                                    <FaLightbulb className="text-sm" />
-                                  </button>
-                                  {/* Tooltip */}
-                                  <div className="absolute bottom-full left-0 mb-2 bg-gray-800 text-white text-xs rounded-lg px-3 py-2 shadow-lg z-30 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
-                                    <div className="font-semibold mb-1">📎 File Upload Guidelines:</div>
-                                    <div>• Images only (JPG, PNG, GIF, WebP)</div>
-                                    <div>• Maximum size: 5MB per file</div>
-                                    <div>• Add captions to images</div>
-                                    <div>• Other file types coming soon</div>
-                                    <div className="absolute top-full left-4 w-2 h-2 bg-gray-800 transform rotate-45"></div>
-                                  </div>
-                                </div>
+                                                              <div className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-4 border-b-2 border-blue-700 bg-gradient-to-r from-blue-700 via-purple-700 to-blue-900 rounded-t-3xl relative shadow-2xl">
                 {headerOptionsMessageId && selectedMessageForHeaderOptions ? (
                   <div className="flex items-center justify-between w-full">
                     <div className="flex items-center gap-3">
@@ -2576,7 +2557,7 @@ function AdminAppointmentRow({
                               <FaStar className="text-sm" />
                               Starred Messages
                             </button>
-                            {/* Keyboard shortcut tip option */}
+                            {/* Keyboard shortcuts and file upload guidelines */}
                             <button
                               className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
                               onClick={() => {
@@ -2585,7 +2566,7 @@ function AdminAppointmentRow({
                               }}
                             >
                               <FaLightbulb className="text-sm" />
-                              Keyboard Shortcuts
+                              Tips & Guidelines
                             </button>
                             {/* User details option for buyer */}
                             <button
@@ -2627,10 +2608,18 @@ function AdminAppointmentRow({
                           </div>
                         )}
                       </div>
-                      {/* Keyboard shortcut tip popup */}
+                      {/* Tips & Guidelines popup */}
                       {showShortcutTip && (
-                        <div className="absolute top-full right-0 mt-2 bg-gray-800 text-white text-xs rounded-lg px-3 py-2 shadow-lg z-20 whitespace-nowrap">
-                          Press Ctrl + F to quickly focus and type your message.
+                        <div className="absolute top-full right-0 mt-2 bg-gray-800 text-white text-xs rounded-lg px-3 py-2 shadow-lg z-20 max-w-xs">
+                          <div className="font-semibold mb-2">⌨️ Keyboard Shortcuts:</div>
+                          <div className="mb-2">• Press Ctrl + F to quickly focus and type your message</div>
+                          <div className="border-t border-gray-600 pt-2 mt-2">
+                            <div className="font-semibold mb-2">📎 File Upload Guidelines:</div>
+                            <div>• Images only (JPG, PNG, GIF, WebP)</div>
+                            <div>• Maximum size: 5MB per file</div>
+                            <div>• Add captions to images</div>
+                            <div>• Other file types coming soon</div>
+                          </div>
                           <div className="absolute -top-1 right-4 w-2 h-2 bg-gray-800 transform rotate-45"></div>
                         </div>
                       )}
