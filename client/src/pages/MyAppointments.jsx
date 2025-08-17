@@ -5,7 +5,7 @@ import { useSelector } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Appointment from "../components/Appointment";
 import { toast, ToastContainer } from 'react-toastify';
-import { socket, acknowledgeMessageReceipt } from "../utils/socket";
+import { socket } from "../utils/socket";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -510,8 +510,6 @@ export default function MyAppointments() {
 
   // Function to copy message to clipboard
   const copyMessageToClipboard = (messageText) => {
-    console.log('Copy button clicked, message:', messageText);
-    
     if (!messageText) {
       toast.error('No message to copy');
       return;
@@ -551,7 +549,6 @@ export default function MyAppointments() {
       document.body.removeChild(textArea);
       
       if (success) {
-        console.log('Copy successful via fallback method');
         toast.success('Copied', {
           autoClose: 2000,
           position: 'bottom-center'
@@ -1021,6 +1018,19 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   // New: track which message's options are shown in the header
   const [headerOptionsMessageId, setHeaderOptionsMessageId] = useState(null);
   const [privacyNoticeHighlighted, setPrivacyNoticeHighlighted] = useState(false);
+  
+  // Check if device is mobile for conditional animation
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  
+  // Update mobile state on window resize
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   
   // Message info modal state
   const [showMessageInfoModal, setShowMessageInfoModal] = useState(false);
@@ -1752,8 +1762,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         // Show floating date when scrolling starts
         setIsScrolling(true);
         
-        // Check if scrolled to top for privacy notice highlighting
-        if (chatContainer) {
+        // Check if scrolled to top for privacy notice highlighting (mobile only)
+        if (chatContainer && isMobile) {
           const { scrollTop } = chatContainer;
           if (scrollTop < 50) { // Near the top
             setPrivacyNoticeHighlighted(true);
@@ -2642,20 +2652,20 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   {/* Privacy Notice - First item in chat */}
                   <div 
                     className={`px-4 py-3 bg-gradient-to-r from-blue-50 to-purple-50 border-l-4 border-blue-400 rounded-r-lg mb-4 transform transition-all duration-500 hover:scale-105 hover:shadow-lg hover:from-blue-100 hover:to-purple-100 hover:border-blue-500 hover:border-l-6 backdrop-blur-sm ${
-                      privacyNoticeHighlighted ? 'animate-attentionGlow shadow-lg border-blue-500 bg-gradient-to-r from-blue-100 to-purple-100 scale-105' : 
-                      isAtBottom ? 'animate-slideInFromTop shadow-lg border-blue-500 bg-gradient-to-r from-blue-100 to-purple-100 animate-attentionGlow' : 'animate-gentlePulse'
+                      isMobile && privacyNoticeHighlighted ? 'animate-attentionGlow shadow-lg border-blue-500 bg-gradient-to-r from-blue-100 to-purple-100 scale-105' : 
+                      isMobile && isAtBottom ? 'animate-slideInFromTop shadow-lg border-blue-500 bg-gradient-to-r from-blue-100 to-purple-100 animate-attentionGlow' : 'animate-gentlePulse'
                     }`}
                     style={{
-                      animationDelay: privacyNoticeHighlighted ? '0s' : (isAtBottom ? '0s' : '0s'),
-                      transform: privacyNoticeHighlighted ? 'scale(1.05)' : (isAtBottom ? 'scale(1.02)' : 'scale(1)'),
-                      boxShadow: privacyNoticeHighlighted ? '0 15px 35px rgba(59, 130, 246, 0.25)' : (isAtBottom ? '0 10px 25px rgba(59, 130, 246, 0.15)' : 'none')
+                      animationDelay: isMobile && privacyNoticeHighlighted ? '0s' : (isMobile && isAtBottom ? '0s' : '0s'),
+                      transform: isMobile && privacyNoticeHighlighted ? 'scale(1.05)' : (isMobile && isAtBottom ? 'scale(1.02)' : 'scale(1)'),
+                      boxShadow: isMobile && privacyNoticeHighlighted ? '0 15px 35px rgba(59, 130, 246, 0.25)' : (isMobile && isAtBottom ? '0 10px 25px rgba(59, 130, 246, 0.15)' : 'none')
                     }}
                   >
                                           <p className="text-sm text-blue-700 font-medium text-center flex items-center justify-center gap-2">
-                        <span className={`${privacyNoticeHighlighted ? 'animate-bounce text-blue-600' : isAtBottom ? 'animate-bounce' : 'animate-gentlePulse'}`}>🔒</span>
+                        <span className={`${isMobile && privacyNoticeHighlighted ? 'animate-bounce text-blue-600' : isMobile && isAtBottom ? 'animate-bounce' : 'animate-gentlePulse'}`}>🔒</span>
                         Your privacy is our top priority — all your chats and data are fully encrypted for your safety
-                        {privacyNoticeHighlighted && <span className="ml-2 animate-pulse text-blue-600">✨</span>}
-                        {isAtBottom && !privacyNoticeHighlighted && <span className="ml-2 animate-pulse text-blue-600">✨</span>}
+                        {isMobile && privacyNoticeHighlighted && <span className="ml-2 animate-pulse text-blue-600">✨</span>}
+                        {isMobile && isAtBottom && !privacyNoticeHighlighted && <span className="ml-2 animate-pulse text-blue-600">✨</span>}
                       </p>
                   </div>
                   
@@ -2702,7 +2712,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           <div
                             ref={el => messageRefs.current[c._id] = el}
                             data-message-id={c._id}
-                            className={`rounded-2xl px-4 sm:px-5 py-3 text-sm shadow-xl max-w-[90%] sm:max-w-[80%] md:max-w-[70%] break-words overflow-hidden relative transition-all duration-300 min-h-[60px] transform hover:scale-[1.02] ${
+                            className={`rounded-2xl px-4 sm:px-5 py-3 text-sm shadow-xl max-w-[90%] sm:max-w-[80%] md:max-w-[70%] lg:max-w-[60%] xl:max-w-[50%] break-words overflow-hidden relative transition-all duration-300 min-h-[60px] ${
                               isMe 
                                 ? 'bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-500 hover:to-purple-600 text-white shadow-blue-200 hover:shadow-blue-300 hover:shadow-2xl' 
                                 : 'bg-white hover:bg-gray-50 text-gray-800 border border-gray-200 shadow-gray-200 hover:shadow-lg hover:border-gray-300 hover:shadow-xl'
