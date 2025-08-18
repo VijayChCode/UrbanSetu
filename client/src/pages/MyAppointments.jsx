@@ -4037,6 +4037,14 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           socket.emit('typing', { toUserId: otherParty._id, fromUserId: currentUser._id, appointmentId: appt._id });
                         }
                         
+                        // If cleared entirely, restore to original height
+                        if ((e.target.value || '').trim() === '') {
+                          const textarea = e.target;
+                          textarea.style.height = '48px';
+                          textarea.style.overflowY = 'hidden';
+                          return;
+                        }
+                        
                         // Auto-expand textarea (WhatsApp style) with scrolling support
                         const textarea = e.target;
                         textarea.style.height = '48px'; // Reset to min height

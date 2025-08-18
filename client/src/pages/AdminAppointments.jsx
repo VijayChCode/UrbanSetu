@@ -3220,6 +3220,14 @@ function AdminAppointmentRow({
                         setEditText(e.target.value);
                       }
                       
+                      // If cleared entirely, restore to original height
+                      if ((e.target.value || '').trim() === '') {
+                        const textarea = e.target;
+                        textarea.style.height = '48px';
+                        textarea.style.overflowY = 'hidden';
+                        return;
+                      }
+                      
                       // Auto-expand textarea (WhatsApp style) with scrolling support
                       const textarea = e.target;
                       textarea.style.height = '48px'; // Reset to min height
