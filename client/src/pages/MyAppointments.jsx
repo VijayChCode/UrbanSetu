@@ -3551,7 +3551,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           </div>
                         )}
                       </div>
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 min-w-0 flex-1">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 min-w-0 flex-1 pr-2 sm:pr-0">
                         <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
                           <h3 
                             className="text-sm sm:text-lg font-bold text-white truncate cursor-pointer hover:underline"
@@ -3566,13 +3566,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             {otherParty?.username || 'Unknown User'}
                           </h3>
                           {/* Online status indicator - below name on mobile, inline on desktop */}
-                          <div className="flex items-center gap-1 sm:hidden">
+                          <div className="flex items-center gap-1 sm:hidden max-w-[120px]">
                             {isOtherPartyTyping ? (
-                              <span className="text-yellow-100 font-semibold text-[10px] bg-yellow-500 bg-opacity-80 px-1.5 py-0.5 rounded-full whitespace-nowrap">Typing...</span>
+                              <span className="text-yellow-100 font-semibold text-[10px] bg-yellow-500 bg-opacity-80 px-1.5 py-0.5 rounded-full whitespace-nowrap truncate">Typing...</span>
                             ) : isOtherPartyOnline ? (
-                              <span className="text-green-100 font-semibold text-[10px] bg-green-500 bg-opacity-80 px-1.5 py-0.5 rounded-full whitespace-nowrap">Online</span>
+                              <span className="text-green-100 font-semibold text-[10px] bg-green-500 bg-opacity-80 px-1.5 py-0.5 rounded-full whitespace-nowrap truncate">Online</span>
                             ) : (
-                              <span className="text-gray-100 font-semibold text-[10px] bg-gray-500 bg-opacity-80 px-1.5 py-0.5 rounded-full whitespace-nowrap">
+                              <span className="text-gray-100 font-semibold text-[10px] bg-gray-500 bg-opacity-80 px-1.5 py-0.5 rounded-full whitespace-nowrap truncate">
                                 {formatLastSeen(otherPartyLastSeen) || 'Offline'}
                               </span>
                             )}
@@ -3594,7 +3594,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                       <div className="flex items-center gap-2 sm:gap-4 ml-auto flex-shrink-0">
                         {/* Lock indicator */}
                         {(chatLocked || chatLockStatusLoading) && (
-                          <div className="flex items-center gap-1 bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+                          <div className="flex items-center gap-1 bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-bold flex-shrink-0">
                             {chatLockStatusLoading ? (
                               <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                             ) : (
