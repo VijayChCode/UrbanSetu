@@ -164,6 +164,10 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
     width: `${pickerWidth}px`,
     maxWidth: '350px',
     maxHeight: `${pickerHeight}px`,
+    overflowY: 'auto',
+    WebkitOverflowScrolling: 'touch',
+    touchAction: 'pan-y',
+    overscrollBehavior: 'contain'
   };
   if (position.center && isMobile) {
     const containerRect = position.containerRect;
@@ -195,7 +199,7 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
   return (
     <div 
       ref={pickerRef}
-      className={positionClasses}
+      className={`${positionClasses} overflow-y-auto overscroll-contain`}
       style={dynamicStyles}
     >
       <div className="emoji-picker-container">
