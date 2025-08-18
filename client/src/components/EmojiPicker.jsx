@@ -4,7 +4,6 @@ import { BsEmojiSmile } from 'react-icons/bs';
 
 const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef }) => {
   const pickerRef = useRef(null);
-  const [searchValue, setSearchValue] = useState('');
 
   // Close picker when clicking outside
   useEffect(() => {
@@ -32,7 +31,6 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef }) => {
   const handleEmojiSelect = (emojiObject) => {
     onEmojiClick(emojiObject.emoji);
     setIsOpen(false);
-    setSearchValue(''); // Clear search when emoji is selected
   };
 
   if (!isOpen) return null;
@@ -46,25 +44,7 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef }) => {
         minWidth: '350px'
       }}
     >
-      {/* Custom header with search */}
-      <div className="p-3 border-b border-gray-200 bg-gray-50 rounded-t-lg">
-        <div className="flex items-center gap-2">
-          <BsEmojiSmile className="text-yellow-500 text-lg" />
-          <span className="text-sm font-medium text-gray-700">Choose an emoji</span>
-        </div>
-        <div className="mt-2">
-          <input
-            type="text"
-            placeholder="Search emojis..."
-            value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            autoFocus
-          />
-        </div>
-      </div>
-
-      {/* Emoji Picker */}
+      {/* Emoji Picker - uses built-in search functionality */}
       <div className="emoji-picker-container">
         <EmojiPicker
           onEmojiClick={handleEmojiSelect}
@@ -81,7 +61,6 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef }) => {
           lazyLoadEmojis={true}
           theme="light"
           emojiStyle="native"
-          searchValue={searchValue}
           categories={[
             'suggested',
             'smileys_people', 
