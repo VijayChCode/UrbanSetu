@@ -104,6 +104,31 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
     };
   }, [isOpen, setIsOpen, buttonRef, inputRef]);
 
+  // Prevent background/page scroll while emoji picker is open
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const preventBackgroundScroll = (event) => {
+      if (pickerRef.current && pickerRef.current.contains(event.target)) {
+        return; // allow scroll inside picker
+      }
+      event.preventDefault();
+    };
+
+    // Block scroll gestures outside the picker
+    document.addEventListener('wheel', preventBackgroundScroll, { passive: false });
+    document.addEventListener('touchmove', preventBackgroundScroll, { passive: false });
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('wheel', preventBackgroundScroll);
+      document.removeEventListener('touchmove', preventBackgroundScroll);
+    };
+  }, [isOpen]);
+
   // Handle emoji selection
   const handleEmojiSelect = (emojiObject) => {
     onEmojiClick(emojiObject.emoji);
