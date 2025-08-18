@@ -1098,6 +1098,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   // Chat options menu state
   const [showChatOptionsMenu, setShowChatOptionsMenu] = useState(false);
   
+  // Search functionality state
+  const [showSearchBox, setShowSearchBox] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [currentSearchIndex, setCurrentSearchIndex] = useState(-1);
+  
   // File upload states
   const [uploadingFile, setUploadingFile] = useState(false);
   const [fileUploadError, setFileUploadError] = useState('');
@@ -1525,14 +1531,26 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       }
     };
 
+    // Close search box when clicking outside
+    const handleSearchClickOutside = (event) => {
+      if (showSearchBox && !event.target.closest('.search-container')) {
+        setShowSearchBox(false);
+        setSearchQuery("");
+        setSearchResults([]);
+        setCurrentSearchIndex(-1);
+      }
+    };
+
     document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('mousedown', handleSearchClickOutside);
     document.addEventListener('scroll', handleScroll, true); // Use capture phase to catch all scroll events
     
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('mousedown', handleSearchClickOutside);
       document.removeEventListener('scroll', handleScroll, true);
     };
-  }, [showChatOptionsMenu]);
+  }, [showChatOptionsMenu, showSearchBox]);
 
   // Reset send icon animation after completion
   useEffect(() => {
@@ -1547,6 +1565,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       return () => clearTimeout(timer);
     }
   }, [sendIconAnimating]);
+
+  // Handle search result navigation
+  useEffect(() => {
+    if (currentSearchIndex >= 0 && searchResults[currentSearchIndex]) {
+      scrollToSearchResult(searchResults[currentSearchIndex]._id);
+    }
+  }, [currentSearchIndex, searchResults]);
 
   // Removed handleClickOutside functionality - options now only close when clicking three dots again
 
@@ -2103,6 +2128,65 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       case "cancelledBySeller": return "bg-pink-100 text-pink-700";
       case "cancelledByAdmin": return "bg-purple-100 text-purple-700";
       default: return "bg-gray-100 text-gray-700";
+    }
+  };
+
+  // Search functionality
+  const performSearch = (query) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      setCurrentSearchIndex(-1);
+      return;
+    }
+    
+    const results = comments
+      .filter(comment => !comment.deleted)
+      .filter(comment => 
+        comment.message.toLowerCase().includes(query.toLowerCase()) ||
+        comment.senderName?.toLowerCase().includes(query.toLowerCase()) ||
+        comment.senderEmail?.toLowerCase().includes(query.toLowerCase())
+      )
+      .map(comment => ({
+        ...comment,
+        matchIndex: comment.message.toLowerCase().indexOf(query.toLowerCase())
+      }));
+    
+    setSearchResults(results);
+    setCurrentSearchIndex(results.length > 0 ? 0 : -1);
+  };
+
+  const handleSearchInputChange = (e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    performSearch(query);
+  };
+
+  const handleSearchKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (searchResults.length > 0) {
+        // Navigate to next result
+        setCurrentSearchIndex((prev) => 
+          prev < searchResults.length - 1 ? prev + 1 : 0
+        );
+      }
+    } else if (e.key === 'Escape') {
+      setShowSearchBox(false);
+      setSearchQuery("");
+      setSearchResults([]);
+      setCurrentSearchIndex(-1);
+    }
+  };
+
+  const scrollToSearchResult = (commentId) => {
+    const messageElement = messageRefs.current[commentId];
+    if (messageElement) {
+      messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Highlight the message briefly
+      messageElement.classList.add('search-highlight');
+      setTimeout(() => {
+        messageElement.classList.remove('search-highlight');
+      }, 2000);
     }
   };
 
@@ -3380,6 +3464,48 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             {unreadNewMessages} new message{unreadNewMessages > 1 ? 's' : ''}
                           </div>
                         )}
+                        {/* Search functionality */}
+                        <div className="relative search-container">
+                          {showSearchBox ? (
+                            <div className="flex items-center gap-2 bg-white/20 rounded-full px-3 py-2">
+                              <input
+                                type="text"
+                                placeholder="Search messages..."
+                                value={searchQuery}
+                                onChange={handleSearchInputChange}
+                                onKeyDown={handleSearchKeyDown}
+                                className="bg-transparent text-white placeholder-white/70 text-sm outline-none min-w-[200px]"
+                                autoFocus
+                              />
+                              {searchResults.length > 0 && (
+                                <span className="text-white/80 text-xs">
+                                  {currentSearchIndex + 1}/{searchResults.length}
+                                </span>
+                              )}
+                              <button
+                                onClick={() => {
+                                  setShowSearchBox(false);
+                                  setSearchQuery("");
+                                  setSearchResults([]);
+                                  setCurrentSearchIndex(-1);
+                                }}
+                                className="text-white/80 hover:text-white"
+                              >
+                                <FaTimes size={14} />
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              className="text-white hover:text-gray-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors shadow"
+                              onClick={() => setShowSearchBox(true)}
+                              title="Search messages"
+                              aria-label="Search messages"
+                            >
+                              <FaSearch className="text-sm" />
+                            </button>
+                          )}
+                        </div>
+                        
                         {/* Chat options menu */}
                         <div className="relative">
                           <button
@@ -4113,6 +4239,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   }
                   .animate-editSaving {
                     animation: editSaving 1.2s ease-in-out infinite;
+                  }
+                  .search-highlight {
+                    animation: searchHighlight 2s ease-in-out;
+                  }
+                  @keyframes searchHighlight {
+                    0%, 100% { box-shadow: 0 0 0 rgba(59, 130, 246, 0); }
+                    50% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.8); }
                   }
                 `}</style>
               </>

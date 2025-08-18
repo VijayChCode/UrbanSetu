@@ -1176,6 +1176,12 @@ function AdminAppointmentRow({
   // Chat options menu state
   const [showChatOptionsMenu, setShowChatOptionsMenu] = useLocalState(false);
   
+  // Search functionality state
+  const [showSearchBox, setShowSearchBox] = useLocalState(false);
+  const [searchQuery, setSearchQuery] = useLocalState("");
+  const [searchResults, setSearchResults] = useLocalState([]);
+  const [currentSearchIndex, setCurrentSearchIndex] = useLocalState(-1);
+  
   // File upload states
   const [uploadingFile, setUploadingFile] = useLocalState(false);
   const [fileUploadError, setFileUploadError] = useLocalState('');
@@ -1268,6 +1274,16 @@ function AdminAppointmentRow({
         setShowChatOptionsMenu(false);
       }
     };
+    
+    // Close search box when clicking outside
+    const handleSearchClickOutside = (event) => {
+      if (showSearchBox && !event.target.closest('.search-container')) {
+        setShowSearchBox(false);
+        setSearchQuery("");
+        setSearchResults([]);
+        setCurrentSearchIndex(-1);
+      }
+    };
 
     const handleScroll = () => {
       if (showChatOptionsMenu) {
@@ -1276,13 +1292,15 @@ function AdminAppointmentRow({
     };
 
     document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('mousedown', handleSearchClickOutside);
     document.addEventListener('scroll', handleScroll, true); // Use capture phase to catch all scroll events
     
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('mousedown', handleSearchClickOutside);
       document.removeEventListener('scroll', handleScroll, true);
     };
-  }, [showChatOptionsMenu]);
+  }, [showChatOptionsMenu, showSearchBox]);
 
   // Reset send icon animation after completion
   React.useEffect(() => {
@@ -1297,6 +1315,13 @@ function AdminAppointmentRow({
       return () => clearTimeout(timer);
     }
   }, [sendIconAnimating]);
+
+  // Handle search result navigation
+  React.useEffect(() => {
+    if (currentSearchIndex >= 0 && searchResults[currentSearchIndex]) {
+      scrollToSearchResult(searchResults[currentSearchIndex]._id);
+    }
+  }, [currentSearchIndex, searchResults]);
 
   // Removed handleClickOutside functionality - options now only close when clicking three dots again
 
@@ -2097,6 +2122,65 @@ function AdminAppointmentRow({
   // Add function to check if appointment is upcoming
   const isUpcoming = new Date(appt.date) > new Date() || (new Date(appt.date).toDateString() === new Date().toDateString() && (!appt.time || appt.time > new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })));
 
+  // Search functionality
+  const performSearch = (query) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      setCurrentSearchIndex(-1);
+      return;
+    }
+    
+    const results = localComments
+      .filter(comment => !comment.deleted)
+      .filter(comment => 
+        comment.message.toLowerCase().includes(query.toLowerCase()) ||
+        comment.senderName?.toLowerCase().includes(query.toLowerCase()) ||
+        comment.senderEmail?.toLowerCase().includes(query.toLowerCase())
+      )
+      .map(comment => ({
+        ...comment,
+        matchIndex: comment.message.toLowerCase().indexOf(query.toLowerCase())
+      }));
+    
+    setSearchResults(results);
+    setCurrentSearchIndex(results.length > 0 ? 0 : -1);
+  };
+
+  const handleSearchInputChange = (e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    performSearch(query);
+  };
+
+  const handleSearchKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (searchResults.length > 0) {
+        // Navigate to next result
+        setCurrentSearchIndex((prev) => 
+          prev < searchResults.length - 1 ? prev + 1 : 0
+        );
+      }
+    } else if (e.key === 'Escape') {
+      setShowSearchBox(false);
+      setSearchQuery("");
+      setSearchResults([]);
+      setCurrentSearchIndex(-1);
+    }
+  };
+
+  const scrollToSearchResult = (commentId) => {
+    const messageElement = messageRefs.current[commentId];
+    if (messageElement) {
+      messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Highlight the message briefly
+      messageElement.classList.add('search-highlight');
+      setTimeout(() => {
+        messageElement.classList.remove('search-highlight');
+      }, 2000);
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case "pending": return "bg-yellow-100 text-yellow-700";
@@ -2553,6 +2637,48 @@ function AdminAppointmentRow({
                       </div>
                     )}
                     <div className="flex items-center gap-3 ml-auto">
+                      {/* Search functionality */}
+                      <div className="relative search-container">
+                        {showSearchBox ? (
+                          <div className="flex items-center gap-2 bg-white/20 rounded-full px-3 py-2">
+                            <input
+                              type="text"
+                              placeholder="Search messages..."
+                              value={searchQuery}
+                              onChange={handleSearchInputChange}
+                              onKeyDown={handleSearchKeyDown}
+                              className="bg-transparent text-white placeholder-white/70 text-sm outline-none min-w-[200px]"
+                              autoFocus
+                            />
+                            {searchResults.length > 0 && (
+                              <span className="text-white/80 text-xs">
+                                {currentSearchIndex + 1}/{searchResults.length}
+                              </span>
+                            )}
+                            <button
+                              onClick={() => {
+                                setShowSearchBox(false);
+                                setSearchQuery("");
+                                setSearchResults([]);
+                                setCurrentSearchIndex(-1);
+                              }}
+                              className="text-white/80 hover:text-white"
+                            >
+                              <FaTimes size={14} />
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            className="text-white hover:text-gray-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors shadow"
+                            onClick={() => setShowSearchBox(true)}
+                            title="Search messages"
+                            aria-label="Search messages"
+                          >
+                            <FaSearch className="text-sm" />
+                          </button>
+                        )}
+                      </div>
+                      
                       {/* Chat options menu */}
                       <div className="relative">
                         <button
@@ -3296,6 +3422,13 @@ function AdminAppointmentRow({
                   }
                   .animate-editSaving {
                     animation: editSaving 1.2s ease-in-out infinite;
+                  }
+                  .search-highlight {
+                    animation: searchHighlight 2s ease-in-out;
+                  }
+                  @keyframes searchHighlight {
+                    0%, 100% { box-shadow: 0 0 0 rgba(59, 130, 246, 0); }
+                    50% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.8); }
                   }
                 `}</style>
               
