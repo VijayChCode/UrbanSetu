@@ -193,12 +193,14 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
       ref={pickerRef}
       className={positionClasses}
       style={dynamicStyles}
+      onMouseDown={(e) => { e.preventDefault(); }}
       onWheel={(e) => { e.stopPropagation(); }}
       onTouchMove={(e) => { e.stopPropagation(); }}
     >
       <div className="emoji-picker-container">
         <EmojiPicker
           onEmojiClick={handleEmojiSelect}
+          onEmojiMouseDown={(e) => { e.preventDefault?.(); }}
           searchDisabled={false}
           searchPlaceholder="Search emojis..."
           autoFocusSearch={false}
