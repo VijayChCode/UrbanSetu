@@ -144,7 +144,7 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
   // Dynamic positioning classes and styles - constrained within chatbox
   const isMobile = window.innerWidth < 768;
   let positionClasses = `absolute z-[60] bg-white rounded-lg shadow-xl border border-gray-200 ${
-    position.bottom ? (isMobile ? 'bottom-full mb-8' : 'bottom-full mb-2') : (isMobile ? 'top-full mt-6' : 'top-full mt-2')
+    position.bottom ? 'bottom-full mb-2' : 'top-full mt-2'
   }`;
   if (position.center && isMobile) {
     positionClasses += '';
@@ -153,7 +153,7 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
   }
   const pickerWidth = window.innerWidth < 400 ? window.innerWidth - 32 : 350;
   const pickerHeight = window.innerWidth < 400 ? 350 : 400;
-  const viewportMax = Math.floor(window.innerHeight * (isMobile ? 0.4 : 0.6));
+  const viewportMax = Math.floor(window.innerHeight * (isMobile ? 0.45 : 0.6));
   const effectiveMaxHeight = Math.min(pickerHeight, viewportMax);
   const dynamicStyles = {
     transform: position.bottom ? 'translateY(-8px)' : 'translateY(8px)',
@@ -178,8 +178,6 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
       const buttonRelativeLeft = buttonLeft - containerLeft;
       dynamicStyles.left = `${pickerLeft - buttonRelativeLeft}px`;
       dynamicStyles.right = 'auto';
-      // Add a stronger vertical offset above the footer on mobile
-      dynamicStyles.transform = (position.bottom ? `translateY(-24px)` : `translateY(24px)`);
     } else {
       const leftOffset = Math.max(16, (window.innerWidth - pickerWidth) / 2);
       dynamicStyles.left = `${leftOffset}px`;
@@ -307,4 +305,3 @@ export const EmojiButton = ({ onEmojiClick, className = "", inputRef }) => {
 };
 
 export default CustomEmojiPicker;
-
