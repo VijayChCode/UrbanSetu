@@ -2004,6 +2004,16 @@ function AdminAppointmentRow({
     }
   };
 
+  // Utility function to auto-resize textarea
+  const autoResizeTextarea = (textarea) => {
+    if (textarea) {
+      textarea.style.height = '48px';
+      const scrollHeight = textarea.scrollHeight;
+      const maxHeight = 144;
+      textarea.style.height = Math.min(scrollHeight, maxHeight) + 'px';
+    }
+  };
+
   const startEditing = (comment) => {
     setEditingComment(comment._id);
     setEditText(comment.message);
@@ -2021,6 +2031,9 @@ function AdminAppointmentRow({
         // Place cursor at end of text instead of selecting all
         const length = inputRef.current.value.length;
         inputRef.current.setSelectionRange(length, length);
+        
+        // Auto-resize textarea for edited content
+        autoResizeTextarea(inputRef.current);
       }
     }, 100);
   };
@@ -2039,6 +2052,8 @@ function AdminAppointmentRow({
           inputRef.current.click();
           inputRef.current.focus();
         }
+        // Auto-resize textarea
+        autoResizeTextarea(inputRef.current);
       }
     };
     
@@ -2951,7 +2966,12 @@ function AdminAppointmentRow({
                 <div className="flex-1 relative">
                   <textarea
                     rows={1}
-                    className="w-full pl-4 pr-12 py-3 border-2 border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-400 shadow-lg transition-all duration-300 bg-white resize-y whitespace-pre-wrap break-all hover:border-blue-300 hover:shadow-xl focus:shadow-2xl transform hover:scale-[1.01]"
+                    className="w-full pl-4 pr-12 py-3 border-2 border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-400 shadow-lg transition-all duration-300 bg-white resize-none whitespace-pre-wrap break-all hover:border-blue-300 hover:shadow-xl focus:shadow-2xl transform hover:scale-[1.01] overflow-hidden"
+                    style={{
+                      minHeight: '48px',
+                      maxHeight: '144px', // 6 lines * 24px line height
+                      lineHeight: '24px'
+                    }}
                     placeholder={editingComment ? "Edit your message..." : "Type a message..."}
                     value={newComment}
                     onChange={(e) => {
@@ -2959,6 +2979,13 @@ function AdminAppointmentRow({
                       if (editingComment) {
                         setEditText(e.target.value);
                       }
+                      
+                      // Auto-expand textarea (WhatsApp style)
+                      const textarea = e.target;
+                      textarea.style.height = '48px'; // Reset to min height
+                      const scrollHeight = textarea.scrollHeight;
+                      const maxHeight = 144; // 6 lines max
+                      textarea.style.height = Math.min(scrollHeight, maxHeight) + 'px';
                     }}
                     onClick={() => {
                       if (headerOptionsMessageId) {
