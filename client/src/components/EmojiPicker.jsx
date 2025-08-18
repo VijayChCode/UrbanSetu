@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import EmojiPicker from 'emoji-picker-react';
 import { BsEmojiSmile } from 'react-icons/bs';
+import { FaKeyboard } from 'react-icons/fa';
 
 const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRef }) => {
   const pickerRef = useRef(null);
@@ -72,11 +73,11 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
         !buttonRef.current.contains(event.target)
       ) {
         setIsOpen(false);
-        // Refocus input to maintain keyboard on mobile
-        if (inputRef && inputRef.current) {
+        // Desktop: refocus input; Mobile: keep keyboard hidden
+        const isMobile = window.innerWidth < 768;
+        if (!isMobile && inputRef && inputRef.current) {
           setTimeout(() => {
             inputRef.current.focus();
-            // Ensure cursor is at the end
             const length = inputRef.current.value.length;
             inputRef.current.setSelectionRange(length, length);
           }, 100);
@@ -99,27 +100,22 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
     // Don't close the modal - let users select multiple emojis
     // setIsOpen(false); // Removed to keep modal open
     
-    // Immediately refocus input to maintain keyboard on mobile
-    if (inputRef && inputRef.current) {
-      // Use multiple strategies to maintain focus
+    // Desktop: keep input focused; Mobile: keep keyboard hidden
+    const isMobile = window.innerWidth < 768;
+    if (!isMobile && inputRef && inputRef.current) {
       const refocusInput = () => {
         inputRef.current.focus();
-        // Ensure cursor is at the end
         const length = inputRef.current.value.length;
         inputRef.current.setSelectionRange(length, length);
-        
-        // Force the input to be the active element on mobile
         if (document.activeElement !== inputRef.current) {
           inputRef.current.click();
           inputRef.current.focus();
         }
       };
-      
-      // Multiple attempts to maintain focus for mobile devices
-      refocusInput(); // Immediate focus
-      requestAnimationFrame(refocusInput); // Focus after DOM updates
-      setTimeout(refocusInput, 10); // Quick fallback
-      setTimeout(refocusInput, 50); // Additional fallback for slower devices
+      refocusInput();
+      requestAnimationFrame(refocusInput);
+      setTimeout(refocusInput, 10);
+      setTimeout(refocusInput, 50);
     }
   };
 
@@ -237,15 +233,36 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
 export const EmojiButton = ({ onEmojiClick, className = "", inputRef }) => {
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const buttonRef = useRef(null);
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 767px)');
+    const handleChange = (e) => setIsMobile(e.matches);
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
 
   const handleButtonClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
     
-    // Prevent keyboard from closing by maintaining focus on input
-    if (inputRef && inputRef.current && !isPickerOpen) {
-      // Keep the input focused when opening emoji picker
-      inputRef.current.focus();
+    // Mobile: replace keyboard with emoji panel (blur input to hide OS keyboard)
+    if (isMobile) {
+      if (!isPickerOpen) {
+        if (inputRef && inputRef.current) {
+          inputRef.current.blur();
+        }
+      } else {
+        // Closing picker: focus input to bring keyboard back
+        if (inputRef && inputRef.current) {
+          inputRef.current.focus();
+        }
+      }
+    } else {
+      // Desktop: keep input focused when opening emoji picker
+      if (inputRef && inputRef.current && !isPickerOpen) {
+        inputRef.current.focus();
+      }
     }
     
     setIsPickerOpen(!isPickerOpen);
@@ -264,7 +281,11 @@ export const EmojiButton = ({ onEmojiClick, className = "", inputRef }) => {
         className={`flex items-center justify-center p-2 text-gray-500 hover:text-yellow-500 hover:bg-gray-100 rounded-full transition-colors duration-200 ${className}`}
         title="Add emoji"
       >
-        <BsEmojiSmile className="text-lg" />
+        {isMobile && isPickerOpen ? (
+          <FaKeyboard className="text-lg" />
+        ) : (
+          <BsEmojiSmile className="text-lg" />
+        )}
       </button>
       
       <CustomEmojiPicker
