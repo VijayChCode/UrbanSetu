@@ -225,7 +225,7 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
           onEmojiMouseDown={(e) => { e.preventDefault?.(); }}
           searchDisabled={false}
           searchPlaceholder="Search emojis..."
-          autoFocusSearch={false}
+          autoFocusSearch={true}
           previewConfig={{ showPreview: false }}
           skinTonesDisabled={false}
           width={pickerWidth}
@@ -266,7 +266,7 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
           onEmojiMouseDown={(e) => { e.preventDefault?.(); }}
           searchDisabled={false}
           searchPlaceholder="Search emojis..."
-          autoFocusSearch={false}
+          autoFocusSearch={true}
           previewConfig={{ showPreview: false }}
           skinTonesDisabled={false}
           width={pickerWidth}
