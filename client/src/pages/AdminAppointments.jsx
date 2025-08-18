@@ -3011,6 +3011,10 @@ function AdminAppointmentRow({
                         toast.info("You can hit reply icon in header to reply");
                       }
                     }}
+                    onScroll={(e) => {
+                      // Prevent scroll event from propagating to parent chat container
+                      e.stopPropagation();
+                    }}
                     onKeyDown={e => { 
                       // Check if this is a desktop viewport only
                       const isDesktop = window.matchMedia('(min-width: 768px)').matches;
