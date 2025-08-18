@@ -3823,21 +3823,21 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           autoFocus
                         />
                         {searchResults.length > 0 && (
-                          <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
+                          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                             <span className="text-white/80 text-xs bg-white/10 px-2 py-1 rounded-full">
                               {currentSearchIndex + 1}/{searchResults.length}
                             </span>
                             <div className="flex gap-1">
                               <button
                                 onClick={() => setCurrentSearchIndex(prev => prev > 0 ? prev - 1 : searchResults.length - 1)}
-                                className="text-white/80 hover:text-white p-1 rounded transition-colors"
+                                className="text-white/80 hover:text-white p-1 rounded transition-colors text-xs"
                                 title="Previous result"
                               >
                                 ↑
                               </button>
                               <button
                                 onClick={() => setCurrentSearchIndex(prev => prev < searchResults.length - 1 ? prev + 1 : 0)}
-                                className="text-white/80 hover:text-white p-1 rounded transition-colors"
+                                className="text-white/80 hover:text-white p-1 rounded transition-colors text-xs"
                                 title="Next result"
                               >
                                 ↓
