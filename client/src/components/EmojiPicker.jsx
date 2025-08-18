@@ -208,11 +208,7 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
           searchDisabled={false}
           searchPlaceholder="Search emojis..."
           autoFocusSearch={false}
-          previewConfig={{
-            showPreview: true,
-            defaultCaption: "Pick an emoji!",
-            defaultEmoji: "1f60a"
-          }}
+          previewConfig={{ showPreview: false }}
           skinTonesDisabled={false}
           width={pickerWidth}
           height={pickerHeight}
