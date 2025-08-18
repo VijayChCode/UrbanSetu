@@ -107,41 +107,9 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
   // Handle emoji selection
   const handleEmojiSelect = (emojiObject) => {
     onEmojiClick(emojiObject.emoji);
-    // Keep picker open for multiple selections
-    const isMobileNow = window.innerWidth < 768;
+    // Keep picker open for multiple selections and keep input focused, but do not modify selection here
     if (inputRef && inputRef.current) {
-      const el = inputRef.current;
-      const moveCaretToEnd = () => {
-        try {
-          const length = el.value.length;
-          el.setSelectionRange(length, length);
-        } catch (_) {}
-      };
-      if (!isMobileNow) {
-        const refocusInput = () => {
-          el.focus();
-          moveCaretToEnd();
-          if (document.activeElement !== el) {
-            el.click();
-            el.focus();
-            moveCaretToEnd();
-          }
-        };
-        refocusInput();
-        requestAnimationFrame(refocusInput);
-        setTimeout(refocusInput, 10);
-        setTimeout(refocusInput, 50);
-      } else {
-        // Mobile: keep keyboard open; ensure caret stays at end while inserting emojis
-        const keepFocusAndCaret = () => {
-          el.focus();
-          moveCaretToEnd();
-        };
-        keepFocusAndCaret();
-        requestAnimationFrame(keepFocusAndCaret);
-        setTimeout(keepFocusAndCaret, 10);
-        setTimeout(keepFocusAndCaret, 50);
-      }
+      try { inputRef.current.focus(); } catch (_) {}
     }
   };
 

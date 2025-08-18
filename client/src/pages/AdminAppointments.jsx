@@ -3406,11 +3406,32 @@ function AdminAppointmentRow({
                   <div className="absolute right-12 bottom-3">
                     <EmojiButton 
                       onEmojiClick={(emoji) => {
-                        const newText = newComment + emoji;
+                        // Use live input value and caret selection for robust insertion
+                        const el = inputRef?.current;
+                        const baseText = el ? el.value : newComment;
+                        let start = baseText.length;
+                        let end = baseText.length;
+                        try {
+                          if (el && typeof el.selectionStart === 'number' && typeof el.selectionEnd === 'number') {
+                            start = el.selectionStart;
+                            end = el.selectionEnd;
+                          }
+                        } catch (_) {}
+                        const newText = baseText.slice(0, start) + emoji + baseText.slice(end);
                         setNewComment(newText);
                         if (editingComment) {
                           setEditText(newText);
                         }
+                        // Restore caret after inserted emoji just after the emoji
+                        setTimeout(() => {
+                          try {
+                            if (el) {
+                              const caretPos = start + emoji.length;
+                              el.focus();
+                              el.setSelectionRange(caretPos, caretPos);
+                            }
+                          } catch (_) {}
+                        }, 0);
                       }}
                       className="w-8 h-8"
                         inputRef={inputRef}
