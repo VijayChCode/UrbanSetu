@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
-import { FaTrash, FaSearch, FaPen, FaPaperPlane, FaUser, FaEnvelope, FaCalendar, FaPhone, FaUserShield, FaArchive, FaUndo, FaCommentDots, FaCheck, FaCheckDouble, FaBan, FaTimes, FaLightbulb, FaCopy, FaEllipsisV, FaInfoCircle, FaSync, FaStar, FaRegStar, FaFlag } from "react-icons/fa";
+import { FaTrash, FaSearch, FaPen, FaPaperPlane, FaUser, FaEnvelope, FaCalendar, FaPhone, FaUserShield, FaArchive, FaUndo, FaCommentDots, FaCheck, FaCheckDouble, FaBan, FaTimes, FaLightbulb, FaCopy, FaEllipsisV, FaInfoCircle, FaSync, FaStar, FaRegStar, FaFlag, FaCalendarAlt } from "react-icons/fa";
 import UserAvatar from '../components/UserAvatar';
 import ImagePreview from '../components/ImagePreview';
 import { useSelector } from "react-redux";
@@ -1182,6 +1182,11 @@ function AdminAppointmentRow({
   const [searchResults, setSearchResults] = useLocalState([]);
   const [currentSearchIndex, setCurrentSearchIndex] = useLocalState(-1);
   
+  // Calendar functionality state
+  const [showCalendar, setShowCalendar] = useLocalState(false);
+  const [selectedDate, setSelectedDate] = useLocalState("");
+  const [highlightedDateMessage, setHighlightedDateMessage] = useLocalState(null);
+  
   // File upload states
   const [uploadingFile, setUploadingFile] = useLocalState(false);
   const [fileUploadError, setFileUploadError] = useLocalState('');
@@ -1285,6 +1290,13 @@ function AdminAppointmentRow({
       }
     };
 
+    // Close calendar when clicking outside
+    const handleCalendarClickOutside = (event) => {
+      if (showCalendar && !event.target.closest('.calendar-container')) {
+        setShowCalendar(false);
+      }
+    };
+
     const handleScroll = () => {
       if (showChatOptionsMenu) {
         setShowChatOptionsMenu(false);
@@ -1293,14 +1305,16 @@ function AdminAppointmentRow({
 
     document.addEventListener('mousedown', handleClickOutside);
     document.addEventListener('mousedown', handleSearchClickOutside);
+    document.addEventListener('mousedown', handleCalendarClickOutside);
     document.addEventListener('scroll', handleScroll, true); // Use capture phase to catch all scroll events
     
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('mousedown', handleSearchClickOutside);
+      document.removeEventListener('mousedown', handleCalendarClickOutside);
       document.removeEventListener('scroll', handleScroll, true);
     };
-  }, [showChatOptionsMenu, showSearchBox]);
+  }, [showChatOptionsMenu, showSearchBox, showCalendar]);
 
   // Reset send icon animation after completion
   React.useEffect(() => {
@@ -2181,6 +2195,48 @@ function AdminAppointmentRow({
     }
   };
 
+  const handleDateSelect = (date) => {
+    setSelectedDate(date);
+    setShowCalendar(false);
+    
+    // Find the first message from the selected date
+    const targetDate = new Date(date);
+    const targetDateString = targetDate.toDateString();
+    
+    const firstMessageOfDate = localComments.find(comment => {
+      const commentDate = new Date(comment.timestamp);
+      return commentDate.toDateString() === targetDateString;
+    });
+    
+    if (firstMessageOfDate) {
+      // Scroll to the message
+      const messageElement = messageRefs.current[firstMessageOfDate._id];
+      if (messageElement) {
+        messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Highlight the message with date highlight color
+        setHighlightedDateMessage(firstMessageOfDate._id);
+        messageElement.classList.add('date-highlight');
+        
+        // Remove highlight after 3 seconds
+        setTimeout(() => {
+          messageElement.classList.remove('date-highlight');
+          setHighlightedDateMessage(null);
+        }, 3000);
+      }
+    } else {
+      toast.info('No messages found for the selected date');
+    }
+  };
+
+  const formatDateForInput = (date) => {
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case "pending": return "bg-yellow-100 text-yellow-700";
@@ -2637,6 +2693,41 @@ function AdminAppointmentRow({
                       </div>
                     )}
                     <div className="flex items-center gap-3 ml-auto">
+                      {/* Calendar functionality */}
+                      <div className="relative calendar-container">
+                        <button
+                          className="text-white hover:text-gray-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors shadow"
+                          onClick={() => setShowCalendar(!showCalendar)}
+                          title="Jump to date"
+                          aria-label="Jump to date"
+                        >
+                          <FaCalendarAlt className="text-sm" />
+                        </button>
+                        {showCalendar && (
+                          <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-20 p-3 min-w-[250px]">
+                            <div className="flex items-center justify-between mb-3">
+                              <span className="text-sm font-medium text-gray-700">Jump to Date</span>
+                              <button
+                                onClick={() => setShowCalendar(false)}
+                                className="text-gray-400 hover:text-gray-600"
+                              >
+                                <FaTimes size={14} />
+                              </button>
+                            </div>
+                            <input
+                              type="date"
+                              value={selectedDate}
+                              onChange={(e) => handleDateSelect(e.target.value)}
+                              className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              max={formatDateForInput(new Date())}
+                            />
+                            <div className="text-xs text-gray-500 mt-2">
+                              Select a date to jump to the first message from that day
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      
                       {/* Search functionality */}
                       <div className="relative search-container">
                         {showSearchBox ? (
@@ -3429,6 +3520,13 @@ function AdminAppointmentRow({
                   @keyframes searchHighlight {
                     0%, 100% { box-shadow: 0 0 0 rgba(59, 130, 246, 0); }
                     50% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.8); }
+                  }
+                  .date-highlight {
+                    animation: dateHighlight 3s ease-in-out;
+                  }
+                  @keyframes dateHighlight {
+                    0%, 100% { box-shadow: 0 0 0 rgba(168, 85, 247, 0); }
+                    50% { box-shadow: 0 0 25px rgba(168, 85, 247, 0.9); }
                   }
                 `}</style>
               
