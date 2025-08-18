@@ -2910,8 +2910,8 @@ function AdminAppointmentRow({
               
               {/* Enhanced Search Header */}
               {showSearchBox && (
-                <div className="enhanced-search-header bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 px-4 py-3 border-b-2 border-blue-700 flex-shrink-0 animate-slideDown">
-                  <div className="flex items-center gap-3">
+                <div className="enhanced-search-header bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 px-3 sm:px-4 py-3 border-b-2 border-blue-700 flex-shrink-0 animate-slideDown overflow-hidden">
+                  <div className="flex items-center gap-2 sm:gap-3 flex-nowrap">
                     {/* Calendar Search Icon */}
                     <div className="relative calendar-container">
                       <button
@@ -2958,7 +2958,7 @@ function AdminAppointmentRow({
                     </div>
                     
                     {/* Enhanced Search Bar */}
-                    <div className="flex-1 flex items-center gap-2 bg-white/20 rounded-full px-4 py-2 backdrop-blur-sm">
+                    <div className="flex-1 flex items-center gap-2 bg-white/20 rounded-full px-3 sm:px-4 py-2 backdrop-blur-sm min-w-0 overflow-hidden">
                       <FaSearch className="text-white/70 text-sm" />
                       <input
                         type="text"
@@ -2966,11 +2966,11 @@ function AdminAppointmentRow({
                         value={searchQuery}
                         onChange={handleSearchInputChange}
                         onKeyDown={handleSearchKeyDown}
-                        className="bg-transparent text-white placeholder-white/70 text-sm outline-none flex-1 min-w-0"
+                        className="bg-transparent text-white placeholder-white/70 text-sm outline-none flex-1 min-w-0 w-full"
                         autoFocus
                       />
                       {searchResults.length > 0 && (
-                        <div className="flex items-center gap-2">
+                        <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
                           <span className="text-white/80 text-xs bg-white/10 px-2 py-1 rounded-full">
                             {currentSearchIndex + 1}/{searchResults.length}
                           </span>
@@ -3003,7 +3003,7 @@ function AdminAppointmentRow({
                         setCurrentSearchIndex(-1);
                         setShowCalendar(false);
                       }}
-                      className="text-white hover:text-gray-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-all duration-300 transform hover:scale-110 shadow"
+                      className="flex-shrink-0 text-white hover:text-gray-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-all duration-300 transform hover:scale-110 shadow"
                       title="Close search"
                       aria-label="Close search"
                     >
