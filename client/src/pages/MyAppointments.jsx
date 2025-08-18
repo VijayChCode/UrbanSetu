@@ -3551,7 +3551,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           </div>
                         )}
                       </div>
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 min-w-0 flex-1 pr-2 sm:pr-0">
+                      <div className={`flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 min-w-0 flex-1 ${(chatLocked || chatLockStatusLoading) ? 'pr-2 sm:pr-0' : ''}`}>
                         <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
                           <h3 
                             className="text-sm sm:text-lg font-bold text-white truncate cursor-pointer hover:underline"
@@ -3566,13 +3566,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             {otherParty?.username || 'Unknown User'}
                           </h3>
                           {/* Online status indicator - below name on mobile, inline on desktop */}
-                          <div className="flex items-center gap-1 sm:hidden max-w-[120px]">
+                          <div className={`flex items-center gap-1 sm:hidden ${(chatLocked || chatLockStatusLoading) ? 'max-w-[120px]' : ''}`}>
                             {isOtherPartyTyping ? (
-                              <span className="text-yellow-100 font-semibold text-[10px] bg-yellow-500 bg-opacity-80 px-1.5 py-0.5 rounded-full whitespace-nowrap truncate">Typing...</span>
+                              <span className={`text-yellow-100 font-semibold text-[10px] bg-yellow-500 bg-opacity-80 px-1.5 py-0.5 rounded-full whitespace-nowrap ${(chatLocked || chatLockStatusLoading) ? 'truncate' : ''}`}>Typing...</span>
                             ) : isOtherPartyOnline ? (
-                              <span className="text-green-100 font-semibold text-[10px] bg-green-500 bg-opacity-80 px-1.5 py-0.5 rounded-full whitespace-nowrap truncate">Online</span>
+                              <span className={`text-green-100 font-semibold text-[10px] bg-green-500 bg-opacity-80 px-1.5 py-0.5 rounded-full whitespace-nowrap ${(chatLocked || chatLockStatusLoading) ? 'truncate' : ''}`}>Online</span>
                             ) : (
-                              <span className="text-gray-100 font-semibold text-[10px] bg-gray-500 bg-opacity-80 px-1.5 py-0.5 rounded-full whitespace-nowrap truncate">
+                              <span className={`text-gray-100 font-semibold text-[10px] bg-gray-500 bg-opacity-80 px-1.5 py-0.5 rounded-full whitespace-nowrap ${(chatLocked || chatLockStatusLoading) ? 'truncate' : ''}`}>
                                 {formatLastSeen(otherPartyLastSeen) || 'Offline'}
                               </span>
                             )}
