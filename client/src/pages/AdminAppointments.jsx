@@ -2787,11 +2787,7 @@ function AdminAppointmentRow({
                       <FaCommentDots className="text-blue-600 text-lg" />
                     </div>
                     <h3 className="text-lg font-bold text-white">Live Chat</h3>
-                    {unreadNewMessages > 0 && (
-                      <div className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold animate-pulse">
-                        {unreadNewMessages} new message{unreadNewMessages > 1 ? 's' : ''}
-                      </div>
-                    )}
+
                     <div className="flex items-center gap-3 ml-auto">
 
                       

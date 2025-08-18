@@ -3605,12 +3605,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             {chatLockStatusLoading ? 'Loading...' : 'Locked'}
                           </div>
                         )}
-                        {/* Unread message count */}
-                        {unreadNewMessages > 0 && (
-                          <div className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold animate-pulse">
-                            {unreadNewMessages} new message{unreadNewMessages > 1 ? 's' : ''}
-                          </div>
-                        )}
+
 
                         
                         {/* Search functionality */}
