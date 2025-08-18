@@ -2004,13 +2004,22 @@ function AdminAppointmentRow({
     }
   };
 
-  // Utility function to auto-resize textarea
+  // Utility function to auto-resize textarea with scrolling support
   const autoResizeTextarea = (textarea) => {
     if (textarea) {
       textarea.style.height = '48px';
       const scrollHeight = textarea.scrollHeight;
       const maxHeight = 144;
-      textarea.style.height = Math.min(scrollHeight, maxHeight) + 'px';
+      
+      if (scrollHeight <= maxHeight) {
+        // If content fits within max height, expand the textarea
+        textarea.style.height = scrollHeight + 'px';
+        textarea.style.overflowY = 'hidden';
+      } else {
+        // If content exceeds max height, set to max height and enable scrolling
+        textarea.style.height = maxHeight + 'px';
+        textarea.style.overflowY = 'auto';
+      }
     }
   };
 
@@ -2966,7 +2975,7 @@ function AdminAppointmentRow({
                 <div className="flex-1 relative">
                   <textarea
                     rows={1}
-                    className="w-full pl-4 pr-12 py-3 border-2 border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-400 shadow-lg transition-all duration-300 bg-white resize-none whitespace-pre-wrap break-all hover:border-blue-300 hover:shadow-xl focus:shadow-2xl transform hover:scale-[1.01] overflow-hidden"
+                    className="w-full pl-4 pr-12 py-3 border-2 border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-400 shadow-lg transition-all duration-300 bg-white resize-none whitespace-pre-wrap break-all hover:border-blue-300 hover:shadow-xl focus:shadow-2xl transform hover:scale-[1.01] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
                     style={{
                       minHeight: '48px',
                       maxHeight: '144px', // 6 lines * 24px line height
@@ -2980,12 +2989,21 @@ function AdminAppointmentRow({
                         setEditText(e.target.value);
                       }
                       
-                      // Auto-expand textarea (WhatsApp style)
+                      // Auto-expand textarea (WhatsApp style) with scrolling support
                       const textarea = e.target;
                       textarea.style.height = '48px'; // Reset to min height
                       const scrollHeight = textarea.scrollHeight;
                       const maxHeight = 144; // 6 lines max
-                      textarea.style.height = Math.min(scrollHeight, maxHeight) + 'px';
+                      
+                      if (scrollHeight <= maxHeight) {
+                        // If content fits within max height, expand the textarea
+                        textarea.style.height = scrollHeight + 'px';
+                        textarea.style.overflowY = 'hidden';
+                      } else {
+                        // If content exceeds max height, set to max height and enable scrolling
+                        textarea.style.height = maxHeight + 'px';
+                        textarea.style.overflowY = 'auto';
+                      }
                     }}
                     onClick={() => {
                       if (headerOptionsMessageId) {
