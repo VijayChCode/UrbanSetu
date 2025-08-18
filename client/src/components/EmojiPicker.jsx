@@ -132,8 +132,9 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
   // Handle emoji selection
   const handleEmojiSelect = (emojiObject) => {
     onEmojiClick(emojiObject.emoji);
-    // Keep picker open for multiple selections and keep input focused, but do not modify selection here
-    if (inputRef && inputRef.current) {
+    // Do not force focus on mobile; only maintain focus if already focused
+    const wasFocused = inputRef && inputRef.current && document.activeElement === inputRef.current;
+    if (wasFocused) {
       try { inputRef.current.focus(); } catch (_) {}
     }
   };
@@ -253,14 +254,16 @@ export const EmojiButton = ({ onEmojiClick, className = "", inputRef }) => {
     e.preventDefault();
     e.stopPropagation();
     if (isMobile) {
-      // Keep keyboard open on mobile by maintaining focus in both cases
-      if (inputRef && inputRef.current) {
+      // Only keep keyboard open if it was already open (input focused).
+      const wasFocused = inputRef && inputRef.current && document.activeElement === inputRef.current;
+      if (wasFocused && inputRef && inputRef.current) {
         const el = inputRef.current;
-        el.focus();
         const moveCaretToEnd = () => {
           const length = el.value.length;
           try { el.setSelectionRange(length, length); } catch (_) {}
         };
+        // Maintain focus and caret position if already focused
+        el.focus();
         moveCaretToEnd();
         requestAnimationFrame(moveCaretToEnd);
         setTimeout(moveCaretToEnd, 10);
