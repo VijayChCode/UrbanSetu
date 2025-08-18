@@ -1818,6 +1818,8 @@ function AdminAppointmentRow({
     setLocalComments(prev => [...prev, tempMessage]);
     setNewComment("");
     setReplyTo(null);
+    // Reset textarea height to normal after sending
+    resetTextareaHeight();
     // Remove the global sending state to allow multiple messages
     // setSending(true);
 
@@ -1954,6 +1956,8 @@ function AdminAppointmentRow({
         setEditingComment(null);
         setEditText("");
         setNewComment(""); // Clear the main input
+        // Reset textarea height to normal after editing
+        resetTextareaHeight();
         
         // Aggressively refocus the input field to keep keyboard open on mobile
         const refocusInput = () => {
@@ -2020,6 +2024,14 @@ function AdminAppointmentRow({
         textarea.style.height = maxHeight + 'px';
         textarea.style.overflowY = 'auto';
       }
+    }
+  };
+
+  // Function to reset textarea to normal height
+  const resetTextareaHeight = () => {
+    if (inputRef.current) {
+      inputRef.current.style.height = '48px';
+      inputRef.current.style.overflowY = 'hidden';
     }
   };
 
