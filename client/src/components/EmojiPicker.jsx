@@ -22,6 +22,7 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
         height: window.innerHeight
       };
       
+      const isMobile = window.innerWidth < 768; // Mobile breakpoint
       const pickerWidth = window.innerWidth < 400 ? window.innerWidth - 32 : 350;
       const pickerHeight = window.innerWidth < 400 ? 350 : 400;
       
@@ -29,15 +30,29 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
       const spaceAbove = buttonRect.top - containerRect.top;
       const showAbove = spaceAbove >= pickerHeight + 16; // 16px margin
       
-      // Check if there's space on the right within the container
-      const spaceRight = containerRect.right - buttonRect.left;
-      const showRight = spaceRight >= pickerWidth + 16; // 16px margin
+      let finalPosition;
       
-      // If neither position fits well, prefer showing above and to the left
-      const finalPosition = {
-        bottom: showAbove,
-        right: showRight || spaceRight < pickerWidth / 2 ? false : true
-      };
+      if (isMobile) {
+        // Mobile: Center the picker within the chatbox
+        finalPosition = {
+          bottom: showAbove,
+          right: false, // Don't use right positioning
+          center: true, // Custom flag for centering
+          containerWidth: containerRect.width,
+          containerLeft: containerRect.left,
+          pickerWidth: pickerWidth
+        };
+      } else {
+        // Desktop: Use existing logic
+        const spaceRight = containerRect.right - buttonRect.left;
+        const showRight = spaceRight >= pickerWidth + 16; // 16px margin
+        
+        finalPosition = {
+          bottom: showAbove,
+          right: showRight || spaceRight < pickerWidth / 2 ? false : true,
+          center: false
+        };
+      }
       
       setPosition(finalPosition);
     }
@@ -107,11 +122,21 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
   if (!isOpen) return null;
 
   // Dynamic positioning classes and styles - constrained within chatbox
-  const positionClasses = `absolute z-[60] bg-white rounded-lg shadow-xl border border-gray-200 ${
+  const isMobile = window.innerWidth < 768;
+  
+  // Base classes for positioning
+  let positionClasses = `absolute z-[60] bg-white rounded-lg shadow-xl border border-gray-200 ${
     position.bottom ? 'bottom-full mb-2' : 'top-full mt-2'
-  } ${
-    position.right ? 'right-0' : 'left-0'
   }`;
+  
+  // Add horizontal positioning classes
+  if (position.center && isMobile) {
+    // Mobile: No left/right classes, we'll use custom positioning
+    positionClasses += '';
+  } else {
+    // Desktop: Use existing logic
+    positionClasses += ` ${position.right ? 'right-0' : 'left-0'}`;
+  }
 
   const pickerWidth = window.innerWidth < 400 ? window.innerWidth - 32 : 350;
   const pickerHeight = window.innerWidth < 400 ? 350 : 400;
@@ -121,10 +146,20 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
     width: `${pickerWidth}px`,
     maxWidth: '350px',
     maxHeight: `${pickerHeight}px`,
-    // Ensure picker stays within viewport bounds
-    left: position.right ? 'auto' : '0',
-    right: position.right ? '0' : 'auto',
   };
+
+  // Handle positioning based on device type
+  if (position.center && isMobile) {
+    // Mobile: Center within the chatbox container
+    const containerWidth = position.containerWidth || window.innerWidth;
+    const leftOffset = Math.max(16, (containerWidth - pickerWidth) / 2); // 16px minimum margin
+    dynamicStyles.left = `${leftOffset}px`;
+    dynamicStyles.right = 'auto';
+  } else {
+    // Desktop: Use existing positioning logic
+    dynamicStyles.left = position.right ? 'auto' : '0';
+    dynamicStyles.right = position.right ? '0' : 'auto';
+  }
 
   return (
     <div 
