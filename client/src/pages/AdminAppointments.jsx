@@ -2625,7 +2625,7 @@ function AdminAppointmentRow({
             <div className="bg-gradient-to-br from-white via-blue-50 to-purple-50 rounded-3xl shadow-2xl w-full h-full max-w-6xl max-h-full p-0 relative animate-fadeIn flex flex-col border border-gray-200 transform transition-all duration-500 hover:shadow-3xl">
                                                               <div className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-4 border-b-2 border-blue-700 bg-gradient-to-r from-blue-700 via-purple-700 to-blue-900 rounded-t-3xl relative shadow-2xl sticky top-[env(safe-area-inset-top,0px)] z-30">
                 {headerOptionsMessageId && selectedMessageForHeaderOptions ? (
-                  <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center justify-end w-full gap-3">
                     <div className="flex items-center gap-3">
                       {!selectedMessageForHeaderOptions.deleted && (
                         <button
