@@ -680,6 +680,7 @@ body.modal-open {
 .enhanced-search-header {
   position: relative;
   z-index: 10;
+  overflow: visible !important;
 }
 
 .enhanced-search-header .calendar-container {
