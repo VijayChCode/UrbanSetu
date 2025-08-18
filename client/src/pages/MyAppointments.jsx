@@ -1623,7 +1623,23 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       if (res.ok) {
         const data = await res.json();
         if (data.comments && data.comments.length !== comments.length) {
-          setComments(data.comments);
+          // Merge server comments with local temp messages to prevent re-entry
+          setComments(prev => {
+            const serverCommentIds = new Set(data.comments.map(c => c._id));
+            const localTempMessages = prev.filter(c => c._id.startsWith('temp-'));
+            
+            // Combine server comments with local temp messages
+            const mergedComments = [...data.comments];
+            
+            // Add back any local temp messages that haven't been confirmed yet
+            localTempMessages.forEach(tempMsg => {
+              if (!serverCommentIds.has(tempMsg._id)) {
+                mergedComments.push(tempMsg);
+              }
+            });
+            
+            return mergedComments;
+          });
           setUnreadNewMessages(0); // Reset unread count after refresh
         }
       }
@@ -1933,7 +1949,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   ...msg, 
                   _id: newComment._id,
                   status: newComment.status,
-                  readBy: newComment.readBy || msg.readBy
+                  readBy: newComment.readBy || msg.readBy,
+                  timestamp: newComment.timestamp || msg.timestamp
                 }
               : msg
           ));

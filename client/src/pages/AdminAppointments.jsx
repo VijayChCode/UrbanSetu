@@ -1786,10 +1786,11 @@ function AdminAppointmentRow({
                 ...msg, 
                 _id: newCommentFromServer._id,
                 status: newCommentFromServer.status,
-                readBy: newCommentFromServer.readBy || msg.readBy
+                readBy: newCommentFromServer.readBy || msg.readBy,
+                timestamp: newCommentFromServer.timestamp || msg.timestamp
               }
             : msg
-        ));
+          ));
       } else {
         // Remove the temp message and show error
         setLocalComments(prev => prev.filter(msg => msg._id !== tempId));
@@ -1927,7 +1928,8 @@ function AdminAppointmentRow({
                   ...msg, 
                   _id: newCommentFromServer._id,
                   status: newCommentFromServer.status,
-                  readBy: newCommentFromServer.readBy || msg.readBy
+                  readBy: newCommentFromServer.readBy || msg.readBy,
+                  timestamp: newCommentFromServer.timestamp || msg.timestamp
                 }
               : msg
           ));
@@ -2359,7 +2361,7 @@ function AdminAppointmentRow({
       if (res.ok) {
         const data = await res.json();
         if (data.comments) {
-          // Preserve starred status from current state
+          // Preserve starred status and temp messages from current state
           const updatedComments = data.comments.map(newComment => {
             const existingComment = localComments.find(c => c._id === newComment._id);
             if (existingComment && existingComment.starredBy) {
@@ -2367,6 +2369,17 @@ function AdminAppointmentRow({
             }
             return newComment;
           });
+          
+          // Add back any local temp messages that haven't been confirmed yet
+          const localTempMessages = localComments.filter(c => c._id.startsWith('temp-'));
+          const serverCommentIds = new Set(data.comments.map(c => c._id));
+          
+          localTempMessages.forEach(tempMsg => {
+            if (!serverCommentIds.has(tempMsg._id)) {
+              updatedComments.push(tempMsg);
+            }
+          });
+          
           setLocalComments(updatedComments);
         }
       }
