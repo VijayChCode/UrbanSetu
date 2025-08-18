@@ -3314,8 +3314,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 <div className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-4 border-b-2 border-blue-700 bg-gradient-to-r from-blue-700 via-purple-700 to-blue-900 rounded-t-3xl relative shadow-2xl flex-shrink-0 md:sticky md:top-0 sticky top-[env(safe-area-inset-top,0px)] z-30">
                   {headerOptionsMessageId && selectedMessageForHeaderOptions ? (
                     // Header-level options overlay (inline icons + three-dots menu + close)
-                    <div className="flex items-center justify-end w-full gap-3">
-                      <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-end w-full gap-4">
+                      <div className="flex items-center gap-4">
                         {/* Reply */}
                         {!selectedMessageForHeaderOptions.deleted && (
                           <button
