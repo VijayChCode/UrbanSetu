@@ -2218,23 +2218,54 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     });
     
     if (firstMessageOfDate) {
-      // Scroll to the message
+      // Enhanced animation for scrolling to the message
       const messageElement = messageRefs.current[firstMessageOfDate._id];
       if (messageElement) {
-        messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Add a pre-animation class for better visual feedback
+        messageElement.classList.add('date-jump-preparing');
         
-        // Highlight the message with date highlight color
-        setHighlightedDateMessage(firstMessageOfDate._id);
-        messageElement.classList.add('date-highlight');
+        // Smooth scroll with enhanced timing
+        messageElement.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center',
+          inline: 'nearest'
+        });
         
-        // Remove highlight after 3 seconds
+        // Enhanced highlight animation with multiple effects
         setTimeout(() => {
-          messageElement.classList.remove('date-highlight');
-          setHighlightedDateMessage(null);
-        }, 3000);
+          messageElement.classList.remove('date-jump-preparing');
+          setHighlightedDateMessage(firstMessageOfDate._id);
+          messageElement.classList.add('date-highlight', 'date-jump-pulse');
+          
+          // Add a ripple effect
+          const ripple = document.createElement('div');
+          ripple.className = 'date-jump-ripple';
+          messageElement.style.position = 'relative';
+          messageElement.appendChild(ripple);
+          
+          // Remove ripple after animation
+          setTimeout(() => {
+            if (ripple.parentNode) {
+              ripple.parentNode.removeChild(ripple);
+            }
+          }, 1000);
+          
+          // Remove highlight effects after enhanced duration
+          setTimeout(() => {
+            messageElement.classList.remove('date-highlight', 'date-jump-pulse');
+            setHighlightedDateMessage(null);
+          }, 4000);
+        }, 500);
       }
     } else {
-      toast.info('No messages found for the selected date');
+      toast.info('No messages found for the selected date', {
+        position: 'top-center',
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
     }
   };
 
@@ -3520,81 +3551,18 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             {unreadNewMessages} new message{unreadNewMessages > 1 ? 's' : ''}
                           </div>
                         )}
-                        {/* Calendar functionality */}
-                        <div className="relative calendar-container">
-                          <button
-                            className="text-white hover:text-gray-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors shadow"
-                            onClick={() => setShowCalendar(!showCalendar)}
-                            title="Jump to date"
-                            aria-label="Jump to date"
-                          >
-                            <FaCalendarAlt className="text-sm" />
-                          </button>
-                          {showCalendar && (
-                            <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-20 p-3 min-w-[250px]">
-                              <div className="flex items-center justify-between mb-3">
-                                <span className="text-sm font-medium text-gray-700">Jump to Date</span>
-                                <button
-                                  onClick={() => setShowCalendar(false)}
-                                  className="text-gray-400 hover:text-gray-600"
-                                >
-                                  <FaTimes size={14} />
-                                </button>
-                              </div>
-                              <input
-                                type="date"
-                                value={selectedDate}
-                                onChange={(e) => handleDateSelect(e.target.value)}
-                                className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                max={formatDateForInput(new Date())}
-                              />
-                              <div className="text-xs text-gray-500 mt-2">
-                                Select a date to jump to the first message from that day
-                              </div>
-                            </div>
-                          )}
-                        </div>
+
                         
                         {/* Search functionality */}
                         <div className="relative search-container">
-                          {showSearchBox ? (
-                            <div className="flex items-center gap-2 bg-white/20 rounded-full px-3 py-2">
-                              <input
-                                type="text"
-                                placeholder="Search messages..."
-                                value={searchQuery}
-                                onChange={handleSearchInputChange}
-                                onKeyDown={handleSearchKeyDown}
-                                className="bg-transparent text-white placeholder-white/70 text-sm outline-none min-w-[200px]"
-                                autoFocus
-                              />
-                              {searchResults.length > 0 && (
-                                <span className="text-white/80 text-xs">
-                                  {currentSearchIndex + 1}/{searchResults.length}
-                                </span>
-                              )}
-                              <button
-                                onClick={() => {
-                                  setShowSearchBox(false);
-                                  setSearchQuery("");
-                                  setSearchResults([]);
-                                  setCurrentSearchIndex(-1);
-                                }}
-                                className="text-white/80 hover:text-white"
-                              >
-                                <FaTimes size={14} />
-                              </button>
-                            </div>
-                          ) : (
-                            <button
-                              className="text-white hover:text-gray-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors shadow"
-                              onClick={() => setShowSearchBox(true)}
-                              title="Search messages"
-                              aria-label="Search messages"
-                            >
-                              <FaSearch className="text-sm" />
-                            </button>
-                          )}
+                          <button
+                            className="text-white hover:text-gray-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-all duration-300 transform hover:scale-110 shadow"
+                            onClick={() => setShowSearchBox(true)}
+                            title="Search messages"
+                            aria-label="Search messages"
+                          >
+                            <FaSearch className="text-sm" />
+                          </button>
                         </div>
                         
                         {/* Chat options menu */}
@@ -3730,6 +3698,101 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                     </>
                   )}
                 </div>
+                
+                {/* Enhanced Search Header */}
+                {showSearchBox && (
+                  <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 px-4 py-3 border-b-2 border-blue-700 flex-shrink-0 animate-slideDown">
+                    <div className="flex items-center gap-3">
+                      {/* Calendar Search Icon */}
+                      <div className="relative calendar-container">
+                        <button
+                          className="text-white hover:text-gray-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-all duration-300 transform hover:scale-110 shadow"
+                          onClick={() => setShowCalendar(!showCalendar)}
+                          title="Jump to date"
+                          aria-label="Jump to date"
+                        >
+                          <FaCalendarAlt className="text-sm" />
+                        </button>
+                        {showCalendar && (
+                          <div className="absolute top-full left-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-20 p-3 min-w-[250px] animate-fadeIn">
+                            <div className="flex items-center justify-between mb-3">
+                              <span className="text-sm font-medium text-gray-700">Jump to Date</span>
+                              <button
+                                onClick={() => setShowCalendar(false)}
+                                className="text-gray-400 hover:text-gray-600 transition-colors"
+                              >
+                                <FaTimes size={14} />
+                              </button>
+                            </div>
+                            <input
+                              type="date"
+                              value={selectedDate}
+                              onChange={(e) => handleDateSelect(e.target.value)}
+                              className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                              max={formatDateForInput(new Date())}
+                            />
+                            <div className="text-xs text-gray-500 mt-2">
+                              Select a date to jump to the first message from that day
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Enhanced Search Bar */}
+                      <div className="flex-1 flex items-center gap-2 bg-white/20 rounded-full px-4 py-2 backdrop-blur-sm">
+                        <FaSearch className="text-white/70 text-sm" />
+                        <input
+                          type="text"
+                          placeholder="Search messages..."
+                          value={searchQuery}
+                          onChange={handleSearchInputChange}
+                          onKeyDown={handleSearchKeyDown}
+                          className="bg-transparent text-white placeholder-white/70 text-sm outline-none flex-1 min-w-0"
+                          autoFocus
+                        />
+                        {searchResults.length > 0 && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-white/80 text-xs bg-white/10 px-2 py-1 rounded-full">
+                              {currentSearchIndex + 1}/{searchResults.length}
+                            </span>
+                            <div className="flex gap-1">
+                              <button
+                                onClick={() => setCurrentSearchIndex(prev => prev > 0 ? prev - 1 : searchResults.length - 1)}
+                                className="text-white/80 hover:text-white p-1 rounded transition-colors"
+                                title="Previous result"
+                              >
+                                ↑
+                              </button>
+                              <button
+                                onClick={() => setCurrentSearchIndex(prev => prev < searchResults.length - 1 ? prev + 1 : 0)}
+                                className="text-white/80 hover:text-white p-1 rounded transition-colors"
+                                title="Next result"
+                              >
+                                ↓
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Close Icon */}
+                      <button
+                        onClick={() => {
+                          setShowSearchBox(false);
+                          setSearchQuery("");
+                          setSearchResults([]);
+                          setCurrentSearchIndex(-1);
+                          setShowCalendar(false);
+                        }}
+                        className="text-white hover:text-gray-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-all duration-300 transform hover:scale-110 shadow"
+                        title="Close search"
+                        aria-label="Close search"
+                      >
+                        <FaTimes className="text-sm" />
+                      </button>
+                    </div>
+                  </div>
+                )}
                 
                 {/* Chat Content Area */}
                 <div className="flex-1 flex flex-col min-h-0">

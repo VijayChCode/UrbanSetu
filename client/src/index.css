@@ -554,3 +554,124 @@ body.modal-open {
     box-shadow: 0 0 0 0 rgba(147, 51, 234, 0);
   }
 }
+
+/* Enhanced search header animations */
+@keyframes slideDown {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Enhanced date jump animations */
+@keyframes dateJumpPreparing {
+  0% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(1.02);
+    filter: brightness(1.1);
+  }
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+@keyframes dateJumpPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.8);
+    background-color: rgba(59, 130, 246, 0.1);
+  }
+  25% {
+    transform: scale(1.03);
+    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0.6);
+    background-color: rgba(59, 130, 246, 0.2);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 20px rgba(59, 130, 246, 0.4);
+    background-color: rgba(59, 130, 246, 0.3);
+  }
+  75% {
+    transform: scale(1.03);
+    box-shadow: 0 0 0 15px rgba(59, 130, 246, 0.2);
+    background-color: rgba(59, 130, 246, 0.2);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+    background-color: rgba(59, 130, 246, 0.1);
+  }
+}
+
+@keyframes dateJumpRipple {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* Animation classes */
+.animate-slideDown {
+  animation: slideDown 0.3s ease-out;
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.date-jump-preparing {
+  animation: dateJumpPreparing 0.5s ease-in-out;
+}
+
+.date-jump-pulse {
+  animation: dateJumpPulse 2s ease-in-out;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.date-jump-ripple {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.4) 0%, transparent 70%);
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  animation: dateJumpRipple 1s ease-out;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Enhanced date highlight with improved visibility */
+.date-highlight {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(147, 51, 234, 0.15) 100%) !important;
+  border-left: 4px solid #3b82f6 !important;
+  border-radius: 8px !important;
+  padding-left: 12px !important;
+  margin-left: -8px !important;
+  transition: all 0.3s ease !important;
+}
