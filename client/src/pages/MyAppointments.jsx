@@ -1529,11 +1529,17 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       if (showChatOptionsMenu && !event.target.closest('.chat-options-menu')) {
         setShowChatOptionsMenu(false);
       }
+      if (showHeaderMoreMenu && !event.target.closest('.chat-options-menu')) {
+        setShowHeaderMoreMenu(false);
+      }
     };
 
     const handleScroll = () => {
       if (showChatOptionsMenu) {
         setShowChatOptionsMenu(false);
+      }
+      if (showHeaderMoreMenu) {
+        setShowHeaderMoreMenu(false);
       }
     };
 
@@ -1565,7 +1571,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       document.removeEventListener('mousedown', handleCalendarClickOutside);
       document.removeEventListener('scroll', handleScroll, true);
     };
-  }, [showChatOptionsMenu, showSearchBox, showCalendar]);
+  }, [showChatOptionsMenu, showHeaderMoreMenu, showSearchBox, showCalendar]);
 
   // Reset send icon animation after completion
   useEffect(() => {
