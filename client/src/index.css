@@ -675,3 +675,20 @@ body.modal-open {
   margin-left: -8px !important;
   transition: all 0.3s ease !important;
 }
+
+/* Enhanced search header styles */
+.enhanced-search-header {
+  position: relative;
+  z-index: 10;
+}
+
+.enhanced-search-header .calendar-container {
+  position: relative;
+  z-index: 30;
+}
+
+/* Ensure calendar dropdown is properly positioned and visible */
+.calendar-container .absolute {
+  z-index: 50 !important;
+  position: absolute !important;
+}

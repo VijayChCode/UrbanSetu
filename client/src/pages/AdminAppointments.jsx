@@ -1282,7 +1282,7 @@ function AdminAppointmentRow({
     
     // Close search box when clicking outside
     const handleSearchClickOutside = (event) => {
-      if (showSearchBox && !event.target.closest('.search-container')) {
+      if (showSearchBox && !event.target.closest('.search-container') && !event.target.closest('.enhanced-search-header')) {
         setShowSearchBox(false);
         setSearchQuery("");
         setSearchResults([]);
@@ -2864,24 +2864,31 @@ function AdminAppointmentRow({
               
               {/* Enhanced Search Header */}
               {showSearchBox && (
-                <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 px-4 py-3 border-b-2 border-blue-700 flex-shrink-0 animate-slideDown">
+                <div className="enhanced-search-header bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 px-4 py-3 border-b-2 border-blue-700 flex-shrink-0 animate-slideDown">
                   <div className="flex items-center gap-3">
                     {/* Calendar Search Icon */}
                     <div className="relative calendar-container">
                       <button
                         className="text-white hover:text-gray-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-all duration-300 transform hover:scale-110 shadow"
-                        onClick={() => setShowCalendar(!showCalendar)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowCalendar(!showCalendar);
+                        }}
                         title="Jump to date"
                         aria-label="Jump to date"
                       >
                         <FaCalendarAlt className="text-sm" />
                       </button>
                       {showCalendar && (
-                        <div className="absolute top-full left-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-20 p-3 min-w-[250px] animate-fadeIn">
+                        <div className="absolute top-full left-0 mt-2 bg-white rounded-lg shadow-xl border border-gray-200 p-3 min-w-[250px] animate-fadeIn" 
+                             style={{zIndex: 9999}}>
                           <div className="flex items-center justify-between mb-3">
                             <span className="text-sm font-medium text-gray-700">Jump to Date</span>
                             <button
-                              onClick={() => setShowCalendar(false)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setShowCalendar(false);
+                              }}
                               className="text-gray-400 hover:text-gray-600 transition-colors"
                             >
                               <FaTimes size={14} />
@@ -2890,7 +2897,10 @@ function AdminAppointmentRow({
                           <input
                             type="date"
                             value={selectedDate}
-                            onChange={(e) => handleDateSelect(e.target.value)}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              handleDateSelect(e.target.value);
+                            }}
                             className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                             max={formatDateForInput(new Date())}
                           />
