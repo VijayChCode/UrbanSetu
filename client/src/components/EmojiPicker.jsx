@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import EmojiPicker from 'emoji-picker-react';
 import { BsEmojiSmile } from 'react-icons/bs';
 import { FaKeyboard } from 'react-icons/fa';
@@ -141,7 +142,7 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
 
   if (!isOpen) return null;
 
-  // Dynamic positioning classes and styles - constrained within chatbox
+  // Dynamic positioning classes and styles - constrained within chatbox (desktop), fixed overlay (mobile)
   const isMobile = window.innerWidth < 768;
   let positionClasses = `absolute z-[60] bg-white rounded-lg shadow-xl border border-gray-200 ${
     position.bottom ? 'bottom-full mb-2' : 'top-full mt-2'
@@ -188,6 +189,68 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
     dynamicStyles.right = position.right ? '0' : 'auto';
   }
 
+  // For mobile: render in a fixed portal anchored to viewport to avoid being affected by footer/keyboard shifts
+  if (isMobile) {
+    const viewportLeft = Math.max(16, (window.innerWidth - pickerWidth) / 2);
+    const fixedStyles = {
+      position: 'fixed',
+      left: `${viewportLeft}px`,
+      right: 'auto',
+      bottom: `88px`,
+      zIndex: 9999,
+      width: `${pickerWidth}px`,
+      maxWidth: '350px',
+      maxHeight: `${effectiveMaxHeight}px`,
+      background: 'white',
+      borderRadius: '0.5rem',
+      boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
+      border: '1px solid rgba(229,231,235,1)',
+      overflowY: 'auto',
+      WebkitOverflowScrolling: 'touch',
+      touchAction: 'pan-y',
+      overscrollBehavior: 'contain'
+    };
+
+    return createPortal(
+      <div
+        ref={pickerRef}
+        style={fixedStyles}
+        onMouseDown={(e) => { e.preventDefault(); }}
+        onWheel={(e) => { e.stopPropagation(); }}
+        onTouchStart={(e) => { e.stopPropagation(); }}
+        onTouchMove={(e) => { e.stopPropagation(); }}
+      >
+        <EmojiPicker
+          onEmojiClick={handleEmojiSelect}
+          onEmojiMouseDown={(e) => { e.preventDefault?.(); }}
+          searchDisabled={false}
+          searchPlaceholder="Search emojis..."
+          autoFocusSearch={false}
+          previewConfig={{ showPreview: false }}
+          skinTonesDisabled={false}
+          width={pickerWidth}
+          height={pickerHeight}
+          lazyLoadEmojis={true}
+          theme="light"
+          emojiStyle="native"
+          categories={[
+            'suggested',
+            'smileys_people', 
+            'animals_nature',
+            'food_drink',
+            'travel_places',
+            'activities',
+            'objects',
+            'symbols',
+            'flags'
+          ]}
+        />
+      </div>,
+      document.body
+    );
+  }
+
+  // Desktop: render within chat container with absolute positioning
   return (
     <div 
       ref={pickerRef}
