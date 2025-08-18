@@ -75,12 +75,19 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
         setIsOpen(false);
         // Desktop: refocus input; Mobile: keep keyboard hidden
         const isMobile = window.innerWidth < 768;
-        if (!isMobile && inputRef && inputRef.current) {
-          setTimeout(() => {
-            inputRef.current.focus();
-            const length = inputRef.current.value.length;
-            inputRef.current.setSelectionRange(length, length);
-          }, 100);
+        if (inputRef && inputRef.current) {
+          const el = inputRef.current;
+          const isMobileNow = window.innerWidth < 768;
+          // On desktop, restore focus; on mobile, only restore if picker is closing due to keyboard icon (handled elsewhere)
+          if (!isMobileNow) {
+            setTimeout(() => {
+              el.focus();
+              try {
+                const length = el.value.length;
+                el.setSelectionRange(length, length);
+              } catch (_) {}
+            }, 100);
+          }
         }
       }
     };
@@ -102,20 +109,33 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
     
     // Desktop: keep input focused; Mobile: keep keyboard hidden
     const isMobile = window.innerWidth < 768;
-    if (!isMobile && inputRef && inputRef.current) {
-      const refocusInput = () => {
-        inputRef.current.focus();
-        const length = inputRef.current.value.length;
-        inputRef.current.setSelectionRange(length, length);
-        if (document.activeElement !== inputRef.current) {
-          inputRef.current.click();
-          inputRef.current.focus();
-        }
+    if (inputRef && inputRef.current) {
+      const el = inputRef.current;
+      const isMobileNow = window.innerWidth < 768;
+      const moveCaretToEnd = () => {
+        try {
+          const length = el.value.length;
+          el.setSelectionRange(length, length);
+        } catch (_) {}
       };
-      refocusInput();
-      requestAnimationFrame(refocusInput);
-      setTimeout(refocusInput, 10);
-      setTimeout(refocusInput, 50);
+      if (!isMobileNow) {
+        const refocusInput = () => {
+          el.focus();
+          moveCaretToEnd();
+          if (document.activeElement !== el) {
+            el.click();
+            el.focus();
+            moveCaretToEnd();
+          }
+        };
+        refocusInput();
+        requestAnimationFrame(refocusInput);
+        setTimeout(refocusInput, 10);
+        setTimeout(refocusInput, 50);
+      } else {
+        // Mobile: keep keyboard hidden while picker is open, but keep caret position persisted
+        moveCaretToEnd();
+      }
     }
   };
 
@@ -255,7 +275,19 @@ export const EmojiButton = ({ onEmojiClick, className = "", inputRef }) => {
       } else {
         // Closing picker: focus input to bring keyboard back
         if (inputRef && inputRef.current) {
-          inputRef.current.focus();
+          const el = inputRef.current;
+          // Focus first
+          el.focus();
+          // Move caret to end reliably on mobile
+          const moveCaretToEnd = () => {
+            const length = el.value.length;
+            try { el.setSelectionRange(length, length); } catch (_) {}
+          };
+          moveCaretToEnd();
+          // Extra attempts for mobile timing quirks
+          requestAnimationFrame(moveCaretToEnd);
+          setTimeout(moveCaretToEnd, 10);
+          setTimeout(moveCaretToEnd, 50);
         }
       }
     } else {
