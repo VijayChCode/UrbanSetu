@@ -990,8 +990,8 @@ export default function AdminAppointments() {
               </div>
             ) : selectedUser ? (
               <>
-                {/* Header with gradient background */}
-                <div className="flex flex-col items-center justify-center bg-gradient-to-r from-blue-100 to-purple-100 rounded-t-2xl px-6 py-6 border-b border-gray-200">
+                {/* Header with gradient background (sticky on mobile) */}
+                <div className="flex flex-col items-center justify-center bg-gradient-to-r from-blue-100 to-purple-100 rounded-t-2xl px-6 py-6 border-b border-gray-200 sticky top-[env(safe-area-inset-top,0px)] z-20">
                   <div className="flex items-center gap-4">
                     <div className="relative">
                       <UserAvatar 
@@ -2616,7 +2616,7 @@ function AdminAppointmentRow({
         {showChatModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-md flex items-center justify-center z-50 p-4">
             <div className="bg-gradient-to-br from-white via-blue-50 to-purple-50 rounded-3xl shadow-2xl w-full h-full max-w-6xl max-h-full p-0 relative animate-fadeIn flex flex-col border border-gray-200 transform transition-all duration-500 hover:shadow-3xl">
-                                                              <div className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-4 border-b-2 border-blue-700 bg-gradient-to-r from-blue-700 via-purple-700 to-blue-900 rounded-t-3xl relative shadow-2xl">
+                                                              <div className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-4 border-b-2 border-blue-700 bg-gradient-to-r from-blue-700 via-purple-700 to-blue-900 rounded-t-3xl relative shadow-2xl sticky top-[env(safe-area-inset-top,0px)] z-30">
                 {headerOptionsMessageId && selectedMessageForHeaderOptions ? (
                   <div className="flex items-center justify-between w-full">
                     <div className="flex items-center gap-3">

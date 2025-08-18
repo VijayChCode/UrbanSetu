@@ -3303,8 +3303,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
               </div>
             ) : (
               <>
-                {/* Chat Header */}
-                <div className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-4 border-b-2 border-blue-700 bg-gradient-to-r from-blue-700 via-purple-700 to-blue-900 rounded-t-3xl relative shadow-2xl flex-shrink-0">
+                {/* Chat Header (sticky on mobile to avoid URL bar overlap) */}
+                <div className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-4 border-b-2 border-blue-700 bg-gradient-to-r from-blue-700 via-purple-700 to-blue-900 rounded-t-3xl relative shadow-2xl flex-shrink-0 md:sticky md:top-0 sticky top-[env(safe-area-inset-top,0px)] z-30">
                   {headerOptionsMessageId && selectedMessageForHeaderOptions ? (
                     // Header-level options overlay (options + close icon only)
                     <div className="flex items-center justify-between w-full">
