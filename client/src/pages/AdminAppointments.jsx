@@ -1156,6 +1156,7 @@ function AdminAppointmentRow({
   const [showShortcutTip, setShowShortcutTip] = useLocalState(false);
   const [hiddenMessageIds, setHiddenMessageIds] = useLocalState(() => getLocallyHiddenIds(appt._id));
   const [headerOptionsMessageId, setHeaderOptionsMessageId] = useLocalState(null);
+  const [showHeaderMoreMenu, setShowHeaderMoreMenu] = useLocalState(false);
   const scrollTimeoutRef = React.useRef(null);
   const [showDeleteChatModal, setShowDeleteChatModal] = useLocalState(false);
   const [deleteChatPassword, setDeleteChatPassword] = useLocalState("");
@@ -1279,6 +1280,9 @@ function AdminAppointmentRow({
       if (showChatOptionsMenu && !event.target.closest('.chat-options-menu')) {
         setShowChatOptionsMenu(false);
       }
+      if (showHeaderMoreMenu && !event.target.closest('.chat-options-menu')) {
+        setShowHeaderMoreMenu(false);
+      }
     };
     
     // Close search box when clicking outside
@@ -1302,6 +1306,9 @@ function AdminAppointmentRow({
       if (showChatOptionsMenu) {
         setShowChatOptionsMenu(false);
       }
+      if (showHeaderMoreMenu) {
+        setShowHeaderMoreMenu(false);
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
@@ -1315,7 +1322,7 @@ function AdminAppointmentRow({
       document.removeEventListener('mousedown', handleCalendarClickOutside);
       document.removeEventListener('scroll', handleScroll, true);
     };
-  }, [showChatOptionsMenu, showSearchBox, showCalendar]);
+  }, [showChatOptionsMenu, showHeaderMoreMenu, showSearchBox, showCalendar]);
 
   // Reset send icon animation after completion
   React.useEffect(() => {
@@ -2643,20 +2650,7 @@ function AdminAppointmentRow({
                           <FaCopy size={18} />
                         </button>
                       )}
-                      {/* Info - show delivery and read times */}
-                      {!selectedMessageForHeaderOptions.deleted && (
-                        <button
-                          className="text-white hover:text-blue-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
-                          onClick={() => { 
-                            showMessageInfo(selectedMessageForHeaderOptions);
-                            setHeaderOptionsMessageId(null);
-                          }}
-                          title="Message info"
-                          aria-label="Message info"
-                        >
-                          <FaInfoCircle size={18} />
-                        </button>
-                      )}
+                      {/* Info moved under three-dots menu */}
                       {/* Star/Unstar - for all messages (sent and received) */}
                       {!selectedMessageForHeaderOptions.deleted && (
                         <button
@@ -2717,41 +2711,70 @@ function AdminAppointmentRow({
                           )}
                         </button>
                       )}
-                      {(selectedMessageForHeaderOptions.senderEmail === currentUser.email) && !selectedMessageForHeaderOptions.deleted && (
-                        <>
+                      {/* Three-dots menu: sent -> Info, Edit, Delete; received -> Info, Delete */}
+                      {!selectedMessageForHeaderOptions.deleted && (
+                        <div className="relative">
                           <button
-                            onClick={() => { startEditing(selectedMessageForHeaderOptions); setHeaderOptionsMessageId(null); }}
-                            className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
-                            title="Edit comment"
-                            aria-label="Edit comment"
-                            disabled={editingComment !== null}
+                            className="text-white hover:text-gray-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                            onClick={() => setShowHeaderMoreMenu(prev => !prev)}
+                            title="More options"
+                            aria-label="More options"
                           >
-                            <FaPen size={18} />
+                            <FaEllipsisV size={14} />
                           </button>
-                          <button
-                            className="text-white hover:text-red-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
-                            onClick={() => { handleDeleteClick(selectedMessageForHeaderOptions); setHeaderOptionsMessageId(null); }}
-                            title="Delete"
-                            aria-label="Delete"
-                          >
-                            <FaTrash size={18} />
-                          </button>
-                        </>
-                      )}
-                      {(selectedMessageForHeaderOptions.senderEmail !== currentUser.email) && !selectedMessageForHeaderOptions.deleted && (
-                        <button
-                          className="text-white hover:text-red-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
-                          onClick={() => { handleDeleteClick(selectedMessageForHeaderOptions); setHeaderOptionsMessageId(null); }}
-                          title="Delete"
-                          aria-label="Delete"
-                        >
-                          <FaTrash size={18} />
-                        </button>
+                          {showHeaderMoreMenu && (
+                            <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-20 min-w-[180px] chat-options-menu">
+                              {(selectedMessageForHeaderOptions.senderEmail === currentUser.email) ? (
+                                <>
+                                  <button
+                                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                                    onClick={() => { showMessageInfo(selectedMessageForHeaderOptions); setShowHeaderMoreMenu(false); setHeaderOptionsMessageId(null); }}
+                                  >
+                                    <FaInfoCircle className="text-sm" />
+                                    Info
+                                  </button>
+                                  <button
+                                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                                    onClick={() => { startEditing(selectedMessageForHeaderOptions); setShowHeaderMoreMenu(false); setHeaderOptionsMessageId(null); }}
+                                    disabled={editingComment !== null}
+                                  >
+                                    <FaPen className="text-sm" />
+                                    Edit
+                                  </button>
+                                  <button
+                                    className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                    onClick={() => { handleDeleteClick(selectedMessageForHeaderOptions); setShowHeaderMoreMenu(false); setHeaderOptionsMessageId(null); }}
+                                  >
+                                    <FaTrash className="text-sm" />
+                                    Delete
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <button
+                                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                                    onClick={() => { showMessageInfo(selectedMessageForHeaderOptions); setShowHeaderMoreMenu(false); setHeaderOptionsMessageId(null); }}
+                                  >
+                                    <FaInfoCircle className="text-sm" />
+                                    Info
+                                  </button>
+                                  <button
+                                    className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                    onClick={() => { handleDeleteClick(selectedMessageForHeaderOptions); setShowHeaderMoreMenu(false); setHeaderOptionsMessageId(null); }}
+                                  >
+                                    <FaTrash className="text-sm" />
+                                    Delete
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       )}
                     </div>
                     <button
                       className="text-white hover:text-gray-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors z-10 shadow"
-                      onClick={() => setHeaderOptionsMessageId(null)}
+                      onClick={() => { setHeaderOptionsMessageId(null); setShowHeaderMoreMenu(false); }}
                       title="Close options"
                       aria-label="Close options"
                     >
