@@ -2973,6 +2973,8 @@ function AdminAppointmentRow({
                         setEditingComment(null); 
                         setEditText(""); 
                         setNewComment(""); 
+                        // Reset textarea height to normal when cancelling edit
+                        resetTextareaHeight();
                       }} 
                       title="Cancel edit"
                     >

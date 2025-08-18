@@ -3786,6 +3786,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           setEditingComment(null); 
                           setEditText(""); 
                           setComment(""); 
+                          // Reset textarea height to normal when cancelling edit
+                          resetTextareaHeight();
                         }} 
                         title="Cancel edit"
                       >
