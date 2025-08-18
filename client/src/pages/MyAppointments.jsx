@@ -3784,7 +3784,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 )}
                 
                 {/* Message Input Footer - Sticky */}
-                <div className="flex gap-2 mt-1 px-3 pb-2 flex-shrink-0 bg-gradient-to-b from-transparent to-white pt-2">
+                <div className="flex gap-2 mt-1 px-3 pb-2 flex-shrink-0 bg-gradient-to-b from-transparent to-white pt-2 items-end">
                   {/* Message Input Container with Attachment Icon Inside */}
                   <div className="flex-1 relative">
                     <textarea
@@ -3863,7 +3863,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                       ref={inputRef}
                     />
                     {/* File Upload Button - Inside textarea on the right (WhatsApp style) */}
-                    <label className={`absolute right-3 inset-y-0 my-auto flex items-center justify-center w-8 h-8 rounded-full transition-all duration-300 cursor-pointer ${
+                    <label className={`absolute right-3 bottom-3 flex items-center justify-center w-8 h-8 rounded-full transition-all duration-300 cursor-pointer ${
                       uploadingFile 
                         ? 'bg-gray-400 cursor-not-allowed' 
                         : 'bg-gray-100 hover:bg-gray-200 hover:shadow-md active:scale-95'
