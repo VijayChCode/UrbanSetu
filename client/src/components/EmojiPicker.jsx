@@ -4,6 +4,30 @@ import { BsEmojiSmile } from 'react-icons/bs';
 
 const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef }) => {
   const pickerRef = useRef(null);
+  const [position, setPosition] = useState({ bottom: true, right: true });
+
+  // Calculate optimal position based on viewport
+  useEffect(() => {
+    if (isOpen && buttonRef.current && pickerRef.current) {
+      const buttonRect = buttonRef.current.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      const pickerWidth = 350;
+      const pickerHeight = 400;
+      
+      // Check if there's space above (preferred position)
+      const spaceAbove = buttonRect.top;
+      const showAbove = spaceAbove >= pickerHeight + 16; // 16px margin
+      
+      // Check if there's space on the right
+      const spaceRight = viewportWidth - buttonRect.left;
+      const showRight = spaceRight >= pickerWidth + 16; // 16px margin
+      
+      setPosition({
+        bottom: showAbove,
+        right: showRight
+      });
+    }
+  }, [isOpen, buttonRef]);
 
   // Close picker when clicking outside
   useEffect(() => {
@@ -35,14 +59,24 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef }) => {
 
   if (!isOpen) return null;
 
+  // Dynamic positioning classes and styles
+  const positionClasses = `absolute z-50 bg-white rounded-lg shadow-lg border border-gray-200 ${
+    position.bottom ? 'bottom-full mb-2' : 'top-full mt-2'
+  } ${
+    position.right ? 'right-0' : 'left-0'
+  }`;
+
+  const dynamicStyles = {
+    transform: position.bottom ? 'translateY(-8px)' : 'translateY(8px)',
+    width: window.innerWidth < 400 ? `${window.innerWidth - 32}px` : '350px',
+    maxWidth: '350px'
+  };
+
   return (
     <div 
       ref={pickerRef}
-      className="absolute bottom-full mb-2 right-0 z-50 bg-white rounded-lg shadow-lg border border-gray-200"
-      style={{ 
-        transform: 'translateY(-8px)',
-        minWidth: '350px'
-      }}
+      className={positionClasses}
+      style={dynamicStyles}
     >
       {/* Emoji Picker - uses built-in search functionality */}
       <div className="emoji-picker-container">
@@ -50,14 +84,15 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef }) => {
           onEmojiClick={handleEmojiSelect}
           searchDisabled={false}
           searchPlaceholder="Search emojis..."
+          autoFocusSearch={false}
           previewConfig={{
             showPreview: true,
             defaultCaption: "Pick an emoji!",
             defaultEmoji: "1f60a"
           }}
           skinTonesDisabled={false}
-          width={350}
-          height={400}
+          width={window.innerWidth < 400 ? window.innerWidth - 32 : 350}
+          height={window.innerWidth < 400 ? 350 : 400}
           lazyLoadEmojis={true}
           theme="light"
           emojiStyle="native"
