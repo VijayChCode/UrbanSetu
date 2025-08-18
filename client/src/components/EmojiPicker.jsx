@@ -104,7 +104,7 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
     };
   }, [isOpen, setIsOpen, buttonRef, inputRef]);
 
-  // Prevent background/page scroll while emoji picker is open
+  // Prevent background/page scroll while emoji picker is open, but keep scroll inside picker
   useEffect(() => {
     if (!isOpen) return;
 
@@ -112,9 +112,7 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
     document.body.style.overflow = 'hidden';
 
     const preventBackgroundScroll = (event) => {
-      if (pickerRef.current && pickerRef.current.contains(event.target)) {
-        return; // allow scroll inside picker
-      }
+      if (pickerRef.current && pickerRef.current.contains(event.target)) return; // allow scroll inside picker
       event.preventDefault();
     };
 
@@ -159,7 +157,11 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
     transform: position.bottom ? 'translateY(-8px)' : 'translateY(8px)',
     width: `${pickerWidth}px`,
     maxWidth: '350px',
-    maxHeight: `${effectiveMaxHeight}px`
+    maxHeight: `${effectiveMaxHeight}px`,
+    overflowY: 'auto',
+    WebkitOverflowScrolling: 'touch',
+    touchAction: 'pan-y',
+    overscrollBehavior: 'contain'
   };
   if (position.center && isMobile) {
     const containerRect = position.containerRect;
@@ -191,10 +193,11 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
   return (
     <div 
       ref={pickerRef}
-      className={positionClasses}
+      className={`${positionClasses} overflow-y-auto overscroll-contain`}
       style={dynamicStyles}
       onMouseDown={(e) => { e.preventDefault(); }}
       onWheel={(e) => { e.stopPropagation(); }}
+      onTouchStart={(e) => { e.stopPropagation(); }}
       onTouchMove={(e) => { e.stopPropagation(); }}
     >
       <div className="emoji-picker-container">
