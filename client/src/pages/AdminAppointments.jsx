@@ -1832,6 +1832,8 @@ function AdminAppointmentRow({
 
   const handleCommentSend = async () => {
     if (!newComment.trim()) return;
+    // Close emoji picker on send
+    window.dispatchEvent(new Event('closeEmojiPicker'));
     
     // Trigger send icon animation
     setSendIconAnimating(true);

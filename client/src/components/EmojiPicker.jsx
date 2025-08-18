@@ -242,6 +242,13 @@ export const EmojiButton = ({ onEmojiClick, className = "", inputRef }) => {
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
 
+  // Close the emoji picker when a global event is dispatched (e.g., after sending a message)
+  useEffect(() => {
+    const closeHandler = () => setIsPickerOpen(false);
+    window.addEventListener('closeEmojiPicker', closeHandler);
+    return () => window.removeEventListener('closeEmojiPicker', closeHandler);
+  }, []);
+
   const handleButtonClick = (e) => {
     e.preventDefault();
     e.stopPropagation();

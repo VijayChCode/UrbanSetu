@@ -1843,6 +1843,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
 
   const handleCommentSend = async () => {
     if (!comment.trim()) return;
+    // Close emoji picker on send
+    window.dispatchEvent(new Event('closeEmojiPicker'));
     
     // Trigger send icon animation
     setSendIconAnimating(true);
