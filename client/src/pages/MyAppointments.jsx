@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo, FaCommentDots, FaCheckDouble, FaBan, FaPaperPlane, FaCalendar, FaLightbulb, FaCopy, FaEllipsisV, FaFlag, FaCircle, FaInfoCircle, FaSync, FaStar, FaRegStar, FaThumbtack, FaCalendarAlt } from "react-icons/fa";
 import UserAvatar from '../components/UserAvatar';
 import ImagePreview from '../components/ImagePreview';
+import { EmojiButton } from '../components/EmojiPicker';
 import { useSelector } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Appointment from "../components/Appointment";
@@ -4148,11 +4149,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 
                 {/* Message Input Footer - Sticky */}
                 <div className="flex gap-2 mt-1 px-3 pb-2 flex-shrink-0 bg-gradient-to-b from-transparent to-white pt-2 items-end">
-                  {/* Message Input Container with Attachment Icon Inside */}
+                  {/* Message Input Container with Attachment and Emoji Icons Inside */}
                   <div className="flex-1 relative">
                     <textarea
                       rows={1}
-                      className="w-full pl-4 pr-12 py-3 border-2 border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-400 shadow-lg transition-all duration-300 bg-white resize-none whitespace-pre-wrap break-all hover:border-blue-300 hover:shadow-xl focus:shadow-2xl transform hover:scale-[1.01] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
+                      className="w-full pl-4 pr-20 py-3 border-2 border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-400 shadow-lg transition-all duration-300 bg-white resize-none whitespace-pre-wrap break-all hover:border-blue-300 hover:shadow-xl focus:shadow-2xl transform hover:scale-[1.01] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
                       style={{
                         minHeight: '48px',
                         maxHeight: '144px', // 6 lines * 24px line height
@@ -4233,6 +4234,28 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                       }}
                       ref={inputRef}
                     />
+                    {/* Emoji Button - Inside textarea on the right */}
+                    <div className="absolute right-12 bottom-3">
+                      <EmojiButton 
+                        onEmojiClick={(emoji) => {
+                          const newText = comment + emoji;
+                          setComment(newText);
+                          if (editingComment) {
+                            setEditText(newText);
+                          }
+                          // Focus back on textarea after emoji selection
+                          if (inputRef.current) {
+                            inputRef.current.focus();
+                            // Set cursor to end
+                            setTimeout(() => {
+                              const textarea = inputRef.current;
+                              textarea.setSelectionRange(newText.length, newText.length);
+                            }, 0);
+                          }
+                        }}
+                        className="w-8 h-8"
+                      />
+                    </div>
                     {/* File Upload Button - Inside textarea on the right (WhatsApp style) */}
                     <label className={`absolute right-3 bottom-3 flex items-center justify-center w-8 h-8 rounded-full transition-all duration-300 cursor-pointer ${
                       uploadingFile 
