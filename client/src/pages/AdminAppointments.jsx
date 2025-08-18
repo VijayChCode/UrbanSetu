@@ -3411,17 +3411,9 @@ function AdminAppointmentRow({
                         if (editingComment) {
                           setEditText(newText);
                         }
-                        // Focus back on textarea after emoji selection
-                        if (inputRef.current) {
-                          inputRef.current.focus();
-                          // Set cursor to end
-                          setTimeout(() => {
-                            const textarea = inputRef.current;
-                            textarea.setSelectionRange(newText.length, newText.length);
-                          }, 0);
-                        }
                       }}
                       className="w-8 h-8"
+                        inputRef={inputRef}
                     />
                   </div>
                   {/* File Upload Button - Inside textarea on the right (WhatsApp style) */}
