@@ -1059,6 +1059,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   // New: track which message's options are shown in the header
   const [headerOptionsMessageId, setHeaderOptionsMessageId] = useState(null);
   const [privacyNoticeHighlighted, setPrivacyNoticeHighlighted] = useState(false);
+  const [showHeaderMoreMenu, setShowHeaderMoreMenu] = useState(false);
   
   // Check if device is mobile for conditional animation
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
