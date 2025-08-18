@@ -1779,10 +1779,15 @@ function AdminAppointmentRow({
         // Find the new comment from the response
         const newCommentFromServer = data.comments[data.comments.length - 1];
         
-        // Replace the temp message with the real one
+        // Update only the status and ID of the temp message, keeping it visible
         setLocalComments(prev => prev.map(msg => 
           msg._id === tempId 
-            ? { ...newCommentFromServer }
+            ? { 
+                ...msg, 
+                _id: newCommentFromServer._id,
+                status: newCommentFromServer.status,
+                readBy: newCommentFromServer.readBy || msg.readBy
+              }
             : msg
         ));
       } else {
@@ -1915,10 +1920,15 @@ function AdminAppointmentRow({
           // Find the new comment from the response
           const newCommentFromServer = data.comments[data.comments.length - 1];
           
-          // Replace the temp message with the real one
+          // Update only the status and ID of the temp message, keeping it visible
           setLocalComments(prev => prev.map(msg => 
             msg._id === tempId 
-              ? { ...newCommentFromServer } // Use the status from server (could be 'sent' or 'delivered')
+              ? { 
+                  ...msg, 
+                  _id: newCommentFromServer._id,
+                  status: newCommentFromServer.status,
+                  readBy: newCommentFromServer.readBy || msg.readBy
+                }
               : msg
           ));
           
@@ -3285,12 +3295,12 @@ function AdminAppointmentRow({
                           {(c.senderEmail === currentUser.email) && !c.deleted && (
                             <span className="ml-1 flex items-center gap-1">
                               {c.readBy?.some(userId => userId !== currentUser._id)
-                                ? <FaCheckDouble className="text-green-400 text-xs" title="Read" />
+                                ? <FaCheckDouble className="text-green-400 text-xs transition-all duration-300 animate-fadeIn" title="Read" />
                                 : c.status === "delivered"
-                                  ? <FaCheckDouble className="text-blue-200 text-xs" title="Delivered" />
+                                  ? <FaCheckDouble className="text-blue-200 text-xs transition-all duration-300 animate-fadeIn" title="Delivered" />
                                   : c.status === "sending"
-                                    ? <FaCheck className="text-blue-200 text-xs animate-pulse" title="Sending..." />
-                                    : <FaCheck className="text-blue-200 text-xs" title="Sent" />}
+                                    ? <FaCheckDouble className="text-blue-200 text-xs animate-pulse transition-all duration-300" title="Sending..." />
+                                    : <FaCheck className="text-blue-200 text-xs transition-all duration-300 animate-fadeIn" title="Sent" />}
                             </span>
                           )}
                         </div>
