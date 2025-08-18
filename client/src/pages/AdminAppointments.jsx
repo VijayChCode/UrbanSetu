@@ -2910,7 +2910,7 @@ function AdminAppointmentRow({
               
               {/* Enhanced Search Header */}
               {showSearchBox && (
-                <div className="enhanced-search-header bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 px-3 sm:px-4 py-3 border-b-2 border-blue-700 flex-shrink-0 animate-slideDown overflow-hidden">
+                <div className="enhanced-search-header bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 px-3 sm:px-4 py-3 border-b-2 border-blue-700 flex-shrink-0 animate-slideDown">
                   <div className="flex items-center gap-2 sm:gap-3 flex-nowrap">
                     {/* Calendar Search Icon */}
                     <div className="relative calendar-container">
