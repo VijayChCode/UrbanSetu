@@ -77,7 +77,8 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
   // Handle emoji selection
   const handleEmojiSelect = (emojiObject) => {
     onEmojiClick(emojiObject.emoji);
-    setIsOpen(false);
+    // Don't close the modal - let users select multiple emojis
+    // setIsOpen(false); // Removed to keep modal open
     
     // Immediately refocus input to maintain keyboard on mobile
     if (inputRef && inputRef.current) {
