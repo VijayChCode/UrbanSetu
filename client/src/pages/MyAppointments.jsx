@@ -3306,7 +3306,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 {/* Chat Header (sticky on mobile to avoid URL bar overlap) */}
                 <div className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-4 border-b-2 border-blue-700 bg-gradient-to-r from-blue-700 via-purple-700 to-blue-900 rounded-t-3xl relative shadow-2xl flex-shrink-0 md:sticky md:top-0 sticky top-[env(safe-area-inset-top,0px)] z-30">
                   {headerOptionsMessageId && selectedMessageForHeaderOptions ? (
-                    // Header-level options overlay (options + close icon only)
+                    // Header-level options overlay (inline icons + three-dots menu + close)
                     <div className="flex items-center justify-between w-full">
                       <div className="flex items-center gap-3">
                         {/* Reply */}
@@ -3334,20 +3334,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             <FaCopy size={18} />
                           </button>
                         )}
-                        {/* Info - only for own sent messages (not for received) */}
-                        {(selectedMessageForHeaderOptions.senderEmail === currentUser.email) && !selectedMessageForHeaderOptions.deleted && (
-                          <button
-                            className="text-white hover:text-blue-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
-                            onClick={() => { 
-                              showMessageInfo(selectedMessageForHeaderOptions);
-                              setHeaderOptionsMessageId(null);
-                            }}
-                            title="Message info"
-                            aria-label="Message info"
-                          >
-                            <FaInfoCircle size={18} />
-                          </button>
-                        )}
+                        {/* Star/Unstar */}
                         {/* Star/Unstar - for all messages (sent and received) */}
                         {!selectedMessageForHeaderOptions.deleted && (
                           <button
@@ -3408,83 +3395,103 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             )}
                           </button>
                         )}
-                        {/* Pin/Unpin - for all messages (sent and received) */}
+                        {/* Delete inline (sent: delete for everyone; received: delete locally) */}
                         {!selectedMessageForHeaderOptions.deleted && (
                           <button
-                            className={`text-white rounded-full p-2 transition-colors ${
-                              selectedMessageForHeaderOptions.pinned 
-                                ? 'bg-red-500 hover:bg-red-600' 
-                                : 'bg-white/10 hover:bg-white/20'
-                            }`}
-                            onClick={() => {
-                              if (selectedMessageForHeaderOptions.pinned) {
-                                // Unpin the message
-                                handlePinMessage(selectedMessageForHeaderOptions, false);
+                            className="text-white hover:text-red-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                            onClick={() => { 
+                              if (selectedMessageForHeaderOptions.senderEmail === currentUser.email) {
+                                handleDeleteClick(selectedMessageForHeaderOptions);
                               } else {
-                                // Show pin modal
-                                setMessageToPin(selectedMessageForHeaderOptions);
-                                setShowPinModal(true);
+                                handleDeleteReceivedMessage(selectedMessageForHeaderOptions);
                               }
                               setHeaderOptionsMessageId(null);
                             }}
-                            title={selectedMessageForHeaderOptions.pinned ? "Unpin message" : "Pin message"}
-                            aria-label={selectedMessageForHeaderOptions.pinned ? "Unpin message" : "Pin message"}
-                            disabled={pinningSaving}
-                          >
-                            {pinningSaving ? (
-                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                            ) : (
-                              <FaThumbtack size={18} />
-                            )}
-                          </button>
-                        )}
-                        {/* Report (only for received messages, not deleted) */}
-                        {(selectedMessageForHeaderOptions.senderEmail !== currentUser.email) && !selectedMessageForHeaderOptions.deleted && (
-                          <button
-                            className="text-white hover:text-red-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
-                            onClick={() => {
-                              setReportingMessage(selectedMessageForHeaderOptions);
-                              setShowReportModal(true);
-                              setHeaderOptionsMessageId(null);
-                            }}
-                            title="Report message"
-                            aria-label="Report message"
-                          >
-                            <FaFlag size={18} />
-                          </button>
-                        )}
-                        {/* Edit/Delete for own message */}
-                        {(selectedMessageForHeaderOptions.senderEmail === currentUser.email) && !selectedMessageForHeaderOptions.deleted && (
-                          <>
-                            <button
-                              onClick={() => { startEditing(selectedMessageForHeaderOptions); setHeaderOptionsMessageId(null); }}
-                              className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
-                              title="Edit comment"
-                              aria-label="Edit comment"
-                              disabled={editingComment !== null}
-                            >
-                              <FaPen size={18} />
-                            </button>
-                            <button
-                              className="text-white hover:text-red-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
-                              onClick={() => { handleDeleteClick(selectedMessageForHeaderOptions); setHeaderOptionsMessageId(null); }}
-                              title="Delete"
-                              aria-label="Delete"
-                            >
-                              <FaTrash size={18} />
-                            </button>
-                          </>
-                        )}
-                        {/* Delete locally for received messages */}
-                        {(selectedMessageForHeaderOptions.senderEmail !== currentUser.email) && !selectedMessageForHeaderOptions.deleted && (
-                          <button
-                            className="text-white hover:text-red-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
-                            onClick={() => { handleDeleteReceivedMessage(selectedMessageForHeaderOptions); setHeaderOptionsMessageId(null); }}
-                            title="Delete locally"
-                            aria-label="Delete locally"
+                            title="Delete"
+                            aria-label="Delete"
                           >
                             <FaTrash size={18} />
                           </button>
+                        )}
+                        {/* Three dots menu (Info/Pin/Edit for sent; Pin/Report for received) */}
+                        {!selectedMessageForHeaderOptions.deleted && (
+                          <div className="relative">
+                            <button
+                              className="text-white hover:text-gray-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                              onClick={() => setShowHeaderMoreMenu(prev => !prev)}
+                              title="More options"
+                              aria-label="More options"
+                            >
+                              <FaEllipsisV size={14} />
+                            </button>
+                            {showHeaderMoreMenu && (
+                              <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-20 min-w-[180px] chat-options-menu">
+                                {(selectedMessageForHeaderOptions.senderEmail === currentUser.email) ? (
+                                  <>
+                                    <button
+                                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                                      onClick={() => { showMessageInfo(selectedMessageForHeaderOptions); setShowHeaderMoreMenu(false); setHeaderOptionsMessageId(null); }}
+                                    >
+                                      <FaInfoCircle className="text-sm" />
+                                      Info
+                                    </button>
+                                    <button
+                                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                                      onClick={() => {
+                                        if (selectedMessageForHeaderOptions.pinned) {
+                                          handlePinMessage(selectedMessageForHeaderOptions, false);
+                                        } else {
+                                          setMessageToPin(selectedMessageForHeaderOptions);
+                                          setShowPinModal(true);
+                                        }
+                                        setShowHeaderMoreMenu(false);
+                                        setHeaderOptionsMessageId(null);
+                                      }}
+                                      disabled={pinningSaving}
+                                    >
+                                      <FaThumbtack className="text-sm" />
+                                      {selectedMessageForHeaderOptions.pinned ? 'Unpin' : 'Pin'}
+                                    </button>
+                                    <button
+                                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                                      onClick={() => { startEditing(selectedMessageForHeaderOptions); setShowHeaderMoreMenu(false); setHeaderOptionsMessageId(null); }}
+                                      disabled={editingComment !== null}
+                                    >
+                                      <FaPen className="text-sm" />
+                                      Edit
+                                    </button>
+                                  </>
+                                ) : (
+                                  <>
+                                    <button
+                                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                                      onClick={() => {
+                                        if (selectedMessageForHeaderOptions.pinned) {
+                                          handlePinMessage(selectedMessageForHeaderOptions, false);
+                                        } else {
+                                          setMessageToPin(selectedMessageForHeaderOptions);
+                                          setShowPinModal(true);
+                                        }
+                                        setShowHeaderMoreMenu(false);
+                                        setHeaderOptionsMessageId(null);
+                                      }}
+                                      disabled={pinningSaving}
+                                    >
+                                      <FaThumbtack className="text-sm" />
+                                      {selectedMessageForHeaderOptions.pinned ? 'Unpin' : 'Pin'}
+                                    </button>
+                                    <button
+                                      className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                      onClick={() => { setReportingMessage(selectedMessageForHeaderOptions); setShowReportModal(true); setShowHeaderMoreMenu(false); setHeaderOptionsMessageId(null); }}
+                                    >
+                                      <FaFlag className="text-sm" />
+                                      Report
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         )}
                         {/* Delete from chat locally for deleted messages */}
                         {selectedMessageForHeaderOptions.deleted && (
@@ -3505,7 +3512,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                       </div>
                       <button
                         className="text-white hover:text-gray-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors z-10 shadow"
-                        onClick={() => setHeaderOptionsMessageId(null)}
+                        onClick={() => { setHeaderOptionsMessageId(null); setShowHeaderMoreMenu(false); }}
                         title="Close options"
                         aria-label="Close options"
                       >
