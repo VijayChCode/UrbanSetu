@@ -12,7 +12,11 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
       const buttonRect = buttonRef.current.getBoundingClientRect();
       
       // Find the chatbox container to constrain the picker within it
-      const chatContainer = buttonRef.current.closest('[class*="chatContainer"], .flex-1.overflow-y-auto');
+      // Look for the specific chat container used in both MyAppointments and AdminAppointments
+      const chatContainer = buttonRef.current.closest('.flex-1.overflow-y-auto.space-y-2') || 
+                           buttonRef.current.closest('.flex-1.overflow-y-auto') ||
+                           buttonRef.current.closest('[class*="flex-1"][class*="overflow-y-auto"]');
+      
       const containerRect = chatContainer ? chatContainer.getBoundingClientRect() : {
         top: 0,
         left: 0,
@@ -33,14 +37,14 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
       let finalPosition;
       
       if (isMobile) {
-        // Mobile: Center the picker within the chatbox
+        // Mobile: Center the picker within the actual chatbox container
         finalPosition = {
           bottom: showAbove,
           right: false, // Don't use right positioning
           center: true, // Custom flag for centering
-          containerWidth: containerRect.width,
-          containerLeft: containerRect.left,
-          pickerWidth: pickerWidth
+          containerRect: containerRect, // Pass the full container rect
+          pickerWidth: pickerWidth,
+          buttonRect: buttonRect // Pass button rect for relative positioning
         };
       } else {
         // Desktop: Use existing logic
@@ -150,11 +154,38 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
 
   // Handle positioning based on device type
   if (position.center && isMobile) {
-    // Mobile: Center within the chatbox container
-    const containerWidth = position.containerWidth || window.innerWidth;
-    const leftOffset = Math.max(16, (containerWidth - pickerWidth) / 2); // 16px minimum margin
-    dynamicStyles.left = `${leftOffset}px`;
-    dynamicStyles.right = 'auto';
+    // Mobile: Center within the actual chatbox container bounds
+    const containerRect = position.containerRect;
+    const buttonRect = position.buttonRect;
+    
+    if (containerRect && buttonRect) {
+      // Calculate the center position relative to the container
+      const containerWidth = containerRect.width;
+      const containerLeft = containerRect.left;
+      const buttonLeft = buttonRect.left;
+      
+      // Calculate offset from button to center of container
+      const containerCenter = containerLeft + (containerWidth / 2);
+      const buttonRelativeLeft = buttonLeft - containerLeft;
+      
+      // Center the picker relative to the container, not the button
+      const pickerLeft = Math.max(
+        16, // Minimum 16px margin from container edge
+        Math.min(
+          containerWidth - pickerWidth - 16, // Maximum position (16px margin from right edge)
+          (containerWidth - pickerWidth) / 2 // Ideal center position
+        )
+      );
+      
+      // Set position relative to the button's parent container
+      dynamicStyles.left = `${pickerLeft - buttonRelativeLeft}px`;
+      dynamicStyles.right = 'auto';
+    } else {
+      // Fallback to previous logic if container info not available
+      const leftOffset = Math.max(16, (window.innerWidth - pickerWidth) / 2);
+      dynamicStyles.left = `${leftOffset}px`;
+      dynamicStyles.right = 'auto';
+    }
   } else {
     // Desktop: Use existing positioning logic
     dynamicStyles.left = position.right ? 'auto' : '0';
