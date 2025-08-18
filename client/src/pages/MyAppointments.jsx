@@ -2150,6 +2150,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     if (!query.trim()) {
       setSearchResults([]);
       setCurrentSearchIndex(-1);
+      // Clear any existing search highlights
+      document.querySelectorAll('.search-highlight').forEach(el => {
+        el.classList.remove('search-highlight', 'search-pulse', 'search-glow');
+      });
       return;
     }
     
@@ -2166,7 +2170,17 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       }));
     
     setSearchResults(results);
-    setCurrentSearchIndex(results.length > 0 ? 0 : -1);
+    
+    // Auto-scroll to first result if results found
+    if (results.length > 0) {
+      setCurrentSearchIndex(0);
+      // Small delay to ensure state is updated before scrolling
+      setTimeout(() => {
+        scrollToSearchResult(results[0]._id);
+      }, 100);
+    } else {
+      setCurrentSearchIndex(-1);
+    }
   };
 
   const handleSearchInputChange = (e) => {
@@ -2195,12 +2209,41 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const scrollToSearchResult = (commentId) => {
     const messageElement = messageRefs.current[commentId];
     if (messageElement) {
-      messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      // Highlight the message briefly
-      messageElement.classList.add('search-highlight');
+      // Enhanced scroll animation with better timing
+      messageElement.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center',
+        inline: 'nearest'
+      });
+      
+      // Enhanced search highlight animation with multiple effects
       setTimeout(() => {
-        messageElement.classList.remove('search-highlight');
-      }, 2000);
+        // Remove any existing highlights first
+        document.querySelectorAll('.search-highlight').forEach(el => {
+          el.classList.remove('search-highlight', 'search-pulse', 'search-glow');
+        });
+        
+        // Add enhanced search highlight with multiple animation classes
+        messageElement.classList.add('search-highlight', 'search-pulse', 'search-glow');
+        
+        // Add a search ripple effect
+        const ripple = document.createElement('div');
+        ripple.className = 'search-ripple';
+        messageElement.style.position = 'relative';
+        messageElement.appendChild(ripple);
+        
+        // Remove ripple after animation
+        setTimeout(() => {
+          if (ripple.parentNode) {
+            ripple.parentNode.removeChild(ripple);
+          }
+        }, 1000);
+        
+        // Remove highlight effects after enhanced duration
+        setTimeout(() => {
+          messageElement.classList.remove('search-highlight', 'search-pulse', 'search-glow');
+        }, 3000);
+      }, 300);
     }
   };
 
