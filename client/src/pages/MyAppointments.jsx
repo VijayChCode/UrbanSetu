@@ -3052,203 +3052,342 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   {headerOptionsMessageId && selectedMessageForHeaderOptions ? (
                     // Header-level options overlay (options + close icon only)
                     <div className="flex items-center justify-between w-full">
-                      <div className="flex items-center gap-3">
-                        {/* Reply */}
-                        {!selectedMessageForHeaderOptions.deleted && (
-                          <button
-                            className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
-                            onClick={() => { 
-                              startReply(selectedMessageForHeaderOptions);
-                              setHeaderOptionsMessageId(null);
-                            }}
-                            title="Reply"
-                            aria-label="Reply"
-                          >
-                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c4.28 0 6.92 1.45 8.84 4.55.23.36.76.09.65-.32C18.31 13.13 15.36 10.36 10 9z"/></svg>
-                          </button>
-                        )}
-                        {/* Copy - only for non-deleted messages */}
-                        {!selectedMessageForHeaderOptions.deleted && (
-                          <button
-                            className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
-                            onClick={() => { copyMessageToClipboard(selectedMessageForHeaderOptions.message); setHeaderOptionsMessageId(null); }}
-                            title="Copy message"
-                            aria-label="Copy message"
-                          >
-                            <FaCopy size={18} />
-                          </button>
-                        )}
-                        {/* Info - only for own sent messages (not for received) */}
-                        {(selectedMessageForHeaderOptions.senderEmail === currentUser.email) && !selectedMessageForHeaderOptions.deleted && (
-                          <button
-                            className="text-white hover:text-blue-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
-                            onClick={() => { 
-                              showMessageInfo(selectedMessageForHeaderOptions);
-                              setHeaderOptionsMessageId(null);
-                            }}
-                            title="Message info"
-                            aria-label="Message info"
-                          >
-                            <FaInfoCircle size={18} />
-                          </button>
-                        )}
-                        {/* Star/Unstar - for all messages (sent and received) */}
-                        {!selectedMessageForHeaderOptions.deleted && (
-                          <button
-                            className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
-                            onClick={async () => { 
-                              const isStarred = selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id);
-                              setStarringSaving(true);
-                              try {
-                                const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${selectedMessageForHeaderOptions._id}/star`, {
-                                  method: 'PATCH',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  credentials: 'include',
-                                  body: JSON.stringify({ starred: !isStarred }),
-                                });
-                                if (res.ok) {
-                                  // Update the local state
-                                  setComments(prev => prev.map(c => 
-                                    c._id === selectedMessageForHeaderOptions._id 
-                                      ? { 
-                                          ...c, 
-                                          starredBy: isStarred 
-                                            ? (c.starredBy || []).filter(id => id !== currentUser._id)
-                                            : [...(c.starredBy || []), currentUser._id]
-                                        }
-                                      : c
-                                  ));
-                                  
-                                  // Update starred messages list
-                                  if (isStarred) {
-                                    // Remove from starred messages
-                                    setStarredMessages(prev => prev.filter(m => m._id !== selectedMessageForHeaderOptions._id));
-                                  } else {
-                                    // Add to starred messages
-                                    setStarredMessages(prev => [...prev, selectedMessageForHeaderOptions]);
-                                  }
-                                  
-                                  toast.success(isStarred ? 'Message unstarred.' : 'Message starred.');
-                                } else {
-                                  toast.error('Failed to update star status');
-                                }
-                              } catch (err) {
-                                toast.error('Failed to update star status');
-                              } finally {
-                                setStarringSaving(false);
-                              }
-                              setHeaderOptionsMessageId(null);
-                            }}
-                            title={selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id) ? "Unstar message" : "Star message"}
-                            aria-label={selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id) ? "Unstar message" : "Star message"}
-                            disabled={starringSaving}
-                          >
-                            {starringSaving ? (
-                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                            ) : selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id) ? (
-                              <FaStar size={18} />
-                            ) : (
-                              <FaRegStar size={18} />
-                            )}
-                          </button>
-                        )}
-                        {/* Pin/Unpin - for all messages (sent and received) */}
-                        {!selectedMessageForHeaderOptions.deleted && (
-                          <button
-                            className={`text-white rounded-full p-2 transition-colors ${
-                              selectedMessageForHeaderOptions.pinned 
-                                ? 'bg-red-500 hover:bg-red-600' 
-                                : 'bg-white/10 hover:bg-white/20'
-                            }`}
-                            onClick={() => {
-                              if (selectedMessageForHeaderOptions.pinned) {
-                                // Unpin the message
-                                handlePinMessage(selectedMessageForHeaderOptions, false);
-                              } else {
-                                // Show pin modal
-                                setMessageToPin(selectedMessageForHeaderOptions);
-                                setShowPinModal(true);
-                              }
-                              setHeaderOptionsMessageId(null);
-                            }}
-                            title={selectedMessageForHeaderOptions.pinned ? "Unpin message" : "Pin message"}
-                            aria-label={selectedMessageForHeaderOptions.pinned ? "Unpin message" : "Pin message"}
-                            disabled={pinningSaving}
-                          >
-                            {pinningSaving ? (
-                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                            ) : (
-                              <FaThumbtack size={18} />
-                            )}
-                          </button>
-                        )}
-                        {/* Report (only for received messages, not deleted) */}
-                        {(selectedMessageForHeaderOptions.senderEmail !== currentUser.email) && !selectedMessageForHeaderOptions.deleted && (
-                          <button
-                            className="text-white hover:text-red-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
-                            onClick={() => {
-                              setReportingMessage(selectedMessageForHeaderOptions);
-                              setShowReportModal(true);
-                              setHeaderOptionsMessageId(null);
-                            }}
-                            title="Report message"
-                            aria-label="Report message"
-                          >
-                            <FaFlag size={18} />
-                          </button>
-                        )}
-                        {/* Edit/Delete for own message */}
-                        {(selectedMessageForHeaderOptions.senderEmail === currentUser.email) && !selectedMessageForHeaderOptions.deleted && (
-                          <>
+                      {/* Scrollable icons container for sent messages to prevent header overflow */}
+                      {selectedMessageForHeaderOptions.senderEmail === currentUser.email ? (
+                        <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto flex-1 mr-2 scrollbar-hide" style={{scrollbarWidth: 'none', msOverflowStyle: 'none'}}>
+                          {/* Reply */}
+                          {!selectedMessageForHeaderOptions.deleted && (
                             <button
-                              onClick={() => { startEditing(selectedMessageForHeaderOptions); setHeaderOptionsMessageId(null); }}
-                              className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
-                              title="Edit comment"
-                              aria-label="Edit comment"
-                              disabled={editingComment !== null}
+                              className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-1.5 sm:p-2 transition-colors flex-shrink-0"
+                              onClick={() => { 
+                                startReply(selectedMessageForHeaderOptions);
+                                setHeaderOptionsMessageId(null);
+                              }}
+                              title="Reply"
+                              aria-label="Reply"
                             >
-                              <FaPen size={18} />
+                              <svg width="16" height="16" className="sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c4.28 0 6.92 1.45 8.84 4.55.23.36.76.09.65-.32C18.31 13.13 15.36 10.36 10 9z"/></svg>
                             </button>
+                          )}
+                          {/* Copy - only for non-deleted messages */}
+                          {!selectedMessageForHeaderOptions.deleted && (
+                            <button
+                              className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-1.5 sm:p-2 transition-colors flex-shrink-0"
+                              onClick={() => { copyMessageToClipboard(selectedMessageForHeaderOptions.message); setHeaderOptionsMessageId(null); }}
+                              title="Copy message"
+                              aria-label="Copy message"
+                            >
+                              <FaCopy size={14} className="sm:w-[18px] sm:h-[18px]" />
+                            </button>
+                          )}
+                          {/* Info - only for own sent messages (not for received) */}
+                          {!selectedMessageForHeaderOptions.deleted && (
+                            <button
+                              className="text-white hover:text-blue-200 bg-white/10 hover:bg-white/20 rounded-full p-1.5 sm:p-2 transition-colors flex-shrink-0"
+                              onClick={() => { 
+                                showMessageInfo(selectedMessageForHeaderOptions);
+                                setHeaderOptionsMessageId(null);
+                              }}
+                              title="Message info"
+                              aria-label="Message info"
+                            >
+                              <FaInfoCircle size={14} className="sm:w-[18px] sm:h-[18px]" />
+                            </button>
+                          )}
+                          {/* Star/Unstar - for all messages (sent and received) */}
+                          {!selectedMessageForHeaderOptions.deleted && (
+                            <button
+                              className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-1.5 sm:p-2 transition-colors flex-shrink-0"
+                              onClick={async () => { 
+                                const isStarred = selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id);
+                                setStarringSaving(true);
+                                try {
+                                  const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${selectedMessageForHeaderOptions._id}/star`, {
+                                    method: 'PATCH',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    credentials: 'include',
+                                    body: JSON.stringify({ starred: !isStarred }),
+                                  });
+                                  if (res.ok) {
+                                    // Update the local state
+                                    setComments(prev => prev.map(c => 
+                                      c._id === selectedMessageForHeaderOptions._id 
+                                        ? { 
+                                            ...c, 
+                                            starredBy: isStarred 
+                                              ? (c.starredBy || []).filter(id => id !== currentUser._id)
+                                              : [...(c.starredBy || []), currentUser._id]
+                                          }
+                                        : c
+                                    ));
+                                    
+                                    // Update starred messages list
+                                    if (isStarred) {
+                                      // Remove from starred messages
+                                      setStarredMessages(prev => prev.filter(m => m._id !== selectedMessageForHeaderOptions._id));
+                                    } else {
+                                      // Add to starred messages
+                                      setStarredMessages(prev => [...prev, selectedMessageForHeaderOptions]);
+                                    }
+                                    
+                                    toast.success(isStarred ? 'Message unstarred.' : 'Message starred.');
+                                  } else {
+                                    toast.error('Failed to update star status');
+                                  }
+                                } catch (err) {
+                                  toast.error('Failed to update star status');
+                                } finally {
+                                  setStarringSaving(false);
+                                }
+                                setHeaderOptionsMessageId(null);
+                              }}
+                              title={selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id) ? "Unstar message" : "Star message"}
+                              aria-label={selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id) ? "Unstar message" : "Star message"}
+                              disabled={starringSaving}
+                            >
+                              {starringSaving ? (
+                                <div className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                              ) : selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id) ? (
+                                <FaStar size={14} className="sm:w-[18px] sm:h-[18px]" />
+                              ) : (
+                                <FaRegStar size={14} className="sm:w-[18px] sm:h-[18px]" />
+                              )}
+                            </button>
+                          )}
+                          {/* Pin/Unpin - for all messages (sent and received) */}
+                          {!selectedMessageForHeaderOptions.deleted && (
+                            <button
+                              className={`text-white rounded-full p-1.5 sm:p-2 transition-colors flex-shrink-0 ${
+                                selectedMessageForHeaderOptions.pinned 
+                                  ? 'bg-red-500 hover:bg-red-600' 
+                                  : 'bg-white/10 hover:bg-white/20'
+                              }`}
+                              onClick={() => {
+                                if (selectedMessageForHeaderOptions.pinned) {
+                                  // Unpin the message
+                                  handlePinMessage(selectedMessageForHeaderOptions, false);
+                                } else {
+                                  // Show pin modal
+                                  setMessageToPin(selectedMessageForHeaderOptions);
+                                  setShowPinModal(true);
+                                }
+                                setHeaderOptionsMessageId(null);
+                              }}
+                              title={selectedMessageForHeaderOptions.pinned ? "Unpin message" : "Pin message"}
+                              aria-label={selectedMessageForHeaderOptions.pinned ? "Unpin message" : "Pin message"}
+                              disabled={pinningSaving}
+                            >
+                              {pinningSaving ? (
+                                <div className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                              ) : (
+                                <FaThumbtack size={14} className="sm:w-[18px] sm:h-[18px]" />
+                              )}
+                            </button>
+                          )}
+                          {/* Edit/Delete for own message */}
+                          {!selectedMessageForHeaderOptions.deleted && (
+                            <>
+                              <button
+                                onClick={() => { startEditing(selectedMessageForHeaderOptions); setHeaderOptionsMessageId(null); }}
+                                className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-1.5 sm:p-2 transition-colors flex-shrink-0"
+                                title="Edit comment"
+                                aria-label="Edit comment"
+                                disabled={editingComment !== null}
+                              >
+                                <FaPen size={14} className="sm:w-[18px] sm:h-[18px]" />
+                              </button>
+                              <button
+                                className="text-white hover:text-red-200 bg-white/10 hover:bg-white/20 rounded-full p-1.5 sm:p-2 transition-colors flex-shrink-0"
+                                onClick={() => { handleDeleteClick(selectedMessageForHeaderOptions); setHeaderOptionsMessageId(null); }}
+                                title="Delete"
+                                aria-label="Delete"
+                              >
+                                <FaTrash size={14} className="sm:w-[18px] sm:h-[18px]" />
+                              </button>
+                            </>
+                          )}
+                          {/* Delete from chat locally for deleted messages */}
+                          {selectedMessageForHeaderOptions.deleted && (
+                            <button
+                              className="text-white hover:text-red-200 bg-white/10 hover:bg-white/20 rounded-full p-1.5 sm:p-2 transition-colors flex-shrink-0"
+                              onClick={() => { 
+                                setMessageToDelete(selectedMessageForHeaderOptions);
+                                setDeleteForBoth(false); // Always delete locally for deleted messages
+                                setShowDeleteModal(true);
+                                setHeaderOptionsMessageId(null); 
+                              }}
+                              title="Delete from chat locally"
+                              aria-label="Delete from chat locally"
+                            >
+                              <FaTrash size={14} className="sm:w-[18px] sm:h-[18px]" />
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        // Regular layout for received messages (no overflow issue)
+                        <div className="flex items-center gap-3">
+                          {/* Reply */}
+                          {!selectedMessageForHeaderOptions.deleted && (
+                            <button
+                              className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                              onClick={() => { 
+                                startReply(selectedMessageForHeaderOptions);
+                                setHeaderOptionsMessageId(null);
+                              }}
+                              title="Reply"
+                              aria-label="Reply"
+                            >
+                              <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c4.28 0 6.92 1.45 8.84 4.55.23.36.76.09.65-.32C18.31 13.13 15.36 10.36 10 9z"/></svg>
+                            </button>
+                          )}
+                          {/* Copy - only for non-deleted messages */}
+                          {!selectedMessageForHeaderOptions.deleted && (
+                            <button
+                              className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                              onClick={() => { copyMessageToClipboard(selectedMessageForHeaderOptions.message); setHeaderOptionsMessageId(null); }}
+                              title="Copy message"
+                              aria-label="Copy message"
+                            >
+                              <FaCopy size={18} />
+                            </button>
+                          )}
+                          {/* Star/Unstar - for all messages (sent and received) */}
+                          {!selectedMessageForHeaderOptions.deleted && (
+                            <button
+                              className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                              onClick={async () => { 
+                                const isStarred = selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id);
+                                setStarringSaving(true);
+                                try {
+                                  const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${selectedMessageForHeaderOptions._id}/star`, {
+                                    method: 'PATCH',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    credentials: 'include',
+                                    body: JSON.stringify({ starred: !isStarred }),
+                                  });
+                                  if (res.ok) {
+                                    // Update the local state
+                                    setComments(prev => prev.map(c => 
+                                      c._id === selectedMessageForHeaderOptions._id 
+                                        ? { 
+                                            ...c, 
+                                            starredBy: isStarred 
+                                              ? (c.starredBy || []).filter(id => id !== currentUser._id)
+                                              : [...(c.starredBy || []), currentUser._id]
+                                          }
+                                        : c
+                                    ));
+                                    
+                                    // Update starred messages list
+                                    if (isStarred) {
+                                      // Remove from starred messages
+                                      setStarredMessages(prev => prev.filter(m => m._id !== selectedMessageForHeaderOptions._id));
+                                    } else {
+                                      // Add to starred messages
+                                      setStarredMessages(prev => [...prev, selectedMessageForHeaderOptions]);
+                                    }
+                                    
+                                    toast.success(isStarred ? 'Message unstarred.' : 'Message starred.');
+                                  } else {
+                                    toast.error('Failed to update star status');
+                                  }
+                                } catch (err) {
+                                  toast.error('Failed to update star status');
+                                } finally {
+                                  setStarringSaving(false);
+                                }
+                                setHeaderOptionsMessageId(null);
+                              }}
+                              title={selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id) ? "Unstar message" : "Star message"}
+                              aria-label={selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id) ? "Unstar message" : "Star message"}
+                              disabled={starringSaving}
+                            >
+                              {starringSaving ? (
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                              ) : selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id) ? (
+                                <FaStar size={18} />
+                              ) : (
+                                <FaRegStar size={18} />
+                              )}
+                            </button>
+                          )}
+                          {/* Pin/Unpin - for all messages (sent and received) */}
+                          {!selectedMessageForHeaderOptions.deleted && (
+                            <button
+                              className={`text-white rounded-full p-2 transition-colors ${
+                                selectedMessageForHeaderOptions.pinned 
+                                  ? 'bg-red-500 hover:bg-red-600' 
+                                  : 'bg-white/10 hover:bg-white/20'
+                              }`}
+                              onClick={() => {
+                                if (selectedMessageForHeaderOptions.pinned) {
+                                  // Unpin the message
+                                  handlePinMessage(selectedMessageForHeaderOptions, false);
+                                } else {
+                                  // Show pin modal
+                                  setMessageToPin(selectedMessageForHeaderOptions);
+                                  setShowPinModal(true);
+                                }
+                                setHeaderOptionsMessageId(null);
+                              }}
+                              title={selectedMessageForHeaderOptions.pinned ? "Unpin message" : "Pin message"}
+                              aria-label={selectedMessageForHeaderOptions.pinned ? "Unpin message" : "Pin message"}
+                              disabled={pinningSaving}
+                            >
+                              {pinningSaving ? (
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                              ) : (
+                                <FaThumbtack size={18} />
+                              )}
+                            </button>
+                          )}
+                          {/* Report (only for received messages, not deleted) */}
+                          {!selectedMessageForHeaderOptions.deleted && (
                             <button
                               className="text-white hover:text-red-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
-                              onClick={() => { handleDeleteClick(selectedMessageForHeaderOptions); setHeaderOptionsMessageId(null); }}
-                              title="Delete"
-                              aria-label="Delete"
+                              onClick={() => {
+                                setReportingMessage(selectedMessageForHeaderOptions);
+                                setShowReportModal(true);
+                                setHeaderOptionsMessageId(null);
+                              }}
+                              title="Report message"
+                              aria-label="Report message"
+                            >
+                              <FaFlag size={18} />
+                            </button>
+                          )}
+                          {/* Delete locally for received messages */}
+                          {!selectedMessageForHeaderOptions.deleted && (
+                            <button
+                              className="text-white hover:text-red-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                              onClick={() => { handleDeleteReceivedMessage(selectedMessageForHeaderOptions); setHeaderOptionsMessageId(null); }}
+                              title="Delete locally"
+                              aria-label="Delete locally"
                             >
                               <FaTrash size={18} />
                             </button>
-                          </>
-                        )}
-                        {/* Delete locally for received messages */}
-                        {(selectedMessageForHeaderOptions.senderEmail !== currentUser.email) && !selectedMessageForHeaderOptions.deleted && (
-                          <button
-                            className="text-white hover:text-red-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
-                            onClick={() => { handleDeleteReceivedMessage(selectedMessageForHeaderOptions); setHeaderOptionsMessageId(null); }}
-                            title="Delete locally"
-                            aria-label="Delete locally"
-                          >
-                            <FaTrash size={18} />
-                          </button>
-                        )}
-                        {/* Delete from chat locally for deleted messages */}
-                        {selectedMessageForHeaderOptions.deleted && (
-                          <button
-                            className="text-white hover:text-red-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
-                            onClick={() => { 
-                              setMessageToDelete(selectedMessageForHeaderOptions);
-                              setDeleteForBoth(false); // Always delete locally for deleted messages
-                              setShowDeleteModal(true);
-                              setHeaderOptionsMessageId(null); 
-                            }}
-                            title="Delete from chat locally"
-                            aria-label="Delete from chat locally"
-                          >
-                            <FaTrash size={18} />
-                          </button>
-                        )}
-                      </div>
+                          )}
+                          {/* Delete from chat locally for deleted messages */}
+                          {selectedMessageForHeaderOptions.deleted && (
+                            <button
+                              className="text-white hover:text-red-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                              onClick={() => { 
+                                setMessageToDelete(selectedMessageForHeaderOptions);
+                                setDeleteForBoth(false); // Always delete locally for deleted messages
+                                setShowDeleteModal(true);
+                                setHeaderOptionsMessageId(null); 
+                              }}
+                              title="Delete from chat locally"
+                              aria-label="Delete from chat locally"
+                            >
+                              <FaTrash size={18} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                      {/* Close button - always positioned on the right with fixed position */}
                       <button
-                        className="text-white hover:text-gray-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors z-10 shadow"
+                        className="text-white hover:text-gray-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors z-10 shadow flex-shrink-0"
                         onClick={() => setHeaderOptionsMessageId(null)}
                         title="Close options"
                         aria-label="Close options"
