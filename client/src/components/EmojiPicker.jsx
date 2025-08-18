@@ -132,8 +132,15 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
         setTimeout(refocusInput, 10);
         setTimeout(refocusInput, 50);
       } else {
-        // Mobile: keep keyboard hidden while picker is open, but keep caret position persisted
-        moveCaretToEnd();
+        // Mobile: keep keyboard open; ensure caret stays at end while inserting emojis
+        const keepFocusAndCaret = () => {
+          el.focus();
+          moveCaretToEnd();
+        };
+        keepFocusAndCaret();
+        requestAnimationFrame(keepFocusAndCaret);
+        setTimeout(keepFocusAndCaret, 10);
+        setTimeout(keepFocusAndCaret, 50);
       }
     }
   };
@@ -242,23 +249,18 @@ export const EmojiButton = ({ onEmojiClick, className = "", inputRef }) => {
     e.preventDefault();
     e.stopPropagation();
     if (isMobile) {
-      if (!isPickerOpen) {
-        if (inputRef && inputRef.current) {
-          inputRef.current.blur();
-        }
-      } else {
-        if (inputRef && inputRef.current) {
-          const el = inputRef.current;
-          el.focus();
-          const moveCaretToEnd = () => {
-            const length = el.value.length;
-            try { el.setSelectionRange(length, length); } catch (_) {}
-          };
-          moveCaretToEnd();
-          requestAnimationFrame(moveCaretToEnd);
-          setTimeout(moveCaretToEnd, 10);
-          setTimeout(moveCaretToEnd, 50);
-        }
+      // Keep keyboard open on mobile by maintaining focus in both cases
+      if (inputRef && inputRef.current) {
+        const el = inputRef.current;
+        el.focus();
+        const moveCaretToEnd = () => {
+          const length = el.value.length;
+          try { el.setSelectionRange(length, length); } catch (_) {}
+        };
+        moveCaretToEnd();
+        requestAnimationFrame(moveCaretToEnd);
+        setTimeout(moveCaretToEnd, 10);
+        setTimeout(moveCaretToEnd, 50);
       }
     } else {
       if (inputRef && inputRef.current && !isPickerOpen) {
