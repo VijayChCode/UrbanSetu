@@ -2947,82 +2947,85 @@ function AdminAppointmentRow({
               )}
               
               <div className="flex gap-2 mt-1 px-3 pb-2">
-                {/* File Upload Button */}
-                <label className={`flex items-center justify-center w-12 h-12 rounded-full shadow-lg transition-all duration-300 cursor-pointer ${
-                  uploadingFile 
-                    ? 'bg-gray-400 cursor-not-allowed' 
-                    : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 hover:shadow-xl transform hover:scale-110 active:scale-95'
-                }`}>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
+                {/* Message Input Container with Attachment Icon Inside */}
+                <div className="flex-1 relative">
+                  <textarea
+                    rows={1}
+                    className="w-full pl-4 pr-12 py-3 border-2 border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-400 shadow-lg transition-all duration-300 bg-white resize-y whitespace-pre-wrap break-all hover:border-blue-300 hover:shadow-xl focus:shadow-2xl transform hover:scale-[1.01]"
+                    placeholder={editingComment ? "Edit your message..." : "Type a message..."}
+                    value={newComment}
                     onChange={(e) => {
-                      const file = e.target.files[0];
-                      if (file) {
-                        handleFileUpload(file);
+                      setNewComment(e.target.value);
+                      if (editingComment) {
+                        setEditText(e.target.value);
                       }
-                      // Reset the input
-                      e.target.value = '';
                     }}
-                    disabled={uploadingFile}
+                    onClick={() => {
+                      if (headerOptionsMessageId) {
+                        setHeaderOptionsMessageId(null);
+                        toast.info("You can hit reply icon in header to reply");
+                      }
+                    }}
+                    onKeyDown={e => { 
+                      // Check if this is a desktop viewport only
+                      const isDesktop = window.matchMedia('(min-width: 768px)').matches;
+                      
+                      if (e.key === 'Enter') {
+                        // Avoid sending while composing (IME)
+                        if (e.isComposing || e.keyCode === 229) return;
+                        // For desktop: Enter sends message, Shift+Enter creates new line
+                        if (isDesktop && !e.shiftKey) {
+                          e.preventDefault();
+                          if (editingComment) {
+                            handleEditComment(editingComment);
+                          } else {
+                            handleCommentSend();
+                          }
+                        }
+                        // For mobile or with Shift+Enter: allow new line (default behavior)
+                        // Ctrl+Enter or Cmd+Enter still works on all devices
+                        else if ((e.ctrlKey || e.metaKey)) {
+                          e.preventDefault();
+                          if (editingComment) {
+                            handleEditComment(editingComment);
+                          } else {
+                            handleCommentSend();
+                          }
+                        }
+                      }
+                    }}
+                    ref={inputRef}
                   />
-                  {uploadingFile ? (
-                    <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full"></div>
-                  ) : (
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                    </svg>
-                  )}
-                </label>
+                  {/* File Upload Button - Inside textarea on the right (WhatsApp style) */}
+                  <label className={`absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center justify-center w-8 h-8 rounded-full transition-all duration-300 cursor-pointer ${
+                    uploadingFile 
+                      ? 'bg-gray-400 cursor-not-allowed' 
+                      : 'bg-gray-100 hover:bg-gray-200 hover:shadow-md active:scale-95'
+                  }`}>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          handleFileUpload(file);
+                        }
+                        // Reset the input
+                        e.target.value = '';
+                      }}
+                      disabled={uploadingFile}
+                    />
+                    {uploadingFile ? (
+                      <div className="animate-spin w-4 h-4 border-2 border-gray-600 border-t-transparent rounded-full"></div>
+                    ) : (
+                      <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                      </svg>
+                    )}
+                  </label>
+                </div>
                 
-                <textarea
-                  rows={1}
-                  className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-400 shadow-lg transition-all duration-300 bg-white resize-y whitespace-pre-wrap break-all hover:border-blue-300 hover:shadow-xl focus:shadow-2xl transform hover:scale-[1.01]"
-                  placeholder={editingComment ? "Edit your message..." : "Type a message..."}
-                  value={newComment}
-                  onChange={(e) => {
-                    setNewComment(e.target.value);
-                    if (editingComment) {
-                      setEditText(e.target.value);
-                    }
-                  }}
-                  onClick={() => {
-                    if (headerOptionsMessageId) {
-                      setHeaderOptionsMessageId(null);
-                      toast.info("You can hit reply icon in header to reply");
-                    }
-                  }}
-                  onKeyDown={e => { 
-                    // Check if this is a desktop viewport only
-                    const isDesktop = window.matchMedia('(min-width: 768px)').matches;
-                    
-                    if (e.key === 'Enter') {
-                      // Avoid sending while composing (IME)
-                      if (e.isComposing || e.keyCode === 229) return;
-                      // For desktop: Enter sends message, Shift+Enter creates new line
-                      if (isDesktop && !e.shiftKey) {
-                        e.preventDefault();
-                        if (editingComment) {
-                          handleEditComment(editingComment);
-                        } else {
-                          handleCommentSend();
-                        }
-                      }
-                      // For mobile or with Shift+Enter: allow new line (default behavior)
-                      // Ctrl+Enter or Cmd+Enter still works on all devices
-                      else if ((e.ctrlKey || e.metaKey)) {
-                        e.preventDefault();
-                        if (editingComment) {
-                          handleEditComment(editingComment);
-                        } else {
-                          handleCommentSend();
-                        }
-                      }
-                    }
-                  }}
-                  ref={inputRef}
-                />
                 <button
                   onClick={(e) => {
                     e.preventDefault();
