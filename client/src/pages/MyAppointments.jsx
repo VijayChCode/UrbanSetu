@@ -3165,6 +3165,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
             {!isUpcoming && (
               <div className="text-xs text-red-600 font-medium mt-1">Outdated</div>
             )}
+            {isArchived && appt.archivedAt && (
+              <div className="text-xs text-gray-500 mt-1">
+                Archived: {new Date(appt.archivedAt).toLocaleDateString('en-GB')}
+              </div>
+            )}
           </div>
         </td>
         <td className="border p-2">
