@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
-import { FaTrash, FaSearch, FaPen, FaPaperPlane, FaUser, FaEnvelope, FaCalendar, FaPhone, FaUserShield, FaArchive, FaUndo, FaCommentDots, FaCheck, FaCheckDouble, FaBan, FaTimes, FaLightbulb, FaCopy, FaEllipsisV, FaInfoCircle, FaSync, FaStar, FaRegStar, FaFlag, FaCalendarAlt } from "react-icons/fa";
+import { FaTrash, FaSearch, FaPen, FaPaperPlane, FaUser, FaEnvelope, FaCalendar, FaPhone, FaUserShield, FaArchive, FaUndo, FaCommentDots, FaCheck, FaCheckDouble, FaBan, FaTimes, FaLightbulb, FaCopy, FaEllipsisV, FaInfoCircle, FaSync, FaStar, FaRegStar, FaFlag, FaCalendarAlt, FaCheckSquare } from "react-icons/fa";
 import UserAvatar from '../components/UserAvatar';
 import ImagePreview from '../components/ImagePreview';
 import { EmojiButton } from '../components/EmojiPicker';
@@ -1196,6 +1196,16 @@ function AdminAppointmentRow({
   
   // Chat options menu state
   const [showChatOptionsMenu, setShowChatOptionsMenu] = useLocalState(false);
+  
+  // Multi-select message states
+  const [isSelectionMode, setIsSelectionMode] = useLocalState(false);
+  const [selectedMessages, setSelectedMessages] = useLocalState([]);
+  const [multiSelectActions, setMultiSelectActions] = useLocalState({
+    starring: false,
+    pinning: false,
+    copying: false,
+    deleting: false
+  });
   
   // Search functionality state
   const [showSearchBox, setShowSearchBox] = useLocalState(false);
@@ -2666,7 +2676,193 @@ function AdminAppointmentRow({
           <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-md flex items-center justify-center z-50 p-4">
             <div className="bg-gradient-to-br from-white via-blue-50 to-purple-50 rounded-3xl shadow-2xl w-full h-full max-w-6xl max-h-full p-0 relative animate-fadeIn flex flex-col border border-gray-200 transform transition-all duration-500 hover:shadow-3xl">
                                                               <div className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-4 border-b-2 border-blue-700 bg-gradient-to-r from-blue-700 via-purple-700 to-blue-900 rounded-t-3xl relative shadow-2xl sticky top-[env(safe-area-inset-top,0px)] z-30">
-                {headerOptionsMessageId && selectedMessageForHeaderOptions ? (
+                {isSelectionMode ? (
+                  // Multi-select header
+                  <div className="flex items-center justify-between w-full">
+                    <button
+                      className="text-white hover:text-gray-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                      onClick={() => {
+                        setIsSelectionMode(false);
+                        setSelectedMessages([]);
+                      }}
+                      title="Exit selection mode"
+                      aria-label="Exit selection mode"
+                    >
+                      <FaTimes className="w-4 h-4" />
+                    </button>
+                    <div className="flex items-center gap-4">
+                      <span className="text-white text-sm font-medium">
+                        {selectedMessages.length} message{selectedMessages.length !== 1 ? 's' : ''} selected
+                      </span>
+                      {selectedMessages.length === 1 ? (
+                        // Single message selected - show individual message options
+                        <div className="flex items-center gap-2">
+                          {(() => {
+                            const selectedMsg = selectedMessages[0];
+                            const isSentMessage = selectedMsg.senderEmail === currentUser.email;
+                            return (
+                              <>
+                                {!selectedMsg.deleted && (
+                                  <>
+                                    <button
+                                      className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                                      onClick={() => { 
+                                        startReply(selectedMsg);
+                                        setIsSelectionMode(false);
+                                        setSelectedMessages([]);
+                                      }}
+                                      title="Reply"
+                                      aria-label="Reply"
+                                    >
+                                      <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c4.28 0 6.92 1.45 8.84 4.55.23.36.76.09.65-.32C18.31 13.13 15.36 10.36 10 9z"/></svg>
+                                    </button>
+                                    <button
+                                      className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                                      onClick={() => { 
+                                        copyMessageToClipboard(selectedMsg.message); 
+                                        setIsSelectionMode(false);
+                                        setSelectedMessages([]);
+                                      }}
+                                      title="Copy message"
+                                      aria-label="Copy message"
+                                    >
+                                      <FaCopy size={18} />
+                                    </button>
+                                    <button
+                                      className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                                      onClick={async () => { 
+                                        const isStarred = selectedMsg.starredBy?.includes(currentUser._id);
+                                        setMultiSelectActions(prev => ({ ...prev, starring: true }));
+                                        try {
+                                          const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${selectedMsg._id}/star`, {
+                                            method: 'PATCH',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            credentials: 'include',
+                                            body: JSON.stringify({ starred: !isStarred }),
+                                          });
+                                          if (res.ok) {
+                                            updateAppointmentComments(appt._id, localComments.map(c => 
+                                              c._id === selectedMsg._id 
+                                                ? { 
+                                                    ...c, 
+                                                    starredBy: isStarred 
+                                                      ? (c.starredBy || []).filter(id => id !== currentUser._id)
+                                                      : [...(c.starredBy || []), currentUser._id]
+                                                  }
+                                                : c
+                                            ));
+                                            toast.success(isStarred ? 'Message unstarred.' : 'Message starred.');
+                                          } else {
+                                            toast.error('Failed to update star status');
+                                          }
+                                        } catch (err) {
+                                          toast.error('Failed to update star status');
+                                        } finally {
+                                          setMultiSelectActions(prev => ({ ...prev, starring: false }));
+                                        }
+                                        setIsSelectionMode(false);
+                                        setSelectedMessages([]);
+                                      }}
+                                      title={selectedMsg.starredBy?.includes(currentUser._id) ? "Unstar message" : "Star message"}
+                                      aria-label={selectedMsg.starredBy?.includes(currentUser._id) ? "Unstar message" : "Star message"}
+                                      disabled={multiSelectActions.starring}
+                                    >
+                                      {multiSelectActions.starring ? (
+                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                      ) : selectedMsg.starredBy?.includes(currentUser._id) ? (
+                                        <FaStar size={18} />
+                                      ) : (
+                                        <FaRegStar size={18} />
+                                      )}
+                                    </button>
+                                    <button
+                                      className="text-white hover:text-red-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                                      onClick={() => { 
+                                        setMessageToDelete(selectedMsg);
+                                        setShowDeleteModal(true);
+                                        setIsSelectionMode(false);
+                                        setSelectedMessages([]);
+                                      }}
+                                      title="Delete"
+                                      aria-label="Delete"
+                                    >
+                                      <FaTrash size={18} />
+                                    </button>
+                                  </>
+                                )}
+                              </>
+                            );
+                          })()}
+                        </div>
+                      ) : selectedMessages.length > 1 ? (
+                        // Multiple messages selected - show bulk actions
+                        <div className="flex items-center gap-2">
+                          <button
+                            className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                            onClick={async () => {
+                              setMultiSelectActions(prev => ({ ...prev, starring: true }));
+                              try {
+                                const promises = selectedMessages.map(msg => {
+                                  const isStarred = msg.starredBy?.includes(currentUser._id);
+                                  return fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${msg._id}/star`, {
+                                    method: 'PATCH',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    credentials: 'include',
+                                    body: JSON.stringify({ starred: !isStarred }),
+                                  });
+                                });
+                                await Promise.all(promises);
+                                toast.success(`Starred ${selectedMessages.length} messages`);
+                                setIsSelectionMode(false);
+                                setSelectedMessages([]);
+                              } catch (err) {
+                                toast.error('Failed to star messages');
+                              } finally {
+                                setMultiSelectActions(prev => ({ ...prev, starring: false }));
+                              }
+                            }}
+                            title="Star all selected messages"
+                            aria-label="Star all selected messages"
+                            disabled={multiSelectActions.starring}
+                          >
+                            {multiSelectActions.starring ? (
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            ) : (
+                              <FaStar size={18} />
+                            )}
+                          </button>
+                          <button
+                            className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                            onClick={() => {
+                              const allMessages = selectedMessages.map(msg => msg.message).join('\n\n');
+                              copyMessageToClipboard(allMessages);
+                              toast.success('Copied all selected messages');
+                              setIsSelectionMode(false);
+                              setSelectedMessages([]);
+                            }}
+                            title="Copy all selected messages"
+                            aria-label="Copy all selected messages"
+                          >
+                            <FaCopy size={18} />
+                          </button>
+                          <button
+                            className="text-white hover:text-red-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                            onClick={() => {
+                              setMessageToDelete(selectedMessages);
+                              setShowDeleteModal(true);
+                              setIsSelectionMode(false);
+                              setSelectedMessages([]);
+                            }}
+                            title="Delete all selected messages"
+                            aria-label="Delete all selected messages"
+                          >
+                            <FaTrash size={18} />
+                          </button>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : headerOptionsMessageId && selectedMessageForHeaderOptions ? (
                   <div className="flex items-center justify-end w-full gap-4">
                     <div className="flex items-center gap-4">
                       {!selectedMessageForHeaderOptions.deleted && (
@@ -2878,6 +3074,19 @@ function AdminAppointmentRow({
                             >
                               <FaStar className="text-sm" />
                               Starred Messages
+                            </button>
+                            
+                            {/* Select Messages option */}
+                            <button
+                              className="w-full px-4 py-2 text-left text-sm text-blue-600 hover:bg-blue-50 flex items-center gap-2"
+                              onClick={() => {
+                                setIsSelectionMode(true);
+                                setSelectedMessages([]);
+                                setShowChatOptionsMenu(false);
+                              }}
+                            >
+                              <FaCheckSquare className="text-sm" />
+                              Select Messages
                             </button>
                             {/* Keyboard shortcuts and file upload guidelines */}
                             <button
@@ -3117,15 +3326,32 @@ function AdminAppointmentRow({
                         </div>
                       )}
                       <div className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-fadeInChatBubble`} style={{ animationDelay: `${0.03 * index}s` }}>
-                      <div 
-                        ref={el => messageRefs.current[c._id] = el}
-                        data-message-id={c._id}
-                        className={`rounded-2xl px-4 sm:px-5 py-3 text-sm shadow-xl max-w-[90%] sm:max-w-[80%] md:max-w-[70%] lg:max-w-[60%] xl:max-w-[50%] break-words overflow-hidden relative transition-all duration-300 min-h-[60px] ${
-                          isMe 
-                            ? 'bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-500 hover:to-purple-600 text-white shadow-blue-200 hover:shadow-blue-300 hover:shadow-2xl' 
-                            : 'bg-white hover:bg-gray-50 text-gray-800 border border-gray-200 shadow-gray-200 hover:shadow-lg hover:border-gray-300 hover:shadow-xl'
-                        }`}
-                      >
+                        {/* Selection checkbox - only show in selection mode */}
+                        {isSelectionMode && (
+                          <div className={`flex items-start ${isMe ? 'order-2 ml-2' : 'order-1 mr-2'}`}>
+                            <input
+                              type="checkbox"
+                              checked={selectedMessages.some(msg => msg._id === c._id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedMessages(prev => [...prev, c]);
+                                } else {
+                                  setSelectedMessages(prev => prev.filter(msg => msg._id !== c._id));
+                                }
+                              }}
+                              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                            />
+                          </div>
+                        )}
+                        <div 
+                          ref={el => messageRefs.current[c._id] = el}
+                          data-message-id={c._id}
+                          className={`rounded-2xl px-4 sm:px-5 py-3 text-sm shadow-xl max-w-[90%] sm:max-w-[80%] md:max-w-[70%] lg:max-w-[60%] xl:max-w-[50%] break-words overflow-hidden relative transition-all duration-300 min-h-[60px] ${
+                            isMe 
+                              ? 'bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-500 hover:to-purple-600 text-white shadow-blue-200 hover:shadow-blue-300 hover:shadow-2xl' 
+                              : 'bg-white hover:bg-gray-50 text-gray-800 border border-gray-200 shadow-gray-200 hover:shadow-lg hover:border-gray-300 hover:shadow-xl'
+                          } ${isSelectionMode && selectedMessages.some(msg => msg._id === c._id) ? 'ring-2 ring-blue-400' : ''}`}
+                        >
                                                     {/* Reply preview above message if this is a reply */}
                             {c.replyTo && (
                               <div className="border-l-4 border-purple-400 pl-3 mb-2 text-xs bg-gradient-to-r from-purple-50 to-blue-50 hover:from-purple-100 hover:to-blue-100 rounded-lg w-full max-w-full break-words cursor-pointer transition-all duration-200 hover:shadow-sm" onClick={() => {
