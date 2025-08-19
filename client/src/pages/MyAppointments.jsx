@@ -30,6 +30,11 @@ export default function MyAppointments() {
   const [showArchived, setShowArchived] = useState(false);
   const navigate = useNavigate();
   const [swipedMsgId, setSwipedMsgId] = useState(null);
+  
+  // Archive/Unarchive modal states
+  const [appointmentToHandle, setAppointmentToHandle] = useState(null);
+  const [showArchiveModal, setShowArchiveModal] = useState(false);
+  const [showUnarchiveModal, setShowUnarchiveModal] = useState(false);
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -581,9 +586,9 @@ export default function MyAppointments() {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-100 py-10 px-2 md:px-8">
 
       <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-6">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h3 className="text-3xl font-extrabold text-blue-700 drop-shadow">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+          <div className="flex-1">
+            <h3 className="text-2xl sm:text-3xl font-extrabold text-blue-700 drop-shadow">
               {showArchived ? "Archived Appointments" : "My Appointments"}
             </h3>
             {!showArchived && (
@@ -592,18 +597,18 @@ export default function MyAppointments() {
               </p>
             )}
           </div>
-          <button
-            onClick={handleManualRefresh}
-            className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all font-semibold shadow-md ml-4"
-            title="Refresh appointments"
-          >
-            Refresh
-          </button>
-          {/* Show archived toggle for all users */}
-          
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+            <button
+              onClick={handleManualRefresh}
+              className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all font-semibold shadow-md"
+              title="Refresh appointments"
+            >
+              Refresh
+            </button>
+            {/* Show archived toggle for all users */}
             <button
               onClick={() => setShowArchived(!showArchived)}
-              className={`bg-gradient-to-r text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2 ${
+              className={`bg-gradient-to-r text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2 justify-center ${
                 showArchived 
                   ? 'from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600' 
                   : 'from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700'
@@ -611,14 +616,15 @@ export default function MyAppointments() {
             >
               {showArchived ? (
                 <>
-                  <FaUndo /> Active Appointments
+                  <FaUndo /> <span className="hidden sm:inline">Active Appointments</span><span className="sm:hidden">Active</span>
                 </>
               ) : (
                 <>
-                  <FaArchive /> Archived Appointments ({archivedAppointments.length})
+                  <FaArchive /> <span className="hidden sm:inline">Archived Appointments ({archivedAppointments.length})</span><span className="sm:hidden">Archived ({archivedAppointments.length})</span>
                 </>
               )}
             </button>
+          </div>
         </div>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div className="flex items-center gap-2">
@@ -1042,8 +1048,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     };
   }, [showChatLockModal, showChatUnlockModal, showForgotPasswordModal, showRemoveLockModal]);
   
-  // Store appointment and reasons for modals
-  const [appointmentToHandle, setAppointmentToHandle] = useState(null);
+  // Store reasons for modals
   const [cancelReason, setCancelReason] = useState('');
   const [deleteReason, setDeleteReason] = useState('');
   const messageRefs = useRef({}); // Add messageRefs here
@@ -5079,7 +5084,6 @@ You can lock this chat again at any time from the options.</p>
                 type="button"
                 onClick={() => {
                   setShowDeleteAppointmentModal(false);
-                  setAppointmentToHandle(null);
                   setDeleteReason('');
                 }}
                 className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors"
@@ -5117,7 +5121,6 @@ You can lock this chat again at any time from the options.</p>
                 type="button"
                 onClick={() => {
                   setShowArchiveModal(false);
-                  setAppointmentToHandle(null);
                 }}
                 className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors"
               >
@@ -5154,7 +5157,6 @@ You can lock this chat again at any time from the options.</p>
                 type="button"
                 onClick={() => {
                   setShowUnarchiveModal(false);
-                  setAppointmentToHandle(null);
                 }}
                 className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors"
               >
