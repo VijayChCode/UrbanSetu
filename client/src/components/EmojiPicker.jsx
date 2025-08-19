@@ -41,8 +41,10 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
       } else {
         const spaceRight = containerRect.right - buttonRect.left;
         const showRight = spaceRight >= pickerWidth + 16; // 16px margin
+        // Desktop: always place the picker ABOVE the button to avoid covering the input area
+        // Keep horizontal alignment logic the same
         finalPosition = {
-          bottom: showAbove,
+          bottom: true,
           right: showRight || spaceRight < pickerWidth / 2 ? false : true,
           center: false
         };
@@ -184,8 +186,9 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
 
   // Dynamic positioning classes and styles - constrained within chatbox (desktop), fixed overlay (mobile)
   const isMobile = window.innerWidth < 768;
+  // Force above positioning on desktop to avoid overlapping the input area
   let positionClasses = `absolute z-[60] bg-white rounded-lg shadow-xl border border-gray-200 ${
-    position.bottom ? 'bottom-full mb-2' : 'top-full mt-2'
+    true ? 'bottom-full mb-2' : 'top-full mt-2'
   }`;
   if (position.center && isMobile) {
     positionClasses += '';
@@ -227,6 +230,11 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
   } else {
     dynamicStyles.left = position.right ? 'auto' : '0';
     dynamicStyles.right = position.right ? '0' : 'auto';
+  }
+
+  // Ensure extra bottom spacing on desktop so the picker never collides with the input area visually
+  if (!isMobile) {
+    dynamicStyles.marginBottom = '8px';
   }
 
   // For mobile: render in a fixed portal anchored to viewport to avoid being affected by footer/keyboard shifts
