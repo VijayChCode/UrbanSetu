@@ -57,21 +57,28 @@ export default function MyAppointments() {
       }
     };
     const fetchArchivedAppointments = async () => {
-      // Only fetch archived appointments for admin users
-      if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) {
-        try {
-          const res = await fetch(`${API_BASE_URL}/api/bookings/archived`, {
-            credentials: 'include'
-          });
-          if (!res.ok) throw new Error('Not allowed');
+      if (!currentUser) {
+        setArchivedAppointments([]);
+        return;
+      }
+      try {
+        // Use user-specific archived endpoint for regular users, admin endpoint for admins
+        const endpoint = (currentUser.role === 'admin' || currentUser.role === 'rootadmin') 
+          ? `${API_BASE_URL}/api/bookings/archived`
+          : `${API_BASE_URL}/api/bookings/my/archived`;
+        
+        const res = await fetch(endpoint, {
+          credentials: 'include'
+        });
+        if (res.ok) {
           const data = await res.json();
           setArchivedAppointments(Array.isArray(data) ? data : []);
-        } catch (err) {
+        } else {
           setArchivedAppointments([]);
-          toast.error("Failed to fetch archived appointments");
         }
-      } else {
+      } catch (err) {
         setArchivedAppointments([]);
+        console.error("Failed to fetch archived appointments:", err);
       }
     };
     fetchAppointments();
@@ -493,9 +500,13 @@ export default function MyAppointments() {
       } else {
         throw new Error('Failed to fetch appointments');
       }
-      // Only fetch archived appointments for admin users
-      if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) {
-        const resArchived = await fetch(`${API_BASE_URL}/api/bookings/archived`, { credentials: 'include' });
+      // Fetch archived appointments for all users
+      if (currentUser) {
+        const endpoint = (currentUser.role === 'admin' || currentUser.role === 'rootadmin') 
+          ? `${API_BASE_URL}/api/bookings/archived`
+          : `${API_BASE_URL}/api/bookings/my/archived`;
+        
+        const resArchived = await fetch(endpoint, { credentials: 'include' });
         if (resArchived.ok) {
           const dataArchived = await resArchived.json();
           setArchivedAppointments(Array.isArray(dataArchived) ? dataArchived : []);
@@ -588,9 +599,10 @@ export default function MyAppointments() {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-100 py-10 px-2 md:px-8">
 
       <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-6">
-        <div className="flex justify-between items-center mb-6">
+        {/* Responsive button group: compact on mobile, original on desktop */}
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-6">
           <div>
-            <h3 className="text-3xl font-extrabold text-blue-700 drop-shadow">
+            <h3 className="text-2xl sm:text-3xl font-extrabold text-blue-700 drop-shadow">
               {showArchived ? "Archived Appointments" : "My Appointments"}
             </h3>
             {!showArchived && (
@@ -599,18 +611,17 @@ export default function MyAppointments() {
               </p>
             )}
           </div>
-          <button
-            onClick={handleManualRefresh}
-            className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all font-semibold shadow-md ml-4"
-            title="Refresh appointments"
-          >
-            Refresh
-          </button>
-          {/* Only show archived toggle for admin/rootadmin */}
-          {currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin') && (
+          <div className="flex flex-row w-full sm:w-auto gap-2 sm:gap-4 justify-center sm:justify-end mt-2 sm:mt-0">
+            <button
+              onClick={handleManualRefresh}
+              className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-2.5 py-1.5 rounded-md hover:from-blue-600 hover:to-purple-600 transition-all font-semibold shadow-md text-xs sm:text-base sm:px-4 sm:py-2 sm:rounded-lg w-1/2 sm:w-auto"
+              title="Refresh appointments"
+            >
+              Refresh
+            </button>
             <button
               onClick={() => setShowArchived(!showArchived)}
-              className={`bg-gradient-to-r text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2 ${
+              className={`bg-gradient-to-r text-white px-2.5 py-1.5 rounded-md transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-1 sm:gap-2 text-xs sm:text-base w-1/2 sm:w-auto sm:px-6 sm:py-3 sm:rounded-lg justify-center ${
                 showArchived 
                   ? 'from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600' 
                   : 'from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700'
@@ -618,15 +629,15 @@ export default function MyAppointments() {
             >
               {showArchived ? (
                 <>
-                  <FaUndo /> Active Appointments
+                  <FaUndo /> <span>Active Appointments</span>
                 </>
               ) : (
                 <>
-                  <FaArchive /> Archived Appointments ({archivedAppointments.length})
+                  <FaArchive /> <span>Archived Appointments ({archivedAppointments.length})</span>
                 </>
               )}
             </button>
-          )}
+          </div>
         </div>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div className="flex items-center gap-2">
@@ -690,8 +701,8 @@ export default function MyAppointments() {
             />
           </div>
         </div>
-        {/* Only show archived appointments table for admin/rootadmin */}
-        {showArchived && currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? (
+        {/* Show archived appointments table for all users */}
+        {showArchived ? (
           filteredArchivedAppointments.length === 0 ? (
             <div className="text-center text-gray-500 text-lg">No archived appointments found.</div>
           ) : (
@@ -3214,6 +3225,30 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 title="Cancel Appointment (Admin)"
               >
                 <FaUserShield />
+              </button>
+            )}
+            
+            {/* Archive button - show for all appointments in active view */}
+            {!isArchived && (
+              <button
+                className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-3 py-1.5 rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-1 text-sm"
+                onClick={() => handleArchiveAppointment(appt._id)}
+                title="Archive Appointment"
+              >
+                <FaArchive size={12} />
+                Archive
+              </button>
+            )}
+            
+            {/* Unarchive button - show for all appointments in archived view */}
+            {isArchived && (
+              <button
+                className="bg-gradient-to-r from-green-500 to-green-600 text-white px-3 py-1.5 rounded-lg hover:from-green-600 hover:to-green-700 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-1 text-sm"
+                onClick={() => handleUnarchiveAppointment(appt._id)}
+                title="Unarchive Appointment"
+              >
+                <FaUndo size={12} />
+                Unarchive
               </button>
             )}
             {/* Reinitiate button: only show to the cancelling party */}
