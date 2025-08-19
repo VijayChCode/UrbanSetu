@@ -3489,21 +3489,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   {isSelectionMode ? (
                     // Multi-select header
                     <div className="flex items-center justify-between w-full">
-                      <button
-                        className="text-white hover:text-gray-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
-                        onClick={() => {
-                          setIsSelectionMode(false);
-                          setSelectedMessages([]);
-                        }}
-                        title="Exit selection mode"
-                        aria-label="Exit selection mode"
-                      >
-                        <FaTimes className="w-4 h-4" />
-                      </button>
+                      <span className="text-white text-sm font-medium">
+                        {selectedMessages.length} message{selectedMessages.length !== 1 ? 's' : ''} selected
+                      </span>
                       <div className="flex items-center gap-4">
-                        <span className="text-white text-sm font-medium">
-                          {selectedMessages.length} message{selectedMessages.length !== 1 ? 's' : ''} selected
-                        </span>
                         {selectedMessages.length === 1 ? (
                           // Single message selected - show individual message options
                           <div className="flex items-center gap-2">
@@ -3709,6 +3698,17 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             </button>
                           </div>
                         ) : null}
+                        <button
+                          className="text-white hover:text-gray-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                          onClick={() => {
+                            setIsSelectionMode(false);
+                            setSelectedMessages([]);
+                          }}
+                          title="Exit selection mode"
+                          aria-label="Exit selection mode"
+                        >
+                          <FaTimes className="w-4 h-4" />
+                        </button>
                       </div>
                     </div>
                   ) : headerOptionsMessageId && selectedMessageForHeaderOptions ? (
