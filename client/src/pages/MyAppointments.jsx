@@ -57,21 +57,28 @@ export default function MyAppointments() {
       }
     };
     const fetchArchivedAppointments = async () => {
-      // Only fetch archived appointments for admin users
-      if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) {
-        try {
-          const res = await fetch(`${API_BASE_URL}/api/bookings/archived`, {
-            credentials: 'include'
-          });
-          if (!res.ok) throw new Error('Not allowed');
+      if (!currentUser) {
+        setArchivedAppointments([]);
+        return;
+      }
+      try {
+        // Use user-specific archived endpoint for regular users, admin endpoint for admins
+        const endpoint = (currentUser.role === 'admin' || currentUser.role === 'rootadmin') 
+          ? `${API_BASE_URL}/api/bookings/archived`
+          : `${API_BASE_URL}/api/bookings/my/archived`;
+        
+        const res = await fetch(endpoint, {
+          credentials: 'include'
+        });
+        if (res.ok) {
           const data = await res.json();
           setArchivedAppointments(Array.isArray(data) ? data : []);
-        } catch (err) {
+        } else {
           setArchivedAppointments([]);
-          toast.error("Failed to fetch archived appointments");
         }
-      } else {
+      } catch (err) {
         setArchivedAppointments([]);
+        console.error("Failed to fetch archived appointments:", err);
       }
     };
     fetchAppointments();
@@ -322,12 +329,7 @@ export default function MyAppointments() {
           setAppointments((prev) => prev.filter((appt) => appt._id !== appointmentToHandle));
           setArchivedAppointments((prev) => [{ ...archivedAppt, archivedAt: new Date() }, ...prev]);
         }
-        toast.success("Appointment archived successfully.", {
-          autoClose: 5000,
-          closeOnClick: true,
-          pauseOnHover: false,
-          draggable: false
-        });
+        toast.success("Appointment archived successfully.");
       } else {
         toast.error(data.message || "Failed to archive appointment.");
       }
@@ -493,9 +495,13 @@ export default function MyAppointments() {
       } else {
         throw new Error('Failed to fetch appointments');
       }
-      // Only fetch archived appointments for admin users
-      if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) {
-        const resArchived = await fetch(`${API_BASE_URL}/api/bookings/archived`, { credentials: 'include' });
+      // Fetch archived appointments for all users
+      if (currentUser) {
+        const endpoint = (currentUser.role === 'admin' || currentUser.role === 'rootadmin') 
+          ? `${API_BASE_URL}/api/bookings/archived`
+          : `${API_BASE_URL}/api/bookings/my/archived`;
+        
+        const resArchived = await fetch(endpoint, { credentials: 'include' });
         if (resArchived.ok) {
           const dataArchived = await resArchived.json();
           setArchivedAppointments(Array.isArray(dataArchived) ? dataArchived : []);
@@ -588,9 +594,10 @@ export default function MyAppointments() {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-100 py-10 px-2 md:px-8">
 
       <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-6">
-        <div className="flex justify-between items-center mb-6">
+        {/* Responsive button group: compact on mobile, original on desktop */}
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-6">
           <div>
-            <h3 className="text-3xl font-extrabold text-blue-700 drop-shadow">
+            <h3 className="text-2xl sm:text-3xl font-extrabold text-blue-700 drop-shadow">
               {showArchived ? "Archived Appointments" : "My Appointments"}
             </h3>
             {!showArchived && (
@@ -599,18 +606,17 @@ export default function MyAppointments() {
               </p>
             )}
           </div>
-          <button
-            onClick={handleManualRefresh}
-            className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all font-semibold shadow-md ml-4"
-            title="Refresh appointments"
-          >
-            Refresh
-          </button>
-          {/* Only show archived toggle for admin/rootadmin */}
-          {currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin') && (
+          <div className="flex flex-row w-full sm:w-auto gap-2 sm:gap-4 justify-center sm:justify-end mt-2 sm:mt-0">
+            <button
+              onClick={handleManualRefresh}
+              className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-2.5 py-1.5 rounded-md hover:from-blue-600 hover:to-purple-600 transition-all font-semibold shadow-md text-xs sm:text-base sm:px-4 sm:py-2 sm:rounded-lg w-1/2 sm:w-auto"
+              title="Refresh appointments"
+            >
+              Refresh
+            </button>
             <button
               onClick={() => setShowArchived(!showArchived)}
-              className={`bg-gradient-to-r text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2 ${
+              className={`bg-gradient-to-r text-white px-2.5 py-1.5 rounded-md transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-1 sm:gap-2 text-xs sm:text-base w-1/2 sm:w-auto sm:px-6 sm:py-3 sm:rounded-lg justify-center ${
                 showArchived 
                   ? 'from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600' 
                   : 'from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700'
@@ -618,15 +624,15 @@ export default function MyAppointments() {
             >
               {showArchived ? (
                 <>
-                  <FaUndo /> Active Appointments
+                  <FaUndo /> <span>Active Appointments</span>
                 </>
               ) : (
                 <>
-                  <FaArchive /> Archived Appointments ({archivedAppointments.length})
+                  <FaArchive /> <span>Archived Appointments ({archivedAppointments.length})</span>
                 </>
               )}
             </button>
-          )}
+          </div>
         </div>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div className="flex items-center gap-2">
@@ -690,8 +696,8 @@ export default function MyAppointments() {
             />
           </div>
         </div>
-        {/* Only show archived appointments table for admin/rootadmin */}
-        {showArchived && currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? (
+        {/* Show archived appointments table for all users */}
+        {showArchived ? (
           filteredArchivedAppointments.length === 0 ? (
             <div className="text-center text-gray-500 text-lg">No archived appointments found.</div>
           ) : (
@@ -1024,9 +1030,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const [removingLock, setRemovingLock] = useState(false);
   const [forgotPasswordProcessing, setForgotPasswordProcessing] = useState(false);
   
-  // Lock body scroll when specific modals are open (Cancel or Remove Appointment)
+  // Lock body scroll when specific modals are open (Cancel/Remove/Archive/Unarchive Appointment)
   useEffect(() => {
-    const shouldLock = showCancelModal || showPermanentDeleteModal;
+    const shouldLock = showCancelModal || showPermanentDeleteModal || showArchiveModal || showUnarchiveModal;
     if (shouldLock) {
       document.body.classList.add('modal-open');
     } else {
@@ -1035,7 +1041,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     return () => {
       document.body.classList.remove('modal-open');
     };
-  }, [showCancelModal, showPermanentDeleteModal]);
+  }, [showCancelModal, showPermanentDeleteModal, showArchiveModal, showUnarchiveModal]);
 
   // Lock body scroll when chat lock modals are open
   useEffect(() => {
@@ -3216,6 +3222,30 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 <FaUserShield />
               </button>
             )}
+            
+            {/* Archive button - show for all appointments in active view */}
+            {!isArchived && (
+              <button
+                className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-3 py-1.5 rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-1 text-sm"
+                onClick={() => { setAppointmentToHandle(appt._id); setShowArchiveModal(true); }}
+                title="Archive Appointment"
+              >
+                <FaArchive size={12} />
+                Archive
+              </button>
+            )}
+            
+            {/* Unarchive button - show for all appointments in archived view */}
+            {isArchived && (
+              <button
+                className="bg-gradient-to-r from-green-500 to-green-600 text-white px-3 py-1.5 rounded-lg hover:from-green-600 hover:to-green-700 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-1 text-sm"
+                onClick={() => { setAppointmentToHandle(appt._id); setShowUnarchiveModal(true); }}
+                title="Unarchive Appointment"
+              >
+                <FaUndo size={12} />
+                Unarchive
+              </button>
+            )}
             {/* Reinitiate button: only show to the cancelling party */}
             {((appt.status === 'cancelledByBuyer' && isBuyer) || (appt.status === 'cancelledBySeller' && isSeller)) && (
               <div className="flex flex-col items-center">
@@ -5088,74 +5118,84 @@ You can lock this chat again at any time from the options.</p>
       )}
 
       {/* Archive Appointment Confirmation Modal */}
-      {showArchiveModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-              <FaArchive className="text-blue-500" />
-              Archive Appointment
-            </h3>
-            
-            <p className="text-gray-600 mb-6">
-              Are you sure you want to archive this appointment? It will be moved to the archived section.
-            </p>
-            
-            <div className="flex gap-3 justify-end">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowArchiveModal(false);
-                  setAppointmentToHandle(null);
-                }}
-                className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={confirmArchive}
-                className="px-4 py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2"
-              >
-                <FaArchive size={12} />
-                Archive
-              </button>
+      {showArchiveModal && appointmentToHandle && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-2 sm:mx-4 animate-fadeIn">
+            <div className="p-6">
+              <div className="flex items-start gap-4 mb-6">
+                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <FaArchive className="text-blue-600 text-xl" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-2">Archive Appointment</h3>
+                  <p className="text-sm text-gray-600 leading-relaxed text-justify">
+                    Are you sure you want to archive this appointment? It will be moved to the archived section.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex gap-3 justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowArchiveModal(false);
+                    setAppointmentToHandle(null);
+                  }}
+                  className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmArchive}
+                  className="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors flex items-center gap-2"
+                >
+                  <FaArchive size={14} />
+                  Archive
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
       {/* Unarchive Appointment Confirmation Modal */}
-      {showUnarchiveModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-              <FaUndo className="text-green-500" />
-              Unarchive Appointment
-            </h3>
-            
-            <p className="text-gray-600 mb-6">
-              Are you sure you want to unarchive this appointment? It will be moved back to the active appointments.
-            </p>
-            
-            <div className="flex gap-3 justify-end">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowUnarchiveModal(false);
-                  setAppointmentToHandle(null);
-                }}
-                className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={confirmUnarchive}
-                className="px-4 py-2 rounded bg-green-600 text-white font-semibold hover:bg-green-700 transition-colors flex items-center gap-2"
-              >
-                <FaUndo size={12} />
-                Unarchive
-              </button>
+      {showUnarchiveModal && appointmentToHandle && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-2 sm:mx-4 animate-fadeIn">
+            <div className="p-6">
+              <div className="flex items-start gap-4 mb-6">
+                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <FaUndo className="text-green-600 text-xl" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-2">Unarchive Appointment</h3>
+                  <p className="text-sm text-gray-600 leading-relaxed text-justify">
+                    Are you sure you want to unarchive this appointment? It will be moved back to the active appointments.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex gap-3 justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowUnarchiveModal(false);
+                    setAppointmentToHandle(null);
+                  }}
+                  className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmUnarchive}
+                  className="px-4 py-2 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 transition-colors flex items-center gap-2"
+                >
+                  <FaUndo size={14} />
+                  Unarchive
+                </button>
+              </div>
             </div>
           </div>
         </div>

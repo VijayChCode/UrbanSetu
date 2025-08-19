@@ -111,6 +111,11 @@ const bookingSchema = new mongoose.Schema({
   archivedAt: {
     type: Date
   },
+  // User-specific archiving
+  archivedByBuyer: { type: Boolean, default: false },
+  archivedBySeller: { type: Boolean, default: false },
+  buyerArchivedAt: { type: Date, default: null },
+  sellerArchivedAt: { type: Date, default: null },
   reinitiationCount: { type: Number, default: 0 },
   buyerReinitiationCount: { type: Number, default: 0 },
   sellerReinitiationCount: { type: Number, default: 0 },
