@@ -286,7 +286,7 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
           height={pickerHeight}
           lazyLoadEmojis={true}
           theme="light"
-          emojiStyle="native"
+          emojiStyle="google"
           categories={[
             'suggested',
             'smileys_people', 
@@ -342,7 +342,7 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
           height={pickerHeight}
           lazyLoadEmojis={true}
           theme="light"
-          emojiStyle="native"
+          emojiStyle="google"
           categories={[
             'suggested',
             'smileys_people', 
