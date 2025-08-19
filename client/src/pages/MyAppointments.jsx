@@ -3654,7 +3654,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                         ) : selectedMessages.length > 1 ? (
                           // Multiple messages selected - show bulk actions
                           <div className="flex items-center gap-2">
-                            {selectedMessages.every(msg => msg.deleted) ? (
+                            {selectedMessages.some(msg => msg.deleted) ? (
                               <button
                                 className="text-white hover:text-red-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
                                 onClick={async () => {
