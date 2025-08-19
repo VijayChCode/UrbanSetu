@@ -341,7 +341,7 @@ export default function MyAppointments() {
           setArchivedAppointments((prev) => [{ ...archivedAppt, archivedAt: new Date() }, ...prev]);
         }
         toast.success("Appointment archived successfully.", {
-          autoClose: 5000,
+          autoClose: 3000,
           closeOnClick: true,
           pauseOnHover: false,
           draggable: false
@@ -376,7 +376,7 @@ export default function MyAppointments() {
           setAppointments((prev) => [{ ...unarchivedAppt, archivedAt: undefined }, ...prev]);
         }
         toast.success("Appointment unarchived successfully.", {
-          autoClose: 5000,
+          autoClose: 3000,
           closeOnClick: true,
           pauseOnHover: false,
           draggable: false
