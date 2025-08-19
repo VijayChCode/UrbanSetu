@@ -335,16 +335,14 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
     zIndex: 9999,
     width: `${pickerWidth}px`,
     maxWidth: '350px',
-    maxHeight: `${effectiveMaxHeight}px`,
+    height: `${effectiveMaxHeight}px`,
     background: 'white',
     borderRadius: '0.5rem',
     boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
     border: '1px solid rgba(229,231,235,1)',
-    overflowY: 'auto',
-    overflowX: 'hidden',
-    WebkitOverflowScrolling: 'touch',
-    touchAction: 'pan-y',
-    overscrollBehavior: 'contain'
+    overflow: 'hidden',
+    display: 'flex',
+    flexDirection: 'column'
   };
 
   return createPortal(
@@ -378,7 +376,7 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
         skinTonesDisabled={false}
         suggestedEmojisMode="recent"
         width={pickerWidth}
-        height={pickerHeight}
+        height={effectiveMaxHeight - 60}
         lazyLoadEmojis={true}
         theme="light"
         emojiStyle="google"
