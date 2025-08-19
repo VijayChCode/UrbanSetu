@@ -18,6 +18,7 @@ export default function AdminAppointments() {
   const [archivedAppointments, setArchivedAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [roleFilter, setRoleFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
   const [showUserModal, setShowUserModal] = useState(false);
@@ -604,6 +605,7 @@ export default function AdminAppointments() {
         statusFilter === "all" ? true :
         statusFilter === "outdated" ? isOutdated :
         appt.status === statusFilter;
+      const matchesRole = roleFilter === "all" ? true : appt.role === roleFilter;
       const matchesSearch =
         appt.buyerId?.email?.toLowerCase().includes(search.toLowerCase()) ||
         appt.sellerId?.email?.toLowerCase().includes(search.toLowerCase()) ||
@@ -617,12 +619,12 @@ export default function AdminAppointments() {
       if (endDate) {
         matchesDate = matchesDate && new Date(appt.date) <= new Date(endDate);
       }
-      return matchesStatus && matchesSearch && matchesDate;
+      return matchesStatus && matchesRole && matchesSearch && matchesDate;
     }).map((appt) => ({
       ...appt,
       comments: updatedComments[appt._id] || appt.comments || []
     }));
-  }, [appointments, statusFilter, search, startDate, endDate, updatedComments]);
+  }, [appointments, statusFilter, roleFilter, search, startDate, endDate, updatedComments]);
 
   const filteredArchivedAppointments = useMemo(() => {
     return archivedAppointments.filter((appt) => {
@@ -631,6 +633,7 @@ export default function AdminAppointments() {
         statusFilter === "all" ? true :
         statusFilter === "outdated" ? isOutdated :
         appt.status === statusFilter;
+      const matchesRole = roleFilter === "all" ? true : appt.role === roleFilter;
       const matchesSearch =
         appt.buyerId?.email?.toLowerCase().includes(search.toLowerCase()) ||
         appt.sellerId?.email?.toLowerCase().includes(search.toLowerCase()) ||
@@ -644,12 +647,12 @@ export default function AdminAppointments() {
       if (endDate) {
         matchesDate = matchesDate && new Date(appt.date) <= new Date(endDate);
       }
-      return matchesStatus && matchesSearch && matchesDate;
+      return matchesStatus && matchesRole && matchesSearch && matchesDate;
     }).map((appt) => ({
       ...appt,
       comments: updatedComments[appt._id] || appt.comments || []
     }));
-  }, [archivedAppointments, statusFilter, search, startDate, endDate, updatedComments]);
+  }, [archivedAppointments, statusFilter, roleFilter, search, startDate, endDate, updatedComments]);
 
   // Add this function to fetch latest data on demand
   const handleManualRefresh = async () => {
@@ -801,54 +804,70 @@ export default function AdminAppointments() {
           }
         </p>
 
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-          <div className="flex items-center gap-2">
-            <label className="font-semibold">Status:</label>
-            <select
-              className="border rounded px-2 py-1 focus:outline-none focus:ring focus:ring-blue-200"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <option value="all">All Appointments</option>
-              <option value="pending">Pending Appointments</option>
-              <option value="accepted">Accepted</option>
-              <option value="rejected">Rejected</option>
-              <option value="cancelledByBuyer">Cancelled by Buyer</option>
-              <option value="cancelledBySeller">Cancelled by Seller</option>
-              <option value="cancelledByAdmin">Cancelled by Admin</option>
-              <option value="deletedByAdmin">Deleted by Admin</option>
-              <option value="completed">Completed</option>
-              <option value="noShow">No Show</option>
-              <option value="outdated">Outdated</option>
-            </select>
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+          <div className="flex flex-col sm:flex-row gap-2">
+            <div className="flex items-center gap-2">
+              <label className="font-semibold text-sm">Status:</label>
+              <select
+                className="border rounded px-2 py-1 focus:outline-none focus:ring focus:ring-blue-200 text-sm"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <option value="all">All Appointments</option>
+                <option value="pending">Pending Appointments</option>
+                <option value="accepted">Accepted</option>
+                <option value="rejected">Rejected</option>
+                <option value="cancelledByBuyer">Cancelled by Buyer</option>
+                <option value="cancelledBySeller">Cancelled by Seller</option>
+                <option value="cancelledByAdmin">Cancelled by Admin</option>
+                <option value="deletedByAdmin">Deleted by Admin</option>
+                <option value="completed">Completed</option>
+                <option value="noShow">No Show</option>
+                <option value="outdated">Outdated</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="font-semibold text-sm">Role:</label>
+              <select
+                className="border rounded px-2 py-1 focus:outline-none focus:ring focus:ring-blue-200 text-sm"
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value)}
+              >
+                <option value="all">All</option>
+                <option value="buyer">As Buyer</option>
+                <option value="seller">As Seller</option>
+              </select>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <label className="font-semibold">From:</label>
-            <input
-              type="date"
-              className="border rounded px-2 py-1 focus:outline-none focus:ring focus:ring-blue-200"
-              value={startDate}
-              onChange={e => setStartDate(e.target.value)}
-              max={endDate || undefined}
-            />
-            <label className="font-semibold">To:</label>
-            <input
-              type="date"
-              className="border rounded px-2 py-1 focus:outline-none focus:ring focus:ring-blue-200"
-              value={endDate}
-              onChange={e => setEndDate(e.target.value)}
-              min={startDate || undefined}
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <FaSearch className="text-gray-500 hover:text-blue-500 transition-colors duration-200" />
-            <input
-              type="text"
-              className="border rounded px-2 py-1 focus:outline-none focus:ring focus:ring-blue-200"
-              placeholder="Search by email, property, or username..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+          <div className="flex flex-col sm:flex-row gap-2">
+            <div className="flex items-center gap-2">
+              <label className="font-semibold text-sm">From:</label>
+              <input
+                type="date"
+                className="border rounded px-2 py-1 focus:outline-none focus:ring focus:ring-blue-200 text-sm"
+                value={startDate}
+                onChange={e => setStartDate(e.target.value)}
+                max={endDate || undefined}
+              />
+              <label className="font-semibold text-sm">To:</label>
+              <input
+                type="date"
+                className="border rounded px-2 py-1 focus:outline-none focus:ring focus:ring-blue-200 text-sm"
+                value={endDate}
+                onChange={e => setEndDate(e.target.value)}
+                min={startDate || undefined}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <FaSearch className="text-gray-500 hover:text-blue-500 transition-colors duration-200" />
+              <input
+                type="text"
+                className="border rounded px-2 py-1 focus:outline-none focus:ring focus:ring-blue-200 text-sm flex-1"
+                placeholder="Search by email, property, or username..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
           </div>
         </div>
         
