@@ -526,6 +526,97 @@ router.delete('/:id/comment/:commentId', verifyToken, async (req, res) => {
   }
 });
 
+// DELETE: Bulk delete multiple comments for everyone
+router.delete('/:id/comments/bulk-delete', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { commentIds } = req.body || {};
+    const userId = req.user.id;
+    
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid appointment ID format.' });
+    }
+    if (!Array.isArray(commentIds) || commentIds.length === 0) {
+      return res.status(400).json({ message: 'commentIds must be a non-empty array.' });
+    }
+    
+    const bookingToUpdate = await booking.findById(id);
+    if (!bookingToUpdate) {
+      return res.status(404).json({ message: 'Appointment not found.' });
+    }
+    
+    const isBuyer = bookingToUpdate.buyerId.toString() === userId;
+    const isSeller = bookingToUpdate.sellerId.toString() === userId;
+    const user = await User.findById(userId);
+    const isAdmin = (user && user.role === 'admin' && user.adminApprovalStatus === 'approved') || (user && user.role === 'rootadmin');
+    if (!isBuyer && !isSeller && !isAdmin) {
+      return res.status(403).json({ message: 'You can only delete comments on your own appointments unless you are an admin or root admin.' });
+    }
+    
+    const io = req.app.get('io');
+    const emitted = [];
+    for (const commentId of commentIds) {
+      if (!commentId || !mongoose.Types.ObjectId.isValid(commentId)) {
+        continue; // skip invalid ids
+      }
+      const comment = bookingToUpdate.comments.id(commentId);
+      if (!comment) continue;
+      
+      // Optional: only allow deleting own messages when not admin
+      if (!isAdmin && comment.senderEmail !== req.user.email) {
+        continue;
+      }
+      
+      if (!comment.originalMessage && comment.message) {
+        comment.originalMessage = comment.message;
+      }
+      if (!comment.originalImageUrl && comment.imageUrl) {
+        comment.originalImageUrl = comment.imageUrl;
+      }
+      
+      comment.deleted = true;
+      comment.deletedBy = req.user.email;
+      comment.deletedAt = new Date();
+      
+      const commentForEmission = {
+        _id: comment._id,
+        senderEmail: comment.senderEmail,
+        message: comment.message,
+        originalMessage: comment.originalMessage,
+        imageUrl: comment.imageUrl,
+        originalImageUrl: comment.originalImageUrl,
+        deleted: true,
+        deletedBy: req.user.email,
+        deletedAt: comment.deletedAt,
+        timestamp: comment.timestamp,
+        readBy: comment.readBy,
+        replyTo: comment.replyTo,
+        edited: comment.edited,
+        editedAt: comment.editedAt
+      };
+      
+      comment.message = '';
+      emitted.push(commentForEmission);
+    }
+    
+    bookingToUpdate.markModified('comments');
+    await bookingToUpdate.save();
+    
+    if (io) {
+      for (const commentForEmission of emitted) {
+        io.to(bookingToUpdate.buyerId.toString()).emit('commentUpdate', { appointmentId: id, comment: commentForEmission });
+        io.to(bookingToUpdate.sellerId.toString()).emit('commentUpdate', { appointmentId: id, comment: commentForEmission });
+        io.to(`appointment_${id}`).emit('commentUpdate', { appointmentId: id, comment: commentForEmission });
+      }
+    }
+    
+    return res.status(200).json({ comments: bookingToUpdate.comments });
+  } catch (err) {
+    console.error('Failed to bulk delete comments:', err);
+    return res.status(500).json({ message: 'Failed to bulk delete comments.' });
+  }
+});
+
 // DELETE: Clear all comments for an appointment (admin only, password required)
 router.delete('/:id/comments', verifyToken, async (req, res) => {
   try {
