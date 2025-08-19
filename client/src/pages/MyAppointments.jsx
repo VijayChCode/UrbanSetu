@@ -311,40 +311,31 @@ export default function MyAppointments() {
   };
 
   const handleArchiveAppointment = async (id) => {
-    console.log('handleArchiveAppointment called with ID:', id);
     setAppointmentToHandle(id);
-    console.log('Setting appointmentToHandle to:', id);
     setShowArchiveModal(true);
-    console.log('Setting showArchiveModal to true');
   };
 
   const confirmArchive = async () => {
-    console.log('confirmArchive called, appointmentToHandle:', appointmentToHandle);
     try {
       const res = await fetch(`${API_BASE_URL}/api/bookings/${appointmentToHandle}/archive`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
       });
-      console.log('Archive API response status:', res.status);
       const data = await res.json();
-      console.log('Archive API response data:', data);
       if (res.ok) {
         const archivedAppt = appointments.find(appt => appt._id === appointmentToHandle);
-        console.log('Found appointment to archive:', archivedAppt);
         if (archivedAppt) {
           setAppointments((prev) => prev.filter((appt) => appt._id !== appointmentToHandle));
           setArchivedAppointments((prev) => [{ ...archivedAppt, archivedAt: new Date() }, ...prev]);
         }
         toast.success("Appointment archived successfully.");
       } else {
-        console.error('Archive failed:', data);
         toast.error(data.message || "Failed to archive appointment.");
       }
       setShowArchiveModal(false);
       setAppointmentToHandle(null);
     } catch (err) {
-      console.error('Archive error:', err);
       toast.error("An error occurred. Please try again.");
     }
   };
@@ -3236,10 +3227,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
             {!isArchived && (
               <button
                 className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-3 py-1.5 rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-1 text-sm"
-                onClick={() => {
-                  console.log('Archive button clicked, appointment ID:', appt._id);
-                  handleArchiveAppointment(appt._id);
-                }}
+                onClick={() => handleArchiveAppointment(appt._id)}
                 title="Archive Appointment"
               >
                 <FaArchive size={12} />
