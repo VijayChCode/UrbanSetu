@@ -5386,7 +5386,7 @@ You can lock this chat again at any time from the options.</p>
               <p className="text-gray-600 mb-6">
                 Delete this message for me?
               </p>
-            ) : (!Array.isArray(messageToDelete) && messageToDelete?.senderEmail === currentUser.email) ? (
+            ) : ((Array.isArray(messageToDelete) && messageToDelete.every(m => m.senderEmail === currentUser.email)) || (!Array.isArray(messageToDelete) && messageToDelete?.senderEmail === currentUser.email)) ? (
               // Own message - show existing functionality
               <>
                 <p className="text-gray-600 mb-4">
@@ -5446,7 +5446,7 @@ You can lock this chat again at any time from the options.</p>
               >
                 <FaTrash size={12} />
                 {Array.isArray(messageToDelete)
-                  ? (deleteForBoth ? 'Delete for everyone' : 'Delete for me')
+                  ? ((messageToDelete.every(m => m.senderEmail === currentUser.email) && deleteForBoth) ? 'Delete for everyone' : 'Delete for me')
                   : (messageToDelete?.deleted
                       ? 'Delete for me'
                       : messageToDelete?.senderEmail === currentUser.email
