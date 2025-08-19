@@ -1817,6 +1817,20 @@ router.patch('/:id/comment/:commentId/pin', verifyToken, async (req, res) => {
     appointment.markModified('comments');
     await appointment.save();
 
+    // Emit real-time update so both parties (and admins) see pin/unpin immediately
+    try {
+      const io = req.app.get('io');
+      if (io) {
+        const updatedComment = comment.toObject ? comment.toObject() : comment;
+        io.to(appointment.buyerId.toString()).emit('commentUpdate', { appointmentId: id, comment: updatedComment });
+        io.to(appointment.sellerId.toString()).emit('commentUpdate', { appointmentId: id, comment: updatedComment });
+        // Emit to appointment room for admin visibility
+        io.to(`appointment_${id}`).emit('commentUpdate', { appointmentId: id, comment: updatedComment });
+      }
+    } catch (emitErr) {
+      console.warn('Warning: failed to emit pin/unpin commentUpdate event:', emitErr);
+    }
+
     return res.status(200).json({ 
       message: pinned ? 'Message pinned successfully' : 'Message unpinned successfully',
       pinned: comment.pinned,
