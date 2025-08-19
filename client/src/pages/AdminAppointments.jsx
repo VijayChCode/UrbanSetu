@@ -2460,26 +2460,41 @@ function AdminAppointmentRow({
     if (!messageToDelete) return;
     
     try {
-      // Check if the message was unread by current user before deleting
-      const wasUnread = !messageToDelete.readBy?.includes(currentUser._id) && 
-                       messageToDelete.senderEmail !== currentUser.email;
-      
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${messageToDelete._id}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setLocalComments(data.comments);
-        
-        // Reduce unread count if the deleted message was unread
-        if (wasUnread) {
-          setUnreadNewMessages(prev => Math.max(0, prev - 1));
+      // Admin deletion is always for everyone
+      if (Array.isArray(messageToDelete)) {
+        const ids = messageToDelete.map(m => m._id);
+        const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/bulk-delete`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ commentIds: ids })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          toast.error(data.message || 'Failed to delete selected messages.');
+        } else {
+          if (data?.comments) {
+            setLocalComments(data.comments);
+          }
+          toast.success(`Deleted ${ids.length} messages for everyone!`);
         }
-        
-        toast.success("Message deleted successfully!");
       } else {
-        toast.error(data.message || 'Failed to delete message.');
+        const wasUnread = !messageToDelete.readBy?.includes(currentUser._id) && 
+                         messageToDelete.senderEmail !== currentUser.email;
+        const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${messageToDelete._id}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setLocalComments(data.comments);
+          if (wasUnread) {
+            setUnreadNewMessages(prev => Math.max(0, prev - 1));
+          }
+          toast.success("Message deleted successfully!");
+        } else {
+          toast.error(data.message || 'Failed to delete message.');
+        }
       }
     } catch (err) {
       toast.error('An error occurred. Please try again.');
