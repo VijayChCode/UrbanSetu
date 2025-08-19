@@ -609,7 +609,7 @@ export default function MyAppointments() {
         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
           <div>
             <h3 className="text-2xl md:text-3xl font-extrabold text-blue-700 drop-shadow">
-              {showArchived ? "Archived Appointments" : "My Appointments"}
+              {showArchived ? `Archived Appointments (${filteredArchivedAppointments.length})` : `My Appointments (${filteredAppointments.length})`}
             </h3>
             {!showArchived && (
               <p className="text-sm text-gray-600 mt-1">
