@@ -3,6 +3,7 @@ import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnv
 import UserAvatar from '../components/UserAvatar';
 import ImagePreview from '../components/ImagePreview';
 import { EmojiButton } from '../components/EmojiPicker';
+import { useSoundEffects, SoundControl } from '../components/SoundEffects';
 import { useSelector } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Appointment from "../components/Appointment";
@@ -1233,7 +1234,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const [imageCaption, setImageCaption] = useState('');
   const [showImagePreviewModal, setShowImagePreviewModal] = useState(false);
 
-
+  // Sound effects
+  const { playMessageSent, playMessageReceived, playNotification, toggleMute, setVolume, isMuted } = useSoundEffects();
 
   // File upload handler
   const handleFileUpload = async (file) => {
@@ -2102,7 +2104,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
               : msg
           ));
           
-          // Don't show success toast as it's too verbose for chat
+                      // Don't show success toast as it's too verbose for chat
+            playMessageSent(); // Play send sound
         } else {
           // Remove the temp message and show error
           setComments(prev => prev.filter(msg => msg._id !== tempId));
@@ -2579,7 +2582,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const handlePermanentDelete = async () => {
     setShowPermanentDeleteModal(true);
   };
-
   const confirmPermanentDelete = async () => {
     try {
       const who = isBuyer ? 'buyer' : isSeller ? 'seller' : null;
@@ -2872,14 +2874,15 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         const isSenderAdmin = !isSenderBuyer && !isSenderSeller;
         
         const senderName = isSenderAdmin ? "UrbanSetu" : (data.comment.senderEmail || 'User');
-        toast.info(`New message from ${senderName}`);
+                  toast.info(`New message from ${senderName}`);
+          playNotification(); // Play notification sound
       }
     }
     socket.on('commentUpdate', handleCommentUpdateNotify);
     return () => {
       socket.off('commentUpdate', handleCommentUpdateNotify);
     };
-  }, [appt._id, showChatModal]);
+  }, [appt._id, showChatModal, playNotification]);
 
   // Real-time comment updates via socket.io (for chat sync)
   useEffect(() => {
@@ -2902,10 +2905,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                     // Only add if not present and not a temporary message
         const isTemporaryMessage = prev.some(msg => msg._id.toString().startsWith('temp-'));
         if (!isTemporaryMessage || data.comment.senderEmail !== currentUser.email) {
-          // If this is a new message from another user and chat is not open, increment unread count
-          if (data.comment.senderEmail !== currentUser.email && !showChatModal && !data.comment.readBy?.includes(currentUser._id)) {
-            setUnreadNewMessages(prev => prev + 1);
-          }
+                      // If this is a new message from another user and chat is not open, increment unread count
+            if (data.comment.senderEmail !== currentUser.email && !showChatModal && !data.comment.readBy?.includes(currentUser._id)) {
+              setUnreadNewMessages(prev => prev + 1);
+              playNotification(); // Play notification sound
+            } else {
+              playMessageReceived(); // Play receive sound
+            }
           return [...prev, data.comment];
         }
         return prev;
@@ -2942,7 +2948,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       socket.off('chatClearedForUser', handleChatClearedForUser);
       socket.off('commentRemovedForUser', handleCommentRemovedForUser);
     };
-  }, [appt._id, currentUser.email, currentUser._id, showChatModal]);
+  }, [appt._id, currentUser.email, currentUser._id, showChatModal, playNotification, playMessageReceived]);
 
   // Mark all comments as read when chat modal opens and fetch latest if needed
   useEffect(() => {
@@ -3188,7 +3194,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       })}`;
     }
   }
-
   // Message selected for header options overlay
   const selectedMessageForHeaderOptions = headerOptionsMessageId ? comments.find(msg => msg._id === headerOptionsMessageId) : null;
   return (
@@ -4089,6 +4094,20 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                         </div>
                       </div>
                       <div className="flex items-center gap-2 sm:gap-4 ml-auto flex-shrink-0">
+                        {/* Sound Controls */}
+                        <div className="hidden sm:block">
+                          <SoundControl 
+                            onToggleMute={() => {
+                              const muted = toggleMute();
+                              toast.info(muted ? 'Sounds muted' : 'Sounds unmuted');
+                            }}
+                            isMuted={isMuted()}
+                            onVolumeChange={(volume) => {
+                              setVolume(volume);
+                              toast.info(`Volume: ${Math.round(volume * 100)}%`);
+                            }}
+                          />
+                        </div>
                         {/* Lock indicator */}
                         {(chatLocked || chatLockStatusLoading) && (
                           <div className="flex items-center gap-1 bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-bold flex-shrink-0">
