@@ -312,59 +312,90 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
     );
   }
 
-  // Desktop: render within chat container with absolute positioning
-  return (
-    <div 
+  // Desktop: render in a fixed portal anchored to viewport near the button to avoid overlapping input
+  const desktopMargin = 12;
+  const buttonRect = buttonRef.current ? buttonRef.current.getBoundingClientRect() : null;
+  const viewportLeftClamp = (x) => Math.max(16, Math.min(x, window.innerWidth - pickerWidth - 16));
+  const spaceAboveViewport = buttonRect ? buttonRect.top : window.innerHeight / 2;
+  const spaceBelowViewport = buttonRect ? (window.innerHeight - buttonRect.bottom) : window.innerHeight / 2;
+  const placeAbove = spaceAboveViewport >= effectiveMaxHeight + desktopMargin || spaceAboveViewport >= spaceBelowViewport;
+  const computedTop = buttonRect
+    ? (placeAbove
+        ? Math.max(16, buttonRect.top - effectiveMaxHeight - desktopMargin)
+        : Math.min(window.innerHeight - effectiveMaxHeight - 16, buttonRect.bottom + desktopMargin))
+    : Math.max(16, window.innerHeight - effectiveMaxHeight - 88);
+  const computedLeft = buttonRect
+    ? viewportLeftClamp(buttonRect.right - pickerWidth)
+    : viewportLeftClamp((window.innerWidth - pickerWidth) / 2);
+
+  const desktopFixedStyles = {
+    position: 'fixed',
+    left: `${computedLeft}px`,
+    top: `${computedTop}px`,
+    zIndex: 9999,
+    width: `${pickerWidth}px`,
+    maxWidth: '350px',
+    maxHeight: `${effectiveMaxHeight}px`,
+    background: 'white',
+    borderRadius: '0.5rem',
+    boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
+    border: '1px solid rgba(229,231,235,1)',
+    overflowY: 'auto',
+    overflowX: 'hidden',
+    WebkitOverflowScrolling: 'touch',
+    touchAction: 'pan-y',
+    overscrollBehavior: 'contain'
+  };
+
+  return createPortal(
+    <div
       ref={pickerRef}
-      className={positionClasses}
-      style={dynamicStyles}
+      style={desktopFixedStyles}
       onMouseDown={(e) => { e.preventDefault(); }}
       onWheel={(e) => { e.stopPropagation(); }}
+      onTouchStart={(e) => { e.stopPropagation(); }}
       onTouchMove={(e) => { e.stopPropagation(); }}
     >
-      {/* Caret arrow */}
-      <span className={`absolute ${position.bottom ? 'top-full' : 'bottom-full'} ${position.right ? 'right-4' : 'left-4'} w-3 h-3 bg-white border-t border-l border-gray-200 rotate-45`}></span>
-      <div className="emoji-picker-container">
-        {/* Header */}
-        <div className="flex items-center justify-between px-3 py-2 border-b bg-white sticky top-0 z-10 rounded-t-lg">
-          <span className="text-sm font-semibold text-gray-700">Emoji</span>
-          <button
-            type="button"
-            className="p-1.5 rounded-full text-gray-500 hover:text-gray-700 hover:bg-gray-100"
-            onClick={() => setIsOpen(false)}
-            aria-label="Close emoji picker"
-          >
-            <FaTimes className="w-4 h-4" />
-          </button>
-        </div>
-        <EmojiPicker
-          onEmojiClick={handleEmojiSelect}
-          onEmojiMouseDown={(e) => { e.preventDefault?.(); }}
-          searchDisabled={false}
-          searchPlaceholder="Search emojis..."
-          autoFocusSearch={true}
-          previewConfig={{ showPreview: false }}
-          skinTonesDisabled={false}
-          suggestedEmojisMode="recent"
-          width={pickerWidth}
-          height={pickerHeight}
-          lazyLoadEmojis={true}
-          theme="light"
-          emojiStyle="google"
-          categories={[
-            'suggested',
-            'smileys_people', 
-            'animals_nature',
-            'food_drink',
-            'travel_places',
-            'activities',
-            'objects',
-            'symbols',
-            'flags'
-          ]}
-        />
+      {/* Header */}
+      <div className="flex items-center justify-between px-3 py-2 border-b bg-white sticky top-0 z-10 rounded-t-lg">
+        <span className="text-sm font-semibold text-gray-700">Emoji</span>
+        <button
+          type="button"
+          className="p-1.5 rounded-full text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+          onClick={() => setIsOpen(false)}
+          aria-label="Close emoji picker"
+        >
+          <FaTimes className="w-4 h-4" />
+        </button>
       </div>
-    </div>
+      <EmojiPicker
+        onEmojiClick={handleEmojiSelect}
+        onEmojiMouseDown={(e) => { e.preventDefault?.(); }}
+        searchDisabled={false}
+        searchPlaceholder="Search emojis..."
+        autoFocusSearch={true}
+        previewConfig={{ showPreview: false }}
+        skinTonesDisabled={false}
+        suggestedEmojisMode="recent"
+        width={pickerWidth}
+        height={pickerHeight}
+        lazyLoadEmojis={true}
+        theme="light"
+        emojiStyle="google"
+        categories={[
+          'suggested',
+          'smileys_people', 
+          'animals_nature',
+          'food_drink',
+          'travel_places',
+          'activities',
+          'objects',
+          'symbols',
+          'flags'
+        ]}
+      />
+    </div>,
+    document.body
   );
 };
 
