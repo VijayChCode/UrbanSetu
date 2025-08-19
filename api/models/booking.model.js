@@ -108,6 +108,8 @@ const bookingSchema = new mongoose.Schema({
   visibleToBuyer: { type: Boolean, default: true },
   visibleToSeller: { type: Boolean, default: true },
   archivedByAdmin: { type: Boolean, default: false },
+  archivedByBuyer: { type: Boolean, default: false },
+  archivedBySeller: { type: Boolean, default: false },
   archivedAt: {
     type: Date
   },

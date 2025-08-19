@@ -57,18 +57,18 @@ export default function MyAppointments() {
       }
     };
     const fetchArchivedAppointments = async () => {
-      // Only fetch archived appointments for admin users
-      if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) {
+      // Fetch archived appointments for all users
+      if (currentUser) {
         try {
           const res = await fetch(`${API_BASE_URL}/api/bookings/archived`, {
             credentials: 'include'
           });
-          if (!res.ok) throw new Error('Not allowed');
+          if (!res.ok) throw new Error('Failed to fetch archived appointments');
           const data = await res.json();
           setArchivedAppointments(Array.isArray(data) ? data : []);
         } catch (err) {
           setArchivedAppointments([]);
-          toast.error("Failed to fetch archived appointments");
+          console.error("Failed to fetch archived appointments:", err);
         }
       } else {
         setArchivedAppointments([]);
@@ -493,8 +493,8 @@ export default function MyAppointments() {
       } else {
         throw new Error('Failed to fetch appointments');
       }
-      // Only fetch archived appointments for admin users
-      if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) {
+      // Fetch archived appointments for all users
+      if (currentUser) {
         const resArchived = await fetch(`${API_BASE_URL}/api/bookings/archived`, { credentials: 'include' });
         if (resArchived.ok) {
           const dataArchived = await resArchived.json();
@@ -606,27 +606,25 @@ export default function MyAppointments() {
           >
             Refresh
           </button>
-          {/* Only show archived toggle for admin/rootadmin */}
-          {currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin') && (
-            <button
-              onClick={() => setShowArchived(!showArchived)}
-              className={`bg-gradient-to-r text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2 ${
-                showArchived 
-                  ? 'from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600' 
-                  : 'from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700'
-              }`}
-            >
-              {showArchived ? (
-                <>
-                  <FaUndo /> Active Appointments
-                </>
-              ) : (
-                <>
-                  <FaArchive /> Archived Appointments ({archivedAppointments.length})
-                </>
-              )}
-            </button>
-          )}
+          {/* Archived appointments toggle for all users */}
+          <button
+            onClick={() => setShowArchived(!showArchived)}
+            className={`bg-gradient-to-r text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2 ${
+              showArchived 
+                ? 'from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600' 
+                : 'from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700'
+            }`}
+          >
+            {showArchived ? (
+              <>
+                <FaUndo /> Active Appointments
+              </>
+            ) : (
+              <>
+                <FaArchive /> Archived Appointments ({archivedAppointments.length})
+              </>
+            )}
+          </button>
         </div>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div className="flex items-center gap-2">
@@ -690,8 +688,8 @@ export default function MyAppointments() {
             />
           </div>
         </div>
-        {/* Only show archived appointments table for admin/rootadmin */}
-        {showArchived && currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? (
+        {/* Show archived appointments table for all users */}
+        {showArchived ? (
           filteredArchivedAppointments.length === 0 ? (
             <div className="text-center text-gray-500 text-lg">No archived appointments found.</div>
           ) : (
@@ -3131,114 +3129,137 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         </td>
         <td className="border p-2 text-center">
           <div className="flex flex-col gap-2">
-            {/* For outdated appointments, only show delete button */}
-            {!isUpcoming ? (
+            {/* For archived appointments, show unarchive button */}
+            {isArchived ? (
               <button
-                className="text-gray-400 hover:text-red-700 text-xl"
-                onClick={handlePermanentDelete}
-                title="Delete outdated appointment from table"
-                style={{ opacity: 0.7 }}
+                className="text-green-600 hover:text-green-800 text-xl"
+                onClick={() => handleUnarchiveAppointment(appt._id)}
+                title="Unarchive Appointment"
               >
-                <FaTrash size={18} />
+                <FaUndo size={16} />
               </button>
             ) : (
               <>
-            {/* Seller approve/deny buttons for pending, upcoming appointments */}
-                {isSeller && appt.status === "pending" && (
-              <>
-                <button
-                  className="text-green-500 hover:text-green-700 text-xl disabled:opacity-50"
-                  onClick={() => handleStatusUpdate(appt._id, "accepted")}
-                  disabled={actionLoading === appt._id + "accepted"}
-                  title="Accept Appointment"
-                >
-                  <FaCheck />
-                </button>
-                <button
-                  className="text-red-500 hover:text-red-700 text-xl disabled:opacity-50"
-                  onClick={() => handleStatusUpdate(appt._id, "rejected")}
-                  disabled={actionLoading === appt._id + "rejected"}
-                  title="Reject Appointment"
-                >
-                  <FaTimes />
-                </button>
-              </>
-            )}
-            {/* Seller cancel button after approval */}
-            {isSeller && appt.status === "accepted" && (
-              <button
-                className="text-red-500 hover:text-red-700 text-xl"
-                onClick={handleUserCancel}
-                title="Cancel Appointment (Seller)"
-              >
-                <FaTrash />
-              </button>
-            )}
-            {/* Seller faded delete after cancellation, rejection, admin deletion, or deletedByAdmin */}
-            {isSeller && (appt.status === 'cancelledBySeller' || appt.status === 'cancelledByBuyer' || appt.status === 'cancelledByAdmin' || appt.status === 'rejected' || appt.status === 'deletedByAdmin') && (
-              <button
-                className="text-gray-400 hover:text-red-700 text-xl"
-                onClick={handlePermanentDelete}
-                title="Remove from table"
-                style={{ opacity: 0.5 }}
-              >
-                <FaTrash className="group-hover:text-red-900 group-hover:scale-125 group-hover:animate-shake transition-all duration-200" />
-              </button>
-            )}
-            {/* Buyer cancel button: allow for both pending and accepted (approved) */}
-                {isBuyer && (appt.status === "pending" || appt.status === "accepted") && (
-              <button
-                className="text-red-500 hover:text-red-700 text-xl"
-                onClick={handleUserCancel}
-                title="Cancel Appointment (Buyer)"
-              >
-                <FaTrash />
-              </button>
-            )}
-            {/* Buyer faded delete after cancellation, seller cancellation, admin deletion, rejected, or deletedByAdmin */}
-            {isBuyer && (appt.status === 'cancelledByBuyer' || appt.status === 'cancelledBySeller' || appt.status === 'cancelledByAdmin' || appt.status === 'deletedByAdmin' || appt.status === 'rejected') && (
-              <button
-                className="text-gray-400 hover:text-red-700 text-xl"
-                onClick={handlePermanentDelete}
-                title="Remove from table"
-                style={{ opacity: 0.5 }}
-              >
-                <FaTrash className="group-hover:text-red-900 group-hover:scale-125 group-hover:animate-shake transition-all duration-200" />
-              </button>
-            )}
-            {/* Admin cancel button */}
-            {isAdmin && (
-              <button
-                className="text-red-500 hover:text-red-700 text-xl"
-                onClick={handleAdminCancel}
-                title="Cancel Appointment (Admin)"
-              >
-                <FaUserShield />
-              </button>
-            )}
-            {/* Reinitiate button: only show to the cancelling party */}
-            {((appt.status === 'cancelledByBuyer' && isBuyer) || (appt.status === 'cancelledBySeller' && isSeller)) && (
-              <div className="flex flex-col items-center">
-                <button
-                  className="text-blue-500 hover:text-blue-700 text-xs border border-blue-500 rounded px-2 py-1 mt-1"
-                  onClick={() => onOpenReinitiate(appt)}
-                  disabled={
-                    (appt.status === 'cancelledByBuyer' && isBuyer && (appt.buyerReinitiationCount || 0) >= 2) ||
-                    (appt.status === 'cancelledBySeller' && isSeller && (appt.sellerReinitiationCount || 0) >= 2) ||
-                    !appt.buyerId || !appt.sellerId
-                  }
-                  title="Reinitiate or Reschedule Appointment"
-                >
-                  Reinitiate
-                </button>
-                <span className="text-xs text-gray-500 mt-1">
-                  {isBuyer && appt.status === 'cancelledByBuyer'
-                    ? `${2 - (appt.buyerReinitiationCount || 0)} left`
-                    : isSeller && appt.status === 'cancelledBySeller'
-                    ? `${2 - (appt.sellerReinitiationCount || 0)} left`
-                    : ''}
-                </span>
-              </div>
+                {/* For outdated appointments, only show delete button */}
+                {!isUpcoming ? (
+                  <button
+                    className="text-gray-400 hover:text-red-700 text-xl"
+                    onClick={handlePermanentDelete}
+                    title="Delete outdated appointment from table"
+                    style={{ opacity: 0.7 }}
+                  >
+                    <FaTrash size={18} />
+                  </button>
+                ) : (
+                  <>
+                    {/* Seller approve/deny buttons for pending, upcoming appointments */}
+                    {isSeller && appt.status === "pending" && (
+                      <>
+                        <button
+                          className="text-green-500 hover:text-green-700 text-xl disabled:opacity-50"
+                          onClick={() => handleStatusUpdate(appt._id, "accepted")}
+                          disabled={actionLoading === appt._id + "accepted"}
+                          title="Accept Appointment"
+                        >
+                          <FaCheck />
+                        </button>
+                        <button
+                          className="text-red-500 hover:text-red-700 text-xl disabled:opacity-50"
+                          onClick={() => handleStatusUpdate(appt._id, "rejected")}
+                          disabled={actionLoading === appt._id + "rejected"}
+                          title="Reject Appointment"
+                        >
+                          <FaTimes />
+                        </button>
+                      </>
+                    )}
+                    {/* Seller cancel button after approval */}
+                    {isSeller && appt.status === "accepted" && (
+                      <button
+                        className="text-red-500 hover:text-red-700 text-xl"
+                        onClick={handleUserCancel}
+                        title="Cancel Appointment (Seller)"
+                      >
+                        <FaTrash />
+                      </button>
+                    )}
+                    {/* Seller faded delete after cancellation, rejection, admin deletion, or deletedByAdmin */}
+                    {isSeller && (appt.status === 'cancelledBySeller' || appt.status === 'cancelledByBuyer' || appt.status === 'cancelledByAdmin' || appt.status === 'rejected' || appt.status === 'deletedByAdmin') && (
+                      <button
+                        className="text-gray-400 hover:text-red-700 text-xl"
+                        onClick={handlePermanentDelete}
+                        title="Remove from table"
+                        style={{ opacity: 0.5 }}
+                      >
+                        <FaTrash className="group-hover:text-red-900 group-hover:scale-125 group-hover:animate-shake transition-all duration-200" />
+                      </button>
+                    )}
+                    {/* Buyer cancel button: allow for both pending and accepted (approved) */}
+                    {isBuyer && (appt.status === "pending" || appt.status === "accepted") && (
+                      <button
+                        className="text-red-500 hover:text-red-700 text-xl"
+                        onClick={handleUserCancel}
+                        title="Cancel Appointment (Buyer)"
+                      >
+                        <FaTrash />
+                      </button>
+                    )}
+                    {/* Buyer faded delete after cancellation, seller cancellation, admin deletion, rejected, or deletedByAdmin */}
+                    {isBuyer && (appt.status === 'cancelledByBuyer' || appt.status === 'cancelledBySeller' || appt.status === 'cancelledByAdmin' || appt.status === 'deletedByAdmin' || appt.status === 'rejected') && (
+                      <button
+                        className="text-gray-400 hover:text-red-700 text-xl"
+                        onClick={handlePermanentDelete}
+                        title="Remove from table"
+                        style={{ opacity: 0.5 }}
+                      >
+                        <FaTrash className="group-hover:text-red-900 group-hover:scale-125 group-hover:animate-shake transition-all duration-200" />
+                      </button>
+                    )}
+                    {/* Admin cancel button */}
+                    {isAdmin && (
+                      <button
+                        className="text-red-500 hover:text-red-700 text-xl"
+                        onClick={handleAdminCancel}
+                        title="Cancel Appointment (Admin)"
+                      >
+                        <FaUserShield />
+                      </button>
+                    )}
+                    {/* Archive button: show for non-admin users on their own appointments */}
+                    {!isAdmin && (
+                      <button
+                        className="text-gray-600 hover:text-gray-800 text-xl"
+                        onClick={() => handleArchiveAppointment(appt._id)}
+                        title="Archive Appointment"
+                      >
+                        <FaArchive size={16} />
+                      </button>
+                    )}
+                    {/* Reinitiate button: only show to the cancelling party */}
+                    {((appt.status === 'cancelledByBuyer' && isBuyer) || (appt.status === 'cancelledBySeller' && isSeller)) && (
+                      <div className="flex flex-col items-center">
+                        <button
+                          className="text-blue-500 hover:text-blue-700 text-xs border border-blue-500 rounded px-2 py-1 mt-1"
+                          onClick={() => onOpenReinitiate(appt)}
+                          disabled={
+                            (appt.status === 'cancelledByBuyer' && isBuyer && (appt.buyerReinitiationCount || 0) >= 2) ||
+                            (appt.status === 'cancelledBySeller' && isSeller && (appt.sellerReinitiationCount || 0) >= 2) ||
+                            !appt.buyerId || !appt.sellerId
+                          }
+                          title="Reinitiate or Reschedule Appointment"
+                        >
+                          Reinitiate
+                        </button>
+                        <span className="text-xs text-gray-500 mt-1">
+                          {isBuyer && appt.status === 'cancelledByBuyer'
+                            ? `${2 - (appt.buyerReinitiationCount || 0)} left`
+                            : isSeller && appt.status === 'cancelledBySeller'
+                            ? `${2 - (appt.sellerReinitiationCount || 0)} left`
+                            : ''}
+                        </span>
+                      </div>
+                    )}
+                  </>
                 )}
               </>
             )}

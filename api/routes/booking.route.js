@@ -132,9 +132,12 @@ router.get("/my", verifyToken, async (req, res) => {
   try {
     const userId = req.user.id;
     
-    // Find all appointments where user is either buyer or seller
+    // Find all appointments where user is either buyer or seller, excluding archived ones
     const bookings = await booking.find({
-      $or: [{ buyerId: userId }, { sellerId: userId }]
+      $or: [
+        { buyerId: userId, archivedByBuyer: { $ne: true } },
+        { sellerId: userId, archivedBySeller: { $ne: true } }
+      ]
     })
     .populate('buyerId', 'username email mobileNumber avatar')
     .populate('sellerId', 'username email mobileNumber avatar')
@@ -1000,7 +1003,7 @@ router.patch('/:id/soft-delete', verifyToken, async (req, res) => {
   }
 });
 
-// PATCH: Archive appointment (admin only)
+// PATCH: Archive appointment (admin or appointment participants)
 router.patch('/:id/archive', verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
@@ -1008,18 +1011,31 @@ router.patch('/:id/archive', verifyToken, async (req, res) => {
     const isRootAdmin = req.user.role === 'rootadmin';
     const isAdmin = req.user.role === 'admin' && req.user.adminApprovalStatus === 'approved';
 
-    // Only allow admin/rootadmin to archive
-    if (!isAdmin && !isRootAdmin) {
-      return res.status(403).json({ message: 'Only admins can archive appointments.' });
-    }
-
     const bookingToArchive = await booking.findById(id);
     if (!bookingToArchive) {
       return res.status(404).json({ message: 'Appointment not found.' });
     }
 
+    // Check if user can archive this appointment
+    const isBuyer = bookingToArchive.buyerId.toString() === userId;
+    const isSeller = bookingToArchive.sellerId.toString() === userId;
+    
+    if (!isAdmin && !isRootAdmin && !isBuyer && !isSeller) {
+      return res.status(403).json({ message: 'You can only archive your own appointments or be an admin.' });
+    }
+
     // Archive the appointment
-    bookingToArchive.archivedByAdmin = true;
+    if (isAdmin || isRootAdmin) {
+      bookingToArchive.archivedByAdmin = true;
+    } else {
+      // User is archiving their own appointment
+      if (isBuyer) {
+        bookingToArchive.archivedByBuyer = true;
+      }
+      if (isSeller) {
+        bookingToArchive.archivedBySeller = true;
+      }
+    }
     bookingToArchive.archivedAt = new Date();
     
     await bookingToArchive.save();
@@ -1044,7 +1060,7 @@ router.patch('/:id/archive', verifyToken, async (req, res) => {
   }
 });
 
-// PATCH: Unarchive appointment (admin only)
+// PATCH: Unarchive appointment (admin or appointment participants)
 router.patch('/:id/unarchive', verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
@@ -1052,18 +1068,31 @@ router.patch('/:id/unarchive', verifyToken, async (req, res) => {
     const isRootAdmin = req.user.role === 'rootadmin';
     const isAdmin = req.user.role === 'admin' && req.user.adminApprovalStatus === 'approved';
 
-    // Only allow admin/rootadmin to unarchive
-    if (!isAdmin && !isRootAdmin) {
-      return res.status(403).json({ message: 'Only admins can unarchive appointments.' });
-    }
-
     const bookingToUnarchive = await booking.findById(id);
     if (!bookingToUnarchive) {
       return res.status(404).json({ message: 'Appointment not found.' });
     }
 
+    // Check if user can unarchive this appointment
+    const isBuyer = bookingToUnarchive.buyerId.toString() === userId;
+    const isSeller = bookingToUnarchive.sellerId.toString() === userId;
+    
+    if (!isAdmin && !isRootAdmin && !isBuyer && !isSeller) {
+      return res.status(403).json({ message: 'You can only unarchive your own appointments or be an admin.' });
+    }
+
     // Unarchive the appointment
-    bookingToUnarchive.archivedByAdmin = false;
+    if (isAdmin || isRootAdmin) {
+      bookingToUnarchive.archivedByAdmin = false;
+    } else {
+      // User is unarchiving their own appointment
+      if (isBuyer) {
+        bookingToUnarchive.archivedByBuyer = false;
+      }
+      if (isSeller) {
+        bookingToUnarchive.archivedBySeller = false;
+      }
+    }
     bookingToUnarchive.archivedAt = undefined;
     
     await bookingToUnarchive.save();
@@ -1088,25 +1117,43 @@ router.patch('/:id/unarchive', verifyToken, async (req, res) => {
   }
 });
 
-// GET: Get archived appointments (admin only)
+// GET: Get archived appointments (admin or user's own archived appointments)
 router.get('/archived', verifyToken, async (req, res) => {
   try {
     const userId = req.user.id;
     const isRootAdmin = req.user.role === 'rootadmin';
     const isAdmin = req.user.role === 'admin' && req.user.adminApprovalStatus === 'approved';
 
-    // Only allow admin/rootadmin to view archived appointments
-    if (!isAdmin && !isRootAdmin) {
-      return res.status(403).json({ message: 'Only admins can view archived appointments.' });
+    let query;
+    if (isAdmin || isRootAdmin) {
+      // Admins can see all archived appointments
+      query = { archivedByAdmin: true };
+    } else {
+      // Regular users can only see their own archived appointments
+      query = {
+        $or: [
+          { buyerId: userId, archivedByBuyer: true },
+          { sellerId: userId, archivedBySeller: true }
+        ]
+      };
     }
 
-    const archivedAppointments = await booking.find({ archivedByAdmin: true })
-      .populate('buyerId', 'username email mobileNumber')
-      .populate('sellerId', 'username email mobileNumber')
+    const archivedAppointments = await booking.find(query)
+      .populate('buyerId', 'username email mobileNumber avatar')
+      .populate('sellerId', 'username email mobileNumber avatar')
       .populate('listingId', '_id name address')
       .sort({ archivedAt: -1 }); // Sort by most recently archived first
 
-    res.status(200).json(archivedAppointments);
+    // Add role information for regular users
+    const appointmentsWithRole = archivedAppointments.map(appointment => {
+      const appointmentObj = appointment.toObject();
+      if (!isAdmin && !isRootAdmin) {
+        appointmentObj.role = appointment.buyerId._id.toString() === userId ? 'buyer' : 'seller';
+      }
+      return appointmentObj;
+    });
+
+    res.status(200).json(appointmentsWithRole);
   } catch (err) {
     console.error('Error fetching archived appointments:', err);
     res.status(500).json({ message: 'Failed to fetch archived appointments.' });
