@@ -3330,7 +3330,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                         <FaUserShield />
                       </button>
                     )}
-                    {/* Archive button: show for non-admin users on their own appointments */}
+                    {/* Archive button: show for non-admin users on their own appointments and outdated appointments */}
                     {!isAdmin && (
                       <button
                         className="text-gray-600 hover:text-gray-800 text-xl"
