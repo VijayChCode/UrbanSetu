@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import EmojiPicker from 'emoji-picker-react';
 import { BsEmojiSmile } from 'react-icons/bs';
-import { FaKeyboard } from 'react-icons/fa';
+import { FaKeyboard, FaTimes } from 'react-icons/fa';
 
 const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRef }) => {
   const pickerRef = useRef(null);
@@ -220,6 +220,18 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
         onTouchStart={(e) => { e.stopPropagation(); }}
         onTouchMove={(e) => { e.stopPropagation(); }}
       >
+        {/* Header */}
+        <div className="flex items-center justify-between px-3 py-2 border-b bg-white sticky top-0 z-10 rounded-t-lg">
+          <span className="text-sm font-semibold text-gray-700">Emoji</span>
+          <button
+            type="button"
+            className="p-1.5 rounded-full text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+            onClick={() => setIsOpen(false)}
+            aria-label="Close emoji picker"
+          >
+            <FaTimes className="w-4 h-4" />
+          </button>
+        </div>
         <EmojiPicker
           onEmojiClick={handleEmojiSelect}
           onEmojiMouseDown={(e) => { e.preventDefault?.(); }}
@@ -228,6 +240,7 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
           autoFocusSearch={true}
           previewConfig={{ showPreview: false }}
           skinTonesDisabled={false}
+          suggestedEmojisMode="recent"
           width={pickerWidth}
           height={pickerHeight}
           lazyLoadEmojis={true}
@@ -260,7 +273,21 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
       onWheel={(e) => { e.stopPropagation(); }}
       onTouchMove={(e) => { e.stopPropagation(); }}
     >
+      {/* Caret arrow */}
+      <span className={`absolute ${position.bottom ? 'top-full' : 'bottom-full'} ${position.right ? 'right-4' : 'left-4'} w-3 h-3 bg-white border-t border-l border-gray-200 rotate-45`}></span>
       <div className="emoji-picker-container">
+        {/* Header */}
+        <div className="flex items-center justify-between px-3 py-2 border-b bg-white sticky top-0 z-10 rounded-t-lg">
+          <span className="text-sm font-semibold text-gray-700">Emoji</span>
+          <button
+            type="button"
+            className="p-1.5 rounded-full text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+            onClick={() => setIsOpen(false)}
+            aria-label="Close emoji picker"
+          >
+            <FaTimes className="w-4 h-4" />
+          </button>
+        </div>
         <EmojiPicker
           onEmojiClick={handleEmojiSelect}
           onEmojiMouseDown={(e) => { e.preventDefault?.(); }}
@@ -269,6 +296,7 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
           autoFocusSearch={true}
           previewConfig={{ showPreview: false }}
           skinTonesDisabled={false}
+          suggestedEmojisMode="recent"
           width={pickerWidth}
           height={pickerHeight}
           lazyLoadEmojis={true}
