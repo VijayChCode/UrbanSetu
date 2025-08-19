@@ -3245,16 +3245,27 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
               </button>
             ) : (
               <>
-                {/* For outdated appointments, only show delete button */}
+                {/* For outdated appointments, show delete button and archive button */}
                 {!isUpcoming ? (
-                  <button
-                    className="text-gray-400 hover:text-red-700 text-xl"
-                    onClick={handlePermanentDelete}
-                    title="Delete outdated appointment from table"
-                    style={{ opacity: 0.7 }}
-                  >
-                    <FaTrash size={18} />
-                  </button>
+                  <div className="flex flex-col gap-2">
+                    <button
+                      className="text-gray-400 hover:text-red-700 text-xl"
+                      onClick={handlePermanentDelete}
+                      title="Delete outdated appointment from table"
+                      style={{ opacity: 0.7 }}
+                    >
+                      <FaTrash size={18} />
+                    </button>
+                    {!isAdmin && (
+                      <button
+                        className="text-gray-600 hover:text-gray-800 text-xl"
+                        onClick={() => handleArchiveAppointment(appt._id)}
+                        title="Archive outdated appointment"
+                      >
+                        <FaArchive size={16} />
+                      </button>
+                    )}
+                  </div>
                 ) : (
                   <>
                     {/* Seller approve/deny buttons for pending, upcoming appointments */}
