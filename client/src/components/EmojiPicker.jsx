@@ -109,6 +109,8 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
   useEffect(() => {
     if (!isOpen) return;
 
+    const isMobileNow = window.innerWidth < 768;
+
     // Save scroll position and lock body
     const scrollY = window.scrollY || window.pageYOffset || 0;
     const previous = {
@@ -126,21 +128,27 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
     document.documentElement.style.overscrollBehavior = 'none';
 
     const preventBackgroundScroll = (event) => {
+      // Allow interactions and scrolling inside the picker
       if (pickerRef.current && pickerRef.current.contains(event.target)) {
-        return; // allow scroll inside picker
+        return;
       }
-      event.preventDefault();
+      // Only prevent if cancelable
+      if (event && event.cancelable) {
+        event.preventDefault();
+      }
     };
     const keepScroll = () => {
+      // On desktop, pin scroll to original
       window.scrollTo(0, scrollY);
     };
 
-    // Block scroll gestures outside the picker (both document and window)
-    document.addEventListener('wheel', preventBackgroundScroll, { passive: false });
+    // Block scroll gestures outside the picker
     document.addEventListener('touchmove', preventBackgroundScroll, { passive: false });
-    window.addEventListener('wheel', preventBackgroundScroll, { passive: false });
-    window.addEventListener('touchmove', preventBackgroundScroll, { passive: false });
-    window.addEventListener('scroll', keepScroll, { passive: false });
+    document.addEventListener('wheel', preventBackgroundScroll, { passive: false });
+    if (!isMobileNow) {
+      window.addEventListener('wheel', preventBackgroundScroll, { passive: false });
+      window.addEventListener('scroll', keepScroll, { passive: false });
+    }
 
     return () => {
       // Restore body
@@ -153,11 +161,12 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
       const y = Math.abs(parseInt(previous.top || '0', 10)) || scrollY;
       window.scrollTo(0, y);
       // Cleanup listeners
-      document.removeEventListener('wheel', preventBackgroundScroll);
       document.removeEventListener('touchmove', preventBackgroundScroll);
-      window.removeEventListener('wheel', preventBackgroundScroll);
-      window.removeEventListener('touchmove', preventBackgroundScroll);
-      window.removeEventListener('scroll', keepScroll);
+      document.removeEventListener('wheel', preventBackgroundScroll);
+      if (!isMobileNow) {
+        window.removeEventListener('wheel', preventBackgroundScroll);
+        window.removeEventListener('scroll', keepScroll);
+      }
     };
   }, [isOpen]);
 
@@ -237,7 +246,8 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
       boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
       border: '1px solid rgba(229,231,235,1)',
       overflowY: 'auto',
-      WebkitOverflowScrolling: 'touch',
+      overflowX: 'hidden',
+      WebkitOverflowScrolling: 'touch', // momentum scroll on iOS
       touchAction: 'pan-y',
       overscrollBehavior: 'contain'
     };
