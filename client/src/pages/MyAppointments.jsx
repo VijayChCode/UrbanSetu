@@ -713,6 +713,14 @@ export default function MyAppointments() {
             </div>
           </div>
         </div>
+        
+        {/* Description text for archived appointments */}
+        {showArchived && (
+          <p className="text-center text-gray-600 mb-6">
+            📋 View and manage archived appointments. You can unarchive them to move them back to active appointments.
+          </p>
+        )}
+        
         {/* Show archived appointments table for all users */}
         {showArchived ? (
           filteredArchivedAppointments.length === 0 ? (
