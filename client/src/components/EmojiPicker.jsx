@@ -420,28 +420,45 @@ export const EmojiButton = ({ onEmojiClick, className = "", inputRef }) => {
   const handleButtonClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
+    const inputEl = inputRef && inputRef.current ? inputRef.current : null;
+    const wasFocused = !!(inputEl && document.activeElement === inputEl);
+    const openingPicker = !isPickerOpen;
+
     if (isMobile) {
-      // Only keep keyboard open if it was already open (input focused).
-      const wasFocused = inputRef && inputRef.current && document.activeElement === inputRef.current;
-      if (wasFocused && inputRef && inputRef.current) {
-        const el = inputRef.current;
-        const moveCaretToEnd = () => {
-          const length = el.value.length;
-          try { el.setSelectionRange(length, length); } catch (_) {}
-        };
-        // Maintain focus and caret position if already focused
-        el.focus();
-        moveCaretToEnd();
-        requestAnimationFrame(moveCaretToEnd);
-        setTimeout(moveCaretToEnd, 10);
-        setTimeout(moveCaretToEnd, 50);
+      if (openingPicker) {
+        // Opening emoji picker: keep keyboard open only if it was already open
+        if (wasFocused && inputEl) {
+          const moveCaretToEnd = () => {
+            const length = inputEl.value.length;
+            try { inputEl.setSelectionRange(length, length); } catch (_) {}
+          };
+          inputEl.focus();
+          moveCaretToEnd();
+          requestAnimationFrame(moveCaretToEnd);
+          setTimeout(moveCaretToEnd, 10);
+          setTimeout(moveCaretToEnd, 50);
+        }
+      } else {
+        // Closing emoji picker via keyboard icon: ALWAYS focus input to open keyboard
+        if (inputEl) {
+          const moveCaretToEnd = () => {
+            const length = inputEl.value.length;
+            try { inputEl.setSelectionRange(length, length); } catch (_) {}
+          };
+          inputEl.focus();
+          moveCaretToEnd();
+          requestAnimationFrame(moveCaretToEnd);
+          setTimeout(moveCaretToEnd, 10);
+          setTimeout(moveCaretToEnd, 50);
+        }
       }
     } else {
-      if (inputRef && inputRef.current && !isPickerOpen) {
-        inputRef.current.focus();
+      // Desktop: when opening picker, focus input for better caret behavior
+      if (openingPicker && inputEl) {
+        try { inputEl.focus(); } catch (_) {}
       }
     }
-    setIsPickerOpen(!isPickerOpen);
+    setIsPickerOpen(openingPicker);
   };
 
   return (
