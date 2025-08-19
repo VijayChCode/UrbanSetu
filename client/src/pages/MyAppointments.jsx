@@ -606,9 +606,9 @@ export default function MyAppointments() {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-100 py-10 px-2 md:px-8">
 
       <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-6">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
           <div>
-            <h3 className="text-3xl font-extrabold text-blue-700 drop-shadow">
+            <h3 className="text-2xl md:text-3xl font-extrabold text-blue-700 drop-shadow">
               {showArchived ? "Archived Appointments" : "My Appointments"}
             </h3>
             {!showArchived && (
@@ -617,93 +617,99 @@ export default function MyAppointments() {
               </p>
             )}
           </div>
-          <button
-            onClick={handleManualRefresh}
-            className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all font-semibold shadow-md ml-4"
-            title="Refresh appointments"
-          >
-            Refresh
-          </button>
-          {/* Archived appointments toggle for all users */}
-          <button
-            onClick={() => setShowArchived(!showArchived)}
-            className={`bg-gradient-to-r text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2 ${
-              showArchived 
-                ? 'from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600' 
-                : 'from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700'
-            }`}
-          >
-            {showArchived ? (
-              <>
-                <FaUndo /> Active Appointments
-              </>
-            ) : (
-              <>
-                <FaArchive /> Archived Appointments ({archivedAppointments.length})
-              </>
-            )}
-          </button>
+          <div className="flex flex-col sm:flex-row gap-2 md:gap-4">
+            <button
+              onClick={handleManualRefresh}
+              className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all font-semibold shadow-md"
+              title="Refresh appointments"
+            >
+              Refresh
+            </button>
+            {/* Archived appointments toggle for all users */}
+            <button
+              onClick={() => setShowArchived(!showArchived)}
+              className={`bg-gradient-to-r text-white px-4 md:px-6 py-2 md:py-3 rounded-lg transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center justify-center gap-2 text-sm md:text-base ${
+                showArchived 
+                  ? 'from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600' 
+                  : 'from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700'
+              }`}
+            >
+              {showArchived ? (
+                <>
+                  <FaUndo /> <span className="hidden sm:inline">Active</span> Appointments
+                </>
+              ) : (
+                <>
+                  <FaArchive /> <span className="hidden sm:inline">Archived</span> Appointments ({archivedAppointments.length})
+                </>
+              )}
+            </button>
+          </div>
         </div>
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-          <div className="flex items-center gap-2">
-            <label className="font-semibold">Status:</label>
-            <select
-              className="border rounded px-2 py-1 focus:outline-none focus:ring focus:ring-blue-200"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <option value="all">All Appointments</option>
-              <option value="pending">Pending</option>
-              <option value="accepted">Accepted</option>
-              <option value="rejected">Rejected</option>
-              <option value="cancelledByBuyer">Cancelled by Buyer</option>
-              <option value="cancelledBySeller">Cancelled by Seller</option>
-              <option value="cancelledByAdmin">Cancelled by Admin</option>
-              <option value="deletedByAdmin">Deleted by Admin</option>
-              <option value="completed">Completed</option>
-              <option value="noShow">No Show</option>
-              <option value="outdated">Outdated</option>
-            </select>
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+          <div className="flex flex-col sm:flex-row gap-2">
+            <div className="flex items-center gap-2">
+              <label className="font-semibold text-sm">Status:</label>
+              <select
+                className="border rounded px-2 py-1 focus:outline-none focus:ring focus:ring-blue-200 text-sm"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <option value="all">All Appointments</option>
+                <option value="pending">Pending</option>
+                <option value="accepted">Accepted</option>
+                <option value="rejected">Rejected</option>
+                <option value="cancelledByBuyer">Cancelled by Buyer</option>
+                <option value="cancelledBySeller">Cancelled by Seller</option>
+                <option value="cancelledByAdmin">Cancelled by Admin</option>
+                <option value="deletedByAdmin">Deleted by Admin</option>
+                <option value="completed">Completed</option>
+                <option value="noShow">No Show</option>
+                <option value="outdated">Outdated</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="font-semibold text-sm">Role:</label>
+              <select
+                className="border rounded px-2 py-1 focus:outline-none focus:ring focus:ring-blue-200 text-sm"
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value)}
+              >
+                <option value="all">All</option>
+                <option value="buyer">As Buyer</option>
+                <option value="seller">As Seller</option>
+              </select>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <label className="font-semibold">From:</label>
-            <input
-              type="date"
-              className="border rounded px-2 py-1 focus:outline-none focus:ring focus:ring-blue-200"
-              value={startDate}
-              onChange={e => setStartDate(e.target.value)}
-              max={endDate || undefined}
-            />
-            <label className="font-semibold">To:</label>
-            <input
-              type="date"
-              className="border rounded px-2 py-1 focus:outline-none focus:ring focus:ring-blue-200"
-              value={endDate}
-              onChange={e => setEndDate(e.target.value)}
-              min={startDate || undefined}
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <label className="font-semibold">Role:</label>
-            <select
-              className="border rounded px-2 py-1 focus:outline-none focus:ring focus:ring-blue-200"
-              value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
-            >
-              <option value="all">All</option>
-              <option value="buyer">As Buyer</option>
-              <option value="seller">As Seller</option>
-            </select>
-          </div>
-          <div className="flex items-center gap-2">
-            <FaSearch className="text-gray-500 hover:text-blue-500 transition-colors duration-200" />
-            <input
-              type="text"
-              className="border rounded px-2 py-1 focus:outline-none focus:ring focus:ring-blue-200"
-              placeholder="Search by property, message, or user..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+          <div className="flex flex-col sm:flex-row gap-2">
+            <div className="flex items-center gap-2">
+              <label className="font-semibold text-sm">From:</label>
+              <input
+                type="date"
+                className="border rounded px-2 py-1 focus:outline-none focus:ring focus:ring-blue-200 text-sm"
+                value={startDate}
+                onChange={e => setStartDate(e.target.value)}
+                max={endDate || undefined}
+              />
+              <label className="font-semibold text-sm">To:</label>
+              <input
+                type="date"
+                className="border rounded px-2 py-1 focus:outline-none focus:ring focus:ring-blue-200 text-sm"
+                value={endDate}
+                onChange={e => setEndDate(e.target.value)}
+                min={startDate || undefined}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <FaSearch className="text-gray-500 hover:text-blue-500 transition-colors duration-200" />
+              <input
+                type="text"
+                className="border rounded px-2 py-1 focus:outline-none focus:ring focus:ring-blue-200 text-sm flex-1"
+                placeholder="Search by property, message, or user..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
           </div>
         </div>
         {/* Show archived appointments table for all users */}
