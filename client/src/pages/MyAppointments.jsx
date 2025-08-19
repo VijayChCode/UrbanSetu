@@ -311,18 +311,22 @@ export default function MyAppointments() {
   };
 
   const handleArchiveAppointment = async (id) => {
+    console.log('Archive button clicked for appointment:', id);
     setAppointmentToHandle(id);
     setShowArchiveModal(true);
   };
 
   const confirmArchive = async () => {
+    console.log('Confirming archive for appointment:', appointmentToHandle);
     try {
       const res = await fetch(`${API_BASE_URL}/api/bookings/${appointmentToHandle}/archive`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
       });
+      console.log('Archive API response status:', res.status);
       const data = await res.json();
+      console.log('Archive API response data:', data);
       if (res.ok) {
         const archivedAppt = appointments.find(appt => appt._id === appointmentToHandle);
         if (archivedAppt) {
@@ -336,11 +340,13 @@ export default function MyAppointments() {
           draggable: false
         });
       } else {
+        console.error('Archive failed:', data);
         toast.error(data.message || "Failed to archive appointment.");
       }
       setShowArchiveModal(false);
       setAppointmentToHandle(null);
     } catch (err) {
+      console.error('Archive error:', err);
       toast.error("An error occurred. Please try again.");
     }
   };
