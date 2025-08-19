@@ -1014,8 +1014,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   
   // New modal states for various confirmations
   const [showDeleteAppointmentModal, setShowDeleteAppointmentModal] = useState(false);
-  const [showArchiveModal, setShowArchiveModal] = useState(false);
-  const [showUnarchiveModal, setShowUnarchiveModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showAdminCancelModal, setShowAdminCancelModal] = useState(false);
   const [showPermanentDeleteModal, setShowPermanentDeleteModal] = useState(false);
