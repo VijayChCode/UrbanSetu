@@ -1030,9 +1030,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const [removingLock, setRemovingLock] = useState(false);
   const [forgotPasswordProcessing, setForgotPasswordProcessing] = useState(false);
   
-  // Lock body scroll when specific modals are open (Cancel or Remove Appointment)
+  // Lock body scroll when specific modals are open (Cancel/Remove/Archive/Unarchive Appointment)
   useEffect(() => {
-    const shouldLock = showCancelModal || showPermanentDeleteModal;
+    const shouldLock = showCancelModal || showPermanentDeleteModal || showArchiveModal || showUnarchiveModal;
     if (shouldLock) {
       document.body.classList.add('modal-open');
     } else {
@@ -1041,7 +1041,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     return () => {
       document.body.classList.remove('modal-open');
     };
-  }, [showCancelModal, showPermanentDeleteModal]);
+  }, [showCancelModal, showPermanentDeleteModal, showArchiveModal, showUnarchiveModal]);
 
   // Lock body scroll when chat lock modals are open
   useEffect(() => {
@@ -3227,7 +3227,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
             {!isArchived && (
               <button
                 className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-3 py-1.5 rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-1 text-sm"
-                onClick={() => handleArchiveAppointment(appt._id)}
+                onClick={() => { setAppointmentToHandle(appt._id); setShowArchiveModal(true); }}
                 title="Archive Appointment"
               >
                 <FaArchive size={12} />
@@ -3239,7 +3239,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
             {isArchived && (
               <button
                 className="bg-gradient-to-r from-green-500 to-green-600 text-white px-3 py-1.5 rounded-lg hover:from-green-600 hover:to-green-700 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-1 text-sm"
-                onClick={() => handleUnarchiveAppointment(appt._id)}
+                onClick={() => { setAppointmentToHandle(appt._id); setShowUnarchiveModal(true); }}
                 title="Unarchive Appointment"
               >
                 <FaUndo size={12} />
@@ -5118,7 +5118,7 @@ You can lock this chat again at any time from the options.</p>
       )}
 
       {/* Archive Appointment Confirmation Modal */}
-      {showArchiveModal && (
+      {showArchiveModal && appointmentToHandle && (
         <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-2 sm:mx-4 animate-fadeIn">
             <div className="p-6">
@@ -5160,7 +5160,7 @@ You can lock this chat again at any time from the options.</p>
       )}
 
       {/* Unarchive Appointment Confirmation Modal */}
-      {showUnarchiveModal && (
+      {showUnarchiveModal && appointmentToHandle && (
         <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-2 sm:mx-4 animate-fadeIn">
             <div className="p-6">
