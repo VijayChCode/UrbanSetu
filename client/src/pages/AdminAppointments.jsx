@@ -766,7 +766,9 @@ export default function AdminAppointments() {
         {/* Responsive button group: compact on mobile, original on desktop */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-6">
           <h3 className="text-2xl sm:text-3xl font-extrabold text-blue-700 drop-shadow">
-            {showArchived ? "Archived Appointments" : "All Appointments (Admin View)"}
+            {showArchived 
+              ? `Archived Appointments (${filteredArchivedAppointments.length})`
+              : `All Appointments (${filteredAppointments.length})`}
           </h3>
           <div className="flex flex-row w-full sm:w-auto gap-2 sm:gap-4 justify-center sm:justify-end mt-2 sm:mt-0">
             <button
