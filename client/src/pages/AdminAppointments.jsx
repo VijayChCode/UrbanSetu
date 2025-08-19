@@ -3755,7 +3755,7 @@ function AdminAppointmentRow({
                     ref={inputRef}
                   />
                   {/* Emoji Button - Inside textarea on the right */}
-                  <div className="absolute right-12 bottom-3">
+                  <div className="absolute right-12 bottom-2">
                     <EmojiButton 
                       onEmojiClick={(emoji) => {
                         // Use live input value and caret selection for robust insertion

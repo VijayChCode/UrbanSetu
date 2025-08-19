@@ -339,7 +339,7 @@ export const EmojiButton = ({ onEmojiClick, className = "", inputRef }) => {
   };
 
   return (
-    <div className="relative">
+    <div className="relative inline-flex items-center justify-center">
       <button
         ref={buttonRef}
         type="button"
@@ -347,13 +347,13 @@ export const EmojiButton = ({ onEmojiClick, className = "", inputRef }) => {
         onMouseDown={(e) => {
           e.preventDefault();
         }}
-        className={`flex items-center justify-center p-2 text-gray-500 hover:text-yellow-500 hover:bg-gray-100 rounded-full transition-colors duration-200 ${className}`}
+        className={`w-9 h-9 flex items-center justify-center text-gray-600 bg-white border border-gray-200 shadow-sm hover:shadow-md hover:bg-gray-50 hover:text-yellow-600 rounded-full transition-all ${className}`}
         title="Add emoji"
       >
         {isMobile && isPickerOpen ? (
           <FaKeyboard className="text-lg" />
         ) : (
-          <BsEmojiSmile className="text-lg" />
+          <BsEmojiSmile className="text-xl" />
         )}
       </button>
       <CustomEmojiPicker
