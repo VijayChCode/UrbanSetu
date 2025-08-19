@@ -3632,6 +3632,39 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                         ) : selectedMessages.length > 1 ? (
                           // Multiple messages selected - show bulk actions
                           <div className="flex items-center gap-2">
+                            {selectedMessages.every(msg => msg.deleted) ? (
+                              <button
+                                className="text-white hover:text-red-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                                onClick={async () => {
+                                  const ids = selectedMessages.map(msg => msg._id);
+                                  try {
+                                    const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/removed/sync`, {
+                                      method: 'POST',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      credentials: 'include',
+                                      body: JSON.stringify({ removedIds: ids })
+                                    });
+                                    if (!res.ok) {
+                                      const data = await res.json().catch(() => ({}));
+                                      toast.error(data.message || 'Failed to delete selected messages for you.');
+                                      return;
+                                    }
+                                    setComments(prev => prev.filter(msg => !ids.includes(msg._id)));
+                                    ids.forEach(cid => addLocallyRemovedId(appt._id, cid));
+                                    toast.success(`Deleted ${ids.length} messages for you!`);
+                                    setIsSelectionMode(false);
+                                    setSelectedMessages([]);
+                                  } catch (e) {
+                                    toast.error('Failed to delete selected messages for you.');
+                                  }
+                                }}
+                                title="Delete selected (for me)"
+                                aria-label="Delete selected (for me)"
+                              >
+                                <FaTrash size={18} />
+                              </button>
+                            ) : (
+                            <>
                             <button
                               className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
                               onClick={async () => {
@@ -3745,6 +3778,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             >
                               <FaTrash size={18} />
                             </button>
+                            </>
+                            )}
                           </div>
                         ) : null}
                         <button
