@@ -1044,6 +1044,51 @@ router.patch('/:id/archive', verifyToken, async (req, res) => {
   }
 });
 
+// PATCH: Archive appointment (user can archive their own appointments)
+router.patch('/:id/user-archive', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const bookingToArchive = await booking.findById(id);
+    if (!bookingToArchive) {
+      return res.status(404).json({ message: 'Appointment not found.' });
+    }
+
+    // Check if user is either buyer or seller of this appointment
+    if (bookingToArchive.buyerId.toString() !== userId && bookingToArchive.sellerId.toString() !== userId) {
+      return res.status(403).json({ message: 'You can only archive your own appointments.' });
+    }
+
+    // Archive the appointment for the user
+    bookingToArchive.archivedByUser = true;
+    bookingToArchive.archivedByUserAt = new Date();
+    bookingToArchive.archivedByUserId = userId;
+    
+    await bookingToArchive.save();
+
+    // Populate the updated booking for response
+    const updated = await booking.findById(id)
+      .populate('buyerId', 'username email mobileNumber')
+      .populate('sellerId', 'username email mobileNumber')
+      .populate('listingId', '_id name address');
+    
+    // Emit socket.io event
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('appointmentUpdate', { appointmentId: id, updatedAppointment: updated });
+    }
+    
+    res.status(200).json({
+      message: 'Appointment archived successfully.',
+      appointment: updated
+    });
+  } catch (err) {
+    console.error('Error archiving appointment:', err);
+    res.status(500).json({ message: 'Failed to archive appointment.' });
+  }
+});
+
 // PATCH: Unarchive appointment (admin only)
 router.patch('/:id/unarchive', verifyToken, async (req, res) => {
   try {
@@ -1088,6 +1133,51 @@ router.patch('/:id/unarchive', verifyToken, async (req, res) => {
   }
 });
 
+// PATCH: Unarchive appointment (user can unarchive their own appointments)
+router.patch('/:id/user-unarchive', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const bookingToUnarchive = await booking.findById(id);
+    if (!bookingToUnarchive) {
+      return res.status(404).json({ message: 'Appointment not found.' });
+    }
+
+    // Check if user is either buyer or seller of this appointment
+    if (bookingToUnarchive.buyerId.toString() !== userId && bookingToUnarchive.sellerId.toString() !== userId) {
+      return res.status(403).json({ message: 'You can only unarchive your own appointments.' });
+    }
+
+    // Unarchive the appointment for the user
+    bookingToUnarchive.archivedByUser = false;
+    bookingToUnarchive.archivedByUserAt = undefined;
+    bookingToUnarchive.archivedByUserId = undefined;
+    
+    await bookingToUnarchive.save();
+
+    // Populate the updated booking for response
+    const updated = await booking.findById(id)
+      .populate('buyerId', 'username email mobileNumber')
+      .populate('sellerId', 'username email mobileNumber')
+      .populate('listingId', '_id name address');
+    
+    // Emit socket.io event
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('appointmentUpdate', { appointmentId: id, updatedAppointment: updated });
+    }
+    
+    res.status(200).json({
+      message: 'Appointment unarchived successfully.',
+      appointment: updated
+    });
+  } catch (err) {
+    console.error('Error unarchiving appointment:', err);
+    res.status(500).json({ message: 'Failed to unarchive appointment.' });
+  }
+});
+
 // GET: Get archived appointments (admin only)
 router.get('/archived', verifyToken, async (req, res) => {
   try {
@@ -1109,6 +1199,38 @@ router.get('/archived', verifyToken, async (req, res) => {
     res.status(200).json(archivedAppointments);
   } catch (err) {
     console.error('Error fetching archived appointments:', err);
+    res.status(500).json({ message: 'Failed to fetch archived appointments.' });
+  }
+});
+
+// GET: Get user's own archived appointments
+router.get('/my-archived', verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const archivedAppointments = await booking.find({ 
+      $or: [
+        { buyerId: userId, archivedByUser: true },
+        { sellerId: userId, archivedByUser: true }
+      ]
+    })
+      .populate('buyerId', 'username email mobileNumber avatar')
+      .populate('sellerId', 'username email mobileNumber avatar')
+      .populate('listingId', '_id name address')
+      .sort({ archivedByUserAt: -1 }); // Sort by most recently archived first
+
+    // Add role information to each booking
+    const bookingsWithRole = archivedAppointments
+      .filter(booking => booking.buyerId && booking.buyerId._id && booking.sellerId && booking.sellerId._id)
+      .map(booking => {
+        const bookingObj = booking.toObject();
+        bookingObj.role = booking.buyerId._id.toString() === userId ? 'buyer' : 'seller';
+        return bookingObj;
+      });
+
+    res.status(200).json(bookingsWithRole);
+  } catch (err) {
+    console.error('Error fetching user archived appointments:', err);
     res.status(500).json({ message: 'Failed to fetch archived appointments.' });
   }
 });

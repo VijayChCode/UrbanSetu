@@ -310,7 +310,7 @@ export default function MyAppointments() {
 
   const confirmArchive = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${appointmentToHandle}/archive`, {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${appointmentToHandle}/user-archive`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
@@ -320,7 +320,7 @@ export default function MyAppointments() {
         const archivedAppt = appointments.find(appt => appt._id === appointmentToHandle);
         if (archivedAppt) {
           setAppointments((prev) => prev.filter((appt) => appt._id !== appointmentToHandle));
-          setArchivedAppointments((prev) => [{ ...archivedAppt, archivedAt: new Date() }, ...prev]);
+          setArchivedAppointments((prev) => [{ ...archivedAppt, archivedByUserAt: new Date() }, ...prev]);
         }
         toast.success("Appointment archived successfully.", {
           autoClose: 5000,
@@ -345,7 +345,7 @@ export default function MyAppointments() {
 
   const confirmUnarchive = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${appointmentToHandle}/unarchive`, {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${appointmentToHandle}/user-unarchive`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
@@ -355,7 +355,7 @@ export default function MyAppointments() {
         const unarchivedAppt = archivedAppointments.find(appt => appt._id === appointmentToHandle);
         if (unarchivedAppt) {
           setArchivedAppointments((prev) => prev.filter((appt) => appt._id !== appointmentToHandle));
-          setAppointments((prev) => [{ ...unarchivedAppt, archivedAt: undefined }, ...prev]);
+          setAppointments((prev) => [{ ...unarchivedAppt, archivedByUserAt: undefined }, ...prev]);
         }
         toast.success("Appointment unarchived successfully.", {
           autoClose: 5000,
@@ -375,6 +375,9 @@ export default function MyAppointments() {
 
   // Filter appointments by status, role, search, and date range
   const filteredAppointments = appointments.filter((appt) => {
+    // Exclude user-archived appointments from active list
+    if (appt.archivedByUser === true) return false;
+    
     if (currentUser._id === appt.buyerId?._id?.toString() && appt.visibleToBuyer === false) return false;
     if (currentUser._id === appt.sellerId?._id?.toString() && appt.visibleToSeller === false) return false;
     const isOutdated = new Date(appt.date) < new Date() || (new Date(appt.date).toDateString() === new Date().toDateString() && appt.time && appt.time < new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
@@ -400,6 +403,9 @@ export default function MyAppointments() {
 
   // Defensive: ensure archivedAppointments is always an array
   const filteredArchivedAppointments = Array.isArray(archivedAppointments) ? archivedAppointments.filter((appt) => {
+    // Only show user-archived appointments
+    if (appt.archivedByUser !== true) return false;
+    
     const isOutdated = new Date(appt.date) < new Date() || (new Date(appt.date).toDateString() === new Date().toDateString() && appt.time && appt.time < new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
     if (statusFilter === 'outdated') {
       return isOutdated;
@@ -709,23 +715,23 @@ export default function MyAppointments() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredArchivedAppointments.map((appt) => (
-                    <AppointmentRow
-                      key={appt._id}
-                      appt={appt}
-                      currentUser={currentUser}
-                      handleStatusUpdate={handleStatusUpdate}
-                      handleAdminDelete={handleAdminDelete}
-                      actionLoading={actionLoading}
-                      onShowOtherParty={party => { setSelectedOtherParty(party); setShowOtherPartyModal(true); }}
-                      onOpenReinitiate={() => handleOpenReinitiate(appt)}
-                      handleArchiveAppointment={handleArchiveAppointment}
-                      handleUnarchiveAppointment={handleUnarchiveAppointment}
-                      isArchived={true}
-                      onCancelRefresh={handleCancelRefresh}
-                      copyMessageToClipboard={copyMessageToClipboard}
-                    />
-                  ))}
+                                  {filteredArchivedAppointments.map((appt) => (
+                  <AppointmentRow
+                    key={appt._id}
+                    appt={appt}
+                    currentUser={currentUser}
+                    handleStatusUpdate={handleStatusUpdate}
+                    handleAdminDelete={handleAdminDelete}
+                    actionLoading={actionLoading}
+                    onShowOtherParty={party => { setSelectedOtherParty(party); setShowOtherPartyModal(true); }}
+                    onOpenReinitiate={() => handleOpenReinitiate(appt)}
+                    handleArchiveAppointment={handleArchiveAppointment}
+                    handleUnarchiveAppointment={handleUnarchiveAppointment}
+                    isArchived={appt.archivedByUser === true}
+                    onCancelRefresh={handleCancelRefresh}
+                    copyMessageToClipboard={copyMessageToClipboard}
+                  />
+                ))}
                 </tbody>
               </table>
           </div>
@@ -762,7 +768,7 @@ export default function MyAppointments() {
                     onOpenReinitiate={() => handleOpenReinitiate(appt)}
                       handleArchiveAppointment={handleArchiveAppointment}
                       handleUnarchiveAppointment={handleUnarchiveAppointment}
-                      isArchived={false}
+                      isArchived={appt.archivedByUser === true}
                       onCancelRefresh={handleCancelRefresh}
                       copyMessageToClipboard={copyMessageToClipboard}
                   />
