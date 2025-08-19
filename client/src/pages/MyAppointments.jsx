@@ -3613,7 +3613,39 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                     });
                                   });
                                   await Promise.all(promises);
-                                  toast.success(`Starred ${selectedMessages.length} messages`);
+                                  
+                                  // Update UI state for all selected messages
+                                  setComments(prev => prev.map(c => {
+                                    const selectedMsg = selectedMessages.find(msg => msg._id === c._id);
+                                    if (selectedMsg) {
+                                      const isStarred = selectedMsg.starredBy?.includes(currentUser._id);
+                                      return {
+                                        ...c,
+                                        starredBy: isStarred 
+                                          ? (c.starredBy || []).filter(id => id !== currentUser._id)
+                                          : [...(c.starredBy || []), currentUser._id]
+                                      };
+                                    }
+                                    return c;
+                                  }));
+                                  
+                                  // Update starred messages list
+                                  const newlyStarredMessages = selectedMessages.filter(msg => !msg.starredBy?.includes(currentUser._id));
+                                  const newlyUnstarredMessages = selectedMessages.filter(msg => msg.starredBy?.includes(currentUser._id));
+                                  
+                                  setStarredMessages(prev => {
+                                    // Remove unstarred messages
+                                    let updated = prev.filter(m => !newlyUnstarredMessages.some(unstarred => unstarred._id === m._id));
+                                    // Add newly starred messages
+                                    newlyStarredMessages.forEach(msg => {
+                                      if (!updated.some(m => m._id === msg._id)) {
+                                        updated.push({ ...msg, starredBy: [...(msg.starredBy || []), currentUser._id] });
+                                      }
+                                    });
+                                    return updated;
+                                  });
+                                  
+                                  toast.success(`Updated star status for ${selectedMessages.length} messages`);
                                   setIsSelectionMode(false);
                                   setSelectedMessages([]);
                                 } catch (err) {
@@ -3634,27 +3666,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             </button>
                             <button
                               className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
-                              onClick={async () => {
-                                setMultiSelectActions(prev => ({ ...prev, pinning: true }));
-                                try {
-                                  const promises = selectedMessages.map(msg => {
-                                    const isPinned = msg.pinned;
-                                    return fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${msg._id}/pin`, {
-                                      method: 'PATCH',
-                                      headers: { 'Content-Type': 'application/json' },
-                                      credentials: 'include',
-                                      body: JSON.stringify({ pinned: !isPinned }),
-                                    });
-                                  });
-                                  await Promise.all(promises);
-                                  toast.success(`Pinned ${selectedMessages.length} messages`);
-                                  setIsSelectionMode(false);
-                                  setSelectedMessages([]);
-                                } catch (err) {
-                                  toast.error('Failed to pin messages');
-                                } finally {
-                                  setMultiSelectActions(prev => ({ ...prev, pinning: false }));
-                                }
+                              onClick={() => {
+                                // For multi-select, open pin modal with selected messages
+                                setMessageToPin(selectedMessages);
+                                setShowPinModal(true);
                               }}
                               title="Pin all selected messages"
                               aria-label="Pin all selected messages"
@@ -6118,7 +6133,11 @@ You can lock this chat again at any time from the options.</p>
             {/* Content */}
             <div className="p-6">
               <div className="mb-4">
-                <p className="text-gray-600 mb-4">Choose how long to pin this message:</p>
+                <p className="text-gray-600 mb-4">
+                  {Array.isArray(messageToPin) 
+                    ? `Choose how long to pin these ${messageToPin.length} messages:` 
+                    : 'Choose how long to pin this message:'}
+                </p>
                 
                 {/* Pin Duration Options */}
                 <div className="space-y-3">
@@ -6206,11 +6225,25 @@ You can lock this chat again at any time from the options.</p>
                 
                 {/* Message Preview */}
                 <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                  <div className="text-sm text-gray-600 mb-2">Message to pin:</div>
-                  <div className="text-sm text-gray-800 bg-white p-2 rounded border">
-                    {messageToPin.message?.substring(0, 100)}
-                    {messageToPin.message?.length > 100 ? '...' : ''}
+                  <div className="text-sm text-gray-600 mb-2">
+                    {Array.isArray(messageToPin) ? 'Messages to pin:' : 'Message to pin:'}
                   </div>
+                  {Array.isArray(messageToPin) ? (
+                    <div className="space-y-2 max-h-32 overflow-y-auto">
+                      {messageToPin.map((msg, index) => (
+                        <div key={msg._id} className="text-sm text-gray-800 bg-white p-2 rounded border">
+                          <span className="font-medium text-xs text-gray-500">#{index + 1}: </span>
+                          {msg.message?.substring(0, 80)}
+                          {msg.message?.length > 80 ? '...' : ''}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-sm text-gray-800 bg-white p-2 rounded border">
+                      {messageToPin.message?.substring(0, 100)}
+                      {messageToPin.message?.length > 100 ? '...' : ''}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -6229,7 +6262,91 @@ You can lock this chat again at any time from the options.</p>
                 Cancel
               </button>
               <button
-                onClick={() => handlePinMessage(messageToPin, true, pinDuration, customHours)}
+                onClick={async () => {
+                  if (Array.isArray(messageToPin)) {
+                    // Handle multiple messages
+                    setPinningSaving(true);
+                    try {
+                      const promises = messageToPin.map(msg => 
+                        fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${msg._id}/pin`, {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          credentials: 'include',
+                          body: JSON.stringify({ 
+                            pinned: true, 
+                            pinDuration: pinDuration, 
+                            customHours: pinDuration === 'custom' ? customHours : undefined 
+                          }),
+                        })
+                      );
+                      
+                      const results = await Promise.all(promises);
+                      const allSuccessful = results.every(res => res.ok);
+                      
+                      if (allSuccessful) {
+                        // Update UI state for all pinned messages
+                        const now = new Date();
+                        let expiryDate;
+                        if (pinDuration === '24hrs') {
+                          expiryDate = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+                        } else if (pinDuration === '7days') {
+                          expiryDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+                        } else if (pinDuration === '30days') {
+                          expiryDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+                        } else if (pinDuration === 'custom') {
+                          expiryDate = new Date(now.getTime() + customHours * 60 * 60 * 1000);
+                        }
+                        
+                        setComments(prev => prev.map(c => {
+                          const pinnedMsg = messageToPin.find(msg => msg._id === c._id);
+                          if (pinnedMsg) {
+                            return {
+                              ...c,
+                              pinned: true,
+                              pinnedBy: currentUser._id,
+                              pinnedAt: now,
+                              pinExpiresAt: expiryDate,
+                              pinDuration: pinDuration
+                            };
+                          }
+                          return c;
+                        }));
+                        
+                        // Update pinned messages list
+                        const newPinnedMessages = messageToPin.map(msg => ({
+                          ...msg,
+                          pinned: true,
+                          pinnedBy: currentUser._id,
+                          pinnedAt: now,
+                          pinExpiresAt: expiryDate,
+                          pinDuration: pinDuration
+                        }));
+                        
+                        setPinnedMessages(prev => {
+                          const filtered = prev.filter(m => !messageToPin.some(msg => msg._id === m._id));
+                          return [...filtered, ...newPinnedMessages];
+                        });
+                        
+                        toast.success(`Pinned ${messageToPin.length} messages`);
+                        setIsSelectionMode(false);
+                        setSelectedMessages([]);
+                      } else {
+                        toast.error('Failed to pin some messages');
+                      }
+                    } catch (err) {
+                      toast.error('Failed to pin messages');
+                    } finally {
+                      setPinningSaving(false);
+                    }
+                  } else {
+                    // Handle single message (existing logic)
+                    handlePinMessage(messageToPin, true, pinDuration, customHours);
+                  }
+                  setShowPinModal(false);
+                  setMessageToPin(null);
+                  setPinDuration('24hrs');
+                  setCustomHours(24);
+                }}
                 disabled={pinningSaving}
                 className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -6239,7 +6356,7 @@ You can lock this chat again at any time from the options.</p>
                     Pinning...
                   </div>
                 ) : (
-                  'Pin Message'
+                  Array.isArray(messageToPin) ? `Pin ${messageToPin.length} Messages` : 'Pin Message'
                 )}
               </button>
             </div>

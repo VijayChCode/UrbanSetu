@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
-import { FaTrash, FaSearch, FaPen, FaPaperPlane, FaUser, FaEnvelope, FaCalendar, FaPhone, FaUserShield, FaArchive, FaUndo, FaCommentDots, FaCheck, FaCheckDouble, FaBan, FaTimes, FaLightbulb, FaCopy, FaEllipsisV, FaInfoCircle, FaSync, FaStar, FaRegStar, FaFlag, FaCalendarAlt, FaCheckSquare } from "react-icons/fa";
+import { FaTrash, FaSearch, FaPen, FaPaperPlane, FaUser, FaEnvelope, FaCalendar, FaPhone, FaUserShield, FaArchive, FaUndo, FaCommentDots, FaCheck, FaCheckDouble, FaBan, FaTimes, FaLightbulb, FaCopy, FaEllipsisV, FaInfoCircle, FaSync, FaStar, FaRegStar, FaFlag, FaCalendarAlt, FaCheckSquare, FaThumbtack } from "react-icons/fa";
 import UserAvatar from '../components/UserAvatar';
 import ImagePreview from '../components/ImagePreview';
 import { EmojiButton } from '../components/EmojiPicker';
@@ -1206,6 +1206,15 @@ function AdminAppointmentRow({
     copying: false,
     deleting: false
   });
+  
+  // Pinned messages states
+  const [pinnedMessages, setPinnedMessages] = useLocalState([]);
+  const [loadingPinnedMessages, setLoadingPinnedMessages] = useLocalState(false);
+  const [pinningSaving, setPinningSaving] = useLocalState(false);
+  const [showPinModal, setShowPinModal] = useLocalState(false);
+  const [messageToPin, setMessageToPin] = useLocalState(null);
+  const [pinDuration, setPinDuration] = useLocalState('24hrs');
+  const [customHours, setCustomHours] = useLocalState(24);
   
   // Search functionality state
   const [showSearchBox, setShowSearchBox] = useLocalState(false);
@@ -2801,7 +2810,54 @@ function AdminAppointmentRow({
                                   });
                                 });
                                 await Promise.all(promises);
-                                toast.success(`Starred ${selectedMessages.length} messages`);
+                                
+                                // Update UI state for all selected messages
+                                setLocalComments(prev => prev.map(c => {
+                                  const selectedMsg = selectedMessages.find(msg => msg._id === c._id);
+                                  if (selectedMsg) {
+                                    const isStarred = selectedMsg.starredBy?.includes(currentUser._id);
+                                    return {
+                                      ...c,
+                                      starredBy: isStarred 
+                                        ? (c.starredBy || []).filter(id => id !== currentUser._id)
+                                        : [...(c.starredBy || []), currentUser._id]
+                                    };
+                                  }
+                                  return c;
+                                }));
+                                
+                                // Update appointment comments for parent component
+                                updateAppointmentComments(appt._id, localComments.map(c => {
+                                  const selectedMsg = selectedMessages.find(msg => msg._id === c._id);
+                                  if (selectedMsg) {
+                                    const isStarred = selectedMsg.starredBy?.includes(currentUser._id);
+                                    return {
+                                      ...c,
+                                      starredBy: isStarred 
+                                        ? (c.starredBy || []).filter(id => id !== currentUser._id)
+                                        : [...(c.starredBy || []), currentUser._id]
+                                    };
+                                  }
+                                  return c;
+                                }));
+                                
+                                // Update starred messages list
+                                const newlyStarredMessages = selectedMessages.filter(msg => !msg.starredBy?.includes(currentUser._id));
+                                const newlyUnstarredMessages = selectedMessages.filter(msg => msg.starredBy?.includes(currentUser._id));
+                                
+                                setStarredMessages(prev => {
+                                  // Remove unstarred messages
+                                  let updated = prev.filter(m => !newlyUnstarredMessages.some(unstarred => unstarred._id === m._id));
+                                  // Add newly starred messages
+                                  newlyStarredMessages.forEach(msg => {
+                                    if (!updated.some(m => m._id === msg._id)) {
+                                      updated.push({ ...msg, starredBy: [...(msg.starredBy || []), currentUser._id] });
+                                    }
+                                  });
+                                  return updated;
+                                });
+                                
+                                toast.success(`Updated star status for ${selectedMessages.length} messages`);
                                 setIsSelectionMode(false);
                                 setSelectedMessages([]);
                               } catch (err) {
@@ -2818,6 +2874,23 @@ function AdminAppointmentRow({
                               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                             ) : (
                               <FaStar size={18} />
+                            )}
+                          </button>
+                          <button
+                            className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                            onClick={() => {
+                              // For multi-select, open pin modal with selected messages
+                              setMessageToPin(selectedMessages);
+                              setShowPinModal(true);
+                            }}
+                            title="Pin all selected messages"
+                            aria-label="Pin all selected messages"
+                            disabled={multiSelectActions.pinning}
+                          >
+                            {multiSelectActions.pinning ? (
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            ) : (
+                              <FaThumbtack size={18} />
                             )}
                           </button>
                           <button
@@ -4661,13 +4734,332 @@ function AdminAppointmentRow({
           </div>
         )}
         
-        {/* Image Preview Modal */}
-        <ImagePreview
-          isOpen={showImagePreview}
-          onClose={() => setShowImagePreview(false)}
-          images={previewImages}
-          initialIndex={previewIndex}
-        />
+              {/* Pin Message Modal */}
+      {showPinModal && messageToPin && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center p-6 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-blue-50">
+              <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <FaThumbtack className="text-purple-500" />
+                {Array.isArray(messageToPin) ? `Pin ${messageToPin.length} Messages` : 'Pin Message'}
+              </h3>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              <div className="mb-4">
+                <p className="text-gray-600 mb-4">
+                  {Array.isArray(messageToPin) 
+                    ? `Choose how long to pin these ${messageToPin.length} messages:` 
+                    : 'Choose how long to pin this message:'}
+                </p>
+                
+                {/* Pin Duration Options */}
+                <div className="space-y-3">
+                  <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                    <input
+                      type="radio"
+                      name="pinDuration"
+                      value="24hrs"
+                      checked={pinDuration === '24hrs'}
+                      onChange={(e) => setPinDuration(e.target.value)}
+                      className="text-purple-600"
+                    />
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-800">24 Hours</div>
+                      <div className="text-sm text-gray-500">Pin for 24 hours</div>
+                    </div>
+                  </label>
+                  
+                  <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                    <input
+                      type="radio"
+                      name="pinDuration"
+                      value="7days"
+                      checked={pinDuration === '7days'}
+                      onChange={(e) => setPinDuration(e.target.value)}
+                      className="text-purple-600"
+                    />
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-800">7 Days</div>
+                      <div className="text-sm text-gray-500">Pin for 7 days</div>
+                    </div>
+                  </label>
+                  
+                  <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                    <input
+                      type="radio"
+                      name="pinDuration"
+                      value="30days"
+                      checked={pinDuration === '30days'}
+                      onChange={(e) => setPinDuration(e.target.value)}
+                      className="text-purple-600"
+                    />
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-800">30 Days</div>
+                      <div className="text-sm text-gray-500">Pin for 30 days</div>
+                    </div>
+                  </label>
+                  
+                  <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                    <input
+                      type="radio"
+                      name="pinDuration"
+                      value="custom"
+                      checked={pinDuration === 'custom'}
+                      onChange={(e) => setPinDuration(e.target.value)}
+                      className="text-purple-600"
+                    />
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-800">Custom Duration</div>
+                      <div className="text-sm text-gray-500">Set your own duration</div>
+                    </div>
+                  </label>
+                  
+                  {pinDuration === 'custom' && (
+                    <div className="ml-6 mt-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Hours:</label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="720"
+                        value={customHours}
+                        onChange={(e) => setCustomHours(parseInt(e.target.value) || 1)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        placeholder="Enter hours (1-720)"
+                      />
+                      <div className="text-xs text-gray-500 mt-1">Maximum: 720 hours (30 days)</div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Message Preview */}
+                <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                  <div className="text-sm text-gray-600 mb-2">
+                    {Array.isArray(messageToPin) ? 'Messages to pin:' : 'Message to pin:'}
+                  </div>
+                  {Array.isArray(messageToPin) ? (
+                    <div className="space-y-2 max-h-32 overflow-y-auto">
+                      {messageToPin.map((msg, index) => (
+                        <div key={msg._id} className="text-sm text-gray-800 bg-white p-2 rounded border">
+                          <span className="font-medium text-xs text-gray-500">#{index + 1}: </span>
+                          {msg.message?.substring(0, 80)}
+                          {msg.message?.length > 80 ? '...' : ''}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-sm text-gray-800 bg-white p-2 rounded border">
+                      {messageToPin.message?.substring(0, 100)}
+                      {messageToPin.message?.length > 100 ? '...' : ''}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-6 border-t border-gray-200 bg-gray-50 flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowPinModal(false);
+                  setMessageToPin(null);
+                  setPinDuration('24hrs');
+                  setCustomHours(24);
+                }}
+                className="px-4 py-2 text-gray-600 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (Array.isArray(messageToPin)) {
+                    // Handle multiple messages
+                    setPinningSaving(true);
+                    setMultiSelectActions(prev => ({ ...prev, pinning: true }));
+                    try {
+                      const promises = messageToPin.map(msg => 
+                        fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${msg._id}/pin`, {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          credentials: 'include',
+                          body: JSON.stringify({ 
+                            pinned: true, 
+                            pinDuration: pinDuration, 
+                            customHours: pinDuration === 'custom' ? customHours : undefined 
+                          }),
+                        })
+                      );
+                      
+                      const results = await Promise.all(promises);
+                      const allSuccessful = results.every(res => res.ok);
+                      
+                      if (allSuccessful) {
+                        // Update UI state for all pinned messages
+                        const now = new Date();
+                        let expiryDate;
+                        if (pinDuration === '24hrs') {
+                          expiryDate = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+                        } else if (pinDuration === '7days') {
+                          expiryDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+                        } else if (pinDuration === '30days') {
+                          expiryDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+                        } else if (pinDuration === 'custom') {
+                          expiryDate = new Date(now.getTime() + customHours * 60 * 60 * 1000);
+                        }
+                        
+                        setLocalComments(prev => prev.map(c => {
+                          const pinnedMsg = messageToPin.find(msg => msg._id === c._id);
+                          if (pinnedMsg) {
+                            return {
+                              ...c,
+                              pinned: true,
+                              pinnedBy: currentUser._id,
+                              pinnedAt: now,
+                              pinExpiresAt: expiryDate,
+                              pinDuration: pinDuration
+                            };
+                          }
+                          return c;
+                        }));
+                        
+                        // Update appointment comments for parent component
+                        updateAppointmentComments(appt._id, localComments.map(c => {
+                          const pinnedMsg = messageToPin.find(msg => msg._id === c._id);
+                          if (pinnedMsg) {
+                            return {
+                              ...c,
+                              pinned: true,
+                              pinnedBy: currentUser._id,
+                              pinnedAt: now,
+                              pinExpiresAt: expiryDate,
+                              pinDuration: pinDuration
+                            };
+                          }
+                          return c;
+                        }));
+                        
+                        // Update pinned messages list
+                        const newPinnedMessages = messageToPin.map(msg => ({
+                          ...msg,
+                          pinned: true,
+                          pinnedBy: currentUser._id,
+                          pinnedAt: now,
+                          pinExpiresAt: expiryDate,
+                          pinDuration: pinDuration
+                        }));
+                        
+                        setPinnedMessages(prev => {
+                          const filtered = prev.filter(m => !messageToPin.some(msg => msg._id === m._id));
+                          return [...filtered, ...newPinnedMessages];
+                        });
+                        
+                        toast.success(`Pinned ${messageToPin.length} messages`);
+                        setIsSelectionMode(false);
+                        setSelectedMessages([]);
+                      } else {
+                        toast.error('Failed to pin some messages');
+                      }
+                    } catch (err) {
+                      toast.error('Failed to pin messages');
+                    } finally {
+                      setPinningSaving(false);
+                      setMultiSelectActions(prev => ({ ...prev, pinning: false }));
+                    }
+                  } else {
+                    // Handle single message - implement basic pin logic
+                    setPinningSaving(true);
+                    try {
+                      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${messageToPin._id}/pin`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ 
+                          pinned: true, 
+                          pinDuration: pinDuration, 
+                          customHours: pinDuration === 'custom' ? customHours : undefined 
+                        }),
+                      });
+                      
+                      if (res.ok) {
+                        const now = new Date();
+                        let expiryDate;
+                        if (pinDuration === '24hrs') {
+                          expiryDate = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+                        } else if (pinDuration === '7days') {
+                          expiryDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+                        } else if (pinDuration === '30days') {
+                          expiryDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+                        } else if (pinDuration === 'custom') {
+                          expiryDate = new Date(now.getTime() + customHours * 60 * 60 * 1000);
+                        }
+                        
+                        setLocalComments(prev => prev.map(c => 
+                          c._id === messageToPin._id 
+                            ? {
+                                ...c,
+                                pinned: true,
+                                pinnedBy: currentUser._id,
+                                pinnedAt: now,
+                                pinExpiresAt: expiryDate,
+                                pinDuration: pinDuration
+                              }
+                            : c
+                        ));
+                        
+                        updateAppointmentComments(appt._id, localComments.map(c => 
+                          c._id === messageToPin._id 
+                            ? {
+                                ...c,
+                                pinned: true,
+                                pinnedBy: currentUser._id,
+                                pinnedAt: now,
+                                pinExpiresAt: expiryDate,
+                                pinDuration: pinDuration
+                              }
+                            : c
+                        ));
+                        
+                        toast.success('Message pinned successfully');
+                      } else {
+                        toast.error('Failed to pin message');
+                      }
+                    } catch (err) {
+                      toast.error('Failed to pin message');
+                    } finally {
+                      setPinningSaving(false);
+                    }
+                  }
+                  setShowPinModal(false);
+                  setMessageToPin(null);
+                  setPinDuration('24hrs');
+                  setCustomHours(24);
+                }}
+                disabled={pinningSaving}
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {pinningSaving ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Pinning...
+                  </div>
+                ) : (
+                  Array.isArray(messageToPin) ? `Pin ${messageToPin.length} Messages` : 'Pin Message'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Image Preview Modal */}
+      <ImagePreview
+        isOpen={showImagePreview}
+        onClose={() => setShowImagePreview(false)}
+        images={previewImages}
+        initialIndex={previewIndex}
+      />
       </td>
     </tr>
   );
