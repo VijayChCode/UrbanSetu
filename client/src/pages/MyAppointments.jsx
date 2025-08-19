@@ -620,7 +620,7 @@ export default function MyAppointments() {
           <div className="flex flex-col sm:flex-row gap-2 md:gap-4">
             <button
               onClick={handleManualRefresh}
-              className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all font-semibold shadow-md"
+              className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-2.5 py-1.5 rounded-md hover:from-blue-600 hover:to-purple-600 transition-all font-semibold shadow-md text-xs sm:text-base sm:px-4 sm:py-2 sm:rounded-lg w-1/2 sm:w-auto"
               title="Refresh appointments"
             >
               Refresh
@@ -628,7 +628,7 @@ export default function MyAppointments() {
             {/* Archived appointments toggle for all users */}
             <button
               onClick={() => setShowArchived(!showArchived)}
-              className={`bg-gradient-to-r text-white px-4 md:px-6 py-2 md:py-3 rounded-lg transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center justify-center gap-2 text-sm md:text-base ${
+              className={`bg-gradient-to-r text-white px-2.5 py-1.5 rounded-md transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-1 sm:gap-2 text-xs sm:text-base w-1/2 sm:w-auto sm:px-6 sm:py-3 sm:rounded-lg justify-center ${
                 showArchived 
                   ? 'from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600' 
                   : 'from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700'
@@ -636,11 +636,11 @@ export default function MyAppointments() {
             >
               {showArchived ? (
                 <>
-                  <FaUndo /> <span className="hidden sm:inline">Active</span> Appointments
+                  <FaUndo /> <span>Active Appointments</span>
                 </>
               ) : (
                 <>
-                  <FaArchive /> <span className="hidden sm:inline">Archived</span> Appointments ({archivedAppointments.length})
+                  <FaArchive /> <span>Archived Appointments ({archivedAppointments.length})</span>
                 </>
               )}
             </button>
