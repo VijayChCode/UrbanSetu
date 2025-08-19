@@ -8,6 +8,7 @@ import { useState as useLocalState } from "react";
 import { Link } from "react-router-dom";
 import { toast, ToastContainer } from 'react-toastify';
 import { socket } from "../utils/socket";
+import { useSoundEffects } from "../components/SoundEffects";
 // Note: Do not import server-only libs here
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -242,12 +243,14 @@ export default function AdminAppointments() {
               if (JSON.stringify(existingComment) !== JSON.stringify(updatedComment)) {
                 const updatedComments = [...(appt.comments || [])];
                 updatedComments[existingCommentIndex] = updatedComment;
+                try { playMessageReceived(); } catch(_) {}
                 return { ...appt, comments: updatedComments };
               }
               return appt; // No changes needed
             } else {
               // Add new comment - this is a new user message
               const updatedComments = [...(appt.comments || []), data.comment];
+              try { playMessageReceived(); } catch(_) {}
               return { ...appt, comments: updatedComments };
             }
           }
@@ -268,12 +271,14 @@ export default function AdminAppointments() {
               if (JSON.stringify(existingComment) !== JSON.stringify(updatedComment)) {
                 const updatedComments = [...(appt.comments || [])];
                 updatedComments[existingCommentIndex] = updatedComment;
+                try { playMessageReceived(); } catch(_) {}
                 return { ...appt, comments: updatedComments };
               }
               return appt; // No changes needed
             } else {
               // Add new comment
               const updatedComments = [...(appt.comments || []), data.comment];
+              try { playMessageReceived(); } catch(_) {}
               return { ...appt, comments: updatedComments };
             }
           }
@@ -1894,6 +1899,7 @@ function AdminAppointmentRow({
 
     // Immediately update UI - this makes the message appear instantly
     setLocalComments(prev => [...prev, tempMessage]);
+    try { playMessageSent(); } catch(_) {}
     setNewComment("");
     setReplyTo(null);
     // Reset textarea height to normal after sending
