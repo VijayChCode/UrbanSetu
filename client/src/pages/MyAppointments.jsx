@@ -954,6 +954,80 @@ export default function MyAppointments() {
           </div>
         </div>
       )}
+
+      {/* Archive Appointment Confirmation Modal */}
+      {showArchiveModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+              <FaArchive className="text-blue-500" />
+              Archive Appointment
+            </h3>
+            
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to archive this appointment? It will be moved to the archived section.
+            </p>
+            
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowArchiveModal(false);
+                  setAppointmentToHandle(null);
+                }}
+                className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmArchive}
+                className="px-4 py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2"
+              >
+                <FaArchive size={12} />
+                Archive
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Unarchive Appointment Confirmation Modal */}
+      {showUnarchiveModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+              <FaUndo className="text-green-500" />
+              Unarchive Appointment
+            </h3>
+            
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to unarchive this appointment? It will be moved back to the active appointments.
+            </p>
+            
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowUnarchiveModal(false);
+                  setAppointmentToHandle(null);
+                }}
+                className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmUnarchive}
+                className="px-4 py-2 rounded bg-green-600 text-white font-semibold hover:bg-green-700 transition-colors flex items-center gap-2"
+              >
+                <FaUndo size={12} />
+                Unarchive
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       </div>
     </div>
   );
@@ -5118,80 +5192,6 @@ You can lock this chat again at any time from the options.</p>
               >
                 <FaTrash size={12} />
                 Delete Appointment
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Archive Appointment Confirmation Modal */}
-      {showArchiveModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-              <FaArchive className="text-blue-500" />
-              Archive Appointment
-            </h3>
-            
-            <p className="text-gray-600 mb-6">
-              Are you sure you want to archive this appointment? It will be moved to the archived section.
-            </p>
-            
-            <div className="flex gap-3 justify-end">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowArchiveModal(false);
-                  setAppointmentToHandle(null);
-                }}
-                className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={confirmArchive}
-                className="px-4 py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2"
-              >
-                <FaArchive size={12} />
-                Archive
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Unarchive Appointment Confirmation Modal */}
-      {showUnarchiveModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-              <FaUndo className="text-green-500" />
-              Unarchive Appointment
-            </h3>
-            
-            <p className="text-gray-600 mb-6">
-              Are you sure you want to unarchive this appointment? It will be moved back to the active appointments.
-            </p>
-            
-            <div className="flex gap-3 justify-end">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowUnarchiveModal(false);
-                  setAppointmentToHandle(null);
-                }}
-                className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={confirmUnarchive}
-                className="px-4 py-2 rounded bg-green-600 text-white font-semibold hover:bg-green-700 transition-colors flex items-center gap-2"
-              >
-                <FaUndo size={12} />
-                Unarchive
               </button>
             </div>
           </div>
