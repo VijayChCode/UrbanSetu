@@ -2804,15 +2804,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         // Show floating date when scrolling starts
         setIsScrolling(true);
         
-        // Check if scrolled to top for privacy notice highlighting (mobile only)
-        if (chatContainer && isMobile) {
-          const { scrollTop } = chatContainer;
-          if (scrollTop < 50) { // Near the top
-            setPrivacyNoticeHighlighted(true);
-            // Reset highlight after 3 seconds
-            setTimeout(() => setPrivacyNoticeHighlighted(false), 3000);
-          }
-        }
+        // Removed: no special highlight when scrolled to top for privacy notice
         
         // Clear existing timeout
         if (scrollTimeoutRef.current) {
@@ -4462,22 +4454,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   <div ref={chatContainerRef} className="flex-1 overflow-y-auto space-y-2 px-4 pt-4 animate-fadeInChat relative bg-gradient-to-b from-transparent to-blue-50/30">
                   {/* Privacy Notice - First item in chat */}
                   <div 
-                    className={`px-4 py-3 bg-gradient-to-r from-blue-50 to-purple-50 border-l-4 border-blue-400 rounded-r-lg mb-4 transform transition-all duration-500 hover:scale-105 hover:shadow-lg hover:from-blue-100 hover:to-purple-100 hover:border-blue-500 hover:border-l-6 backdrop-blur-sm ${
-                      isMobile && privacyNoticeHighlighted ? 'animate-attentionGlow shadow-lg border-blue-500 bg-gradient-to-r from-blue-100 to-purple-100 scale-105' : 
-                      isMobile && isAtBottom ? 'animate-slideInFromTop shadow-lg border-blue-500 bg-gradient-to-r from-blue-100 to-purple-100 animate-attentionGlow' : 'animate-gentlePulse'
-                    }`}
-                    style={{
-                      animationDelay: isMobile && privacyNoticeHighlighted ? '0s' : (isMobile && isAtBottom ? '0s' : '0s'),
-                      transform: isMobile && privacyNoticeHighlighted ? 'scale(1.05)' : (isMobile && isAtBottom ? 'scale(1.02)' : 'scale(1)'),
-                      boxShadow: isMobile && privacyNoticeHighlighted ? '0 15px 35px rgba(59, 130, 246, 0.25)' : (isMobile && isAtBottom ? '0 10px 25px rgba(59, 130, 246, 0.15)' : 'none')
-                    }}
+                    className="px-4 py-3 bg-gradient-to-r from-blue-50 to-purple-50 border-l-4 border-blue-400 rounded-r-lg mb-4 backdrop-blur-sm"
                   >
-                                          <p className="text-sm text-blue-700 font-medium text-center flex items-center justify-center gap-2">
-                        <span className={`${isMobile && privacyNoticeHighlighted ? 'animate-bounce text-blue-600' : isMobile && isAtBottom ? 'animate-bounce' : 'animate-gentlePulse'}`}>🔒</span>
-                        Your privacy is our top priority — all your chats and data are fully encrypted for your safety
-                        {isMobile && privacyNoticeHighlighted && <span className="ml-2 animate-pulse text-blue-600">✨</span>}
-                        {isMobile && isAtBottom && !privacyNoticeHighlighted && <span className="ml-2 animate-pulse text-blue-600">✨</span>}
-                      </p>
+                    <p className="text-sm text-blue-700 font-medium text-center flex items-center justify-center gap-2">
+                      <span className="animate-gentlePulse">🔒</span>
+                      Your privacy is our top priority — all your chats and data are fully encrypted for your safety
+                    </p>
                   </div>
                   
                   {/* Floating Date Indicator */}
