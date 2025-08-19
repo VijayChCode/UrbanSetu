@@ -30,6 +30,11 @@ export default function MyAppointments() {
   const [showArchived, setShowArchived] = useState(false);
   const navigate = useNavigate();
   const [swipedMsgId, setSwipedMsgId] = useState(null);
+  
+  // Archive/Unarchive modal states
+  const [appointmentToHandle, setAppointmentToHandle] = useState(null);
+  const [showArchiveModal, setShowArchiveModal] = useState(false);
+  const [showUnarchiveModal, setShowUnarchiveModal] = useState(false);
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -57,21 +62,16 @@ export default function MyAppointments() {
       }
     };
     const fetchArchivedAppointments = async () => {
-      // Only fetch archived appointments for admin users
-      if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) {
-        try {
-          const res = await fetch(`${API_BASE_URL}/api/bookings/archived`, {
-            credentials: 'include'
-          });
-          if (!res.ok) throw new Error('Not allowed');
-          const data = await res.json();
-          setArchivedAppointments(Array.isArray(data) ? data : []);
-        } catch (err) {
-          setArchivedAppointments([]);
-          toast.error("Failed to fetch archived appointments");
-        }
-      } else {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/bookings/my-archived`, {
+          credentials: 'include'
+        });
+        if (!res.ok) throw new Error('Not allowed');
+        const data = await res.json();
+        setArchivedAppointments(Array.isArray(data) ? data : []);
+      } catch (err) {
         setArchivedAppointments([]);
+        console.error("Failed to fetch archived appointments:", err);
       }
     };
     fetchAppointments();
@@ -310,7 +310,7 @@ export default function MyAppointments() {
 
   const confirmArchive = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${appointmentToHandle}/archive`, {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${appointmentToHandle}/user-archive`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
@@ -320,7 +320,7 @@ export default function MyAppointments() {
         const archivedAppt = appointments.find(appt => appt._id === appointmentToHandle);
         if (archivedAppt) {
           setAppointments((prev) => prev.filter((appt) => appt._id !== appointmentToHandle));
-          setArchivedAppointments((prev) => [{ ...archivedAppt, archivedAt: new Date() }, ...prev]);
+          setArchivedAppointments((prev) => [{ ...archivedAppt, archivedByUserAt: new Date() }, ...prev]);
         }
         toast.success("Appointment archived successfully.", {
           autoClose: 5000,
@@ -345,7 +345,7 @@ export default function MyAppointments() {
 
   const confirmUnarchive = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${appointmentToHandle}/unarchive`, {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${appointmentToHandle}/user-unarchive`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
@@ -355,7 +355,7 @@ export default function MyAppointments() {
         const unarchivedAppt = archivedAppointments.find(appt => appt._id === appointmentToHandle);
         if (unarchivedAppt) {
           setArchivedAppointments((prev) => prev.filter((appt) => appt._id !== appointmentToHandle));
-          setAppointments((prev) => [{ ...unarchivedAppt, archivedAt: undefined }, ...prev]);
+          setAppointments((prev) => [{ ...unarchivedAppt, archivedByUserAt: undefined }, ...prev]);
         }
         toast.success("Appointment unarchived successfully.", {
           autoClose: 5000,
@@ -375,6 +375,9 @@ export default function MyAppointments() {
 
   // Filter appointments by status, role, search, and date range
   const filteredAppointments = appointments.filter((appt) => {
+    // Exclude user-archived appointments from active list
+    if (appt.archivedByUser === true) return false;
+    
     if (currentUser._id === appt.buyerId?._id?.toString() && appt.visibleToBuyer === false) return false;
     if (currentUser._id === appt.sellerId?._id?.toString() && appt.visibleToSeller === false) return false;
     const isOutdated = new Date(appt.date) < new Date() || (new Date(appt.date).toDateString() === new Date().toDateString() && appt.time && appt.time < new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
@@ -400,6 +403,9 @@ export default function MyAppointments() {
 
   // Defensive: ensure archivedAppointments is always an array
   const filteredArchivedAppointments = Array.isArray(archivedAppointments) ? archivedAppointments.filter((appt) => {
+    // Only show user-archived appointments
+    if (appt.archivedByUser !== true) return false;
+    
     const isOutdated = new Date(appt.date) < new Date() || (new Date(appt.date).toDateString() === new Date().toDateString() && appt.time && appt.time < new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
     if (statusFilter === 'outdated') {
       return isOutdated;
@@ -493,13 +499,11 @@ export default function MyAppointments() {
       } else {
         throw new Error('Failed to fetch appointments');
       }
-      // Only fetch archived appointments for admin users
-      if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) {
-        const resArchived = await fetch(`${API_BASE_URL}/api/bookings/archived`, { credentials: 'include' });
-        if (resArchived.ok) {
-          const dataArchived = await resArchived.json();
-          setArchivedAppointments(Array.isArray(dataArchived) ? dataArchived : []);
-        }
+      // Fetch archived appointments for all users
+      const resArchived = await fetch(`${API_BASE_URL}/api/bookings/my-archived`, { credentials: 'include' });
+      if (resArchived.ok) {
+        const dataArchived = await resArchived.json();
+        setArchivedAppointments(Array.isArray(dataArchived) ? dataArchived : []);
       } else {
         setArchivedAppointments([]);
       }
@@ -588,9 +592,9 @@ export default function MyAppointments() {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-100 py-10 px-2 md:px-8">
 
       <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-6">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h3 className="text-3xl font-extrabold text-blue-700 drop-shadow">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+          <div className="flex-1">
+            <h3 className="text-2xl sm:text-3xl font-extrabold text-blue-700 drop-shadow">
               {showArchived ? "Archived Appointments" : "My Appointments"}
             </h3>
             {!showArchived && (
@@ -599,18 +603,18 @@ export default function MyAppointments() {
               </p>
             )}
           </div>
-          <button
-            onClick={handleManualRefresh}
-            className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all font-semibold shadow-md ml-4"
-            title="Refresh appointments"
-          >
-            Refresh
-          </button>
-          {/* Only show archived toggle for admin/rootadmin */}
-          {currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin') && (
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+            <button
+              onClick={handleManualRefresh}
+              className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all font-semibold shadow-md"
+              title="Refresh appointments"
+            >
+              Refresh
+            </button>
+            {/* Show archived toggle for all users */}
             <button
               onClick={() => setShowArchived(!showArchived)}
-              className={`bg-gradient-to-r text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2 ${
+              className={`bg-gradient-to-r text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2 justify-center ${
                 showArchived 
                   ? 'from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600' 
                   : 'from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700'
@@ -618,15 +622,15 @@ export default function MyAppointments() {
             >
               {showArchived ? (
                 <>
-                  <FaUndo /> Active Appointments
+                  <FaUndo /> <span className="hidden sm:inline">Active Appointments</span><span className="sm:hidden">Active</span>
                 </>
               ) : (
                 <>
-                  <FaArchive /> Archived Appointments ({archivedAppointments.length})
+                  <FaArchive /> <span className="hidden sm:inline">Archived Appointments ({archivedAppointments.length})</span><span className="sm:hidden">Archived ({archivedAppointments.length})</span>
                 </>
               )}
             </button>
-          )}
+          </div>
         </div>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div className="flex items-center gap-2">
@@ -711,23 +715,23 @@ export default function MyAppointments() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredArchivedAppointments.map((appt) => (
-                    <AppointmentRow
-                      key={appt._id}
-                      appt={appt}
-                      currentUser={currentUser}
-                      handleStatusUpdate={handleStatusUpdate}
-                      handleAdminDelete={handleAdminDelete}
-                      actionLoading={actionLoading}
-                      onShowOtherParty={party => { setSelectedOtherParty(party); setShowOtherPartyModal(true); }}
-                      onOpenReinitiate={() => handleOpenReinitiate(appt)}
-                      handleArchiveAppointment={handleArchiveAppointment}
-                      handleUnarchiveAppointment={handleUnarchiveAppointment}
-                      isArchived={true}
-                      onCancelRefresh={handleCancelRefresh}
-                      copyMessageToClipboard={copyMessageToClipboard}
-                    />
-                  ))}
+                                  {filteredArchivedAppointments.map((appt) => (
+                  <AppointmentRow
+                    key={appt._id}
+                    appt={appt}
+                    currentUser={currentUser}
+                    handleStatusUpdate={handleStatusUpdate}
+                    handleAdminDelete={handleAdminDelete}
+                    actionLoading={actionLoading}
+                    onShowOtherParty={party => { setSelectedOtherParty(party); setShowOtherPartyModal(true); }}
+                    onOpenReinitiate={() => handleOpenReinitiate(appt)}
+                    handleArchiveAppointment={handleArchiveAppointment}
+                    handleUnarchiveAppointment={handleUnarchiveAppointment}
+                    isArchived={appt.archivedByUser === true}
+                    onCancelRefresh={handleCancelRefresh}
+                    copyMessageToClipboard={copyMessageToClipboard}
+                  />
+                ))}
                 </tbody>
               </table>
           </div>
@@ -764,7 +768,7 @@ export default function MyAppointments() {
                     onOpenReinitiate={() => handleOpenReinitiate(appt)}
                       handleArchiveAppointment={handleArchiveAppointment}
                       handleUnarchiveAppointment={handleUnarchiveAppointment}
-                      isArchived={false}
+                      isArchived={appt.archivedByUser === true}
                       onCancelRefresh={handleCancelRefresh}
                       copyMessageToClipboard={copyMessageToClipboard}
                   />
@@ -1050,8 +1054,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     };
   }, [showChatLockModal, showChatUnlockModal, showForgotPasswordModal, showRemoveLockModal]);
   
-  // Store appointment and reasons for modals
-  const [appointmentToHandle, setAppointmentToHandle] = useState(null);
+  // Store reasons for modals
   const [cancelReason, setCancelReason] = useState('');
   const [deleteReason, setDeleteReason] = useState('');
   const messageRefs = useRef({}); // Add messageRefs here
@@ -3216,6 +3219,26 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 <FaUserShield />
               </button>
             )}
+            {/* Archive button for active appointments */}
+            {!isArchived && isUpcoming && (
+              <button
+                className="text-purple-500 hover:text-purple-700 text-xl"
+                onClick={() => handleArchiveAppointment(appt._id)}
+                title="Archive Appointment"
+              >
+                <FaArchive />
+              </button>
+            )}
+            {/* Unarchive button for archived appointments */}
+            {isArchived && (
+              <button
+                className="text-green-500 hover:text-green-700 text-xl"
+                onClick={() => handleUnarchiveAppointment(appt._id)}
+                title="Unarchive Appointment"
+              >
+                <FaUndo />
+              </button>
+            )}
             {/* Reinitiate button: only show to the cancelling party */}
             {((appt.status === 'cancelledByBuyer' && isBuyer) || (appt.status === 'cancelledBySeller' && isSeller)) && (
               <div className="flex flex-col items-center">
@@ -5067,7 +5090,6 @@ You can lock this chat again at any time from the options.</p>
                 type="button"
                 onClick={() => {
                   setShowDeleteAppointmentModal(false);
-                  setAppointmentToHandle(null);
                   setDeleteReason('');
                 }}
                 className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors"
@@ -5105,7 +5127,6 @@ You can lock this chat again at any time from the options.</p>
                 type="button"
                 onClick={() => {
                   setShowArchiveModal(false);
-                  setAppointmentToHandle(null);
                 }}
                 className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors"
               >
@@ -5142,7 +5163,6 @@ You can lock this chat again at any time from the options.</p>
                 type="button"
                 onClick={() => {
                   setShowUnarchiveModal(false);
-                  setAppointmentToHandle(null);
                 }}
                 className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors"
               >
