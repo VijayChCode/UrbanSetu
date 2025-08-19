@@ -419,10 +419,11 @@ export default function MyAppointments() {
   // Defensive: ensure archivedAppointments is always an array
   const filteredArchivedAppointments = Array.isArray(archivedAppointments) ? archivedAppointments.filter((appt) => {
     const isOutdated = new Date(appt.date) < new Date() || (new Date(appt.date).toDateString() === new Date().toDateString() && appt.time && appt.time < new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-    if (statusFilter === 'outdated') {
-      return isOutdated;
-    }
-    const matchesStatus = statusFilter === "all" ? true : appt.status === statusFilter;
+    const matchesStatus =
+      statusFilter === "all" ? true :
+      statusFilter === "outdated" ? isOutdated :
+      appt.status === statusFilter;
+    const matchesRole = roleFilter === "all" ? true : appt.role === roleFilter;
     const matchesSearch =
       appt.propertyName?.toLowerCase().includes(search.toLowerCase()) ||
       appt.message?.toLowerCase().includes(search.toLowerCase()) ||
@@ -435,7 +436,7 @@ export default function MyAppointments() {
     if (endDate) {
       matchesDate = matchesDate && new Date(appt.date) <= new Date(endDate);
     }
-    return matchesSearch && matchesDate;
+    return matchesStatus && matchesRole && matchesSearch && matchesDate;
   }) : [];
 
   function handleOpenReinitiate(appt) {
