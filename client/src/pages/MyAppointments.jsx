@@ -31,6 +31,24 @@ export default function MyAppointments() {
   const navigate = useNavigate();
   const [swipedMsgId, setSwipedMsgId] = useState(null);
 
+  // Archive modal states
+  const [showArchiveModal, setShowArchiveModal] = useState(false);
+  const [showUnarchiveModal, setShowUnarchiveModal] = useState(false);
+  const [appointmentToHandle, setAppointmentToHandle] = useState(null);
+
+  // Lock body scroll when archive modals are open
+  useEffect(() => {
+    const shouldLock = showArchiveModal || showUnarchiveModal;
+    if (shouldLock) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+    }
+    return () => {
+      document.body.classList.remove('modal-open');
+    };
+  }, [showArchiveModal, showUnarchiveModal]);
+
   useEffect(() => {
     const fetchAppointments = async () => {
       if (!currentUser) {
