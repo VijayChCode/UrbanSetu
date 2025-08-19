@@ -3585,34 +3585,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                           <FaRegStar size={18} />
                                         )}
                                       </button>
-                                      {isSentMessage && (
-                                        <>
-                                          <button
-                                            className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
-                                            onClick={() => { 
-                                              showMessageInfo(selectedMsg); 
-                                              setIsSelectionMode(false);
-                                              setSelectedMessages([]);
-                                            }}
-                                            title="Info"
-                                            aria-label="Info"
-                                          >
-                                            <FaInfoCircle size={18} />
-                                          </button>
-                                          <button
-                                            className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
-                                            onClick={() => { 
-                                              startEditing(selectedMsg); 
-                                              setIsSelectionMode(false);
-                                              setSelectedMessages([]);
-                                            }}
-                                            title="Edit"
-                                            aria-label="Edit"
-                                          >
-                                            <FaPen size={18} />
-                                          </button>
-                                        </>
-                                      )}
+                                      {isSentMessage && null}
                                       <button
                                         className="text-white hover:text-red-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
                                         onClick={() => { 
