@@ -3625,6 +3625,28 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                       </button>
                                     </>
                                   )}
+                                  {selectedMsg.deleted && (
+                                    <button
+                                      className="text-white hover:text-red-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                                      onClick={async () => { 
+                                        try {
+                                          await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${selectedMsg._id}/remove-for-me`, {
+                                            method: 'PATCH',
+                                            credentials: 'include'
+                                          });
+                                        } catch {}
+                                        setComments(prev => prev.filter(msg => msg._id !== selectedMsg._id));
+                                        addLocallyRemovedId(appt._id, selectedMsg._id);
+                                        toast.success('Message deleted for you!');
+                                        setIsSelectionMode(false);
+                                        setSelectedMessages([]);
+                                      }}
+                                      title="Delete for me"
+                                      aria-label="Delete for me"
+                                    >
+                                      <FaTrash size={18} />
+                                    </button>
+                                  )}
                                 </>
                               );
                             })()}
