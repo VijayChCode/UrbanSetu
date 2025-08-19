@@ -68,7 +68,6 @@ export default function MyAppointments() {
         setArchivedAppointments([]);
         console.error("Failed to fetch archived appointments:", err);
       }
-      }
     };
     fetchAppointments();
     fetchArchivedAppointments();
