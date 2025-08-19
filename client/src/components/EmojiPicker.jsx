@@ -105,12 +105,25 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
     };
   }, [isOpen, setIsOpen, buttonRef, inputRef]);
 
-  // Prevent background/page scroll while emoji picker is open
+  // Robustly prevent background/page scroll while emoji picker is open
   useEffect(() => {
     if (!isOpen) return;
 
-    const previousOverflow = document.body.style.overflow;
+    // Save scroll position and lock body
+    const scrollY = window.scrollY || window.pageYOffset || 0;
+    const previous = {
+      overflow: document.body.style.overflow,
+      position: document.body.style.position,
+      top: document.body.style.top,
+      width: document.body.style.width,
+      overscroll: document.documentElement.style.overscrollBehavior,
+    };
     document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = '100%';
+    // Helps on mobile Safari to avoid rubber-band
+    document.documentElement.style.overscrollBehavior = 'none';
 
     const preventBackgroundScroll = (event) => {
       if (pickerRef.current && pickerRef.current.contains(event.target)) {
@@ -118,15 +131,33 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
       }
       event.preventDefault();
     };
+    const keepScroll = () => {
+      window.scrollTo(0, scrollY);
+    };
 
-    // Block scroll gestures outside the picker
+    // Block scroll gestures outside the picker (both document and window)
     document.addEventListener('wheel', preventBackgroundScroll, { passive: false });
     document.addEventListener('touchmove', preventBackgroundScroll, { passive: false });
+    window.addEventListener('wheel', preventBackgroundScroll, { passive: false });
+    window.addEventListener('touchmove', preventBackgroundScroll, { passive: false });
+    window.addEventListener('scroll', keepScroll, { passive: false });
 
     return () => {
-      document.body.style.overflow = previousOverflow;
+      // Restore body
+      document.body.style.overflow = previous.overflow;
+      document.body.style.position = previous.position;
+      document.body.style.top = previous.top;
+      document.body.style.width = previous.width;
+      document.documentElement.style.overscrollBehavior = previous.overscroll;
+      // Restore scroll position
+      const y = Math.abs(parseInt(previous.top || '0', 10)) || scrollY;
+      window.scrollTo(0, y);
+      // Cleanup listeners
       document.removeEventListener('wheel', preventBackgroundScroll);
       document.removeEventListener('touchmove', preventBackgroundScroll);
+      window.removeEventListener('wheel', preventBackgroundScroll);
+      window.removeEventListener('touchmove', preventBackgroundScroll);
+      window.removeEventListener('scroll', keepScroll);
     };
   }, [isOpen]);
 
