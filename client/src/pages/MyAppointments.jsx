@@ -1056,7 +1056,6 @@ function getDateLabel(date) {
   if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
   return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 }
-
 function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDelete, actionLoading, onShowOtherParty, onOpenReinitiate, handleArchiveAppointment, handleUnarchiveAppointment, isArchived, onCancelRefresh, copyMessageToClipboard }) {
   const [replyTo, setReplyTo] = useState(null);
   const [comment, setComment] = useState("");
@@ -1786,7 +1785,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       setLoadingPinnedMessages(false);
     }
   };
-
   // Pin/unpin a message
   const handlePinMessage = async (message, pinned, duration = '24hrs', customHrs = 24) => {
     if (!appt?._id) return;
@@ -2155,13 +2153,15 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         const refocusInput = () => {
           if (inputRef.current) {
             inputRef.current.focus();
-            // For mobile devices, ensure the input remains active and set cursor position
-            inputRef.current.setSelectionRange(0, 0);
-            // Force the input to be the active element
-            if (document.activeElement !== inputRef.current) {
-              inputRef.current.click();
-              inputRef.current.focus();
-            }
+            // Place cursor at end of text instead of selecting all
+            const length = inputRef.current.value.length;
+            inputRef.current.setSelectionRange(length, length);
+            
+            // Auto-resize textarea for edited content
+            inputRef.current.style.height = '48px';
+            const scrollHeight = inputRef.current.scrollHeight;
+            const maxHeight = 144;
+            inputRef.current.style.height = Math.min(scrollHeight, maxHeight) + 'px';
           }
         };
         
@@ -2578,7 +2578,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   }, [showChatModal]);
 
   // Mark messages as read when user can actually see them at the bottom of chat
-
   const markingReadRef = useRef(false);
   
   const markVisibleMessagesAsRead = useCallback(async () => {
@@ -3164,7 +3163,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
 
   // Message selected for header options overlay
   const selectedMessageForHeaderOptions = headerOptionsMessageId ? comments.find(msg => msg._id === headerOptionsMessageId) : null;
-
   return (
     <>
       <tr className={`hover:bg-blue-50 transition align-top ${!isUpcoming ? 'bg-gray-100' : ''}`}>
@@ -4196,7 +4194,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                     </>
                   )}
                 </div>
-                
                 {/* Enhanced Search Header */}
                 {showSearchBox && (
                   <div className="enhanced-search-header bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 px-3 sm:px-4 py-3 border-b-2 border-blue-700 flex-shrink-0 animate-slideDown">
@@ -5345,19 +5342,19 @@ You can lock this chat again at any time from the options.</p>
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
             <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
               <FaTrash className="text-red-500" />
-              Delete Message
+              {Array.isArray(messageToDelete) ? 'Delete Selected Messages' : 'Delete Message'}
             </h3>
             
-            {messageToDelete?.deleted ? (
+            {(!Array.isArray(messageToDelete) && messageToDelete?.deleted) ? (
               // Deleted message - show simplified message for local removal
               <p className="text-gray-600 mb-6">
                 Delete this message for me?
               </p>
-            ) : messageToDelete?.senderEmail === currentUser.email ? (
+            ) : (!Array.isArray(messageToDelete) && messageToDelete?.senderEmail === currentUser.email) ? (
               // Own message - show existing functionality
               <>
                 <p className="text-gray-600 mb-4">
-                  Are you sure you want to delete this message?
+                  {Array.isArray(messageToDelete) ? `Are you sure you want to delete ${messageToDelete.length} messages?` : 'Are you sure you want to delete this message?'}
                 </p>
                 
                 <div className="mb-6">
@@ -5377,8 +5374,8 @@ You can lock this chat again at any time from the options.</p>
                   </label>
                   <p className="text-xs text-gray-500 mt-1 ml-7">
                     {deleteForBoth 
-                      ? "The message will be permanently deleted for everyone"
-                      : "The message will only be deleted for you"
+                      ? (Array.isArray(messageToDelete) ? 'The selected messages will be permanently deleted for everyone' : 'The message will be permanently deleted for everyone')
+                      : (Array.isArray(messageToDelete) ? 'The selected messages will only be deleted for you' : 'The message will only be deleted for you')
                     }
                   </p>
                 </div>
@@ -5386,11 +5383,11 @@ You can lock this chat again at any time from the options.</p>
             ) : (
               // Received message - show simplified message
               <p className="text-gray-600 mb-6">
-                Delete message from{' '}
-                <span className="font-medium text-gray-900">
-                  {otherParty?.username || 'other user'}
-                </span>
-                ?
+                {Array.isArray(messageToDelete) ? (
+                  <>Delete selected messages from <span className="font-medium text-gray-900">{otherParty?.username || 'other user'}</span>?</>
+                ) : (
+                  <>Delete message from <span className="font-medium text-gray-900">{otherParty?.username || 'other user'}</span>?</>
+                )}
               </p>
             )}
             
@@ -5412,11 +5409,13 @@ You can lock this chat again at any time from the options.</p>
                 className="px-4 py-2 rounded bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors flex items-center gap-2"
               >
                 <FaTrash size={12} />
-                {messageToDelete?.deleted
-                  ? 'Delete for me'
-                  : messageToDelete?.senderEmail === currentUser.email
-                    ? (deleteForBoth ? 'Delete for everyone' : 'Delete for me')
-                    : 'Delete for me'
+                {Array.isArray(messageToDelete)
+                  ? (deleteForBoth ? 'Delete for everyone' : 'Delete for me')
+                  : (messageToDelete?.deleted
+                      ? 'Delete for me'
+                      : messageToDelete?.senderEmail === currentUser.email
+                        ? (deleteForBoth ? 'Delete for everyone' : 'Delete for me')
+                        : 'Delete for me')
                 }
               </button>
             </div>
@@ -5922,7 +5921,6 @@ You can lock this chat again at any time from the options.</p>
           </div>
         </div>
       )}
-
       {/* Starred Messages Modal */}
       {showStarredModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
