@@ -18,7 +18,7 @@ export default function AdminAppointments() {
   const [archivedAppointments, setArchivedAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("all");
-  const [roleFilter, setRoleFilter] = useState("all");
+  // Removed role filter
   const [search, setSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
   const [showUserModal, setShowUserModal] = useState(false);
@@ -605,7 +605,7 @@ export default function AdminAppointments() {
         statusFilter === "all" ? true :
         statusFilter === "outdated" ? isOutdated :
         appt.status === statusFilter;
-      const matchesRole = roleFilter === "all" ? true : appt.role === roleFilter;
+      const matchesRole = true; // role filter removed
       const matchesSearch =
         appt.buyerId?.email?.toLowerCase().includes(search.toLowerCase()) ||
         appt.sellerId?.email?.toLowerCase().includes(search.toLowerCase()) ||
@@ -624,7 +624,7 @@ export default function AdminAppointments() {
       ...appt,
       comments: updatedComments[appt._id] || appt.comments || []
     }));
-  }, [appointments, statusFilter, roleFilter, search, startDate, endDate, updatedComments]);
+  }, [appointments, statusFilter, search, startDate, endDate, updatedComments]);
 
   const filteredArchivedAppointments = useMemo(() => {
     return archivedAppointments.filter((appt) => {
@@ -633,7 +633,7 @@ export default function AdminAppointments() {
         statusFilter === "all" ? true :
         statusFilter === "outdated" ? isOutdated :
         appt.status === statusFilter;
-      const matchesRole = roleFilter === "all" ? true : appt.role === roleFilter;
+      const matchesRole = true; // role filter removed
       const matchesSearch =
         appt.buyerId?.email?.toLowerCase().includes(search.toLowerCase()) ||
         appt.sellerId?.email?.toLowerCase().includes(search.toLowerCase()) ||
@@ -652,7 +652,7 @@ export default function AdminAppointments() {
       ...appt,
       comments: updatedComments[appt._id] || appt.comments || []
     }));
-  }, [archivedAppointments, statusFilter, roleFilter, search, startDate, endDate, updatedComments]);
+  }, [archivedAppointments, statusFilter, search, startDate, endDate, updatedComments]);
 
   // Add this function to fetch latest data on demand
   const handleManualRefresh = async () => {
@@ -828,18 +828,7 @@ export default function AdminAppointments() {
                 <option value="outdated">Outdated</option>
               </select>
             </div>
-            <div className="flex items-center gap-2">
-              <label className="font-semibold text-sm">Role:</label>
-              <select
-                className="border rounded px-2 py-1 focus:outline-none focus:ring focus:ring-blue-200 text-sm"
-                value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value)}
-              >
-                <option value="all">All</option>
-                <option value="buyer">As Buyer</option>
-                <option value="seller">As Seller</option>
-              </select>
-            </div>
+            {/* Role filter removed for streamlined UI */}
           </div>
           <div className="flex flex-col sm:flex-row gap-2">
             <div className="flex items-center gap-2">
