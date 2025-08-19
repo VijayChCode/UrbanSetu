@@ -1215,6 +1215,7 @@ function AdminAppointmentRow({
   const [messageToPin, setMessageToPin] = useLocalState(null);
   const [pinDuration, setPinDuration] = useLocalState('24hrs');
   const [customHours, setCustomHours] = useLocalState(24);
+  const [highlightedPinnedMessage, setHighlightedPinnedMessage] = useLocalState(null);
   
   // Search functionality state
   const [showSearchBox, setShowSearchBox] = useLocalState(false);
@@ -1311,6 +1312,20 @@ function AdminAppointmentRow({
       });
     }
   }, [showStarredModal, appt._id]);
+
+  // Initialize pinned messages when comments are loaded
+  React.useEffect(() => {
+    if (localComments.length > 0) {
+      const now = new Date();
+      const pinnedMsgs = localComments.filter(c => {
+        if (!c.pinned || !c.pinExpiresAt) return false;
+        // Ensure pinExpiresAt is a Date object
+        const expiryDate = new Date(c.pinExpiresAt);
+        return expiryDate > now;
+      });
+      setPinnedMessages(pinnedMsgs);
+    }
+  }, [localComments]);
 
   // Close chat options menu when clicking outside or scrolling
   React.useEffect(() => {
@@ -2186,6 +2201,88 @@ function AdminAppointmentRow({
   const showMessageInfo = (message) => {
     setSelectedMessageForInfo(message);
     setShowMessageInfoModal(true);
+  };
+
+  // Pin/unpin a message
+  const handlePinMessage = async (message, pinned, duration = '24hrs', customHrs = 24) => {
+    if (!appt?._id) return;
+    
+    setPinningSaving(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${message._id}/pin`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ 
+          pinned, 
+          pinDuration: duration, 
+          customHours: duration === 'custom' ? customHrs : undefined 
+        }),
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        
+        // Update the local state
+        setLocalComments(prev => prev.map(c => 
+          c._id === message._id 
+            ? { 
+                ...c, 
+                pinned: data.pinned,
+                pinnedBy: data.pinned ? currentUser._id : null,
+                pinnedAt: data.pinned ? new Date() : null,
+                pinExpiresAt: data.pinned ? new Date(data.pinExpiresAt) : null,
+                pinDuration: data.pinned ? duration : null
+              }
+            : c
+        ));
+        
+        // Update appointment comments for parent component
+        updateAppointmentComments(appt._id, localComments.map(c => 
+          c._id === message._id 
+            ? { 
+                ...c, 
+                pinned: data.pinned,
+                pinnedBy: data.pinned ? currentUser._id : null,
+                pinnedAt: data.pinned ? new Date() : null,
+                pinExpiresAt: data.pinned ? new Date(data.pinExpiresAt) : null,
+                pinDuration: data.pinned ? duration : null
+              }
+            : c
+        ));
+        
+        // Update pinned messages list
+        if (pinned) {
+          // Add to pinned messages
+          const pinnedMsg = { 
+            ...message, 
+            pinned: true, 
+            pinnedBy: currentUser._id, 
+            pinnedAt: new Date(),
+            pinExpiresAt: new Date(data.pinExpiresAt),
+            pinDuration: duration
+          };
+          setPinnedMessages(prev => {
+            const newPinned = [...prev, pinnedMsg];
+            return newPinned;
+          });
+        } else {
+          // Remove from pinned messages
+          setPinnedMessages(prev => prev.filter(m => m._id !== message._id));
+        }
+        
+        toast.success(data.message || (pinned ? 'Message pinned successfully' : 'Message unpinned successfully'));
+        setShowPinModal(false);
+        setMessageToPin(null);
+      } else {
+        const errorData = await res.json();
+        toast.error(errorData.message || 'Failed to update pin status');
+      }
+    } catch (err) {
+      toast.error('Failed to update pin status');
+    } finally {
+      setPinningSaving(false);
+    }
   };
 
   // Check if comment is from current admin user
@@ -3149,6 +3246,26 @@ function AdminAppointmentRow({
                               Starred Messages
                             </button>
                             
+                            {/* Pinned Messages option */}
+                            <button
+                              className="w-full px-4 py-2 text-left text-sm text-purple-600 hover:bg-purple-50 flex items-center gap-2"
+                              onClick={() => {
+                                // Show pinned messages in a simple alert for now, or implement a pinned messages modal
+                                if (pinnedMessages.length > 0) {
+                                  const pinnedList = pinnedMessages.map((msg, index) => 
+                                    `${index + 1}. ${msg.message?.substring(0, 50)}${msg.message?.length > 50 ? '...' : ''}`
+                                  ).join('\n');
+                                  alert(`Pinned Messages (${pinnedMessages.length}):\n\n${pinnedList}`);
+                                } else {
+                                  toast.info('No pinned messages found');
+                                }
+                                setShowChatOptionsMenu(false);
+                              }}
+                            >
+                              <FaThumbtack className="text-sm" />
+                              Pinned Messages ({pinnedMessages.length})
+                            </button>
+                            
                             {/* Select Messages option */}
                             <button
                               className="w-full px-4 py-2 text-left text-sm text-blue-600 hover:bg-blue-50 flex items-center gap-2"
@@ -3364,6 +3481,74 @@ function AdminAppointmentRow({
                     Chats are encrypted and secure. View only for valid purposes like disputes or fraud checks. Unauthorized access or sharing is prohibited and will be logged.
                   </p>
                 </div>
+                
+                {/* Pinned Messages Section */}
+                {pinnedMessages.length > 0 && (
+                  <div className="bg-gradient-to-r from-purple-50 to-blue-50 border-b border-purple-200 px-4 py-3 flex-shrink-0 mb-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <FaThumbtack className="text-purple-600 text-sm" />
+                      <span className="text-purple-700 font-semibold text-sm">Pinned Messages</span>
+                      <span className="text-purple-600 text-xs">({pinnedMessages.length})</span>
+                    </div>
+                    <div className="space-y-2 max-h-24 overflow-y-auto">
+                      {pinnedMessages.map((pinnedMsg) => (
+                        <div
+                          key={pinnedMsg._id}
+                          className={`bg-white rounded-lg p-2 border-l-4 border-purple-500 cursor-pointer transition-all duration-200 hover:shadow-md ${
+                            highlightedPinnedMessage === pinnedMsg._id ? 'ring-2 ring-purple-400 shadow-lg' : ''
+                          }`}
+                          onClick={() => {
+                            // Highlight the pinned message and scroll to it
+                            setHighlightedPinnedMessage(pinnedMsg._id);
+                            const messageElement = messageRefs.current[pinnedMsg._id];
+                            if (messageElement) {
+                              messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                              // Remove highlight after 3 seconds
+                              setTimeout(() => setHighlightedPinnedMessage(null), 3000);
+                            }
+                          }}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-xs text-purple-600 font-medium">
+                                  {pinnedMsg.senderEmail === currentUser.email ? 'You' : (
+                                    pinnedMsg.senderEmail === appt.buyerId?.email ? (appt.buyerId?.username || 'Buyer') :
+                                    pinnedMsg.senderEmail === appt.sellerId?.email ? (appt.sellerId?.username || 'Seller') :
+                                    'Admin'
+                                  )}
+                                </span>
+                                <span className="text-xs text-gray-500">
+                                  {pinnedMsg.pinDuration === 'custom' 
+                                    ? `${Math.round((new Date(pinnedMsg.pinExpiresAt) - new Date()) / (1000 * 60 * 60))}h left`
+                                    : pinnedMsg.pinDuration === '24hrs' 
+                                      ? '24h left'
+                                      : pinnedMsg.pinDuration === '7days' 
+                                        ? '7d left'
+                                        : '30d left'
+                                  }
+                                </span>
+                              </div>
+                              <div className="text-sm text-gray-800 line-clamp-2">
+                                {pinnedMsg.message}
+                              </div>
+                            </div>
+                            <button
+                              className="text-purple-600 hover:text-purple-800 p-1 rounded-full hover:bg-purple-100 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handlePinMessage(pinnedMsg, false);
+                              }}
+                              title="Unpin message"
+                            >
+                              <FaThumbtack size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 
                 {/* Floating Date Indicator */}
                 {currentFloatingDate && localComments.length > 0 && (
