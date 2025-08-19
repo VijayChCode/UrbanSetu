@@ -1014,8 +1014,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   
   // New modal states for various confirmations
   const [showDeleteAppointmentModal, setShowDeleteAppointmentModal] = useState(false);
-  const [showArchiveModal, setShowArchiveModal] = useState(false);
-  const [showUnarchiveModal, setShowUnarchiveModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showAdminCancelModal, setShowAdminCancelModal] = useState(false);
   const [showPermanentDeleteModal, setShowPermanentDeleteModal] = useState(false);
@@ -3243,16 +3241,14 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                         <FaUserShield />
                       </button>
                     )}
-                    {/* Archive button: show for non-admin users on their own appointments */}
-                    {!isAdmin && (
-                      <button
-                        className="text-gray-600 hover:text-gray-800 text-xl"
-                        onClick={() => handleArchiveAppointment(appt._id)}
-                        title="Archive Appointment"
-                      >
-                        <FaArchive size={16} />
-                      </button>
-                    )}
+                    {/* Archive button: show for all users on their own appointments */}
+                    <button
+                      className="text-gray-600 hover:text-gray-800 text-xl"
+                      onClick={() => handleArchiveAppointment(appt._id)}
+                      title="Archive Appointment"
+                    >
+                      <FaArchive size={16} />
+                    </button>
                     {/* Reinitiate button: only show to the cancelling party */}
                     {((appt.status === 'cancelledByBuyer' && isBuyer) || (appt.status === 'cancelledBySeller' && isSeller)) && (
                       <div className="flex flex-col items-center">
