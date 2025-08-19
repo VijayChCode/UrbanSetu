@@ -57,21 +57,17 @@ export default function MyAppointments() {
       }
     };
     const fetchArchivedAppointments = async () => {
-      // Only fetch archived appointments for admin users
-      if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) {
-        try {
-          const res = await fetch(`${API_BASE_URL}/api/bookings/archived`, {
-            credentials: 'include'
-          });
-          if (!res.ok) throw new Error('Not allowed');
-          const data = await res.json();
-          setArchivedAppointments(Array.isArray(data) ? data : []);
-        } catch (err) {
-          setArchivedAppointments([]);
-          toast.error("Failed to fetch archived appointments");
-        }
-      } else {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/bookings/my-archived`, {
+          credentials: 'include'
+        });
+        if (!res.ok) throw new Error('Not allowed');
+        const data = await res.json();
+        setArchivedAppointments(Array.isArray(data) ? data : []);
+      } catch (err) {
         setArchivedAppointments([]);
+        console.error("Failed to fetch archived appointments:", err);
+      }
       }
     };
     fetchAppointments();
@@ -493,13 +489,11 @@ export default function MyAppointments() {
       } else {
         throw new Error('Failed to fetch appointments');
       }
-      // Only fetch archived appointments for admin users
-      if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) {
-        const resArchived = await fetch(`${API_BASE_URL}/api/bookings/archived`, { credentials: 'include' });
-        if (resArchived.ok) {
-          const dataArchived = await resArchived.json();
-          setArchivedAppointments(Array.isArray(dataArchived) ? dataArchived : []);
-        }
+      // Fetch archived appointments for all users
+      const resArchived = await fetch(`${API_BASE_URL}/api/bookings/my-archived`, { credentials: 'include' });
+      if (resArchived.ok) {
+        const dataArchived = await resArchived.json();
+        setArchivedAppointments(Array.isArray(dataArchived) ? dataArchived : []);
       } else {
         setArchivedAppointments([]);
       }
@@ -606,8 +600,8 @@ export default function MyAppointments() {
           >
             Refresh
           </button>
-          {/* Only show archived toggle for admin/rootadmin */}
-          {currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin') && (
+          {/* Show archived toggle for all users */}
+          
             <button
               onClick={() => setShowArchived(!showArchived)}
               className={`bg-gradient-to-r text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2 ${
@@ -626,7 +620,6 @@ export default function MyAppointments() {
                 </>
               )}
             </button>
-          )}
         </div>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div className="flex items-center gap-2">
@@ -3214,6 +3207,26 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 title="Cancel Appointment (Admin)"
               >
                 <FaUserShield />
+              </button>
+            )}
+            {/* Archive button for active appointments */}
+            {!isArchived && isUpcoming && (
+              <button
+                className="text-purple-500 hover:text-purple-700 text-xl"
+                onClick={() => handleArchiveAppointment(appt._id)}
+                title="Archive Appointment"
+              >
+                <FaArchive />
+              </button>
+            )}
+            {/* Unarchive button for archived appointments */}
+            {isArchived && (
+              <button
+                className="text-green-500 hover:text-green-700 text-xl"
+                onClick={() => handleUnarchiveAppointment(appt._id)}
+                title="Unarchive Appointment"
+              >
+                <FaUndo />
               </button>
             )}
             {/* Reinitiate button: only show to the cancelling party */}
