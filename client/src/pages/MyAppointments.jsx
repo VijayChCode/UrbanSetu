@@ -2538,7 +2538,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
           
           // Update unreadNewMessages to reflect the actual unread count
           setUnreadNewMessages(prev => Math.max(0, prev - unreadMessages.length));
-        }
       } catch (error) {
         console.error('Error marking messages as read:', error);
       } finally {
