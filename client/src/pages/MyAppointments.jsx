@@ -2083,8 +2083,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   ...msg, 
                   _id: newComment._id,
                   status: newComment.status,
-                  readBy: newComment.readBy || msg.readBy,
-                  timestamp: newComment.timestamp || msg.timestamp
+                  readBy: newComment.readBy || msg.readBy
                 }
               : msg
           ));
