@@ -1660,10 +1660,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         withCredentials: true
       });
       if (data.comments && data.comments.length !== comments.length) {
-          // Merge server comments with local temp messages to prevent re-entry
-          setComments(data.comments);
-          setUnreadNewMessages(0); // Reset unread count after refresh
-        }
+        // Merge server comments with local temp messages to prevent re-entry
+        setComments(data.comments);
+        setUnreadNewMessages(0); // Reset unread count after refresh
       }
     } catch (err) {
       console.error('Error fetching latest comments:', err);
@@ -1679,16 +1678,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     
     setLoadingPinnedMessages(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/pinned-messages`, {
-        credentials: 'include'
+      const { data } = await axios.get(`${API_BASE_URL}/api/bookings/${appt._id}/pinned-messages`, {
+        withCredentials: true
       });
-      if (res.ok) {
-        const data = await res.json();
-
-        setPinnedMessages(data.pinnedMessages || []);
-      } else {
-        toast.error('Failed to fetch pinned messages');
-      }
+      setPinnedMessages(data.pinnedMessages || []);
     } catch (err) {
       toast.error('Failed to fetch pinned messages');
     } finally {
@@ -1701,19 +1694,17 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     
     setPinningSaving(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${message._id}/pin`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ 
+      const { data } = await axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${message._id}/pin`, 
+        { 
           pinned, 
           pinDuration: duration, 
           customHours: duration === 'custom' ? customHrs : undefined 
-        }),
-      });
-      
-      if (res.ok) {
-        const data = await res.json();
+        },
+        { 
+          withCredentials: true,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
         
         // Update the local state
         setComments(prev => prev.map(c => 
