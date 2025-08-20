@@ -1490,9 +1490,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         const { data } = await axios.get(`${API_BASE_URL}/api/bookings/${appt._id}/chat/lock-status`, {
           withCredentials: true
         });
-          setChatLocked(data.chatLocked);
-          setChatAccessGranted(data.accessGranted);
-        }
+        setChatLocked(data.chatLocked);
+        setChatAccessGranted(data.accessGranted);
       } catch (err) {
         console.error('Error fetching chat lock status:', err);
       } finally {
@@ -1546,11 +1545,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     if (showStarredModal) {
       setLoadingStarredMessages(true);
       // Fetch starred messages from backend
-      fetch(`${API_BASE_URL}/api/bookings/${appt._id}/starred-messages`, {
-        credentials: 'include'
+      axios.get(`${API_BASE_URL}/api/bookings/${appt._id}/starred-messages`, {
+        withCredentials: true
       })
-        .then(res => res.json())
-        .then(data => {
+        .then(({ data }) => {
           if (data.starredMessages) {
             setStarredMessages(data.starredMessages);
           }
