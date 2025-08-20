@@ -9,6 +9,7 @@ import { Link } from "react-router-dom";
 import { toast, ToastContainer } from 'react-toastify';
 import { socket } from "../utils/socket";
 import { useSoundEffects } from "../components/SoundEffects";
+import axios from 'axios';
 // Note: Do not import server-only libs here
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -112,9 +113,9 @@ export default function AdminAppointments() {
   // Define fetch functions outside useEffect so they can be used in socket handlers
   const fetchAppointments = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings`, { credentials: 'include' });
-      const data = await res.json();
-
+      const { data } = await axios.get(`${API_BASE_URL}/api/bookings`, { 
+        withCredentials: true 
+      });
       setAppointments(data);
       setLoading(false);
     } catch (err) {
@@ -125,10 +126,9 @@ export default function AdminAppointments() {
 
   const fetchArchivedAppointments = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings/archived`, {
-        credentials: 'include'
+      const { data } = await axios.get(`${API_BASE_URL}/api/bookings/archived`, {
+        withCredentials: true
       });
-      const data = await res.json();
       setArchivedAppointments(data);
     } catch (err) {
       console.error("Failed to fetch archived appointments", err);
@@ -445,23 +445,18 @@ export default function AdminAppointments() {
     }
     
     try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${appointmentToHandle}/cancel`, { 
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: 'include',
-        body: JSON.stringify({ reason: cancelReason }),
-      });
+      const { data } = await axios.patch(`${API_BASE_URL}/api/bookings/${appointmentToHandle}/cancel`, 
+        { reason: cancelReason },
+        { 
+          withCredentials: true,
+          headers: { "Content-Type": "application/json" }
+        }
+      );
       
-      const data = await res.json();
-      
-      if (res.ok) {
-        setAppointments((prev) =>
-          prev.map((appt) => (appt._id === appointmentToHandle ? { ...appt, status: "cancelledByAdmin", cancelReason: cancelReason } : appt))
-        );
-        toast.success("Appointment cancelled successfully. Both buyer and seller have been notified of the cancellation.");
-      } else {
-        toast.error(data.message || "Failed to cancel appointment.");
-      }
+      setAppointments((prev) =>
+        prev.map((appt) => (appt._id === appointmentToHandle ? { ...appt, status: "cancelledByAdmin", cancelReason: cancelReason } : appt))
+      );
+      toast.success("Appointment cancelled successfully. Both buyer and seller have been notified of the cancellation.");
       
       // Close modal and reset state
       setShowCancelModal(false);
@@ -469,7 +464,7 @@ export default function AdminAppointments() {
       setCancelReason('');
     } catch (err) {
       console.error('Error in confirmAdminCancel:', err);
-      toast.error("An error occurred. Please try again.");
+      toast.error(err.response?.data?.message || "Failed to cancel appointment.");
     }
   };
 
@@ -480,29 +475,25 @@ export default function AdminAppointments() {
 
   const confirmReinitiate = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${appointmentToHandle}/reinitiate`, { 
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: 'include',
-      });
+      const { data } = await axios.patch(`${API_BASE_URL}/api/bookings/${appointmentToHandle}/reinitiate`, 
+        {},
+        { 
+          withCredentials: true,
+          headers: { "Content-Type": "application/json" }
+        }
+      );
       
-      const data = await res.json();
-      
-      if (res.ok) {
-        setAppointments((prev) =>
-          prev.map((appt) => (appt._id === appointmentToHandle ? { ...appt, status: "pending", cancelReason: "" } : appt))
-        );
-        toast.success("Appointment reinitiated successfully. Both buyer and seller have been notified.");
-      } else {
-        toast.error(data.message || "Failed to reinitiate appointment.");
-      }
+      setAppointments((prev) =>
+        prev.map((appt) => (appt._id === appointmentToHandle ? { ...appt, status: "pending", cancelReason: "" } : appt))
+      );
+      toast.success("Appointment reinitiated successfully. Both buyer and seller have been notified.");
       
       // Close modal and reset state
       setShowReinitiateModal(false);
       setAppointmentToHandle(null);
     } catch (err) {
       console.error('Error in confirmReinitiate:', err);
-      toast.error("An error occurred. Please try again.");
+      toast.error(err.response?.data?.message || "Failed to reinitiate appointment.");
     }
   };
 
@@ -513,32 +504,28 @@ export default function AdminAppointments() {
 
   const confirmArchive = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${appointmentToHandle}/archive`, { 
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: 'include',
-      });
-      
-      const data = await res.json();
-      
-      if (res.ok) {
-        // Remove from active appointments and add to archived
-        const archivedAppt = appointments.find(appt => appt._id === appointmentToHandle);
-        if (archivedAppt) {
-          setAppointments((prev) => prev.filter((appt) => appt._id !== appointmentToHandle));
-          setArchivedAppointments((prev) => [{ ...archivedAppt, archivedByAdmin: true, archivedAt: new Date() }, ...prev]);
+      const { data } = await axios.patch(`${API_BASE_URL}/api/bookings/${appointmentToHandle}/archive`, 
+        {},
+        { 
+          withCredentials: true,
+          headers: { "Content-Type": "application/json" }
         }
-        toast.success("Appointment archived successfully.");
-      } else {
-        toast.error(data.message || "Failed to archive appointment.");
+      );
+      
+      // Remove from active appointments and add to archived
+      const archivedAppt = appointments.find(appt => appt._id === appointmentToHandle);
+      if (archivedAppt) {
+        setAppointments((prev) => prev.filter((appt) => appt._id !== appointmentToHandle));
+        setArchivedAppointments((prev) => [{ ...archivedAppt, archivedByAdmin: true, archivedAt: new Date() }, ...prev]);
       }
+      toast.success("Appointment archived successfully.");
       
       // Close modal and reset state
       setShowArchiveModal(false);
       setAppointmentToHandle(null);
     } catch (err) {
       console.error('Error in confirmArchive:', err);
-      toast.error("An error occurred. Please try again.");
+      toast.error(err.response?.data?.message || "Failed to archive appointment.");
     }
   };
 
@@ -549,32 +536,28 @@ export default function AdminAppointments() {
 
   const confirmUnarchive = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${appointmentToHandle}/unarchive`, { 
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: 'include',
-      });
-      
-      const data = await res.json();
-      
-      if (res.ok) {
-        // Remove from archived appointments and add back to active
-        const unarchivedAppt = archivedAppointments.find(appt => appt._id === appointmentToHandle);
-        if (unarchivedAppt) {
-          setArchivedAppointments((prev) => prev.filter((appt) => appt._id !== appointmentToHandle));
-          setAppointments((prev) => [{ ...unarchivedAppt, archivedByAdmin: false, archivedAt: undefined }, ...prev]);
+      const { data } = await axios.patch(`${API_BASE_URL}/api/bookings/${appointmentToHandle}/unarchive`, 
+        {},
+        { 
+          withCredentials: true,
+          headers: { "Content-Type": "application/json" }
         }
-        toast.success("Appointment unarchived successfully.");
-      } else {
-        toast.error(data.message || "Failed to unarchive appointment.");
+      );
+      
+      // Remove from archived appointments and add back to active
+      const unarchivedAppt = archivedAppointments.find(appt => appt._id === appointmentToHandle);
+      if (unarchivedAppt) {
+        setArchivedAppointments((prev) => prev.filter((appt) => appt._id !== appointmentToHandle));
+        setAppointments((prev) => [{ ...unarchivedAppt, archivedByAdmin: false, archivedAt: undefined }, ...prev]);
       }
+      toast.success("Appointment unarchived successfully.");
       
       // Close modal and reset state
       setShowUnarchiveModal(false);
       setAppointmentToHandle(null);
     } catch (err) {
       console.error('Error in confirmUnarchive:', err);
-      toast.error("An error occurred. Please try again.");
+      toast.error(err.response?.data?.message || "Failed to unarchive appointment.");
     }
   };
 
@@ -587,16 +570,10 @@ export default function AdminAppointments() {
     setUserLoading(true);
     setShowUserModal(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/user/id/${userId}`);
-      const data = await res.json();
-      if (res.ok) {
-        setSelectedUser(data);
-      } else {
-        toast.error("Failed to fetch user details.");
-        setShowUserModal(false);
-      }
+      const { data } = await axios.get(`${API_BASE_URL}/api/user/id/${userId}`);
+      setSelectedUser(data);
     } catch (err) {
-      toast.error("An error occurred while fetching user details.");
+      toast.error("Failed to fetch user details.");
       setShowUserModal(false);
     }
     setUserLoading(false);
@@ -663,16 +640,15 @@ export default function AdminAppointments() {
   const handleManualRefresh = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings`, { credentials: 'include' });
-      if (res.ok) {
-        const data = await res.json();
-        setAppointments(data);
-      }
-      const resArchived = await fetch(`${API_BASE_URL}/api/bookings/archived`, { credentials: 'include' });
-      if (resArchived.ok) {
-        const dataArchived = await resArchived.json();
-        setArchivedAppointments(Array.isArray(dataArchived) ? dataArchived : []);
-      }
+      const { data } = await axios.get(`${API_BASE_URL}/api/bookings`, { 
+        withCredentials: true 
+      });
+      setAppointments(data);
+      
+      const { data: archivedData } = await axios.get(`${API_BASE_URL}/api/bookings/archived`, { 
+        withCredentials: true 
+      });
+      setArchivedAppointments(Array.isArray(archivedData) ? archivedData : []);
     } catch (err) {
       // Optionally handle error
     } finally {
@@ -1234,9 +1210,8 @@ function AdminAppointmentRow({
     if (showChatModal) {
       setUnreadNewMessages(0);
       // Mark messages as read when chat is opened
-      fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/read`, {
-        method: 'PATCH',
-        credentials: 'include'
+      axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/read`, {}, {
+        withCredentials: true
       });
       
       // Sync starred messages when chat opens
@@ -1280,11 +1255,10 @@ function AdminAppointmentRow({
       // First, sync comments to ensure we have the latest starred status
       fetchLatestComments().then(() => {
         // Then fetch starred messages from backend
-        fetch(`${API_BASE_URL}/api/bookings/${appt._id}/starred-messages`, {
-          credentials: 'include'
+        axios.get(`${API_BASE_URL}/api/bookings/${appt._id}/starred-messages`, {
+          withCredentials: true
         })
-          .then(res => res.json())
-          .then(data => {
+          .then(({ data }) => {
             if (data.starredMessages) {
               setStarredMessages(data.starredMessages);
             }
@@ -1407,9 +1381,8 @@ function AdminAppointmentRow({
           // Mark messages as read if chat is open
           if (showChatModal) {
             setTimeout(() => {
-              fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/read`, {
-                method: 'PATCH',
-                credentials: 'include'
+              axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/read`, {}, {
+                withCredentials: true
               });
             }, 100);
           }
@@ -1524,13 +1497,13 @@ function AdminAppointmentRow({
       markingReadRef.current = true;
       try {
         // Mark messages as read in backend
-        const response = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/read`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include'
-        });
-        
-        if (response.ok) {
+        const { data } = await axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/read`, 
+          {},
+          { 
+            withCredentials: true,
+            headers: { 'Content-Type': 'application/json' }
+          }
+        );
           // Update local state immediately
           setLocalComments(prev => 
             prev.map(c => 
@@ -1790,20 +1763,17 @@ function AdminAppointmentRow({
 
     // Send message in background
     try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: 'include',
-        body: JSON.stringify({ 
+      const { data } = await axios.post(`${API_BASE_URL}/api/bookings/${appt._id}/comment`, 
+        { 
           message: caption || `📷 ${fileName}`,
           imageUrl: imageUrl,
           type: "image"
-        }),
-      });
-      
-      const data = await res.json();
-      
-      if (res.ok) {
+        },
+        { 
+          withCredentials: true,
+          headers: { "Content-Type": "application/json" }
+        }
+      );
         // Find the new comment from the response
         const newCommentFromServer = data.comments[data.comments.length - 1];
         
@@ -1818,15 +1788,10 @@ function AdminAppointmentRow({
               }
             : msg
           ));
-      } else {
-        // Remove the temp message and show error
-        setLocalComments(prev => prev.filter(msg => msg._id !== tempId));
-        toast.error(data.message || "Failed to send image.");
-      }
     } catch (error) {
       console.error('Send image error:', error);
       setLocalComments(prev => prev.filter(msg => msg._id !== tempId));
-      toast.error("Failed to send image.");
+      toast.error(error.response?.data?.message || "Failed to send image.");
     }
   };
 
@@ -1839,30 +1804,22 @@ function AdminAppointmentRow({
       const uploadFormData = new FormData();
       uploadFormData.append('image', selectedFile);
       
-      const res = await fetch(`${API_BASE_URL}/api/upload/image`, {
-        method: 'POST',
-        credentials: 'include',
-        body: uploadFormData,
-      });
-      
-      const data = await res.json();
-      
-      if (res.ok) {
+      const { data } = await axios.post(`${API_BASE_URL}/api/upload/image`, 
+        uploadFormData,
+        { 
+          withCredentials: true,
+          headers: { 'Content-Type': 'multipart/form-data' }
+        }
+      );
         // Send the image as a message with caption
         await sendImageMessage(data.imageUrl, selectedFile.name, imageCaption);
         setSelectedFile(null);
         setImageCaption('');
         setShowImagePreviewModal(false);
-      } else {
-        setFileUploadError(data.message || 'Upload failed');
-        toast.error(data.message || 'Upload failed');
-        // Auto-hide error message after 3 seconds
-        setTimeout(() => setFileUploadError(''), 3000);
-      }
     } catch (error) {
       console.error('File upload error:', error);
-      setFileUploadError('Upload failed. Please try again.');
-      toast.error('Upload failed. Please try again.');
+      setFileUploadError(error.response?.data?.message || 'Upload failed. Please try again.');
+      toast.error(error.response?.data?.message || 'Upload failed. Please try again.');
       // Auto-hide error message after 3 seconds
       setTimeout(() => setFileUploadError(''), 3000);
     } finally {
@@ -1933,19 +1890,18 @@ function AdminAppointmentRow({
     // Send message in background without blocking UI
     (async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: 'include',
-          body: JSON.stringify({ 
+        const { data } = await axios.post(`${API_BASE_URL}/api/bookings/${appt._id}/comment`, 
+          { 
             message: messageContent, 
             ...(replyToData ? { replyTo: replyToData._id } : {}) 
-          }),
-        });
+          },
+          { 
+            withCredentials: true,
+            headers: { "Content-Type": "application/json" }
+          }
+        );
         
-        const data = await res.json();
-        
-        if (res.ok) {
+        // Find the new comment from the response
           // Find the new comment from the response
           const newCommentFromServer = data.comments[data.comments.length - 1];
           
@@ -1962,11 +1918,11 @@ function AdminAppointmentRow({
           ));
           
           // Don't show success toast as it's too verbose for chat
-        } else {
-          // Remove the temp message and show error
-          setLocalComments(prev => prev.filter(msg => msg._id !== tempId));
-          setNewComment(messageContent); // Restore message
-          toast.error(data.message || "Failed to send message.");
+      } catch (err) {
+        // Remove the temp message and show error
+        setLocalComments(prev => prev.filter(msg => msg._id !== tempId));
+        setNewComment(messageContent); // Restore message
+        toast.error(err.response?.data?.message || "Failed to send message.");
           // Refocus input on error - aggressive mobile focus
           const refocusInput = () => {
             if (inputRef.current) {
@@ -2017,15 +1973,14 @@ function AdminAppointmentRow({
     setLocalComments(optimisticUpdate);
     
     try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${commentId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: 'include',
-        body: JSON.stringify({ message: editText }),
-      });
-      const data = await res.json();
-      console.log('Edit response:', { status: res.status, data });
-      if (res.ok) {
+      const { data } = await axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${commentId}`, 
+        { message: editText },
+        { 
+          withCredentials: true,
+          headers: { "Content-Type": "application/json" }
+        }
+      );
+      console.log('Edit response:', { data });
         // Update with server response
         setLocalComments(prev => prev.map(c => {
           const serverComment = data.comments.find(sc => sc._id === c._id);
@@ -2384,12 +2339,10 @@ function AdminAppointmentRow({
   // Fetch latest comments when chat modal opens
   const fetchLatestComments = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}`, {
-        credentials: 'include'
+      const { data } = await axios.get(`${API_BASE_URL}/api/bookings/${appt._id}`, {
+        withCredentials: true
       });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.comments) {
+      if (data.comments) {
           // Preserve starred status from current state
           const updatedComments = data.comments.map(newComment => {
             const existingComment = localComments.find(c => c._id === newComment._id);
@@ -2412,25 +2365,22 @@ function AdminAppointmentRow({
     setPasswordLoading(true);
     try {
       // Call backend to verify admin password
-      const res = await fetch(`${API_BASE_URL}/api/auth/verify-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ password: adminPassword })
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
+      const { data } = await axios.post(`${API_BASE_URL}/api/auth/verify-password`, 
+        { password: adminPassword },
+        { 
+          withCredentials: true,
+          headers: { "Content-Type": "application/json" }
+        }
+      );
+      if (data.success) {
         setShowPasswordModal(false);
         setShowChatModal(true);
         // Fetch latest comments when chat opens
         setTimeout(() => {
           fetchLatestComments();
         }, 100);
-      } else {
-        toast.error("Incorrect password. Please try again.");
-      }
     } catch (err) {
-      toast.error("Failed to verify password. Please try again.");
+      toast.error(err.response?.data?.message || "Failed to verify password. Please try again.");
     }
     setPasswordLoading(false);
   };
@@ -2448,16 +2398,11 @@ function AdminAppointmentRow({
       // Admin deletion is always for everyone
       if (Array.isArray(messageToDelete)) {
         const ids = messageToDelete.map(m => m._id);
-        const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/bulk-delete`, {
-          method: 'DELETE',
+        const { data } = await axios.delete(`${API_BASE_URL}/api/bookings/${appt._id}/comments/bulk-delete`, {
+          withCredentials: true,
           headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ commentIds: ids })
+          data: { commentIds: ids }
         });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          toast.error(data.message || 'Failed to delete selected messages.');
-        } else {
           if (data?.comments) {
             setLocalComments(data.comments);
           }
@@ -2466,23 +2411,17 @@ function AdminAppointmentRow({
       } else {
         const wasUnread = !messageToDelete.readBy?.includes(currentUser._id) && 
                          messageToDelete.senderEmail !== currentUser.email;
-        const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${messageToDelete._id}`, {
-          method: 'DELETE',
-          credentials: 'include'
+        const { data } = await axios.delete(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${messageToDelete._id}`, {
+          withCredentials: true
         });
-        const data = await res.json();
-        if (res.ok) {
           setLocalComments(data.comments);
           if (wasUnread) {
             setUnreadNewMessages(prev => Math.max(0, prev - 1));
           }
           toast.success("Message deleted successfully!");
-        } else {
-          toast.error(data.message || 'Failed to delete message.');
-        }
       }
     } catch (err) {
-      toast.error('An error occurred. Please try again.');
+      toast.error(err.response?.data?.message || 'Failed to delete message.');
     }
     
     setShowDeleteModal(false);
@@ -2728,13 +2667,13 @@ function AdminAppointmentRow({
                                         const isStarred = selectedMsg.starredBy?.includes(currentUser._id);
                                         setMultiSelectActions(prev => ({ ...prev, starring: true }));
                                         try {
-                                          const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${selectedMsg._id}/star`, {
-                                            method: 'PATCH',
-                                            headers: { 'Content-Type': 'application/json' },
-                                            credentials: 'include',
-                                            body: JSON.stringify({ starred: !isStarred }),
-                                          });
-                                          if (res.ok) {
+                                          const { data } = await axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${selectedMsg._id}/star`, 
+                                            { starred: !isStarred },
+                                            { 
+                                              withCredentials: true,
+                                              headers: { 'Content-Type': 'application/json' }
+                                            }
+                                          );
                                             updateAppointmentComments(appt._id, localComments.map(c => 
                                               c._id === selectedMsg._id 
                                                 ? { 
@@ -2798,12 +2737,13 @@ function AdminAppointmentRow({
                               try {
                                 const promises = selectedMessages.map(msg => {
                                   const isStarred = msg.starredBy?.includes(currentUser._id);
-                                  return fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${msg._id}/star`, {
-                                    method: 'PATCH',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    credentials: 'include',
-                                    body: JSON.stringify({ starred: !isStarred }),
-                                  });
+                                  return axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${msg._id}/star`, 
+                                    { starred: !isStarred },
+                                    { 
+                                      withCredentials: true,
+                                      headers: { 'Content-Type': 'application/json' }
+                                    }
+                                  );
                                 });
                                 await Promise.all(promises);
                                 
@@ -2950,13 +2890,13 @@ function AdminAppointmentRow({
                             const isStarred = selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id);
                             setStarringSaving(true);
                             try {
-                              const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${selectedMessageForHeaderOptions._id}/star`, {
-                                method: 'PATCH',
-                                headers: { 'Content-Type': 'application/json' },
-                                credentials: 'include',
-                                body: JSON.stringify({ starred: !isStarred }),
-                              });
-                              if (res.ok) {
+                              const { data } = await axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${selectedMessageForHeaderOptions._id}/star`, 
+                                { starred: !isStarred },
+                                { 
+                                  withCredentials: true,
+                                  headers: { 'Content-Type': 'application/json' }
+                                }
+                              );
                                 // Update the local state
                                 updateAppointmentComments(appt._id, localComments.map(c => 
                                   c._id === selectedMessageForHeaderOptions._id 
@@ -2979,9 +2919,6 @@ function AdminAppointmentRow({
                                 }
                                 
                                 toast.success(isStarred ? 'Message unstarred' : 'Message starred');
-                              } else {
-                                toast.error('Failed to update star status');
-                              }
                             } catch (err) {
                               toast.error('Failed to update star status');
                             } finally {
@@ -4092,23 +4029,17 @@ function AdminAppointmentRow({
                            (async () => {
                              try {
                                setDeleteChatLoading(true);
-                               const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments`, {
-                                 method: 'DELETE',
+                               const { data } = await axios.delete(`${API_BASE_URL}/api/bookings/${appt._id}/comments`, {
+                                 withCredentials: true,
                                  headers: { 'Content-Type': 'application/json' },
-                                 credentials: 'include',
-                                 body: JSON.stringify({ password: deleteChatPassword })
+                                 data: { password: deleteChatPassword }
                                });
-                               const data = await res.json();
-                               if (res.ok) {
                                  setLocalComments([]);
                                  toast.success('Chat deleted successfully.');
                                  setShowDeleteChatModal(false);
                                  setDeleteChatPassword('');
-                               } else {
-                                 toast.error(data.message || 'Failed to delete chat');
-                               }
                              } catch (e) {
-                               toast.error('An error occurred. Please try again.');
+                               toast.error(e.response?.data?.message || 'Failed to delete chat');
                              } finally {
                                setDeleteChatLoading(false);
                              }
@@ -4131,24 +4062,18 @@ function AdminAppointmentRow({
                          onClick={async () => {
                            try {
                              setDeleteChatLoading(true);
-                             const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments`, {
-                               method: 'DELETE',
+                             const { data } = await axios.delete(`${API_BASE_URL}/api/bookings/${appt._id}/comments`, {
+                               withCredentials: true,
                                headers: { 'Content-Type': 'application/json' },
-                               credentials: 'include',
-                               body: JSON.stringify({ password: deleteChatPassword })
+                               data: { password: deleteChatPassword }
                              });
-                             const data = await res.json();
-                             if (res.ok) {
-                               setLocalComments([]);
-                               toast.success('Chat deleted successfully.');
-                               setShowDeleteChatModal(false);
-                               setDeleteChatPassword('');
-                             } else {
-                               toast.error(data.message || 'Failed to delete chat');
-                             }
-                           } catch (e) {
-                             toast.error('An error occurred. Please try again.');
-                           } finally {
+                                                                setLocalComments([]);
+                                 toast.success('Chat deleted successfully.');
+                                 setShowDeleteChatModal(false);
+                                 setDeleteChatPassword('');
+                             } catch (e) {
+                               toast.error(e.response?.data?.message || 'Failed to delete chat');
+                             } finally {
                              setDeleteChatLoading(false);
                            }
                          }}
@@ -4455,13 +4380,13 @@ function AdminAppointmentRow({
                                 onClick={async () => {
                                   setUnstarringMessageId(message._id);
                                   try {
-                                    const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${message._id}/star`, {
-                                      method: 'PATCH',
-                                      headers: { 'Content-Type': 'application/json' },
-                                      credentials: 'include',
-                                      body: JSON.stringify({ starred: false }),
-                                    });
-                                    if (res.ok) {
+                                    const { data } = await axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${message._id}/star`, 
+                                      { starred: false },
+                                      { 
+                                        withCredentials: true,
+                                        headers: { 'Content-Type': 'application/json' }
+                                      }
+                                    );
                                       // Remove from starred messages list
                                       setStarredMessages(prev => prev.filter(m => m._id !== message._id));
                                       // Update the main comments state
@@ -4471,9 +4396,6 @@ function AdminAppointmentRow({
                                           : c
                                       ));
                                       toast.success('Message unstarred');
-                                    } else {
-                                      toast.error('Failed to unstar message');
-                                    }
                                   } catch (err) {
                                     toast.error('Failed to unstar message');
                                   } finally {

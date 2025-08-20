@@ -9,6 +9,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import Appointment from "../components/Appointment";
 import { toast, ToastContainer } from 'react-toastify';
 import { socket } from "../utils/socket";
+import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -60,15 +61,10 @@ export default function MyAppointments() {
       try {
         setLoading(true);
         setError(null);
-        const res = await fetch(`${API_BASE_URL}/api/bookings/my`, {
-          credentials: 'include'
+        const { data } = await axios.get(`${API_BASE_URL}/api/bookings/my`, {
+          withCredentials: true
         });
-        if (res.ok) {
-          const data = await res.json();
-          setAppointments(data);
-        } else {
-          throw new Error("Failed to fetch appointments");
-        }
+        setAppointments(data);
       } catch (err) {
         setError("Failed to load appointments. Please try again.");
       } finally {
@@ -79,11 +75,9 @@ export default function MyAppointments() {
       // Fetch archived appointments for all users
       if (currentUser) {
         try {
-          const res = await fetch(`${API_BASE_URL}/api/bookings/archived`, {
-            credentials: 'include'
+          const { data } = await axios.get(`${API_BASE_URL}/api/bookings/archived`, {
+            withCredentials: true
           });
-          if (!res.ok) throw new Error('Failed to fetch archived appointments');
-          const data = await res.json();
           setArchivedAppointments(Array.isArray(data) ? data : []);
         } catch (err) {
           setArchivedAppointments([]);
@@ -242,35 +236,31 @@ export default function MyAppointments() {
   const handleStatusUpdate = async (id, status) => {
     setActionLoading(id + status);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${id}/status`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: 'include',
-        body: JSON.stringify({ status }),
+      const { data } = await axios.patch(`${API_BASE_URL}/api/bookings/${id}/status`, 
+        { status },
+        { 
+          withCredentials: true,
+          headers: { "Content-Type": "application/json" }
+        }
+      );
+      setAppointments((prev) =>
+        prev.map((appt) => (appt._id === id ? { ...appt, status } : appt))
+      );
+      const statusText = status === "accepted" ? "accepted" : "rejected";
+      toast.success(`Appointment ${statusText} successfully! ${status === "accepted" ? "Contact information is now visible to both parties." : ""}`, {
+        autoClose: 3000,
+        closeOnClick: true,
+        pauseOnHover: false,
+        draggable: false
       });
-      const data = await res.json();
-      if (res.status === 401) {
+      navigate("/user/my-appointments");
+    } catch (err) {
+      if (err.response?.status === 401) {
         toast.error("Session expired or unauthorized. Please sign in again.");
         navigate("/sign-in");
         return;
       }
-      if (res.ok) {
-        setAppointments((prev) =>
-          prev.map((appt) => (appt._id === id ? { ...appt, status } : appt))
-        );
-        const statusText = status === "accepted" ? "accepted" : "rejected";
-        toast.success(`Appointment ${statusText} successfully! ${status === "accepted" ? "Contact information is now visible to both parties." : ""}`, {
-          autoClose: 3000,
-          closeOnClick: true,
-          pauseOnHover: false,
-          draggable: false
-        });
-        navigate("/user/my-appointments");
-      } else {
-        toast.error(data.message || "Failed to update appointment status.");
-      }
-    } catch (err) {
-      toast.error("An error occurred. Please try again.");
+      toast.error(err.response?.data?.message || "Failed to update appointment status.");
     }
     setActionLoading("");
   };
@@ -288,37 +278,31 @@ export default function MyAppointments() {
     }
     
     try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${appointmentToHandle}`, { 
-        method: "DELETE",
+      const { data } = await axios.delete(`${API_BASE_URL}/api/bookings/${appointmentToHandle}`, { 
+        withCredentials: true,
         headers: { "Content-Type": "application/json" },
-        credentials: 'include',
-        body: JSON.stringify({ reason: deleteReason }),
+        data: { reason: deleteReason }
       });
-      const data = await res.json();
-      if (res.status === 401) {
-        toast.error("Session expired or unauthorized. Please sign in again.");
-        navigate("/sign-in");
-        return;
-      }
-      if (res.ok) {
-        setAppointments((prev) =>
-          prev.map((appt) => (appt._id === appointmentToHandle ? { ...appt, status: "deletedByAdmin", adminComment: deleteReason } : appt))
-        );
-        toast.success("Appointment deleted successfully. Both buyer and seller have been notified.", {
-          autoClose: 5000,
-          closeOnClick: true,
-          pauseOnHover: false,
-          draggable: false
-        });
-        navigate("/user/my-appointments");
-      } else {
-        toast.error(data.message || "Failed to delete appointment.");
-      }
+      setAppointments((prev) =>
+        prev.map((appt) => (appt._id === appointmentToHandle ? { ...appt, status: "deletedByAdmin", adminComment: deleteReason } : appt))
+      );
+      toast.success("Appointment deleted successfully. Both buyer and seller have been notified.", {
+        autoClose: 5000,
+        closeOnClick: true,
+        pauseOnHover: false,
+        draggable: false
+      });
+      navigate("/user/my-appointments");
       setShowDeleteAppointmentModal(false);
       setAppointmentToHandle(null);
       setDeleteReason('');
     } catch (err) {
-      toast.error("An error occurred. Please try again.");
+      if (err.response?.status === 401) {
+        toast.error("Session expired or unauthorized. Please sign in again.");
+        navigate("/sign-in");
+        return;
+      }
+      toast.error(err.response?.data?.message || "Failed to delete appointment.");
     }
   };
 
@@ -329,31 +313,28 @@ export default function MyAppointments() {
 
   const confirmArchive = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${appointmentToHandle}/archive`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: 'include',
-      });
-      const data = await res.json();
-      if (res.ok) {
-        const archivedAppt = appointments.find(appt => appt._id === appointmentToHandle);
-        if (archivedAppt) {
-          setAppointments((prev) => prev.filter((appt) => appt._id !== appointmentToHandle));
-          setArchivedAppointments((prev) => [{ ...archivedAppt, archivedAt: new Date() }, ...prev]);
+      const { data } = await axios.patch(`${API_BASE_URL}/api/bookings/${appointmentToHandle}/archive`, 
+        {},
+        { 
+          withCredentials: true,
+          headers: { "Content-Type": "application/json" }
         }
-        toast.success("Appointment archived successfully.", {
-          autoClose: 3000,
-          closeOnClick: true,
-          pauseOnHover: false,
-          draggable: false
-        });
-      } else {
-        toast.error(data.message || "Failed to archive appointment.");
+      );
+      const archivedAppt = appointments.find(appt => appt._id === appointmentToHandle);
+      if (archivedAppt) {
+        setAppointments((prev) => prev.filter((appt) => appt._id !== appointmentToHandle));
+        setArchivedAppointments((prev) => [{ ...archivedAppt, archivedAt: new Date() }, ...prev]);
       }
+      toast.success("Appointment archived successfully.", {
+        autoClose: 3000,
+        closeOnClick: true,
+        pauseOnHover: false,
+        draggable: false
+      });
       setShowArchiveModal(false);
       setAppointmentToHandle(null);
     } catch (err) {
-      toast.error("An error occurred. Please try again.");
+      toast.error(err.response?.data?.message || "Failed to archive appointment.");
     }
   };
 
@@ -364,31 +345,28 @@ export default function MyAppointments() {
 
   const confirmUnarchive = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${appointmentToHandle}/unarchive`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: 'include',
-      });
-      const data = await res.json();
-      if (res.ok) {
-        const unarchivedAppt = archivedAppointments.find(appt => appt._id === appointmentToHandle);
-        if (unarchivedAppt) {
-          setArchivedAppointments((prev) => prev.filter((appt) => appt._id !== appointmentToHandle));
-          setAppointments((prev) => [{ ...unarchivedAppt, archivedAt: undefined }, ...prev]);
+      const { data } = await axios.patch(`${API_BASE_URL}/api/bookings/${appointmentToHandle}/unarchive`, 
+        {},
+        { 
+          withCredentials: true,
+          headers: { "Content-Type": "application/json" }
         }
-        toast.success("Appointment unarchived successfully.", {
-          autoClose: 3000,
-          closeOnClick: true,
-          pauseOnHover: false,
-          draggable: false
-        });
-      } else {
-        toast.error(data.message || "Failed to unarchive appointment.");
+      );
+      const unarchivedAppt = archivedAppointments.find(appt => appt._id === appointmentToHandle);
+      if (unarchivedAppt) {
+        setArchivedAppointments((prev) => prev.filter((appt) => appt._id !== appointmentToHandle));
+        setAppointments((prev) => [{ ...unarchivedAppt, archivedAt: undefined }, ...prev]);
       }
+      toast.success("Appointment unarchived successfully.", {
+        autoClose: 3000,
+        closeOnClick: true,
+        pauseOnHover: false,
+        draggable: false
+      });
       setShowUnarchiveModal(false);
       setAppointmentToHandle(null);
     } catch (err) {
-      toast.error("An error occurred. Please try again.");
+      toast.error(err.response?.data?.message || "Failed to unarchive appointment.");
     }
   };
 
@@ -471,29 +449,25 @@ export default function MyAppointments() {
       status: 'pending',
     };
     try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings/reinitiate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(payload),
+      const { data } = await axios.post(`${API_BASE_URL}/api/bookings/reinitiate`, 
+        payload,
+        { 
+          withCredentials: true,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+      toast.success('Appointment reinitiated successfully!', {
+        autoClose: 5000,
+        closeOnClick: true,
+        pauseOnHover: false,
+        draggable: false
       });
-      const data = await res.json();
-      if (res.ok) {
-        toast.success('Appointment reinitiated successfully!', {
-          autoClose: 5000,
-          closeOnClick: true,
-          pauseOnHover: false,
-          draggable: false
-        });
-        setShowReinitiateModal(false);
-        setReinitiateData(null);
-        navigate("/user/my-appointments");
-        setAppointments((prev) => prev.map(appt => appt._id === data.appointment._id ? { ...appt, ...data.appointment } : appt));
-      } else {
-        toast.error(data.message || 'Failed to reinitiate appointment.');
-      }
+      setShowReinitiateModal(false);
+      setReinitiateData(null);
+      navigate("/user/my-appointments");
+      setAppointments((prev) => prev.map(appt => appt._id === data.appointment._id ? { ...appt, ...data.appointment } : appt));
     } catch (err) {
-      toast.error('An error occurred. Please try again.');
+      toast.error(err.response?.data?.message || 'Failed to reinitiate appointment.');
     }
   }
 //next
@@ -506,20 +480,17 @@ export default function MyAppointments() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings/my`, { credentials: 'include' });
-      if (res.ok) {
-        const data = await res.json();
-        setAppointments(data);
-      } else {
-        throw new Error('Failed to fetch appointments');
-      }
+      const { data } = await axios.get(`${API_BASE_URL}/api/bookings/my`, { 
+        withCredentials: true 
+      });
+      setAppointments(data);
+      
       // Fetch archived appointments for all users
       if (currentUser) {
-        const resArchived = await fetch(`${API_BASE_URL}/api/bookings/archived`, { credentials: 'include' });
-        if (resArchived.ok) {
-          const dataArchived = await resArchived.json();
-          setArchivedAppointments(Array.isArray(dataArchived) ? dataArchived : []);
-        }
+        const { data: archivedData } = await axios.get(`${API_BASE_URL}/api/bookings/archived`, { 
+          withCredentials: true 
+        });
+        setArchivedAppointments(Array.isArray(archivedData) ? archivedData : []);
       } else {
         setArchivedAppointments([]);
       }
