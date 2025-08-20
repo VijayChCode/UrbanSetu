@@ -2651,9 +2651,6 @@ function AdminAppointmentRow({
                                                 : c
                                             ));
                                             toast.success(isStarred ? 'Message unstarred.' : 'Message starred.');
-                                          } else {
-                                            toast.error('Failed to update star status');
-                                          }
                                         } catch (err) {
                                           toast.error('Failed to update star status');
                                         } finally {
