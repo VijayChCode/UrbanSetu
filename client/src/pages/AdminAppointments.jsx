@@ -2346,6 +2346,7 @@ function AdminAppointmentRow({
         setTimeout(() => {
           fetchLatestComments();
         }, 100);
+      }
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to verify password. Please try again.");
     }
