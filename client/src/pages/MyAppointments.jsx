@@ -1750,10 +1750,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         toast.success(data.message);
         setShowPinModal(false);
         setMessageToPin(null);
-      } else {
-        const errorData = await res.json();
-        toast.error(errorData.message || 'Failed to update pin status');
-      }
     } catch (err) {
       toast.error('Failed to update pin status');
     } finally {
