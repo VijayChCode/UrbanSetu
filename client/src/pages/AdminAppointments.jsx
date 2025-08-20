@@ -2321,7 +2321,6 @@ function AdminAppointmentRow({
           
           setLocalComments(updatedComments);
         }
-      }
     } catch (err) {
       console.error('Error fetching latest comments:', err);
     }
