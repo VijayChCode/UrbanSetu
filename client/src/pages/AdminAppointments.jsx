@@ -2001,7 +2001,6 @@ function AdminAppointmentRow({
         setTimeout(refocusInput, 10); // Final fallback
         
         toast.success("Message edited successfully!");
-      }
     } catch (err) {
       console.error('Error editing comment:', err);
       // Revert optimistic update on error
