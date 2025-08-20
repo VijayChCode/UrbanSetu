@@ -1901,46 +1901,26 @@ function AdminAppointmentRow({
         );
         
         // Find the new comment from the response
-          // Find the new comment from the response
-          const newCommentFromServer = data.comments[data.comments.length - 1];
-          
-          // Update only the status and ID of the temp message, keeping it visible
-          setLocalComments(prev => prev.map(msg => 
-            msg._id === tempId 
-              ? { 
-                  ...msg, 
-                  _id: newCommentFromServer._id,
-                  status: newCommentFromServer.status,
-                  readBy: newCommentFromServer.readBy || msg.readBy
-                }
-              : msg
-          ));
-          
-          // Don't show success toast as it's too verbose for chat
+        const newCommentFromServer = data.comments[data.comments.length - 1];
+        
+        // Update only the status and ID of the temp message, keeping it visible
+        setLocalComments(prev => prev.map(msg => 
+          msg._id === tempId 
+            ? { 
+                ...msg, 
+                _id: newCommentFromServer._id,
+                status: newCommentFromServer.status,
+                readBy: newCommentFromServer.readBy || msg.readBy
+              }
+            : msg
+        ));
+        
+        // Don't show success toast as it's too verbose for chat
       } catch (err) {
         // Remove the temp message and show error
         setLocalComments(prev => prev.filter(msg => msg._id !== tempId));
         setNewComment(messageContent); // Restore message
         toast.error(err.response?.data?.message || "Failed to send message.");
-          // Refocus input on error - aggressive mobile focus
-          const refocusInput = () => {
-            if (inputRef.current) {
-              inputRef.current.focus();
-              inputRef.current.setSelectionRange(0, 0);
-              if (document.activeElement !== inputRef.current) {
-                inputRef.current.click();
-                inputRef.current.focus();
-              }
-            }
-          };
-          refocusInput();
-          requestAnimationFrame(refocusInput);
-        }
-      } catch (err) {
-        // Remove the temp message and show error
-        setLocalComments(prev => prev.filter(msg => msg._id !== tempId));
-        setNewComment(messageContent); // Restore message
-        toast.error('An error occurred. Please try again.');
         // Refocus input on error - aggressive mobile focus
         const refocusInput = () => {
           if (inputRef.current) {
