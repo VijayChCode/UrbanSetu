@@ -257,17 +257,15 @@ const GeminiChatbox = () => {
                                     >
                                         <p className="text-sm whitespace-pre-wrap leading-relaxed pr-8">{message.content}</p>
 
-                                        {/* Copy icon for Gemini replies */}
-                                        {message.role === 'assistant' && (
-                                            <button
-                                                onClick={() => copyToClipboard(message.content)}
-                                                className="absolute top-2 right-2 p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded transition-all duration-200 opacity-0 group-hover:opacity-100"
-                                                title="Copy message"
-                                                aria-label="Copy message"
-                                            >
-                                                <FaCopy size={14} />
-                                            </button>
-                                        )}
+                                        {/* Copy icon for all messages (sent and received) */}
+                                        <button
+                                            onClick={() => copyToClipboard(message.content)}
+                                            className="absolute top-2 right-2 p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded transition-all duration-200 opacity-0 group-hover:opacity-100"
+                                            title="Copy message"
+                                            aria-label="Copy message"
+                                        >
+                                            <FaCopy size={14} />
+                                        </button>
                                     </div>
                                 </div>
                             ))}
