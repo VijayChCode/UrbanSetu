@@ -1738,22 +1738,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         const data = await res.json();
         if (data.comments && data.comments.length !== comments.length) {
           // Merge server comments with local temp messages to prevent re-entry
-          setComments(prev => {
-            const serverCommentIds = new Set(data.comments.map(c => c._id));
-            const localTempMessages = prev.filter(c => c._id.startsWith('temp-'));
-            
-            // Combine server comments with local temp messages
-            const mergedComments = [...data.comments];
-            
-            // Add back any local temp messages that haven't been confirmed yet
-            localTempMessages.forEach(tempMsg => {
-              if (!serverCommentIds.has(tempMsg._id)) {
-                mergedComments.push(tempMsg);
-              }
-            });
-            
-            return mergedComments;
-          });
+          setComments(data.comments);
           setUnreadNewMessages(0); // Reset unread count after refresh
         }
       }
