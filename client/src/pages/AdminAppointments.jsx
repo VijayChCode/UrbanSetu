@@ -2001,17 +2001,6 @@ function AdminAppointmentRow({
         setTimeout(refocusInput, 10); // Final fallback
         
         toast.success("Message edited successfully!");
-      } else {
-        // Revert optimistic update on error
-        setLocalComments(prev => prev.map(c => 
-          c._id === commentId 
-            ? { ...c, message: c.originalMessage || c.message, edited: c.wasEdited || false }
-            : c
-        ));
-        setEditingComment(commentId);
-        setEditText(editText);
-        setNewComment(editText); // Restore the text in main input for retry
-        toast.error(data.message || "Failed to edit message.");
       }
     } catch (err) {
       console.error('Error editing comment:', err);
