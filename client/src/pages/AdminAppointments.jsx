@@ -1521,7 +1521,6 @@ function AdminAppointmentRow({
               userId: currentUser._id
             });
           });
-        }
       } catch (error) {
         console.error('Error marking messages as read:', error);
       } finally {
