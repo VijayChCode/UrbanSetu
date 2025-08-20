@@ -2821,6 +2821,25 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     };
   }, [appt._id, currentUser.email, currentUser._id, showChatModal, playNotification, playMessageReceived]);
 
+  // Lock body scroll when chat modal is open
+  useEffect(() => {
+    if (showChatModal) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+    } else {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+    }
+    
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+    };
+  }, [showChatModal]);
+
   // Mark all comments as read when chat modal opens and fetch latest if needed
   useEffect(() => {
     if (showChatModal) {

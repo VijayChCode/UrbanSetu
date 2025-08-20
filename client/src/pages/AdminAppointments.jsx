@@ -1205,6 +1205,25 @@ function AdminAppointmentRow({
 
   const selectedMessageForHeaderOptions = headerOptionsMessageId ? localComments.find(msg => msg._id === headerOptionsMessageId) : null;
 
+  // Lock body scroll when chat modal is open
+  React.useEffect(() => {
+    if (showChatModal) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+    } else {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+    }
+    
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+    };
+  }, [showChatModal]);
+
   // Reset unread count when chat modal opens
   React.useEffect(() => {
     if (showChatModal) {
