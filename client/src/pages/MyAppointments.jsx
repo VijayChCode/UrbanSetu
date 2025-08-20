@@ -1590,11 +1590,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         const expiryDate = new Date(c.pinExpiresAt);
         return expiryDate > now;
       });
-      console.log('Initializing pinned messages:', { 
-        totalComments: comments.length, 
-        pinnedCount: pinnedMsgs.length,
-        pinnedMsgs: pinnedMsgs.map(m => ({ id: m._id, message: m.message?.substring(0, 30), pinned: m.pinned, pinExpiresAt: m.pinExpiresAt }))
-      });
+
       setPinnedMessages(pinnedMsgs);
     }
   }, [comments]);
@@ -1761,7 +1757,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       });
       if (res.ok) {
         const data = await res.json();
-        console.log('Fetched pinned messages from API:', data);
+
         setPinnedMessages(data.pinnedMessages || []);
       } else {
         toast.error('Failed to fetch pinned messages');
