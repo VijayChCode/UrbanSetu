@@ -2374,19 +2374,18 @@ function AdminAppointmentRow({
             setLocalComments(data.comments);
           }
           toast.success(`Deleted ${ids.length} messages for everyone!`);
+        } else {
+          const wasUnread = !messageToDelete.readBy?.includes(currentUser._id) && 
+                           messageToDelete.senderEmail !== currentUser.email;
+          const { data } = await axios.delete(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${messageToDelete._id}`, {
+            withCredentials: true
+          });
+            setLocalComments(data.comments);
+            if (wasUnread) {
+              setUnreadNewMessages(prev => Math.max(0, prev - 1));
+            }
+            toast.success("Message deleted successfully!");
         }
-      } else {
-        const wasUnread = !messageToDelete.readBy?.includes(currentUser._id) && 
-                         messageToDelete.senderEmail !== currentUser.email;
-        const { data } = await axios.delete(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${messageToDelete._id}`, {
-          withCredentials: true
-        });
-          setLocalComments(data.comments);
-          if (wasUnread) {
-            setUnreadNewMessages(prev => Math.max(0, prev - 1));
-          }
-          toast.success("Message deleted successfully!");
-      }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to delete message.');
     }
