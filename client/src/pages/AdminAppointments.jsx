@@ -1212,6 +1212,8 @@ function AdminAppointmentRow({
       // Mark messages as read when chat is opened
       axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/read`, {}, {
         withCredentials: true
+      }).catch(err => {
+        console.error('Error marking messages as read:', err);
       });
       
       // Sync starred messages when chat opens
@@ -1383,6 +1385,8 @@ function AdminAppointmentRow({
             setTimeout(() => {
               axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/read`, {}, {
                 withCredentials: true
+              }).catch(err => {
+                console.error('Error marking messages as read:', err);
               });
             }, 100);
           }
