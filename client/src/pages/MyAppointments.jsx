@@ -1260,20 +1260,17 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
 
     // Send message in background
     try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: 'include',
-        body: JSON.stringify({ 
+      const { data } = await axios.post(`${API_BASE_URL}/api/bookings/${appt._id}/comment`, 
+        { 
           message: caption || `📷 ${fileName}`,
           imageUrl: imageUrl,
           type: "image"
-        }),
-      });
-      
-      const data = await res.json();
-      
-      if (res.ok) {
+        },
+        { 
+          withCredentials: true,
+          headers: { "Content-Type": "application/json" }
+        }
+      );
         // Find the new comment from the response
         const newComment = data.comments[data.comments.length - 1];
         
@@ -1283,15 +1280,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
             ? { ...newComment }
             : msg
         ));
-      } else {
-        // Remove the temp message and show error
-        setComments(prev => prev.filter(msg => msg._id !== tempId));
-        toast.error(data.message || "Failed to send image.");
-      }
     } catch (error) {
       console.error('Send image error:', error);
       setComments(prev => prev.filter(msg => msg._id !== tempId));
-      toast.error("Failed to send image.");
+      toast.error(error.response?.data?.message || "Failed to send image.");
     }
   };
 
@@ -1304,30 +1296,22 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       const uploadFormData = new FormData();
       uploadFormData.append('image', selectedFile);
       
-      const res = await fetch(`${API_BASE_URL}/api/upload/image`, {
-        method: 'POST',
-        credentials: 'include',
-        body: uploadFormData,
-      });
-      
-      const data = await res.json();
-      
-      if (res.ok) {
+      const { data } = await axios.post(`${API_BASE_URL}/api/upload/image`, 
+        uploadFormData,
+        { 
+          withCredentials: true,
+          headers: { 'Content-Type': 'multipart/form-data' }
+        }
+      );
         // Send the image as a message with caption
         await sendImageMessage(data.imageUrl, selectedFile.name, imageCaption);
         setSelectedFile(null);
         setImageCaption('');
         setShowImagePreviewModal(false);
-      } else {
-        setFileUploadError(data.message || 'Upload failed');
-        toast.error(data.message || 'Upload failed');
-        // Auto-hide error message after 3 seconds
-        setTimeout(() => setFileUploadError(''), 3000);
-      }
     } catch (error) {
       console.error('File upload error:', error);
-      setFileUploadError('Upload failed. Please try again.');
-      toast.error('Upload failed. Please try again.');
+      setFileUploadError(error.response?.data?.message || 'Upload failed. Please try again.');
+      toast.error(error.response?.data?.message || 'Upload failed. Please try again.');
       // Auto-hide error message after 3 seconds
       setTimeout(() => setFileUploadError(''), 3000);
     } finally {
@@ -1354,26 +1338,21 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     
     setLockingChat(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/lock`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ password: lockPassword })
-      });
-      
-      const data = await res.json();
-      if (res.ok) {
+      const { data } = await axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/lock`, 
+        { password: lockPassword },
+        { 
+          withCredentials: true,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
         setChatLocked(true);
         setChatAccessGranted(false);
         setShowChatLockModal(false);
         setLockPassword('');
         setLockConfirmPassword('');
         toast.success('Chat locked successfully.');
-      } else {
-        toast.error(data.message || 'Failed to lock chat');
-      }
     } catch (err) {
-      toast.error('An error occurred while locking chat');
+      toast.error(err.response?.data?.message || 'Failed to lock chat');
     } finally {
       setLockingChat(false);
     }
@@ -1387,26 +1366,21 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     
     setUnlockingChat(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/unlock`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ password: unlockPassword })
-      });
-      
-      const data = await res.json();
-      if (res.ok) {
+      const { data } = await axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/unlock`, 
+        { password: unlockPassword },
+        { 
+          withCredentials: true,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
         setChatAccessGranted(true);
         setShowChatUnlockModal(false);
         setUnlockPassword('');
         toast.success('Chat access granted.');
         // Open chat modal after successful unlock
         setShowChatModal(true);
-      } else {
-        toast.error(data.message || 'Incorrect password');
-      }
     } catch (err) {
-      toast.error('An error occurred while unlocking chat');
+      toast.error(err.response?.data?.message || 'Incorrect password');
     } finally {
       setUnlockingChat(false);
     }
@@ -1420,25 +1394,20 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     
     setUnlockingChat(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/remove-lock`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ password: unlockPassword })
-      });
-      
-      const data = await res.json();
-      if (res.ok) {
+      const { data } = await axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/remove-lock`, 
+        { password: unlockPassword },
+        { 
+          withCredentials: true,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
         setChatLocked(false);
         setChatAccessGranted(false);
         setShowChatUnlockModal(false);
         setUnlockPassword('');
         toast.success('Chat lock removed successfully.');
-      } else {
-        toast.error(data.message || 'Incorrect password');
-      }
     } catch (err) {
-      toast.error('An error occurred while removing chat lock');
+      toast.error(err.response?.data?.message || 'Incorrect password');
     } finally {
       setUnlockingChat(false);
     }
@@ -1452,26 +1421,21 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     
     setRemovingLock(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/remove-lock`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ password: removeLockPassword })
-      });
-      
-      const data = await res.json();
-      if (res.ok) {
+      const { data } = await axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/remove-lock`, 
+        { password: removeLockPassword },
+        { 
+          withCredentials: true,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
         setChatLocked(false);
         setChatAccessGranted(false);
         setShowRemoveLockModal(false);
         setRemoveLockPassword('');
         setShowRemoveLockPassword(false);
         toast.success('Chat lock removed.');
-      } else {
-        toast.error(data.message || 'Incorrect password');
-      }
     } catch (err) {
-      toast.error('An error occurred while removing chat lock');
+      toast.error(err.response?.data?.message || 'Incorrect password');
     } finally {
       setRemovingLock(false);
     }
@@ -1480,23 +1444,19 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const handleForgotPassword = async () => {
     setForgotPasswordProcessing(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/forgot-password`, {
-        method: 'PATCH',
-        credentials: 'include'
-      });
-      
-      const data = await res.json();
-      if (res.ok) {
+      const { data } = await axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/forgot-password`, 
+        {},
+        { 
+          withCredentials: true
+        }
+      );
         setChatLocked(false);
         setChatAccessGranted(false);
         setShowForgotPasswordModal(false);
         setComments([]); // Clear chat messages locally
         toast.success('Chat lock removed and cleared successfully.');
-      } else {
-        toast.error(data.message || 'Failed to reset chat');
-      }
     } catch (err) {
-      toast.error('An error occurred while resetting chat');
+      toast.error(err.response?.data?.message || 'Failed to reset chat');
     } finally {
       setForgotPasswordProcessing(false);
     }
@@ -1509,10 +1469,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     // Reset chat access if it was temporarily granted
     if (chatLocked && chatAccessGranted) {
       try {
-        await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/reset-access`, {
-          method: 'PATCH',
-          credentials: 'include'
-        });
+        await axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/reset-access`, 
+          {},
+          { 
+            withCredentials: true
+          }
+        );
         setChatAccessGranted(false);
       } catch (err) {
         console.error('Error resetting chat access:', err);
@@ -1525,11 +1487,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     const fetchChatLockStatus = async () => {
       setChatLockStatusLoading(true);
       try {
-        const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/lock-status`, {
-          credentials: 'include'
+        const { data } = await axios.get(`${API_BASE_URL}/api/bookings/${appt._id}/chat/lock-status`, {
+          withCredentials: true
         });
-        if (res.ok) {
-          const data = await res.json();
           setChatLocked(data.chatLocked);
           setChatAccessGranted(data.accessGranted);
         }
@@ -1698,12 +1658,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const fetchLatestComments = async () => {
     try {
       setLoadingComments(true);
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}`, {
-        credentials: 'include'
+      const { data } = await axios.get(`${API_BASE_URL}/api/bookings/${appt._id}`, {
+        withCredentials: true
       });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.comments && data.comments.length !== comments.length) {
+      if (data.comments && data.comments.length !== comments.length) {
           // Merge server comments with local temp messages to prevent re-entry
           setComments(data.comments);
           setUnreadNewMessages(0); // Reset unread count after refresh
@@ -1896,12 +1854,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         // Single delete for everyone
         const wasUnread = !messageToDelete.readBy?.includes(currentUser._id) && 
                          messageToDelete.senderEmail !== currentUser.email;
-        const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${messageToDelete._id}`, {
-          method: 'DELETE',
-          credentials: 'include'
+        const { data } = await axios.delete(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${messageToDelete._id}`, {
+          withCredentials: true
         });
-        const data = await res.json();
-        if (res.ok) {
           setComments(prev => data.comments.map(newC => {
             const localC = prev.find(lc => lc._id === newC._id);
             if (localC && localC.status === 'read' && newC.status !== 'read') {
@@ -1913,23 +1868,22 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
             setUnreadNewMessages(prev => Math.max(0, prev - 1));
           }
           toast.success('Message deleted for everyone!');
-        } else {
-          toast.error(data.message || 'Failed to delete message.');
-        }
       } else {
         // Single delete for me
         try {
-          await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${messageToDelete._id}/remove-for-me`, {
-            method: 'PATCH',
-            credentials: 'include'
-          });
+          await axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${messageToDelete._id}/remove-for-me`, 
+            {},
+            { 
+              withCredentials: true
+            }
+          );
         } catch {}
         setComments(prev => prev.filter(msg => msg._id !== messageToDelete._id));
         addLocallyRemovedId(appt._id, messageToDelete._id);
         toast.success('Message deleted for you!');
       }
     } catch (err) {
-      toast.error('An error occurred. Please try again.');
+      toast.error(err.response?.data?.message || 'An error occurred. Please try again.');
     }
     
     // Close modal and reset state
@@ -1946,15 +1900,17 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       setComments([]);
 
       // Persist to server so it applies across devices for this user
-      await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/clear-local`, {
-        method: 'PATCH',
-        credentials: 'include'
-      });
+      await axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/clear-local`, 
+        {},
+        { 
+          withCredentials: true
+        }
+      );
 
       toast.success("Chat Cleared.");
     } catch (err) {
       console.error('Failed to persist chat clear:', err);
-      toast.error('Cleared locally, but failed to sync with server.');
+      toast.error(err.response?.data?.message || 'Cleared locally, but failed to sync with server.');
     } finally {
       setShowClearChatModal(false);
     }
@@ -2110,14 +2066,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     setComments(optimisticUpdate);
     
     try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${commentId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: 'include',
-        body: JSON.stringify({ message: editText }),
-      });
-      const data = await res.json();
-      if (res.ok) {
+      const { data } = await axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${commentId}`, 
+        { message: editText },
+        { 
+          withCredentials: true,
+          headers: { "Content-Type": "application/json" }
+        }
+      );
         // Update with server response - simpler and faster approach
         setComments(prev => prev.map(c => {
           const serverComment = data.comments.find(sc => sc._id === c._id);
@@ -2161,18 +2116,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         setTimeout(refocusInput, 10); // Final fallback
         
         toast.success("Message edited successfully!");
-      } else {
-        // Revert optimistic update on error
-        setComments(prev => prev.map(c => 
-          c._id === commentId 
-            ? { ...c, message: c.originalMessage || c.message, edited: c.wasEdited || false }
-            : c
-        ));
-        setEditingComment(commentId);
-        setEditText(editText);
-        setComment(editText); // Restore the text in main input for retry
-        toast.error(data.message || "Failed to edit message.");
-      }
     } catch (err) {
       // Revert optimistic update on error
       setComments(prev => prev.map(c => 
@@ -2183,7 +2126,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       setEditingComment(commentId);
       setEditText(editText);
       setComment(editText); // Restore the text in main input for retry
-      toast.error('An error occurred. Please try again.');
+      toast.error(err.response?.data?.message || 'An error occurred. Please try again.');
     } finally {
       setSavingComment(null);
     }
@@ -2504,28 +2447,24 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       return;
     }
     try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/cancel`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ reason: cancelReason }),
-      });
-      const data = await res.json();
-      if (res.status === 401) {
+      const { data } = await axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/cancel`, 
+        { reason: cancelReason },
+        { 
+          withCredentials: true,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+        toast.success('Appointment cancelled by admin.');
+        navigate('/user/my-appointments');
+      setShowAdminCancelModal(false);
+      setCancelReason('');
+    } catch (err) {
+      if (err.response?.status === 401) {
         toast.error('Session expired or unauthorized. Please sign in again.');
         navigate('/sign-in');
         return;
       }
-      if (res.ok) {
-        toast.success('Appointment cancelled by admin.');
-        navigate('/user/my-appointments');
-      } else {
-        toast.error(data.message || 'Failed to cancel appointment.');
-      }
-      setShowAdminCancelModal(false);
-      setCancelReason('');
-    } catch (err) {
-      toast.error('An error occurred. Please try again.');
+      toast.error(err.response?.data?.message || 'Failed to cancel appointment.');
     }
   };
 
@@ -2537,25 +2476,22 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     try {
       const who = isBuyer ? 'buyer' : isSeller ? 'seller' : null;
       if (!who) return;
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/soft-delete`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ who }),
-      });
-      if (res.ok) {
+      const { data } = await axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/soft-delete`, 
+        { who },
+        { 
+          withCredentials: true,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
         // Remove from UI immediately
         if (typeof window !== 'undefined') {
           const event = new CustomEvent('removeAppointmentRow', { detail: appt._id });
           window.dispatchEvent(event);
           toast.success("Appointment removed from your table successfully.");
         }
-      } else {
-        toast.error('Failed to remove appointment from table.');
-      }
       setShowPermanentDeleteModal(false);
     } catch (err) {
-      toast.error('An error occurred. Please try again.');
+      toast.error(err.response?.data?.message || 'Failed to remove appointment from table.');
     }
   };
 
@@ -2587,13 +2523,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       markingReadRef.current = true; // Prevent concurrent requests
       try {
         // Mark messages as read in backend
-        const response = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/read`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include'
-        });
-        
-        if (response.ok) {
+        const { data } = await axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/read`, 
+          {},
+          { 
+            withCredentials: true,
+            headers: { 'Content-Type': 'application/json' }
+          }
+        );
           // Update local state immediately
           setComments(prev => 
             prev.map(c => 
