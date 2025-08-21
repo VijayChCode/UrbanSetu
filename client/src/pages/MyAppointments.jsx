@@ -2483,7 +2483,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const markingReadRef = useRef(false);
   
   const markVisibleMessagesAsRead = useCallback(async () => {
-    if (!chatContainerRef.current || markingReadRef.current) return;
+    if (!chatContainerRef.current || markingReadRef.current || !appt?._id) return;
     
     // Only mark messages as read when user is at the bottom of chat AND has manually scrolled
     const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
@@ -2531,7 +2531,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
           // Update unreadNewMessages to reflect the actual unread count
           setUnreadNewMessages(prev => Math.max(0, prev - unreadMessages.length));
       } catch (error) {
-        console.error('Error marking messages as read:', error);
+        // Only log error if it's not a 500 server error (which might be temporary)
+        if (error.response?.status !== 500) {
+          console.error('Error marking messages as read:', error);
+        } else {
+          console.warn('Server error marking messages as read (will retry later):', error.response?.status);
+        }
       } finally {
         markingReadRef.current = false; // Reset the flag
       }
@@ -2834,12 +2839,17 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
 
   // Mark all comments as read when chat modal opens and fetch latest if needed
   useEffect(() => {
-    if (showChatModal) {
+    if (showChatModal && appt?._id) {
       // Mark comments as read immediately
       axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/read`, {}, {
         withCredentials: true
       }).catch(error => {
-        console.warn('Error marking comments as read on modal open:', error);
+        // Only log error if it's not a 500 server error (which might be temporary)
+        if (error.response?.status !== 500) {
+          console.warn('Error marking comments as read on modal open:', error);
+        } else {
+          console.warn('Server error marking comments as read on modal open (will retry later):', error.response?.status);
+        }
       });
     }
   }, [showChatModal, appt._id]);
