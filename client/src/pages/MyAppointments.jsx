@@ -1746,15 +1746,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
             pinExpiresAt: new Date(data.pinExpiresAt),
             pinDuration: duration
           };
-          console.log('Adding pinned message:', { 
-            messageId: pinnedMsg._id, 
-            pinExpiresAt: pinnedMsg.pinExpiresAt,
-            pinDuration: duration,
-            apiResponse: data
-          });
           setPinnedMessages(prev => {
             const newPinned = [...prev, pinnedMsg];
-            console.log('Updated pinned messages:', newPinned.length);
             return newPinned;
           });
         } else {
@@ -2526,8 +2519,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
             });
           });
           
-          console.log(`Marked ${unreadMessages.length} messages as read for user ${currentUser._id}`);
-          
           // Update unreadNewMessages to reflect the actual unread count
           setUnreadNewMessages(prev => Math.max(0, prev - unreadMessages.length));
       } catch (error) {
@@ -2595,7 +2586,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         ).length;
         
         if (unreadCount > 0) {
-          console.log(`User manually scrolled to bottom, marking ${unreadCount} messages as read`);
           markVisibleMessagesAsRead();
         }
         
