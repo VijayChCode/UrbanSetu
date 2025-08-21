@@ -366,32 +366,44 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
           <FaTimes className="w-4 h-4" />
         </button>
       </div>
-      <EmojiPicker
-        onEmojiClick={handleEmojiSelect}
-        onEmojiMouseDown={(e) => { e.preventDefault?.(); }}
-        searchDisabled={false}
-        searchPlaceholder="Search emojis..."
-        autoFocusSearch={true}
-        previewConfig={{ showPreview: false }}
-        skinTonesDisabled={false}
-        suggestedEmojisMode="recent"
-        width={pickerWidth}
-        height={effectiveMaxHeight - 60}
-        lazyLoadEmojis={true}
-        theme="light"
-        emojiStyle="google"
-        categories={[
-          'suggested',
-          'smileys_people', 
-          'animals_nature',
-          'food_drink',
-          'travel_places',
-          'activities',
-          'objects',
-          'symbols',
-          'flags'
-        ]}
-      />
+      <div
+        style={{
+          flex: 1,
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          WebkitOverflowScrolling: 'touch',
+          overscrollBehavior: 'contain'
+        }}
+        onWheel={(e) => { e.stopPropagation(); }}
+        onTouchMove={(e) => { e.stopPropagation(); }}
+      >
+        <EmojiPicker
+          onEmojiClick={handleEmojiSelect}
+          onEmojiMouseDown={(e) => { e.preventDefault?.(); }}
+          searchDisabled={false}
+          searchPlaceholder="Search emojis..."
+          autoFocusSearch={true}
+          previewConfig={{ showPreview: false }}
+          skinTonesDisabled={false}
+          suggestedEmojisMode="recent"
+          width={pickerWidth}
+          height={effectiveMaxHeight - 60}
+          lazyLoadEmojis={true}
+          theme="light"
+          emojiStyle="google"
+          categories={[
+            'suggested',
+            'smileys_people', 
+            'animals_nature',
+            'food_drink',
+            'travel_places',
+            'activities',
+            'objects',
+            'symbols',
+            'flags'
+          ]}
+        />
+      </div>
     </div>,
     document.body
   );
