@@ -1798,42 +1798,42 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       if (Array.isArray(messageToDelete)) {
         const ids = messageToDelete.map(m => m._id);
         if (deleteForBoth) {
-          const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/bulk-delete`, {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ commentIds: ids })
-          });
-          const data = await res.json().catch(() => ({}));
-          if (!res.ok) {
-            toast.error(data.message || 'Failed to delete selected messages.');
+          try {
+            const { data } = await axios.delete(`${API_BASE_URL}/api/bookings/${appt._id}/comments/bulk-delete`, {
+              withCredentials: true,
+              headers: { 'Content-Type': 'application/json' },
+              data: { commentIds: ids }
+            });
+            if (data?.comments) {
+              setComments(prev => data.comments.map(newC => {
+                const localC = prev.find(lc => lc._id === newC._id);
+                if (localC && localC.status === 'read' && newC.status !== 'read') {
+                  return { ...newC, status: 'read' };
+                }
+                return newC;
+              }));
+            }
+            toast.success(`Deleted ${ids.length} messages for everyone!`);
+          } catch (err) {
+            toast.error(err.response?.data?.message || 'Failed to delete selected messages.');
             return;
           }
-          if (data?.comments) {
-            setComments(prev => data.comments.map(newC => {
-              const localC = prev.find(lc => lc._id === newC._id);
-              if (localC && localC.status === 'read' && newC.status !== 'read') {
-                return { ...newC, status: 'read' };
-              }
-              return newC;
-            }));
-          }
-          toast.success(`Deleted ${ids.length} messages for everyone!`);
         } else {
-          const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/removed/sync`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ removedIds: ids })
-          });
-          if (!res.ok) {
-            const data = await res.json().catch(() => ({}));
-            toast.error(data.message || 'Failed to delete selected messages for you.');
+          try {
+            await axios.post(`${API_BASE_URL}/api/bookings/${appt._id}/comments/removed/sync`, 
+              { removedIds: ids },
+              {
+                withCredentials: true,
+                headers: { 'Content-Type': 'application/json' }
+              }
+            );
+            setComments(prev => prev.filter(msg => !ids.includes(msg._id)));
+            ids.forEach(cid => addLocallyRemovedId(appt._id, cid));
+            toast.success(`Deleted ${ids.length} messages for you!`);
+          } catch (err) {
+            toast.error(err.response?.data?.message || 'Failed to delete selected messages for you.');
             return;
           }
-          setComments(prev => prev.filter(msg => !ids.includes(msg._id)));
-          ids.forEach(cid => addLocallyRemovedId(appt._id, cid));
-          toast.success(`Deleted ${ids.length} messages for you!`);
         }
       } else if (deleteForBoth) {
         // Single delete for everyone
@@ -1968,58 +1968,38 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     // Send message in background without blocking UI
     (async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: 'include',
-          body: JSON.stringify({ 
+        const { data } = await axios.post(`${API_BASE_URL}/api/bookings/${appt._id}/comment`, 
+          { 
             message: messageContent, 
             ...(replyToData ? { replyTo: replyToData._id } : {}) 
-          }),
-        });
+          },
+          {
+            withCredentials: true,
+            headers: { "Content-Type": "application/json" }
+          }
+        );
         
-        const data = await res.json();
+        // Find the new comment from the response
+        const newComment = data.comments[data.comments.length - 1];
         
-        if (res.ok) {
-          // Find the new comment from the response
-          const newComment = data.comments[data.comments.length - 1];
-          
-          // Update only the status and ID of the temp message, keeping it visible
-          setComments(prev => prev.map(msg => 
-            msg._id === tempId 
-              ? { 
-                  ...msg, 
-                  _id: newComment._id,
-                  status: newComment.status,
-                  readBy: newComment.readBy || msg.readBy
-                }
-              : msg
-          ));
-          
-                      // Don't show success toast as it's too verbose for chat
-            playMessageSent(); // Play send sound
-        } else {
-          // Remove the temp message and show error
-          setComments(prev => prev.filter(msg => msg._id !== tempId));
-          toast.error(data.message || "Failed to send message.");
-          // Refocus input on error - aggressive mobile focus
-          const refocusInput = () => {
-            if (inputRef.current) {
-              inputRef.current.focus();
-              inputRef.current.setSelectionRange(0, 0);
-              if (document.activeElement !== inputRef.current) {
-                inputRef.current.click();
-                inputRef.current.focus();
+        // Update only the status and ID of the temp message, keeping it visible
+        setComments(prev => prev.map(msg => 
+          msg._id === tempId 
+            ? { 
+                ...msg, 
+                _id: newComment._id,
+                status: newComment.status,
+                readBy: newComment.readBy || msg.readBy
               }
-            }
-          };
-          refocusInput();
-          requestAnimationFrame(refocusInput);
-        }
+            : msg
+        ));
+        
+        // Don't show success toast as it's too verbose for chat
+        playMessageSent(); // Play send sound
       } catch (err) {
         // Remove the temp message and show error
         setComments(prev => prev.filter(msg => msg._id !== tempId));
-        toast.error('An error occurred. Please try again.');
+        toast.error(err.response?.data?.message || 'An error occurred. Please try again.');
         // Refocus input on error - aggressive mobile focus
         const refocusInput = () => {
           if (inputRef.current) {
@@ -2395,28 +2375,24 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       return;
     }
     try {
-      const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/cancel`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ reason: cancelReason }),
-      });
-      const data = await res.json();
-      if (res.status === 401) {
+      const { data } = await axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/cancel`, 
+        { reason: cancelReason },
+        {
+          withCredentials: true,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+      toast.success('Appointment cancelled successfully.');
+      if (typeof onCancelRefresh === 'function') onCancelRefresh(appt._id, isSeller ? 'cancelledBySeller' : 'cancelledByBuyer');
+      setShowCancelModal(false);
+      setCancelReason('');
+    } catch (err) {
+      if (err.response?.status === 401) {
         toast.error('Session expired or unauthorized. Please sign in again.');
         navigate('/sign-in');
         return;
       }
-      if (res.ok) {
-        toast.success('Appointment cancelled successfully.');
-        if (typeof onCancelRefresh === 'function') onCancelRefresh(appt._id, isSeller ? 'cancelledBySeller' : 'cancelledByBuyer');
-      } else {
-        toast.error(data.message || 'Failed to cancel appointment.');
-      }
-      setShowCancelModal(false);
-      setCancelReason('');
-    } catch (err) {
-      toast.error('An error occurred. Please try again.');
+      toast.error(err.response?.data?.message || 'An error occurred. Please try again.');
     }
   };
 
@@ -2844,9 +2820,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   useEffect(() => {
     if (showChatModal) {
       // Mark comments as read immediately
-      fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/read`, {
-        method: 'PATCH',
-        credentials: 'include'
+      axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/read`, {}, {
+        withCredentials: true
       }).catch(error => {
         console.warn('Error marking comments as read on modal open:', error);
       });
@@ -3454,29 +3429,26 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                           const isStarred = selectedMsg.starredBy?.includes(currentUser._id);
                                           setMultiSelectActions(prev => ({ ...prev, starring: true }));
                                           try {
-                                            const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${selectedMsg._id}/star`, {
-                                              method: 'PATCH',
-                                              headers: { 'Content-Type': 'application/json' },
-                                              credentials: 'include',
-                                              body: JSON.stringify({ starred: !isStarred }),
-                                            });
-                                            if (res.ok) {
-                                              setComments(prev => prev.map(c => 
-                                                c._id === selectedMsg._id 
-                                                  ? { 
-                                                      ...c, 
-                                                      starredBy: isStarred 
-                                                        ? (c.starredBy || []).filter(id => id !== currentUser._id)
-                                                        : [...(c.starredBy || []), currentUser._id]
-                                                    }
-                                                  : c
-                                              ));
-                                              toast.success(isStarred ? 'Message unstarred.' : 'Message starred.');
-                                            } else {
-                                              toast.error('Failed to update star status');
-                                            }
+                                            const { data } = await axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${selectedMsg._id}/star`, 
+                                              { starred: !isStarred },
+                                              {
+                                                withCredentials: true,
+                                                headers: { 'Content-Type': 'application/json' }
+                                              }
+                                            );
+                                            setComments(prev => prev.map(c => 
+                                              c._id === selectedMsg._id 
+                                                ? { 
+                                                    ...c, 
+                                                    starredBy: isStarred 
+                                                      ? (c.starredBy || []).filter(id => id !== currentUser._id)
+                                                      : [...(c.starredBy || []), currentUser._id]
+                                                  }
+                                                : c
+                                            ));
+                                            toast.success(isStarred ? 'Message unstarred.' : 'Message starred.');
                                           } catch (err) {
-                                            toast.error('Failed to update star status');
+                                            toast.error(err.response?.data?.message || 'Failed to update star status');
                                           } finally {
                                             setMultiSelectActions(prev => ({ ...prev, starring: false }));
                                           }
@@ -3517,10 +3489,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                       className="text-white hover:text-red-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
                                       onClick={async () => { 
                                         try {
-                                          await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${selectedMsg._id}/remove-for-me`, {
-                                            method: 'PATCH',
-                                            credentials: 'include'
-                                          });
+                                          await axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${selectedMsg._id}/remove-for-me`, 
+                                            {},
+                                            {
+                                              withCredentials: true
+                                            }
+                                          );
                                         } catch {}
                                         setComments(prev => prev.filter(msg => msg._id !== selectedMsg._id));
                                         addLocallyRemovedId(appt._id, selectedMsg._id);
@@ -3547,24 +3521,20 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                 onClick={async () => {
                                   const ids = selectedMessages.map(msg => msg._id);
                                   try {
-                                    const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/removed/sync`, {
-                                      method: 'POST',
-                                      headers: { 'Content-Type': 'application/json' },
-                                      credentials: 'include',
-                                      body: JSON.stringify({ removedIds: ids })
-                                    });
-                                    if (!res.ok) {
-                                      const data = await res.json().catch(() => ({}));
-                                      toast.error(data.message || 'Failed to delete selected messages for you.');
-                                      return;
-                                    }
+                                    await axios.post(`${API_BASE_URL}/api/bookings/${appt._id}/comments/removed/sync`, 
+                                      { removedIds: ids },
+                                      {
+                                        withCredentials: true,
+                                        headers: { 'Content-Type': 'application/json' }
+                                      }
+                                    );
                                     setComments(prev => prev.filter(msg => !ids.includes(msg._id)));
                                     ids.forEach(cid => addLocallyRemovedId(appt._id, cid));
                                     toast.success(`Deleted ${ids.length} messages for you!`);
                                     setIsSelectionMode(false);
                                     setSelectedMessages([]);
                                   } catch (e) {
-                                    toast.error('Failed to delete selected messages for you.');
+                                    toast.error(e.response?.data?.message || 'Failed to delete selected messages for you.');
                                   }
                                 }}
                                 title="Delete selected (for me)"
@@ -3581,12 +3551,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                 try {
                                   const promises = selectedMessages.map(msg => {
                                     const isStarred = msg.starredBy?.includes(currentUser._id);
-                                    return fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${msg._id}/star`, {
-                                      method: 'PATCH',
-                                      headers: { 'Content-Type': 'application/json' },
-                                      credentials: 'include',
-                                      body: JSON.stringify({ starred: !isStarred }),
-                                    });
+                                    return axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${msg._id}/star`, 
+                                      { starred: !isStarred },
+                                      {
+                                        withCredentials: true,
+                                        headers: { 'Content-Type': 'application/json' }
+                                      }
+                                    );
                                   });
                                   await Promise.all(promises);
                                   
@@ -3742,40 +3713,37 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               const isStarred = selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id);
                               setStarringSaving(true);
                               try {
-                                const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${selectedMessageForHeaderOptions._id}/star`, {
-                                  method: 'PATCH',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  credentials: 'include',
-                                  body: JSON.stringify({ starred: !isStarred }),
-                                });
-                                if (res.ok) {
-                                  // Update the local state
-                                  setComments(prev => prev.map(c => 
-                                    c._id === selectedMessageForHeaderOptions._id 
-                                      ? { 
-                                          ...c, 
-                                          starredBy: isStarred 
-                                            ? (c.starredBy || []).filter(id => id !== currentUser._id)
-                                            : [...(c.starredBy || []), currentUser._id]
-                                        }
-                                      : c
-                                  ));
-                                  
-                                  // Update starred messages list
-                                  if (isStarred) {
-                                    // Remove from starred messages
-                                    setStarredMessages(prev => prev.filter(m => m._id !== selectedMessageForHeaderOptions._id));
-                                  } else {
-                                    // Add to starred messages
-                                    setStarredMessages(prev => [...prev, selectedMessageForHeaderOptions]);
+                                const { data } = await axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${selectedMessageForHeaderOptions._id}/star`, 
+                                  { starred: !isStarred },
+                                  {
+                                    withCredentials: true,
+                                    headers: { 'Content-Type': 'application/json' }
                                   }
-                                  
-                                  toast.success(isStarred ? 'Message unstarred.' : 'Message starred.');
+                                );
+                                // Update the local state
+                                setComments(prev => prev.map(c => 
+                                  c._id === selectedMessageForHeaderOptions._id 
+                                    ? { 
+                                        ...c, 
+                                        starredBy: isStarred 
+                                          ? (c.starredBy || []).filter(id => id !== currentUser._id)
+                                          : [...(c.starredBy || []), currentUser._id]
+                                      }
+                                    : c
+                                ));
+                                
+                                // Update starred messages list
+                                if (isStarred) {
+                                  // Remove from starred messages
+                                  setStarredMessages(prev => prev.filter(m => m._id !== selectedMessageForHeaderOptions._id));
                                 } else {
-                                  toast.error('Failed to update star status');
+                                  // Add to starred messages
+                                  setStarredMessages(prev => [...prev, selectedMessageForHeaderOptions]);
                                 }
+                                
+                                toast.success(isStarred ? 'Message unstarred.' : 'Message starred.');
                               } catch (err) {
-                                toast.error('Failed to update star status');
+                                toast.error(err.response?.data?.message || 'Failed to update star status');
                               } finally {
                                 setStarringSaving(false);
                               }
@@ -5681,29 +5649,25 @@ You can lock this chat again at any time from the options.</p>
                   if (!reportReason) { toast.error('Please select a reason'); return; }
                   setSubmittingReport(true);
                   try {
-                    const res = await fetch(`${API_BASE_URL}/api/notifications/report-chat`, {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      credentials: 'include',
-                      body: JSON.stringify({
+                    const { data } = await axios.post(`${API_BASE_URL}/api/notifications/report-chat`, 
+                      {
                         appointmentId: appt._id,
                         commentId: reportingMessage._id,
                         reason: reportReason,
                         details: reportDetails,
-                      }),
-                    });
-                    const data = await res.json();
-                    if (res.ok) {
-                      toast.info('Thank you for reporting.');
-                      setShowReportModal(false);
-                      setReportingMessage(null);
-                      setReportReason('');
-                      setReportDetails('');
-                    } else {
-                      toast.error(data.message || 'Failed to submit report');
-                    }
+                      },
+                      {
+                        withCredentials: true,
+                        headers: { 'Content-Type': 'application/json' }
+                      }
+                    );
+                    toast.info('Thank you for reporting.');
+                    setShowReportModal(false);
+                    setReportingMessage(null);
+                    setReportReason('');
+                    setReportDetails('');
                   } catch (err) {
-                    toast.error('Network error while reporting');
+                    toast.error(err.response?.data?.message || 'Network error while reporting');
                   } finally {
                     setSubmittingReport(false);
                   }
@@ -5777,27 +5741,23 @@ You can lock this chat again at any time from the options.</p>
                   }
                   setSubmittingChatReport(true);
                   try {
-                    const res = await fetch(`${API_BASE_URL}/api/notifications/report-chat-conversation`, {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      credentials: 'include',
-                      body: JSON.stringify({
+                    const { data } = await axios.post(`${API_BASE_URL}/api/notifications/report-chat-conversation`, 
+                      {
                         appointmentId: appt._id,
                         reason: reportChatReason,
                         details: reportChatDetails,
-                      }),
-                    });
-                    const data = await res.json();
-                    if (res.ok) {
-                      toast.info('Thank you for reporting.');
-                      setShowReportChatModal(false);
-                      setReportChatReason('');
-                      setReportChatDetails('');
-                    } else {
-                      toast.error(data.message || 'Failed to submit report');
-                    }
+                      },
+                      {
+                        withCredentials: true,
+                        headers: { 'Content-Type': 'application/json' }
+                      }
+                    );
+                    toast.info('Thank you for reporting.');
+                    setShowReportChatModal(false);
+                    setReportChatReason('');
+                    setReportChatDetails('');
                   } catch (err) {
-                    toast.error('Network error while reporting');
+                    toast.error(err.response?.data?.message || 'Network error while reporting');
                   } finally {
                     setSubmittingChatReport(false);
                   }
@@ -5959,29 +5919,26 @@ You can lock this chat again at any time from the options.</p>
                               onClick={async () => {
                                 setUnstarringMessageId(message._id);
                                 try {
-                                  const res = await fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${message._id}/star`, {
-                                    method: 'PATCH',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    credentials: 'include',
-                                    body: JSON.stringify({ starred: false }),
-                                  });
-                                  if (res.ok) {
-                                    // Update the local comments state
-                                    setComments(prev => prev.map(c => 
-                                      c._id === message._id 
-                                        ? { ...c, starredBy: (c.starredBy || []).filter(id => id !== currentUser._id) }
-                                        : c
-                                    ));
-                                    
-                                    // Remove from starred messages list
-                                    setStarredMessages(prev => prev.filter(m => m._id !== message._id));
-                                    
-                                    toast.success('Message unstarred.');
-                                  } else {
-                                    toast.error('Failed to unstar message');
-                                  }
+                                  const { data } = await axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${message._id}/star`, 
+                                    { starred: false },
+                                    {
+                                      withCredentials: true,
+                                      headers: { 'Content-Type': 'application/json' }
+                                    }
+                                  );
+                                  // Update the local comments state
+                                  setComments(prev => prev.map(c => 
+                                    c._id === message._id 
+                                      ? { ...c, starredBy: (c.starredBy || []).filter(id => id !== currentUser._id) }
+                                      : c
+                                  ));
+                                  
+                                  // Remove from starred messages list
+                                  setStarredMessages(prev => prev.filter(m => m._id !== message._id));
+                                  
+                                  toast.success('Message unstarred.');
                                 } catch (err) {
-                                  toast.error('Failed to unstar message');
+                                  toast.error(err.response?.data?.message || 'Failed to unstar message');
                                 } finally {
                                   setUnstarringMessageId(null);
                                 }
@@ -6250,20 +6207,21 @@ You can lock this chat again at any time from the options.</p>
                     setPinningSaving(true);
                     try {
                       const promises = messageToPin.map(msg => 
-                        fetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${msg._id}/pin`, {
-                          method: 'PATCH',
-                          headers: { 'Content-Type': 'application/json' },
-                          credentials: 'include',
-                          body: JSON.stringify({ 
+                        axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${msg._id}/pin`, 
+                          { 
                             pinned: true, 
                             pinDuration: pinDuration, 
                             customHours: pinDuration === 'custom' ? customHours : undefined 
-                          }),
-                        })
+                          },
+                          {
+                            withCredentials: true,
+                            headers: { 'Content-Type': 'application/json' }
+                          }
+                        )
                       );
                       
                       const results = await Promise.all(promises);
-                      const allSuccessful = results.every(res => res.ok);
+                      const allSuccessful = results.every(res => res.status === 200);
                       
                       if (allSuccessful) {
                         // Update UI state for all pinned messages
