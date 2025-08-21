@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { FaComments, FaTimes, FaPaperPlane, FaRobot, FaCopy } from 'react-icons/fa';
 import { toast } from 'react-toastify';
+import { formatLinksInText } from '../utils/linkFormatter';
 
 const GeminiChatbox = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -255,7 +256,7 @@ const GeminiChatbox = () => {
                                                 : 'bg-gray-100 text-gray-800'
                                         }`}
                                     >
-                                        <p className="text-sm whitespace-pre-wrap leading-relaxed pr-8">{message.content}</p>
+                                        <p className="text-sm whitespace-pre-wrap leading-relaxed pr-8">{formatLinksInText(message.content)}</p>
 
                                         {/* Copy icon for all messages (sent and received) */}
                                         <button

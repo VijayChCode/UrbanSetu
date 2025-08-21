@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo, FaCommentDots, FaCheckDouble, FaBan, FaPaperPlane, FaCalendar, FaLightbulb, FaCopy, FaEllipsisV, FaFlag, FaCircle, FaInfoCircle, FaSync, FaStar, FaRegStar, FaThumbtack, FaCalendarAlt, FaCheckSquare } from "react-icons/fa";
+import { formatLinksInText } from '../utils/linkFormatter';
 import UserAvatar from '../components/UserAvatar';
 import ImagePreview from '../components/ImagePreview';
 import { EmojiButton } from '../components/EmojiPicker';
@@ -4486,7 +4487,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                           />
                                         </div>
                                       )}
-                                      <span className="whitespace-pre-wrap break-words">{(c.message || '').replace(/\n+$/, '')}</span>
+                                      <span className="whitespace-pre-wrap break-words">{formatLinksInText((c.message || '').replace(/\n+$/, ''))}</span>
                                       {c.edited && (
                                         <span className="ml-2 text-[10px] italic text-gray-300 whitespace-nowrap">(Edited)</span>
                                       )}
