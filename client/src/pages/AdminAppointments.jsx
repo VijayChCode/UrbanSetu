@@ -1128,6 +1128,7 @@ function AdminAppointmentRow({
   }, [localComments, currentUser._id]);
   const [newComment, setNewComment] = useLocalState("");
   const [detectedUrl, setDetectedUrl] = useState(null);
+  const [previewDismissed, setPreviewDismissed] = useState(false);
   const [sending, setSending] = useLocalState(false);
   const [editingComment, setEditingComment] = useLocalState(null);
   const [editText, setEditText] = useLocalState("");
@@ -1913,6 +1914,7 @@ function AdminAppointmentRow({
       status: "sending",
       timestamp: new Date().toISOString(),
       readBy: [currentUser._id],
+      previewDismissed: previewDismissed,
       ...(replyToData ? { replyTo: replyToData._id } : {}),
     };
 
@@ -1921,6 +1923,7 @@ function AdminAppointmentRow({
     try { playMessageSent(); } catch(_) {}
     setNewComment("");
     setDetectedUrl(null);
+    setPreviewDismissed(false);
     setReplyTo(null);
     // Reset textarea height to normal after sending
     resetTextareaHeight();
@@ -2045,6 +2048,7 @@ function AdminAppointmentRow({
         setEditText("");
         setNewComment(""); // Clear the main input
         setDetectedUrl(null);
+        setPreviewDismissed(false);
         // Reset textarea height to normal after editing
         resetTextareaHeight();
         
@@ -3562,6 +3566,9 @@ function AdminAppointmentRow({
                                       
                                       {/* Link Preview in Message */}
                                       {(() => {
+                                        // Only show preview if it wasn't dismissed before sending
+                                        if (c.previewDismissed) return null;
+                                        
                                         const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/gi;
                                         const urls = (c.message || '').match(urlRegex);
                                         if (urls && urls.length > 0) {
@@ -3657,6 +3664,7 @@ function AdminAppointmentRow({
                         setEditText(""); 
                         setNewComment(""); 
                         setDetectedUrl(null);
+                        setPreviewDismissed(false);
                         // Reset textarea height to normal when cancelling edit
                         resetTextareaHeight();
                       }} 
@@ -3675,7 +3683,10 @@ function AdminAppointmentRow({
                   {detectedUrl && (
                     <LinkPreview
                       url={detectedUrl}
-                      onRemove={() => setDetectedUrl(null)}
+                      onRemove={() => {
+                        setDetectedUrl(null);
+                        setPreviewDismissed(true);
+                      }}
                       className="mb-2"
                       showRemoveButton={true}
                     />
@@ -3694,14 +3705,16 @@ function AdminAppointmentRow({
                       const value = e.target.value;
                       setNewComment(value);
                       
-                      // Detect URLs in the input
-                      const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/gi;
-                      const urls = value.match(urlRegex);
-                      if (urls && urls.length > 0) {
-                        setDetectedUrl(urls[0]);
-                      } else {
-                        setDetectedUrl(null);
-                      }
+                                              // Detect URLs in the input
+                        const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/gi;
+                        const urls = value.match(urlRegex);
+                        if (urls && urls.length > 0) {
+                          setDetectedUrl(urls[0]);
+                          setPreviewDismissed(false); // Reset dismissed flag for new URL
+                        } else {
+                          setDetectedUrl(null);
+                          setPreviewDismissed(false);
+                        }
                       
                       if (editingComment) {
                         setEditText(value);
