@@ -39,6 +39,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0 }) => {
   
   const imageRef = useRef(null);
   const slideshowRef = useRef(null);
+  const settingsRef = useRef(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -155,16 +156,27 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0 }) => {
       if (!showControls) setShowControls(true);
     };
 
+    const handleClickOutside = (e) => {
+      if (showSettings && settingsRef.current && !settingsRef.current.contains(e.target)) {
+        setShowSettings(false);
+      }
+      if (showInfo && !e.target.closest('[data-info-panel]')) {
+        setShowInfo(false);
+      }
+    };
+
     document.addEventListener('keydown', handleKeyDown);
     document.addEventListener('wheel', handleWheel, { passive: false });
     document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('click', handleClickOutside);
     
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('wheel', handleWheel);
       document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('click', handleClickOutside);
     };
-  }, [isOpen, images.length, onClose, showControls]);
+      }, [isOpen, images.length, onClose, showControls, showSettings, showInfo]);
 
   useEffect(() => {
     if (isOpen) {
@@ -556,7 +568,10 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0 }) => {
 
       {/* Settings Panel */}
       {showSettings && (
-        <div className="absolute top-20 right-4 md:right-4 left-4 md:left-auto bg-black bg-opacity-90 backdrop-blur-sm rounded-xl p-4 text-white min-w-64 max-w-xs md:max-w-none transition-all duration-300">
+        <div 
+          ref={settingsRef}
+          className="absolute top-20 right-4 md:right-4 left-4 md:left-auto bg-black bg-opacity-90 backdrop-blur-sm rounded-xl p-4 text-white min-w-64 max-w-xs md:max-w-none transition-all duration-300"
+        >
           <h3 className="text-lg font-semibold mb-3">Settings</h3>
           <div className="space-y-3">
             <label className="flex items-center justify-between">
@@ -632,7 +647,10 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0 }) => {
 
       {/* Image Info Panel */}
       {showInfo && (
-        <div className="absolute top-20 left-4 md:left-4 right-4 md:right-auto bg-black bg-opacity-90 backdrop-blur-sm rounded-xl p-4 text-white min-w-64 max-w-xs md:max-w-none transition-all duration-300">
+        <div 
+          data-info-panel
+          className="absolute top-20 left-4 md:left-4 right-4 md:right-auto bg-black bg-opacity-90 backdrop-blur-sm rounded-xl p-4 text-white min-w-64 max-w-xs md:max-w-none transition-all duration-300"
+        >
           <h3 className="text-lg font-semibold mb-3">Image Info</h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
