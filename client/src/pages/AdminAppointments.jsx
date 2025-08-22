@@ -3462,11 +3462,14 @@ function AdminAppointmentRow({
                                           src={c.originalImageUrl || c.imageUrl}
                                           alt="Preserved image from deleted message"
                                           className="max-w-full max-h-64 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                                          onClick={() => {
-                                            setPreviewImages([c.originalImageUrl || c.imageUrl]);
-                                            setPreviewIndex(0);
-                                            setShowImagePreview(true);
-                                          }}
+                                                                                      onClick={() => {
+                                              const chatImages = (comments || []).filter(msg => !!(msg.originalImageUrl || msg.imageUrl)).map(msg => msg.originalImageUrl || msg.imageUrl);
+                                              const currentUrl = c.originalImageUrl || c.imageUrl;
+                                              const startIndex = Math.max(0, chatImages.indexOf(currentUrl));
+                                              setPreviewImages(chatImages);
+                                              setPreviewIndex(startIndex);
+                                              setShowImagePreview(true);
+                                            }}
                                           onError={(e) => {
                                             e.target.src = "https://via.placeholder.com/300x200?text=Image+Not+Found";
                                             e.target.className = "max-w-full max-h-64 rounded-lg opacity-50";
@@ -3537,8 +3540,11 @@ function AdminAppointmentRow({
                                             alt="Shared image"
                                             className="max-w-full max-h-64 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                                             onClick={() => {
-                                              setPreviewImages([c.originalImageUrl || c.imageUrl]);
-                                              setPreviewIndex(0);
+                                              const chatImages = (comments || []).filter(msg => !!(msg.originalImageUrl || msg.imageUrl)).map(msg => msg.originalImageUrl || msg.imageUrl);
+                                              const currentUrl = c.originalImageUrl || c.imageUrl;
+                                              const startIndex = Math.max(0, chatImages.indexOf(currentUrl));
+                                              setPreviewImages(chatImages);
+                                              setPreviewIndex(startIndex);
                                               setShowImagePreview(true);
                                             }}
                                             onError={(e) => {
@@ -4634,12 +4640,15 @@ function AdminAppointmentRow({
                                       src={message.originalImageUrl || message.imageUrl}
                                       alt="Shared image"
                                       className="max-w-full max-h-64 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setPreviewImages([message.originalImageUrl || message.imageUrl]);
-                                        setPreviewIndex(0);
-                                        setShowImagePreview(true);
-                                      }}
+                                                                              onClick={(e) => {
+                                          e.stopPropagation();
+                                          const chatImages = (comments || []).filter(msg => !!(msg.originalImageUrl || msg.imageUrl)).map(msg => msg.originalImageUrl || msg.imageUrl);
+                                          const currentUrl = message.originalImageUrl || message.imageUrl;
+                                          const startIndex = Math.max(0, chatImages.indexOf(currentUrl));
+                                          setPreviewImages(chatImages);
+                                          setPreviewIndex(startIndex);
+                                          setShowImagePreview(true);
+                                        }}
                                       onError={(e) => {
                                         e.target.src = "https://via.placeholder.com/300x200?text=Image+Not+Found";
                                         e.target.className = "max-w-full max-h-64 rounded-lg opacity-50";

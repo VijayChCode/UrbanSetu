@@ -4513,8 +4513,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                             alt="Shared image"
                                             className="max-w-full max-h-64 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                                             onClick={() => {
-                                              setPreviewImages([c.imageUrl]);
-                                              setPreviewIndex(0);
+                                              const imageUrls = (comments || []).filter(msg => !!msg.imageUrl).map(msg => msg.imageUrl);
+                                              const startIndex = Math.max(0, imageUrls.indexOf(c.imageUrl));
+                                              setPreviewImages(imageUrls);
+                                              setPreviewIndex(startIndex);
                                               setShowImagePreview(true);
                                             }}
                                             onError={(e) => {
@@ -6208,8 +6210,10 @@ You can lock this chat again at any time from the options.</p>
                                         className="max-w-full max-h-64 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                                         onClick={(e) => {
                                           e.stopPropagation();
-                                          setPreviewImages([message.imageUrl]);
-                                          setPreviewIndex(0);
+                                          const imageUrls = (comments || []).filter(msg => !!msg.imageUrl).map(msg => msg.imageUrl);
+                                          const startIndex = Math.max(0, imageUrls.indexOf(message.imageUrl));
+                                          setPreviewImages(imageUrls);
+                                          setPreviewIndex(startIndex);
                                           setShowImagePreview(true);
                                         }}
                                         onError={(e) => {
