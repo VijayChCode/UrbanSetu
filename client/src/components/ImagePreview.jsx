@@ -603,6 +603,49 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0 }) => {
                 <span className="text-sm text-gray-300">{slideshowSpeed}ms</span>
               </div>
             )}
+            {/* Desktop-only options */}
+            <div className="hidden md:block space-y-2 pt-2 border-t border-gray-600">
+              <button
+                onClick={() => setShowInfo(prev => !prev)}
+                className={`w-full text-left p-2 rounded-lg transition-all duration-200 ${
+                  showInfo 
+                    ? 'text-blue-400 bg-blue-400 bg-opacity-20' 
+                    : 'text-white hover:text-blue-300 hover:bg-white hover:bg-opacity-20'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <FaInfo size={14} />
+                  <span>Image Info</span>
+                </div>
+              </button>
+              <button
+                onClick={handleShare}
+                className="w-full text-left p-2 rounded-lg text-white hover:text-blue-300 hover:bg-white hover:bg-opacity-20 transition-all duration-200"
+              >
+                <div className="flex items-center gap-2">
+                  <FaShare size={14} />
+                  <span>Share Image</span>
+                </div>
+              </button>
+              <button
+                onClick={toggleFullscreen}
+                className="w-full text-left p-2 rounded-lg text-white hover:text-blue-300 hover:bg-white hover:bg-opacity-20 transition-all duration-200"
+              >
+                <div className="flex items-center gap-2">
+                  {isFullscreen ? <FaCompress size={14} /> : <FaExpand size={14} />}
+                  <span>{isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}</span>
+                </div>
+              </button>
+              <button
+                onClick={handleRotate}
+                className="w-full text-left p-2 rounded-lg text-white hover:text-blue-300 hover:bg-white hover:bg-opacity-20 transition-all duration-200"
+              >
+                <div className="flex items-center gap-2">
+                  <FaUndo size={14} />
+                  <span>Rotate Image</span>
+                </div>
+              </button>
+            </div>
             {/* Mobile-only options */}
             <div className="md:hidden space-y-2 pt-2 border-t border-gray-600">
               <button
