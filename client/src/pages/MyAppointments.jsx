@@ -4534,8 +4534,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                           />
                                         </div>
                                       )}
-                                      <span className="whitespace-pre-wrap break-words">{formatLinksInText((c.message || '').replace(/\n+$/, ''), isMe)}</span>
-                                      
                                       {/* Link Preview in Message */}
                                       {(() => {
                                         // Only show preview if it wasn't dismissed before sending
@@ -4545,7 +4543,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                         const urls = (c.message || '').match(urlRegex);
                                         if (urls && urls.length > 0) {
                                           return (
-                                            <div className="mt-2">
+                                            <div className="mb-2">
                                               <LinkPreview
                                                 url={urls[0]}
                                                 className="max-w-xs"
@@ -4556,6 +4554,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                         }
                                         return null;
                                       })()}
+                                      
+                                      <span className="whitespace-pre-wrap break-words">{formatLinksInText((c.message || '').replace(/\n+$/, ''), isMe)}</span>
                                       {c.edited && (
                                         <span className="ml-2 text-[10px] italic text-gray-300 whitespace-nowrap">(Edited)</span>
                                       )}
