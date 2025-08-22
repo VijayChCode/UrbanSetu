@@ -450,8 +450,8 @@ export default function NotificationBell({ mobile = false }) {
                 }
               }}
             >
-              <div className="w-full max-w-md mx-auto bg-gradient-to-br from-white via-blue-50 to-purple-50 rounded-3xl shadow-2xl border border-gray-200 max-h-[90vh] overflow-hidden relative animate-fade-in notification-popup transform transition-all duration-300"
-                   style={{ marginTop: '0.5rem', marginBottom: '0.5rem' }}>
+              <div className="w-full max-w-md mx-auto bg-gradient-to-br from-white via-blue-50 to-purple-50 rounded-3xl shadow-2xl border border-gray-200 max-h-[85vh] overflow-hidden relative animate-fade-in notification-popup transform transition-all duration-300"
+                   style={{ marginTop: '1rem', marginBottom: '1rem' }}>
                 {/* Close Button */}
                 <button
                   onClick={() => setIsOpen(false)}
@@ -461,7 +461,7 @@ export default function NotificationBell({ mobile = false }) {
                   <FaTimes className="w-4 h-4" />
                 </button>
                 {/* Content */}
-                <div className="pt-12 pb-6 px-6 flex flex-col h-full">
+                <div className="pt-12 pb-6 px-6">
                   {/* Header with Tabs */}
                   <div className="border-b border-gray-200 mb-6">
                     <h3 className="text-2xl font-bold text-gray-800 text-center tracking-wide mb-2">Notifications</h3>
@@ -521,7 +521,7 @@ export default function NotificationBell({ mobile = false }) {
                       </div>
 
                       {/* Notifications List */}
-                      <div className="flex-1 overflow-y-auto min-h-0 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                      <div className="notification-scroll-area-mobile">
                         {notifications.length === 0 ? (
                           <div className="p-6 text-center text-gray-500">
                             <FaBell className="w-8 h-8 mx-auto mb-2 text-gray-300" />
@@ -532,7 +532,7 @@ export default function NotificationBell({ mobile = false }) {
                             {notifications.map((notification) => (
                               <div
                                 key={notification._id}
-                                className={`relative group p-5 my-3 rounded-2xl shadow-lg bg-white border transition-all duration-300 flex flex-col gap-2 animate-fadeInNotification
+                                className={`relative group p-4 my-2 rounded-2xl shadow-lg bg-white border transition-all duration-300 flex flex-col gap-2 animate-fadeInNotification
                                   ${!notification.isRead ? 'border-l-4 border-blue-500 bg-gradient-to-r from-blue-50 to-white shadow-blue-100' : 'border border-gray-200 hover:border-gray-300'}
                                   hover:shadow-xl hover:-translate-y-1 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 active:scale-[0.98]`}
                                 style={{ animationDelay: `${0.05 * notifications.indexOf(notification)}s` }}
@@ -623,7 +623,7 @@ export default function NotificationBell({ mobile = false }) {
 
                       {/* Footer - Always visible when there are notifications */}
                       {notifications.length > 0 && (
-                        <div className="sticky bottom-0 p-3 border-t border-gray-100 bg-gray-50 shadow-lg">
+                        <div className="p-3 border-t border-gray-100 bg-gray-50 shadow-lg mt-4">
                           <button
                             onClick={() => {
                               // Clear all notifications
@@ -1247,11 +1247,12 @@ export default function NotificationBell({ mobile = false }) {
         }
         
         .notification-scroll-area-mobile {
-          max-height: calc(85vh - 250px);
+          max-height: calc(85vh - 320px);
           overflow-y: auto;
           scrollbar-width: thin;
           scrollbar-color: #cbd5e0 #f7fafc;
           padding-bottom: 1rem;
+          -webkit-overflow-scrolling: touch;
         }
         
         .notification-scroll-area-mobile::-webkit-scrollbar {
