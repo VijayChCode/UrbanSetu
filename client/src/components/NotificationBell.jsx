@@ -62,8 +62,8 @@ export default function NotificationBell({ mobile = false }) {
     };
   }, [isOpen, mobile]);
 
-  // Fetch notifications
-  const fetchNotifications = async () => {
+  // Fetch notifications; when showTodayOnly is true, filter to today's notifications and show toast
+  const fetchNotifications = async (showTodayOnly = false) => {
     if (!currentUser) return;
     
     try {
@@ -73,7 +73,20 @@ export default function NotificationBell({ mobile = false }) {
       const data = await res.json();
       
       if (res.ok) {
-        setNotifications(data);
+        if (showTodayOnly) {
+          const now = new Date();
+          const todayYear = now.getFullYear();
+          const todayMonth = now.getMonth();
+          const todayDate = now.getDate();
+          const todays = (Array.isArray(data) ? data : []).filter((n) => {
+            const d = new Date(n.createdAt);
+            return d.getFullYear() === todayYear && d.getMonth() === todayMonth && d.getDate() === todayDate;
+          });
+          setNotifications(todays);
+          toast.info('Notifications list updated');
+        } else {
+          setNotifications(data);
+        }
       }
     } catch (error) {
       console.error('Error fetching notifications:', error);
@@ -510,7 +523,7 @@ export default function NotificationBell({ mobile = false }) {
                             </button>
                           )}
                           <button
-                            onClick={fetchNotifications}
+                            onClick={() => fetchNotifications(true)}
                             className="ml-2 text-sm text-gray-500 hover:text-blue-600 flex items-center gap-1"
                             title="Refresh notifications"
                           >
@@ -899,7 +912,7 @@ export default function NotificationBell({ mobile = false }) {
                     </button>
                   )}
                   <button
-                    onClick={fetchNotifications}
+                    onClick={() => fetchNotifications(true)}
                     className="ml-2 text-sm text-gray-500 hover:text-blue-600 flex items-center gap-1"
                     title="Refresh notifications"
                   >
