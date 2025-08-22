@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { FaComments, FaTimes, FaPaperPlane, FaRobot, FaCopy } from 'react-icons/fa';
 import { toast } from 'react-toastify';
-import { formatLinksInText } from '../utils/linkFormatter';
+import { formatLinksInText } from '../utils/linkFormatter.jsx';
 
 const GeminiChatbox = () => {
     const [isOpen, setIsOpen] = useState(false);

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { FaTrash, FaSearch, FaPen, FaPaperPlane, FaUser, FaEnvelope, FaCalendar, FaPhone, FaUserShield, FaArchive, FaUndo, FaCommentDots, FaCheck, FaCheckDouble, FaBan, FaTimes, FaLightbulb, FaCopy, FaEllipsisV, FaInfoCircle, FaSync, FaStar, FaRegStar, FaFlag, FaCalendarAlt, FaCheckSquare } from "react-icons/fa";
-import { formatLinksInText } from '../utils/linkFormatter';
+import { formatLinksInText } from '../utils/linkFormatter.jsx';
 import UserAvatar from '../components/UserAvatar';
 import ImagePreview from '../components/ImagePreview';
 import { EmojiButton } from '../components/EmojiPicker';
