@@ -1201,6 +1201,7 @@ function AdminAppointmentRow({
   const [previewIndex, setPreviewIndex] = useLocalState(0);
   const [imageCaptions, setImageCaptions] = useLocalState({});
   const [showImagePreviewModal, setShowImagePreviewModal] = useLocalState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
 
 
@@ -1842,10 +1843,12 @@ function AdminAppointmentRow({
     if (!selectedFiles || selectedFiles.length === 0) return;
     
     setUploadingFile(true);
+    setUploadProgress(0);
     
     try {
-      // Upload all images first
-      const uploadPromises = selectedFiles.map(async (file) => {
+      // Upload images sequentially so we can show progress
+      for (let i = 0; i < selectedFiles.length; i++) {
+        const file = selectedFiles[i];
         const uploadFormData = new FormData();
         uploadFormData.append('image', file);
         
@@ -1853,22 +1856,19 @@ function AdminAppointmentRow({
           uploadFormData,
           { 
             withCredentials: true,
-            headers: { 'Content-Type': 'multipart/form-data' }
+            headers: { 'Content-Type': 'multipart/form-data' },
+            onUploadProgress: (evt) => {
+              if (evt.total) {
+                const perFile = Math.round((evt.loaded * 100) / evt.total);
+                const overall = Math.round(((i + perFile / 100) / selectedFiles.length) * 100);
+                setUploadProgress(overall);
+              }
+            }
           }
         );
         
-        return {
-          imageUrl: data.imageUrl,
-          fileName: file.name,
-          caption: imageCaptions[file.name] || ''
-        };
-      });
-      
-      const uploadedImages = await Promise.all(uploadPromises);
-      
-      // Send each image as a separate message
-      for (const image of uploadedImages) {
-        await sendImageMessage(image.imageUrl, image.fileName, image.caption);
+        await sendImageMessage(data.imageUrl, file.name, imageCaptions[file.name] || '');
+        setUploadProgress(Math.round(((i + 1) / selectedFiles.length) * 100));
       }
       
       // Clear state
@@ -1884,6 +1884,7 @@ function AdminAppointmentRow({
       setTimeout(() => setFileUploadError(''), 3000);
     } finally {
       setUploadingFile(false);
+      setUploadProgress(0);
     }
   };
 
@@ -4019,13 +4020,15 @@ function AdminAppointmentRow({
                       <button
                         onClick={handleSendImagesWithCaptions}
                         disabled={uploadingFile}
-                        className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition-colors"
+                        className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition-colors flex items-center gap-2"
                       >
                         {uploadingFile ? (
-                          <div className="flex items-center justify-center">
-                            <div className="animate-spin w-3 h-3 border-2 border-white border-t-transparent rounded-full mr-1"></div>
-                            Sending {selectedFiles.length} image{selectedFiles.length !== 1 ? 's' : ''}...
-                          </div>
+                          <>
+                            <div className="w-20 h-2 bg-white/30 rounded-full overflow-hidden">
+                              <div className="h-2 bg-white rounded-full transition-all" style={{ width: `${uploadProgress}%` }}></div>
+                            </div>
+                            <span>{uploadProgress}%</span>
+                          </>
                         ) : (
                           `Send ${selectedFiles.length} Image${selectedFiles.length !== 1 ? 's' : ''}`
                         )}
