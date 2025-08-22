@@ -18,8 +18,8 @@ export const formatLinksInText = (text, isSentMessage = false) => {
       
       // Different styling for sent vs received messages
       const linkClasses = isSentMessage 
-        ? "text-white hover:text-blue-200 hover:underline transition-colors duration-200" // White for sent messages (blue background)
-        : "text-blue-600 hover:text-blue-800 hover:underline transition-colors duration-200"; // Blue for received messages (white/gray background)
+        ? "text-white hover:text-blue-200 underline transition-colors duration-200" // White for sent messages (blue background)
+        : "text-blue-600 hover:text-blue-800 underline transition-colors duration-200"; // Blue for received messages (white/gray background)
       
       return (
         <a
