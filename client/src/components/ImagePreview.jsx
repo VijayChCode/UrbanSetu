@@ -386,8 +386,8 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0 }) => {
         />
       </div>
 
-      {/* Enhanced Controls */}
-      <div className={`absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2 bg-black bg-opacity-80 backdrop-blur-sm rounded-xl p-3 transition-all duration-300 ${
+      {/* Enhanced Controls - Desktop */}
+      <div className={`absolute bottom-4 left-1/2 transform -translate-x-1/2 hidden md:flex items-center gap-2 bg-black bg-opacity-80 backdrop-blur-sm rounded-xl p-3 transition-all duration-300 ${
         showControls ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
       }`}>
         <button
@@ -486,9 +486,77 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0 }) => {
         </button>
       </div>
 
+      {/* Mobile Controls - Compact */}
+      <div className={`absolute bottom-4 left-1/2 transform -translate-x-1/2 md:hidden flex items-center gap-1 bg-black bg-opacity-80 backdrop-blur-sm rounded-xl p-2 transition-all duration-300 ${
+        showControls ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+      }`}>
+        <button
+          onClick={handleZoomIn}
+          className="text-white hover:text-blue-300 p-1.5 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200"
+          title="Zoom In"
+        >
+          <FaSearchPlus size={14} />
+        </button>
+        <button
+          onClick={handleZoomOut}
+          className="text-white hover:text-blue-300 p-1.5 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200"
+          title="Zoom Out"
+        >
+          <FaSearchMinus size={14} />
+        </button>
+        <button
+          onClick={handleReset}
+          className="text-white hover:text-blue-300 p-1.5 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200"
+          title="Reset"
+        >
+          <span className="text-xs font-bold">0</span>
+        </button>
+        <div className="w-px h-4 bg-white bg-opacity-30"></div>
+        <button
+          onClick={toggleSlideshow}
+          className={`p-1.5 rounded-lg transition-all duration-200 ${
+            isSlideshow 
+              ? 'text-red-400 hover:text-red-300 bg-red-400 bg-opacity-20' 
+              : 'text-white hover:text-blue-300 hover:bg-white hover:bg-opacity-20'
+          }`}
+          title="Slideshow"
+        >
+          {isSlideshow ? <FaPause size={14} /> : <FaPlay size={14} />}
+        </button>
+        <button
+          onClick={() => setIsFavorited(prev => !prev)}
+          className={`p-1.5 rounded-lg transition-all duration-200 ${
+            isFavorited 
+              ? 'text-red-400 hover:text-red-300' 
+              : 'text-white hover:text-red-300 hover:bg-white hover:bg-opacity-20'
+          }`}
+          title="Favorite"
+        >
+          {isFavorited ? <FaHeart size={14} /> : <FaRegHeart size={14} />}
+        </button>
+        <button
+          onClick={handleDownload}
+          className="text-white hover:text-blue-300 p-1.5 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200"
+          title="Download"
+        >
+          <FaDownload size={14} />
+        </button>
+        <button
+          onClick={() => setShowSettings(prev => !prev)}
+          className={`p-1.5 rounded-lg transition-all duration-200 ${
+            showSettings 
+              ? 'text-yellow-400 bg-yellow-400 bg-opacity-20' 
+              : 'text-white hover:text-yellow-300 hover:bg-white hover:bg-opacity-20'
+          }`}
+          title="More"
+        >
+          <FaCog size={14} />
+        </button>
+      </div>
+
       {/* Settings Panel */}
       {showSettings && (
-        <div className="absolute top-20 right-4 bg-black bg-opacity-90 backdrop-blur-sm rounded-xl p-4 text-white min-w-64 transition-all duration-300">
+        <div className="absolute top-20 right-4 md:right-4 left-4 md:left-auto bg-black bg-opacity-90 backdrop-blur-sm rounded-xl p-4 text-white min-w-64 max-w-xs md:max-w-none transition-all duration-300">
           <h3 className="text-lg font-semibold mb-3">Settings</h3>
           <div className="space-y-3">
             <label className="flex items-center justify-between">
@@ -515,13 +583,56 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0 }) => {
                 <span className="text-sm text-gray-300">{slideshowSpeed}ms</span>
               </div>
             )}
+            {/* Mobile-only options */}
+            <div className="md:hidden space-y-2 pt-2 border-t border-gray-600">
+              <button
+                onClick={() => setShowInfo(prev => !prev)}
+                className={`w-full text-left p-2 rounded-lg transition-all duration-200 ${
+                  showInfo 
+                    ? 'text-blue-400 bg-blue-400 bg-opacity-20' 
+                    : 'text-white hover:text-blue-300 hover:bg-white hover:bg-opacity-20'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <FaInfo size={14} />
+                  <span>Image Info</span>
+                </div>
+              </button>
+              <button
+                onClick={handleShare}
+                className="w-full text-left p-2 rounded-lg text-white hover:text-blue-300 hover:bg-white hover:bg-opacity-20 transition-all duration-200"
+              >
+                <div className="flex items-center gap-2">
+                  <FaShare size={14} />
+                  <span>Share Image</span>
+                </div>
+              </button>
+              <button
+                onClick={toggleFullscreen}
+                className="w-full text-left p-2 rounded-lg text-white hover:text-blue-300 hover:bg-white hover:bg-opacity-20 transition-all duration-200"
+              >
+                <div className="flex items-center gap-2">
+                  {isFullscreen ? <FaCompress size={14} /> : <FaExpand size={14} />}
+                  <span>{isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}</span>
+                </div>
+              </button>
+              <button
+                onClick={handleRotate}
+                className="w-full text-left p-2 rounded-lg text-white hover:text-blue-300 hover:bg-white hover:bg-opacity-20 transition-all duration-200"
+              >
+                <div className="flex items-center gap-2">
+                  <FaUndo size={14} />
+                  <span>Rotate Image</span>
+                </div>
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {/* Image Info Panel */}
       {showInfo && (
-        <div className="absolute top-20 left-4 bg-black bg-opacity-90 backdrop-blur-sm rounded-xl p-4 text-white min-w-64 transition-all duration-300">
+        <div className="absolute top-20 left-4 md:left-4 right-4 md:right-auto bg-black bg-opacity-90 backdrop-blur-sm rounded-xl p-4 text-white min-w-64 max-w-xs md:max-w-none transition-all duration-300">
           <h3 className="text-lg font-semibold mb-3">Image Info</h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
