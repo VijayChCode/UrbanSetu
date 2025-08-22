@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FaComments, FaTimes, FaPaperPlane, FaRobot, FaCopy } from 'react-icons/fa';
+import { FaComments, FaTimes, FaPaperPlane, FaRobot, FaCopy, FaCheck } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { formatLinksInText } from '../utils/linkFormatter.jsx';
 
@@ -15,6 +15,8 @@ const GeminiChatbox = () => {
     const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef(null);
     const inputRef = useRef(null);
+    const [sendIconAnimating, setSendIconAnimating] = useState(false);
+    const [sendIconSent, setSendIconSent] = useState(false);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -97,6 +99,10 @@ const GeminiChatbox = () => {
         e.preventDefault();
         if (!inputMessage.trim() || isLoading) return;
 
+        // Trigger send icon fly animation
+        setSendIconAnimating(true);
+        setTimeout(() => setSendIconAnimating(false), 800);
+
         const userMessage = inputMessage.trim();
         setInputMessage('');
         setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
@@ -134,6 +140,10 @@ const GeminiChatbox = () => {
                 const trimmedResponse = data.response.trim();
                 console.log('Setting message with response length:', trimmedResponse.length);
                 setMessages(prev => [...prev, { role: 'assistant', content: trimmedResponse }]);
+
+                // Show sent success check briefly
+                setSendIconSent(true);
+                setTimeout(() => setSendIconSent(false), 600);
             } else {
                 console.error('Invalid response structure:', data);
                 throw new Error('Invalid response structure from server');
@@ -303,15 +313,73 @@ const GeminiChatbox = () => {
                                 <button
                                     type="submit"
                                     disabled={!inputMessage.trim() || isLoading}
-                                    className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-2 rounded-full hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex-shrink-0 flex items-center justify-center w-10 h-10"
+                                    className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-2 rounded-full hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-110 flex-shrink-0 flex items-center justify-center w-10 h-10 group hover:shadow-xl active:scale-95"
                                 >
-                                    <FaPaperPlane size={16} />
+                                    <div className="relative">
+                                        {sendIconSent ? (
+                                            <FaCheck className="text-white send-icon animate-sent" size={16} />
+                                        ) : (
+                                            <FaPaperPlane className={`text-white send-icon ${sendIconAnimating ? 'animate-fly' : ''} group-hover:scale-110 transition-all duration-300`} size={16} />
+                                        )}
+                                    </div>
                                 </button>
                             </form>
                         </div>
                     </div>
                 </div>
             )}
+
+            {/* Send button animation styles */}
+            <style>
+                {`
+                @keyframes sendIconFly {
+                  0% {
+                    transform: translate(0, 0) scale(1);
+                    opacity: 1;
+                  }
+                  20% {
+                    transform: translate(-3px, -6px) scale(1.05);
+                    opacity: 0.9;
+                  }
+                  40% {
+                    transform: translate(-8px, -12px) scale(1.1);
+                    opacity: 0.8;
+                  }
+                  60% {
+                    transform: translate(8px, -18px) scale(1.15);
+                    opacity: 0.9;
+                  }
+                  80% {
+                    transform: translate(15px, -20px) scale(1.2);
+                    opacity: 0.95;
+                  }
+                  100% {
+                    transform: translate(0, 0) scale(1);
+                    opacity: 1;
+                  }
+                }
+                .send-icon.animate-fly {
+                  animation: sendIconFly 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+                }
+                @keyframes sentSuccess {
+                  0% {
+                    transform: scale(0.8);
+                    opacity: 0;
+                  }
+                  50% {
+                    transform: scale(1.2);
+                    opacity: 1;
+                  }
+                  100% {
+                    transform: scale(1);
+                    opacity: 1;
+                  }
+                }
+                .send-icon.animate-sent {
+                  animation: sentSuccess 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+                }
+                `}
+            </style>
         </>
     );
 };
