@@ -3695,11 +3695,13 @@ function AdminAppointmentRow({
                   )}
                   <textarea
                     rows={1}
-                    className="w-full pl-4 pr-20 py-3 border-2 border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-400 shadow-lg transition-all duration-300 bg-white resize-none whitespace-pre-wrap break-all hover:border-blue-300 hover:shadow-xl focus:shadow-2xl transform hover:scale-[1.01] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
+                    className="w-full pl-4 pr-20 py-3 border-2 border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-400 shadow-lg transition-all duration-300 bg-white resize-none whitespace-pre-wrap break-all hover:border-blue-300 hover:shadow-xl focus:shadow-2xl transform hover:scale-[1.01] overflow-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
                     style={{
                       minHeight: '48px',
                       maxHeight: '144px', // 6 lines * 24px line height
-                      lineHeight: '24px'
+                      lineHeight: '24px',
+                      wordBreak: 'break-all',
+                      overflowWrap: 'break-word'
                     }}
                     placeholder={editingComment ? "Edit your message..." : "Type a message..."}
                     value={newComment}
