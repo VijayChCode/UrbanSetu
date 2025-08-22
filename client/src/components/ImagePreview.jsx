@@ -157,10 +157,15 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0 }) => {
     };
 
     const handleClickOutside = (e) => {
-      if (showSettings && settingsRef.current && !settingsRef.current.contains(e.target)) {
+      // Check if click is on settings button or inside settings panel
+      const isSettingsButton = e.target.closest('button[title="Settings"], button[title="More"]');
+      if (showSettings && settingsRef.current && !settingsRef.current.contains(e.target) && !isSettingsButton) {
         setShowSettings(false);
       }
-      if (showInfo && !e.target.closest('[data-info-panel]')) {
+      
+      // Check if click is on info button or inside info panel
+      const isInfoButton = e.target.closest('button[title="Image Info (I)"]');
+      if (showInfo && !e.target.closest('[data-info-panel]') && !isInfoButton) {
         setShowInfo(false);
       }
     };
