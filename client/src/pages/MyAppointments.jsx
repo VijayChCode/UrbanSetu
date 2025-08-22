@@ -4850,43 +4850,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                         )}
                         
                         {/* Current Image */}
-                        <div className="mb-3 relative">
+                        <div className="mb-3">
                           <img
                             src={URL.createObjectURL(selectedFiles[previewIndex])}
                             alt={`Preview ${previewIndex + 1}`}
                             className="w-full h-64 object-contain rounded-lg border"
                           />
-                          {/* Delete Icon - Only show when multiple images are selected */}
-                          {selectedFiles.length > 1 && (
-                            <button
-                              onClick={() => {
-                                const newFiles = selectedFiles.filter((_, index) => index !== previewIndex);
-                                const newCaptions = { ...imageCaptions };
-                                // Remove caption for deleted image
-                                delete newCaptions[selectedFiles[previewIndex]?.name];
-                                
-                                if (newFiles.length === 0) {
-                                  // If no images left, close modal
-                                  setSelectedFiles([]);
-                                  setImageCaptions({});
-                                  setShowImagePreviewModal(false);
-                                } else {
-                                  // Update files and adjust preview index
-                                  setSelectedFiles(newFiles);
-                                  setImageCaptions(newCaptions);
-                                  // Adjust preview index if needed
-                                  if (previewIndex >= newFiles.length) {
-                                    setPreviewIndex(newFiles.length - 1);
-                                  }
-                                }
-                              }}
-                              className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-2 shadow-lg transition-all duration-200 hover:scale-110 z-10"
-                              title="Remove this image"
-                              aria-label="Remove this image"
-                            >
-                              <FaTimes className="w-4 h-4" />
-                            </button>
-                          )}
                         </div>
                         
                         {/* Image Counter */}
@@ -4940,11 +4909,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                       }
                                     }
                                   }}
-                                  className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 shadow-lg transition-all duration-200 hover:scale-110 z-10"
+                                  className="absolute top-0 right-0 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 shadow-lg transition-all duration-200 hover:scale-110 z-10 transform translate-x-1/2 -translate-y-1/2"
                                   title="Remove this image"
                                   aria-label="Remove this image"
                                 >
-                                  <FaTimes className="w-2 h-2" />
+                                  <FaTimes className="w-2.5 h-2.5" />
                                 </button>
                               )}
                             </div>
