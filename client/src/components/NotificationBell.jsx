@@ -82,7 +82,7 @@ export default function NotificationBell({ mobile = false }) {
             const d = new Date(n.createdAt);
             return d.getFullYear() === todayYear && d.getMonth() === todayMonth && d.getDate() === todayDate;
           });
-          setNotifications(todays);
+          setNotifications(todays.length > 0 ? todays : data);
           toast.info('Notifications list updated');
         } else {
           setNotifications(data);
