@@ -4822,47 +4822,99 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                         </button>
                       </div>
                       
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        {selectedFiles.map((file, index) => (
-                          <div key={index} className="border border-gray-200 rounded-lg p-3">
-                            <div className="mb-3">
-                              <img
-                                src={URL.createObjectURL(file)}
-                                alt={`Preview ${index + 1}`}
-                                className="w-full h-32 object-cover rounded-lg border"
-                              />
-                            </div>
-                            <div className="relative">
-                              <textarea
-                                placeholder={`Add a caption for ${file.name}...`}
-                                value={imageCaptions[file.name] || ''}
-                                onChange={(e) => setImageCaptions(prev => ({
-                                  ...prev,
-                                  [file.name]: e.target.value
-                                }))}
-                                className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg text-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                rows={2}
-                                maxLength={500}
-                              />
-                              {/* Emoji Picker for Caption */}
-                              <div className="absolute right-2 top-2">
-                                <EmojiButton 
-                                  onEmojiClick={(emoji) => {
-                                    const currentCaption = imageCaptions[file.name] || '';
-                                    setImageCaptions(prev => ({
-                                      ...prev,
-                                      [file.name]: currentCaption + emoji
-                                    }));
-                                  }}
-                                  className="w-6 h-6"
-                                />
-                              </div>
-                              <div className="text-xs text-gray-500 mt-1 text-right">
-                                {(imageCaptions[file.name] || '').length}/500
-                              </div>
-                            </div>
+                      {/* Image Slideshow */}
+                      <div className="relative mb-4">
+                        {/* Navigation Arrows */}
+                        {selectedFiles.length > 1 && (
+                          <>
+                            <button
+                              onClick={() => setPreviewIndex(prev => prev > 0 ? prev - 1 : selectedFiles.length - 1)}
+                              className="absolute left-2 top-1/2 transform -translate-y-1/2 z-10 bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-70 transition-all duration-200"
+                            >
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                              </svg>
+                            </button>
+                            <button
+                              onClick={() => setPreviewIndex(prev => prev < selectedFiles.length - 1 ? prev + 1 : 0)}
+                              className="absolute right-2 top-1/2 transform -translate-y-1/2 z-10 bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-70 transition-all duration-200"
+                            >
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                              </svg>
+                            </button>
+                          </>
+                        )}
+                        
+                        {/* Current Image */}
+                        <div className="mb-3">
+                          <img
+                            src={URL.createObjectURL(selectedFiles[previewIndex])}
+                            alt={`Preview ${previewIndex + 1}`}
+                            className="w-full h-64 object-contain rounded-lg border"
+                          />
+                        </div>
+                        
+                        {/* Image Counter */}
+                        {selectedFiles.length > 1 && (
+                          <div className="text-center text-sm text-gray-600 mb-3">
+                            {previewIndex + 1} of {selectedFiles.length}
                           </div>
-                        ))}
+                        )}
+                        
+                        {/* Image Thumbnails */}
+                        {selectedFiles.length > 1 && (
+                          <div className="flex gap-2 justify-center mb-3 overflow-x-auto">
+                            {selectedFiles.map((file, index) => (
+                              <button
+                                key={index}
+                                onClick={() => setPreviewIndex(index)}
+                                className={`flex-shrink-0 w-16 h-16 rounded-lg border-2 transition-all duration-200 ${
+                                  index === previewIndex 
+                                    ? 'border-blue-500 shadow-lg' 
+                                    : 'border-gray-300 hover:border-gray-400'
+                                }`}
+                              >
+                                <img
+                                  src={URL.createObjectURL(file)}
+                                  alt={`Thumbnail ${index + 1}`}
+                                  className="w-full h-full object-cover rounded-lg"
+                                />
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Caption for Current Image */}
+                      <div className="relative mb-4">
+                        <textarea
+                          placeholder={`Add a caption for ${selectedFiles[previewIndex]?.name}...`}
+                          value={imageCaptions[selectedFiles[previewIndex]?.name] || ''}
+                          onChange={(e) => setImageCaptions(prev => ({
+                            ...prev,
+                            [selectedFiles[previewIndex]?.name]: e.target.value
+                          }))}
+                          className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg text-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          rows={3}
+                          maxLength={500}
+                        />
+                        {/* Emoji Picker for Caption */}
+                        <div className="absolute right-2 top-2">
+                          <EmojiButton 
+                            onEmojiClick={(emoji) => {
+                              const currentCaption = imageCaptions[selectedFiles[previewIndex]?.name] || '';
+                              setImageCaptions(prev => ({
+                                ...prev,
+                                [selectedFiles[previewIndex]?.name]: currentCaption + emoji
+                              }));
+                            }}
+                            className="w-6 h-6"
+                          />
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1 text-right">
+                          {(imageCaptions[selectedFiles[previewIndex]?.name] || '').length}/500
+                        </div>
                       </div>
                       
                       <div className="flex justify-between items-center">
