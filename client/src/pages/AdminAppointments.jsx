@@ -3829,7 +3829,7 @@ function AdminAppointmentRow({
               {/* Multi-Image Preview Modal - Positioned as overlay */}
               {showImagePreviewModal && selectedFiles.length > 0 && (
                 <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                  <div className="bg-white border-2 border-gray-200 rounded-lg p-4 shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                                      <div className="bg-white border-2 border-gray-200 rounded-lg p-4 shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-lg font-medium text-gray-700">
                         Image Preview ({selectedFiles.length} image{selectedFiles.length !== 1 ? 's' : ''})
@@ -3886,7 +3886,7 @@ function AdminAppointmentRow({
                         </div>
                       
                                               {/* Image Thumbnails */}
-                        <div className="flex gap-2 justify-center mb-3 overflow-x-auto">
+                        <div className="flex gap-2 mb-3 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 pb-2 min-w-0 max-w-full" style={{ scrollbarWidth: 'thin', scrollbarColor: '#d1d5db #f3f4f6' }}>
                           {selectedFiles.map((file, index) => (
                             <div key={index} className="relative">
                               <button
