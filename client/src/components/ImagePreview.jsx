@@ -165,7 +165,8 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0 }) => {
       
       // Check if click is on info button or inside info panel
       const isInfoButton = e.target.closest('button[title="Image Info (I)"]');
-      if (showInfo && !e.target.closest('[data-info-panel]') && !isInfoButton) {
+      const isInfoButtonInSettings = e.target.closest('button') && e.target.closest('button').textContent?.includes('Image Info');
+      if (showInfo && !e.target.closest('[data-info-panel]') && !isInfoButton && !isInfoButtonInSettings) {
         setShowInfo(false);
       }
     };
