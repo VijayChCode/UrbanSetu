@@ -4543,7 +4543,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                         const urls = (c.message || '').match(urlRegex);
                                         if (urls && urls.length > 0) {
                                           return (
-                                            <div className="mb-2">
+                                            <div className="mb-2 max-h-40 overflow-hidden">
                                               <LinkPreview
                                                 url={urls[0]}
                                                 className="max-w-xs"
@@ -4650,17 +4650,19 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 <div className="flex gap-2 mt-1 px-3 pb-2 flex-shrink-0 bg-gradient-to-b from-transparent to-white pt-2 items-end">
                   {/* Message Input Container with Attachment and Emoji Icons Inside */}
                   <div className="flex-1 relative">
-                    {/* Link Preview */}
+                    {/* Link Preview Container with Height Constraints */}
                     {detectedUrl && (
-                      <LinkPreview
-                        url={detectedUrl}
-                        onRemove={() => {
-                          setDetectedUrl(null);
-                          setPreviewDismissed(true);
-                        }}
-                        className="mb-2"
-                        showRemoveButton={true}
-                      />
+                      <div className="max-h-32 overflow-y-auto mb-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                        <LinkPreview
+                          url={detectedUrl}
+                          onRemove={() => {
+                            setDetectedUrl(null);
+                            setPreviewDismissed(true);
+                          }}
+                          className=""
+                          showRemoveButton={true}
+                        />
+                      </div>
                     )}
                     <textarea
                       rows={1}
