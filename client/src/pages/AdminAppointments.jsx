@@ -3941,30 +3941,43 @@ function AdminAppointmentRow({
                             </div>
                           ))}
                           
-                          {/* Add More Images Button */}
-                          <div className="relative">
-                            <label className="flex-shrink-0 w-12 h-12 rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 cursor-pointer flex items-center justify-center group">
-                              <input
-                                type="file"
-                                accept="image/*"
-                                multiple
-                                className="hidden"
-                                onChange={(e) => {
-                                  const files = e.target.files;
-                                  if (files && files.length > 0) {
-                                    // Add new files to existing selection
-                                    const newFiles = [...selectedFiles, ...Array.from(files)];
-                                    setSelectedFiles(newFiles);
-                                    // Reset the input
-                                    e.target.value = '';
-                                  }
-                                }}
-                              />
-                              <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                              </svg>
-                            </label>
-                          </div>
+                          {/* Add More Images Button - Only show when less than 10 images */}
+                          {selectedFiles.length < 10 && (
+                            <div className="relative">
+                              <label className="flex-shrink-0 w-12 h-12 rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 cursor-pointer flex items-center justify-center group">
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  multiple
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const files = e.target.files;
+                                    if (files && files.length > 0) {
+                                      // Calculate how many more images can be added
+                                      const remainingSlots = 10 - selectedFiles.length;
+                                      const filesToAdd = Array.from(files).slice(0, remainingSlots);
+                                      
+                                      if (filesToAdd.length > 0) {
+                                        // Add new files to existing selection
+                                        const newFiles = [...selectedFiles, ...filesToAdd];
+                                        setSelectedFiles(newFiles);
+                                        
+                                        // Show notification if some files were skipped
+                                        if (filesToAdd.length < files.length) {
+                                          toast.info(`Added ${filesToAdd.length} images. Maximum limit of 10 images reached.`);
+                                        }
+                                      }
+                                      // Reset the input
+                                      e.target.value = '';
+                                    }
+                                  }}
+                                />
+                                <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                              </label>
+                            </div>
+                          )}
                         </div>
                     </div>
                     
