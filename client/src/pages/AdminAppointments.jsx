@@ -1195,11 +1195,11 @@ function AdminAppointmentRow({
   // File upload states
   const [uploadingFile, setUploadingFile] = useLocalState(false);
   const [fileUploadError, setFileUploadError] = useLocalState('');
-  const [selectedFile, setSelectedFile] = useLocalState(null);
+  const [selectedFiles, setSelectedFiles] = useLocalState([]);
   const [showImagePreview, setShowImagePreview] = useLocalState(false);
   const [previewImages, setPreviewImages] = useLocalState([]);
   const [previewIndex, setPreviewIndex] = useLocalState(0);
-  const [imageCaption, setImageCaption] = useLocalState('');
+  const [imageCaptions, setImageCaptions] = useLocalState({});
   const [showImagePreviewModal, setShowImagePreviewModal] = useLocalState(false);
 
 
@@ -1735,27 +1735,45 @@ function AdminAppointmentRow({
   }, [showChatModal]);
 
   // File upload handler
-  const handleFileUpload = async (file) => {
-    if (!file) return;
+  const handleFileUpload = async (files) => {
+    if (!files || files.length === 0) return;
     
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      setFileUploadError('Please select an image file');
-      // Auto-hide error message after 3 seconds
-      setTimeout(() => setFileUploadError(''), 3000);
+    const validFiles = [];
+    const errors = [];
+    
+    // Validate each file
+    Array.from(files).forEach((file, index) => {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        errors.push(`File ${index + 1}: Please select an image file`);
+        return;
+      }
+      
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        errors.push(`File ${index + 1}: File size must be less than 5MB`);
+        return;
+      }
+      
+      validFiles.push(file);
+    });
+    
+    // Show errors if any
+    if (errors.length > 0) {
+      setFileUploadError(errors.join(', '));
+      setTimeout(() => setFileUploadError(''), 5000);
       return;
     }
     
-    // Validate file size (5MB limit)
-    if (file.size > 5 * 1024 * 1024) {
-      setFileUploadError('File size must be less than 5MB');
-      // Auto-hide error message after 3 seconds
+    // Limit to 10 images maximum
+    if (validFiles.length > 10) {
+      setFileUploadError('Maximum 10 images allowed at once');
       setTimeout(() => setFileUploadError(''), 3000);
       return;
     }
     
     // Show preview with caption input instead of directly sending
-    setSelectedFile(file);
+    setSelectedFiles(validFiles);
     setShowImagePreviewModal(true);
     setFileUploadError('');
   };
@@ -1819,27 +1837,43 @@ function AdminAppointmentRow({
     }
   };
 
-  const handleSendImageWithCaption = async () => {
-    if (!selectedFile) return;
+  const handleSendImagesWithCaptions = async () => {
+    if (!selectedFiles || selectedFiles.length === 0) return;
     
     setUploadingFile(true);
     
     try {
-      const uploadFormData = new FormData();
-      uploadFormData.append('image', selectedFile);
+      // Upload all images first
+      const uploadPromises = selectedFiles.map(async (file) => {
+        const uploadFormData = new FormData();
+        uploadFormData.append('image', file);
+        
+        const { data } = await axios.post(`${API_BASE_URL}/api/upload/image`, 
+          uploadFormData,
+          { 
+            withCredentials: true,
+            headers: { 'Content-Type': 'multipart/form-data' }
+          }
+        );
+        
+        return {
+          imageUrl: data.imageUrl,
+          fileName: file.name,
+          caption: imageCaptions[file.name] || ''
+        };
+      });
       
-      const { data } = await axios.post(`${API_BASE_URL}/api/upload/image`, 
-        uploadFormData,
-        { 
-          withCredentials: true,
-          headers: { 'Content-Type': 'multipart/form-data' }
-        }
-      );
-        // Send the image as a message with caption
-        await sendImageMessage(data.imageUrl, selectedFile.name, imageCaption);
-        setSelectedFile(null);
-        setImageCaption('');
-        setShowImagePreviewModal(false);
+      const uploadedImages = await Promise.all(uploadPromises);
+      
+      // Send each image as a separate message
+      for (const image of uploadedImages) {
+        await sendImageMessage(image.imageUrl, image.fileName, image.caption);
+      }
+      
+      // Clear state
+      setSelectedFiles([]);
+      setImageCaptions({});
+      setShowImagePreviewModal(false);
     } catch (error) {
       console.error('File upload error:', error);
       setFileUploadError(error.response?.data?.message || 'Upload failed. Please try again.');
@@ -3729,11 +3763,12 @@ function AdminAppointmentRow({
                     <input
                       type="file"
                       accept="image/*"
+                      multiple
                       className="hidden"
                       onChange={(e) => {
-                        const file = e.target.files[0];
-                        if (file) {
-                          handleFileUpload(file);
+                        const files = e.target.files;
+                        if (files && files.length > 0) {
+                          handleFileUpload(files);
                         }
                         // Reset the input
                         e.target.value = '';
@@ -3789,16 +3824,18 @@ function AdminAppointmentRow({
                 </div>
               )}
               
-              {/* Image Preview Modal - Positioned as overlay */}
-              {showImagePreviewModal && selectedFile && (
+              {/* Multi-Image Preview Modal - Positioned as overlay */}
+              {showImagePreviewModal && selectedFiles.length > 0 && (
                 <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                  <div className="bg-white border-2 border-gray-200 rounded-lg p-4 shadow-2xl max-w-md w-full max-h-[80vh] overflow-y-auto">
+                  <div className="bg-white border-2 border-gray-200 rounded-lg p-4 shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-lg font-medium text-gray-700">Image Preview</span>
+                      <span className="text-lg font-medium text-gray-700">
+                        Image Preview ({selectedFiles.length} image{selectedFiles.length !== 1 ? 's' : ''})
+                      </span>
                       <button
                         onClick={() => {
-                          setSelectedFile(null);
-                          setImageCaption('');
+                          setSelectedFiles([]);
+                          setImageCaptions({});
                           setShowImagePreviewModal(false);
                         }}
                         className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-2 transition-colors"
@@ -3806,39 +3843,66 @@ function AdminAppointmentRow({
                         <FaTimes className="w-5 h-5" />
                       </button>
                     </div>
-                    <div className="mb-4">
-                      <img
-                        src={URL.createObjectURL(selectedFile)}
-                        alt="Preview"
-                        className="w-full max-h-64 object-contain rounded-lg border"
-                      />
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      {selectedFiles.map((file, index) => (
+                        <div key={index} className="border border-gray-200 rounded-lg p-3">
+                          <div className="mb-3">
+                            <img
+                              src={URL.createObjectURL(file)}
+                              alt={`Preview ${index + 1}`}
+                              className="w-full h-32 object-cover rounded-lg border"
+                            />
+                          </div>
+                          <div className="relative">
+                            <textarea
+                              placeholder={`Add a caption for ${file.name}...`}
+                              value={imageCaptions[file.name] || ''}
+                              onChange={(e) => setImageCaptions(prev => ({
+                                ...prev,
+                                [file.name]: e.target.value
+                              }))}
+                              className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg text-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              rows={2}
+                              maxLength={500}
+                            />
+                            {/* Emoji Picker for Caption */}
+                            <div className="absolute right-2 top-2">
+                              <EmojiButton 
+                                onEmojiClick={(emoji) => {
+                                  const currentCaption = imageCaptions[file.name] || '';
+                                  setImageCaptions(prev => ({
+                                    ...prev,
+                                    [file.name]: currentCaption + emoji
+                                  }));
+                                }}
+                                className="w-6 h-6"
+                              />
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1 text-right">
+                              {(imageCaptions[file.name] || '').length}/500
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <div className="mb-4">
-                      <textarea
-                        placeholder="Add a caption..."
-                        value={imageCaption}
-                        onChange={(e) => setImageCaption(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        rows={3}
-                        maxLength={500}
-                      />
-                      <div className="text-xs text-gray-500 mt-1 text-right">
-                        {imageCaption.length}/500
+                    
+                    <div className="flex justify-between items-center">
+                      <div className="text-sm text-gray-600">
+                        {selectedFiles.length} image{selectedFiles.length !== 1 ? 's' : ''} ready to send
                       </div>
-                    </div>
-                    <div className="flex justify-end">
                       <button
-                        onClick={handleSendImageWithCaption}
+                        onClick={handleSendImagesWithCaptions}
                         disabled={uploadingFile}
-                        className="bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition-colors"
+                        className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition-colors"
                       >
                         {uploadingFile ? (
                           <div className="flex items-center justify-center">
                             <div className="animate-spin w-3 h-3 border-2 border-white border-t-transparent rounded-full mr-1"></div>
-                            Sending...
+                            Sending {selectedFiles.length} image{selectedFiles.length !== 1 ? 's' : ''}...
                           </div>
                         ) : (
-                          'Send'
+                          `Send ${selectedFiles.length} Image${selectedFiles.length !== 1 ? 's' : ''}`
                         )}
                       </button>
                     </div>
