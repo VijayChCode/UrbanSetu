@@ -3,6 +3,7 @@ import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnv
 import { formatLinksInText } from '../utils/linkFormatter.jsx';
 import UserAvatar from '../components/UserAvatar';
 import ImagePreview from '../components/ImagePreview';
+import LinkPreview from '../components/LinkPreview';
 import { EmojiButton } from '../components/EmojiPicker';
 import { useSoundEffects, SoundControl } from '../components/SoundEffects';
 import { useSelector } from "react-redux";
@@ -1206,6 +1207,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const [imageCaptions, setImageCaptions] = useState({});
   const [showImagePreviewModal, setShowImagePreviewModal] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [detectedUrl, setDetectedUrl] = useState(null);
 
   // Sound effects
   const { playMessageSent, playMessageReceived, playNotification, toggleMute, setVolume, isMuted } = useSoundEffects();
@@ -1981,6 +1983,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     // Immediately update UI - this makes the message appear instantly
     setComments(prev => [...prev, tempMessage]);
     setComment("");
+    setDetectedUrl(null);
     setReplyTo(null);
     // Reset textarea height to normal after sending
     resetTextareaHeight();
@@ -2103,6 +2106,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         setEditingComment(null);
         setEditText("");
         setComment(""); // Clear the main input
+        setDetectedUrl(null);
         // Reset textarea height to normal after editing
         resetTextareaHeight();
         
@@ -4604,6 +4608,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           setEditingComment(null); 
                           setEditText(""); 
                           setComment(""); 
+                          setDetectedUrl(null);
                           // Reset textarea height to normal when cancelling edit
                           resetTextareaHeight();
                         }} 
@@ -4619,6 +4624,14 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 <div className="flex gap-2 mt-1 px-3 pb-2 flex-shrink-0 bg-gradient-to-b from-transparent to-white pt-2 items-end">
                   {/* Message Input Container with Attachment and Emoji Icons Inside */}
                   <div className="flex-1 relative">
+                    {/* Link Preview */}
+                    {detectedUrl && (
+                      <LinkPreview
+                        url={detectedUrl}
+                        onRemove={() => setDetectedUrl(null)}
+                        className="mb-2"
+                      />
+                    )}
                     <textarea
                       rows={1}
                       className="w-full pl-4 pr-20 py-3 border-2 border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-400 shadow-lg transition-all duration-300 bg-white resize-none whitespace-pre-wrap break-all hover:border-blue-300 hover:shadow-xl focus:shadow-2xl transform hover:scale-[1.01] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
@@ -4630,16 +4643,27 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                       placeholder={editingComment ? "Edit your message..." : "Type a message..."}
                       value={comment}
                       onChange={e => {
-                        setComment(e.target.value);
+                        const value = e.target.value;
+                        setComment(value);
+                        
+                        // Detect URLs in the input
+                        const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/gi;
+                        const urls = value.match(urlRegex);
+                        if (urls && urls.length > 0) {
+                          setDetectedUrl(urls[0]);
+                        } else {
+                          setDetectedUrl(null);
+                        }
+                        
                         if (editingComment) {
-                          setEditText(e.target.value);
+                          setEditText(value);
                         }
                         if (!editingComment) {
                           socket.emit('typing', { toUserId: otherParty._id, fromUserId: currentUser._id, appointmentId: appt._id });
                         }
                         
                         // If cleared entirely, restore to original height
-                        if ((e.target.value || '').trim() === '') {
+                        if ((value || '').trim() === '') {
                           const textarea = e.target;
                           textarea.style.height = '48px';
                           textarea.style.overflowY = 'hidden';

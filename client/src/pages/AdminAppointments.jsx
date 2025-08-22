@@ -3,6 +3,7 @@ import { FaTrash, FaSearch, FaPen, FaPaperPlane, FaUser, FaEnvelope, FaCalendar,
 import { formatLinksInText } from '../utils/linkFormatter.jsx';
 import UserAvatar from '../components/UserAvatar';
 import ImagePreview from '../components/ImagePreview';
+import LinkPreview from '../components/LinkPreview';
 import { EmojiButton } from '../components/EmojiPicker';
 import { useSelector } from "react-redux";
 import { useState as useLocalState } from "react";
@@ -1126,6 +1127,7 @@ function AdminAppointmentRow({
     }
   }, [localComments, currentUser._id]);
   const [newComment, setNewComment] = useLocalState("");
+  const [detectedUrl, setDetectedUrl] = useState(null);
   const [sending, setSending] = useLocalState(false);
   const [editingComment, setEditingComment] = useLocalState(null);
   const [editText, setEditText] = useLocalState("");
@@ -1918,6 +1920,7 @@ function AdminAppointmentRow({
     setLocalComments(prev => [...prev, tempMessage]);
     try { playMessageSent(); } catch(_) {}
     setNewComment("");
+    setDetectedUrl(null);
     setReplyTo(null);
     // Reset textarea height to normal after sending
     resetTextareaHeight();
@@ -2041,6 +2044,7 @@ function AdminAppointmentRow({
         setEditingComment(null);
         setEditText("");
         setNewComment(""); // Clear the main input
+        setDetectedUrl(null);
         // Reset textarea height to normal after editing
         resetTextareaHeight();
         
@@ -3634,6 +3638,7 @@ function AdminAppointmentRow({
                         setEditingComment(null); 
                         setEditText(""); 
                         setNewComment(""); 
+                        setDetectedUrl(null);
                         // Reset textarea height to normal when cancelling edit
                         resetTextareaHeight();
                       }} 
@@ -3648,6 +3653,14 @@ function AdminAppointmentRow({
               <div className="flex gap-2 mt-1 px-3 pb-2 items-end">
                 {/* Message Input Container with Attachment and Emoji Icons Inside */}
                 <div className="flex-1 relative">
+                  {/* Link Preview */}
+                  {detectedUrl && (
+                    <LinkPreview
+                      url={detectedUrl}
+                      onRemove={() => setDetectedUrl(null)}
+                      className="mb-2"
+                    />
+                  )}
                   <textarea
                     rows={1}
                     className="w-full pl-4 pr-20 py-3 border-2 border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-400 shadow-lg transition-all duration-300 bg-white resize-none whitespace-pre-wrap break-all hover:border-blue-300 hover:shadow-xl focus:shadow-2xl transform hover:scale-[1.01] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
@@ -3659,9 +3672,20 @@ function AdminAppointmentRow({
                     placeholder={editingComment ? "Edit your message..." : "Type a message..."}
                     value={newComment}
                     onChange={(e) => {
-                      setNewComment(e.target.value);
+                      const value = e.target.value;
+                      setNewComment(value);
+                      
+                      // Detect URLs in the input
+                      const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/gi;
+                      const urls = value.match(urlRegex);
+                      if (urls && urls.length > 0) {
+                        setDetectedUrl(urls[0]);
+                      } else {
+                        setDetectedUrl(null);
+                      }
+                      
                       if (editingComment) {
-                        setEditText(e.target.value);
+                        setEditText(value);
                       }
                       
                       // If cleared entirely, restore to original height
