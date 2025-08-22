@@ -3891,7 +3891,7 @@ function AdminAppointmentRow({
                             <div key={index} className="relative">
                               <button
                                 onClick={() => setPreviewIndex(index)}
-                                className={`flex-shrink-0 w-16 h-16 rounded-lg border-2 transition-all duration-200 ${
+                                className={`flex-shrink-0 w-12 h-12 rounded-lg border-2 transition-all duration-200 ${
                                   index === previewIndex 
                                     ? 'border-blue-500 shadow-lg' 
                                     : 'border-gray-300 hover:border-gray-400'
@@ -3931,11 +3931,11 @@ function AdminAppointmentRow({
                                       }
                                     }
                                   }}
-                                  className="absolute top-0 right-0 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 shadow-lg transition-all duration-200 hover:scale-110 z-10 transform translate-x-1/2 -translate-y-1/2"
+                                  className="absolute -top-1 -right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 shadow-lg transition-all duration-200 hover:scale-110 z-10"
                                   title="Remove this image"
                                   aria-label="Remove this image"
                                 >
-                                  <FaTimes className="w-2.5 h-2.5" />
+                                  <FaTimes className="w-2 h-2" />
                                 </button>
                               )}
                             </div>
