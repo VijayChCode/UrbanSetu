@@ -256,7 +256,7 @@ const GeminiChatbox = () => {
                                                 : 'bg-gray-100 text-gray-800'
                                         }`}
                                     >
-                                        <p className="text-sm whitespace-pre-wrap leading-relaxed pr-8">{formatLinksInText(message.content)}</p>
+                                        <p className="text-sm whitespace-pre-wrap leading-relaxed pr-8">{formatLinksInText(message.content, message.role === 'user')}</p>
 
                                         {/* Copy icon for all messages (sent and received) */}
                                         <button

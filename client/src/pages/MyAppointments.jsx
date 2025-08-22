@@ -4487,7 +4487,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                           />
                                         </div>
                                       )}
-                                      <span className="whitespace-pre-wrap break-words">{formatLinksInText((c.message || '').replace(/\n+$/, ''))}</span>
+                                      <span className="whitespace-pre-wrap break-words">{formatLinksInText((c.message || '').replace(/\n+$/, ''), isMe)}</span>
                                       {c.edited && (
                                         <span className="ml-2 text-[10px] italic text-gray-300 whitespace-nowrap">(Edited)</span>
                                       )}
