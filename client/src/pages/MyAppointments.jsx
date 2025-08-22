@@ -1249,6 +1249,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     
     // Show preview with caption input instead of directly sending
     setSelectedFiles(validFiles);
+    setPreviewIndex(0); // Reset to first image
     setShowImagePreviewModal(true);
     setFileUploadError('');
   };
@@ -1342,6 +1343,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       // Clear state
       setSelectedFiles([]);
       setImageCaptions({});
+      setPreviewIndex(0);
       setShowImagePreviewModal(false);
     } catch (error) {
       console.error('File upload error:', error);
@@ -4814,6 +4816,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           onClick={() => {
                             setSelectedFiles([]);
                             setImageCaptions({});
+                            setPreviewIndex(0);
                             setShowImagePreviewModal(false);
                           }}
                           className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-2 transition-colors"
@@ -4841,7 +4844,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             >
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                              </svg>
+                            </svg>
                             </button>
                           </>
                         )}
@@ -4856,34 +4859,30 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                         </div>
                         
                         {/* Image Counter */}
-                        {selectedFiles.length > 1 && (
-                          <div className="text-center text-sm text-gray-600 mb-3">
-                            {previewIndex + 1} of {selectedFiles.length}
-                          </div>
-                        )}
+                        <div className="text-center text-sm text-gray-600 mb-3">
+                          {previewIndex + 1} of {selectedFiles.length}
+                        </div>
                         
                         {/* Image Thumbnails */}
-                        {selectedFiles.length > 1 && (
-                          <div className="flex gap-2 justify-center mb-3 overflow-x-auto">
-                            {selectedFiles.map((file, index) => (
-                              <button
-                                key={index}
-                                onClick={() => setPreviewIndex(index)}
-                                className={`flex-shrink-0 w-16 h-16 rounded-lg border-2 transition-all duration-200 ${
-                                  index === previewIndex 
-                                    ? 'border-blue-500 shadow-lg' 
-                                    : 'border-gray-300 hover:border-gray-400'
-                                }`}
-                              >
-                                <img
-                                  src={URL.createObjectURL(file)}
-                                  alt={`Thumbnail ${index + 1}`}
-                                  className="w-full h-full object-cover rounded-lg"
-                                />
-                              </button>
-                            ))}
-                          </div>
-                        )}
+                        <div className="flex gap-2 justify-center mb-3 overflow-x-auto">
+                          {selectedFiles.map((file, index) => (
+                            <button
+                              key={index}
+                              onClick={() => setPreviewIndex(index)}
+                              className={`flex-shrink-0 w-16 h-16 rounded-lg border-2 transition-all duration-200 ${
+                                index === previewIndex 
+                                  ? 'border-blue-500 shadow-lg' 
+                                  : 'border-gray-300 hover:border-gray-400'
+                              }`}
+                            >
+                              <img
+                                src={URL.createObjectURL(file)}
+                                alt={`Thumbnail ${index + 1}`}
+                                className="w-full h-full object-cover rounded-lg"
+                              />
+                            </button>
+                          ))}
+                        </div>
                       </div>
                       
                       {/* Caption for Current Image */}

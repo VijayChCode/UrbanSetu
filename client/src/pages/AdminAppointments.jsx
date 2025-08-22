@@ -1774,6 +1774,7 @@ function AdminAppointmentRow({
     
     // Show preview with caption input instead of directly sending
     setSelectedFiles(validFiles);
+    setPreviewIndex(0); // Reset to first image
     setShowImagePreviewModal(true);
     setFileUploadError('');
   };
@@ -1873,6 +1874,7 @@ function AdminAppointmentRow({
       // Clear state
       setSelectedFiles([]);
       setImageCaptions({});
+      setPreviewIndex(0);
       setShowImagePreviewModal(false);
     } catch (error) {
       console.error('File upload error:', error);
@@ -3833,11 +3835,12 @@ function AdminAppointmentRow({
                         Image Preview ({selectedFiles.length} image{selectedFiles.length !== 1 ? 's' : ''})
                       </span>
                       <button
-                        onClick={() => {
-                          setSelectedFiles([]);
-                          setImageCaptions({});
-                          setShowImagePreviewModal(false);
-                        }}
+                                                  onClick={() => {
+                            setSelectedFiles([]);
+                            setImageCaptions({});
+                            setPreviewIndex(0);
+                            setShowImagePreviewModal(false);
+                          }}
                         className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-2 transition-colors"
                       >
                         <FaTimes className="w-5 h-5" />
@@ -3877,15 +3880,12 @@ function AdminAppointmentRow({
                         />
                       </div>
                       
-                      {/* Image Counter */}
-                      {selectedFiles.length > 1 && (
+                                              {/* Image Counter */}
                         <div className="text-center text-sm text-gray-600 mb-3">
                           {previewIndex + 1} of {selectedFiles.length}
                         </div>
-                      )}
                       
-                      {/* Image Thumbnails */}
-                      {selectedFiles.length > 1 && (
+                                              {/* Image Thumbnails */}
                         <div className="flex gap-2 justify-center mb-3 overflow-x-auto">
                           {selectedFiles.map((file, index) => (
                             <button
@@ -3905,7 +3905,6 @@ function AdminAppointmentRow({
                             </button>
                           ))}
                         </div>
-                      )}
                     </div>
                     
                     {/* Caption for Current Image */}
