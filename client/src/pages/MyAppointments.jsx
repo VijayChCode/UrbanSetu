@@ -4531,6 +4531,24 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                         </div>
                                       )}
                                       <span className="whitespace-pre-wrap break-words">{formatLinksInText((c.message || '').replace(/\n+$/, ''), isMe)}</span>
+                                      
+                                      {/* Link Preview in Message */}
+                                      {(() => {
+                                        const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/gi;
+                                        const urls = (c.message || '').match(urlRegex);
+                                        if (urls && urls.length > 0) {
+                                          return (
+                                            <div className="mt-2">
+                                              <LinkPreview
+                                                url={urls[0]}
+                                                className="max-w-xs"
+                                                showRemoveButton={false}
+                                              />
+                                            </div>
+                                          );
+                                        }
+                                        return null;
+                                      })()}
                                       {c.edited && (
                                         <span className="ml-2 text-[10px] italic text-gray-300 whitespace-nowrap">(Edited)</span>
                                       )}
@@ -4630,6 +4648,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                         url={detectedUrl}
                         onRemove={() => setDetectedUrl(null)}
                         className="mb-2"
+                        showRemoveButton={true}
                       />
                     )}
                     <textarea

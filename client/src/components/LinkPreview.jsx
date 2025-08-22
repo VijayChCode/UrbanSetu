@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaExternalLinkAlt, FaTimes } from 'react-icons/fa';
 
-const LinkPreview = ({ url, onRemove, className = "" }) => {
+const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true }) => {
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -68,14 +68,14 @@ const LinkPreview = ({ url, onRemove, className = "" }) => {
               <div className="text-xs text-gray-500 truncate max-w-xs">{url}</div>
             </div>
           </div>
-          {onRemove && (
-            <button
-              onClick={onRemove}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <FaTimes className="text-sm" />
-            </button>
-          )}
+                      {onRemove && showRemoveButton && (
+              <button
+                onClick={onRemove}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <FaTimes className="text-sm" />
+              </button>
+            )}
         </div>
       </div>
     );
@@ -110,10 +110,10 @@ const LinkPreview = ({ url, onRemove, className = "" }) => {
                 <FaExternalLinkAlt className="text-xs text-gray-400" />
               </div>
             </div>
-            {onRemove && (
+            {onRemove && showRemoveButton && (
               <button
                 onClick={onRemove}
-                className="text-gray-400 hover:text-gray-600 transition-colors ml-2"
+                className="text-gray-600 transition-colors ml-2"
               >
                 <FaTimes className="text-sm" />
               </button>
