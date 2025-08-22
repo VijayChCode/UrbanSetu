@@ -3872,12 +3872,43 @@ function AdminAppointmentRow({
                       )}
                       
                       {/* Current Image */}
-                      <div className="mb-3">
+                      <div className="mb-3 relative">
                         <img
                           src={URL.createObjectURL(selectedFiles[previewIndex])}
                           alt={`Preview ${previewIndex + 1}`}
                           className="w-full h-64 object-contain rounded-lg border"
                         />
+                        {/* Delete Icon - Only show when multiple images are selected */}
+                        {selectedFiles.length > 1 && (
+                          <button
+                            onClick={() => {
+                              const newFiles = selectedFiles.filter((_, index) => index !== previewIndex);
+                              const newCaptions = { ...imageCaptions };
+                              // Remove caption for deleted image
+                              delete newCaptions[selectedFiles[previewIndex]?.name];
+                              
+                              if (newFiles.length === 0) {
+                                // If no images left, close modal
+                                setSelectedFiles([]);
+                                setImageCaptions({});
+                                setShowImagePreviewModal(false);
+                              } else {
+                                // Update files and adjust preview index
+                                setSelectedFiles(newFiles);
+                                setImageCaptions(newCaptions);
+                                // Adjust preview index if needed
+                                if (previewIndex >= newFiles.length) {
+                                  setPreviewIndex(newFiles.length - 1);
+                                }
+                              }
+                            }}
+                            className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-2 shadow-lg transition-all duration-200 hover:scale-110 z-10"
+                            title="Remove this image"
+                            aria-label="Remove this image"
+                          >
+                            <FaTimes className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                       
                                               {/* Image Counter */}
@@ -3888,21 +3919,57 @@ function AdminAppointmentRow({
                                               {/* Image Thumbnails */}
                         <div className="flex gap-2 justify-center mb-3 overflow-x-auto">
                           {selectedFiles.map((file, index) => (
-                            <button
-                              key={index}
-                              onClick={() => setPreviewIndex(index)}
-                              className={`flex-shrink-0 w-16 h-16 rounded-lg border-2 transition-all duration-200 ${
-                                index === previewIndex 
-                                  ? 'border-blue-500 shadow-lg' 
-                                  : 'border-gray-300 hover:border-gray-400'
-                              }`}
-                            >
-                              <img
-                                src={URL.createObjectURL(file)}
-                                alt={`Thumbnail ${index + 1}`}
-                                className="w-full h-full object-cover rounded-lg"
-                              />
-                            </button>
+                            <div key={index} className="relative">
+                              <button
+                                onClick={() => setPreviewIndex(index)}
+                                className={`flex-shrink-0 w-16 h-16 rounded-lg border-2 transition-all duration-200 ${
+                                  index === previewIndex 
+                                    ? 'border-blue-500 shadow-lg' 
+                                    : 'border-gray-300 hover:border-gray-400'
+                                }`}
+                              >
+                                <img
+                                  src={URL.createObjectURL(file)}
+                                  alt={`Thumbnail ${index + 1}`}
+                                  className="w-full h-full object-cover rounded-lg"
+                                />
+                              </button>
+                              {/* Delete Icon on Thumbnail - Only show when multiple images are selected */}
+                              {selectedFiles.length > 1 && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation(); // Prevent triggering the thumbnail selection
+                                    const newFiles = selectedFiles.filter((_, fileIndex) => fileIndex !== index);
+                                    const newCaptions = { ...imageCaptions };
+                                    // Remove caption for deleted image
+                                    delete newCaptions[file.name];
+                                    
+                                    if (newFiles.length === 0) {
+                                      // If no images left, close modal
+                                      setSelectedFiles([]);
+                                      setImageCaptions({});
+                                      setShowImagePreviewModal(false);
+                                    } else {
+                                      // Update files and adjust preview index
+                                      setSelectedFiles(newFiles);
+                                      setImageCaptions(newCaptions);
+                                      // Adjust preview index if needed
+                                      if (previewIndex >= newFiles.length) {
+                                        setPreviewIndex(newFiles.length - 1);
+                                      } else if (previewIndex > index) {
+                                        // If we deleted an image before the current preview, adjust index
+                                        setPreviewIndex(previewIndex - 1);
+                                      }
+                                    }
+                                  }}
+                                  className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 shadow-lg transition-all duration-200 hover:scale-110 z-10"
+                                  title="Remove this image"
+                                  aria-label="Remove this image"
+                                >
+                                  <FaTimes className="w-2 h-2" />
+                                </button>
+                              )}
+                            </div>
                           ))}
                         </div>
                     </div>
