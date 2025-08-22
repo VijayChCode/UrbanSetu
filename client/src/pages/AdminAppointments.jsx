@@ -3576,6 +3576,7 @@ function AdminAppointmentRow({
                                                 url={urls[0]}
                                                 className="max-w-xs"
                                                 showRemoveButton={false}
+                                                clickable={true}
                                               />
                                             </div>
                                             );
@@ -3682,15 +3683,16 @@ function AdminAppointmentRow({
                   {/* Link Preview Container with Height Constraints */}
                   {detectedUrl && (
                     <div className="max-h-32 overflow-y-auto mb-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                      <LinkPreview
-                        url={detectedUrl}
-                        onRemove={() => {
-                          setDetectedUrl(null);
-                          setPreviewDismissed(true);
-                        }}
-                        className=""
-                        showRemoveButton={true}
-                      />
+                                              <LinkPreview
+                          url={detectedUrl}
+                          onRemove={() => {
+                            setDetectedUrl(null);
+                            setPreviewDismissed(true);
+                          }}
+                          className=""
+                          showRemoveButton={true}
+                          clickable={false}
+                        />
                     </div>
                   )}
                   <textarea

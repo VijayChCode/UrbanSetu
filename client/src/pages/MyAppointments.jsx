@@ -4548,6 +4548,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                                 url={urls[0]}
                                                 className="max-w-xs"
                                                 showRemoveButton={false}
+                                                clickable={true}
                                               />
                                             </div>
                                           );
@@ -4661,6 +4662,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           }}
                           className=""
                           showRemoveButton={true}
+                          clickable={false}
                         />
                       </div>
                     )}

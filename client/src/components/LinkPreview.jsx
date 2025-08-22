@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { FaExternalLinkAlt, FaTimes } from 'react-icons/fa';
 
-const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true }) => {
+const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, clickable = true }) => {
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+
+  const handlePreviewClick = () => {
+    if (clickable && url) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+  };
 
   useEffect(() => {
     if (!url) return;
@@ -82,7 +88,18 @@ const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true })
   }
 
   return (
-    <div className={`bg-gray-50 border border-gray-200 rounded-lg p-3 mb-2 hover:border-gray-300 transition-colors ${className}`}>
+    <div 
+      className={`bg-gray-50 border border-gray-200 rounded-lg p-3 mb-2 hover:border-gray-300 transition-colors ${clickable ? 'cursor-pointer hover:bg-gray-100' : ''} ${className}`}
+      onClick={clickable ? handlePreviewClick : undefined}
+      role={clickable ? 'button' : undefined}
+      tabIndex={clickable ? 0 : undefined}
+      onKeyDown={clickable ? (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handlePreviewClick();
+        }
+      } : undefined}
+    >
       <div className="flex items-start space-x-3">
         {preview.image && (
           <div className="flex-shrink-0">
