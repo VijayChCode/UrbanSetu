@@ -517,6 +517,26 @@ export default function NotificationBell({ mobile = false }) {
                             <FaRedo className="w-4 h-4" />
                             Refresh
                           </button>
+                          {notifications.length > 0 && (
+                            <button
+                              onClick={() => {
+                                // Clear all notifications
+                                fetch(`${API_BASE_URL}/api/notifications/user/${currentUser._id}/all`, {
+                                  method: 'DELETE',
+                                  credentials: 'include',
+                                }).then(() => {
+                                  setNotifications([]);
+                                  setUnreadCount(0);
+                                  toast.success('All notifications cleared');
+                                });
+                              }}
+                              className="ml-2 text-sm text-red-600 hover:text-red-800 font-medium flex items-center gap-1"
+                              title="Clear all notifications"
+                            >
+                              <FaTrash className="w-4 h-4" />
+                              Clear all
+                            </button>
+                          )}
                         </div>
                       </div>
 
@@ -787,27 +807,7 @@ export default function NotificationBell({ mobile = false }) {
                     </div>
                   )}
                   
-                  {/* Footer - Always visible when there are notifications (outside scrollable area) */}
-                  {activeTab === 'notifications' && notifications.length > 0 && (
-                    <div className="p-3 border-t border-gray-100 bg-gray-50 shadow-lg mt-4">
-                      <button
-                        onClick={() => {
-                          // Clear all notifications
-                          fetch(`${API_BASE_URL}/api/notifications/user/${currentUser._id}/all`, {
-                            method: 'DELETE',
-                            credentials: 'include',
-                          }).then(() => {
-                            setNotifications([]);
-                            setUnreadCount(0);
-                            toast.success('All notifications cleared');
-                          });
-                        }}
-                        className="text-sm text-red-600 hover:text-red-800 font-medium"
-                      >
-                        Clear all notifications
-                      </button>
-                    </div>
-                  )}
+
                 </div>
               </div>
             </div>,
@@ -906,6 +906,26 @@ export default function NotificationBell({ mobile = false }) {
                     <FaRedo className="w-4 h-4" />
                     Refresh
                   </button>
+                  {notifications.length > 0 && (
+                    <button
+                      onClick={() => {
+                        // Clear all notifications
+                        fetch(`${API_BASE_URL}/api/notifications/user/${currentUser._id}/all`, {
+                          method: 'DELETE',
+                          credentials: 'include',
+                        }).then(() => {
+                          setNotifications([]);
+                          setUnreadCount(0);
+                          toast.success('All notifications cleared');
+                        });
+                      }}
+                      className="ml-2 text-sm text-red-600 hover:text-red-800 font-medium flex items-center gap-1"
+                      title="Clear all notifications"
+                    >
+                      <FaTrash className="w-4 h-4" />
+                      Clear all
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -1009,27 +1029,7 @@ export default function NotificationBell({ mobile = false }) {
                 )}
               </div>
 
-              {/* Footer - Always visible when there are notifications */}
-              {notifications.length > 0 && (
-                <div className="sticky bottom-0 p-3 border-t border-gray-100 bg-gray-50 shadow-lg">
-                  <button
-                    onClick={() => {
-                      // Clear all notifications
-                      fetch(`${API_BASE_URL}/api/notifications/user/${currentUser._id}/all`, {
-                        method: 'DELETE',
-                        credentials: 'include',
-                      }).then(() => {
-                        setNotifications([]);
-                        setUnreadCount(0);
-                        toast.success('All notifications cleared');
-                      });
-                    }}
-                    className="text-sm text-red-600 hover:text-red-800 font-medium"
-                  >
-                    Clear all notifications
-                  </button>
-                </div>
-              )}
+
             </>
           ) : (
             /* Send Notification Tab */
