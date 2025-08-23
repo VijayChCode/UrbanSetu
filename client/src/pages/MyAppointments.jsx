@@ -43,6 +43,7 @@ export default function MyAppointments() {
   // New state for notification-triggered chat opening
   const [notificationChatData, setNotificationChatData] = useState(null);
   const [shouldOpenChatFromNotification, setShouldOpenChatFromNotification] = useState(false);
+  const [activeChatAppointmentId, setActiveChatAppointmentId] = useState(null);
 
   // Function to open chat from notification
   const openChatFromNotification = useCallback((appointmentId) => {
@@ -50,25 +51,9 @@ export default function MyAppointments() {
     if (appointment) {
       setNotificationChatData(appointment);
       setShouldOpenChatFromNotification(true);
-      
-      // Check if chat is locked/encrypted
-      const isChatLocked = appointment.buyerChatLocked || appointment.sellerChatLocked;
-      const currentUserId = currentUser._id;
-      const isBuyer = appointment.buyerId?._id === currentUserId || appointment.buyerId === currentUserId;
-      const isSeller = appointment.sellerId?._id === currentUserId || appointment.sellerId === currentUserId;
-      
-      if (isChatLocked) {
-        if (isBuyer && appointment.buyerChatLocked) {
-          setShowChatUnlockModal(true);
-        } else if (isSeller && appointment.sellerChatLocked) {
-          setShowChatUnlockModal(true);
-        }
-      } else {
-        // Open chat directly if not locked
-        setShowChatModal(true);
-      }
+      setActiveChatAppointmentId(appointmentId);
     }
-  }, [appointments, currentUser._id]);
+  }, [appointments]);
 
   // Function to handle notification clicks when already on MyAppointments page
   const handleNotificationClick = useCallback((appointmentId) => {
@@ -273,18 +258,10 @@ export default function MyAppointments() {
   // Handle notification-triggered chat opening
   useEffect(() => {
     if (shouldOpenChatFromNotification && notificationChatData) {
-      // Find the appointment in the current list and set it as active
-      const appointment = appointments.find(appt => appt._id === notificationChatData._id);
-      if (appointment) {
-        // Set the appointment as active and open chat
-        setNotificationChatData(null);
-        setShouldOpenChatFromNotification(false);
-        
-        // The chat will be opened by the openChatFromNotification function
-        // which handles both locked and unlocked chats
-      }
+      // The chat will be opened by the AppointmentRow component
+      // which handles both locked and unlocked chats
     }
-  }, [shouldOpenChatFromNotification, notificationChatData, appointments]);
+  }, [shouldOpenChatFromNotification, notificationChatData]);
 
   // Global event listener for notification clicks when on MyAppointments page
   useEffect(() => {
@@ -296,23 +273,7 @@ export default function MyAppointments() {
         if (appointment) {
           setNotificationChatData(appointment);
           setShouldOpenChatFromNotification(true);
-          
-          // Check if chat is locked/encrypted
-          const isChatLocked = appointment.buyerChatLocked || appointment.sellerChatLocked;
-          const currentUserId = currentUser._id;
-          const isBuyer = appointment.buyerId?._id === currentUserId || appointment.buyerId === currentUserId;
-          const isSeller = appointment.sellerId?._id === currentUserId || appointment.sellerId === currentUserId;
-          
-          if (isChatLocked) {
-            if (isBuyer && appointment.buyerChatLocked) {
-              setShowChatUnlockModal(true);
-            } else if (isSeller && appointment.sellerChatLocked) {
-              setShowChatUnlockModal(true);
-            }
-          } else {
-            // Open chat directly if not locked
-            setShowChatModal(true);
-          }
+          setActiveChatAppointmentId(appointmentId);
         }
       }
     };
@@ -339,23 +300,7 @@ export default function MyAppointments() {
         if (appointment) {
           setNotificationChatData(appointment);
           setShouldOpenChatFromNotification(true);
-          
-          // Check if chat is locked/encrypted
-          const isChatLocked = appointment.buyerChatLocked || appointment.sellerChatLocked;
-          const currentUserId = currentUser._id;
-          const isBuyer = appointment.buyerId?._id === currentUserId || appointment.buyerId === currentUserId;
-          const isSeller = appointment.sellerId?._id === currentUserId || appointment.sellerId === currentUserId;
-          
-          if (isChatLocked) {
-            if (isBuyer && appointment.buyerChatLocked) {
-              setShowChatUnlockModal(true);
-            } else if (isSeller && appointment.sellerChatLocked) {
-              setShowChatUnlockModal(true);
-            }
-          } else {
-            // Open chat directly if not locked
-            setShowChatModal(true);
-          }
+          setActiveChatAppointmentId(appointmentId);
         }
       }, 500);
     }
@@ -898,6 +843,12 @@ export default function MyAppointments() {
                       isArchived={false}
                       onCancelRefresh={handleCancelRefresh}
                       copyMessageToClipboard={copyMessageToClipboard}
+                      activeChatAppointmentId={activeChatAppointmentId}
+                      shouldOpenChatFromNotification={shouldOpenChatFromNotification}
+                      onChatOpened={() => {
+                        setShouldOpenChatFromNotification(false);
+                        setActiveChatAppointmentId(null);
+                      }}
                   />
                 ))}
               </tbody>
@@ -1156,7 +1107,7 @@ function getDateLabel(date) {
   if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
   return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 }
-function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDelete, actionLoading, onShowOtherParty, onOpenReinitiate, handleArchiveAppointment, handleUnarchiveAppointment, isArchived, onCancelRefresh, copyMessageToClipboard }) {
+function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDelete, actionLoading, onShowOtherParty, onOpenReinitiate, handleArchiveAppointment, handleUnarchiveAppointment, isArchived, onCancelRefresh, copyMessageToClipboard, activeChatAppointmentId, shouldOpenChatFromNotification, onChatOpened }) {
   const [replyTo, setReplyTo] = useState(null);
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState(appt.comments || []);
@@ -1251,6 +1202,32 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       document.body.style.overflow = 'unset';
     };
   }, [showChatLockModal, showChatUnlockModal, showForgotPasswordModal, showRemoveLockModal]);
+
+  // Handle notification-triggered chat opening
+  useEffect(() => {
+    if (shouldOpenChatFromNotification && activeChatAppointmentId === appt._id) {
+      // Check if chat is locked/encrypted
+      const isChatLocked = appt.buyerChatLocked || appt.sellerChatLocked;
+      const currentUserId = currentUser._id;
+      const isBuyer = appt.buyerId?._id === currentUserId || appt.buyerId === currentUserId;
+      const isSeller = appt.sellerId?._id === currentUserId || appt.sellerId === currentUserId;
+      
+      if (isChatLocked) {
+        if (isBuyer && appt.buyerChatLocked) {
+          setShowChatUnlockModal(true);
+        } else if (isSeller && appt.sellerChatLocked) {
+          setShowChatUnlockModal(true);
+        }
+      } else {
+        // Open chat directly if not locked
+        setShowChatModal(true);
+        // Notify parent that chat has been opened
+        if (onChatOpened) {
+          onChatOpened();
+        }
+      }
+    }
+  }, [shouldOpenChatFromNotification, activeChatAppointmentId, appt._id, appt.buyerChatLocked, appt.sellerChatLocked, appt.buyerId, appt.sellerId, currentUser._id, onChatOpened]);
   
   // Store appointment and reasons for modals
   const [appointmentToHandle, setAppointmentToHandle] = useState(null);
@@ -1580,6 +1557,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         
         // Open chat modal after successful unlock
         setShowChatModal(true);
+        // Notify parent that chat has been opened
+        if (onChatOpened) {
+          onChatOpened();
+        }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Incorrect password');
     } finally {
@@ -3032,23 +3013,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
             // Open the specific chat when notification is clicked
             setNotificationChatData(appt);
             setShouldOpenChatFromNotification(true);
-            
-            // Check if chat is locked/encrypted
-            const isChatLocked = appt.buyerChatLocked || appt.sellerChatLocked;
-            const currentUserId = currentUser._id;
-            const isBuyer = appt.buyerId?._id === currentUserId || appt.buyerId === currentUserId;
-            const isSeller = appt.sellerId?._id === currentUserId || appt.sellerId === currentUserId;
-            
-            if (isChatLocked) {
-              if (isBuyer && appt.buyerChatLocked) {
-                setShowChatUnlockModal(true);
-              } else if (isSeller && appt.sellerChatLocked) {
-                setShowChatUnlockModal(true);
-              }
-            } else {
-              // Open chat directly if not locked
-              setShowChatModal(true);
-            }
+            setActiveChatAppointmentId(appt._id);
           },
           autoClose: 5000,
           closeOnClick: true,
