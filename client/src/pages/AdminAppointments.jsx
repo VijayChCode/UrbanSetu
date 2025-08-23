@@ -3547,7 +3547,7 @@ function AdminAppointmentRow({
               
               <div 
                 ref={chatContainerRef} 
-                className={`flex-1 overflow-y-auto space-y-2 mb-4 px-4 pt-4 animate-fadeInChat relative bg-gradient-to-b from-transparent to-blue-50/30 ${isDragOver ? 'bg-blue-50/50 border-2 border-dashed border-blue-300' : ''}`}
+                className={`flex-1 overflow-y-auto space-y-2 px-4 pt-4 animate-fadeInChat relative bg-gradient-to-b from-transparent to-blue-50/30 ${isDragOver ? 'bg-blue-50/50 border-2 border-dashed border-blue-300' : ''}`}
                 style={{minHeight: '400px', maxHeight: 'calc(100vh - 200px)'}}
                 onDragOver={(e) => {
                   e.preventDefault();
