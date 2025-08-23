@@ -3122,15 +3122,6 @@ function AdminAppointmentRow({
                               <FaRegStar size={18} />
                             )}
                           </button>
-                          {/* Close button for deleted messages */}
-                          <button
-                            onClick={() => setHeaderOptionsMessageId(null)}
-                            className="text-white hover:text-gray-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
-                            title="Close options"
-                            aria-label="Close options"
-                          >
-                            <FaTimes size={18} />
-                          </button>
                         </>
                       ) : (
                         <>
