@@ -2821,6 +2821,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       const message = comments.find(c => c._id === messageId);
       if (!message) return;
 
+      console.log('Adding/removing reaction:', { messageId, emoji, currentUser: currentUser._id });
+      console.log('Current reactions:', message.reactions);
+
       // Add reaction to the message
       const { data } = await axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${messageId}/react`, 
         { emoji },
@@ -2831,6 +2834,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       );
 
       // Update local state
+      console.log('API response reactions:', data.reactions);
       setComments(prev => prev.map(c => 
         c._id === messageId 
           ? { 
@@ -5043,16 +5047,39 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               {/* Display reactions */}
                               {!c.deleted && c.reactions && c.reactions.length > 0 && (
                                 <div className="flex items-center gap-1 ml-1">
-                                  {c.reactions.map((reaction, index) => (
-                                    <span 
-                                      key={index}
-                                      className="text-xs bg-gray-100 rounded-full px-2 py-1 flex items-center gap-1"
-                                      title={`${reaction.userName || 'User'} reacted with ${reaction.emoji}`}
-                                    >
-                                      <span>{reaction.emoji}</span>
-                                      <span className="text-gray-600">{reaction.count || 1}</span>
-                                    </span>
-                                  ))}
+                                  {(() => {
+                                    // Group reactions by emoji
+                                    const groupedReactions = {};
+                                    c.reactions.forEach(reaction => {
+                                      if (!groupedReactions[reaction.emoji]) {
+                                        groupedReactions[reaction.emoji] = [];
+                                      }
+                                      groupedReactions[reaction.emoji].push(reaction);
+                                    });
+                                    
+                                    return Object.entries(groupedReactions).map(([emoji, reactions]) => {
+                                      const hasUserReaction = reactions.some(r => r.userId === currentUser._id);
+                                      const userNames = reactions.map(r => r.userName).join(', ');
+                                      
+                                      return (
+                                        <button
+                                          key={emoji}
+                                          onClick={() => handleQuickReaction(c._id, emoji)}
+                                          className={`text-xs rounded-full px-2 py-1 flex items-center gap-1 transition-all duration-200 hover:scale-105 ${
+                                            hasUserReaction 
+                                              ? 'bg-blue-100 border border-blue-300 hover:bg-blue-200' 
+                                              : 'bg-gray-100 hover:bg-gray-200'
+                                          }`}
+                                          title={`${userNames} reacted with ${emoji}${hasUserReaction ? ' (Click to remove)' : ' (Click to add)'}`}
+                                        >
+                                          <span>{emoji}</span>
+                                          <span className={`${hasUserReaction ? 'text-blue-600' : 'text-gray-600'}`}>
+                                            {reactions.length}
+                                          </span>
+                                        </button>
+                                      );
+                                    });
+                                  })()}
                                 </div>
                               )}
                               {(c.senderEmail === currentUser.email) && !c.deleted && (
