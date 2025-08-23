@@ -320,18 +320,12 @@ function AppRoutes({ bootstrapped }) {
     if (!currentUser) return; // Only run if user is logged in
     
     const handleNewMessage = async (data) => {
-      console.log('App.jsx: Received commentUpdate event:', data);
-      
       // Since backend now only sends to intended recipients, we can trust this message is for us
       // Just check if it's not from the current user
       if (data.comment && data.comment.senderEmail !== currentUser.email) {
-        console.log('App.jsx: Processing message from:', data.comment.senderEmail);
-        
         // Check if we're not already on the MyAppointments page
         const currentPath = window.location.pathname;
         const isOnMyAppointments = currentPath.includes('/my-appointments') || currentPath.includes('/user/my-appointments');
-        
-        console.log('App.jsx: Current path:', currentPath, 'Is on MyAppointments:', isOnMyAppointments);
         
         if (!isOnMyAppointments) {
           // Use same logic as MyAppointments page to check if sender is admin
@@ -360,13 +354,10 @@ function AppRoutes({ bootstrapped }) {
             }
           }
           
-          console.log('App.jsx: Showing notification for appointmentId:', data.appointmentId);
-          
           // Show notification for new message
           playNotification();
           toast.info(`New message from ${senderName}`, {
             onClick: () => {
-              console.log('App.jsx: Notification clicked, navigating to appointmentId:', data.appointmentId);
               // Navigate to MyAppointments page when notification is clicked
               // and pass the appointment ID to open the specific chat
               navigate('/user/my-appointments', { 
