@@ -45,20 +45,7 @@ export default function MyAppointments() {
   const [shouldOpenChatFromNotification, setShouldOpenChatFromNotification] = useState(false);
   const [activeChatAppointmentId, setActiveChatAppointmentId] = useState(null);
 
-  // Function to open chat from notification
-  const openChatFromNotification = useCallback((appointmentId) => {
-    const appointment = appointments.find(appt => appt._id === appointmentId);
-    if (appointment) {
-      setNotificationChatData(appointment);
-      setShouldOpenChatFromNotification(true);
-      setActiveChatAppointmentId(appointmentId);
-    }
-  }, [appointments]);
 
-  // Function to handle notification clicks when already on MyAppointments page
-  const handleNotificationClick = useCallback((appointmentId) => {
-    openChatFromNotification(appointmentId);
-  }, [openChatFromNotification]);
 
   // Lock body scroll when archive modals are open
   useEffect(() => {
@@ -129,7 +116,13 @@ export default function MyAppointments() {
     const handleNotificationClick = (e) => {
       const { appointmentId } = e.detail;
       if (appointmentId) {
-        openChatFromNotification(appointmentId);
+        // Find the appointment and set the state directly
+        const appointment = appointments.find(appt => appt._id === appointmentId);
+        if (appointment) {
+          setNotificationChatData(appointment);
+          setShouldOpenChatFromNotification(true);
+          setActiveChatAppointmentId(appointmentId);
+        }
       }
     };
     
@@ -137,7 +130,7 @@ export default function MyAppointments() {
     return () => {
       window.removeEventListener('openChatFromNotification', handleNotificationClick);
     };
-  }, [openChatFromNotification]);
+  }, [appointments]);
 
   // Lock background scroll when profile modal is open
   useEffect(() => {
@@ -278,41 +271,7 @@ export default function MyAppointments() {
     }
   }, [shouldOpenChatFromNotification, notificationChatData]);
 
-  // Global event listener for notification clicks when on MyAppointments page
-  useEffect(() => {
-    const handleGlobalNotificationClick = (event) => {
-      if (event.detail && event.detail.appointmentId) {
-        // Call the function directly to avoid dependency issues
-        const appointmentId = event.detail.appointmentId;
-        const appointment = appointments.find(appt => appt._id === appointmentId);
-        if (appointment) {
-          setNotificationChatData(appointment);
-          setShouldOpenChatFromNotification(true);
-          setActiveChatAppointmentId(appointmentId);
-        }
-      }
-    };
 
-    const handleOpenChatFromNotification = (event) => {
-      if (event.detail && event.detail.appointmentId) {
-        const appointmentId = event.detail.appointmentId;
-        const appointment = appointments.find(appt => appt._id === appointmentId);
-        if (appointment) {
-          setNotificationChatData(appointment);
-          setShouldOpenChatFromNotification(true);
-          setActiveChatAppointmentId(appointmentId);
-        }
-      }
-    };
-
-    window.addEventListener('notificationClick', handleGlobalNotificationClick);
-    window.addEventListener('openChatFromNotification', handleOpenChatFromNotification);
-    
-    return () => {
-      window.removeEventListener('notificationClick', handleGlobalNotificationClick);
-      window.removeEventListener('openChatFromNotification', handleOpenChatFromNotification);
-    };
-  }, [appointments, currentUser._id]);
 
   // Handle navigation state when coming from notification
   const location = useLocation();
