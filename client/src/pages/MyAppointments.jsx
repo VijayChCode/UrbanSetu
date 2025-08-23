@@ -2855,8 +2855,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   };
 
   const handleReactionsEmojiClick = (emojiString) => {
+    console.log('handleReactionsEmojiClick called with:', emojiString);
+    console.log('reactionsMessageId:', reactionsMessageId);
     if (reactionsMessageId) {
       handleQuickReaction(reactionsMessageId, emojiString);
+    } else {
+      console.log('No reactionsMessageId found');
     }
   };
 
@@ -2873,6 +2877,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   };
 
   const toggleReactionsEmojiPicker = () => {
+    console.log('toggleReactionsEmojiPicker called');
+    console.log('Current reactionsMessageId:', reactionsMessageId);
+    console.log('Current showReactionsEmojiPicker:', showReactionsEmojiPicker);
     setShowReactionsEmojiPicker(!showReactionsEmojiPicker);
     // Don't close reactions bar or clear message ID when opening emoji picker
     // setShowReactionsBar(false);
