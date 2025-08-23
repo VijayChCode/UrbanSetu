@@ -1848,13 +1848,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       if (showHeaderMoreMenu && !event.target.closest('.chat-options-menu')) {
         setShowHeaderMoreMenu(false);
       }
-      if (showReactionsBar && !event.target.closest('.reactions-bar') && !event.target.closest('.emoji-picker-container')) {
+      if (showReactionsBar && !event.target.closest('.reactions-bar')) {
         setShowReactionsBar(false);
         setReactionsMessageId(null);
-      }
-      if (showReactionsEmojiPicker && !event.target.closest('.emoji-picker-container') && !event.target.closest('.reactions-bar')) {
         setShowReactionsEmojiPicker(false);
-        // Don't clear reactionsMessageId when closing emoji picker
       }
     };
 
@@ -1865,13 +1862,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       if (showHeaderMoreMenu) {
         setShowHeaderMoreMenu(false);
       }
-      if (showReactionsBar && !showReactionsEmojiPicker) {
+      if (showReactionsBar) {
         setShowReactionsBar(false);
         setReactionsMessageId(null);
-      }
-      if (showReactionsEmojiPicker) {
         setShowReactionsEmojiPicker(false);
-        // Don't clear reactionsMessageId when closing emoji picker on scroll
       }
     };
 
@@ -5159,7 +5153,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             }
                             return shouldShow;
                           })() && (
-                            <div className={`absolute -top-20 ${isMe ? 'right-0' : 'left-0'} bg-red-500 rounded-full shadow-lg border-2 border-red-600 p-1 flex items-center gap-1 animate-reactions-bar z-[9999] reactions-bar`} style={{ minWidth: 'max-content' }}>
+                            <div className={`absolute -top-20 ${isMe ? 'right-0' : 'left-0'} bg-red-500 rounded-full shadow-lg border-2 border-red-600 p-1 flex items-center gap-1 animate-reactions-bar z-[9999] reactions-bar transition-all duration-300`} style={{ minWidth: 'max-content' }}>
                               {/* Quick reaction buttons */}
                               <button
                                 onClick={() => handleQuickReaction(c._id, '👍')}
@@ -5211,44 +5205,33 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               >
                                 ➕
                               </button>
+                              
+                              {/* Expanded reactions when plus is clicked - expand in place */}
+                              {showReactionsEmojiPicker && (
+                                <div className="absolute top-full left-0 mt-2 bg-white rounded-lg shadow-xl border border-gray-200 p-2 max-w-xs z-[9999] animate-fadeIn">
+                                  <div className="text-sm font-semibold text-gray-700 mb-2 text-center">Quick Reactions</div>
+                                  <div className="grid grid-cols-6 gap-2">
+                                    {['🎉', '👏', '🔥', '💯', '✨', '🌟', '😍', '🤔', '😎', '🤗', '😴', '🤯', '🥳', '😭', '😤', '🤮', '🤧', '🤠', '👻', '🤖', '👽', '👾', '🤡', '👹', '👺', '💀', '👻', '👽', '🤖', '👾', '🤡', '💪', '🙏', '👌', '✌️', '🤞', '🤟'].map((emoji) => (
+                                      <button
+                                        key={emoji}
+                                        onClick={() => {
+                                          console.log('Quick reaction button clicked:', emoji);
+                                          handleReactionsEmojiClick(emoji);
+                                        }}
+                                        className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
+                                        title={`React with ${emoji}`}
+                                      >
+                                        {emoji}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
                         
-                        {/* Emoji Picker for reactions - positioned above reaction bar */}
-                        {(() => {
-                          const shouldShowEmojiPicker = !c.deleted && showReactionsEmojiPicker && reactionsMessageId === c._id;
-                          if (c._id === reactionsMessageId) {
-                            console.log('Emoji picker render check for message:', c._id, {
-                              deleted: c.deleted,
-                              showReactionsEmojiPicker,
-                              reactionsMessageId,
-                              shouldShowEmojiPicker
-                            });
-                          }
-                          return shouldShowEmojiPicker;
-                        })() && (
-                          <div className={`absolute -top-40 ${isMe ? 'right-0' : 'left-0'} z-[9999] emoji-picker-container`}>
-                            <div className="bg-white rounded-lg shadow-xl border border-gray-200 p-2 max-w-xs">
-                              <div className="text-sm font-semibold text-gray-700 mb-2 text-center">Quick Reactions</div>
-                              <div className="grid grid-cols-6 gap-2">
-                                {['👍', '❤️', '😂', '😮', '😢', '😡', '🎉', '👏', '🔥', '💯', '✨', '🌟', '😍', '🤔', '😎', '🤗', '😴', '🤯', '🥳', '😭', '😤', '🤮', '🤧', '🤠', '👻', '🤖', '👽', '👾', '🤡', '👹', '👺', '💀', '👻', '👽', '🤖', '👾', '🤡'].map((emoji) => (
-                                  <button
-                                    key={emoji}
-                                    onClick={() => {
-                                      console.log('Quick reaction button clicked:', emoji);
-                                      handleReactionsEmojiClick(emoji);
-                                    }}
-                                    className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
-                                    title={`React with ${emoji}`}
-                                  >
-                                    {emoji}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                        )}
+
                       </React.Fragment>
                     );
                   }))}
