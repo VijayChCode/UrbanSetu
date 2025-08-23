@@ -354,17 +354,23 @@ function AppRoutes({ bootstrapped }) {
             }
           }
             
-          // Show notification for new message
-          playNotification();
-          toast.info(`New message from ${senderName}`, {
-            onClick: () => {
-              // Navigate to MyAppointments page when notification is clicked
-              navigate('/user/my-appointments');
-            },
-            autoClose: 5000,
-            closeOnClick: true,
-            pauseOnHover: true
-          });
+                  // Show notification for new message
+        playNotification();
+        toast.info(`New message from ${senderName}`, {
+          onClick: () => {
+            // Navigate to MyAppointments page when notification is clicked
+            // and pass the appointment ID to open the specific chat
+            navigate('/user/my-appointments', { 
+              state: { 
+                openChatForAppointment: data.appointmentId,
+                fromNotification: true 
+              } 
+            });
+          },
+          autoClose: 5000,
+          closeOnClick: true,
+          pauseOnHover: true
+        });
         }
       }
     };

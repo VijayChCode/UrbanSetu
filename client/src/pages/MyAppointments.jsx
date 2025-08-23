@@ -40,6 +40,41 @@ export default function MyAppointments() {
   const [showUnarchiveModal, setShowUnarchiveModal] = useState(false);
   const [appointmentToHandle, setAppointmentToHandle] = useState(null);
 
+  // New state for notification-triggered chat opening
+  const [notificationChatData, setNotificationChatData] = useState(null);
+  const [shouldOpenChatFromNotification, setShouldOpenChatFromNotification] = useState(false);
+
+  // Function to open chat from notification
+  const openChatFromNotification = useCallback((appointmentId) => {
+    const appointment = appointments.find(appt => appt._id === appointmentId);
+    if (appointment) {
+      setNotificationChatData(appointment);
+      setShouldOpenChatFromNotification(true);
+      
+      // Check if chat is locked/encrypted
+      const isChatLocked = appointment.buyerChatLocked || appointment.sellerChatLocked;
+      const currentUserId = currentUser._id;
+      const isBuyer = appointment.buyerId?._id === currentUserId || appointment.buyerId === currentUserId;
+      const isSeller = appointment.sellerId?._id === currentUserId || appointment.sellerId === currentUserId;
+      
+      if (isChatLocked) {
+        if (isBuyer && appointment.buyerChatLocked) {
+          setShowChatUnlockModal(true);
+        } else if (isSeller && appointment.sellerChatLocked) {
+          setShowChatUnlockModal(true);
+        }
+      } else {
+        // Open chat directly if not locked
+        setShowChatModal(true);
+      }
+    }
+  }, [appointments, currentUser._id]);
+
+  // Function to handle notification clicks when already on MyAppointments page
+  const handleNotificationClick = useCallback((appointmentId) => {
+    openChatFromNotification(appointmentId);
+  }, [openChatFromNotification]);
+
   // Lock body scroll when archive modals are open
   useEffect(() => {
     const shouldLock = showArchiveModal || showUnarchiveModal;
@@ -234,6 +269,53 @@ export default function MyAppointments() {
     }, 1000);
     return () => clearInterval(interval);
   }, [currentUser]);
+
+  // Handle notification-triggered chat opening
+  useEffect(() => {
+    if (shouldOpenChatFromNotification && notificationChatData) {
+      // Find the appointment in the current list and set it as active
+      const appointment = appointments.find(appt => appt._id === notificationChatData._id);
+      if (appointment) {
+        // Set the appointment as active and open chat
+        setNotificationChatData(null);
+        setShouldOpenChatFromNotification(false);
+        
+        // The chat will be opened by the openChatFromNotification function
+        // which handles both locked and unlocked chats
+      }
+    }
+  }, [shouldOpenChatFromNotification, notificationChatData, appointments]);
+
+  // Global event listener for notification clicks when on MyAppointments page
+  useEffect(() => {
+    const handleGlobalNotificationClick = (event) => {
+      if (event.detail && event.detail.appointmentId) {
+        handleNotificationClick(event.detail.appointmentId);
+      }
+    };
+
+    window.addEventListener('notificationClick', handleGlobalNotificationClick);
+    
+    return () => {
+      window.removeEventListener('notificationClick', handleGlobalNotificationClick);
+    };
+  }, [handleNotificationClick]);
+
+  // Handle navigation state when coming from notification
+  const location = useLocation();
+  useEffect(() => {
+    if (location.state?.fromNotification && location.state?.openChatForAppointment) {
+      const appointmentId = location.state.openChatForAppointment;
+      
+      // Clear the navigation state
+      navigate(location.pathname, { replace: true });
+      
+      // Open the specific chat after a short delay to ensure appointments are loaded
+      setTimeout(() => {
+        openChatFromNotification(appointmentId);
+      }, 500);
+    }
+  }, [location.state, navigate, openChatFromNotification, appointments]);
 
   const handleStatusUpdate = async (id, status) => {
     setActionLoading(id + status);
@@ -1451,7 +1533,19 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         setShowChatUnlockModal(false);
         setUnlockPassword('');
         toast.success('Chat access granted.');
+        
         // Open chat modal after successful unlock
+        // If this was triggered by a notification, open the specific chat
+        if (shouldOpenChatFromNotification && notificationChatData) {
+          // Find and set the appointment as active
+          const appointment = appointments.find(appt => appt._id === notificationChatData._id);
+          if (appointment) {
+            // Set the appointment as active and open chat
+            setNotificationChatData(null);
+            setShouldOpenChatFromNotification(false);
+          }
+        }
+        
         setShowChatModal(true);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Incorrect password');
@@ -1797,7 +1891,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       localStorage.setItem(`removedDeletedMsgs_${apptId}`, JSON.stringify(updated));
     }
   }
-
   // Fetch latest comments when refresh button is clicked
   const fetchLatestComments = async () => {
     try {
@@ -2579,7 +2672,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     setCancelReason('');
     setShowAdminCancelModal(true);
   };
-
   const confirmAdminCancel = async () => {
     if (!cancelReason.trim()) {
       toast.error('Reason is required for admin cancellation.');
@@ -2901,15 +2993,24 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         const isSenderAdmin = !isSenderBuyer && !isSenderSeller;
         
         const senderName = isSenderAdmin ? "UrbanSetu" : (data.comment.senderEmail || 'User');
-                  toast.info(`New message from ${senderName}`);
-          playNotification(); // Play notification sound
+        // Show clickable toast notification
+        toast.info(`New message from ${senderName}`, {
+          onClick: () => {
+            // Open the specific chat when notification is clicked
+            handleNotificationClick(appt._id);
+          },
+          autoClose: 5000,
+          closeOnClick: true,
+          pauseOnHover: true
+        });
+        playNotification(); // Play notification sound
       }
     }
     socket.on('commentUpdate', handleCommentUpdateNotify);
     return () => {
       socket.off('commentUpdate', handleCommentUpdateNotify);
     };
-  }, [appt._id, showChatModal, playNotification]);
+  }, [appt._id, showChatModal, playNotification, handleNotificationClick]);
 
   // Real-time comment updates via socket.io (for chat sync)
   useEffect(() => {
@@ -2975,7 +3076,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       socket.off('chatClearedForUser', handleChatClearedForUser);
       socket.off('commentRemovedForUser', handleCommentRemovedForUser);
     };
-  }, [appt._id, currentUser.email, currentUser._id, showChatModal, playNotification, playMessageReceived]);
+  }, [appt._id, currentUser.email, currentUser._id, showChatModal, playNotification, playMessageReceived, handleNotificationClick]);
 
   // Lock body scroll when chat modal is open
   useEffect(() => {
@@ -4867,7 +4968,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                     </div>
                   </div>
                 )}
-                
                 {/* Message Input Footer - Sticky */}
                 <div className="flex gap-2 mt-1 px-3 pb-2 flex-shrink-0 bg-gradient-to-b from-transparent to-white pt-2 items-end">
                   {/* Message Input Container with Attachment and Emoji Icons Inside */}
@@ -5646,7 +5746,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
           </div>
         </div>
       )}
-
       {/* Forgot Password Modal */}
       {showForgotPasswordModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
