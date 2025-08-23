@@ -2821,8 +2821,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       const message = comments.find(c => c._id === messageId);
       if (!message) return;
 
-      console.log('Adding/removing reaction:', { messageId, emoji, currentUser: currentUser._id });
-      console.log('Current reactions:', message.reactions);
+
 
       // Add reaction to the message
       const { data } = await axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${messageId}/react`, 
@@ -2834,7 +2833,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       );
 
       // Update local state
-      console.log('API response reactions:', data.reactions);
       setComments(prev => prev.map(c => 
         c._id === messageId 
           ? { 
