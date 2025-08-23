@@ -5014,7 +5014,7 @@ function AdminAppointmentRow({
                       <button
                         onClick={handleRemoveAllStarredMessages}
                         disabled={removingAllStarred}
-                        className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:bg-red-400 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2"
+                        className="px-2 sm:px-4 py-1.5 sm:py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:bg-red-400 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-1 sm:gap-2 text-xs sm:text-sm"
                       >
                         {removingAllStarred ? (
                           <>
@@ -5031,7 +5031,7 @@ function AdminAppointmentRow({
                     )}
                     <button
                       onClick={() => setShowStarredModal(false)}
-                      className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors font-medium"
+                      className="px-2 sm:px-4 py-1.5 sm:py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors font-medium text-xs sm:text-sm"
                     >
                       Close
                     </button>
