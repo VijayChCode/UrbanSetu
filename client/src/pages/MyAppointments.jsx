@@ -4923,7 +4923,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             ref={el => messageRefs.current[c._id] = el}
                             id={`message-${c._id}`}
                             data-message-id={c._id}
-                            className={`relative rounded-2xl px-4 sm:px-5 py-3 text-sm shadow-xl max-w-[90%] sm:max-w-[80%] md:max-w-[70%] lg:max-w-[60%] xl:max-w-[50%] break-words overflow-hidden transition-all duration-300 min-h-[60px] ${
+                            className={`relative rounded-2xl px-4 sm:px-5 py-3 text-sm shadow-xl max-w-[90%] sm:max-w-[80%] md:max-w-[70%] lg:max-w-[60%] xl:max-w-[50%] break-words overflow-visible transition-all duration-300 min-h-[60px] ${
                               isMe 
                                 ? 'bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-500 hover:to-purple-600 text-white shadow-blue-200 hover:shadow-blue-300 hover:shadow-2xl' 
                                 : 'bg-white hover:bg-gray-50 text-gray-800 border border-gray-200 shadow-gray-200 hover:shadow-lg hover:border-gray-300 hover:shadow-xl'
@@ -5107,7 +5107,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                         
                         {/* Reactions Bar - positioned immediately above message bubble */}
                         {!c.deleted && showReactionsBar && reactionsMessageId === c._id && (
-                          <div className={`absolute -top-2 ${isMe ? 'right-0' : 'left-0'} bg-white rounded-full shadow-lg border border-gray-200 p-1 flex items-center gap-1 animate-reactions-bar z-50 reactions-bar`}>
+                          <div className={`absolute -top-12 ${isMe ? 'right-0' : 'left-0'} bg-white rounded-full shadow-lg border border-gray-200 p-1 flex items-center gap-1 animate-reactions-bar z-50 reactions-bar`}>
                             {/* Quick reaction buttons */}
                             <button
                               onClick={() => handleQuickReaction(c._id, '👍')}
@@ -5164,7 +5164,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                         
                         {/* Emoji Picker for reactions - positioned immediately above message bubble */}
                         {!c.deleted && showReactionsEmojiPicker && reactionsMessageId === c._id && (
-                          <div className={`absolute -top-2 z-50 emoji-picker-container ${isMe ? 'right-0' : 'left-0'}`}>
+                          <div className={`absolute -top-12 z-50 emoji-picker-container ${isMe ? 'right-0' : 'left-0'}`}>
                             <CustomEmojiPicker
                               onEmojiClick={handleReactionsEmojiClick}
                               isOpen={showReactionsEmojiPicker}
