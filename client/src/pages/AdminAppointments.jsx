@@ -3423,7 +3423,7 @@ function AdminAppointmentRow({
                           <div className="border-t border-gray-600 pt-2 mt-2">
                             <div className="font-semibold mb-2">🔒 Security & Moderation:</div>
                             <div>• Report inappropriate content</div>
-                            <div>• Admin chat monitoring</div>
+                            <div>• Report chat</div>
                             <div>• Content filtering and moderation</div>
                             <div>• User blocking capabilities</div>
                           </div>
