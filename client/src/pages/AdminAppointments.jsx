@@ -2707,14 +2707,14 @@ function AdminAppointmentRow({
                       <label className="flex items-center gap-2 text-white text-sm cursor-pointer hover:text-blue-200 transition-colors">
                         <input
                           type="checkbox"
-                          checked={selectedMessages.length === filteredComments.length && filteredComments.length > 0}
+                          checked={selectedMessages.length === localComments.length && localComments.length > 0}
                           onChange={() => {
-                            if (selectedMessages.length === filteredComments.length) {
+                            if (selectedMessages.length === localComments.length) {
                               // If all are selected, deselect all
                               setSelectedMessages([]);
                             } else {
                               // Select all non-deleted messages
-                              setSelectedMessages([...filteredComments]);
+                              setSelectedMessages([...localComments]);
                             }
                           }}
                           className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
