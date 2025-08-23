@@ -2818,11 +2818,14 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   // Reactions functions
   const handleQuickReaction = async (messageId, emoji) => {
     try {
+      console.log('handleQuickReaction called with:', { messageId, emoji });
       const message = comments.find(c => c._id === messageId);
-      if (!message) return;
+      if (!message) {
+        console.log('Message not found:', messageId);
+        return;
+      }
 
-
-
+      console.log('Sending API request to add reaction');
       // Add reaction to the message
       const { data } = await axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${messageId}/react`, 
         { emoji },
@@ -2831,6 +2834,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
           headers: { 'Content-Type': 'application/json' }
         }
       );
+
+      console.log('API response:', data);
 
       // Update local state
       setComments(prev => prev.map(c => 
@@ -2855,8 +2860,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   };
 
   const handleReactionsEmojiClick = (emojiString) => {
+    console.log('handleReactionsEmojiClick called with:', emojiString);
+    console.log('Current reactionsMessageId:', reactionsMessageId);
     if (reactionsMessageId) {
+      console.log('Calling handleQuickReaction');
       handleQuickReaction(reactionsMessageId, emojiString);
+    } else {
+      console.log('No reactionsMessageId found - cannot add reaction');
     }
   };
 
