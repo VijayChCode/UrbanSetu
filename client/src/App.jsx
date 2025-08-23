@@ -323,38 +323,38 @@ function AppRoutes({ bootstrapped }) {
       // Since backend now only sends to intended recipients, we can trust this message is for us
       // Just check if it's not from the current user
       if (data.comment && data.comment.senderEmail !== currentUser.email) {
-        // Check if we're not already on the MyAppointments page
+        // Check if we're already on the MyAppointments page
         const currentPath = window.location.pathname;
         const isOnMyAppointments = currentPath.includes('/my-appointments') || currentPath.includes('/user/my-appointments');
         
-        if (!isOnMyAppointments) {
-          // Use same logic as MyAppointments page to check if sender is admin
-          let senderName = data.comment.senderEmail || 'User';
-          
-          // Check if sender is admin by comparing with buyer and seller emails from the appointment data
-          // This is the same logic used in MyAppointments.jsx
-          const isSenderAdmin = data.comment.senderEmail !== data.buyerEmail && data.comment.senderEmail !== data.sellerEmail;
-          
-          if (isSenderAdmin) {
-            senderName = "UrbanSetu";
-          } else {
-            // For regular users, try to get a better name if available
-            try {
-              const res = await fetch(`${API_BASE_URL}/api/user/check-email/${encodeURIComponent(data.comment.senderEmail)}`, {
-                credentials: 'include'
-              });
-              
-              if (res.ok) {
-                const userData = await res.json();
-                senderName = userData.username || data.comment.senderEmail;
-              }
-            } catch (error) {
-              // If API call fails, use email as fallback
-              senderName = data.comment.senderEmail;
+        // Use same logic as MyAppointments page to check if sender is admin
+        let senderName = data.comment.senderEmail || 'User';
+        
+        // Check if sender is admin by comparing with buyer and seller emails from the appointment data
+        // This is the same logic used in MyAppointments.jsx
+        const isSenderAdmin = data.comment.senderEmail !== data.buyerEmail && data.comment.senderEmail !== data.sellerEmail;
+        
+        if (isSenderAdmin) {
+          senderName = "UrbanSetu";
+        } else {
+          // For regular users, try to get a better name if available
+          try {
+            const res = await fetch(`${API_BASE_URL}/api/user/check-email/${encodeURIComponent(data.comment.senderEmail)}`, {
+              credentials: 'include'
+            });
+            
+            if (res.ok) {
+              const userData = await res.json();
+              senderName = userData.username || data.comment.senderEmail;
             }
+          } catch (error) {
+            // If API call fails, use email as fallback
+            senderName = data.comment.senderEmail;
           }
-          
-          // Show notification for new message
+        }
+        
+        if (!isOnMyAppointments) {
+          // Show notification for new message when NOT on MyAppointments page
           playNotification();
           toast.info(`New message from ${senderName}`, {
             onClick: () => {
@@ -366,6 +366,23 @@ function AppRoutes({ bootstrapped }) {
                   fromNotification: true 
                 } 
               });
+            },
+            autoClose: 5000,
+            closeOnClick: true,
+            pauseOnHover: true
+          });
+        } else {
+          // User is already on MyAppointments page - dispatch a custom event
+          playNotification();
+          toast.info(`New message from ${senderName}`, {
+            onClick: () => {
+              // Dispatch custom event to MyAppointments page to open the specific chat
+              window.dispatchEvent(new CustomEvent('openChatFromNotification', {
+                detail: {
+                  appointmentId: data.appointmentId,
+                  fromNotification: true
+                }
+              }));
             },
             autoClose: 5000,
             closeOnClick: true,
