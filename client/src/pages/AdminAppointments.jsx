@@ -1168,6 +1168,7 @@ function AdminAppointmentRow({
   const [starringSaving, setStarringSaving] = useLocalState(false);
   const [loadingStarredMessages, setLoadingStarredMessages] = useLocalState(false);
   const [unstarringMessageId, setUnstarringMessageId] = useLocalState(null);
+  const [removingAllStarred, setRemovingAllStarred] = useLocalState(false);
   const [sendIconAnimating, setSendIconAnimating] = useLocalState(false);
   const [sendIconSent, setSendIconSent] = useLocalState(false);
   
@@ -1300,6 +1301,46 @@ function AdminAppointmentRow({
       });
     }
   }, [showStarredModal, appt._id]);
+
+  // Function to remove all starred messages
+  const handleRemoveAllStarredMessages = async () => {
+    if (starredMessages.length === 0) return;
+    
+    setRemovingAllStarred(true);
+    try {
+      // Unstar all messages by making API calls
+      const promises = starredMessages.map(message => 
+        axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${message._id}/star`, 
+          { starred: false },
+          {
+            withCredentials: true,
+            headers: { 'Content-Type': 'application/json' }
+          }
+        )
+      );
+      
+      await Promise.all(promises);
+      
+      // Update local comments state - remove starredBy for current user
+      setLocalComments(prev => prev.map(c => ({
+        ...c,
+        starredBy: (c.starredBy || []).filter(id => id !== currentUser._id)
+      })));
+      
+      // Clear starred messages list
+      setStarredMessages([]);
+      
+      toast.success(`Removed ${starredMessages.length} starred message${starredMessages.length !== 1 ? 's' : ''}`);
+      
+      // Close the modal
+      setShowStarredModal(false);
+      
+    } catch (err) {
+      toast.error('Failed to remove all starred messages. Please try again.');
+    } finally {
+      setRemovingAllStarred(false);
+    }
+  };
 
   // Removed pinning initialization
 
@@ -4896,12 +4937,33 @@ function AdminAppointmentRow({
                   <span className="text-sm text-gray-600">
                     {starredMessages.length} starred message{starredMessages.length !== 1 ? 's' : ''}
                   </span>
-                  <button
-                    onClick={() => setShowStarredModal(false)}
-                    className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors font-medium"
-                  >
-                    Close
-                  </button>
+                  <div className="flex gap-2">
+                    {starredMessages.length > 0 && (
+                      <button
+                        onClick={handleRemoveAllStarredMessages}
+                        disabled={removingAllStarred}
+                        className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:bg-red-400 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2"
+                      >
+                        {removingAllStarred ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            Removing...
+                          </>
+                        ) : (
+                          <>
+                            <FaTrash className="w-4 h-4" />
+                            Remove All
+                          </>
+                          )}
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setShowStarredModal(false)}
+                      className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors font-medium"
+                    >
+                      Close
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
