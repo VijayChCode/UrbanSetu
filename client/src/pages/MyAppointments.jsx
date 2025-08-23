@@ -4891,7 +4891,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             <span className="bg-blue-600 text-white text-xs px-4 py-2 rounded-full shadow-lg border-2 border-white">{getDateLabel(currentDate)}</span>
                           </div>
                         )}
-                        <div className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-fadeInChatBubble relative`} style={{ animationDelay: `${0.03 * index}s` }}>
+                        <div className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-fadeInChatBubble`} style={{ animationDelay: `${0.03 * index}s` }}>
                           {/* Selection checkbox - only show in selection mode */}
                           {isSelectionMode && (
                             <div className={`flex items-start ${isMe ? 'order-2 ml-2' : 'order-1 mr-2'}`}>
@@ -4913,7 +4913,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             ref={el => messageRefs.current[c._id] = el}
                             id={`message-${c._id}`}
                             data-message-id={c._id}
-                            className={`rounded-2xl px-4 sm:px-5 py-3 text-sm shadow-xl max-w-[90%] sm:max-w-[80%] md:max-w-[70%] lg:max-w-[60%] xl:max-w-[50%] break-words overflow-hidden transition-all duration-300 min-h-[60px] ${
+                            className={`relative rounded-2xl px-4 sm:px-5 py-3 text-sm shadow-xl max-w-[90%] sm:max-w-[80%] md:max-w-[70%] lg:max-w-[60%] xl:max-w-[50%] break-words overflow-hidden transition-all duration-300 min-h-[60px] ${
                               isMe 
                                 ? 'bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-500 hover:to-purple-600 text-white shadow-blue-200 hover:shadow-blue-300 hover:shadow-2xl' 
                                 : 'bg-white hover:bg-gray-50 text-gray-800 border border-gray-200 shadow-gray-200 hover:shadow-lg hover:border-gray-300 hover:shadow-xl'
@@ -5095,9 +5095,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           </div>
                         </div>
                         
-                        {/* Reactions Bar - positioned above message bubble */}
+                        {/* Reactions Bar - positioned immediately above message bubble */}
                         {!c.deleted && showReactionsBar && reactionsMessageId === c._id && (
-                          <div className={`absolute top-0 ${isMe ? 'right-0' : 'left-0'} -mt-2 bg-white rounded-full shadow-lg border border-gray-200 p-1 flex items-center gap-1 animate-reactions-bar z-50 reactions-bar`}>
+                          <div className={`absolute -top-2 ${isMe ? 'right-0' : 'left-0'} bg-white rounded-full shadow-lg border border-gray-200 p-1 flex items-center gap-1 animate-reactions-bar z-50 reactions-bar`}>
                             {/* Quick reaction buttons */}
                             <button
                               onClick={() => handleQuickReaction(c._id, '👍')}
@@ -5152,9 +5152,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           </div>
                         )}
                         
-                        {/* Emoji Picker for reactions - positioned above message bubble */}
+                        {/* Emoji Picker for reactions - positioned immediately above message bubble */}
                         {!c.deleted && showReactionsEmojiPicker && reactionsMessageId === c._id && (
-                          <div className={`absolute top-0 -mt-2 z-50 emoji-picker-container ${isMe ? 'right-0' : 'left-0'}`}>
+                          <div className={`absolute -top-2 z-50 emoji-picker-container ${isMe ? 'right-0' : 'left-0'}`}>
                             <CustomEmojiPicker
                               onEmojiClick={handleReactionsEmojiClick}
                               isOpen={showReactionsEmojiPicker}
