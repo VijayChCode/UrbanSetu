@@ -6708,25 +6708,45 @@ You can lock this chat again at any time from the options.</p>
                     // Handle multiple messages
                     setPinningSaving(true);
                     try {
-                      const promises = messageToPin.map(msg => 
-                        axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${msg._id}/pin`, 
-                          { 
-                            pinned: true, 
-                            pinDuration: pinDuration, 
-                            customHours: pinDuration === 'custom' ? customHours : undefined 
-                          },
-                          {
-                            withCredentials: true,
-                            headers: { 'Content-Type': 'application/json' }
-                          }
-                        )
-                      );
+                      console.log('Starting bulk pinning operation for', messageToPin.length, 'messages');
                       
-                      const results = await Promise.all(promises);
-                      const allSuccessful = results.every(res => res.status === 200);
+                      // Process messages one by one to handle individual failures gracefully
+                      let successCount = 0;
+                      let failureCount = 0;
+                      const failedMessages = [];
+                      const successfulMessages = [];
                       
-                      if (allSuccessful) {
-                        // Update UI state for all pinned messages
+                      for (const msg of messageToPin) {
+                        try {
+                          console.log(`Pinning message ${msg._id}`);
+                          
+                          const response = await axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${msg._id}/pin`, 
+                            { 
+                              pinned: true, 
+                              pinDuration: pinDuration, 
+                              customHours: pinDuration === 'custom' ? customHours : undefined 
+                            },
+                            {
+                              withCredentials: true,
+                              headers: { 'Content-Type': 'application/json' }
+                            }
+                          );
+                          
+                          console.log(`Successfully pinned message ${msg._id}`);
+                          successCount++;
+                          successfulMessages.push(msg);
+                          
+                        } catch (err) {
+                          console.error(`Failed to pin message ${msg._id}:`, err);
+                          failureCount++;
+                          failedMessages.push(msg);
+                        }
+                      }
+                      
+                      console.log(`Bulk pinning operation completed: ${successCount} successful, ${failureCount} failed`);
+                      
+                      if (successCount > 0) {
+                        // Calculate expiry date based on duration
                         const now = new Date();
                         let expiryDate;
                         if (pinDuration === '24hrs') {
@@ -6739,8 +6759,9 @@ You can lock this chat again at any time from the options.</p>
                           expiryDate = new Date(now.getTime() + customHours * 60 * 60 * 1000);
                         }
                         
+                        // Update UI state for successfully pinned messages
                         setComments(prev => prev.map(c => {
-                          const pinnedMsg = messageToPin.find(msg => msg._id === c._id);
+                          const pinnedMsg = successfulMessages.find(msg => msg._id === c._id);
                           if (pinnedMsg) {
                             return {
                               ...c,
@@ -6755,7 +6776,7 @@ You can lock this chat again at any time from the options.</p>
                         }));
                         
                         // Update pinned messages list
-                        const newPinnedMessages = messageToPin.map(msg => ({
+                        const newPinnedMessages = successfulMessages.map(msg => ({
                           ...msg,
                           pinned: true,
                           pinnedBy: currentUser._id,
@@ -6765,18 +6786,32 @@ You can lock this chat again at any time from the options.</p>
                         }));
                         
                         setPinnedMessages(prev => {
-                          const filtered = prev.filter(m => !messageToPin.some(msg => msg._id === m._id));
+                          const filtered = prev.filter(m => !successfulMessages.some(msg => msg._id === m._id));
                           return [...filtered, ...newPinnedMessages];
                         });
                         
-                        toast.success(`Pinned ${messageToPin.length} messages`);
-                        setIsSelectionMode(false);
-                        setSelectedMessages([]);
+                        // Show appropriate feedback
+                        if (successCount > 0 && failureCount === 0) {
+                          toast.success(`Successfully pinned ${successCount} messages`);
+                          // Clear selection mode if all messages were processed successfully
+                          setIsSelectionMode(false);
+                          setSelectedMessages([]);
+                        } else if (successCount > 0 && failureCount > 0) {
+                          toast.warning(`Partially successful: ${successCount} messages pinned, ${failureCount} failed`);
+                        } else {
+                          toast.error(`Failed to pin any messages. Please try again.`);
+                        }
                       } else {
-                        toast.error('Failed to pin some messages');
+                        toast.error(`Failed to pin any messages. Please try again.`);
                       }
+                      
                     } catch (err) {
-                      toast.error('Failed to pin messages');
+                      console.error('Error in bulk pinning operation:', err);
+                      if (err.response) {
+                        console.error('Response data:', err.response.data);
+                        console.error('Response status:', err.response.status);
+                      }
+                      toast.error('Failed to pin messages. Please try again.');
                     } finally {
                       setPinningSaving(false);
                     }
