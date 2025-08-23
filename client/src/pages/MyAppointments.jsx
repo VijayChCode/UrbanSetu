@@ -4886,7 +4886,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             <span className="bg-blue-600 text-white text-xs px-4 py-2 rounded-full shadow-lg border-2 border-white">{getDateLabel(currentDate)}</span>
                           </div>
                         )}
-                        <div className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-fadeInChatBubble`} style={{ animationDelay: `${0.03 * index}s` }}>
+                        <div className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-fadeInChatBubble relative`} style={{ animationDelay: `${0.03 * index}s` }}>
                           {/* Selection checkbox - only show in selection mode */}
                           {isSelectionMode && (
                             <div className={`flex items-start ${isMe ? 'order-2 ml-2' : 'order-1 mr-2'}`}>
@@ -4908,7 +4908,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             ref={el => messageRefs.current[c._id] = el}
                             id={`message-${c._id}`}
                             data-message-id={c._id}
-                            className={`rounded-2xl px-4 sm:px-5 py-3 text-sm shadow-xl max-w-[90%] sm:max-w-[80%] md:max-w-[70%] lg:max-w-[60%] xl:max-w-[50%] break-words overflow-hidden relative transition-all duration-300 min-h-[60px] ${
+                            className={`rounded-2xl px-4 sm:px-5 py-3 text-sm shadow-xl max-w-[90%] sm:max-w-[80%] md:max-w-[70%] lg:max-w-[60%] xl:max-w-[50%] break-words overflow-hidden transition-all duration-300 min-h-[60px] ${
                               isMe 
                                 ? 'bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-500 hover:to-purple-600 text-white shadow-blue-200 hover:shadow-blue-300 hover:shadow-2xl' 
                                 : 'bg-white hover:bg-gray-50 text-gray-800 border border-gray-200 shadow-gray-200 hover:shadow-lg hover:border-gray-300 hover:shadow-xl'
@@ -5011,7 +5011,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                 </div>
                               )}
                             </div>
-                            <div className="flex items-center gap-1 justify-end mt-2 relative" data-message-actions>
+                            <div className="flex items-center gap-1 justify-end mt-2" data-message-actions>
                               {/* Pin indicator for pinned messages */}
                               {c.pinned && (
                                 <FaThumbtack className={`${isMe ? 'text-purple-300' : 'text-purple-500'} text-[10px]`} title="Pinned message" />
@@ -5036,76 +5036,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               >
                                 <FaEllipsisV size={12} />
                               </button>
-                              
-                              {/* Reactions Bar */}
-                              {!c.deleted && showReactionsBar && reactionsMessageId === c._id && (
-                                <div className={`absolute bottom-full mb-2 bg-white rounded-full shadow-lg border border-gray-200 p-1 flex items-center gap-1 animate-reactions-bar z-50 reactions-bar ${isMe ? 'right-0' : 'left-0'}`}>
-                                  {/* Quick reaction buttons */}
-                                  <button
-                                    onClick={() => handleQuickReaction(c._id, '👍')}
-                                    className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
-                                    title="Like"
-                                  >
-                                    👍
-                                  </button>
-                                  <button
-                                    onClick={() => handleQuickReaction(c._id, '❤️')}
-                                    className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
-                                    title="Love"
-                                  >
-                                    ❤️
-                                  </button>
-                                  <button
-                                    onClick={() => handleQuickReaction(c._id, '😂')}
-                                    className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
-                                    title="Laugh"
-                                  >
-                                    😂
-                                  </button>
-                                  <button
-                                    onClick={() => handleQuickReaction(c._id, '😮')}
-                                    className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
-                                    title="Wow"
-                                  >
-                                    😮
-                                  </button>
-                                  <button
-                                    onClick={() => handleQuickReaction(c._id, '😢')}
-                                    className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
-                                    title="Sad"
-                                  >
-                                    😢
-                                  </button>
-                                  <button
-                                    onClick={() => handleQuickReaction(c._id, '😡')}
-                                    className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
-                                    title="Angry"
-                                  >
-                                    😡
-                                  </button>
-                                  <div className="w-px h-6 bg-gray-300 mx-1"></div>
-                                  <button
-                                    onClick={toggleReactionsEmojiPicker}
-                                    className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
-                                    title="More emojis"
-                                  >
-                                    ➕
-                                  </button>
-                                </div>
-                              )}
-                              
-                              {/* Emoji Picker for reactions */}
-                              {!c.deleted && showReactionsEmojiPicker && reactionsMessageId === c._id && (
-                                <div className={`absolute bottom-full mb-2 z-50 emoji-picker-container ${isMe ? 'right-0' : 'left-0'}`}>
-                                  <CustomEmojiPicker
-                                    onEmojiClick={handleReactionsEmojiClick}
-                                    isOpen={showReactionsEmojiPicker}
-                                    setIsOpen={setShowReactionsEmojiPicker}
-                                    buttonRef={{ current: null }}
-                                    inputRef={null}
-                                  />
-                                </div>
-                              )}
                               
                               {/* Display reactions */}
                               {!c.deleted && c.reactions && c.reactions.length > 0 && (
@@ -5136,6 +5066,76 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             </div>
                           </div>
                         </div>
+                        
+                        {/* Reactions Bar - positioned outside message bubble */}
+                        {!c.deleted && showReactionsBar && reactionsMessageId === c._id && (
+                          <div className={`absolute bottom-0 ${isMe ? 'right-0' : 'left-0'} mb-2 bg-white rounded-full shadow-lg border border-gray-200 p-1 flex items-center gap-1 animate-reactions-bar z-50 reactions-bar`}>
+                            {/* Quick reaction buttons */}
+                            <button
+                              onClick={() => handleQuickReaction(c._id, '👍')}
+                              className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
+                              title="Like"
+                            >
+                              👍
+                            </button>
+                            <button
+                              onClick={() => handleQuickReaction(c._id, '❤️')}
+                              className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
+                              title="Love"
+                            >
+                              ❤️
+                            </button>
+                            <button
+                              onClick={() => handleQuickReaction(c._id, '😂')}
+                              className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
+                              title="Laugh"
+                            >
+                              😂
+                            </button>
+                            <button
+                              onClick={() => handleQuickReaction(c._id, '😮')}
+                              className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
+                              title="Wow"
+                            >
+                              😮
+                            </button>
+                            <button
+                              onClick={() => handleQuickReaction(c._id, '😢')}
+                              className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
+                              title="Sad"
+                            >
+                              😢
+                            </button>
+                            <button
+                              onClick={() => handleQuickReaction(c._id, '😡')}
+                              className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
+                              title="Angry"
+                            >
+                              😡
+                            </button>
+                            <div className="w-px h-6 bg-gray-300 mx-1"></div>
+                            <button
+                              onClick={toggleReactionsEmojiPicker}
+                              className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
+                              title="More emojis"
+                            >
+                              ➕
+                            </button>
+                          </div>
+                        )}
+                        
+                        {/* Emoji Picker for reactions - positioned outside message bubble */}
+                        {!c.deleted && showReactionsEmojiPicker && reactionsMessageId === c._id && (
+                          <div className={`absolute bottom-0 mb-2 z-50 emoji-picker-container ${isMe ? 'right-0' : 'left-0'}`}>
+                            <CustomEmojiPicker
+                              onEmojiClick={handleReactionsEmojiClick}
+                              isOpen={showReactionsEmojiPicker}
+                              setIsOpen={setShowReactionsEmojiPicker}
+                              buttonRef={{ current: null }}
+                              inputRef={null}
+                            />
+                          </div>
+                        )}
                       </React.Fragment>
                     );
                   }))}
