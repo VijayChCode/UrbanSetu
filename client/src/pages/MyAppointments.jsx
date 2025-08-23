@@ -5123,7 +5123,23 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           }
                           return shouldShow;
                         })() && (
-                          <div className={`absolute -top-16 ${isMe ? 'right-0' : 'left-0'} bg-white rounded-full shadow-lg border border-gray-200 p-1 flex items-center gap-1 animate-reactions-bar z-[9999] reactions-bar`} style={{ minWidth: 'max-content' }}>
+                          <div style={{ position: 'absolute', top: '-100px', left: '0', right: '0', background: 'red', color: 'white', padding: '10px', zIndex: 9999 }}>
+                            DEBUG: REACTION BAR SHOULD BE VISIBLE HERE
+                          </div>
+                        )}
+                        {(() => {
+                          const shouldShow = !c.deleted && showReactionsBar && reactionsMessageId === c._id;
+                          if (c._id === reactionsMessageId) {
+                            console.log('Reaction bar render check for message:', c._id, {
+                              deleted: c.deleted,
+                              showReactionsBar,
+                              reactionsMessageId,
+                              shouldShow
+                            });
+                          }
+                          return shouldShow;
+                        })() && (
+                          <div className={`absolute -top-20 ${isMe ? 'right-0' : 'left-0'} bg-red-500 rounded-full shadow-lg border-2 border-red-600 p-1 flex items-center gap-1 animate-reactions-bar z-[9999] reactions-bar`} style={{ minWidth: 'max-content' }}>
                             {/* Quick reaction buttons */}
                             <button
                               onClick={() => handleQuickReaction(c._id, '👍')}
