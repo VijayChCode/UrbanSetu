@@ -3057,93 +3057,166 @@ function AdminAppointmentRow({
                 ) : headerOptionsMessageId && selectedMessageForHeaderOptions ? (
                   <div className="flex items-center justify-end w-full gap-4">
                     <div className="flex items-center gap-4">
-                      {!selectedMessageForHeaderOptions.deleted && (
-                        <button
-                          className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
-                          onClick={() => { 
-                            startReply(selectedMessageForHeaderOptions);
-                            setHeaderOptionsMessageId(null);
-                          }}
-                          title="Reply"
-                          aria-label="Reply"
-                        >
-                          <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c4.28 0 6.92 1.45 8.84 4.55.23.36.76.09.65-.32C18.31 13.13 15.36 10.36 10 9z"/></svg>
-                        </button>
-                      )}
-                      {!selectedMessageForHeaderOptions.deleted && (
-                        <button
-                          className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
-                          onClick={() => { copyMessageToClipboard(selectedMessageForHeaderOptions.message); setHeaderOptionsMessageId(null); }}
-                          title="Copy message"
-                          aria-label="Copy message"
-                        >
-                          <FaCopy size={18} />
-                        </button>
-                      )}
-                      {/* Info moved under three-dots menu */}
-                      {/* Star/Unstar - for all messages (sent and received) */}
-                      {!selectedMessageForHeaderOptions.deleted && (
-                        <button
-                          className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
-                          onClick={async () => { 
-                            const isStarred = selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id);
-                            setStarringSaving(true);
-                            try {
-                              const { data } = await axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${selectedMessageForHeaderOptions._id}/star`, 
-                                { starred: !isStarred },
-                                { 
-                                  withCredentials: true,
-                                  headers: { 'Content-Type': 'application/json' }
-                                }
-                              );
-                                // Update the local state
-                                setLocalComments(prev => {
-                                  const updated = prev.map(c => 
-                                    c._id === selectedMessageForHeaderOptions._id 
-                                      ? { 
-                                          ...c, 
-                                          starredBy: isStarred 
-                                            ? (c.starredBy || []).filter(id => id !== currentUser._id)
-                                            : [...(c.starredBy || []), currentUser._id]
-                                        }
-                                      : c
-                                  );
+                      {/* For deleted messages, only show star and close options */}
+                      {selectedMessageForHeaderOptions.deleted ? (
+                        <>
+                          {/* Star/Unstar - for deleted messages */}
+                          <button
+                            className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                            onClick={async () => { 
+                              const isStarred = selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id);
+                              setStarringSaving(true);
+                              try {
+                                const { data } = await axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${selectedMessageForHeaderOptions._id}/star`, 
+                                  { starred: !isStarred },
+                                  { 
+                                    withCredentials: true,
+                                    headers: { 'Content-Type': 'application/json' }
+                                  }
+                                );
+                                  // Update the local state
+                                  setLocalComments(prev => {
+                                    const updated = prev.map(c => 
+                                      c._id === selectedMessageForHeaderOptions._id 
+                                        ? { 
+                                            ...c, 
+                                            starredBy: isStarred 
+                                              ? (c.starredBy || []).filter(id => id !== currentUser._id)
+                                              : [...(c.starredBy || []), currentUser._id]
+                                          }
+                                        : c
+                                    );
+                                    
+                                    // Update appointment comments for parent component with the updated state
+                                    updateAppointmentComments(appt._id, updated);
+                                    
+                                    return updated;
+                                  });
                                   
-                                  // Update appointment comments for parent component with the updated state
-                                  updateAppointmentComments(appt._id, updated);
+                                  // Update starred messages list
+                                  if (isStarred) {
+                                    // Remove from starred messages
+                                    setStarredMessages(prev => prev.filter(m => m._id !== selectedMessageForHeaderOptions._id));
+                                  } else {
+                                    // Add to starred messages
+                                    setStarredMessages(prev => [...prev, selectedMessageForHeaderOptions]);
+                                  }
                                   
-                                  return updated;
-                                });
-                                
-                                // Update starred messages list
-                                if (isStarred) {
-                                  // Remove from starred messages
-                                  setStarredMessages(prev => prev.filter(m => m._id !== selectedMessageForHeaderOptions._id));
-                                } else {
-                                  // Add to starred messages
-                                  setStarredMessages(prev => [...prev, selectedMessageForHeaderOptions]);
-                                }
-                                
-                                toast.success(isStarred ? 'Message unstarred' : 'Message starred');
-                            } catch (err) {
-                              toast.error('Failed to update star status');
-                            } finally {
-                              setStarringSaving(false);
-                            }
-                            setHeaderOptionsMessageId(null);
-                          }}
-                          title={selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id) ? "Unstar message" : "Star message"}
-                          aria-label={selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id) ? "Unstar message" : "Star message"}
-                          disabled={starringSaving}
-                        >
-                          {starringSaving ? (
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                          ) : selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id) ? (
-                            <FaStar size={18} />
-                          ) : (
-                            <FaRegStar size={18} />
-                          )}
-                        </button>
+                                  toast.success(isStarred ? 'Message unstarred' : 'Message starred');
+                              } catch (err) {
+                                toast.error('Failed to update star status');
+                              } finally {
+                                setStarringSaving(false);
+                              }
+                              setHeaderOptionsMessageId(null);
+                            }}
+                            title={selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id) ? "Unstar message" : "Star message"}
+                            aria-label={selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id) ? "Unstar message" : "Star message"}
+                            disabled={starringSaving}
+                          >
+                            {starringSaving ? (
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            ) : selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id) ? (
+                              <FaStar size={18} />
+                            ) : (
+                              <FaRegStar size={18} />
+                            )}
+                          </button>
+                          {/* Close button for deleted messages */}
+                          <button
+                            onClick={() => setHeaderOptionsMessageId(null)}
+                            className="text-white hover:text-gray-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                            title="Close options"
+                            aria-label="Close options"
+                          >
+                            <FaTimes size={18} />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          {/* Regular message options for non-deleted messages */}
+                          <button
+                            className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                            onClick={() => { 
+                              startReply(selectedMessageForHeaderOptions);
+                              setHeaderOptionsMessageId(null);
+                            }}
+                            title="Reply"
+                            aria-label="Reply"
+                          >
+                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c4.28 0 6.92 1.45 8.84 4.55.23.36.76.09.65-.32C18.31 13.13 15.36 10.36 10 9z"/></svg>
+                          </button>
+                          <button
+                            className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                            onClick={() => { copyMessageToClipboard(selectedMessageForHeaderOptions.message); setHeaderOptionsMessageId(null); }}
+                            title="Copy message"
+                            aria-label="Copy message"
+                          >
+                            <FaCopy size={18} />
+                          </button>
+                          {/* Star/Unstar - for regular messages */}
+                          <button
+                            className="text-white hover:text-yellow-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                            onClick={async () => { 
+                              const isStarred = selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id);
+                              setStarringSaving(true);
+                              try {
+                                const { data } = await axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${selectedMessageForHeaderOptions._id}/star`, 
+                                  { starred: !isStarred },
+                                  { 
+                                    withCredentials: true,
+                                    headers: { 'Content-Type': 'application/json' }
+                                  }
+                                );
+                                  // Update the local state
+                                  setLocalComments(prev => {
+                                    const updated = prev.map(c => 
+                                      c._id === selectedMessageForHeaderOptions._id 
+                                        ? { 
+                                            ...c, 
+                                            starredBy: isStarred 
+                                              ? (c.starredBy || []).filter(id => id !== currentUser._id)
+                                              : [...(c.starredBy || []), currentUser._id]
+                                          }
+                                        : c
+                                    );
+                                    
+                                    // Update appointment comments for parent component with the updated state
+                                    updateAppointmentComments(appt._id, updated);
+                                    
+                                    return updated;
+                                  });
+                                  
+                                  // Update starred messages list
+                                  if (isStarred) {
+                                    // Remove from starred messages
+                                    setStarredMessages(prev => prev.filter(m => m._id !== selectedMessageForHeaderOptions._id));
+                                  } else {
+                                    // Add to starred messages
+                                    setStarredMessages(prev => [...prev, selectedMessageForHeaderOptions]);
+                                  }
+                                  
+                                  toast.success(isStarred ? 'Message unstarred' : 'Message starred');
+                              } catch (err) {
+                                toast.error('Failed to update star status');
+                              } finally {
+                                setStarringSaving(false);
+                              }
+                              setHeaderOptionsMessageId(null);
+                            }}
+                            title={selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id) ? "Unstar message" : "Star message"}
+                            aria-label={selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id) ? "Unstar message" : "Star message"}
+                            disabled={starringSaving}
+                          >
+                            {starringSaving ? (
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            ) : selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id) ? (
+                              <FaStar size={18} />
+                            ) : (
+                              <FaRegStar size={18} />
+                            )}
+                          </button>
+                        </>
                       )}
                       {/* Three-dots menu: sent -> Info, Edit, Delete; received -> Info, Delete */}
                       {!selectedMessageForHeaderOptions.deleted && (
@@ -3797,20 +3870,18 @@ function AdminAppointmentRow({
                           <span className={`${isMe ? 'text-blue-200' : 'text-gray-500'} text-[10px]`}>
                             {new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
                           </span>
-                          {/* Options icon - only visible for non-deleted messages */}
-                          {!c.deleted && (
-                            <button
-                              className={`${c.senderEmail === currentUser.email ? 'text-blue-200 hover:text-white' : 'text-gray-500 hover:text-gray-700'} transition-all duration-200 hover:scale-110 p-1 rounded-full hover:bg-white hover:bg-opacity-20 ml-1`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setHeaderOptionsMessageId(c._id);
-                              }}
-                              title="Message options"
-                              aria-label="Message options"
-                            >
-                              <FaEllipsisV size={c.senderEmail === currentUser.email ? 14 : 12} />
-                            </button>
-                          )}
+                          {/* Options icon - visible for all messages (including deleted) */}
+                          <button
+                            className={`${c.senderEmail === currentUser.email ? 'text-blue-200 hover:text-white' : 'text-gray-500 hover:text-gray-700'} transition-all duration-200 hover:scale-110 p-1 rounded-full hover:bg-white hover:bg-opacity-20 ml-1`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setHeaderOptionsMessageId(c._id);
+                            }}
+                            title="Message options"
+                            aria-label="Message options"
+                          >
+                            <FaEllipsisV size={c.senderEmail === currentUser.email ? 14 : 12} />
+                          </button>
                           
                           {/* Read status indicator - always visible for sent messages */}
                           {(c.senderEmail === currentUser.email) && !c.deleted && (
