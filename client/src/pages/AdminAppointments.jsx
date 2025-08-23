@@ -1276,29 +1276,33 @@ function AdminAppointmentRow({
     };
   }, [showPasswordModal]);
 
+  // Function to fetch starred messages
+  const fetchStarredMessages = async () => {
+    if (!appt?._id) return;
+    
+    setLoadingStarredMessages(true);
+    try {
+      // First, sync comments to ensure we have the latest starred status
+      await fetchLatestComments();
+      // Then fetch starred messages from backend
+      const { data } = await axios.get(`${API_BASE_URL}/api/bookings/${appt._id}/starred-messages`, {
+        withCredentials: true
+      });
+      if (data.starredMessages) {
+        setStarredMessages(data.starredMessages);
+      }
+    } catch (err) {
+      console.error('Error fetching starred messages:', err);
+      toast.error('Failed to load starred messages');
+    } finally {
+      setLoadingStarredMessages(false);
+    }
+  };
+
   // Fetch starred messages when modal opens
   React.useEffect(() => {
     if (showStarredModal) {
-      setLoadingStarredMessages(true);
-      // First, sync comments to ensure we have the latest starred status
-      fetchLatestComments().then(() => {
-        // Then fetch starred messages from backend
-        axios.get(`${API_BASE_URL}/api/bookings/${appt._id}/starred-messages`, {
-          withCredentials: true
-        })
-          .then(({ data }) => {
-            if (data.starredMessages) {
-              setStarredMessages(data.starredMessages);
-            }
-          })
-          .catch(err => {
-            console.error('Error fetching starred messages:', err);
-            toast.error('Failed to load starred messages');
-          })
-          .finally(() => {
-            setLoadingStarredMessages(false);
-          });
-      });
+      fetchStarredMessages();
     }
   }, [showStarredModal, appt._id]);
 
@@ -4786,11 +4790,23 @@ function AdminAppointmentRow({
           <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
               {/* Header */}
-              <div className="flex items-center p-6 border-b border-gray-200 bg-gradient-to-r from-yellow-50 to-amber-50">
+              <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-yellow-50 to-amber-50">
                 <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
                   <FaStar className="text-yellow-500" />
                   Starred Messages
                 </h3>
+                <button
+                  onClick={fetchStarredMessages}
+                  disabled={loadingStarredMessages}
+                  className="p-2 text-yellow-600 hover:text-yellow-700 bg-yellow-100 hover:bg-yellow-200 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Refresh starred messages"
+                >
+                  {loadingStarredMessages ? (
+                    <div className="w-4 h-4 border-2 border-yellow-600 border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <FaSync className="w-4 h-4" />
+                  )}
+                </button>
               </div>
 
               {/* Content */}
