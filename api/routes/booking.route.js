@@ -1986,18 +1986,28 @@ router.patch('/:id/comment/:commentId/react', verifyToken, async (req, res) => {
       return res.status(404).json({ message: 'User not found.' });
     }
 
-    // Remove all existing reactions from this user
-    comment.reactions = comment.reactions.filter(
-      reaction => reaction.userId.toString() !== userId
+    // Check if user already has this exact reaction
+    const existingReactionIndex = comment.reactions.findIndex(
+      reaction => reaction.userId.toString() === userId && reaction.emoji === emoji
     );
 
-    // Add new reaction
-    comment.reactions.push({
-      emoji,
-      userId,
-      userName: user.username,
-      timestamp: new Date()
-    });
+    if (existingReactionIndex !== -1) {
+      // Remove the existing reaction (toggle off)
+      comment.reactions.splice(existingReactionIndex, 1);
+    } else {
+      // Remove any other reactions from this user first
+      comment.reactions = comment.reactions.filter(
+        reaction => reaction.userId.toString() !== userId
+      );
+      
+      // Add new reaction
+      comment.reactions.push({
+        emoji,
+        userId,
+        userName: user.username,
+        timestamp: new Date()
+      });
+    }
 
     appointment.markModified('comments');
     await appointment.save();
@@ -2017,7 +2027,7 @@ router.patch('/:id/comment/:commentId/react', verifyToken, async (req, res) => {
     }
 
     return res.status(200).json({ 
-      message: 'Reaction updated successfully',
+      message: existingReactionIndex !== -1 ? 'Reaction removed successfully' : 'Reaction added successfully',
       reactions: comment.reactions
     });
   } catch (err) {
