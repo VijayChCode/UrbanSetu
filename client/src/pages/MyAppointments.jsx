@@ -278,10 +278,24 @@ export default function MyAppointments() {
       }
     };
 
+    const handleOpenChatFromNotification = (event) => {
+      if (event.detail && event.detail.appointmentId) {
+        const appointmentId = event.detail.appointmentId;
+        const appointment = appointments.find(appt => appt._id === appointmentId);
+        if (appointment) {
+          setNotificationChatData(appointment);
+          setShouldOpenChatFromNotification(true);
+          setActiveChatAppointmentId(appointmentId);
+        }
+      }
+    };
+
     window.addEventListener('notificationClick', handleGlobalNotificationClick);
+    window.addEventListener('openChatFromNotification', handleOpenChatFromNotification);
     
     return () => {
       window.removeEventListener('notificationClick', handleGlobalNotificationClick);
+      window.removeEventListener('openChatFromNotification', handleOpenChatFromNotification);
     };
   }, [appointments, currentUser._id]);
 
@@ -294,15 +308,31 @@ export default function MyAppointments() {
       // Clear the navigation state
       navigate(location.pathname, { replace: true });
       
-      // Open the specific chat after a short delay to ensure appointments are loaded
-      setTimeout(() => {
+      // Wait for appointments to be loaded before trying to open chat
+      if (appointments.length > 0) {
         const appointment = appointments.find(appt => appt._id === appointmentId);
         if (appointment) {
           setNotificationChatData(appointment);
           setShouldOpenChatFromNotification(true);
           setActiveChatAppointmentId(appointmentId);
         }
-      }, 500);
+      } else {
+        // If appointments are not loaded yet, wait for them
+        const checkAppointments = setInterval(() => {
+          if (appointments.length > 0) {
+            const appointment = appointments.find(appt => appt._id === appointmentId);
+            if (appointment) {
+              setNotificationChatData(appointment);
+              setShouldOpenChatFromNotification(true);
+              setActiveChatAppointmentId(appointmentId);
+            }
+            clearInterval(checkAppointments);
+          }
+        }, 100);
+        
+        // Cleanup interval after 5 seconds to prevent infinite waiting
+        setTimeout(() => clearInterval(checkAppointments), 5000);
+      }
     }
   }, [location.state, navigate, appointments, currentUser._id]);
 
@@ -3011,9 +3041,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         toast.info(`New message from ${senderName}`, {
           onClick: () => {
             // Open the specific chat when notification is clicked
-            setNotificationChatData(appt);
-            setShouldOpenChatFromNotification(true);
-            setActiveChatAppointmentId(appt._id);
+            // Use a custom event to communicate with the parent component
+            const event = new CustomEvent('openChatFromNotification', { 
+              detail: { appointmentId: appt._id } 
+            });
+            window.dispatchEvent(event);
           },
           autoClose: 5000,
           closeOnClick: true,
