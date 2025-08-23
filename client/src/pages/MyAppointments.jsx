@@ -2897,10 +2897,32 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   };
 
   const toggleReactionsEmojiPicker = () => {
-    setShowReactionsEmojiPicker(!showReactionsEmojiPicker);
-    // Don't close reactions bar or clear message ID when opening emoji picker
-    // setShowReactionsBar(false);
+    console.log('=== toggleReactionsEmojiPicker START ===');
+    console.log('Current showReactionsEmojiPicker:', showReactionsEmojiPicker);
+    console.log('Current reactionsMessageId:', reactionsMessageId);
+    console.log('Current showReactionsBar:', showReactionsBar);
+    
+    const newState = !showReactionsEmojiPicker;
+    console.log('Setting showReactionsEmojiPicker to:', newState);
+    
+    setShowReactionsEmojiPicker(newState);
+    
+    // Ensure reactionsMessageId is maintained when opening emoji picker
+    if (newState && reactionsMessageId) {
+      console.log('Opening emoji picker for message:', reactionsMessageId);
+    } else if (!newState) {
+      console.log('Closing emoji picker');
+    }
+    
+    console.log('=== toggleReactionsEmojiPicker END ===');
   };
+
+  // Debug useEffect to monitor state changes
+  useEffect(() => {
+    console.log('State changed - showReactionsEmojiPicker:', showReactionsEmojiPicker);
+    console.log('State changed - reactionsMessageId:', reactionsMessageId);
+    console.log('State changed - showReactionsBar:', showReactionsBar);
+  }, [showReactionsEmojiPicker, reactionsMessageId, showReactionsBar]);
 
   // Mark messages as read when user can actually see them at the bottom of chat
   const markingReadRef = useRef(false);
@@ -5188,7 +5210,18 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                         </div>
                         
                         {/* Emoji Picker for reactions - positioned above reaction bar */}
-                        {!c.deleted && showReactionsEmojiPicker && reactionsMessageId === c._id && (
+                        {(() => {
+                          const shouldShowEmojiPicker = !c.deleted && showReactionsEmojiPicker && reactionsMessageId === c._id;
+                          if (c._id === reactionsMessageId) {
+                            console.log('Emoji picker render check for message:', c._id, {
+                              deleted: c.deleted,
+                              showReactionsEmojiPicker,
+                              reactionsMessageId,
+                              shouldShowEmojiPicker
+                            });
+                          }
+                          return shouldShowEmojiPicker;
+                        })() && (
                           <div className={`absolute -top-40 ${isMe ? 'right-0' : 'left-0'} z-[9999] emoji-picker-container`}>
                             <div className="bg-white rounded-lg shadow-xl border border-gray-200 p-2 max-w-xs">
                               <div className="text-sm font-semibold text-gray-700 mb-2 text-center">Quick Reactions</div>
