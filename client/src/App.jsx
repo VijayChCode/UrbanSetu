@@ -328,30 +328,24 @@ function AppRoutes({ bootstrapped }) {
         const isOnMyAppointments = currentPath.includes('/my-appointments') || currentPath.includes('/user/my-appointments');
         
         if (!isOnMyAppointments) {
-          // Use same logic as MyAppointments page to check if sender is admin
+          // Determine if sender is admin based on email pattern and current user
           let senderName = data.comment.senderEmail || 'User';
           
-          // Check if sender is admin by comparing with buyer and seller emails from the appointment data
-          // This is the same logic used in MyAppointments.jsx
-          const isSenderAdmin = data.comment.senderEmail !== data.buyerEmail && data.comment.senderEmail !== data.sellerEmail;
+          // Check if sender is admin by looking for admin email patterns
+          // Admin emails typically contain 'admin', 'urbansetu', or are from specific domains
+          const senderEmail = data.comment.senderEmail.toLowerCase();
+          const isSenderAdmin = senderEmail.includes('admin') || 
+                               senderEmail.includes('urbansetu') || 
+                               senderEmail.includes('rootadmin') ||
+                               senderEmail.includes('support') ||
+                               senderEmail.includes('info@urbansetu') ||
+                               senderEmail.includes('admin@urbansetu');
           
           if (isSenderAdmin) {
             senderName = "UrbanSetu";
           } else {
-            // For regular users, try to get a better name if available
-            try {
-              const res = await fetch(`${API_BASE_URL}/api/user/check-email/${encodeURIComponent(data.comment.senderEmail)}`, {
-                credentials: 'include'
-              });
-              
-              if (res.ok) {
-                const userData = await res.json();
-                senderName = userData.username || data.comment.senderEmail;
-              }
-            } catch (error) {
-              // If API call fails, use email as fallback
-              senderName = data.comment.senderEmail;
-            }
+            // For regular users, show their email
+            senderName = data.comment.senderEmail;
           }
             
                   // Show notification for new message
