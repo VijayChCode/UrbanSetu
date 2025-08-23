@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FaComments, FaTimes, FaPaperPlane, FaRobot, FaCopy, FaCheck, FaLightbulb } from 'react-icons/fa';
+import { FaComments, FaTimes, FaPaperPlane, FaRobot, FaCopy, FaCheck } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { formatLinksInText } from '../utils/linkFormatter.jsx';
 
@@ -13,13 +13,10 @@ const GeminiChatbox = () => {
     ]);
     const [inputMessage, setInputMessage] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [showTips, setShowTips] = useState(false);
     const messagesEndRef = useRef(null);
     const inputRef = useRef(null);
-    const chatWindowRef = useRef(null);
     const [sendIconAnimating, setSendIconAnimating] = useState(false);
     const [sendIconSent, setSendIconSent] = useState(false);
-    const autoCloseTimerRef = useRef(null);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -28,39 +25,6 @@ const GeminiChatbox = () => {
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
-
-    // Auto-close timer functionality
-    useEffect(() => {
-        if (isOpen) {
-            // Start 10-second timer
-            autoCloseTimerRef.current = setTimeout(() => {
-                setIsOpen(false);
-                setShowTips(false);
-            }, 10000);
-
-            // Add click outside listener
-            const handleClickOutside = (event) => {
-                if (chatWindowRef.current && !chatWindowRef.current.contains(event.target)) {
-                    setIsOpen(false);
-                    setShowTips(false);
-                    if (autoCloseTimerRef.current) {
-                        clearTimeout(autoCloseTimerRef.current);
-                    }
-                }
-            };
-
-            document.addEventListener('mousedown', handleClickOutside);
-            document.addEventListener('touchstart', handleClickOutside);
-
-            return () => {
-                if (autoCloseTimerRef.current) {
-                    clearTimeout(autoCloseTimerRef.current);
-                }
-                document.removeEventListener('mousedown', handleClickOutside);
-                document.removeEventListener('touchstart', handleClickOutside);
-            };
-        }
-    }, [isOpen]);
 
     // Keyboard shortcut Ctrl+F to focus message input
     useEffect(() => {
@@ -134,15 +98,6 @@ const GeminiChatbox = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!inputMessage.trim() || isLoading) return;
-
-        // Reset auto-close timer when user interacts
-        if (autoCloseTimerRef.current) {
-            clearTimeout(autoCloseTimerRef.current);
-        }
-        autoCloseTimerRef.current = setTimeout(() => {
-            setIsOpen(false);
-            setShowTips(false);
-        }, 10000);
 
         // Trigger send icon fly animation
         setSendIconAnimating(true);
@@ -239,18 +194,6 @@ const GeminiChatbox = () => {
         }
     };
 
-    const toggleTips = () => {
-        setShowTips(!showTips);
-        // Reset timer when tips are toggled
-        if (autoCloseTimerRef.current) {
-            clearTimeout(autoCloseTimerRef.current);
-        }
-        autoCloseTimerRef.current = setTimeout(() => {
-            setIsOpen(false);
-            setShowTips(false);
-        }, 10000);
-    };
-
     return (
         <>
             {/* Enhanced Floating AI Chat Button */}
@@ -291,7 +234,7 @@ const GeminiChatbox = () => {
             {/* Chat Window */}
             {isOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4 md:p-0 md:items-end md:justify-end gemini-chatbox-modal">
-                    <div ref={chatWindowRef} className="bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col w-full max-w-md h-full max-h-[90vh] md:w-96 md:h-[500px] md:mb-32 md:mr-6 md:max-h-[500px]">
+                    <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col w-full max-w-md h-full max-h-[90vh] md:w-96 md:h-[500px] md:mb-32 md:mr-6 md:max-h-[500px]">
                         {/* Header */}
                         <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 rounded-t-2xl flex items-center justify-between flex-shrink-0">
                             <div className="flex items-center space-x-3">
@@ -301,43 +244,13 @@ const GeminiChatbox = () => {
                                     <p className="text-xs opacity-90">Real Estate Helper</p>
                                 </div>
                             </div>
-                            <div className="flex items-center space-x-2">
-                                {/* Tips Button */}
-                                <button
-                                    onClick={toggleTips}
-                                    className="text-white hover:text-gray-200 transition-colors p-1"
-                                    title="Tips & Guidelines"
-                                >
-                                    <FaLightbulb size={16} />
-                                </button>
-                                <button
-                                    onClick={() => setIsOpen(false)}
-                                    className="text-white hover:text-gray-200 transition-colors"
-                                >
-                                    <FaTimes size={16} />
-                                </button>
-                            </div>
+                            <button
+                                onClick={() => setIsOpen(false)}
+                                className="text-white hover:text-gray-200 transition-colors"
+                            >
+                                <FaTimes size={16} />
+                            </button>
                         </div>
-
-                        {/* Tips & Guidelines Popup */}
-                        {showTips && (
-                            <div className="absolute top-full right-0 mt-2 bg-gray-800 text-white text-xs rounded-lg px-3 py-2 shadow-lg z-20 max-w-xs animate-fadeIn">
-                                <div className="font-semibold mb-2">🤖 AI Assistant Guidelines:</div>
-                                <div className="mb-2">• Ask about property search, market trends, buying/selling advice</div>
-                                <div className="mb-2">• Get investment guidance and legal information</div>
-                                <div className="mb-2">• Request property valuation insights</div>
-                                <div className="border-t border-gray-600 pt-2 mt-2">
-                                    <div className="font-semibold mb-2">⌨️ Keyboard Shortcuts:</div>
-                                    <div>• Press Ctrl + F to quickly focus and type your message</div>
-                                </div>
-                                <div className="border-t border-gray-600 pt-2 mt-2">
-                                    <div className="font-semibold mb-2">⏰ Auto-Close:</div>
-                                    <div>• Chat closes automatically after 10 seconds of inactivity</div>
-                                    <div>• Click outside to close immediately</div>
-                                </div>
-                                <div className="absolute -top-1 right-4 w-2 h-2 bg-gray-800 transform rotate-45"></div>
-                            </div>
-                        )}
 
                         {/* Messages */}
                         <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
@@ -464,19 +377,6 @@ const GeminiChatbox = () => {
                 }
                 .send-icon.animate-sent {
                   animation: sentSuccess 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-                }
-                @keyframes fadeIn {
-                  from {
-                    opacity: 0;
-                    transform: translateY(-10px);
-                  }
-                  to {
-                    opacity: 1;
-                    transform: translateY(0);
-                  }
-                }
-                .animate-fadeIn {
-                  animation: fadeIn 0.3s ease-out;
                 }
                 `}
             </style>
