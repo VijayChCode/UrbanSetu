@@ -2360,7 +2360,16 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       return;
     }
     
-    const results = comments
+    // Get filtered comments (only visible messages)
+    const filteredComments = comments.filter(c => {
+      const clearTime = c.clearTime || 0;
+      const effectiveClearMs = Math.max(clearTime, 0);
+      return new Date(c.timestamp).getTime() > effectiveClearMs && 
+             !locallyRemovedIds.includes(c._id) && 
+             !(c.removedFor?.includes?.(currentUser._id));
+    });
+    
+    const results = filteredComments
       .filter(comment => !comment.deleted)
       .filter(comment => 
         comment.message.toLowerCase().includes(query.toLowerCase()) ||
@@ -2454,11 +2463,20 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     setSelectedDate(date);
     setShowCalendar(false);
     
+    // Get filtered comments (only visible messages)
+    const filteredComments = comments.filter(c => {
+      const clearTime = c.clearTime || 0;
+      const effectiveClearMs = Math.max(clearTime, 0);
+      return new Date(c.timestamp).getTime() > effectiveClearMs && 
+             !locallyRemovedIds.includes(c._id) && 
+             !(c.removedFor?.includes?.(currentUser._id));
+    });
+    
     // Find the first message from the selected date
     const targetDate = new Date(date);
     const targetDateString = targetDate.toDateString();
     
-    const firstMessageOfDate = comments.find(comment => {
+    const firstMessageOfDate = filteredComments.find(comment => {
       const commentDate = new Date(comment.timestamp);
       return commentDate.toDateString() === targetDateString;
     });
@@ -2504,7 +2522,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         }, 500);
       }
     } else {
-      toast.info('No messages found for the selected date', {
+      toast.info('No messages found for the selected date in visible chat', {
         position: 'top-center',
         autoClose: 3000,
         hideProgressBar: false,
