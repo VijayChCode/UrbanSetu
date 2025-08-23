@@ -3403,7 +3403,7 @@ function AdminAppointmentRow({
                       </div>
                       {/* Tips & Guidelines popup */}
                       {showShortcutTip && (
-                        <div className="absolute top-full right-0 mt-2 bg-gray-800 text-white text-xs rounded-lg px-3 py-2 shadow-lg z-20 max-w-xs">
+                        <div className="absolute top-full right-0 mt-2 bg-gray-800 text-xs rounded-lg px-3 py-2 shadow-lg z-20 max-w-xs animate-fadeIn">
                           <div className="font-semibold mb-2">⌨️ Keyboard Shortcuts:</div>
                           <div className="mb-2">• Press Ctrl + F to quickly focus and type your message</div>
                           <div className="border-t border-gray-600 pt-2 mt-2">
@@ -3412,6 +3412,27 @@ function AdminAppointmentRow({
                             <div>• Maximum size: 5MB per file</div>
                             <div>• Add captions to images</div>
                             <div>• Other file types coming soon</div>
+                          </div>
+                          <div className="border-t border-gray-600 pt-2 mt-2">
+                            <div className="font-semibold mb-2">💬 Chat Features:</div>
+                            <div>• Real-time messaging with socket.io</div>
+                            <div>• Message reactions and emoji support</div>
+                            <div>• File sharing and image previews</div>
+                            <div>• Chat locking for dispute resolution</div>
+                          </div>
+                          <div className="border-t border-gray-600 pt-2 mt-2">
+                            <div className="font-semibold mb-2">🔒 Security & Moderation:</div>
+                            <div>• Report inappropriate content</div>
+                            <div>• Admin chat monitoring</div>
+                            <div>• Content filtering and moderation</div>
+                            <div>• User blocking capabilities</div>
+                          </div>
+                          <div className="border-t border-gray-600 pt-2 mt-2">
+                            <div className="font-semibold mb-2">👨‍💼 Admin Controls:</div>
+                            <div>• Full chat moderation access</div>
+                            <div>• User management and blocking</div>
+                            <div>• Content removal and warnings</div>
+                            <div>• Dispute resolution tools</div>
                           </div>
                           <div className="absolute -top-1 right-4 w-2 h-2 bg-gray-800 transform rotate-45"></div>
                         </div>
