@@ -779,3 +779,13 @@ body.modal-open {
   margin-left: -8px !important;
   transition: all 0.3s ease !important;
 }
+
+/* Yellow highlight for searched text within messages */
+.search-text-highlight {
+  background-color: #fef08a !important;
+  color: #92400e !important;
+  padding: 2px 4px !important;
+  border-radius: 4px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}

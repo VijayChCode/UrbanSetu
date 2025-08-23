@@ -2478,6 +2478,21 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     }
   };
 
+  // Function to highlight searched text within message content
+  const highlightSearchedText = (text, searchQuery) => {
+    if (!searchQuery || !text) return text;
+    
+    const regex = new RegExp(`(${searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const parts = text.split(regex);
+    
+    return parts.map((part, index) => {
+      if (regex.test(part)) {
+        return `<span class="search-text-highlight">${part}</span>`;
+      }
+      return part;
+    }).join('');
+  };
+
   // Search functionality
   const performSearch = (query) => {
     if (!query.trim()) {
@@ -2486,6 +2501,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       // Clear any existing search highlights
       document.querySelectorAll('.search-highlight').forEach(el => {
         el.classList.remove('search-highlight', 'search-pulse', 'search-glow');
+      });
+      // Clear any existing text highlights
+      document.querySelectorAll('.search-text-highlight').forEach(el => {
+        el.outerHTML = el.innerHTML;
       });
       return;
     }
@@ -2545,6 +2564,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       setSearchQuery("");
       setSearchResults([]);
       setCurrentSearchIndex(-1);
+      // Clear any existing text highlights
+      document.querySelectorAll('.search-text-highlight').forEach(el => {
+        el.outerHTML = el.innerHTML;
+      });
     }
   };
 
@@ -4611,13 +4634,17 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                       
                       {/* Close Icon */}
                       <button
-                        onClick={() => {
-                          setShowSearchBox(false);
-                          setSearchQuery("");
-                          setSearchResults([]);
-                          setCurrentSearchIndex(-1);
-                          setShowCalendar(false);
-                        }}
+                                              onClick={() => {
+                        setShowSearchBox(false);
+                        setSearchQuery("");
+                        setSearchResults([]);
+                        setCurrentSearchIndex(-1);
+                        setShowCalendar(false);
+                        // Clear any existing text highlights
+                        document.querySelectorAll('.search-text-highlight').forEach(el => {
+                          el.outerHTML = el.innerHTML;
+                        });
+                      }}
                         className="flex-shrink-0 text-white hover:text-gray-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-all duration-300 transform hover:scale-110 shadow"
                         title="Close search"
                         aria-label="Close search"
@@ -4887,7 +4914,15 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                         return null;
                                       })()}
                                       
-                                      <span className="whitespace-pre-wrap break-words">{formatLinksInText((c.message || '').replace(/\n+$/, ''), isMe)}</span>
+                                      <span 
+                                        className="whitespace-pre-wrap break-words" 
+                                        dangerouslySetInnerHTML={{
+                                          __html: formatLinksInText(
+                                            highlightSearchedText((c.message || '').replace(/\n+$/, ''), searchQuery), 
+                                            isMe
+                                          )
+                                        }}
+                                      />
                                       {c.edited && (
                                         <span className="ml-2 text-[10px] italic text-gray-300 whitespace-nowrap">(Edited)</span>
                                       )}
