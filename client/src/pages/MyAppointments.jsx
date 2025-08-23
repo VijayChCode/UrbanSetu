@@ -124,6 +124,21 @@ export default function MyAppointments() {
     };
   }, [currentUser]);
 
+  // Listen for notification clicks when already on MyAppointments page
+  useEffect(() => {
+    const handleNotificationClick = (e) => {
+      const { appointmentId } = e.detail;
+      if (appointmentId) {
+        openChatFromNotification(appointmentId);
+      }
+    };
+    
+    window.addEventListener('openChatFromNotification', handleNotificationClick);
+    return () => {
+      window.removeEventListener('openChatFromNotification', handleNotificationClick);
+    };
+  }, [openChatFromNotification]);
+
   // Lock background scroll when profile modal is open
   useEffect(() => {
     if (showOtherPartyModal) {
@@ -3023,43 +3038,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     }
   }, [markVisibleMessagesAsRead]);
 
-  // Toast notification for new messages when chat is closed
-  useEffect(() => {
-    function handleCommentUpdateNotify(data) {
-      if (data.appointmentId === appt._id && !showChatModal) {
-        // Don't show notification for deleted messages
-        if (data.comment.deleted) {
-          return;
-        }
-        
-        // Check if sender is admin by checking if senderEmail matches any admin user
-        const isSenderBuyer = data.comment.senderEmail === appt.buyerId?.email;
-        const isSenderSeller = data.comment.senderEmail === appt.sellerId?.email;
-        const isSenderAdmin = !isSenderBuyer && !isSenderSeller;
-        
-        const senderName = isSenderAdmin ? "UrbanSetu" : (data.comment.senderEmail || 'User');
-        // Show clickable toast notification
-        toast.info(`New message from ${senderName}`, {
-          onClick: () => {
-            // Open the specific chat when notification is clicked
-            // Use a custom event to communicate with the parent component
-            const event = new CustomEvent('openChatFromNotification', { 
-              detail: { appointmentId: appt._id } 
-            });
-            window.dispatchEvent(event);
-          },
-          autoClose: 5000,
-          closeOnClick: true,
-          pauseOnHover: true
-        });
-        playNotification(); // Play notification sound
-      }
-    }
-    socket.on('commentUpdate', handleCommentUpdateNotify);
-    return () => {
-      socket.off('commentUpdate', handleCommentUpdateNotify);
-    };
-  }, [appt._id, showChatModal, playNotification]);
+
 
   // Real-time comment updates via socket.io (for chat sync)
   useEffect(() => {
