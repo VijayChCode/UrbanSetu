@@ -1848,12 +1848,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       if (showHeaderMoreMenu && !event.target.closest('.chat-options-menu')) {
         setShowHeaderMoreMenu(false);
       }
-      if (showReactionsBar && !event.target.closest('.reactions-bar')) {
+      if (showReactionsBar && !event.target.closest('.reactions-bar') && !event.target.closest('.emoji-picker-container')) {
         setShowReactionsBar(false);
         setReactionsMessageId(null);
       }
-      if (showReactionsEmojiPicker && !event.target.closest('.emoji-picker-container')) {
+      if (showReactionsEmojiPicker && !event.target.closest('.emoji-picker-container') && !event.target.closest('.reactions-bar')) {
         setShowReactionsEmojiPicker(false);
+        setReactionsMessageId(null);
       }
     };
 
@@ -1864,12 +1865,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       if (showHeaderMoreMenu) {
         setShowHeaderMoreMenu(false);
       }
-      if (showReactionsBar) {
+      if (showReactionsBar && !showReactionsEmojiPicker) {
         setShowReactionsBar(false);
         setReactionsMessageId(null);
       }
       if (showReactionsEmojiPicker) {
         setShowReactionsEmojiPicker(false);
+        setReactionsMessageId(null);
       }
     };
 
@@ -2815,14 +2817,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
 
   // Reactions functions
   const handleQuickReaction = async (messageId, emoji) => {
-    console.log('handleQuickReaction called with messageId:', messageId, 'emoji:', emoji);
     try {
       const message = comments.find(c => c._id === messageId);
-      console.log('Found message:', message);
-      if (!message) {
-        console.log('No message found for messageId:', messageId);
-        return;
-      }
+      if (!message) return;
 
       // Add reaction to the message
       const { data } = await axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${messageId}/react`, 
@@ -2856,13 +2853,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   };
 
   const handleReactionsEmojiClick = (emojiObject) => {
-    console.log('handleReactionsEmojiClick called with:', emojiObject);
-    console.log('reactionsMessageId:', reactionsMessageId);
     if (reactionsMessageId) {
-      console.log('Calling handleQuickReaction with messageId:', reactionsMessageId, 'emoji:', emojiObject.emoji);
       handleQuickReaction(reactionsMessageId, emojiObject.emoji);
-    } else {
-      console.log('No reactionsMessageId found');
     }
   };
 
@@ -2879,11 +2871,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   };
 
   const toggleReactionsEmojiPicker = () => {
-    console.log('toggleReactionsEmojiPicker called');
-    console.log('Current showReactionsEmojiPicker:', showReactionsEmojiPicker);
-    console.log('Current reactionsMessageId:', reactionsMessageId);
     setShowReactionsEmojiPicker(!showReactionsEmojiPicker);
-    setShowReactionsBar(false);
+    // Don't close reactions bar or clear message ID when opening emoji picker
+    // setShowReactionsBar(false);
   };
 
   // Mark messages as read when user can actually see them at the bottom of chat
