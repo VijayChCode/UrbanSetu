@@ -6517,7 +6517,9 @@ You can lock this chat again at any time from the options.</p>
                                       />
                                     </div>
                                   )}
-                                  {message.message}
+                                  <span className="whitespace-pre-wrap break-words">
+                                    {formatLinksInText((message.message || '').replace(/\n+$/, ''), isMe)}
+                                  </span>
                                 </>
                               )}
                             </div>

@@ -4983,7 +4983,9 @@ function AdminAppointmentRow({
                                     </div>
                                   </div>
                                 ) : (
-                                  message.message
+                                  <span className="whitespace-pre-wrap break-words">
+                                    {formatLinksInText((message.message || '').replace(/\n+$/, ''), isMe)}
+                                  </span>
                                 )}
                               </div>
                               
