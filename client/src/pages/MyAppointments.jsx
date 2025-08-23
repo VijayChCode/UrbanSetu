@@ -5108,91 +5108,75 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               )}
                             </div>
                           </div>
+                          
+                          {/* Reactions Bar - positioned inside message container */}
+                          {(() => {
+                            const shouldShow = !c.deleted && showReactionsBar && reactionsMessageId === c._id;
+                            if (c._id === reactionsMessageId) {
+                              console.log('Reaction bar render check for message:', c._id, {
+                                deleted: c.deleted,
+                                showReactionsBar,
+                                reactionsMessageId,
+                                shouldShow
+                              });
+                            }
+                            return shouldShow;
+                          })() && (
+                            <div className={`absolute -top-20 ${isMe ? 'right-0' : 'left-0'} bg-red-500 rounded-full shadow-lg border-2 border-red-600 p-1 flex items-center gap-1 animate-reactions-bar z-[9999] reactions-bar`} style={{ minWidth: 'max-content' }}>
+                              {/* Quick reaction buttons */}
+                              <button
+                                onClick={() => handleQuickReaction(c._id, '👍')}
+                                className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
+                                title="Like"
+                              >
+                                👍
+                              </button>
+                              <button
+                                onClick={() => handleQuickReaction(c._id, '❤️')}
+                                className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
+                                title="Love"
+                              >
+                                ❤️
+                              </button>
+                              <button
+                                onClick={() => handleQuickReaction(c._id, '😂')}
+                                className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
+                                title="Laugh"
+                              >
+                                😂
+                              </button>
+                              <button
+                                onClick={() => handleQuickReaction(c._id, '😮')}
+                                className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
+                                title="Wow"
+                              >
+                                😮
+                              </button>
+                              <button
+                                onClick={() => handleQuickReaction(c._id, '😢')}
+                                className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
+                                title="Sad"
+                              >
+                                😢
+                              </button>
+                              <button
+                                onClick={() => handleQuickReaction(c._id, '😡')}
+                                className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
+                                title="Angry"
+                              >
+                                😡
+                              </button>
+                              <div className="w-px h-6 bg-gray-300 mx-1"></div>
+                              <button
+                                onClick={toggleReactionsEmojiPicker}
+                                className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
+                                title="More emojis"
+                              >
+                                ➕
+                              </button>
+                            </div>
+                          )}
                         </div>
-                        
-                        {/* Reactions Bar - positioned immediately above message bubble */}
-                        {(() => {
-                          const shouldShow = !c.deleted && showReactionsBar && reactionsMessageId === c._id;
-                          if (c._id === reactionsMessageId) {
-                            console.log('Reaction bar render check for message:', c._id, {
-                              deleted: c.deleted,
-                              showReactionsBar,
-                              reactionsMessageId,
-                              shouldShow
-                            });
-                          }
-                          return shouldShow;
-                        })() && (
-                          <div style={{ position: 'absolute', top: '-100px', left: '0', right: '0', background: 'red', color: 'white', padding: '10px', zIndex: 9999 }}>
-                            DEBUG: REACTION BAR SHOULD BE VISIBLE HERE
-                          </div>
-                        )}
-                        {(() => {
-                          const shouldShow = !c.deleted && showReactionsBar && reactionsMessageId === c._id;
-                          if (c._id === reactionsMessageId) {
-                            console.log('Reaction bar render check for message:', c._id, {
-                              deleted: c.deleted,
-                              showReactionsBar,
-                              reactionsMessageId,
-                              shouldShow
-                            });
-                          }
-                          return shouldShow;
-                        })() && (
-                          <div className={`absolute -top-20 ${isMe ? 'right-0' : 'left-0'} bg-red-500 rounded-full shadow-lg border-2 border-red-600 p-1 flex items-center gap-1 animate-reactions-bar z-[9999] reactions-bar`} style={{ minWidth: 'max-content' }}>
-                            {/* Quick reaction buttons */}
-                            <button
-                              onClick={() => handleQuickReaction(c._id, '👍')}
-                              className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
-                              title="Like"
-                            >
-                              👍
-                            </button>
-                            <button
-                              onClick={() => handleQuickReaction(c._id, '❤️')}
-                              className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
-                              title="Love"
-                            >
-                              ❤️
-                            </button>
-                            <button
-                              onClick={() => handleQuickReaction(c._id, '😂')}
-                              className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
-                              title="Laugh"
-                            >
-                              😂
-                            </button>
-                            <button
-                              onClick={() => handleQuickReaction(c._id, '😮')}
-                              className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
-                              title="Wow"
-                            >
-                              😮
-                            </button>
-                            <button
-                              onClick={() => handleQuickReaction(c._id, '😢')}
-                              className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
-                              title="Sad"
-                            >
-                              😢
-                            </button>
-                            <button
-                              onClick={() => handleQuickReaction(c._id, '😡')}
-                              className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
-                              title="Angry"
-                            >
-                              😡
-                            </button>
-                            <div className="w-px h-6 bg-gray-300 mx-1"></div>
-                            <button
-                              onClick={toggleReactionsEmojiPicker}
-                              className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
-                              title="More emojis"
-                            >
-                              ➕
-                            </button>
-                          </div>
-                        )}
                         
                         {/* Emoji Picker for reactions - positioned immediately above message bubble */}
                         {!c.deleted && showReactionsEmojiPicker && reactionsMessageId === c._id && (
