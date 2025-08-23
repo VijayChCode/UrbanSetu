@@ -2907,7 +2907,7 @@ function AdminAppointmentRow({
                             onClick={async () => {
                               setMultiSelectActions(prev => ({ ...prev, starring: true }));
                                                             try {
-                                console.log('Starting bulk starring operation for', selectedMessages.length, 'messages');
+  
                                 
                                 // Process messages one by one to handle individual failures gracefully
                                 let successCount = 0;
@@ -2917,7 +2917,7 @@ function AdminAppointmentRow({
                                 for (const msg of selectedMessages) {
                                   try {
                                     const isStarred = msg.starredBy?.includes(currentUser._id);
-                                    console.log(`Processing message ${msg._id}: currently starred = ${isStarred}, will set starred = ${!isStarred}`);
+
                                     
                                     const response = await axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${msg._id}/star`, 
                                       { starred: !isStarred },
@@ -2927,7 +2927,7 @@ function AdminAppointmentRow({
                                       }
                                     );
                                     
-                                    console.log(`Successfully processed message ${msg._id}`);
+
                                     successCount++;
                                     
                                     // Update this specific message in local comments
@@ -2970,7 +2970,7 @@ function AdminAppointmentRow({
                                   }
                                 }
                                 
-                                console.log(`Bulk operation completed: ${successCount} successful, ${failureCount} failed`);
+
                                 
                                 // Show appropriate feedback
                                 if (successCount > 0 && failureCount === 0) {

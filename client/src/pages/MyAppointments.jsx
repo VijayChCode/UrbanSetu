@@ -3739,7 +3739,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               onClick={async () => {
                                 setMultiSelectActions(prev => ({ ...prev, starring: true }));
                                 try {
-                                  console.log('Starting bulk starring operation for', selectedMessages.length, 'messages');
+            
                                   
                                   // Process messages one by one to handle individual failures gracefully
                                   let successCount = 0;
@@ -6708,7 +6708,7 @@ You can lock this chat again at any time from the options.</p>
                     // Handle multiple messages
                     setPinningSaving(true);
                     try {
-                      console.log('Starting bulk pinning operation for', messageToPin.length, 'messages');
+
                       
                       // Process messages one by one to handle individual failures gracefully
                       let successCount = 0;
@@ -6718,7 +6718,7 @@ You can lock this chat again at any time from the options.</p>
                       
                       for (const msg of messageToPin) {
                         try {
-                          console.log(`Pinning message ${msg._id}`);
+
                           
                           const response = await axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${msg._id}/pin`, 
                             { 
@@ -6732,7 +6732,7 @@ You can lock this chat again at any time from the options.</p>
                             }
                           );
                           
-                          console.log(`Successfully pinned message ${msg._id}`);
+
                           successCount++;
                           successfulMessages.push(msg);
                           
@@ -6743,7 +6743,7 @@ You can lock this chat again at any time from the options.</p>
                         }
                       }
                       
-                      console.log(`Bulk pinning operation completed: ${successCount} successful, ${failureCount} failed`);
+
                       
                       if (successCount > 0) {
                         // Calculate expiry date based on duration
