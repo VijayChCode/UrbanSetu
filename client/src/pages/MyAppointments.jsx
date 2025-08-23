@@ -2073,8 +2073,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   // Add function to check if appointment is upcoming
   const isUpcoming = new Date(appt.date) > new Date() || (new Date(appt.date).toDateString() === new Date().toDateString() && (!appt.time || appt.time > new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })));
   
-  // Check if chat should be disabled (for outdated, pending, rejected, or cancelled by admin appointments)
-  const isChatDisabled = !isUpcoming || appt.status === 'pending' || appt.status === 'rejected' || appt.status === 'cancelledByAdmin';
+  // Check if chat should be disabled (for outdated, rejected, cancelled by admin, cancelled by buyer, or cancelled by seller appointments)
+  const isChatDisabled = !isUpcoming || appt.status === 'rejected' || appt.status === 'cancelledByAdmin' || appt.status === 'cancelledByBuyer' || appt.status === 'cancelledBySeller';
   
   const canSeeContactInfo = (isAdmin || appt.status === 'accepted') && isUpcoming && 
     appt.status !== 'cancelledByBuyer' && appt.status !== 'cancelledBySeller' && 
@@ -3747,11 +3747,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
             title={isChatDisabled ? (
               !isUpcoming 
                 ? "Chat not available for outdated appointments" 
-                : appt.status === 'pending'
-                  ? "Chat not available for pending appointments"
-                  : appt.status === 'rejected'
-                    ? "Chat not available for rejected appointments"
-                    : "Chat not available for appointments cancelled by admin"
+                : appt.status === 'rejected'
+                  ? "Chat not available for rejected appointments"
+                  : appt.status === 'cancelledByAdmin'
+                    ? "Chat not available for appointments cancelled by admin"
+                    : appt.status === 'cancelledByBuyer'
+                      ? "Chat not available for appointments cancelled by buyer"
+                      : "Chat not available for appointments cancelled by seller"
             ) : "Open Chat"}
             onClick={isChatDisabled ? undefined : () => {
               if ((chatLocked || chatLockStatusLoading) && !chatAccessGranted) {
@@ -3817,21 +3819,25 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 <div className="text-xl font-semibold text-gray-500 text-center">
                   {!isUpcoming 
                     ? "Chat not available for outdated appointments"
-                    : appt.status === 'pending'
-                      ? "Chat not available for pending appointments"
-                      : appt.status === 'rejected'
-                        ? "Chat not available for rejected appointments"
-                        : "Chat not available for appointments cancelled by admin"
+                    : appt.status === 'rejected'
+                      ? "Chat not available for rejected appointments"
+                      : appt.status === 'cancelledByAdmin'
+                        ? "Chat not available for appointments cancelled by admin"
+                        : appt.status === 'cancelledByBuyer'
+                          ? "Chat not available for appointments cancelled by buyer"
+                          : "Chat not available for appointments cancelled by seller"
                   }
                 </div>
                 <div className="text-gray-400 text-center mt-2">
                   {!isUpcoming 
                     ? "This appointment has already passed"
-                    : appt.status === 'pending'
-                      ? "Chat will be enabled once the appointment is accepted"
-                      : appt.status === 'rejected'
-                        ? "This appointment has been rejected"
-                        : "This appointment has been cancelled by admin"
+                    : appt.status === 'rejected'
+                      ? "This appointment has been rejected"
+                      : appt.status === 'cancelledByAdmin'
+                        ? "This appointment has been cancelled by admin"
+                        : appt.status === 'cancelledByBuyer'
+                          ? "This appointment has been cancelled by buyer"
+                          : "This appointment has been cancelled by seller"
                   }
                 </div>
               </div>
