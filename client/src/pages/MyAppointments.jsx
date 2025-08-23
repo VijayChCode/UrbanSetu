@@ -5,6 +5,7 @@ import UserAvatar from '../components/UserAvatar';
 import ImagePreview from '../components/ImagePreview';
 import LinkPreview from '../components/LinkPreview';
 import { EmojiButton } from '../components/EmojiPicker';
+import CustomEmojiPicker from '../components/EmojiPicker';
 import { useSoundEffects, SoundControl } from '../components/SoundEffects';
 import { useSelector } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -1249,6 +1250,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const [privacyNoticeHighlighted, setPrivacyNoticeHighlighted] = useState(false);
   const [showHeaderMoreMenu, setShowHeaderMoreMenu] = useState(false);
   
+  // Reactions state
+  const [showReactionsBar, setShowReactionsBar] = useState(false);
+  const [reactionsMessageId, setReactionsMessageId] = useState(null);
+  const [showReactionsEmojiPicker, setShowReactionsEmojiPicker] = useState(false);
+  
   // Check if device is mobile for conditional animation
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   
@@ -1842,6 +1848,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       if (showHeaderMoreMenu && !event.target.closest('.chat-options-menu')) {
         setShowHeaderMoreMenu(false);
       }
+      if (showReactionsBar && !event.target.closest('.reactions-bar')) {
+        setShowReactionsBar(false);
+        setReactionsMessageId(null);
+      }
+      if (showReactionsEmojiPicker && !event.target.closest('.emoji-picker-container')) {
+        setShowReactionsEmojiPicker(false);
+      }
     };
 
     const handleScroll = () => {
@@ -1850,6 +1863,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       }
       if (showHeaderMoreMenu) {
         setShowHeaderMoreMenu(false);
+      }
+      if (showReactionsBar) {
+        setShowReactionsBar(false);
+        setReactionsMessageId(null);
+      }
+      if (showReactionsEmojiPicker) {
+        setShowReactionsEmojiPicker(false);
       }
     };
 
@@ -1881,7 +1901,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       document.removeEventListener('mousedown', handleCalendarClickOutside);
       document.removeEventListener('scroll', handleScroll, true);
     };
-  }, [showChatOptionsMenu, showHeaderMoreMenu, showSearchBox, showCalendar]);
+  }, [showChatOptionsMenu, showHeaderMoreMenu, showSearchBox, showCalendar, showReactionsBar, showReactionsEmojiPicker]);
 
   // Reset send icon animation after completion
   useEffect(() => {
@@ -2792,6 +2812,66 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [showChatModal]);
+
+  // Reactions functions
+  const handleQuickReaction = async (messageId, emoji) => {
+    try {
+      const message = comments.find(c => c._id === messageId);
+      if (!message) return;
+
+      // Add reaction to the message
+      const { data } = await axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${messageId}/react`, 
+        { emoji },
+        { 
+          withCredentials: true,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+
+      // Update local state
+      setComments(prev => prev.map(c => 
+        c._id === messageId 
+          ? { 
+              ...c, 
+              reactions: data.reactions || c.reactions || []
+            }
+          : c
+      ));
+
+      // Close reactions bar
+      setShowReactionsBar(false);
+      setReactionsMessageId(null);
+      setShowReactionsEmojiPicker(false);
+
+      toast.success('Reaction added!');
+    } catch (err) {
+      console.error('Error adding reaction:', err);
+      toast.error('Failed to add reaction');
+    }
+  };
+
+  const handleReactionsEmojiClick = (emojiObject) => {
+    if (reactionsMessageId) {
+      handleQuickReaction(reactionsMessageId, emojiObject.emoji);
+    }
+  };
+
+  const toggleReactionsBar = (messageId) => {
+    if (reactionsMessageId === messageId && showReactionsBar) {
+      setShowReactionsBar(false);
+      setReactionsMessageId(null);
+      setShowReactionsEmojiPicker(false);
+    } else {
+      setReactionsMessageId(messageId);
+      setShowReactionsBar(true);
+      setShowReactionsEmojiPicker(false);
+    }
+  };
+
+  const toggleReactionsEmojiPicker = () => {
+    setShowReactionsEmojiPicker(!showReactionsEmojiPicker);
+    setShowReactionsBar(false);
+  };
 
   // Mark messages as read when user can actually see them at the bottom of chat
   const markingReadRef = useRef(false);
@@ -4946,12 +5026,102 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               {/* Options icon - visible for all messages including deleted ones */}
                               <button
                                 className={`${c.senderEmail === currentUser.email ? 'text-blue-200 hover:text-white' : 'text-gray-500 hover:text-gray-700'} transition-all duration-200 hover:scale-110 p-1 rounded-full hover:bg-white hover:bg-opacity-20 ml-1`}
-                                onClick={(e) => { e.stopPropagation(); setHeaderOptionsMessageId(c._id); }}
+                                onClick={(e) => { 
+                                  e.stopPropagation(); 
+                                  setHeaderOptionsMessageId(c._id); 
+                                  toggleReactionsBar(c._id);
+                                }}
                                 title="Message options"
                                 aria-label="Message options"
                               >
                                 <FaEllipsisV size={12} />
                               </button>
+                              
+                              {/* Reactions Bar */}
+                              {!c.deleted && showReactionsBar && reactionsMessageId === c._id && (
+                                <div className="absolute bottom-full right-0 mb-2 bg-white rounded-full shadow-lg border border-gray-200 p-1 flex items-center gap-1 animate-reactions-bar z-50 reactions-bar">
+                                  {/* Quick reaction buttons */}
+                                  <button
+                                    onClick={() => handleQuickReaction(c._id, '👍')}
+                                    className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
+                                    title="Like"
+                                  >
+                                    👍
+                                  </button>
+                                  <button
+                                    onClick={() => handleQuickReaction(c._id, '❤️')}
+                                    className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
+                                    title="Love"
+                                  >
+                                    ❤️
+                                  </button>
+                                  <button
+                                    onClick={() => handleQuickReaction(c._id, '😂')}
+                                    className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
+                                    title="Laugh"
+                                  >
+                                    😂
+                                  </button>
+                                  <button
+                                    onClick={() => handleQuickReaction(c._id, '😮')}
+                                    className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
+                                    title="Wow"
+                                  >
+                                    😮
+                                  </button>
+                                  <button
+                                    onClick={() => handleQuickReaction(c._id, '😢')}
+                                    className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
+                                    title="Sad"
+                                  >
+                                    😢
+                                  </button>
+                                  <button
+                                    onClick={() => handleQuickReaction(c._id, '😡')}
+                                    className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
+                                    title="Angry"
+                                  >
+                                    😡
+                                  </button>
+                                  <div className="w-px h-6 bg-gray-300 mx-1"></div>
+                                  <button
+                                    onClick={toggleReactionsEmojiPicker}
+                                    className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
+                                    title="More emojis"
+                                  >
+                                    ➕
+                                  </button>
+                                </div>
+                              )}
+                              
+                              {/* Emoji Picker for reactions */}
+                              {!c.deleted && showReactionsEmojiPicker && reactionsMessageId === c._id && (
+                                <div className="absolute bottom-full right-0 mb-2 z-50 emoji-picker-container">
+                                  <CustomEmojiPicker
+                                    onEmojiClick={handleReactionsEmojiClick}
+                                    isOpen={showReactionsEmojiPicker}
+                                    setIsOpen={setShowReactionsEmojiPicker}
+                                    buttonRef={{ current: null }}
+                                    inputRef={null}
+                                  />
+                                </div>
+                              )}
+                              
+                              {/* Display reactions */}
+                              {!c.deleted && c.reactions && c.reactions.length > 0 && (
+                                <div className="flex items-center gap-1 ml-1">
+                                  {c.reactions.map((reaction, index) => (
+                                    <span 
+                                      key={index}
+                                      className="text-xs bg-gray-100 rounded-full px-2 py-1 flex items-center gap-1"
+                                      title={`${reaction.userName || 'User'} reacted with ${reaction.emoji}`}
+                                    >
+                                      <span>{reaction.emoji}</span>
+                                      <span className="text-gray-600">{reaction.count || 1}</span>
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
                               {(c.senderEmail === currentUser.email) && !c.deleted && (
                                 <span className="flex items-center gap-1 ml-1">
                                   {c.readBy?.includes(otherParty?._id)

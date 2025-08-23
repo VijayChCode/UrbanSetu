@@ -96,6 +96,15 @@ const bookingSchema = new mongoose.Schema({
       pinnedAt: { type: Date, default: null },
       pinExpiresAt: { type: Date, default: null },
       pinDuration: { type: String, enum: ['24hrs', '7days', '30days', 'custom'], default: null },
+      // Message reactions
+      reactions: [
+        {
+          emoji: { type: String, required: true },
+          userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+          userName: { type: String, required: true },
+          timestamp: { type: Date, default: Date.now }
+        }
+      ],
     }
   ],
   chat: [

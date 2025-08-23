@@ -1946,6 +1946,91 @@ router.patch('/:id/comment/:commentId/pin', verifyToken, async (req, res) => {
   }
 });
 
+// PATCH: Add/remove reaction to a comment
+router.patch('/:id/comment/:commentId/react', verifyToken, async (req, res) => {
+  try {
+    const { id, commentId } = req.params;
+    const { emoji } = req.body;
+    const userId = req.user.id;
+
+    if (!mongoose.Types.ObjectId.isValid(id) || !mongoose.Types.ObjectId.isValid(commentId)) {
+      return res.status(400).json({ message: 'Invalid ID format.' });
+    }
+
+    if (!emoji) {
+      return res.status(400).json({ message: 'Emoji is required.' });
+    }
+
+    const appointment = await booking.findById(id);
+    if (!appointment) {
+      return res.status(404).json({ message: 'Appointment not found.' });
+    }
+
+    // Check if user is authorized (buyer, seller, or admin)
+    const isBuyer = appointment.buyerId.toString() === userId;
+    const isSeller = appointment.sellerId.toString() === userId;
+    const isAdmin = req.user.role === 'admin' || req.user.role === 'rootadmin';
+
+    if (!isBuyer && !isSeller && !isAdmin) {
+      return res.status(403).json({ message: 'Not authorized to react to messages in this appointment.' });
+    }
+
+    const comment = appointment.comments.id(commentId);
+    if (!comment) {
+      return res.status(404).json({ message: 'Comment not found.' });
+    }
+
+    // Get user details for the reaction
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    // Check if user already reacted with this emoji
+    const existingReactionIndex = comment.reactions.findIndex(
+      reaction => reaction.userId.toString() === userId && reaction.emoji === emoji
+    );
+
+    if (existingReactionIndex !== -1) {
+      // Remove existing reaction
+      comment.reactions.splice(existingReactionIndex, 1);
+    } else {
+      // Add new reaction
+      comment.reactions.push({
+        emoji,
+        userId,
+        userName: user.username,
+        timestamp: new Date()
+      });
+    }
+
+    appointment.markModified('comments');
+    await appointment.save();
+
+    // Emit real-time update
+    try {
+      const io = req.app.get('io');
+      if (io) {
+        const updatedComment = comment.toObject ? comment.toObject() : comment;
+        io.to(appointment.buyerId.toString()).emit('commentUpdate', { appointmentId: id, comment: updatedComment });
+        io.to(appointment.sellerId.toString()).emit('commentUpdate', { appointmentId: id, comment: updatedComment });
+        // Emit to appointment room for admin visibility
+        io.to(`appointment_${id}`).emit('commentUpdate', { appointmentId: id, comment: updatedComment });
+      }
+    } catch (emitErr) {
+      console.warn('Warning: failed to emit reaction commentUpdate event:', emitErr);
+    }
+
+    return res.status(200).json({ 
+      message: existingReactionIndex !== -1 ? 'Reaction removed successfully' : 'Reaction added successfully',
+      reactions: comment.reactions
+    });
+  } catch (err) {
+    console.error('Error adding/removing reaction:', err);
+    return res.status(500).json({ message: 'Failed to update reaction.' });
+  }
+});
+
 // GET: Get all pinned messages for an appointment
 router.get('/:id/pinned-messages', verifyToken, async (req, res) => {
   try {
