@@ -2871,11 +2871,16 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   };
 
   const toggleReactionsBar = (messageId) => {
+    console.log('toggleReactionsBar called with:', messageId);
+    console.log('Current state:', { reactionsMessageId, showReactionsBar, showReactionsEmojiPicker });
+    
     if (reactionsMessageId === messageId && showReactionsBar) {
+      console.log('Closing reactions bar');
       setShowReactionsBar(false);
       setReactionsMessageId(null);
       setShowReactionsEmojiPicker(false);
     } else {
+      console.log('Opening reactions bar for message:', messageId);
       setReactionsMessageId(messageId);
       setShowReactionsBar(true);
       setShowReactionsEmojiPicker(false);
@@ -4923,7 +4928,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             ref={el => messageRefs.current[c._id] = el}
                             id={`message-${c._id}`}
                             data-message-id={c._id}
-                            className={`relative rounded-2xl px-4 sm:px-5 py-3 text-sm shadow-xl max-w-[90%] sm:max-w-[80%] md:max-w-[70%] lg:max-w-[60%] xl:max-w-[50%] break-words overflow-hidden transition-all duration-300 min-h-[60px] ${
+                            className={`relative rounded-2xl px-4 sm:px-5 py-3 text-sm shadow-xl max-w-[90%] sm:max-w-[80%] md:max-w-[70%] lg:max-w-[60%] xl:max-w-[50%] break-words overflow-visible transition-all duration-300 min-h-[60px] ${
                               isMe 
                                 ? 'bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-500 hover:to-purple-600 text-white shadow-blue-200 hover:shadow-blue-300 hover:shadow-2xl' 
                                 : 'bg-white hover:bg-gray-50 text-gray-800 border border-gray-200 shadow-gray-200 hover:shadow-lg hover:border-gray-300 hover:shadow-xl'
@@ -5106,8 +5111,19 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                         </div>
                         
                         {/* Reactions Bar - positioned immediately above message bubble */}
-                        {!c.deleted && showReactionsBar && reactionsMessageId === c._id && (
-                          <div className={`absolute -top-2 ${isMe ? 'right-0' : 'left-0'} bg-white rounded-full shadow-lg border border-gray-200 p-1 flex items-center gap-1 animate-reactions-bar z-50 reactions-bar`}>
+                        {(() => {
+                          const shouldShow = !c.deleted && showReactionsBar && reactionsMessageId === c._id;
+                          if (c._id === reactionsMessageId) {
+                            console.log('Reaction bar render check for message:', c._id, {
+                              deleted: c.deleted,
+                              showReactionsBar,
+                              reactionsMessageId,
+                              shouldShow
+                            });
+                          }
+                          return shouldShow;
+                        })() && (
+                          <div className={`absolute -top-16 ${isMe ? 'right-0' : 'left-0'} bg-white rounded-full shadow-lg border border-gray-200 p-1 flex items-center gap-1 animate-reactions-bar z-[9999] reactions-bar`} style={{ minWidth: 'max-content' }}>
                             {/* Quick reaction buttons */}
                             <button
                               onClick={() => handleQuickReaction(c._id, '👍')}
