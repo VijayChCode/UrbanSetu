@@ -1226,6 +1226,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       } else {
         // Open chat directly if not locked
         setShowChatModal(true);
+        // Dispatch event to notify App.jsx that chat is opened
+        window.dispatchEvent(new CustomEvent('chatOpened', {
+          detail: { appointmentId: appt._id }
+        }));
         // Notify parent that chat has been opened
         if (onChatOpened) {
           onChatOpened();
@@ -1562,6 +1566,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         
         // Open chat modal after successful unlock
         setShowChatModal(true);
+        // Dispatch event to notify App.jsx that chat is opened
+        window.dispatchEvent(new CustomEvent('chatOpened', {
+          detail: { appointmentId: appt._id }
+        }));
         // Notify parent that chat has been opened
         if (onChatOpened) {
           onChatOpened();
@@ -1652,6 +1660,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   // Reset chat access when chat modal is closed
   const handleChatModalClose = async () => {
     setShowChatModal(false);
+    
+    // Dispatch event to notify App.jsx that chat is closed
+    window.dispatchEvent(new CustomEvent('chatClosed'));
     
     // Reset chat access if it was temporarily granted
     if (chatLocked && chatAccessGranted) {
@@ -3586,6 +3597,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 setShowChatUnlockModal(true);
               } else {
                 setShowChatModal(true);
+                // Dispatch event to notify App.jsx that chat is opened
+                window.dispatchEvent(new CustomEvent('chatOpened', {
+                  detail: { appointmentId: appt._id }
+                }));
               }
             }}
             disabled={isChatDisabled}

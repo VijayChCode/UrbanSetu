@@ -315,6 +315,28 @@ function AppRoutes({ bootstrapped }) {
     };
   }, [dispatch, navigate, currentUser]);
 
+  // Track currently open chat
+  const [currentlyOpenChat, setCurrentlyOpenChat] = useState(null);
+
+  // Listen for chat open/close events
+  useEffect(() => {
+    const handleChatOpen = (e) => {
+      setCurrentlyOpenChat(e.detail.appointmentId);
+    };
+    
+    const handleChatClose = () => {
+      setCurrentlyOpenChat(null);
+    };
+    
+    window.addEventListener('chatOpened', handleChatOpen);
+    window.addEventListener('chatClosed', handleChatClose);
+    
+    return () => {
+      window.removeEventListener('chatOpened', handleChatOpen);
+      window.removeEventListener('chatClosed', handleChatClose);
+    };
+  }, []);
+
   // Socket event listener for new message notifications
   useEffect(() => {
     if (!currentUser) return; // Only run if user is logged in
@@ -326,6 +348,14 @@ function AppRoutes({ bootstrapped }) {
         // Check if we're on the MyAppointments page
         const currentPath = window.location.pathname;
         const isOnMyAppointments = currentPath.includes('/my-appointments') || currentPath.includes('/user/my-appointments');
+        
+        // Check if the user is currently viewing this specific chat
+        const isCurrentlyViewingThisChat = currentlyOpenChat === data.appointmentId;
+        
+        // Don't show notification if user is already viewing this chat
+        if (isCurrentlyViewingThisChat) {
+          return;
+        }
         
         // Use same logic as MyAppointments page to check if sender is admin
         let senderName = data.comment.senderEmail || 'User';
@@ -398,7 +428,7 @@ function AppRoutes({ bootstrapped }) {
     return () => {
       socket.off('commentUpdate', handleNewMessage);
     };
-  }, [dispatch, navigate, currentUser, playNotification]);
+  }, [dispatch, navigate, currentUser, playNotification, currentlyOpenChat]);
 
   // Periodic session check (every 30 seconds)
   useEffect(() => {
