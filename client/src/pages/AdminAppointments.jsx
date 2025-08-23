@@ -1129,6 +1129,7 @@ function AdminAppointmentRow({
   const [newComment, setNewComment] = useLocalState("");
   const [detectedUrl, setDetectedUrl] = useState(null);
   const [previewDismissed, setPreviewDismissed] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
   const [sending, setSending] = useLocalState(false);
   const [editingComment, setEditingComment] = useLocalState(null);
   const [editText, setEditText] = useLocalState("");
@@ -1840,6 +1841,37 @@ function AdminAppointmentRow({
       setLocalComments(prev => prev.filter(msg => msg._id !== tempId));
       toast.error(error.response?.data?.message || "Failed to send image.");
     }
+  };
+
+  const handleImageFiles = (files) => {
+    // Check if adding these files would exceed the 10 image limit
+    const totalFiles = (selectedFiles?.length || 0) + files.length;
+    if (totalFiles > 10) {
+      toast.error('Maximum 10 images allowed. Please remove some images first.');
+      return;
+    }
+    
+    // Filter only image files
+    const imageFiles = files.filter(file => file.type.startsWith('image/'));
+    if (imageFiles.length === 0) {
+      toast.error('No valid image files found');
+      return;
+    }
+    
+    // Add new files to existing selection
+    setSelectedFiles(prev => [...(prev || []), ...imageFiles]);
+    
+    // Initialize captions for new files
+    const newCaptions = {};
+    imageFiles.forEach(file => {
+      newCaptions[file.name] = '';
+    });
+    setImageCaptions(prev => ({ ...prev, ...newCaptions }));
+    
+    // Show image preview modal
+    setShowImagePreviewModal(true);
+    
+    toast.success(`${imageFiles.length} image${imageFiles.length > 1 ? 's' : ''} added successfully!`);
   };
 
   const handleSendImagesWithCaptions = async () => {
@@ -3320,7 +3352,42 @@ function AdminAppointmentRow({
                 </div>
               )}
               
-              <div ref={chatContainerRef} className="flex-1 overflow-y-auto space-y-2 mb-4 px-4 pt-4 animate-fadeInChat relative bg-gradient-to-b from-transparent to-blue-50/30" style={{minHeight: '400px', maxHeight: 'calc(100vh - 200px)'}}>
+              <div 
+                ref={chatContainerRef} 
+                className={`flex-1 overflow-y-auto space-y-2 mb-4 px-4 pt-4 animate-fadeInChat relative bg-gradient-to-b from-transparent to-blue-50/30 ${isDragOver ? 'bg-blue-50/50 border-2 border-dashed border-blue-300' : ''}`}
+                style={{minHeight: '400px', maxHeight: 'calc(100vh - 200px)'}}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsDragOver(true);
+                }}
+                onDragEnter={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsDragOver(true);
+                }}
+                onDragLeave={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (!e.currentTarget.contains(e.relatedTarget)) {
+                    setIsDragOver(false);
+                  }
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsDragOver(false);
+                  
+                  const files = Array.from(e.dataTransfer.files);
+                  const imageFiles = files.filter(file => file.type.startsWith('image/'));
+                  
+                  if (imageFiles.length > 0) {
+                    handleImageFiles(imageFiles);
+                  } else if (files.length > 0) {
+                    toast.error('Only image files are supported');
+                  }
+                }}
+              >
                 {/* Privacy Notice for Admins */}
                 <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-purple-50 border-l-4 border-blue-400 rounded-r-lg mb-4 transform transition-all duration-500 hover:scale-105 hover:shadow-lg hover:from-blue-100 hover:to-purple-100 hover:border-blue-500 hover:border-l-6 backdrop-blur-sm">
                   <p className="text-sm text-blue-700 font-medium text-center flex items-center justify-center gap-2">
@@ -3759,6 +3826,19 @@ function AdminAppointmentRow({
                     onScroll={(e) => {
                       // Prevent scroll event from propagating to parent chat container
                       e.stopPropagation();
+                    }}
+                    onPaste={(e) => {
+                      const items = Array.from(e.clipboardData.items);
+                      const imageItems = items.filter(item => item.type.startsWith('image/'));
+                      
+                      if (imageItems.length > 0) {
+                        e.preventDefault();
+                        const imageItem = imageItems[0];
+                        const file = imageItem.getAsFile();
+                        if (file) {
+                          handleImageFiles([file]);
+                        }
+                      }
                     }}
                     onKeyDown={e => { 
                       // Check if this is a desktop viewport only
