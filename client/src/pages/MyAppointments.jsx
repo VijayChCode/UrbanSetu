@@ -1646,35 +1646,56 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     
     try {
       console.log('Starting remove all starred messages operation for', starredMessages.length, 'messages');
-      // Unstar all messages by making API calls
-      const promises = starredMessages.map(message => {
-        console.log(`Unstarring message ${message._id}`);
-        return axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${message._id}/star`, 
-          { starred: false },
-          {
-            withCredentials: true,
-            headers: { 'Content-Type': 'application/json' }
-          }
-        );
-      });
       
-      console.log('Making', promises.length, 'API calls to unstar messages...');
-      await Promise.all(promises);
-      console.log('All unstar API calls completed successfully');
+      // Process messages one by one to handle individual failures gracefully
+      let successCount = 0;
+      let failureCount = 0;
+      const failedMessages = [];
       
-      // Update local comments state - remove starredBy for current user
-      setComments(prev => prev.map(c => ({
-        ...c,
-        starredBy: (c.starredBy || []).filter(id => id !== currentUser._id)
-      })));
+      for (const message of starredMessages) {
+        try {
+          console.log(`Unstarring message ${message._id}`);
+          
+          const response = await axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${message._id}/star`, 
+            { starred: false },
+            {
+              withCredentials: true,
+              headers: { 'Content-Type': 'application/json' }
+            }
+          );
+          
+          console.log(`Successfully unstarred message ${message._id}`);
+          successCount++;
+          
+          // Update this specific message in comments
+          setComments(prev => prev.map(c => 
+            c._id === message._id 
+              ? { ...c, starredBy: (c.starredBy || []).filter(id => id !== currentUser._id) }
+              : c
+          ));
+          
+        } catch (err) {
+          console.error(`Failed to unstar message ${message._id}:`, err);
+          failureCount++;
+          failedMessages.push(message);
+        }
+      }
       
-      // Clear starred messages list
-      setStarredMessages([]);
+      console.log(`Remove all operation completed: ${successCount} successful, ${failureCount} failed`);
       
-      toast.success(`Removed ${messageCount} starred message${messageCount !== 1 ? 's' : ''}`);
+      // Remove successfully unstarred messages from starred messages list
+      setStarredMessages(prev => prev.filter(msg => !failedMessages.some(failed => failed._id === msg._id)));
       
-      // Close the modal
-      setShowStarredModal(false);
+      // Show appropriate feedback
+      if (successCount > 0 && failureCount === 0) {
+        toast.success(`Successfully removed ${successCount} starred message${successCount !== 1 ? 's' : ''}`);
+        // Close the modal only if all messages were processed successfully
+        setShowStarredModal(false);
+      } else if (successCount > 0 && failureCount > 0) {
+        toast.warning(`Partially successful: ${successCount} messages unstarred, ${failureCount} failed`);
+      } else {
+        toast.error(`Failed to unstar any messages. Please try again.`);
+      }
       
     } catch (err) {
       console.error('Error removing all starred messages:', err);
@@ -3719,55 +3740,77 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                 setMultiSelectActions(prev => ({ ...prev, starring: true }));
                                 try {
                                   console.log('Starting bulk starring operation for', selectedMessages.length, 'messages');
-                                  const promises = selectedMessages.map(msg => {
-                                    const isStarred = msg.starredBy?.includes(currentUser._id);
-                                    console.log(`Message ${msg._id}: currently starred = ${isStarred}, will set starred = ${!isStarred}`);
-                                    return axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${msg._id}/star`, 
-                                      { starred: !isStarred },
-                                      {
-                                        withCredentials: true,
-                                        headers: { 'Content-Type': 'application/json' }
-                                      }
-                                    );
-                                  });
-                                  console.log('Making', promises.length, 'API calls...');
-                                  await Promise.all(promises);
-                                  console.log('All API calls completed successfully');
                                   
-                                  // Update UI state for all selected messages
-                                  setComments(prev => prev.map(c => {
-                                    const selectedMsg = selectedMessages.find(msg => msg._id === c._id);
-                                    if (selectedMsg) {
-                                      const isStarred = selectedMsg.starredBy?.includes(currentUser._id);
-                                      return {
-                                        ...c,
-                                        starredBy: isStarred 
-                                          ? (c.starredBy || []).filter(id => id !== currentUser._id)
-                                          : [...(c.starredBy || []), currentUser._id]
-                                      };
+                                  // Process messages one by one to handle individual failures gracefully
+                                  let successCount = 0;
+                                  let failureCount = 0;
+                                  const failedMessages = [];
+                                  
+                                  for (const msg of selectedMessages) {
+                                    try {
+                                      const isStarred = msg.starredBy?.includes(currentUser._id);
+                                      console.log(`Processing message ${msg._id}: currently starred = ${isStarred}, will set starred = ${!isStarred}`);
+                                      
+                                      const response = await axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${msg._id}/star`, 
+                                        { starred: !isStarred },
+                                        {
+                                          withCredentials: true,
+                                          headers: { 'Content-Type': 'application/json' }
+                                        }
+                                      );
+                                      
+                                      console.log(`Successfully processed message ${msg._id}`);
+                                      successCount++;
+                                      
+                                      // Update this specific message in comments
+                                      setComments(prev => prev.map(c => 
+                                        c._id === msg._id 
+                                          ? { 
+                                              ...c, 
+                                              starredBy: isStarred 
+                                                ? (c.starredBy || []).filter(id => id !== currentUser._id)
+                                                : [...(c.starredBy || []), currentUser._id]
+                                            }
+                                          : c
+                                      ));
+                                      
+                                      // Update starred messages list for this message
+                                      setStarredMessages(prev => {
+                                        if (isStarred) {
+                                          // Remove from starred messages
+                                          return prev.filter(m => m._id !== msg._id);
+                                        } else {
+                                          // Add to starred messages
+                                          if (!prev.some(m => m._id === msg._id)) {
+                                            return [...prev, { ...msg, starredBy: [...(msg.starredBy || []), currentUser._id] }];
+                                          }
+                                          return prev;
+                                        }
+                                      });
+                                      
+                                    } catch (err) {
+                                      console.error(`Failed to process message ${msg._id}:`, err);
+                                      failureCount++;
+                                      failedMessages.push(msg);
                                     }
-                                    return c;
-                                  }));
+                                  }
                                   
-                                  // Update starred messages list
-                                  const newlyStarredMessages = selectedMessages.filter(msg => !msg.starredBy?.includes(currentUser._id));
-                                  const newlyUnstarredMessages = selectedMessages.filter(msg => msg.starredBy?.includes(currentUser._id));
+                                  console.log(`Bulk operation completed: ${successCount} successful, ${failureCount} failed`);
                                   
-                                  setStarredMessages(prev => {
-                                    // Remove unstarred messages
-                                    let updated = prev.filter(m => !newlyUnstarredMessages.some(unstarred => unstarred._id === m._id));
-                                    // Add newly starred messages
-                                    newlyStarredMessages.forEach(msg => {
-                                      if (!updated.some(m => m._id === msg._id)) {
-                                        updated.push({ ...msg, starredBy: [...(msg.starredBy || []), currentUser._id] });
-                                      }
-                                    });
-                                    return updated;
-                                  });
+                                  // Show appropriate feedback
+                                  if (successCount > 0 && failureCount === 0) {
+                                    toast.success(`Successfully updated star status for ${successCount} messages`);
+                                  } else if (successCount > 0 && failureCount > 0) {
+                                    toast.warning(`Partially successful: ${successCount} messages updated, ${failureCount} failed`);
+                                  } else {
+                                    toast.error(`Failed to update any messages. Please try again.`);
+                                  }
                                   
-                                  toast.success(`Updated star status for ${selectedMessages.length} messages`);
-                                  setIsSelectionMode(false);
-                                  setSelectedMessages([]);
+                                  // Clear selection mode if all messages were processed successfully
+                                  if (failureCount === 0) {
+                                    setIsSelectionMode(false);
+                                    setSelectedMessages([]);
+                                  }
                                 } catch (err) {
                                   console.error('Error in bulk starring operation:', err);
                                   if (err.response) {
