@@ -2857,11 +2857,17 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   };
 
   const toggleReactionsBar = (messageId) => {
+    console.log('toggleReactionsBar called with messageId:', messageId);
+    console.log('Current reactionsMessageId:', reactionsMessageId);
+    console.log('Current showReactionsBar:', showReactionsBar);
+    
     if (reactionsMessageId === messageId && showReactionsBar) {
+      console.log('Closing reactions bar');
       setShowReactionsBar(false);
       setReactionsMessageId(null);
       setShowReactionsEmojiPicker(false);
     } else {
+      console.log('Opening reactions bar');
       setReactionsMessageId(messageId);
       setShowReactionsBar(true);
       setShowReactionsEmojiPicker(false);
@@ -5011,7 +5017,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                 </div>
                               )}
                             </div>
-                            <div className="flex items-center gap-1 justify-end mt-2" data-message-actions>
+                            <div className="flex items-center gap-1 justify-end mt-2 relative" data-message-actions>
                               {/* Pin indicator for pinned messages */}
                               {c.pinned && (
                                 <FaThumbtack className={`${isMe ? 'text-purple-300' : 'text-purple-500'} text-[10px]`} title="Pinned message" />
@@ -5038,7 +5044,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               </button>
                               
                               {/* Reactions Bar */}
-                              {!c.deleted && showReactionsBar && reactionsMessageId === c._id && (
+                              {(() => {
+                                console.log('Rendering reactions bar for message:', c._id);
+                                console.log('!c.deleted:', !c.deleted);
+                                console.log('showReactionsBar:', showReactionsBar);
+                                console.log('reactionsMessageId === c._id:', reactionsMessageId === c._id);
+                                return !c.deleted && showReactionsBar && reactionsMessageId === c._id;
+                              })() && (
                                 <div className="absolute bottom-full right-0 mb-2 bg-white rounded-full shadow-lg border border-gray-200 p-1 flex items-center gap-1 animate-reactions-bar z-50 reactions-bar">
                                   {/* Quick reaction buttons */}
                                   <button
