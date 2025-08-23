@@ -5095,9 +5095,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           </div>
                         </div>
                         
-                        {/* Reactions Bar - positioned outside message bubble */}
+                        {/* Reactions Bar - positioned above message bubble */}
                         {!c.deleted && showReactionsBar && reactionsMessageId === c._id && (
-                          <div className={`absolute bottom-0 ${isMe ? 'right-0' : 'left-0'} mb-2 bg-white rounded-full shadow-lg border border-gray-200 p-1 flex items-center gap-1 animate-reactions-bar z-50 reactions-bar`}>
+                          <div className={`absolute top-0 ${isMe ? 'right-0' : 'left-0'} -mt-2 bg-white rounded-full shadow-lg border border-gray-200 p-1 flex items-center gap-1 animate-reactions-bar z-50 reactions-bar`}>
                             {/* Quick reaction buttons */}
                             <button
                               onClick={() => handleQuickReaction(c._id, '👍')}
@@ -5152,9 +5152,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           </div>
                         )}
                         
-                        {/* Emoji Picker for reactions - positioned outside message bubble */}
+                        {/* Emoji Picker for reactions - positioned above message bubble */}
                         {!c.deleted && showReactionsEmojiPicker && reactionsMessageId === c._id && (
-                          <div className={`absolute bottom-0 mb-2 z-50 emoji-picker-container ${isMe ? 'right-0' : 'left-0'}`}>
+                          <div className={`absolute top-0 -mt-2 z-50 emoji-picker-container ${isMe ? 'right-0' : 'left-0'}`}>
                             <CustomEmojiPicker
                               onEmojiClick={handleReactionsEmojiClick}
                               isOpen={showReactionsEmojiPicker}
