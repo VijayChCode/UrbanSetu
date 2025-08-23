@@ -2842,16 +2842,23 @@ function AdminAppointmentRow({
                                               headers: { 'Content-Type': 'application/json' }
                                             }
                                           );
-                                            updateAppointmentComments(appt._id, localComments.map(c => 
-                                              c._id === selectedMsg._id 
-                                                ? { 
-                                                    ...c, 
-                                                    starredBy: isStarred 
-                                                      ? (c.starredBy || []).filter(id => id !== currentUser._id)
-                                                      : [...(c.starredBy || []), currentUser._id]
-                                                  }
-                                                : c
-                                            ));
+                                            setLocalComments(prev => {
+                                              const updated = prev.map(c => 
+                                                c._id === selectedMsg._id 
+                                                  ? { 
+                                                      ...c, 
+                                                      starredBy: isStarred 
+                                                        ? (c.starredBy || []).filter(id => id !== currentUser._id)
+                                                        : [...(c.starredBy || []), currentUser._id]
+                                                    }
+                                                  : c
+                                              );
+                                              
+                                              // Update appointment comments for parent component with the updated state
+                                              updateAppointmentComments(appt._id, updated);
+                                              
+                                              return updated;
+                                            });
                                             toast.success(isStarred ? 'Message unstarred.' : 'Message starred.');
                                         } catch (err) {
                                           toast.error('Failed to update star status');
@@ -2924,28 +2931,23 @@ function AdminAppointmentRow({
                                     successCount++;
                                     
                                     // Update this specific message in local comments
-                                    setLocalComments(prev => prev.map(c => 
-                                      c._id === msg._id 
-                                        ? { 
-                                            ...c, 
-                                            starredBy: isStarred 
-                                              ? (c.starredBy || []).filter(id => id !== currentUser._id)
-                                              : [...(c.starredBy || []), currentUser._id]
-                                          }
-                                        : c
-                                    ));
-                                    
-                                    // Update appointment comments for parent component
-                                    updateAppointmentComments(appt._id, localComments.map(c => 
-                                      c._id === msg._id 
-                                        ? { 
-                                            ...c, 
-                                            starredBy: isStarred 
-                                              ? (c.starredBy || []).filter(id => id !== currentUser._id)
-                                              : [...(c.starredBy || []), currentUser._id]
-                                          }
-                                        : c
-                                    ));
+                                    setLocalComments(prev => {
+                                      const updated = prev.map(c => 
+                                        c._id === msg._id 
+                                          ? { 
+                                              ...c, 
+                                              starredBy: isStarred 
+                                                ? (c.starredBy || []).filter(id => id !== currentUser._id)
+                                                : [...(c.starredBy || []), currentUser._id]
+                                            }
+                                          : c
+                                      );
+                                      
+                                      // Update appointment comments for parent component with the updated state
+                                      updateAppointmentComments(appt._id, updated);
+                                      
+                                      return updated;
+                                    });
                                     
                                     // Update starred messages list for this message
                                     setStarredMessages(prev => {
@@ -3091,16 +3093,23 @@ function AdminAppointmentRow({
                                 }
                               );
                                 // Update the local state
-                                updateAppointmentComments(appt._id, localComments.map(c => 
-                                  c._id === selectedMessageForHeaderOptions._id 
-                                    ? { 
-                                        ...c, 
-                                        starredBy: isStarred 
-                                          ? (c.starredBy || []).filter(id => id !== currentUser._id)
-                                          : [...(c.starredBy || []), currentUser._id]
-                                      }
-                                    : c
-                                ));
+                                setLocalComments(prev => {
+                                  const updated = prev.map(c => 
+                                    c._id === selectedMessageForHeaderOptions._id 
+                                      ? { 
+                                          ...c, 
+                                          starredBy: isStarred 
+                                            ? (c.starredBy || []).filter(id => id !== currentUser._id)
+                                            : [...(c.starredBy || []), currentUser._id]
+                                        }
+                                      : c
+                                  );
+                                  
+                                  // Update appointment comments for parent component with the updated state
+                                  updateAppointmentComments(appt._id, updated);
+                                  
+                                  return updated;
+                                });
                                 
                                 // Update starred messages list
                                 if (isStarred) {
@@ -4846,11 +4855,18 @@ function AdminAppointmentRow({
                                       // Remove from starred messages list
                                       setStarredMessages(prev => prev.filter(m => m._id !== message._id));
                                       // Update the main comments state
-                                      updateAppointmentComments(appt._id, localComments.map(c => 
-                                        c._id === message._id 
-                                          ? { ...c, starredBy: (c.starredBy || []).filter(id => id !== currentUser._id) }
-                                          : c
-                                      ));
+                                      setLocalComments(prev => {
+                                        const updated = prev.map(c => 
+                                          c._id === message._id 
+                                            ? { ...c, starredBy: (c.starredBy || []).filter(id => id !== currentUser._id) }
+                                            : c
+                                        );
+                                        
+                                        // Update appointment comments for parent component with the updated state
+                                        updateAppointmentComments(appt._id, updated);
+                                        
+                                        return updated;
+                                      });
                                       toast.success('Message unstarred');
                                   } catch (err) {
                                     toast.error('Failed to unstar message');
