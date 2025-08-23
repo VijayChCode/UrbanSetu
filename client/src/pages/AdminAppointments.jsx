@@ -3680,19 +3680,19 @@ function AdminAppointmentRow({
               <div className="flex gap-2 mt-1 px-3 pb-2 items-end">
                 {/* Message Input Container with Attachment and Emoji Icons Inside */}
                 <div className="flex-1 relative">
-                  {/* Link Preview Container with Height Constraints */}
+                                    {/* Link Preview Container with Height and Width Constraints */}
                   {detectedUrl && (
-                    <div className="max-h-32 overflow-y-auto mb-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                                              <LinkPreview
-                          url={detectedUrl}
-                          onRemove={() => {
-                            setDetectedUrl(null);
-                            setPreviewDismissed(true);
-                          }}
-                          className=""
-                          showRemoveButton={true}
-                          clickable={false}
-                        />
+                    <div className="max-h-32 max-w-full overflow-y-auto mb-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                      <LinkPreview
+                        url={detectedUrl}
+                        onRemove={() => {
+                          setDetectedUrl(null);
+                          setPreviewDismissed(true);
+                        }}
+                        className="w-full"
+                        showRemoveButton={true}
+                        clickable={false}
+                      />
                     </div>
                   )}
                   <textarea

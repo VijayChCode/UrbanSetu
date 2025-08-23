@@ -48,10 +48,10 @@ const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, c
 
   if (loading) {
     return (
-      <div className={`bg-gray-50 border border-gray-200 rounded-lg p-3 mb-2 ${className}`}>
+      <div className={`bg-gray-50 border border-gray-200 rounded-lg p-3 mb-2 max-w-full ${className}`}>
         <div className="flex items-center space-x-3">
-          <div className="w-16 h-16 bg-gray-200 rounded animate-pulse"></div>
-          <div className="flex-1 space-y-2">
+          <div className="w-16 h-16 bg-gray-200 rounded animate-pulse flex-shrink-0"></div>
+          <div className="flex-1 min-w-0 max-w-full space-y-2">
             <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
             <div className="h-3 bg-gray-200 rounded animate-pulse w-3/4"></div>
             <div className="h-3 bg-gray-200 rounded animate-pulse w-1/2"></div>
@@ -63,15 +63,15 @@ const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, c
 
   if (error || !preview) {
     return (
-      <div className={`bg-gray-50 border border-gray-200 rounded-lg p-3 mb-2 ${className}`}>
+      <div className={`bg-gray-50 border border-gray-200 rounded-lg p-3 mb-2 max-w-full ${className}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center">
+            <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center flex-shrink-0">
               <FaExternalLinkAlt className="text-gray-400 text-xl" />
             </div>
-            <div>
-              <div className="text-sm text-gray-600 font-medium">Link Preview Unavailable</div>
-              <div className="text-xs text-gray-500 truncate max-w-xs">{url}</div>
+            <div className="flex-1 min-w-0 max-w-full">
+              <div className="text-sm text-gray-600 font-medium break-words">Link Preview Unavailable</div>
+              <div className="text-xs text-gray-500 break-all">{url}</div>
             </div>
           </div>
                       {onRemove && showRemoveButton && (
@@ -89,7 +89,7 @@ const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, c
 
   return (
     <div 
-      className={`bg-gray-50 border border-gray-200 rounded-lg p-3 mb-2 hover:border-gray-300 transition-colors ${clickable ? 'cursor-pointer hover:bg-gray-100' : ''} ${className}`}
+      className={`bg-gray-50 border border-gray-200 rounded-lg p-3 mb-2 hover:border-gray-300 transition-colors max-w-full ${clickable ? 'cursor-pointer hover:bg-gray-100' : ''} ${className}`}
       onClick={clickable ? handlePreviewClick : undefined}
       role={clickable ? 'button' : undefined}
       tabIndex={clickable ? 0 : undefined}
@@ -113,18 +113,18 @@ const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, c
             />
           </div>
         )}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 max-w-full">
           <div className="flex items-start justify-between">
-            <div className="flex-1 min-w-0">
-              <h4 className="text-sm font-medium text-gray-900 truncate" title={preview.title}>
+            <div className="flex-1 min-w-0 max-w-full">
+              <h4 className="text-sm font-medium text-gray-900 break-words line-clamp-2" title={preview.title}>
                 {preview.title}
               </h4>
-              <p className="text-xs text-gray-600 mt-1 line-clamp-2" title={preview.description}>
+              <p className="text-xs text-gray-600 mt-1 break-words line-clamp-2" title={preview.description}>
                 {preview.description}
               </p>
               <div className="flex items-center space-x-2 mt-2">
-                <span className="text-xs text-gray-500">{preview.siteName}</span>
-                <FaExternalLinkAlt className="text-xs text-gray-400" />
+                <span className="text-xs text-gray-500 break-all">{preview.siteName}</span>
+                <FaExternalLinkAlt className="text-xs text-gray-400 flex-shrink-0" />
               </div>
             </div>
             {onRemove && showRemoveButton && (
