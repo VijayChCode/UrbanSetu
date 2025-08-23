@@ -314,26 +314,39 @@ router.post('/:id/comment', verifyToken, async (req, res) => {
       const isSeller = bookingToComment.sellerId.toString() === userId;
       const isAdmin = !isBuyer && !isSeller;
       
+      // Get populated booking data for email addresses
+      const populatedBooking = await booking.findById(id)
+        .populate('buyerId', 'email')
+        .populate('sellerId', 'email');
+      
+      // Prepare complete data for emission
+      const emitData = { 
+        appointmentId: id, 
+        comment: newCommentObj,
+        buyerEmail: populatedBooking.buyerId.email,
+        sellerEmail: populatedBooking.sellerId.email
+      };
+      
       if (isAdmin) {
         // If admin is sending, emit to both buyer and seller
         console.log(`🔔 Admin message: Emitting to buyer ${bookingToComment.buyerId.toString()} and seller ${bookingToComment.sellerId.toString()}`);
-        io.to(bookingToComment.buyerId.toString()).emit('commentUpdate', { appointmentId: id, comment: newCommentObj });
-        io.to(bookingToComment.sellerId.toString()).emit('commentUpdate', { appointmentId: id, comment: newCommentObj });
+        io.to(bookingToComment.buyerId.toString()).emit('commentUpdate', emitData);
+        io.to(bookingToComment.sellerId.toString()).emit('commentUpdate', emitData);
         
         // For admin, only emit to appointment room (not personal room) to avoid duplicates
         // Admin will receive the message through appointment room since they're joined to all appointment rooms
-        io.to(`appointment_${id}`).emit('commentUpdate', { appointmentId: id, comment: newCommentObj });
+        io.to(`appointment_${id}`).emit('commentUpdate', emitData);
       } else {
         // If buyer or seller is sending, emit to the other party
         const recipientId = isBuyer ? bookingToComment.sellerId.toString() : bookingToComment.buyerId.toString();
         console.log(`🔔 User message: Emitting to recipient ${recipientId}`);
-        io.to(recipientId).emit('commentUpdate', { appointmentId: id, comment: newCommentObj });
+        io.to(recipientId).emit('commentUpdate', emitData);
         
         // Also emit to the sender for their own message sync
-        io.to(userId).emit('commentUpdate', { appointmentId: id, comment: newCommentObj });
+        io.to(userId).emit('commentUpdate', emitData);
         
         // Emit to appointment room for admin access (so admin sees user messages immediately)
-        io.to(`appointment_${id}`).emit('commentUpdate', { appointmentId: id, comment: newCommentObj });
+        io.to(`appointment_${id}`).emit('commentUpdate', emitData);
         
         // ADDITIONAL: Explicitly emit to all connected admin sockets to ensure they receive user messages
         const adminSockets = Array.from(io.sockets.sockets.values()).filter(s => 
@@ -341,7 +354,7 @@ router.post('/:id/comment', verifyToken, async (req, res) => {
         );
         
         for (const adminSocket of adminSockets) {
-          adminSocket.emit('commentUpdate', { appointmentId: id, comment: newCommentObj });
+          adminSocket.emit('commentUpdate', emitData);
           console.log(`🔔 User message: Also emitted to admin socket ${adminSocket.adminId}`);
         }
       }

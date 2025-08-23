@@ -302,29 +302,39 @@ export default function MyAppointments() {
   // Handle navigation state when coming from notification
   const location = useLocation();
   useEffect(() => {
+    console.log('MyAppointments: location.state:', location.state);
+    console.log('MyAppointments: appointments.length:', appointments.length);
+    
     if (location.state?.fromNotification && location.state?.openChatForAppointment) {
       const appointmentId = location.state.openChatForAppointment;
-      
-      // Clear the navigation state
-      navigate(location.pathname, { replace: true });
+      console.log('MyAppointments: Processing notification for appointmentId:', appointmentId);
       
       // Wait for appointments to be loaded before trying to open chat
       if (appointments.length > 0) {
         const appointment = appointments.find(appt => appt._id === appointmentId);
+        console.log('MyAppointments: Found appointment:', appointment);
         if (appointment) {
+          console.log('MyAppointments: Setting notification data and opening chat');
           setNotificationChatData(appointment);
           setShouldOpenChatFromNotification(true);
           setActiveChatAppointmentId(appointmentId);
+          // Clear the navigation state after setting the data
+          navigate(location.pathname, { replace: true });
         }
       } else {
+        console.log('MyAppointments: Appointments not loaded yet, waiting...');
         // If appointments are not loaded yet, wait for them
         const checkAppointments = setInterval(() => {
           if (appointments.length > 0) {
             const appointment = appointments.find(appt => appt._id === appointmentId);
+            console.log('MyAppointments: Found appointment after waiting:', appointment);
             if (appointment) {
+              console.log('MyAppointments: Setting notification data and opening chat after waiting');
               setNotificationChatData(appointment);
               setShouldOpenChatFromNotification(true);
               setActiveChatAppointmentId(appointmentId);
+              // Clear the navigation state after setting the data
+              navigate(location.pathname, { replace: true });
             }
             clearInterval(checkAppointments);
           }
@@ -1235,7 +1245,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
 
   // Handle notification-triggered chat opening
   useEffect(() => {
+    console.log('AppointmentRow: shouldOpenChatFromNotification:', shouldOpenChatFromNotification);
+    console.log('AppointmentRow: activeChatAppointmentId:', activeChatAppointmentId);
+    console.log('AppointmentRow: appt._id:', appt._id);
+    
     if (shouldOpenChatFromNotification && activeChatAppointmentId === appt._id) {
+      console.log('AppointmentRow: Opening chat for appointment:', appt._id);
+      
       // Check if chat is locked/encrypted
       const isChatLocked = appt.buyerChatLocked || appt.sellerChatLocked;
       const currentUserId = currentUser._id;
@@ -1243,6 +1259,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       const isSeller = appt.sellerId?._id === currentUserId || appt.sellerId === currentUserId;
       
       if (isChatLocked) {
+        console.log('AppointmentRow: Chat is locked, showing unlock modal');
         if (isBuyer && appt.buyerChatLocked) {
           setShowChatUnlockModal(true);
         } else if (isSeller && appt.sellerChatLocked) {
@@ -1250,6 +1267,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         }
       } else {
         // Open chat directly if not locked
+        console.log('AppointmentRow: Opening chat modal directly');
         setShowChatModal(true);
         // Notify parent that chat has been opened
         if (onChatOpened) {
