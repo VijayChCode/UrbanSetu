@@ -3403,7 +3403,7 @@ function AdminAppointmentRow({
                       </div>
                       {/* Tips & Guidelines popup */}
                       {showShortcutTip && (
-                        <div className="absolute top-full right-0 mt-2 bg-gray-800 text-xs rounded-lg px-3 py-2 shadow-lg z-20 max-w-xs animate-fadeIn">
+                        <div className="absolute top-full right-0 mt-2 bg-gray-800 text-white text-xs rounded-lg px-3 py-2 shadow-lg z-20 max-w-xs animate-fadeIn">
                           <div className="font-semibold mb-2">⌨️ Keyboard Shortcuts:</div>
                           <div className="mb-2">• Press Ctrl + F to quickly focus and type your message</div>
                           <div className="border-t border-gray-600 pt-2 mt-2">
