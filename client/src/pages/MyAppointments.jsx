@@ -2817,11 +2817,17 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
 
   // Reactions functions
   const handleQuickReaction = async (messageId, emoji) => {
+    console.log('handleQuickReaction called with messageId:', messageId, 'emoji:', emoji);
     try {
       const message = comments.find(c => c._id === messageId);
-      if (!message) return;
+      console.log('Found message:', message);
+      if (!message) {
+        console.log('No message found for messageId:', messageId);
+        return;
+      }
 
       // Add reaction to the message
+      console.log('Making API call to add reaction...');
       const { data } = await axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${messageId}/react`, 
         { emoji },
         { 
@@ -2829,16 +2835,22 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
           headers: { 'Content-Type': 'application/json' }
         }
       );
+      console.log('API response:', data);
 
       // Update local state
-      setComments(prev => prev.map(c => 
-        c._id === messageId 
-          ? { 
-              ...c, 
-              reactions: data.reactions || c.reactions || []
-            }
-          : c
-      ));
+      console.log('Updating local comments state...');
+      setComments(prev => {
+        const updated = prev.map(c => 
+          c._id === messageId 
+            ? { 
+                ...c, 
+                reactions: data.reactions || c.reactions || []
+              }
+            : c
+        );
+        console.log('Updated comments:', updated);
+        return updated;
+      });
 
       // Close reactions bar
       setShowReactionsBar(false);
@@ -2853,8 +2865,18 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   };
 
   const handleReactionsEmojiClick = (emojiObject) => {
+    console.log('handleReactionsEmojiClick called with:', emojiObject);
+    console.log('reactionsMessageId:', reactionsMessageId);
+    console.log('emojiObject.emoji:', emojiObject.emoji);
+    console.log('emojiObject.emoji.emoji:', emojiObject.emoji?.emoji);
+    
     if (reactionsMessageId) {
-      handleQuickReaction(reactionsMessageId, emojiObject.emoji);
+      // Try different possible emoji properties
+      const emoji = emojiObject.emoji || emojiObject.emoji?.emoji || emojiObject;
+      console.log('Using emoji:', emoji);
+      handleQuickReaction(reactionsMessageId, emoji);
+    } else {
+      console.log('No reactionsMessageId found');
     }
   };
 
