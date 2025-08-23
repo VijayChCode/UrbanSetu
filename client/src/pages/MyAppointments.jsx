@@ -6695,5 +6695,4 @@ You can lock this chat again at any time from the options.</p>
 
     </>
   );
-} 
 }
