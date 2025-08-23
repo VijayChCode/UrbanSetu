@@ -2857,17 +2857,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   };
 
   const toggleReactionsBar = (messageId) => {
-    console.log('toggleReactionsBar called with messageId:', messageId);
-    console.log('Current reactionsMessageId:', reactionsMessageId);
-    console.log('Current showReactionsBar:', showReactionsBar);
-    
     if (reactionsMessageId === messageId && showReactionsBar) {
-      console.log('Closing reactions bar');
       setShowReactionsBar(false);
       setReactionsMessageId(null);
       setShowReactionsEmojiPicker(false);
     } else {
-      console.log('Opening reactions bar');
       setReactionsMessageId(messageId);
       setShowReactionsBar(true);
       setShowReactionsEmojiPicker(false);
@@ -5044,14 +5038,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               </button>
                               
                               {/* Reactions Bar */}
-                              {(() => {
-                                console.log('Rendering reactions bar for message:', c._id);
-                                console.log('!c.deleted:', !c.deleted);
-                                console.log('showReactionsBar:', showReactionsBar);
-                                console.log('reactionsMessageId === c._id:', reactionsMessageId === c._id);
-                                return !c.deleted && showReactionsBar && reactionsMessageId === c._id;
-                              })() && (
-                                <div className="absolute bottom-full right-0 mb-2 bg-white rounded-full shadow-lg border border-gray-200 p-1 flex items-center gap-1 animate-reactions-bar z-50 reactions-bar">
+                              {!c.deleted && showReactionsBar && reactionsMessageId === c._id && (
+                                <div className={`absolute bottom-full mb-2 bg-white rounded-full shadow-lg border border-gray-200 p-1 flex items-center gap-1 animate-reactions-bar z-50 reactions-bar ${isMe ? 'right-0' : 'left-0'}`}>
                                   {/* Quick reaction buttons */}
                                   <button
                                     onClick={() => handleQuickReaction(c._id, '👍')}
@@ -5108,7 +5096,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               
                               {/* Emoji Picker for reactions */}
                               {!c.deleted && showReactionsEmojiPicker && reactionsMessageId === c._id && (
-                                <div className="absolute bottom-full right-0 mb-2 z-50 emoji-picker-container">
+                                <div className={`absolute bottom-full mb-2 z-50 emoji-picker-container ${isMe ? 'right-0' : 'left-0'}`}>
                                   <CustomEmojiPicker
                                     onEmojiClick={handleReactionsEmojiClick}
                                     isOpen={showReactionsEmojiPicker}
