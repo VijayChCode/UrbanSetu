@@ -3935,7 +3935,7 @@ function AdminAppointmentRow({
                 </div>
               )}
               
-              <div className="flex gap-2 mt-1 px-3 pb-2 items-end">
+              <div className="flex gap-2 mt-1 px-3 pb-2 flex-shrink-0 bg-gradient-to-b from-transparent to-white pt-2 items-end">
                 {/* Message Input Container with Attachment and Emoji Icons Inside */}
                 <div className="flex-1 relative">
                                     {/* Link Preview Container with Height and Width Constraints */}
