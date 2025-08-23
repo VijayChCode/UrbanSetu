@@ -1947,6 +1947,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
           return mergedComments;
         });
         setUnreadNewMessages(0); // Reset unread count after refresh
+        
+        // Force scroll to bottom after refresh
+        setTimeout(() => {
+          if (chatEndRef.current) {
+            chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+          }
+        }, 100);
       }
     } catch (err) {
       console.error('Error fetching latest comments:', err);
