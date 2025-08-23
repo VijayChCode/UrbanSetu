@@ -5190,21 +5190,24 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                         {/* Emoji Picker for reactions - positioned above reaction bar */}
                         {!c.deleted && showReactionsEmojiPicker && reactionsMessageId === c._id && (
                           <div className={`absolute -top-40 ${isMe ? 'right-0' : 'left-0'} z-[9999] emoji-picker-container`}>
-                            <CustomEmojiPicker
-                              onEmojiClick={(emojiObject) => {
-                                console.log('CustomEmojiPicker onEmojiClick called with:', emojiObject);
-                                if (emojiObject && emojiObject.emoji) {
-                                  console.log('Calling handleReactionsEmojiClick with emoji:', emojiObject.emoji);
-                                  handleReactionsEmojiClick(emojiObject.emoji);
-                                } else {
-                                  console.log('Invalid emoji object received:', emojiObject);
-                                }
-                              }}
-                              isOpen={showReactionsEmojiPicker}
-                              setIsOpen={setShowReactionsEmojiPicker}
-                              buttonRef={{ current: null }}
-                              inputRef={null}
-                            />
+                            <div className="bg-white rounded-lg shadow-xl border border-gray-200 p-2 max-w-xs">
+                              <div className="text-sm font-semibold text-gray-700 mb-2 text-center">Quick Reactions</div>
+                              <div className="grid grid-cols-6 gap-2">
+                                {['👍', '❤️', '😂', '😮', '😢', '😡', '🎉', '👏', '🔥', '💯', '✨', '🌟', '😍', '🤔', '😎', '🤗', '😴', '🤯', '🥳', '😭', '😤', '🤮', '🤧', '🤠', '👻', '🤖', '👽', '👾', '🤡', '👹', '👺', '💀', '👻', '👽', '🤖', '👾', '🤡'].map((emoji) => (
+                                  <button
+                                    key={emoji}
+                                    onClick={() => {
+                                      console.log('Quick reaction button clicked:', emoji);
+                                      handleReactionsEmojiClick(emoji);
+                                    }}
+                                    className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
+                                    title={`React with ${emoji}`}
+                                  >
+                                    {emoji}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
                           </div>
                         )}
                       </React.Fragment>
