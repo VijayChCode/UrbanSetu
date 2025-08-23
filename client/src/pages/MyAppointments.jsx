@@ -1641,20 +1641,26 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const handleRemoveAllStarredMessages = async () => {
     if (starredMessages.length === 0) return;
     
+    const messageCount = starredMessages.length; // Store count before clearing
     setRemovingAllStarred(true);
+    
     try {
+      console.log('Starting remove all starred messages operation for', starredMessages.length, 'messages');
       // Unstar all messages by making API calls
-      const promises = starredMessages.map(message => 
-        axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${message._id}/star`, 
+      const promises = starredMessages.map(message => {
+        console.log(`Unstarring message ${message._id}`);
+        return axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${message._id}/star`, 
           { starred: false },
           {
             withCredentials: true,
             headers: { 'Content-Type': 'application/json' }
           }
-        )
-      );
+        );
+      });
       
+      console.log('Making', promises.length, 'API calls to unstar messages...');
       await Promise.all(promises);
+      console.log('All unstar API calls completed successfully');
       
       // Update local comments state - remove starredBy for current user
       setComments(prev => prev.map(c => ({
@@ -1665,12 +1671,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       // Clear starred messages list
       setStarredMessages([]);
       
-      toast.success(`Removed ${starredMessages.length} starred message${starredMessages.length !== 1 ? 's' : ''}`);
+      toast.success(`Removed ${messageCount} starred message${messageCount !== 1 ? 's' : ''}`);
       
       // Close the modal
       setShowStarredModal(false);
       
     } catch (err) {
+      console.error('Error removing all starred messages:', err);
       toast.error('Failed to remove all starred messages. Please try again.');
     } finally {
       setRemovingAllStarred(false);
@@ -3711,8 +3718,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               onClick={async () => {
                                 setMultiSelectActions(prev => ({ ...prev, starring: true }));
                                 try {
+                                  console.log('Starting bulk starring operation for', selectedMessages.length, 'messages');
                                   const promises = selectedMessages.map(msg => {
                                     const isStarred = msg.starredBy?.includes(currentUser._id);
+                                    console.log(`Message ${msg._id}: currently starred = ${isStarred}, will set starred = ${!isStarred}`);
                                     return axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${msg._id}/star`, 
                                       { starred: !isStarred },
                                       {
@@ -3721,7 +3730,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                       }
                                     );
                                   });
+                                  console.log('Making', promises.length, 'API calls...');
                                   await Promise.all(promises);
+                                  console.log('All API calls completed successfully');
                                   
                                   // Update UI state for all selected messages
                                   setComments(prev => prev.map(c => {
@@ -3758,7 +3769,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                   setIsSelectionMode(false);
                                   setSelectedMessages([]);
                                 } catch (err) {
-                                  toast.error('Failed to star messages');
+                                  console.error('Error in bulk starring operation:', err);
+                                  if (err.response) {
+                                    console.error('Response data:', err.response.data);
+                                    console.error('Response status:', err.response.status);
+                                  }
+                                  toast.error(err.response?.data?.message || 'Failed to star messages. Please try again.');
                                 } finally {
                                   setMultiSelectActions(prev => ({ ...prev, starring: false }));
                                 }
