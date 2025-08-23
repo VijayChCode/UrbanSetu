@@ -3487,9 +3487,28 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   {isSelectionMode ? (
                     // Multi-select header
                     <div className="flex items-center justify-between w-full">
-                      <span className="text-white text-sm font-medium">
-                        {selectedMessages.length} message{selectedMessages.length !== 1 ? 's' : ''} selected
-                      </span>
+                      <div className="flex items-center gap-3">
+                        <label className="flex items-center gap-2 text-white text-sm cursor-pointer hover:text-blue-200 transition-colors">
+                          <input
+                            type="checkbox"
+                            checked={selectedMessages.length === filteredComments.length && filteredComments.length > 0}
+                            onChange={() => {
+                              if (selectedMessages.length === filteredComments.length) {
+                                // If all are selected, deselect all
+                                setSelectedMessages([]);
+                              } else {
+                                // Select all non-deleted messages
+                                setSelectedMessages([...filteredComments]);
+                              }
+                            }}
+                            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                          />
+                          <span className="font-medium">Select All Messages</span>
+                        </label>
+                        <span className="text-white text-sm font-medium">
+                          ({selectedMessages.length} message{selectedMessages.length !== 1 ? 's' : ''} selected)
+                        </span>
+                      </div>
                       <div className="flex items-center gap-4">
                         {selectedMessages.length === 1 ? (
                           // Single message selected - show individual message options
@@ -6677,3 +6696,4 @@ You can lock this chat again at any time from the options.</p>
     </>
   );
 } 
+}
