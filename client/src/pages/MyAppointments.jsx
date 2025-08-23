@@ -2818,6 +2818,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   // Reactions functions
   const handleQuickReaction = async (messageId, emoji) => {
     try {
+      console.log('=== handleQuickReaction START ===');
       console.log('handleQuickReaction called with:', { messageId, emoji });
       const message = comments.find(c => c._id === messageId);
       if (!message) {
@@ -2853,21 +2854,29 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       setShowReactionsEmojiPicker(false);
 
       toast.success('Reaction added!');
+      console.log('=== handleQuickReaction SUCCESS ===');
     } catch (err) {
+      console.error('=== handleQuickReaction ERROR ===');
       console.error('Error adding reaction:', err);
       toast.error('Failed to add reaction');
     }
   };
 
   const handleReactionsEmojiClick = (emojiString) => {
+    console.log('=== handleReactionsEmojiClick START ===');
     console.log('handleReactionsEmojiClick called with:', emojiString);
     console.log('Current reactionsMessageId:', reactionsMessageId);
+    console.log('Current showReactionsEmojiPicker:', showReactionsEmojiPicker);
+    console.log('Current showReactionsBar:', showReactionsBar);
+    
     if (reactionsMessageId) {
-      console.log('Calling handleQuickReaction');
+      console.log('Calling handleQuickReaction for message:', reactionsMessageId);
       handleQuickReaction(reactionsMessageId, emojiString);
     } else {
       console.log('No reactionsMessageId found - cannot add reaction');
+      console.log('This might indicate a state management issue');
     }
+    console.log('=== handleReactionsEmojiClick END ===');
   };
 
   const toggleReactionsBar = (messageId) => {
@@ -5178,11 +5187,19 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           )}
                         </div>
                         
-                        {/* Emoji Picker for reactions - positioned immediately above message bubble */}
+                        {/* Emoji Picker for reactions - positioned above reaction bar */}
                         {!c.deleted && showReactionsEmojiPicker && reactionsMessageId === c._id && (
-                          <div className={`absolute -top-2 z-50 emoji-picker-container ${isMe ? 'right-0' : 'left-0'}`}>
+                          <div className={`absolute -top-40 ${isMe ? 'right-0' : 'left-0'} z-[9999] emoji-picker-container`}>
                             <CustomEmojiPicker
-                              onEmojiClick={handleReactionsEmojiClick}
+                              onEmojiClick={(emojiObject) => {
+                                console.log('CustomEmojiPicker onEmojiClick called with:', emojiObject);
+                                if (emojiObject && emojiObject.emoji) {
+                                  console.log('Calling handleReactionsEmojiClick with emoji:', emojiObject.emoji);
+                                  handleReactionsEmojiClick(emojiObject.emoji);
+                                } else {
+                                  console.log('Invalid emoji object received:', emojiObject);
+                                }
+                              }}
                               isOpen={showReactionsEmojiPicker}
                               setIsOpen={setShowReactionsEmojiPicker}
                               buttonRef={{ current: null }}
