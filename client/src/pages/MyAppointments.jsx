@@ -1853,6 +1853,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         setReactionsMessageId(null);
         setShowReactionsEmojiPicker(false);
       }
+      // Handle click outside for the new fixed overlay modal
+      if (showReactionsEmojiPicker && !event.target.closest('.quick-reactions-modal')) {
+        setShowReactionsEmojiPicker(false);
+      }
     };
 
     const handleScroll = () => {
@@ -5237,36 +5241,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                 ➕
                               </button>
                               
-                              {/* Expanded reactions when plus is clicked - expand in place */}
-                              {showReactionsEmojiPicker && (
-                                <div className={`absolute ${isMe ? 'top-full right-0' : 'top-full left-0'} mt-2 bg-white rounded-lg shadow-xl border border-gray-200 p-2 max-w-xs z-[99999] animate-fadeIn`}>
-                                  <div className="text-sm font-semibold text-gray-700 mb-2 text-center">Quick Reactions</div>
-                                  <div className="grid grid-cols-6 gap-2">
-                                    {['🎉', '👏', '🔥', '💯', '✨', '🌟', '😍', '🤔', '😎', '🤗', '😴', '🤯', '🥳', '😭', '😤', '🤮', '🤧', '🤠', '👻', '🤖', '👽', '👾', '🤡', '👹', '👺', '💀', '👻', '👽', '🤖', '👾', '🤡', '💪', '🙏', '👌', '✌️', '🤞', '🤟'].map((emoji) => (
-                                      <button
-                                        key={emoji}
-                                        onClick={() => {
-                                          console.log('Quick reaction button clicked:', emoji);
-                                          console.log('Current reactionsMessageId:', reactionsMessageId);
-                                          console.log('Current message ID:', c._id);
-                                          // Ensure we're using the correct message ID
-                                          if (reactionsMessageId === c._id) {
-                                            handleReactionsEmojiClick(emoji);
-                                          } else {
-                                            // Fallback: directly call handleQuickReaction with current message ID
-                                            console.log('Fallback: calling handleQuickReaction directly');
-                                            handleQuickReaction(c._id, emoji);
-                                          }
-                                        }}
-                                        className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
-                                        title={`React with ${emoji}`}
-                                      >
-                                        {emoji}
-                                      </button>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
+
                             </div>
                           )}
                         </div>
@@ -5279,6 +5254,59 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   <div ref={chatEndRef} />
                 </div>
                 </div>
+                
+                {/* Quick Reactions Model - Fixed Overlay */}
+                {showReactionsEmojiPicker && reactionsMessageId && (
+                  <div 
+                    className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-[999999] animate-fadeIn"
+                    onClick={(e) => {
+                      // Close modal when clicking on backdrop
+                      if (e.target === e.currentTarget) {
+                        setShowReactionsEmojiPicker(false);
+                      }
+                    }}
+                  >
+                    <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-hidden quick-reactions-modal">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="text-lg font-semibold text-gray-800">Quick Reactions</div>
+                        <button
+                          onClick={() => setShowReactionsEmojiPicker(false)}
+                          className="text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors"
+                          title="Close"
+                        >
+                          <FaTimes size={16} />
+                        </button>
+                      </div>
+                      <div className="overflow-y-auto max-h-[60vh] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                        <div className="grid grid-cols-8 gap-3">
+                          {[
+                            '👍', '❤️', '😂', '😮', '😢', '😡', '🎉', '👏', '🔥', '💯', '✨', '🌟', '😍', '🤔', '😎', '🤗', 
+                            '😴', '🤯', '🥳', '😭', '😤', '🤮', '🤧', '🤠', '👻', '🤖', '👽', '👾', '🤡', '👹', '👺', '💀', 
+                            '💪', '🙏', '👌', '✌️', '🤞', '🤟', '🤘', '👊', '🤝', '👋', '🤙', '👈', '👉', '👆', '👇', '☝️',
+                            '👌', '🤌', '🤏', '✋', '🤚', '🖐️', '🖖', '👌', '🤌', '🤏', '✋', '🤚', '🖐️', '🖖', '👌', '🤌'
+                          ].map((emoji) => (
+                            <button
+                              key={emoji}
+                              onClick={() => {
+                                console.log('Quick reaction button clicked:', emoji);
+                                console.log('Current reactionsMessageId:', reactionsMessageId);
+                                // Direct call to handleQuickReaction with the stored message ID
+                                handleQuickReaction(reactionsMessageId, emoji);
+                                // Close the modal after selection
+                                setShowReactionsEmojiPicker(false);
+                              }}
+                              className="w-12 h-12 flex items-center justify-center text-2xl hover:scale-110 transition-all duration-200 bg-gray-50 hover:bg-gray-100 rounded-xl border border-gray-200 hover:border-gray-300 hover:shadow-md"
+                              title={`React with ${emoji}`}
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
                 {/* Reply indicator */}
                 {replyTo && (
                   <div className="px-4 mb-2">
