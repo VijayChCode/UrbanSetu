@@ -397,7 +397,7 @@ export default function Profile() {
 
   const fetchUserStats = async () => {
     try {
-      console.log("[fetchUserStats] Fetching stats for:", currentUser);
+
       if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) {
         // Fetch admin-specific stats
         const [listingsRes, appointmentsRes] = await Promise.all([
@@ -753,7 +753,7 @@ export default function Profile() {
       });
       const res = await fetch(apiUrl, options);
       const data = await res.json();
-      console.log('Profile update response:', data); // Debug log
+
       // Handle new backend validation responses
       if (data.status === "email_exists") {
         toast.error("Email already registered. Please use a different one.");
@@ -824,15 +824,6 @@ export default function Profile() {
         }
         
         // Emit socket event to notify other users about profile update
-        console.log('[Profile] Emitting profileUpdated socket event:', {
-          userId: updatedUser._id,
-          username: updatedUser.username,
-          avatar: updatedUser.avatar,
-          mobileNumber: updatedUser.mobileNumber,
-          email: updatedUser.email
-        });
-        console.log('[Profile] Socket connected:', socket.connected);
-        console.log('[Profile] Socket ID:', socket.id);
         
         // Add acknowledgment callback to see if event is sent successfully
         socket.emit('profileUpdated', {
@@ -841,8 +832,6 @@ export default function Profile() {
           avatar: updatedUser.avatar,
           mobileNumber: updatedUser.mobileNumber,
           email: updatedUser.email
-        }, (acknowledgment) => {
-          console.log('[Profile] Socket event acknowledgment:', acknowledgment);
         });
         
         setUpdateSuccess(true);
@@ -866,13 +855,12 @@ export default function Profile() {
         return;
       }
       // If we reach here, it means we got an unexpected response
-      console.log('Unexpected response:', data);
       setUpdateError("Profile Update Failed!");
       setLoading(false);
       setShowUpdatePasswordModal(false);
       setUpdatePassword("");
     } catch (error) {
-      console.log('Profile update error:', error); // Debug log
+
       setUpdateError("Profile Update Failed!");
       dispatch(updateUserFailure(error.message));
       setLoading(false);
@@ -1236,11 +1224,11 @@ export default function Profile() {
     async function fetchLatestUser() {
       if (currentUser && currentUser._id) {
         try {
-          console.log("[fetchLatestUser] Fetching user data for:", currentUser._id);
+
           const res = await fetch(`${API_BASE_URL}/api/user/id/${currentUser._id}`);
           if (res.ok) {
             const user = await res.json();
-            console.log("[fetchLatestUser] Got user:", user);
+
             dispatch({ type: 'user/signInSuccess', payload: user });
           } else {
             console.error("[fetchLatestUser] Failed to fetch user");
