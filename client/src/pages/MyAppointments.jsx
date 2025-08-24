@@ -2838,8 +2838,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
           : c
       ));
 
-      // Close only the expanded emoji picker, keep reactions bar open
+      // Close both the quick reactions model and the reactions bar
       setShowReactionsEmojiPicker(false);
+      setShowReactionsBar(false);
+      setReactionsMessageId(null);
 
       toast.success('Reaction added!');
       
