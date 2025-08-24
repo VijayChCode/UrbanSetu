@@ -4050,27 +4050,15 @@ function AdminAppointmentRow({
                           {/* Options icon - visible for all messages (including deleted) */}
                           <button
                             className={`${c.senderEmail === currentUser.email ? 'text-blue-200 hover:text-white' : 'text-gray-500 hover:text-gray-700'} transition-all duration-200 hover:scale-110 p-1 rounded-full hover:bg-white hover:bg-opacity-20 ml-1`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setHeaderOptionsMessageId(c._id);
+                            onClick={(e) => { 
+                              e.stopPropagation(); 
+                              setHeaderOptionsMessageId(c._id); 
+                              toggleReactionsBar(c._id);
                             }}
                             title="Message options"
                             aria-label="Message options"
                           >
-                            <FaEllipsisV size={c.senderEmail === currentUser.email ? 14 : 12} />
-                          </button>
-                          
-                          {/* Three dots for reactions */}
-                          <button
-                            className={`${c.senderEmail === currentUser.email ? 'text-blue-200 hover:text-white' : 'text-gray-500 hover:text-gray-700'} transition-all duration-200 hover:scale-110 p-1 rounded-full hover:bg-white hover:bg-opacity-20 ml-1`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleReactionsBar(c._id);
-                            }}
-                            title="Add reaction"
-                            aria-label="Add reaction"
-                          >
-                            <FaEllipsisV size={c.senderEmail === currentUser.email ? 12 : 10} />
+                            <FaEllipsisV size={12} />
                           </button>
                           
                           {/* Reactions Bar - positioned inside message container (above only) */}
