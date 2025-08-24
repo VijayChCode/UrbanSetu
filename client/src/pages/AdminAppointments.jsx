@@ -1261,6 +1261,56 @@ function AdminAppointmentRow({
 
   const selectedMessageForHeaderOptions = headerOptionsMessageId ? localComments.find(msg => msg._id === headerOptionsMessageId) : null;
 
+  // Reactions functions
+  const handleQuickReaction = async (messageId, emoji) => {
+    try {
+      const message = localComments.find(c => c._id === messageId);
+      if (!message) {
+        toast.error('Message not found');
+        return;
+      }
+      
+      // Add reaction to the message
+      const { data } = await axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${messageId}/react`, 
+        { emoji },
+        { 
+          withCredentials: true,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+
+      // Update local state
+      setLocalComments(prev => prev.map(c => 
+        c._id === messageId 
+          ? { 
+              ...c, 
+              reactions: data.reactions || c.reactions || []
+            }
+          : c
+      ));
+
+      // Update parent component state
+      updateAppointmentComments(appt._id, localComments.map(c => 
+        c._id === messageId 
+          ? { 
+              ...c, 
+              reactions: data.reactions || c.reactions || []
+            }
+          : c
+      ));
+
+      // Close both the quick reactions model and the reactions bar
+      setShowReactionsEmojiPicker(false);
+      setShowReactionsBar(false);
+      setReactionsMessageId(null);
+
+      toast.success('Reaction added!');
+      
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to add reaction');
+    }
+  };
+
   // Lock body scroll when chat modal is open
   React.useEffect(() => {
     if (showChatModal) {
