@@ -1851,7 +1851,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       if (showReactionsBar && !event.target.closest('.reactions-bar')) {
         setShowReactionsBar(false);
         setReactionsMessageId(null);
-        setShowReactionsEmojiPicker(false);
+        // Don't close quick reactions model on click outside - only close reaction bar
       }
 
     };
@@ -1863,11 +1863,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       if (showHeaderMoreMenu) {
         setShowHeaderMoreMenu(false);
       }
-      if (showReactionsBar) {
+      if (showReactionsBar && !showReactionsEmojiPicker) {
         setShowReactionsBar(false);
         setReactionsMessageId(null);
-        setShowReactionsEmojiPicker(false);
       }
+      // Don't close quick reactions model on scroll - only close reaction bar
     };
 
     // Close search box when clicking outside
@@ -3828,7 +3828,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 }
               }}
             >
-              <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-hidden quick-reactions-modal">
+              <div 
+                className="bg-white rounded-2xl shadow-2xl border border-gray-200 p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-hidden quick-reactions-modal"
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent any event bubbling
+                  console.log('Modal container clicked - preventing close');
+                }}
+              >
                 <div className="flex items-center justify-between mb-4">
                   <div className="text-lg font-semibold text-gray-800">Quick Reactions</div>
                   <button
@@ -3843,8 +3849,20 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                     <FaTimes size={16} />
                   </button>
                 </div>
-                <div className="overflow-y-auto max-h-[60vh] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                  <div className="grid grid-cols-8 gap-3">
+                <div 
+                  className="overflow-y-auto max-h-[60vh] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent any event bubbling
+                    console.log('Scrollable content clicked - preventing close');
+                  }}
+                >
+                  <div 
+                    className="grid grid-cols-8 gap-3"
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent any event bubbling
+                      console.log('Grid container clicked - preventing close');
+                    }}
+                  >
                     {[
                       '👍', '❤️', '😂', '😮', '😢', '😡', '🎉', '👏', '🔥', '💯', '✨', '🌟', '😍', '🤔', '😎', '🤗', 
                       '😴', '🤯', '🥳', '😭', '😤', '🤮', '🤧', '🤠', '👻', '🤖', '👽', '👾', '🤡', '👹', '👺', '💀', 
@@ -3855,20 +3873,30 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                         key={emoji}
                         onClick={(e) => {
                           e.stopPropagation(); // Prevent event bubbling
-                          console.log('Quick reaction button clicked:', emoji);
+                          e.preventDefault(); // Prevent default behavior
+                          console.log('=== QUICK REACTION BUTTON CLICKED ===');
+                          console.log('Emoji clicked:', emoji);
                           console.log('Current reactionsMessageId:', reactionsMessageId);
                           console.log('Current appt._id:', appt._id);
+                          console.log('Event target:', e.target);
+                          console.log('Event currentTarget:', e.currentTarget);
                           
                           // Ensure we have the required IDs
                           if (reactionsMessageId && appt._id) {
+                            console.log('✅ All required IDs present - calling handleQuickReaction');
                             console.log('Calling handleQuickReaction with:', { messageId: reactionsMessageId, emoji, appointmentId: appt._id });
+                            
+                            // Call the function directly
                             handleQuickReaction(reactionsMessageId, emoji);
+                            
                             // Close the modal after successful reaction selection
+                            console.log('Closing quick reactions modal');
                             setShowReactionsEmojiPicker(false);
                           } else {
-                            console.error('Missing required IDs:', { reactionsMessageId, apptId: appt._id });
+                            console.error('❌ Missing required IDs:', { reactionsMessageId, apptId: appt._id });
                             toast.error('Unable to add reaction - missing message information');
                           }
+                          console.log('=== END QUICK REACTION BUTTON CLICK ===');
                         }}
                         className="w-12 h-12 flex items-center justify-center text-2xl hover:scale-110 transition-all duration-200 bg-gray-50 hover:bg-gray-100 rounded-xl border border-gray-200 hover:border-gray-300 hover:shadow-md"
                         title={`React with ${emoji}`}
