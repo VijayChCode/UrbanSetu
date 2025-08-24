@@ -5270,7 +5270,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             return shouldShow;
                           })() && (
                             <div className={`absolute ${(() => {
-                              // Smart positioning: check if message is near top of chat
+                              // Smart positioning: check if message is near top of chat and has space below
                               const messageElement = document.querySelector(`[data-message-id="${c._id}"]`);
                               if (messageElement) {
                                 const messageRect = messageElement.getBoundingClientRect();
@@ -5278,15 +5278,22 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                 if (chatContainer) {
                                   const containerRect = chatContainer.getBoundingClientRect();
                                   const distanceFromTop = messageRect.top - containerRect.top;
-                                  // If message is within 120px of chat header, position below
+                                  
+                                  // Check if message is near top AND has enough space below
                                   if (distanceFromTop < 120) {
-                                    return `top-full mt-2 ${isMe ? 'right-0' : 'left-0'}`;
+                                    // Check if there's enough space below the message
+                                    const spaceBelow = containerRect.bottom - messageRect.bottom;
+                                    const reactionBarHeight = 60; // Approximate height of reaction bar
+                                    
+                                    if (spaceBelow >= reactionBarHeight + 20) { // 20px buffer
+                                      return `top-full mt-2 ${isMe ? 'right-0' : 'left-0'}`;
+                                    }
                                   }
                                 }
                               }
-                              // Default: position above message
+                              // Default: position above message (always safe)
                               return `-top-8 ${isMe ? 'right-0' : 'left-0'}`;
-                            })()} bg-red-500 rounded-full shadow-lg border-2 border-red-600 p-1 flex items-center gap-1 animate-reactions-bar z-[9999] reactions-bar transition-all duration-300`} style={{ minWidth: 'max-content' }}>
+                            })()} bg-red-500 rounded-full shadow-lg border-2 border-red-600 p-1 flex items-center gap-1 animate-reactions-bar z-[99999] reactions-bar transition-all duration-300`} style={{ minWidth: 'max-content' }}>
                               {/* Quick reaction buttons */}
                               <button
                                 onClick={() => handleQuickReaction(c._id, '👍')}
