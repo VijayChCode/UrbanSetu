@@ -96,6 +96,38 @@
   .animate-reactions-bar {
     animation: reactionsBarSlide 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
   }
+  
+  /* Enhanced Photo Slider Animations */
+  .animate-slider-fade-in {
+    animation: sliderFadeIn 1.2s cubic-bezier(0.4, 0, 0.2, 1) both;
+  }
+  .animate-slider-slide-up {
+    animation: sliderSlideUp 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+  }
+  .animate-slider-scale-in {
+    animation: sliderScaleIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  .animate-slider-glow {
+    animation: sliderGlow 2s ease-in-out infinite;
+  }
+  .animate-progress-fill {
+    animation: progressFill 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+  }
+  .animate-thumbnail-bounce {
+    animation: thumbnailBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) both;
+  }
+  .animate-overlay-fade-in {
+    animation: overlayFadeIn 0.8s ease-out both;
+  }
+  .animate-text-slide-up {
+    animation: textSlideUp 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+  }
+  .animate-price-pulse {
+    animation: pricePulse 2s ease-in-out infinite;
+  }
+  .animate-type-badge {
+    animation: typeBadge 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
 }
 
 @keyframes fadeIn {
@@ -802,5 +834,118 @@ body.modal-open {
   100% {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+/* Enhanced Photo Slider Keyframes */
+@keyframes sliderFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes sliderSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes sliderScaleIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes sliderGlow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.6), 0 0 40px rgba(147, 51, 234, 0.4);
+  }
+}
+
+@keyframes progressFill {
+  0% {
+    width: 0%;
+  }
+  100% {
+    width: var(--progress-width, 0%);
+  }
+}
+
+@keyframes thumbnailBounce {
+  0% {
+    opacity: 0;
+    transform: scale(0.3) rotate(-180deg);
+  }
+  50% {
+    transform: scale(1.1) rotate(-90deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes overlayFadeIn {
+  0% {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  100% {
+    opacity: 1;
+    backdrop-filter: blur(2px);
+  }
+}
+
+@keyframes textSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pricePulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 8px rgba(59, 130, 246, 0);
+  }
+}
+
+@keyframes typeBadge {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) rotate(-10deg);
+  }
+  50% {
+    transform: scale(1.1) rotate(5deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
   }
 }
