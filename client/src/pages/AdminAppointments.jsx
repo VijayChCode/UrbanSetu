@@ -1428,7 +1428,7 @@ function AdminAppointmentRow({
     setRemovingAllStarred(true);
     
     try {
-      console.log('Starting remove all starred messages operation for', starredMessages.length, 'messages');
+
       
       // Process messages one by one to handle individual failures gracefully
       let successCount = 0;
@@ -1437,7 +1437,7 @@ function AdminAppointmentRow({
       
       for (const message of starredMessages) {
         try {
-          console.log(`Unstarring message ${message._id}`);
+
           
           const response = await axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${message._id}/star`, 
             { starred: false },
@@ -1447,7 +1447,7 @@ function AdminAppointmentRow({
             }
           );
           
-          console.log(`Successfully unstarred message ${message._id}`);
+
           successCount++;
           
           // Update this specific message in local comments
@@ -1464,7 +1464,7 @@ function AdminAppointmentRow({
         }
       }
       
-      console.log(`Remove all operation completed: ${successCount} successful, ${failureCount} failed`);
+
       
       // Remove successfully unstarred messages from starred messages list
       setStarredMessages(prev => prev.filter(msg => !failedMessages.some(failed => failed._id === msg._id)));
@@ -2278,7 +2278,7 @@ function AdminAppointmentRow({
           headers: { "Content-Type": "application/json" }
         }
       );
-      console.log('Edit response:', { data });
+
         // Update with server response
         setLocalComments(prev => prev.map(c => {
           const serverComment = data.comments.find(sc => sc._id === c._id);
@@ -3959,14 +3959,14 @@ function AdminAppointmentRow({
                                           src={c.originalImageUrl || c.imageUrl}
                                           alt="Preserved image from deleted message"
                                           className="max-w-full max-h-64 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                                                                                      onClick={() => {
-                                              const chatImages = (comments || []).filter(msg => !!(msg.originalImageUrl || msg.imageUrl)).map(msg => msg.originalImageUrl || msg.imageUrl);
-                                              const currentUrl = c.originalImageUrl || c.imageUrl;
-                                              const startIndex = Math.max(0, chatImages.indexOf(currentUrl));
-                                              setPreviewImages(chatImages);
-                                              setPreviewIndex(startIndex);
-                                              setShowImagePreview(true);
-                                            }}
+                                          onClick={() => {
+                                            const chatImages = (localComments || []).filter(msg => !!(msg.originalImageUrl || msg.imageUrl)).map(msg => msg.originalImageUrl || msg.imageUrl);
+                                            const currentUrl = c.originalImageUrl || c.imageUrl;
+                                            const startIndex = Math.max(0, chatImages.indexOf(currentUrl));
+                                            setPreviewImages(chatImages);
+                                            setPreviewIndex(startIndex);
+                                            setShowImagePreview(true);
+                                          }}
                                           onError={(e) => {
                                             e.target.src = "https://via.placeholder.com/300x200?text=Image+Not+Found";
                                             e.target.className = "max-w-full max-h-64 rounded-lg opacity-50";
@@ -4037,7 +4037,7 @@ function AdminAppointmentRow({
                                             alt="Shared image"
                                             className="max-w-full max-h-64 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                                             onClick={() => {
-                                              const chatImages = (comments || []).filter(msg => !!(msg.originalImageUrl || msg.imageUrl)).map(msg => msg.originalImageUrl || msg.imageUrl);
+                                              const chatImages = (localComments || []).filter(msg => !!(msg.originalImageUrl || msg.imageUrl)).map(msg => msg.originalImageUrl || msg.imageUrl);
                                               const currentUrl = c.originalImageUrl || c.imageUrl;
                                               const startIndex = Math.max(0, chatImages.indexOf(currentUrl));
                                               setPreviewImages(chatImages);
@@ -5648,7 +5648,7 @@ function AdminAppointmentRow({
                                       className="max-w-full max-h-64 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                                                                               onClick={(e) => {
                                           e.stopPropagation();
-                                          const chatImages = (comments || []).filter(msg => !!(msg.originalImageUrl || msg.imageUrl)).map(msg => msg.originalImageUrl || msg.imageUrl);
+                                          const chatImages = (localComments || []).filter(msg => !!(msg.originalImageUrl || msg.imageUrl)).map(msg => msg.originalImageUrl || msg.imageUrl);
                                           const currentUrl = message.originalImageUrl || message.imageUrl;
                                           const startIndex = Math.max(0, chatImages.indexOf(currentUrl));
                                           setPreviewImages(chatImages);
