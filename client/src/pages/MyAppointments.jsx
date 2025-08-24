@@ -2817,10 +2817,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       console.log('handleQuickReaction called with:', { messageId, emoji });
       console.log('Current appt._id:', appt._id);
       console.log('API_BASE_URL:', API_BASE_URL);
+      console.log('Current comments length:', comments.length);
       
       const message = comments.find(c => c._id === messageId);
       if (!message) {
         console.log('Message not found:', messageId);
+        console.log('Available message IDs:', comments.map(c => c._id));
         toast.error('Message not found');
         return;
       }
@@ -2855,6 +2857,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
 
       toast.success('Reaction added!');
       console.log('=== handleQuickReaction SUCCESS ===');
+      
+      // Force a re-render to show the new reaction
+      setTimeout(() => {
+        console.log('Forcing re-render after reaction addition');
+      }, 100);
+      
     } catch (err) {
       console.error('=== handleQuickReaction ERROR ===');
       console.error('Error adding reaction:', err);
@@ -2933,7 +2941,26 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     console.log('State changed - showReactionsEmojiPicker:', showReactionsEmojiPicker);
     console.log('State changed - reactionsMessageId:', reactionsMessageId);
     console.log('State changed - showReactionsBar:', showReactionsBar);
+    
+    // Additional debugging for quick reactions model
+    if (showReactionsEmojiPicker) {
+      console.log('✅ Quick reactions model is OPEN');
+      console.log('Current reactionsMessageId:', reactionsMessageId);
+      console.log('Current appt._id:', appt._id);
+    } else {
+      console.log('❌ Quick reactions model is CLOSED');
+    }
   }, [showReactionsEmojiPicker, reactionsMessageId, showReactionsBar]);
+
+  // Prevent quick reactions model from closing unexpectedly
+  const preventModalClose = useCallback((e) => {
+    if (showReactionsEmojiPicker) {
+      e.stopPropagation();
+      e.preventDefault();
+      console.log('Preventing modal close for event:', e.type);
+      return false;
+    }
+  }, [showReactionsEmojiPicker]);
 
   // Mark messages as read when user can actually see them at the bottom of chat
   const markingReadRef = useRef(false);
@@ -3820,6 +3847,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
           {showReactionsEmojiPicker && reactionsMessageId && (
             <div 
               className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-[999999] animate-fadeIn"
+              onMouseDown={(e) => {
+                // Only close on backdrop mousedown, not modal content
+                if (e.target === e.currentTarget) {
+                  console.log('Backdrop mousedown - closing modal');
+                  setShowReactionsEmojiPicker(false);
+                }
+              }}
               onClick={(e) => {
                 // Close modal only when clicking on backdrop, not modal content
                 if (e.target === e.currentTarget) {
@@ -3830,6 +3864,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
             >
               <div 
                 className="bg-white rounded-2xl shadow-2xl border border-gray-200 p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-hidden quick-reactions-modal"
+                onMouseDown={(e) => {
+                  e.stopPropagation(); // Prevent any event bubbling
+                  console.log('Modal container mousedown - preventing close');
+                }}
                 onClick={(e) => {
                   e.stopPropagation(); // Prevent any event bubbling
                   console.log('Modal container clicked - preventing close');
@@ -3838,6 +3876,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 <div className="flex items-center justify-between mb-4">
                   <div className="text-lg font-semibold text-gray-800">Quick Reactions</div>
                   <button
+                    onMouseDown={(e) => {
+                      e.stopPropagation(); // Prevent event bubbling
+                      e.preventDefault(); // Prevent default behavior
+                      console.log('Close button mousedown - preventing close');
+                    }}
                     onClick={(e) => {
                       e.stopPropagation(); // Prevent event bubbling
                       console.log('Close button clicked - closing modal');
@@ -3851,6 +3894,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 </div>
                 <div 
                   className="overflow-y-auto max-h-[60vh] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
+                  onMouseDown={(e) => {
+                    e.stopPropagation(); // Prevent any event bubbling
+                    console.log('Scrollable content mousedown - preventing close');
+                  }}
                   onClick={(e) => {
                     e.stopPropagation(); // Prevent any event bubbling
                     console.log('Scrollable content clicked - preventing close');
@@ -3858,6 +3905,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 >
                   <div 
                     className="grid grid-cols-8 gap-3"
+                    onMouseDown={(e) => {
+                      e.stopPropagation(); // Prevent any event bubbling
+                      console.log('Grid container mousedown - preventing close');
+                    }}
                     onClick={(e) => {
                       e.stopPropagation(); // Prevent any event bubbling
                       console.log('Grid container clicked - preventing close');
@@ -3871,6 +3922,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                     ].map((emoji) => (
                       <button
                         key={emoji}
+                        onMouseDown={(e) => {
+                          e.stopPropagation(); // Prevent event bubbling
+                          e.preventDefault(); // Prevent default behavior
+                          console.log('=== QUICK REACTION BUTTON MOUSEDOWN ===');
+                          console.log('Emoji mousedown:', emoji);
+                        }}
                         onClick={(e) => {
                           e.stopPropagation(); // Prevent event bubbling
                           e.preventDefault(); // Prevent default behavior
