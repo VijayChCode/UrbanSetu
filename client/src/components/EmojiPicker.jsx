@@ -174,11 +174,9 @@ const CustomEmojiPicker = ({ onEmojiClick, isOpen, setIsOpen, buttonRef, inputRe
 
   // Handle emoji selection
   const handleEmojiSelect = (emojiObject) => {
-    console.log('CustomEmojiPicker: handleEmojiSelect called with:', emojiObject);
-    console.log('CustomEmojiPicker: calling onEmojiClick with:', emojiObject.emoji);
     onEmojiClick(emojiObject.emoji);
-    // Close the picker after selection
-    setIsOpen(false);
+    // Keep the picker open after selection for better user experience
+    // setIsOpen(false); // Removed to keep picker open
     // Do not force focus on mobile; only maintain focus if already focused
     const wasFocused = inputRef && inputRef.current && document.activeElement === inputRef.current;
     if (wasFocused) {
