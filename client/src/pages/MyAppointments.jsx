@@ -2867,6 +2867,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     } else {
       console.log('No reactionsMessageId found - cannot add reaction');
       console.log('This might indicate a state management issue');
+      // Try to find the message ID from the current context
+      console.log('Attempting to find message ID from context...');
     }
     console.log('=== handleReactionsEmojiClick END ===');
   };
@@ -2905,6 +2907,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     } else if (!newState) {
       console.log('Closing emoji picker');
     }
+    
+    // Additional debugging for state consistency
+    console.log('State after toggle:', {
+      newShowReactionsEmojiPicker: newState,
+      reactionsMessageId,
+      showReactionsBar
+    });
     
     console.log('=== toggleReactionsEmojiPicker END ===');
   };
@@ -5230,7 +5239,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               
                               {/* Expanded reactions when plus is clicked - expand in place */}
                               {showReactionsEmojiPicker && (
-                                <div className="absolute top-full left-0 mt-2 bg-white rounded-lg shadow-xl border border-gray-200 p-2 max-w-xs z-[9999] animate-fadeIn">
+                                <div className={`absolute ${isMe ? 'top-full right-0' : 'top-full left-0'} mt-2 bg-white rounded-lg shadow-xl border border-gray-200 p-2 max-w-xs z-[99999] animate-fadeIn`}>
                                   <div className="text-sm font-semibold text-gray-700 mb-2 text-center">Quick Reactions</div>
                                   <div className="grid grid-cols-6 gap-2">
                                     {['🎉', '👏', '🔥', '💯', '✨', '🌟', '😍', '🤔', '😎', '🤗', '😴', '🤯', '🥳', '😭', '😤', '🤮', '🤧', '🤠', '👻', '🤖', '👽', '👾', '🤡', '👹', '👺', '💀', '👻', '👽', '🤖', '👾', '🤡', '💪', '🙏', '👌', '✌️', '🤞', '🤟'].map((emoji) => (
@@ -5238,7 +5247,16 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                         key={emoji}
                                         onClick={() => {
                                           console.log('Quick reaction button clicked:', emoji);
-                                          handleReactionsEmojiClick(emoji);
+                                          console.log('Current reactionsMessageId:', reactionsMessageId);
+                                          console.log('Current message ID:', c._id);
+                                          // Ensure we're using the correct message ID
+                                          if (reactionsMessageId === c._id) {
+                                            handleReactionsEmojiClick(emoji);
+                                          } else {
+                                            // Fallback: directly call handleQuickReaction with current message ID
+                                            console.log('Fallback: calling handleQuickReaction directly');
+                                            handleQuickReaction(c._id, emoji);
+                                          }
                                         }}
                                         className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
                                         title={`React with ${emoji}`}
