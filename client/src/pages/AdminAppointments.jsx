@@ -443,6 +443,9 @@ export default function AdminAppointments() {
     setAppointmentToHandle(id);
     setCancelReason('');
     setShowCancelModal(true);
+    // Close reactions bar when admin action modal opens
+    setShowReactionsBar(false);
+    setReactionsMessageId(null);
   };
 
   const confirmAdminCancel = async () => {
@@ -478,6 +481,9 @@ export default function AdminAppointments() {
   const handleReinitiateAppointment = async (id) => {
     setAppointmentToHandle(id);
     setShowReinitiateModal(true);
+    // Close reactions bar when admin action modal opens
+    setShowReactionsBar(false);
+    setReactionsMessageId(null);
   };
 
   const confirmReinitiate = async () => {
@@ -507,6 +513,9 @@ export default function AdminAppointments() {
   const handleArchiveAppointment = async (id) => {
     setAppointmentToHandle(id);
     setShowArchiveModal(true);
+    // Close reactions bar when admin action modal opens
+    setShowReactionsBar(false);
+    setReactionsMessageId(null);
   };
 
   const confirmArchive = async () => {
@@ -539,6 +548,9 @@ export default function AdminAppointments() {
   const handleUnarchiveAppointment = async (id) => {
     setAppointmentToHandle(id);
     setShowUnarchiveModal(true);
+    // Close reactions bar when admin action modal opens
+    setShowReactionsBar(false);
+    setReactionsMessageId(null);
   };
 
   const confirmUnarchive = async () => {
@@ -576,6 +588,9 @@ export default function AdminAppointments() {
     
     setUserLoading(true);
     setShowUserModal(true);
+    // Close reactions bar when user modal opens
+    setShowReactionsBar(false);
+    setReactionsMessageId(null);
     try {
       const { data } = await axios.get(`${API_BASE_URL}/api/user/id/${userId}`);
       setSelectedUser(data);
@@ -1508,6 +1523,11 @@ function AdminAppointmentRow({
       if (showReactionsEmojiPicker && !event.target.closest('.quick-reactions-modal')) {
         setShowReactionsEmojiPicker(false);
       }
+      if (showReactionsBar && !event.target.closest('.reactions-bar')) {
+        setShowReactionsBar(false);
+        setReactionsMessageId(null);
+        // Don't close quick reactions model on click outside - only close reaction bar
+      }
     };
 
     const handleScroll = () => {
@@ -1520,6 +1540,11 @@ function AdminAppointmentRow({
       if (showReactionsEmojiPicker) {
         setShowReactionsEmojiPicker(false);
       }
+      if (showReactionsBar && !showReactionsEmojiPicker) {
+        setShowReactionsBar(false);
+        setReactionsMessageId(null);
+      }
+      // Don't close quick reactions model on scroll - only close reaction bar
     };
 
     document.addEventListener('mousedown', handleClickOutside);
@@ -1535,7 +1560,7 @@ function AdminAppointmentRow({
       document.removeEventListener('mousedown', handleReactionsClickOutside);
       document.removeEventListener('scroll', handleScroll, true);
     };
-  }, [showChatOptionsMenu, showHeaderMoreMenu, showSearchBox, showCalendar, showReactionsEmojiPicker]);
+  }, [showChatOptionsMenu, showHeaderMoreMenu, showSearchBox, showCalendar, showReactionsBar, showReactionsEmojiPicker]);
 
   // Reset send icon animation after completion
   React.useEffect(() => {
@@ -1849,11 +1874,17 @@ function AdminAppointmentRow({
       if (appointmentId !== appt._id) return;
       setLocalComments([]);
       setUnreadNewMessages(0);
+      // Close reactions bar when chat is cleared
+      setShowReactionsBar(false);
+      setReactionsMessageId(null);
     }
     
     function handleCommentRemovedForUser({ appointmentId, commentId }) {
       if (appointmentId !== appt._id) return;
       setLocalComments(prev => prev.filter(c => c._id !== commentId));
+      // Close reactions bar when comment is removed
+      setShowReactionsBar(false);
+      setReactionsMessageId(null);
     }
 
     socket.on('chatClearedForUser', handleChatClearedForUser);
@@ -1893,6 +1924,9 @@ function AdminAppointmentRow({
       if (data.appointmentId === appt._id) {
         setLocalComments([]);
         toast.success('Chat deleted by admin');
+        // Close reactions bar when chat is cleared
+        setShowReactionsBar(false);
+        setReactionsMessageId(null);
       }
     };
     socket.on('chatCleared', handleChatCleared);
@@ -3348,7 +3382,14 @@ function AdminAppointmentRow({
                         <div className="relative">
                           <button
                             className="text-white hover:text-gray-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
-                            onClick={() => setShowHeaderMoreMenu(prev => !prev)}
+                            onClick={() => {
+                              setShowHeaderMoreMenu(prev => !prev);
+                              // Close reactions bar when header more menu toggles
+                              if (!showHeaderMoreMenu) {
+                                setShowReactionsBar(false);
+                                setReactionsMessageId(null);
+                              }
+                            }}
                             title="More options"
                             aria-label="More options"
                           >
@@ -3427,7 +3468,12 @@ function AdminAppointmentRow({
                       <div className="relative search-container">
                         <button
                           className="text-white hover:text-gray-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-all duration-300 transform hover:scale-110 shadow"
-                          onClick={() => setShowSearchBox(true)}
+                          onClick={() => {
+                            setShowSearchBox(true);
+                            // Close reactions bar when search box opens
+                            setShowReactionsBar(false);
+                            setReactionsMessageId(null);
+                          }}
                           title="Search messages"
                           aria-label="Search messages"
                         >
@@ -3439,7 +3485,14 @@ function AdminAppointmentRow({
                       <div className="relative">
                         <button
                           className="text-white hover:text-gray-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors shadow"
-                          onClick={() => setShowChatOptionsMenu(!showChatOptionsMenu)}
+                          onClick={() => {
+                            setShowChatOptionsMenu(!showChatOptionsMenu);
+                            // Close reactions bar when chat options menu toggles
+                            if (!showChatOptionsMenu) {
+                              setShowReactionsBar(false);
+                              setReactionsMessageId(null);
+                            }
+                          }}
                           title="Chat options"
                           aria-label="Chat options"
                         >
@@ -3464,6 +3517,9 @@ function AdminAppointmentRow({
                               onClick={() => {
                                 setShowStarredModal(true);
                                 setShowChatOptionsMenu(false);
+                                // Close reactions bar when starred modal opens
+                                setShowReactionsBar(false);
+                                setReactionsMessageId(null);
                               }}
                             >
                               <FaStar className="text-sm" />
@@ -3479,6 +3535,9 @@ function AdminAppointmentRow({
                                 setIsSelectionMode(true);
                                 setSelectedMessages([]);
                                 setShowChatOptionsMenu(false);
+                                // Close reactions bar when selection mode opens
+                                setShowReactionsBar(false);
+                                setReactionsMessageId(null);
                               }}
                             >
                               <FaCheckSquare className="text-sm" />
@@ -3490,6 +3549,9 @@ function AdminAppointmentRow({
                               onClick={() => {
                                 setShowShortcutTip(!showShortcutTip);
                                 setShowChatOptionsMenu(false);
+                                // Close reactions bar when shortcut tip toggles
+                                setShowReactionsBar(false);
+                                setReactionsMessageId(null);
                               }}
                             >
                               <FaLightbulb className="text-sm" />
@@ -3526,6 +3588,9 @@ function AdminAppointmentRow({
                                 onClick={() => {
                                   setShowDeleteChatModal(true);
                                   setShowChatOptionsMenu(false);
+                                  // Close reactions bar when delete chat modal opens
+                                  setShowReactionsBar(false);
+                                  setReactionsMessageId(null);
                                 }}
                               >
                                 <FaTrash className="text-sm" />
@@ -3584,7 +3649,12 @@ function AdminAppointmentRow({
                       )}
                       <button
                         className="text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors z-10 shadow"
-                        onClick={() => setShowChatModal(false)}
+                        onClick={() => {
+                          setShowChatModal(false);
+                          // Close reactions bar when chat modal closes
+                          setShowReactionsBar(false);
+                          setReactionsMessageId(null);
+                        }}
                         title="Close"
                         aria-label="Close"
                       >
