@@ -3899,7 +3899,7 @@ function AdminAppointmentRow({
                                 );
                               }
                             })()
-                                                        ) : (
+                          ) : (
                                 <div>
                                   {isEditing ? (
                                     <div className="bg-yellow-100 border-l-4 border-yellow-400 px-2 py-1 rounded">
@@ -3946,7 +3946,7 @@ function AdminAppointmentRow({
                                                 clickable={true}
                                               />
                                             </div>
-                                            );
+                                          );
                                         }
                                         return null;
                                       })()}
@@ -3965,26 +3965,26 @@ function AdminAppointmentRow({
                                       )}
                                     </>
                                   )}
+                                  
+                                  {/* Reactions Display */}
+                                  {c.reactions && c.reactions.length > 0 && (
+                                    <div className="flex flex-wrap gap-1 mt-2">
+                                      {c.reactions.map((reaction, index) => (
+                                        <span
+                                          key={index}
+                                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
+                                            reaction.userId === currentUser._id
+                                              ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                                              : 'bg-gray-100 text-gray-700 border border-gray-200'
+                                          }`}
+                                        >
+                                          <span>{reaction.emoji}</span>
+                                          <span className="font-medium">{reaction.count || 1}</span>
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
                                 </div>
-                                
-                                {/* Reactions Display */}
-                                {c.reactions && c.reactions.length > 0 && (
-                                  <div className="flex flex-wrap gap-1 mt-2">
-                                    {c.reactions.map((reaction, index) => (
-                                      <span
-                                        key={index}
-                                        className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
-                                          reaction.userId === currentUser._id
-                                            ? 'bg-blue-100 text-blue-800 border border-blue-200'
-                                            : 'bg-gray-100 text-gray-700 border border-gray-200'
-                                        }`}
-                                      >
-                                        <span>{reaction.emoji}</span>
-                                        <span className="font-medium">{reaction.count || 1}</span>
-                                      </span>
-                                    ))}
-                                  </div>
-                                )}
                           )}
                         </div>
                         <div className="flex items-center gap-1 justify-end mt-2" data-message-actions>
