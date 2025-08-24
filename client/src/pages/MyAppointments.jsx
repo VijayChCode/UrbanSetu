@@ -5264,36 +5264,34 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             </div>
                           </div>
                           
-                          {/* Reactions Bar - positioned inside message container */}
+                          {/* Reactions Bar - positioned inside message container (above only) */}
                           {(() => {
                             const shouldShow = !c.deleted && showReactionsBar && reactionsMessageId === c._id;
-                            return shouldShow;
-                          })() && (
-                            <div className={`absolute ${(() => {
-                              // Smart positioning: check if message is near top of chat and has space below
-                              const messageElement = document.querySelector(`[data-message-id="${c._id}"]`);
-                              if (messageElement) {
-                                const messageRect = messageElement.getBoundingClientRect();
-                                const chatContainer = chatContainerRef.current;
-                                if (chatContainer) {
-                                  const containerRect = chatContainer.getBoundingClientRect();
-                                  const distanceFromTop = messageRect.top - containerRect.top;
+                            if (!shouldShow) return false;
+                            
+                            // Only show inline reaction bar if message should be positioned above
+                            const messageElement = document.querySelector(`[data-message-id="${c._id}"]`);
+                            if (messageElement) {
+                              const messageRect = messageElement.getBoundingClientRect();
+                              const chatContainer = chatContainerRef.current;
+                              if (chatContainer) {
+                                const containerRect = chatContainer.getBoundingClientRect();
+                                const distanceFromTop = messageRect.top - containerRect.top;
+                                
+                                // If message is near top and has space below, don't show inline bar (floating bar will handle it)
+                                if (distanceFromTop < 120) {
+                                  const spaceBelow = containerRect.bottom - messageRect.bottom;
+                                  const reactionBarHeight = 60;
                                   
-                                  // Check if message is near top AND has enough space below
-                                  if (distanceFromTop < 120) {
-                                    // Check if there's enough space below the message
-                                    const spaceBelow = containerRect.bottom - messageRect.bottom;
-                                    const reactionBarHeight = 60; // Approximate height of reaction bar
-                                    
-                                    if (spaceBelow >= reactionBarHeight + 20) { // 20px buffer
-                                      return `top-full mt-2 ${isMe ? 'right-0' : 'left-0'}`;
-                                    }
+                                  if (spaceBelow >= reactionBarHeight + 20) {
+                                    return false; // Don't show inline bar, floating bar will handle it
                                   }
                                 }
                               }
-                              // Default: position above message (always safe)
-                              return `-top-8 ${isMe ? 'right-0' : 'left-0'}`;
-                            })()} bg-red-500 rounded-full shadow-lg border-2 border-red-600 p-1 flex items-center gap-1 animate-reactions-bar z-[99999] reactions-bar transition-all duration-300`} style={{ minWidth: 'max-content' }}>
+                            }
+                            return true; // Show inline bar for above positioning
+                          })() && (
+                            <div className={`absolute -top-8 ${isMe ? 'right-0' : 'left-0'} bg-red-500 rounded-full shadow-lg border-2 border-red-600 p-1 flex items-center gap-1 animate-reactions-bar z-[999999] reactions-bar transition-all duration-300`} style={{ minWidth: 'max-content' }}>
                               {/* Quick reaction buttons */}
                               <button
                                 onClick={() => handleQuickReaction(c._id, '👍')}
@@ -5383,6 +5381,124 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   <div ref={chatEndRef} />
                 </div>
                 </div>
+                
+                {/* Floating Reaction Bar for Bottom Positioning */}
+                {(() => {
+                  const shouldShow = showReactionsBar && reactionsMessageId;
+                  if (!shouldShow) return null;
+                  
+                  const messageElement = document.querySelector(`[data-message-id="${reactionsMessageId}"]`);
+                  if (!messageElement) return null;
+                  
+                  const messageRect = messageElement.getBoundingClientRect();
+                  const chatContainer = chatContainerRef.current;
+                  if (!chatContainer) return null;
+                  
+                  const containerRect = chatContainer.getBoundingClientRect();
+                  const distanceFromTop = messageRect.top - containerRect.top;
+                  
+                  // Only show floating bar if message is near top and needs bottom positioning
+                  if (distanceFromTop < 120) {
+                    const spaceBelow = containerRect.bottom - messageRect.bottom;
+                    const reactionBarHeight = 60;
+                    
+                    if (spaceBelow >= reactionBarHeight + 20) {
+                      const comment = comments.find(c => c._id === reactionsMessageId);
+                      if (!comment || comment.deleted) return null;
+                      
+                      const isMe = comment.senderEmail === currentUser.email;
+                      
+                      return (
+                        <div 
+                          className="fixed bg-red-500 rounded-full shadow-lg border-2 border-red-600 p-1 flex items-center gap-1 animate-reactions-bar z-[999999] reactions-bar transition-all duration-300"
+                          style={{ 
+                            minWidth: 'max-content',
+                            top: `${messageRect.bottom + 8}px`,
+                            left: isMe ? 'auto' : `${messageRect.left}px`,
+                            right: isMe ? `${window.innerWidth - messageRect.right}px` : 'auto'
+                          }}
+                        >
+                          {/* Quick reaction buttons */}
+                          <button
+                            onClick={() => handleQuickReaction(comment._id, '👍')}
+                            className={`w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform rounded-full ${
+                              comment.reactions?.some(r => r.emoji === '👍' && r.userId === currentUser._id)
+                                ? 'bg-blue-100 border-2 border-blue-400'
+                                : 'bg-gray-50 hover:bg-gray-100'
+                            }`}
+                            title="Like"
+                          >
+                            👍
+                          </button>
+                          <button
+                            onClick={() => handleQuickReaction(comment._id, '❤️')}
+                            className={`w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform rounded-full ${
+                              comment.reactions?.some(r => r.emoji === '❤️' && r.userId === currentUser._id)
+                                ? 'bg-blue-100 border-2 border-blue-400'
+                                : 'bg-gray-50 hover:bg-gray-100'
+                            }`}
+                            title="Love"
+                          >
+                            ❤️
+                          </button>
+                          <button
+                            onClick={() => handleQuickReaction(comment._id, '😂')}
+                            className={`w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform rounded-full ${
+                              comment.reactions?.some(r => r.emoji === '😂' && r.userId === currentUser._id)
+                                ? 'bg-blue-100 border-2 border-blue-400'
+                                : 'bg-gray-50 hover:bg-gray-100'
+                            }`}
+                            title="Laugh"
+                          >
+                            😂
+                          </button>
+                          <button
+                            onClick={() => handleQuickReaction(comment._id, '😮')}
+                            className={`w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform rounded-full ${
+                              comment.reactions?.some(r => r.emoji === '😮' && r.userId === currentUser._id)
+                                ? 'bg-blue-100 border-2 border-blue-400'
+                                : 'bg-gray-50 hover:bg-gray-100'
+                            }`}
+                            title="Wow"
+                          >
+                            😮
+                          </button>
+                          <button
+                            onClick={() => handleQuickReaction(comment._id, '😢')}
+                            className={`w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform rounded-full ${
+                              comment.reactions?.some(r => r.emoji === '😢' && r.userId === currentUser._id)
+                                ? 'bg-blue-100 border-2 border-blue-400'
+                                : 'bg-gray-50 hover:bg-gray-100'
+                            }`}
+                            title="Sad"
+                          >
+                            😢
+                          </button>
+                          <button
+                            onClick={() => handleQuickReaction(comment._id, '😡')}
+                            className={`w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform rounded-full ${
+                              comment.reactions?.some(r => r.emoji === '😡' && r.userId === currentUser._id)
+                                ? 'bg-blue-100 border-2 border-blue-400'
+                                : 'bg-gray-50 hover:bg-gray-100'
+                            }`}
+                            title="Angry"
+                          >
+                            😡
+                          </button>
+                          <div className="w-px h-6 bg-gray-300 mx-1"></div>
+                          <button
+                            onClick={toggleReactionsEmojiPicker}
+                            className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
+                            title="More emojis"
+                          >
+                            ➕
+                          </button>
+                        </div>
+                      );
+                    }
+                  }
+                  return null;
+                })()}
                 
                 {/* Reply indicator */}
                 {replyTo && (
