@@ -3815,6 +3815,73 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       </tr>
       {showChatModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-md flex items-center justify-center z-50 p-4">
+          
+          {/* Quick Reactions Model - Fixed Overlay */}
+          {showReactionsEmojiPicker && reactionsMessageId && (
+            <div 
+              className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-[999999] animate-fadeIn"
+              onClick={(e) => {
+                // Close modal only when clicking on backdrop, not modal content
+                if (e.target === e.currentTarget) {
+                  console.log('Backdrop clicked - closing modal');
+                  setShowReactionsEmojiPicker(false);
+                }
+              }}
+            >
+              <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-hidden quick-reactions-modal">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="text-lg font-semibold text-gray-800">Quick Reactions</div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent event bubbling
+                      console.log('Close button clicked - closing modal');
+                      setShowReactionsEmojiPicker(false);
+                    }}
+                    className="text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors"
+                    title="Close"
+                  >
+                    <FaTimes size={16} />
+                  </button>
+                </div>
+                <div className="overflow-y-auto max-h-[60vh] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                  <div className="grid grid-cols-8 gap-3">
+                    {[
+                      '👍', '❤️', '😂', '😮', '😢', '😡', '🎉', '👏', '🔥', '💯', '✨', '🌟', '😍', '🤔', '😎', '🤗', 
+                      '😴', '🤯', '🥳', '😭', '😤', '🤮', '🤧', '🤠', '👻', '🤖', '👽', '👾', '🤡', '👹', '👺', '💀', 
+                      '💪', '🙏', '👌', '✌️', '🤞', '🤟', '🤘', '👊', '🤝', '👋', '🤙', '👈', '👉', '👆', '👇', '☝️',
+                      '👌', '🤌', '🤏', '✋', '🤚', '🖐️', '🖖', '👌', '🤌', '🤏', '✋', '🤚', '🖐️', '🖖', '👌', '🤌'
+                    ].map((emoji) => (
+                      <button
+                        key={emoji}
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent event bubbling
+                          console.log('Quick reaction button clicked:', emoji);
+                          console.log('Current reactionsMessageId:', reactionsMessageId);
+                          console.log('Current appt._id:', appt._id);
+                          
+                          // Ensure we have the required IDs
+                          if (reactionsMessageId && appt._id) {
+                            console.log('Calling handleQuickReaction with:', { messageId: reactionsMessageId, emoji, appointmentId: appt._id });
+                            handleQuickReaction(reactionsMessageId, emoji);
+                            // Close the modal after successful reaction selection
+                            setShowReactionsEmojiPicker(false);
+                          } else {
+                            console.error('Missing required IDs:', { reactionsMessageId, apptId: appt._id });
+                            toast.error('Unable to add reaction - missing message information');
+                          }
+                        }}
+                        className="w-12 h-12 flex items-center justify-center text-2xl hover:scale-110 transition-all duration-200 bg-gray-50 hover:bg-gray-100 rounded-xl border border-gray-200 hover:border-gray-300 hover:shadow-md"
+                        title={`React with ${emoji}`}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          
           <div className="bg-gradient-to-br from-white via-blue-50 to-purple-50 rounded-3xl shadow-2xl w-full h-full max-w-6xl max-h-full p-0 relative animate-fadeIn flex flex-col border border-gray-200 transform transition-all duration-500 hover:shadow-3xl overflow-hidden">
             { isChatDisabled ? (
               <div className="flex flex-col items-center justify-center flex-1 p-8 min-h-96 relative">
@@ -5260,72 +5327,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   <div ref={chatEndRef} />
                 </div>
                 </div>
-                
-                {/* Quick Reactions Model - Fixed Overlay */}
-                {showReactionsEmojiPicker && reactionsMessageId && (
-                  <div 
-                    className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-[999999] animate-fadeIn"
-                    onClick={(e) => {
-                      // Close modal only when clicking on backdrop, not modal content
-                      if (e.target === e.currentTarget) {
-                        console.log('Backdrop clicked - closing modal');
-                        setShowReactionsEmojiPicker(false);
-                      }
-                    }}
-                  >
-                    <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-hidden quick-reactions-modal">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="text-lg font-semibold text-gray-800">Quick Reactions</div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation(); // Prevent event bubbling
-                            console.log('Close button clicked - closing modal');
-                            setShowReactionsEmojiPicker(false);
-                          }}
-                          className="text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors"
-                          title="Close"
-                        >
-                          <FaTimes size={16} />
-                        </button>
-                      </div>
-                      <div className="overflow-y-auto max-h-[60vh] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                        <div className="grid grid-cols-8 gap-3">
-                          {[
-                            '👍', '❤️', '😂', '😮', '😢', '😡', '🎉', '👏', '🔥', '💯', '✨', '🌟', '😍', '🤔', '😎', '🤗', 
-                            '😴', '🤯', '🥳', '😭', '😤', '🤮', '🤧', '🤠', '👻', '🤖', '👽', '👾', '🤡', '👹', '👺', '💀', 
-                            '💪', '🙏', '👌', '✌️', '🤞', '🤟', '🤘', '👊', '🤝', '👋', '🤙', '👈', '👉', '👆', '👇', '☝️',
-                            '👌', '🤌', '🤏', '✋', '🤚', '🖐️', '🖖', '👌', '🤌', '🤏', '✋', '🤚', '🖐️', '🖖', '👌', '🤌'
-                          ].map((emoji) => (
-                            <button
-                              key={emoji}
-                              onClick={(e) => {
-                                e.stopPropagation(); // Prevent event bubbling
-                                console.log('Quick reaction button clicked:', emoji);
-                                console.log('Current reactionsMessageId:', reactionsMessageId);
-                                console.log('Current appt._id:', appt._id);
-                                
-                                // Ensure we have the required IDs
-                                if (reactionsMessageId && appt._id) {
-                                  console.log('Calling handleQuickReaction with:', { messageId: reactionsMessageId, emoji, appointmentId: appt._id });
-                                  handleQuickReaction(reactionsMessageId, emoji);
-                                  // Close the modal after successful reaction selection
-                                  setShowReactionsEmojiPicker(false);
-                                } else {
-                                  console.error('Missing required IDs:', { reactionsMessageId, apptId: appt._id });
-                                  toast.error('Unable to add reaction - missing message information');
-                                }
-                              }}
-                              className="w-12 h-12 flex items-center justify-center text-2xl hover:scale-110 transition-all duration-200 bg-gray-50 hover:bg-gray-100 rounded-xl border border-gray-200 hover:border-gray-300 hover:shadow-md"
-                              title={`React with ${emoji}`}
-                            >
-                              {emoji}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
                 
                 {/* Reply indicator */}
                 {replyTo && (
