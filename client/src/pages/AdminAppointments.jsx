@@ -37,8 +37,13 @@ export default function AdminAppointments() {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showReinitiateModal, setShowReinitiateModal] = useState(false);
   const [showArchiveModal, setShowArchiveModal] = useState(false);
-    const [showUnarchiveModal, setShowUnarchiveModal] = useState(false);
- 
+      const [showUnarchiveModal, setShowUnarchiveModal] = useState(false);
+  
+  // Reactions state
+  const [showReactionsBar, setShowReactionsBar] = useState(false);
+  const [reactionsMessageId, setReactionsMessageId] = useState(null);
+  const [showReactionsEmojiPicker, setShowReactionsEmojiPicker] = useState(false);
+
    // Lock body scroll when admin action modals are open (cancel, reinitiate, archive, unarchive)
    useEffect(() => {
      const shouldLock = showCancelModal || showReinitiateModal || showArchiveModal || showUnarchiveModal;
@@ -728,34 +733,7 @@ export default function AdminAppointments() {
     setShowReactionsEmojiPicker(prev => !prev);
   }, []);
 
-  const handleQuickReaction = useCallback(async (messageId, emoji) => {
-    try {
-      const { data } = await axios.patch(
-        `${API_BASE_URL}/api/bookings/${appt._id}/comment/${messageId}/react`,
-        { emoji },
-        { withCredentials: true }
-      );
 
-      // Update local comments with new reactions
-      setLocalComments(prev => prev.map(msg => 
-        msg._id === messageId 
-          ? { ...msg, reactions: data.reactions }
-          : msg
-      ));
-
-      // Update appointment comments for parent component
-      updateAppointmentComments(appt._id, localComments.map(msg => 
-        msg._id === messageId 
-          ? { ...msg, reactions: data.reactions }
-          : msg
-      ));
-
-      toast.success(data.message);
-    } catch (error) {
-      console.error('Error adding reaction:', error);
-      toast.error(error.response?.data?.message || 'Failed to add reaction');
-    }
-  }, [appt._id, localComments, updateAppointmentComments]);
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
@@ -940,6 +918,15 @@ export default function AdminAppointments() {
                         confirmReinitiate={confirmReinitiate}
                         confirmArchive={confirmArchive}
                         confirmUnarchive={confirmUnarchive}
+                        // Reactions props
+                        showReactionsBar={showReactionsBar}
+                        setShowReactionsBar={setShowReactionsBar}
+                        reactionsMessageId={reactionsMessageId}
+                        setReactionsMessageId={setReactionsMessageId}
+                        showReactionsEmojiPicker={showReactionsEmojiPicker}
+                        setShowReactionsEmojiPicker={setShowReactionsEmojiPicker}
+                        toggleReactionsBar={toggleReactionsBar}
+                        toggleReactionsEmojiPicker={toggleReactionsEmojiPicker}
                       />
                     ))}
                   </tbody>
@@ -997,6 +984,15 @@ export default function AdminAppointments() {
                       confirmReinitiate={confirmReinitiate}
                       confirmArchive={confirmArchive}
                       confirmUnarchive={confirmUnarchive}
+                      // Reactions props
+                      showReactionsBar={showReactionsBar}
+                      setShowReactionsBar={setShowReactionsBar}
+                      reactionsMessageId={reactionsMessageId}
+                      setReactionsMessageId={setReactionsMessageId}
+                      showReactionsEmojiPicker={showReactionsEmojiPicker}
+                      setShowReactionsEmojiPicker={setShowReactionsEmojiPicker}
+                      toggleReactionsBar={toggleReactionsBar}
+                      toggleReactionsEmojiPicker={toggleReactionsEmojiPicker}
                     />
                   ))}
                 </tbody>
@@ -1158,7 +1154,16 @@ function AdminAppointmentRow({
   confirmAdminCancel,
   confirmReinitiate,
   confirmArchive,
-  confirmUnarchive
+  confirmUnarchive,
+  // Reactions props from parent
+  showReactionsBar,
+  setShowReactionsBar,
+  reactionsMessageId,
+  setReactionsMessageId,
+  showReactionsEmojiPicker,
+  setShowReactionsEmojiPicker,
+  toggleReactionsBar,
+  toggleReactionsEmojiPicker
 }) {
   // Use parent comments directly for real-time sync, with local state for UI interactions
   const [localComments, setLocalComments] = React.useState(appt.comments || []);
@@ -1252,10 +1257,7 @@ function AdminAppointmentRow({
   const [showImagePreviewModal, setShowImagePreviewModal] = useLocalState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  // Reactions functionality state
-  const [showReactionsBar, setShowReactionsBar] = useLocalState(false);
-  const [reactionsMessageId, setReactionsMessageId] = useLocalState(null);
-  const [showReactionsEmojiPicker, setShowReactionsEmojiPicker] = useLocalState(false);
+
 
   const selectedMessageForHeaderOptions = headerOptionsMessageId ? localComments.find(msg => msg._id === headerOptionsMessageId) : null;
 
