@@ -1853,10 +1853,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
         setReactionsMessageId(null);
         setShowReactionsEmojiPicker(false);
       }
-      // Handle click outside for the new fixed overlay modal
-      if (showReactionsEmojiPicker && !event.target.closest('.quick-reactions-modal')) {
-        setShowReactionsEmojiPicker(false);
-      }
+
     };
 
     const handleScroll = () => {
@@ -2818,13 +2815,20 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     try {
       console.log('=== handleQuickReaction START ===');
       console.log('handleQuickReaction called with:', { messageId, emoji });
+      console.log('Current appt._id:', appt._id);
+      console.log('API_BASE_URL:', API_BASE_URL);
+      
       const message = comments.find(c => c._id === messageId);
       if (!message) {
         console.log('Message not found:', messageId);
+        toast.error('Message not found');
         return;
       }
 
+      console.log('Message found:', message);
       console.log('Sending API request to add reaction');
+      console.log('API endpoint:', `${API_BASE_URL}/api/bookings/${appt._id}/comment/${messageId}/react`);
+      
       // Add reaction to the message
       const { data } = await axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${messageId}/react`, 
         { emoji },
@@ -2854,7 +2858,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     } catch (err) {
       console.error('=== handleQuickReaction ERROR ===');
       console.error('Error adding reaction:', err);
-      toast.error('Failed to add reaction');
+      console.error('Error response:', err.response?.data);
+      console.error('Error status:', err.response?.status);
+      toast.error(err.response?.data?.message || 'Failed to add reaction');
     }
   };
 
@@ -5260,8 +5266,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   <div 
                     className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-[999999] animate-fadeIn"
                     onClick={(e) => {
-                      // Close modal when clicking on backdrop
+                      // Close modal only when clicking on backdrop, not modal content
                       if (e.target === e.currentTarget) {
+                        console.log('Backdrop clicked - closing modal');
                         setShowReactionsEmojiPicker(false);
                       }
                     }}
@@ -5270,7 +5277,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                       <div className="flex items-center justify-between mb-4">
                         <div className="text-lg font-semibold text-gray-800">Quick Reactions</div>
                         <button
-                          onClick={() => setShowReactionsEmojiPicker(false)}
+                          onClick={(e) => {
+                            e.stopPropagation(); // Prevent event bubbling
+                            console.log('Close button clicked - closing modal');
+                            setShowReactionsEmojiPicker(false);
+                          }}
                           className="text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors"
                           title="Close"
                         >
@@ -5287,13 +5298,22 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           ].map((emoji) => (
                             <button
                               key={emoji}
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.stopPropagation(); // Prevent event bubbling
                                 console.log('Quick reaction button clicked:', emoji);
                                 console.log('Current reactionsMessageId:', reactionsMessageId);
-                                // Direct call to handleQuickReaction with the stored message ID
-                                handleQuickReaction(reactionsMessageId, emoji);
-                                // Close the modal after selection
-                                setShowReactionsEmojiPicker(false);
+                                console.log('Current appt._id:', appt._id);
+                                
+                                // Ensure we have the required IDs
+                                if (reactionsMessageId && appt._id) {
+                                  console.log('Calling handleQuickReaction with:', { messageId: reactionsMessageId, emoji, appointmentId: appt._id });
+                                  handleQuickReaction(reactionsMessageId, emoji);
+                                  // Close the modal after successful reaction selection
+                                  setShowReactionsEmojiPicker(false);
+                                } else {
+                                  console.error('Missing required IDs:', { reactionsMessageId, apptId: appt._id });
+                                  toast.error('Unable to add reaction - missing message information');
+                                }
                               }}
                               className="w-12 h-12 flex items-center justify-center text-2xl hover:scale-110 transition-all duration-200 bg-gray-50 hover:bg-gray-100 rounded-xl border border-gray-200 hover:border-gray-300 hover:shadow-md"
                               title={`React with ${emoji}`}
