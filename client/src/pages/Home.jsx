@@ -81,7 +81,7 @@ export default function Home() {
       url: img,
       listingId: listing._id,
       title: listing.name || 'Featured Property',
-      price: listing.regularPrice,
+      price: listing.offer && listing.discountPrice ? listing.discountPrice : listing.regularPrice,
       type: listing.type
     }))
   );
@@ -156,7 +156,7 @@ export default function Home() {
                         </h3>
                         <div className="flex items-center gap-4 text-sm md:text-base">
                           <span className="bg-blue-600 px-3 py-1 rounded-full font-semibold animate-price-pulse">
-                            ${image.price?.toLocaleString() || 'Contact for Price'}
+                            ₹{image.price?.toLocaleString('en-IN') || 'Contact for Price'}
                           </span>
                           <span className="bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm animate-type-badge">
                             {image.type?.charAt(0).toUpperCase() + image.type?.slice(1) || 'Property'}
