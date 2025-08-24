@@ -2,6 +2,50 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Global image optimization for crisp, clear rendering */
+img {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  image-rendering: optimize-contrast;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+/* Specific optimizations for gallery slider images */
+.gallery-image-crisp {
+  image-rendering: optimize-contrast !important;
+  -webkit-image-rendering: -webkit-optimize-contrast !important;
+  image-rendering: crisp-edges !important;
+  backface-visibility: hidden !important;
+  transform: translateZ(0) !important;
+  will-change: transform !important;
+  filter: contrast(1.1) brightness(1.05) saturate(1.05) !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.gallery-image-crisp:hover {
+  transform: translateZ(0) scale(1.05) !important;
+}
+
+/* Prevent blur on Swiper slides */
+.swiper-slide {
+  backface-visibility: hidden !important;
+  transform-style: preserve-3d !important;
+}
+
+.swiper-slide img {
+  transform: translateZ(0) !important;
+  backface-visibility: hidden !important;
+}
+
+/* Optimize Swiper wrapper */
+.swiper-wrapper {
+  backface-visibility: hidden !important;
+  transform-style: preserve-3d !important;
+}
+
 @layer utilities {
   .animate-fadeIn {
     animation: fadeIn 0.8s ease-in both;

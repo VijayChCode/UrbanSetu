@@ -135,12 +135,27 @@ export default function PublicHome() {
             >
               {allSliderImages.map((image, idx) => (
                 <SwiperSlide key={`${image.listingId}-${idx}`} className="relative">
-                  <div className="relative h-80 md:h-96 lg:h-[500px] overflow-hidden">
+                  <div className="relative h-80 md:h-96 lg:h-[500px] overflow-hidden" style={{
+                    backfaceVisibility: 'hidden',
+                    transform: 'translateZ(0)',
+                    willChange: 'transform'
+                  }}>
                     <img 
                       src={image.url} 
-                      className="w-full h-full object-cover transition-transform duration-700 hover:scale-110" 
+                      className="w-full h-full object-cover gallery-image-crisp" 
                       alt={image.title}
-                      loading="lazy"
+                      loading="eager"
+                      decoding="sync"
+                      fetchpriority="high"
+                      style={{
+                        imageRendering: 'optimize-contrast',
+                        WebkitImageRendering: '-webkit-optimize-contrast',
+                        backfaceVisibility: 'hidden',
+                        transform: 'translateZ(0)',
+                        filter: 'contrast(1.1) brightness(1.05) saturate(1.05)',
+                        WebkitFontSmoothing: 'antialiased',
+                        MozOsxFontSmoothing: 'grayscale'
+                      }}
                     />
                     {/* Image Overlay with Property Info */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent animate-overlay-fade-in">
