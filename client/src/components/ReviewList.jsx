@@ -69,13 +69,9 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
     
     // Listen for profile updates to update user info in reviews and replies
     const handleProfileUpdate = (profileData) => {
-      console.log('[ReviewList] Received profileUpdated socket event:', profileData);
-      console.log('[ReviewList] Current reviews:', reviews.length);
-      
       setReviews(prevReviews => {
         const updated = prevReviews.map(review => {
           if (review.userId === profileData.userId) {
-            console.log('[ReviewList] Updating review:', review._id, 'for user:', profileData.userId);
             return {
               ...review,
               userName: profileData.username,
@@ -84,7 +80,6 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
           }
           return review;
         });
-        console.log('[ReviewList] Updated reviews:', updated.length);
         return updated;
       });
       
@@ -93,7 +88,6 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
         Object.keys(updated).forEach(reviewId => {
           updated[reviewId] = updated[reviewId]?.map(reply => {
             if (reply.userId === profileData.userId) {
-              console.log('[ReviewList] Updating reply:', reply._id, 'for user:', profileData.userId);
               return {
                 ...reply,
                 userName: profileData.username,
@@ -107,18 +101,16 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
       });
     };
     socket.on('profileUpdated', handleProfileUpdate);
-    console.log('[ReviewList] Socket listeners set up for profileUpdated');
+
     
     // Test socket connection with a simple event
-    socket.emit('testConnection', { message: 'ReviewList component connected' }, (response) => {
-      console.log('[ReviewList] Test socket response:', response);
-    });
+    socket.emit('testConnection', { message: 'ReviewList component connected' });
     
     return () => {
       socket.off('reviewUpdated', handleSocketReviewUpdate);
       socket.off('reviewReplyUpdated', handleSocketReplyUpdate);
       socket.off('profileUpdated', handleProfileUpdate);
-      console.log('[ReviewList] Socket listeners cleaned up');
+
       // Restore body scroll when component unmounts
       document.body.style.overflow = 'unset';
     };
@@ -155,7 +147,7 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
         if (res.ok) {
           const updatedUser = await res.json();
           if (updatedUser.username !== currentUser.username || updatedUser.avatar !== currentUser.avatar) {
-            console.log('[ReviewList] Profile updated via polling:', updatedUser);
+
             // Update reviews and replies with new profile data
             setReviews(prevReviews => prevReviews.map(r =>
               r.userId === updatedUser._id
