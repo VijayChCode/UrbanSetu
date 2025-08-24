@@ -345,6 +345,21 @@ function AppRoutes({ bootstrapped }) {
       // Since backend now only sends to intended recipients, we can trust this message is for us
       // Just check if it's not from the current user
       if (data.comment && data.comment.senderEmail !== currentUser.email) {
+        
+        // Debug logging to understand the data structure
+        console.log('[App.jsx] Received commentUpdate event:', {
+          eventType: 'commentUpdate',
+          commentId: data.comment._id,
+          senderEmail: data.comment.senderEmail,
+          messageContent: data.comment.message,
+          messageLength: data.comment.message?.length || 0,
+          hasReactions: !!data.comment.reactions,
+          reactionsCount: data.comment.reactions?.length || 0,
+          timestamp: data.comment.timestamp || data.comment.createdAt,
+          appointmentId: data.appointmentId,
+          dataKeys: Object.keys(data),
+          commentKeys: Object.keys(data.comment)
+        });
         // Check if we're on the MyAppointments page
         const currentPath = window.location.pathname;
         const isOnMyAppointments = currentPath.includes('/my-appointments') || currentPath.includes('/user/my-appointments');
@@ -360,30 +375,35 @@ function AppRoutes({ bootstrapped }) {
         // IMPORTANT: Check if this is a reaction update, not a new message
         // We need to distinguish between new messages and updates to existing messages
         
+        // The key insight: reaction updates are updates to existing messages, not new messages
+        // Even though they contain the original message content, they're triggered by reactions
+        
         // Check if this is likely a reaction update by looking for key indicators:
         // 1. If there's no message content, it's not a new message
         // 2. If there's a messageId field, it might be an update to an existing message
-        // 3. If there are reactions but no new message content, it's a reaction update
-        // 4. If the timestamp is very recent (within last few seconds), it might be a new message
+        // 3. If there are reactions, it's likely a reaction update
+        // 4. If the comment has an _id that suggests it's an existing message update
         
         // Don't show notification if:
         // - No message content (reactions, status updates, etc.)
         // - This appears to be an update to an existing message rather than a new message
         // - The comment object structure suggests it's an update, not a new message
         
-        // Additional check: if this has reactions but no message content, it's definitely a reaction update
-        const hasReactionsOnly = data.comment.reactions && 
-                                data.comment.reactions.length > 0 && 
-                                (!data.comment.message || data.comment.message.trim() === '');
+        // CRITICAL: Check if this is a reaction update by looking for reactions
+        // If the comment has reactions, it's almost certainly a reaction update to an existing message
+        const hasReactions = data.comment.reactions && data.comment.reactions.length > 0;
         
         // Check if this appears to be a reaction update by examining the comment structure
-        const isLikelyReactionUpdate = hasReactionsOnly || 
+        const isLikelyReactionUpdate = hasReactions || 
                                       data.messageId || 
-                                      (!data.comment.message && data.comment.reactions);
+                                      data.comment._id; // If _id exists, it's likely an update
         
+        // Additional check: if this has reactions, it's definitely a reaction update
+        // Even if it has message content, reactions indicate it's updating an existing message
         if (!data.comment.message || 
             data.comment.message.trim() === '' || 
-            isLikelyReactionUpdate) {
+            isLikelyReactionUpdate ||
+            hasReactions) { // This is the key fix - if there are reactions, skip notification
           // This is likely a reaction update, status change, or metadata update, not a new message
           // Don't show notification for these
           console.log('[App.jsx] Skipping notification - likely reaction update:', {
@@ -392,7 +412,19 @@ function AppRoutes({ bootstrapped }) {
             hasReactions: !!data.comment.reactions,
             reactionsCount: data.comment.reactions?.length || 0,
             messageId: data.messageId,
-            isLikelyReactionUpdate
+            commentId: data.comment._id,
+            isLikelyReactionUpdate,
+            skipReason: hasReactions ? 'Has reactions' : 'Other update indicator'
+          });
+          return;
+        }
+        
+        // Additional safety check: if the message content is very short (like "Cc..."), 
+        // it might be a reaction update with minimal content
+        if (data.comment.message && data.comment.message.trim().length < 10) {
+          console.log('[App.jsx] Skipping notification - message too short, likely reaction update:', {
+            messageContent: data.comment.message,
+            messageLength: data.comment.message.trim().length
           });
           return;
         }
