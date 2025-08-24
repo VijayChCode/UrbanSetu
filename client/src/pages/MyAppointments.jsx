@@ -2813,23 +2813,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   // Reactions functions
   const handleQuickReaction = async (messageId, emoji) => {
     try {
-      console.log('=== handleQuickReaction START ===');
-      console.log('handleQuickReaction called with:', { messageId, emoji });
-      console.log('Current appt._id:', appt._id);
-      console.log('API_BASE_URL:', API_BASE_URL);
-      console.log('Current comments length:', comments.length);
-      
       const message = comments.find(c => c._id === messageId);
       if (!message) {
-        console.log('Message not found:', messageId);
-        console.log('Available message IDs:', comments.map(c => c._id));
         toast.error('Message not found');
         return;
       }
-
-      console.log('Message found:', message);
-      console.log('Sending API request to add reaction');
-      console.log('API endpoint:', `${API_BASE_URL}/api/bookings/${appt._id}/comment/${messageId}/react`);
       
       // Add reaction to the message
       const { data } = await axios.patch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${messageId}/react`, 
@@ -2839,8 +2827,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
           headers: { 'Content-Type': 'application/json' }
         }
       );
-
-      console.log('API response:', data);
 
       // Update local state
       setComments(prev => prev.map(c => 
@@ -2856,52 +2842,24 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
       setShowReactionsEmojiPicker(false);
 
       toast.success('Reaction added!');
-      console.log('=== handleQuickReaction SUCCESS ===');
-      
-      // Force a re-render to show the new reaction
-      setTimeout(() => {
-        console.log('Forcing re-render after reaction addition');
-      }, 100);
       
     } catch (err) {
-      console.error('=== handleQuickReaction ERROR ===');
-      console.error('Error adding reaction:', err);
-      console.error('Error response:', err.response?.data);
-      console.error('Error status:', err.response?.status);
       toast.error(err.response?.data?.message || 'Failed to add reaction');
     }
   };
 
   const handleReactionsEmojiClick = (emojiString) => {
-    console.log('=== handleReactionsEmojiClick START ===');
-    console.log('handleReactionsEmojiClick called with:', emojiString);
-    console.log('Current reactionsMessageId:', reactionsMessageId);
-    console.log('Current showReactionsEmojiPicker:', showReactionsEmojiPicker);
-    console.log('Current showReactionsBar:', showReactionsBar);
-    
     if (reactionsMessageId) {
-      console.log('Calling handleQuickReaction for message:', reactionsMessageId);
       handleQuickReaction(reactionsMessageId, emojiString);
-    } else {
-      console.log('No reactionsMessageId found - cannot add reaction');
-      console.log('This might indicate a state management issue');
-      // Try to find the message ID from the current context
-      console.log('Attempting to find message ID from context...');
     }
-    console.log('=== handleReactionsEmojiClick END ===');
   };
 
   const toggleReactionsBar = (messageId) => {
-    console.log('toggleReactionsBar called with:', messageId);
-    console.log('Current state:', { reactionsMessageId, showReactionsBar, showReactionsEmojiPicker });
-    
     if (reactionsMessageId === messageId && showReactionsBar) {
-      console.log('Closing reactions bar');
       setShowReactionsBar(false);
       setReactionsMessageId(null);
       setShowReactionsEmojiPicker(false);
     } else {
-      console.log('Opening reactions bar for message:', messageId);
       setReactionsMessageId(messageId);
       setShowReactionsBar(true);
       setShowReactionsEmojiPicker(false);
@@ -2909,55 +2867,15 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   };
 
   const toggleReactionsEmojiPicker = () => {
-    console.log('=== toggleReactionsEmojiPicker START ===');
-    console.log('Current showReactionsEmojiPicker:', showReactionsEmojiPicker);
-    console.log('Current reactionsMessageId:', reactionsMessageId);
-    console.log('Current showReactionsBar:', showReactionsBar);
-    
     const newState = !showReactionsEmojiPicker;
-    console.log('Setting showReactionsEmojiPicker to:', newState);
-    
     setShowReactionsEmojiPicker(newState);
-    
-    // Ensure reactionsMessageId is maintained when opening emoji picker
-    if (newState && reactionsMessageId) {
-      console.log('Opening emoji picker for message:', reactionsMessageId);
-    } else if (!newState) {
-      console.log('Closing emoji picker');
-    }
-    
-    // Additional debugging for state consistency
-    console.log('State after toggle:', {
-      newShowReactionsEmojiPicker: newState,
-      reactionsMessageId,
-      showReactionsBar
-    });
-    
-    console.log('=== toggleReactionsEmojiPicker END ===');
   };
-
-  // Debug useEffect to monitor state changes
-  useEffect(() => {
-    console.log('State changed - showReactionsEmojiPicker:', showReactionsEmojiPicker);
-    console.log('State changed - reactionsMessageId:', reactionsMessageId);
-    console.log('State changed - showReactionsBar:', showReactionsBar);
-    
-    // Additional debugging for quick reactions model
-    if (showReactionsEmojiPicker) {
-      console.log('✅ Quick reactions model is OPEN');
-      console.log('Current reactionsMessageId:', reactionsMessageId);
-      console.log('Current appt._id:', appt._id);
-    } else {
-      console.log('❌ Quick reactions model is CLOSED');
-    }
-  }, [showReactionsEmojiPicker, reactionsMessageId, showReactionsBar]);
 
   // Prevent quick reactions model from closing unexpectedly
   const preventModalClose = useCallback((e) => {
     if (showReactionsEmojiPicker) {
       e.stopPropagation();
       e.preventDefault();
-      console.log('Preventing modal close for event:', e.type);
       return false;
     }
   }, [showReactionsEmojiPicker]);
@@ -3850,14 +3768,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
               onMouseDown={(e) => {
                 // Only close on backdrop mousedown, not modal content
                 if (e.target === e.currentTarget) {
-                  console.log('Backdrop mousedown - closing modal');
                   setShowReactionsEmojiPicker(false);
                 }
               }}
               onClick={(e) => {
                 // Close modal only when clicking on backdrop, not modal content
                 if (e.target === e.currentTarget) {
-                  console.log('Backdrop clicked - closing modal');
                   setShowReactionsEmojiPicker(false);
                 }
               }}
@@ -3866,11 +3782,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                 className="bg-white rounded-2xl shadow-2xl border border-gray-200 p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-hidden quick-reactions-modal"
                 onMouseDown={(e) => {
                   e.stopPropagation(); // Prevent any event bubbling
-                  console.log('Modal container mousedown - preventing close');
                 }}
                 onClick={(e) => {
                   e.stopPropagation(); // Prevent any event bubbling
-                  console.log('Modal container clicked - preventing close');
                 }}
               >
                 <div className="flex items-center justify-between mb-4">
@@ -3879,11 +3793,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                     onMouseDown={(e) => {
                       e.stopPropagation(); // Prevent event bubbling
                       e.preventDefault(); // Prevent default behavior
-                      console.log('Close button mousedown - preventing close');
                     }}
                     onClick={(e) => {
                       e.stopPropagation(); // Prevent event bubbling
-                      console.log('Close button clicked - closing modal');
                       setShowReactionsEmojiPicker(false);
                     }}
                     className="text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors"
@@ -3896,22 +3808,18 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                   className="overflow-y-auto max-h-[60vh] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
                   onMouseDown={(e) => {
                     e.stopPropagation(); // Prevent any event bubbling
-                    console.log('Scrollable content mousedown - preventing close');
                   }}
                   onClick={(e) => {
                     e.stopPropagation(); // Prevent any event bubbling
-                    console.log('Scrollable content clicked - preventing close');
                   }}
                 >
                   <div 
                     className="grid grid-cols-8 gap-3"
                     onMouseDown={(e) => {
                       e.stopPropagation(); // Prevent any event bubbling
-                      console.log('Grid container mousedown - preventing close');
                     }}
                     onClick={(e) => {
                       e.stopPropagation(); // Prevent any event bubbling
-                      console.log('Grid container clicked - preventing close');
                     }}
                   >
                     {[
@@ -3925,35 +3833,21 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                         onMouseDown={(e) => {
                           e.stopPropagation(); // Prevent event bubbling
                           e.preventDefault(); // Prevent default behavior
-                          console.log('=== QUICK REACTION BUTTON MOUSEDOWN ===');
-                          console.log('Emoji mousedown:', emoji);
                         }}
                         onClick={(e) => {
                           e.stopPropagation(); // Prevent event bubbling
                           e.preventDefault(); // Prevent default behavior
-                          console.log('=== QUICK REACTION BUTTON CLICKED ===');
-                          console.log('Emoji clicked:', emoji);
-                          console.log('Current reactionsMessageId:', reactionsMessageId);
-                          console.log('Current appt._id:', appt._id);
-                          console.log('Event target:', e.target);
-                          console.log('Event currentTarget:', e.currentTarget);
                           
                           // Ensure we have the required IDs
                           if (reactionsMessageId && appt._id) {
-                            console.log('✅ All required IDs present - calling handleQuickReaction');
-                            console.log('Calling handleQuickReaction with:', { messageId: reactionsMessageId, emoji, appointmentId: appt._id });
-                            
                             // Call the function directly
                             handleQuickReaction(reactionsMessageId, emoji);
                             
                             // Close the modal after successful reaction selection
-                            console.log('Closing quick reactions modal');
                             setShowReactionsEmojiPicker(false);
                           } else {
-                            console.error('❌ Missing required IDs:', { reactionsMessageId, apptId: appt._id });
                             toast.error('Unable to add reaction - missing message information');
                           }
-                          console.log('=== END QUICK REACTION BUTTON CLICK ===');
                         }}
                         className="w-12 h-12 flex items-center justify-center text-2xl hover:scale-110 transition-all duration-200 bg-gray-50 hover:bg-gray-100 rounded-xl border border-gray-200 hover:border-gray-300 hover:shadow-md"
                         title={`React with ${emoji}`}
@@ -5312,14 +5206,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           {/* Reactions Bar - positioned inside message container */}
                           {(() => {
                             const shouldShow = !c.deleted && showReactionsBar && reactionsMessageId === c._id;
-                            if (c._id === reactionsMessageId) {
-                              console.log('Reaction bar render check for message:', c._id, {
-                                deleted: c.deleted,
-                                showReactionsBar,
-                                reactionsMessageId,
-                                shouldShow
-                              });
-                            }
                             return shouldShow;
                           })() && (
                             <div className={`absolute -top-20 ${isMe ? 'right-0' : 'left-0'} bg-red-500 rounded-full shadow-lg border-2 border-red-600 p-1 flex items-center gap-1 animate-reactions-bar z-[9999] reactions-bar transition-all duration-300`} style={{ minWidth: 'max-content' }}>
