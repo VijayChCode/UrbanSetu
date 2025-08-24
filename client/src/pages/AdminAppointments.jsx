@@ -713,6 +713,50 @@ export default function AdminAppointments() {
     }
   };
 
+  // Reactions functionality functions
+  const toggleReactionsBar = useCallback((messageId) => {
+    if (reactionsMessageId === messageId && showReactionsBar) {
+      setShowReactionsBar(false);
+      setReactionsMessageId(null);
+    } else {
+      setShowReactionsBar(true);
+      setReactionsMessageId(messageId);
+    }
+  }, [reactionsMessageId, showReactionsBar]);
+
+  const toggleReactionsEmojiPicker = useCallback(() => {
+    setShowReactionsEmojiPicker(prev => !prev);
+  }, []);
+
+  const handleQuickReaction = useCallback(async (messageId, emoji) => {
+    try {
+      const { data } = await axios.patch(
+        `${API_BASE_URL}/api/bookings/${appt._id}/comment/${messageId}/react`,
+        { emoji },
+        { withCredentials: true }
+      );
+
+      // Update local comments with new reactions
+      setLocalComments(prev => prev.map(msg => 
+        msg._id === messageId 
+          ? { ...msg, reactions: data.reactions }
+          : msg
+      ));
+
+      // Update appointment comments for parent component
+      updateAppointmentComments(appt._id, localComments.map(msg => 
+        msg._id === messageId 
+          ? { ...msg, reactions: data.reactions }
+          : msg
+      ));
+
+      toast.success(data.message);
+    } catch (error) {
+      console.error('Error adding reaction:', error);
+      toast.error(error.response?.data?.message || 'Failed to add reaction');
+    }
+  }, [appt._id, localComments, updateAppointmentComments]);
+
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-center">
@@ -1208,7 +1252,10 @@ function AdminAppointmentRow({
   const [showImagePreviewModal, setShowImagePreviewModal] = useLocalState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-
+  // Reactions functionality state
+  const [showReactionsBar, setShowReactionsBar] = useLocalState(false);
+  const [reactionsMessageId, setReactionsMessageId] = useLocalState(null);
+  const [showReactionsEmojiPicker, setShowReactionsEmojiPicker] = useLocalState(false);
 
   const selectedMessageForHeaderOptions = headerOptionsMessageId ? localComments.find(msg => msg._id === headerOptionsMessageId) : null;
 
@@ -1404,6 +1451,13 @@ function AdminAppointmentRow({
       }
     };
 
+    // Close reactions when clicking outside
+    const handleReactionsClickOutside = (event) => {
+      if (showReactionsEmojiPicker && !event.target.closest('.quick-reactions-modal')) {
+        setShowReactionsEmojiPicker(false);
+      }
+    };
+
     const handleScroll = () => {
       if (showChatOptionsMenu) {
         setShowChatOptionsMenu(false);
@@ -1411,20 +1465,25 @@ function AdminAppointmentRow({
       if (showHeaderMoreMenu) {
         setShowHeaderMoreMenu(false);
       }
+      if (showReactionsEmojiPicker) {
+        setShowReactionsEmojiPicker(false);
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     document.addEventListener('mousedown', handleSearchClickOutside);
     document.addEventListener('mousedown', handleCalendarClickOutside);
+    document.addEventListener('mousedown', handleReactionsClickOutside);
     document.addEventListener('scroll', handleScroll, true); // Use capture phase to catch all scroll events
     
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('mousedown', handleSearchClickOutside);
       document.removeEventListener('mousedown', handleCalendarClickOutside);
+      document.removeEventListener('mousedown', handleReactionsClickOutside);
       document.removeEventListener('scroll', handleScroll, true);
     };
-  }, [showChatOptionsMenu, showHeaderMoreMenu, showSearchBox, showCalendar]);
+  }, [showChatOptionsMenu, showHeaderMoreMenu, showSearchBox, showCalendar, showReactionsEmojiPicker]);
 
   // Reset send icon animation after completion
   React.useEffect(() => {
@@ -3693,10 +3752,10 @@ function AdminAppointmentRow({
                         <div 
                           ref={el => messageRefs.current[c._id] = el}
                           data-message-id={c._id}
-                          className={`rounded-2xl px-4 sm:px-5 py-3 text-sm shadow-xl max-w-[90%] sm:max-w-[80%] md:max-w-[70%] lg:max-w-[60%] xl:max-w-[50%] break-words overflow-hidden relative transition-all duration-300 min-h-[60px] ${
+                          className={`relative rounded-2xl px-4 sm:px-5 py-3 text-sm shadow-xl max-w-[90%] sm:max-w-[80%] md:max-w-[70%] lg:max-w-[60%] xl:max-w-[50%] break-words overflow-visible transition-all duration-300 min-h-[60px] ${
                             isMe 
                               ? 'bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-500 hover:to-purple-600 text-white shadow-blue-200 hover:shadow-blue-300 hover:shadow-2xl' 
-                              : 'bg-white hover:bg-gray-50 text-gray-800 border border-gray-200 shadow-gray-200 hover:shadow-lg hover:border-gray-300 hover:shadow-xl'
+                              : 'bg-white hover:bg-gray-100 text-gray-800 border border-gray-200 shadow-gray-200 hover:shadow-lg hover:border-gray-300 hover:shadow-xl'
                           } ${isSelectionMode && selectedMessages.some(msg => msg._id === c._id) ? 'ring-2 ring-blue-400' : ''}`}
                         >
                                                     {/* Reply preview above message if this is a reply */}
@@ -3907,6 +3966,25 @@ function AdminAppointmentRow({
                                     </>
                                   )}
                                 </div>
+                                
+                                {/* Reactions Display */}
+                                {c.reactions && c.reactions.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mt-2">
+                                    {c.reactions.map((reaction, index) => (
+                                      <span
+                                        key={index}
+                                        className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
+                                          reaction.userId === currentUser._id
+                                            ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                                            : 'bg-gray-100 text-gray-700 border border-gray-200'
+                                        }`}
+                                      >
+                                        <span>{reaction.emoji}</span>
+                                        <span className="font-medium">{reaction.count || 1}</span>
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
                           )}
                         </div>
                         <div className="flex items-center gap-1 justify-end mt-2" data-message-actions>
@@ -3930,6 +4008,125 @@ function AdminAppointmentRow({
                             <FaEllipsisV size={c.senderEmail === currentUser.email ? 14 : 12} />
                           </button>
                           
+                          {/* Three dots for reactions */}
+                          <button
+                            className={`${c.senderEmail === currentUser.email ? 'text-blue-200 hover:text-white' : 'text-gray-500 hover:text-gray-700'} transition-all duration-200 hover:scale-110 p-1 rounded-full hover:bg-white hover:bg-opacity-20 ml-1`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleReactionsBar(c._id);
+                            }}
+                            title="Add reaction"
+                            aria-label="Add reaction"
+                          >
+                            <FaEllipsisV size={c.senderEmail === currentUser.email ? 12 : 10} />
+                          </button>
+                          
+                          {/* Reactions Bar - positioned inside message container (above only) */}
+                          {(() => {
+                            const shouldShow = !c.deleted && showReactionsBar && reactionsMessageId === c._id;
+                            if (!shouldShow) return false;
+                            
+                            // Only show inline reaction bar if message should be positioned above
+                            const messageElement = document.querySelector(`[data-message-id="${c._id}"]`);
+                            if (messageElement) {
+                              const messageRect = messageElement.getBoundingClientRect();
+                              const chatContainer = chatContainerRef.current;
+                              if (chatContainer) {
+                                const containerRect = chatContainer.getBoundingClientRect();
+                                const distanceFromTop = messageRect.top - containerRect.top;
+                                
+                                // If message is near top and has space below, don't show inline bar (floating bar will handle it)
+                                if (distanceFromTop < 120) {
+                                  const spaceBelow = containerRect.bottom - messageRect.bottom;
+                                  const reactionBarHeight = 60;
+                                  
+                                  if (spaceBelow >= reactionBarHeight + 20) {
+                                    return false; // Don't show inline bar, floating bar will handle it
+                                  }
+                                }
+                              }
+                            }
+                            return true; // Show inline bar for above positioning
+                          })() && (
+                            <div className={`absolute -top-8 ${isMe ? 'right-0' : 'left-0'} bg-red-500 rounded-full shadow-lg border-2 border-red-600 p-1 flex items-center gap-1 animate-reactions-bar z-[999999] reactions-bar transition-all duration-300`} style={{ minWidth: 'max-content' }}>
+                              {/* Quick reaction buttons */}
+                              <button
+                                onClick={() => handleQuickReaction(c._id, '👍')}
+                                className={`w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform rounded-full ${
+                                  c.reactions?.some(r => r.emoji === '👍' && r.userId === currentUser._id)
+                                    ? 'bg-blue-100 border-2 border-blue-400'
+                                    : 'bg-gray-50 hover:bg-gray-100'
+                                }`}
+                                title="Like"
+                              >
+                                👍
+                              </button>
+                              <button
+                                onClick={() => handleQuickReaction(c._id, '❤️')}
+                                className={`w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform rounded-full ${
+                                  c.reactions?.some(r => r.emoji === '❤️' && r.userId === currentUser._id)
+                                    ? 'bg-blue-100 border-2 border-blue-400'
+                                    : 'bg-gray-50 hover:bg-gray-100'
+                                }`}
+                                title="Love"
+                              >
+                                ❤️
+                              </button>
+                              <button
+                                onClick={() => handleQuickReaction(c._id, '😂')}
+                                className={`w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform rounded-full ${
+                                  c.reactions?.some(r => r.emoji === '😂' && r.userId === currentUser._id)
+                                    ? 'bg-blue-100 border-2 border-blue-400'
+                                    : 'bg-gray-50 hover:bg-gray-100'
+                                }`}
+                                title="Laugh"
+                              >
+                                😂
+                              </button>
+                              <button
+                                onClick={() => handleQuickReaction(c._id, '😮')}
+                                className={`w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform rounded-full ${
+                                  c.reactions?.some(r => r.emoji === '😮' && r.userId === currentUser._id)
+                                    ? 'bg-blue-100 border-2 border-blue-400'
+                                    : 'bg-gray-50 hover:bg-gray-100'
+                                }`}
+                                title="Wow"
+                              >
+                                😮
+                              </button>
+                              <button
+                                onClick={() => handleQuickReaction(c._id, '😢')}
+                                className={`w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform rounded-full ${
+                                  c.reactions?.some(r => r.emoji === '😢' && r.userId === currentUser._id)
+                                    ? 'bg-blue-100 border-2 border-blue-400'
+                                    : 'bg-gray-50 hover:bg-gray-100'
+                                }`}
+                                title="Sad"
+                              >
+                                😢
+                              </button>
+                              <button
+                                onClick={() => handleQuickReaction(c._id, '😡')}
+                                className={`w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform rounded-full ${
+                                  c.reactions?.some(r => r.emoji === '😡' && r.userId === currentUser._id)
+                                    ? 'bg-blue-100 border-2 border-blue-400'
+                                    : 'bg-gray-50 hover:bg-gray-100'
+                                }`}
+                                title="Angry"
+                              >
+                                😡
+                              </button>
+                              <div className="w-px h-6 bg-gray-300 mx-1"></div>
+                              <button
+                                onClick={toggleReactionsEmojiPicker}
+                                className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
+                                title="More emojis"
+                              >
+                                ➕
+                              </button>
+                            </div>
+                          )}
+                          
                           {/* Read status indicator - always visible for sent messages */}
                           {(c.senderEmail === currentUser.email) && !c.deleted && (
                             <span className="ml-1 flex items-center gap-1">
@@ -3951,6 +4148,277 @@ function AdminAppointmentRow({
                 
                 <div ref={chatEndRef} />
               </div>
+              
+              {/* Floating Reaction Bar for Bottom Positioning */}
+              {(() => {
+                const shouldShow = showReactionsBar && reactionsMessageId;
+                if (!shouldShow) return null;
+                
+                const messageElement = document.querySelector(`[data-message-id="${reactionsMessageId}"]`);
+                if (!messageElement) return null;
+                
+                const messageRect = messageElement.getBoundingClientRect();
+                const chatContainer = chatContainerRef.current;
+                if (!chatContainer) return null;
+                
+                const containerRect = chatContainer.getBoundingClientRect();
+                const distanceFromTop = messageRect.top - containerRect.top;
+                
+                // Only show floating bar if message is near top and needs bottom positioning
+                if (distanceFromTop < 120) {
+                  const spaceBelow = containerRect.bottom - messageRect.bottom;
+                  const reactionBarHeight = 60;
+                  
+                  if (spaceBelow >= reactionBarHeight + 20) {
+                    const comment = localComments.find(c => c._id === reactionsMessageId);
+                    if (!comment || comment.deleted) return null;
+                    
+                    const isMe = comment.senderEmail === currentUser.email;
+                    
+                    return (
+                      <div 
+                        className="fixed bg-red-500 rounded-full shadow-lg border-2 border-red-600 p-1 flex items-center gap-1 animate-reactions-bar z-[999999] reactions-bar transition-all duration-300"
+                        style={{ 
+                          minWidth: 'max-content',
+                          top: `${messageRect.bottom + 2}px`,
+                          left: isMe ? 'auto' : `${messageRect.left}px`,
+                          right: isMe ? `${window.innerWidth - messageRect.right}px` : 'auto'
+                        }}
+                      >
+                        {/* Quick reaction buttons */}
+                        <button
+                          onClick={() => handleQuickReaction(comment._id, '👍')}
+                          className={`w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform rounded-full ${
+                            comment.reactions?.some(r => r.emoji === '👍' && r.userId === currentUser._id)
+                              ? 'bg-blue-100 border-2 border-blue-400'
+                              : 'bg-gray-50 hover:bg-gray-100'
+                          }`}
+                          title="Like"
+                        >
+                          👍
+                        </button>
+                        <button
+                          onClick={() => handleQuickReaction(comment._id, '❤️')}
+                          className={`w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform rounded-full ${
+                            comment.reactions?.some(r => r.emoji === '❤️' && r.userId === currentUser._id)
+                              ? 'bg-blue-100 border-2 border-blue-400'
+                              : 'bg-gray-50 hover:bg-gray-100'
+                          }`}
+                          title="Love"
+                        >
+                          ❤️
+                        </button>
+                        <button
+                          onClick={() => handleQuickReaction(comment._id, '😂')}
+                          className={`w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform rounded-full ${
+                            comment.reactions?.some(r => r.emoji === '😂' && r.userId === currentUser._id)
+                              ? 'bg-blue-100 border-2 border-blue-400'
+                              : 'bg-gray-50 hover:bg-gray-100'
+                          }`}
+                          title="Laugh"
+                        >
+                          😂
+                        </button>
+                        <button
+                          onClick={() => handleQuickReaction(comment._id, '😮')}
+                          className={`w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform rounded-full ${
+                            comment.reactions?.some(r => r.emoji === '😮' && r.userId === currentUser._id)
+                              ? 'bg-blue-100 border-2 border-blue-400'
+                              : 'bg-gray-50 hover:bg-gray-100'
+                          }`}
+                          title="Wow"
+                        >
+                          😮
+                        </button>
+                        <button
+                          onClick={() => handleQuickReaction(comment._id, '😢')}
+                          className={`w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform rounded-full ${
+                            comment.reactions?.some(r => r.emoji === '😢' && r.userId === currentUser._id)
+                              ? 'bg-blue-100 border-2 border-blue-400'
+                              : 'bg-gray-50 hover:bg-gray-100'
+                          }`}
+                          title="Sad"
+                        >
+                          😢
+                        </button>
+                        <button
+                          onClick={() => handleQuickReaction(comment._id, '😡')}
+                          className={`w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform rounded-full ${
+                            comment.reactions?.some(r => r.emoji === '😡' && r.userId === currentUser._id)
+                              ? 'bg-blue-100 border-2 border-blue-400'
+                              : 'bg-gray-50 hover:bg-gray-100'
+                          }`}
+                          title="Angry"
+                        >
+                          😡
+                        </button>
+                        <div className="w-px h-6 bg-gray-300 mx-1"></div>
+                        <button
+                          onClick={toggleReactionsEmojiPicker}
+                          className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
+                          title="More emojis"
+                        >
+                          ➕
+                        </button>
+                      </div>
+                    );
+                  }
+                }
+                return null;
+              })()}
+              
+              {/* Quick Reactions Modal */}
+              {showReactionsEmojiPicker && (
+                <div 
+                  className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-[999999] animate-fadeIn"
+                  onMouseDown={(e) => {
+                    // Only close on backdrop mousedown, not modal content
+                    if (e.target === e.currentTarget) {
+                      setShowReactionsEmojiPicker(false);
+                    }
+                  }}
+                  onClick={(e) => {
+                    // Close modal only when clicking on backdrop, not modal content
+                    if (e.target === e.currentTarget) {
+                      setShowReactionsEmojiPicker(false);
+                    }
+                  }}
+                >
+                  <div 
+                    className="bg-white rounded-2xl shadow-2xl border border-gray-200 p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-hidden quick-reactions-modal"
+                    onMouseDown={(e) => {
+                      e.stopPropagation(); // Prevent any event bubbling
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent any event bubbling
+                    }}
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="text-lg font-semibold text-gray-800">Quick Reactions</div>
+                      <button
+                        onMouseDown={(e) => {
+                          e.stopPropagation(); // Prevent event bubbling
+                          e.preventDefault(); // Prevent default behavior
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent event bubbling
+                          setShowReactionsEmojiPicker(false);
+                        }}
+                        className="text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors"
+                        title="Close"
+                      >
+                        <FaTimes size={16} />
+                      </button>
+                    </div>
+                    <div 
+                      className="overflow-y-auto max-h-[60vh] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
+                      onMouseDown={(e) => {
+                        e.stopPropagation(); // Prevent any event bubbling
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent any event bubbling
+                      }}
+                    >
+                      <div 
+                        className="grid grid-cols-10 gap-2"
+                        onMouseDown={(e) => {
+                          e.stopPropagation(); // Prevent any event bubbling
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent any event bubbling
+                        }}
+                      >
+                        {[
+                          // Smileys & People
+                          '😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇', '🙂', '🙃', '😉', '😌', '😍', '🥰',
+                          '😘', '😗', '😙', '😚', '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩', '🥳', '😏',
+                          '😒', '😞', '😔', '😟', '😕', '🙁', '☹️', '😣', '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠',
+                          '😡', '🤬', '🤯', '😳', '🥵', '🥶', '😱', '😨', '😰', '😥', '😓', '🤗', '🤔', '🤭', '🤫', '🤥',
+                          '😶', '😐', '😑', '😯', '😦', '😧', '😮', '😲', '🥱', '😴', '🤤', '😪', '😵', '🤐', '🥴', '🤢',
+                          '🤮', '🤧', '😷', '🤒', '🤕', '🤑', '🤠', '💀', '👻', '👽', '👾', '🤖', '😈', '👿', '👹', '👺',
+                          
+                          // Gestures & Body Parts
+                          '💪', '🦾', '🦿', '🦵', '🦶', '👂', '🦻', '👃', '🧠', '🫀', '🫁', '🦷', '🦴', '👀', '👁️', '👅',
+                          '👄', '💋', '🩸', '🫂', '👶', '👧', '🧒', '👦', '👩', '🧑', '👨', '👵', '🧓', '👴', '👮‍♀️', '👮',
+                          '👮‍♂️', '🕵️‍♀️', '🕵️', '🕵️‍♂️', '👷‍♀️', '👷', '👷‍♂️', '🫅', '🤴', '👸', '👳‍♀️', '👳', '👳‍♂️',
+                          '👲', '🧕', '🤵‍♀️', '🤵', '🤵‍♂️', '👰‍♀️', '👰', '👰‍♂️', '🤰', '🤱', '👼', '🎅', '🤶', '🦸‍♀️', '🦸',
+                          '🦸‍♂️', '🦹‍♀️', '🦹', '🦹‍♂️', '🧙‍♀️', '🧙', '🧙‍♂️', '🧚‍♀️', '🧚', '🧚‍♂️', '🧛‍♀️', '🧛', '🧛‍♂️',
+                          '🧜‍♀️', '🧜', '🧜‍♂️', '🧝‍♀️', '🧝', '🧝‍♂️', '🧞‍♀️', '🧞', '🧞‍♂️', '🧟‍♀️', '🧟', '🧟‍♂️', '🧌',
+                          
+                          // Animals & Nature
+                          '🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐻‍❄️', '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵',
+                          '🙈', '🙉', '🙊', '🐒', '🐔', '🐧', '🐦', '🐤', '🐣', '🦆', '🦅', '🦉', '🦇', '🐺', '🐗', '🐴',
+                          '🦄', '🐝', '🐛', '🦋', '🐌', '🐞', '🐜', '🦟', '🦗', '🕷️', '🕸️', '🦂', '🐢', '🐍', '🦎', '🦖',
+                          '🦕', '🐙', '🦑', '🦐', '🦞', '🦀', '🐡', '🐠', '🐟', '🐬', '🐳', '🐋', '🦈', '🐊', '🐅', '🐆',
+                          '🦓', '🦍', '🦧', '🐘', '🦛', '🦏', '🐪', '🐫', '🦙', '🦒', '🐃', '🐂', '🐄', '🐎', '🐖', '🐏',
+                          '🐑', '🐐', '🦌', '🐕', '🐩', '🦮', '🐕‍🦺', '🐈', '🐈‍⬛', '🐓', '🦃', '🦚', '🦜', '🦢', '🦩', '🕊️',
+                          
+                          // Food & Drink
+                          '🍎', '🍐', '🍊', '🍋', '🍌', '🍉', '🍇', '🍓', '🫐', '🍈', '🍒', '🍑', '🥭', '🍍', '🥥', '🥝',
+                          '🍅', '🍆', '🥑', '🥦', '🥬', '🥒', '🌶️', '🫑', '🌽', '🥕', '🫒', '🧄', '🧅', '🥔', '🍠', '🥐',
+                          '🥯', '🍞', '🥖', '🥨', '🧀', '🥚', '🍳', '🧈', '🥞', '🧇', '🥓', '🥩', '🍗', '🍖', '🦴', '🌭',
+                          '🍔', '🍟', '🍕', '🥪', '🥙', '🧆', '🌮', '🌯', '🫔', '🥗', '🥘', '🫕', '🥫', '🍝', '🍜', '🍲',
+                          '🍛', '🍣', '🍱', '🥟', '🦪', '🍤', '🍙', '🍚', '🍘', '🍥', '🥠', '🥮', '🍢', '🍡', '🍧', '🍨',
+                          '🍦', '🍰', '🧁', '🥧', '🍮', '🍭', '🍬', '🍫', '🍿', '🍪', '🌰', '🥜', '🍯', '🥛', '🍼', '🫖',
+                          
+                          // Activities & Objects
+                          '⚽', '🏀', '🏈', '⚾', '🥎', '🎾', '🏐', '🏉', '🥏', '🎱', '🪀', '🏓', '🏸', '🏒', '🏑', '🥍',
+                          '🏏', '🥅', '⛳', '🪁', '🏹', '🎣', '🤿', '🥊', '🥋', '🎽', '🛹', '🛷️', '⛸️', '🥌', '🎿', '⛷️',
+                          '🏂', '🪂', '🏋️‍♀️', '🏋️', '🏋️‍♂️', '🤼‍♀️', '🤼', '🤼‍♂️', '🤸‍♀️', '🤸', '🤸‍♂️', '⛹️‍♀️', '⛹️', '⛹️‍♂️',
+                          '🤺', '🤾‍♀️', '🤾', '🤾‍♂️', '🏊‍♀️', '🏊', '🏊‍♂️', '🚣‍♀️', '🚣', '🚣‍♂️', '🏄‍♀️', '🏄', '🏄‍♂️', '🚴‍♀️', '🚴',
+                          '🚴‍♂️', '🚵‍♀️', '🚵', '🚵‍♂️', '🤹‍♀️', '🤹', '🤹‍♂️', '🎭', '🩰', '🎨', '🎬', '🎤', '🎧', '🎼', '🎹',
+                          '🥁', '🪘', '🎷', '🎺', '🎸', '🪕', '🎻', '🎲', '♟️', '🎯', '🎳', '🎮', '🎰', '🧩', '🎨', '📱',
+                          
+                          // Travel & Places
+                          '🚗', '🚕', '🚙', '🚌', '🚎', '🏎️', '🚓', '🚑', '🚒', '🚐', '🚚', '🚛', '🚜', '🛴', '🛵', '🏍️',
+                          '🚨', '🚔', '🚍', '🚘', '🚖', '🚡', '🚠', '🚟', '🚃', '🚋', '🚞', '🚝', '🚄', '🚅', '🚈', '🚂',
+                          '🚆', '🚇', '🚊', '🚉', '✈️', '🛫', '🛬', '🛩️', '💺', '🛰️', '🚀', '🛸', '🚁', '🛥️', '⛴️', '🚢',
+                          '⚓', '🚦', '🚥', '🏁', '🚏', '🎡', '🎢', '🎠', '🏗️', '🏘️', '🏚️', '🏛️', '🏙️', '🏎️', '🏎️', '🏎️',
+                          '🏎️', '🏎️', '🏎️', '🏎️', '🏎️', '🏎️', '🏎️', '🏎️', '🏎️', '🏎️', '🏎️', '🏎️', '🏎️', '🏎️', '🏎️', '🏎️',
+                          '🏎️', '🏎️', '🏎️', '🏎️', '🏎️', '🏎️', '🏎️', '🏎️', '🏎️', '🏎️', '🏎️', '🏎️', '🏎️', '🏎️', '🏎️', '🏎️',
+                          
+                          // Symbols & Objects
+                          '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔', '❣️', '💕', '💞', '💓', '💗', '💖',
+                          '💘', '💝', '💟', '☮️', '✝️', '☪️', '🕉️', '☸️', '✡️', '🔯', '🕎', '☯️', '☦️', '🛐', '⛎', '♈',
+                          '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓', '🆔', '⚛️', '🉑', '☢️', '☣️',
+                          '📴', '📳', '🈶', '🈚', '🈸', '🈺', '🈷️', '✴️', '🆚', '💮', '🉐', '㊙️', '㊗️', '🈴', '🈵', '🈹',
+                          '🈲', '🅰️', '🅱️', '🆎', '🆑', '🅾️', '🆘', '❌', '⭕', '🛑', '⛔', '📛', '🚫', '💯', '💢', '♨️',
+                          
+                          // Flags & Misc
+                          '🏁', '🚩', '🎌', '🏴', '🏳️', '🏳️‍🌈', '🏴‍☠️', '🇦🇫', '🇦🇽', '🇦🇱', '🇩🇿', '🇦🇸', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩',
+                          '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩',
+                          '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩',
+                          '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩',
+                          '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩'
+                        ].map((emoji, index) => (
+                          <button
+                            key={index}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                              if (reactionsMessageId) {
+                                handleQuickReaction(reactionsMessageId, emoji);
+                                setShowReactionsEmojiPicker(false);
+                                setShowReactionsBar(false);
+                                setReactionsMessageId(null);
+                              }
+                            }}
+                            onMouseDown={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                            }}
+                            className="w-10 h-10 flex items-center justify-center text-xl hover:scale-110 transition-all duration-200 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 hover:border-gray-300 hover:shadow-md"
+                            title={`React with ${emoji}`}
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
                               {/* Reply indicator */}
                 {replyTo && (
                   <div className="px-4 mb-2">
