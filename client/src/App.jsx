@@ -357,6 +357,46 @@ function AppRoutes({ bootstrapped }) {
           return;
         }
         
+        // IMPORTANT: Check if this is a reaction update, not a new message
+        // We need to distinguish between new messages and updates to existing messages
+        
+        // Check if this is likely a reaction update by looking for key indicators:
+        // 1. If there's no message content, it's not a new message
+        // 2. If there's a messageId field, it might be an update to an existing message
+        // 3. If there are reactions but no new message content, it's a reaction update
+        // 4. If the timestamp is very recent (within last few seconds), it might be a new message
+        
+        // Don't show notification if:
+        // - No message content (reactions, status updates, etc.)
+        // - This appears to be an update to an existing message rather than a new message
+        // - The comment object structure suggests it's an update, not a new message
+        
+        // Additional check: if this has reactions but no message content, it's definitely a reaction update
+        const hasReactionsOnly = data.comment.reactions && 
+                                data.comment.reactions.length > 0 && 
+                                (!data.comment.message || data.comment.message.trim() === '');
+        
+        // Check if this appears to be a reaction update by examining the comment structure
+        const isLikelyReactionUpdate = hasReactionsOnly || 
+                                      data.messageId || 
+                                      (!data.comment.message && data.comment.reactions);
+        
+        if (!data.comment.message || 
+            data.comment.message.trim() === '' || 
+            isLikelyReactionUpdate) {
+          // This is likely a reaction update, status change, or metadata update, not a new message
+          // Don't show notification for these
+          console.log('[App.jsx] Skipping notification - likely reaction update:', {
+            hasMessage: !!data.comment.message,
+            messageLength: data.comment.message?.length || 0,
+            hasReactions: !!data.comment.reactions,
+            reactionsCount: data.comment.reactions?.length || 0,
+            messageId: data.messageId,
+            isLikelyReactionUpdate
+          });
+          return;
+        }
+        
         // Use same logic as MyAppointments page to check if sender is admin
         let senderName = data.comment.senderEmail || 'User';
         
@@ -384,6 +424,12 @@ function AppRoutes({ bootstrapped }) {
         }
         
         // Show notification for new message
+        console.log('[App.jsx] Showing notification for new message:', {
+          senderEmail: data.comment.senderEmail,
+          messagePreview: data.comment.message?.substring(0, 50) + '...',
+          appointmentId: data.appointmentId,
+          timestamp: data.comment.timestamp || data.comment.createdAt
+        });
         playNotification();
         
         if (isOnMyAppointments) {
