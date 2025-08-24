@@ -114,7 +114,6 @@ export default function Listing() {
   };
 
   const handleImageClick = (index) => {
-    console.log('Image clicked:', index);
     setSelectedImageIndex(index);
     setShowImagePreview(true);
   };
@@ -275,7 +274,6 @@ export default function Listing() {
         const res = await fetch(`${API_BASE_URL}/api/listing/get/${params.listingId}`);
         const data = await res.json();
         if (data.success === false) {
-          console.log(data.message);
           return;
         }
         setListing(data);

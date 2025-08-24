@@ -25,7 +25,6 @@ export default function AdminListing() {
   };
 
   const handleImageClick = (index) => {
-    console.log('Image clicked:', index);
     setSelectedImageIndex(index);
     setShowImagePreview(true);
   };
@@ -59,7 +58,6 @@ export default function AdminListing() {
         const res = await fetch(`/api/listing/get/${params.listingId}`);
         const data = await res.json();
         if (data.success === false) {
-          console.log(data.message);
           return;
         }
         setListing(data);
