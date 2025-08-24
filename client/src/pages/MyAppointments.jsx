@@ -5269,7 +5269,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             const shouldShow = !c.deleted && showReactionsBar && reactionsMessageId === c._id;
                             return shouldShow;
                           })() && (
-                            <div className={`absolute -top-20 ${isMe ? 'right-0' : 'left-0'} bg-red-500 rounded-full shadow-lg border-2 border-red-600 p-1 flex items-center gap-1 animate-reactions-bar z-[9999] reactions-bar transition-all duration-300`} style={{ minWidth: 'max-content' }}>
+                            <div className={`absolute -top-8 ${isMe ? 'right-0' : 'left-0'} bg-red-500 rounded-full shadow-lg border-2 border-red-600 p-1 flex items-center gap-1 animate-reactions-bar z-[9999] reactions-bar transition-all duration-300`} style={{ minWidth: 'max-content' }}>
                               {/* Quick reaction buttons */}
                               <button
                                 onClick={() => handleQuickReaction(c._id, '👍')}
