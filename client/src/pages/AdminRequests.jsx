@@ -14,27 +14,16 @@ const AdminRequests = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Debug: Log current user data
-    console.log('=== AdminRequests Page Debug ===');
-    console.log('Current User:', currentUser);
-    console.log('User Email:', currentUser?.email);
-    console.log('User Role:', currentUser?.role);
-    console.log('Is Default Admin:', currentUser?.isDefaultAdmin);
-    console.log('================================');
-    
     // Wait for currentUser to be loaded
     if (!currentUser) {
-      console.log('No current user yet, waiting...');
       return;
     }
 
     if (currentUser.role !== 'admin' && currentUser.role !== 'rootadmin' && !currentUser.isDefaultAdmin) {
-      console.log('User is not admin or rootadmin, redirecting...');
       navigate('/sign-in');
       return;
     }
 
-    console.log('User is default admin, fetching requests...');
     fetchPendingRequests();
   }, [currentUser, navigate]);
 
@@ -155,9 +144,7 @@ const AdminRequests = () => {
     );
   }
 
-  // Debug: Log the final check
-  console.log('Final check - User email:', currentUser.email);
-  console.log('Final check - Is default admin:', currentUser.isDefaultAdmin);
+
 
   // Show access denied for non-default admins
   if (!(currentUser.isDefaultAdmin || currentUser.role === 'rootadmin')) {

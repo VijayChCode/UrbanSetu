@@ -131,17 +131,17 @@ export default function NotificationBell({ mobile = false }) {
     
     setFetchingUsers(true);
     try {
-      console.log('Fetching users for admin notification...');
+
       const res = await fetch(`${API_BASE_URL}/api/notifications/admin/users`, {
         credentials: 'include',
       });
       const data = await res.json();
       
-      console.log('Users fetch response:', res.status, data);
+
       
       if (res.ok) {
         setUsers(data);
-        console.log('Users loaded:', data.length, 'users');
+
       } else {
         console.error('Failed to fetch users:', data);
         toast.error('Failed to fetch users: ' + (data.message || 'Unknown error'));
@@ -396,10 +396,10 @@ export default function NotificationBell({ mobile = false }) {
 
   // Fetch users when send tab is active (admin only)
   useEffect(() => {
-    console.log('useEffect triggered:', { isOpen, activeTab, currentUser: !!currentUser, isAdmin: isAdmin() });
+
     
     if (isOpen && activeTab === 'send' && currentUser && isAdmin()) {
-      console.log('Fetching users for send tab...');
+      
       fetchUsers();
     }
   }, [isOpen, activeTab, currentUser]);
@@ -407,10 +407,7 @@ export default function NotificationBell({ mobile = false }) {
   // Don't render if no user
   if (!currentUser) return null;
 
-  // Debug: Check admin role
-  console.log('Current user:', currentUser);
-  console.log('Current user role:', currentUser.role);
-  console.log('Is admin:', currentUser.role === 'admin' || currentUser.role === 'rootadmin' || currentUser.isDefaultAdmin);
+
 
   // Helper function to check if user is admin
   const isAdmin = () => {
@@ -422,7 +419,6 @@ export default function NotificationBell({ mobile = false }) {
 
   useEffect(() => {
     const handleNewNotification = (notification) => {
-      console.log('Received notification via socket:', notification);
       if (!currentUser || notification.userId !== currentUser._id) return;
       setNotifications((prev) => [notification, ...prev]);
       setUnreadCount((count) => count + 1);
@@ -974,7 +970,7 @@ export default function NotificationBell({ mobile = false }) {
                                       className="text-blue-600 hover:underline cursor-pointer"
                                       onClick={() => {
                                         markAsRead(notification._id);
-                                        console.log('Notification link clicked:', notification.link);
+                                
                                         if (notification.link.startsWith('http')) {
                                           window.open(notification.link, '_blank');
                                         } else {
