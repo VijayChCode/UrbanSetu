@@ -4018,22 +4018,42 @@ function AdminAppointmentRow({
                                     </>
                                   )}
                                   
-                                  {/* Reactions Display */}
-                                  {c.reactions && c.reactions.length > 0 && (
-                                    <div className="flex flex-wrap gap-1 mt-2">
-                                      {c.reactions.map((reaction, index) => (
-                                        <span
-                                          key={index}
-                                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
-                                            reaction.userId === currentUser._id
-                                              ? 'bg-blue-100 text-blue-800 border border-blue-200'
-                                              : 'bg-gray-100 text-gray-700 border border-gray-200'
-                                          }`}
-                                        >
-                                          <span>{reaction.emoji}</span>
-                                          <span className="font-medium">{reaction.count || 1}</span>
-                                        </span>
-                                      ))}
+                                  {/* Display reactions */}
+                                  {!c.deleted && c.reactions && c.reactions.length > 0 && (
+                                    <div className="flex items-center gap-1 mt-2">
+                                      {(() => {
+                                        // Group reactions by emoji
+                                        const groupedReactions = {};
+                                        c.reactions.forEach(reaction => {
+                                          if (!groupedReactions[reaction.emoji]) {
+                                            groupedReactions[reaction.emoji] = [];
+                                          }
+                                          groupedReactions[reaction.emoji].push(reaction);
+                                        });
+                                        
+                                        return Object.entries(groupedReactions).map(([emoji, reactions]) => {
+                                          const hasUserReaction = reactions.some(r => r.userId === currentUser._id);
+                                          const userNames = reactions.map(r => r.userName).join(', ');
+                                          
+                                          return (
+                                            <button
+                                              key={emoji}
+                                              onClick={() => handleQuickReaction(c._id, emoji)}
+                                              className={`text-xs rounded-full px-2 py-1 flex items-center gap-1 transition-all duration-200 hover:scale-105 ${
+                                                hasUserReaction 
+                                                  ? 'bg-blue-100 border border-blue-300 hover:bg-blue-200' 
+                                                  : 'bg-gray-100 hover:bg-gray-200'
+                                              }`}
+                                              title={`${userNames} reacted with ${emoji}${hasUserReaction ? ' (Click to remove)' : ' (Click to add)'}`}
+                                            >
+                                              <span>{emoji}</span>
+                                              <span className={`${hasUserReaction ? 'text-blue-600' : 'text-gray-600'}`}>
+                                                {reactions.length}
+                                              </span>
+                                            </button>
+                                          );
+                                        });
+                                      })()}
                                     </div>
                                   )}
                                 </div>
