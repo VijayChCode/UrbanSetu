@@ -5413,7 +5413,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                           className="fixed bg-red-500 rounded-full shadow-lg border-2 border-red-600 p-1 flex items-center gap-1 animate-reactions-bar z-[999999] reactions-bar transition-all duration-300"
                           style={{ 
                             minWidth: 'max-content',
-                            top: `${messageRect.bottom + 8}px`,
+                            top: `${messageRect.bottom + 2}px`,
                             left: isMe ? 'auto' : `${messageRect.left}px`,
                             right: isMe ? `${window.innerWidth - messageRect.right}px` : 'auto'
                           }}
