@@ -2842,9 +2842,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
           : c
       ));
 
-      // Close reactions bar
-      setShowReactionsBar(false);
-      setReactionsMessageId(null);
+      // Close only the expanded emoji picker, keep reactions bar open
       setShowReactionsEmojiPicker(false);
 
       toast.success('Reaction added!');
@@ -5157,42 +5155,66 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               {/* Quick reaction buttons */}
                               <button
                                 onClick={() => handleQuickReaction(c._id, '👍')}
-                                className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
+                                className={`w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform rounded-full ${
+                                  c.reactions?.some(r => r.emoji === '👍' && r.userId === currentUser._id)
+                                    ? 'bg-blue-100 border-2 border-blue-400'
+                                    : 'bg-gray-50 hover:bg-gray-100'
+                                }`}
                                 title="Like"
                               >
                                 👍
                               </button>
                               <button
                                 onClick={() => handleQuickReaction(c._id, '❤️')}
-                                className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
+                                className={`w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform rounded-full ${
+                                  c.reactions?.some(r => r.emoji === '❤️' && r.userId === currentUser._id)
+                                    ? 'bg-blue-100 border-2 border-blue-400'
+                                    : 'bg-gray-50 hover:bg-gray-100'
+                                }`}
                                 title="Love"
                               >
                                 ❤️
                               </button>
                               <button
                                 onClick={() => handleQuickReaction(c._id, '😂')}
-                                className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
+                                className={`w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform rounded-full ${
+                                  c.reactions?.some(r => r.emoji === '😂' && r.userId === currentUser._id)
+                                    ? 'bg-blue-100 border-2 border-blue-400'
+                                    : 'bg-gray-50 hover:bg-gray-100'
+                                }`}
                                 title="Laugh"
                               >
                                 😂
                               </button>
                               <button
                                 onClick={() => handleQuickReaction(c._id, '😮')}
-                                className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
+                                className={`w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform rounded-full ${
+                                  c.reactions?.some(r => r.emoji === '😮' && r.userId === currentUser._id)
+                                    ? 'bg-blue-100 border-2 border-blue-400'
+                                    : 'bg-gray-50 hover:bg-gray-100'
+                                }`}
                                 title="Wow"
                               >
                                 😮
                               </button>
                               <button
                                 onClick={() => handleQuickReaction(c._id, '😢')}
-                                className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
+                                className={`w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform rounded-full ${
+                                  c.reactions?.some(r => r.emoji === '😢' && r.userId === currentUser._id)
+                                    ? 'bg-blue-100 border-2 border-blue-400'
+                                    : 'bg-gray-50 hover:bg-gray-100'
+                                }`}
                                 title="Sad"
                               >
                                 😢
                               </button>
                               <button
                                 onClick={() => handleQuickReaction(c._id, '😡')}
-                                className="w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform bg-gray-50 hover:bg-gray-100 rounded-full"
+                                className={`w-8 h-8 flex items-center justify-center text-lg hover:scale-110 transition-transform rounded-full ${
+                                  c.reactions?.some(r => r.emoji === '😡' && r.userId === currentUser._id)
+                                    ? 'bg-blue-100 border-2 border-blue-400'
+                                    : 'bg-gray-50 hover:bg-gray-100'
+                                }`}
                                 title="Angry"
                               >
                                 😡
