@@ -346,20 +346,7 @@ function AppRoutes({ bootstrapped }) {
       // Just check if it's not from the current user
       if (data.comment && data.comment.senderEmail !== currentUser.email) {
         
-        // Debug logging to understand the data structure
-        console.log('[App.jsx] Received commentUpdate event:', {
-          eventType: 'commentUpdate',
-          commentId: data.comment._id,
-          senderEmail: data.comment.senderEmail,
-          messageContent: data.comment.message,
-          messageLength: data.comment.message?.length || 0,
-          hasReactions: !!data.comment.reactions,
-          reactionsCount: data.comment.reactions?.length || 0,
-          timestamp: data.comment.timestamp || data.comment.createdAt,
-          appointmentId: data.appointmentId,
-          dataKeys: Object.keys(data),
-          commentKeys: Object.keys(data.comment)
-        });
+
         // Check if we're on the MyAppointments page
         const currentPath = window.location.pathname;
         const isOnMyAppointments = currentPath.includes('/my-appointments') || currentPath.includes('/user/my-appointments');
@@ -406,26 +393,12 @@ function AppRoutes({ bootstrapped }) {
             hasReactions) { // This is the key fix - if there are reactions, skip notification
           // This is likely a reaction update, status change, or metadata update, not a new message
           // Don't show notification for these
-          console.log('[App.jsx] Skipping notification - likely reaction update:', {
-            hasMessage: !!data.comment.message,
-            messageLength: data.comment.message?.length || 0,
-            hasReactions: !!data.comment.reactions,
-            reactionsCount: data.comment.reactions?.length || 0,
-            messageId: data.messageId,
-            commentId: data.comment._id,
-            isLikelyReactionUpdate,
-            skipReason: hasReactions ? 'Has reactions' : 'Other update indicator'
-          });
           return;
         }
         
         // Additional safety check: if the message content is very short (like "Cc..."), 
         // it might be a reaction update with minimal content
         if (data.comment.message && data.comment.message.trim().length < 10) {
-          console.log('[App.jsx] Skipping notification - message too short, likely reaction update:', {
-            messageContent: data.comment.message,
-            messageLength: data.comment.message.trim().length
-          });
           return;
         }
         
@@ -456,12 +429,6 @@ function AppRoutes({ bootstrapped }) {
         }
         
         // Show notification for new message
-        console.log('[App.jsx] Showing notification for new message:', {
-          senderEmail: data.comment.senderEmail,
-          messagePreview: data.comment.message?.substring(0, 50) + '...',
-          appointmentId: data.appointmentId,
-          timestamp: data.comment.timestamp || data.comment.createdAt
-        });
         playNotification();
         
         if (isOnMyAppointments) {
