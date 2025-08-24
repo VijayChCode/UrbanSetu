@@ -5269,7 +5269,24 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                             const shouldShow = !c.deleted && showReactionsBar && reactionsMessageId === c._id;
                             return shouldShow;
                           })() && (
-                            <div className={`absolute -top-8 ${isMe ? 'right-0' : 'left-0'} bg-red-500 rounded-full shadow-lg border-2 border-red-600 p-1 flex items-center gap-1 animate-reactions-bar z-[9999] reactions-bar transition-all duration-300`} style={{ minWidth: 'max-content' }}>
+                            <div className={`absolute ${(() => {
+                              // Smart positioning: check if message is near top of chat
+                              const messageElement = document.querySelector(`[data-message-id="${c._id}"]`);
+                              if (messageElement) {
+                                const messageRect = messageElement.getBoundingClientRect();
+                                const chatContainer = chatContainerRef.current;
+                                if (chatContainer) {
+                                  const containerRect = chatContainer.getBoundingClientRect();
+                                  const distanceFromTop = messageRect.top - containerRect.top;
+                                  // If message is within 120px of chat header, position below
+                                  if (distanceFromTop < 120) {
+                                    return `top-full mt-2 ${isMe ? 'right-0' : 'left-0'}`;
+                                  }
+                                }
+                              }
+                              // Default: position above message
+                              return `-top-8 ${isMe ? 'right-0' : 'left-0'}`;
+                            })()} bg-red-500 rounded-full shadow-lg border-2 border-red-600 p-1 flex items-center gap-1 animate-reactions-bar z-[9999] reactions-bar transition-all duration-300`} style={{ minWidth: 'max-content' }}>
                               {/* Quick reaction buttons */}
                               <button
                                 onClick={() => handleQuickReaction(c._id, '👍')}
