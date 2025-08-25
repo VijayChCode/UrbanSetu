@@ -1485,6 +1485,143 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     }
   };
 
+  // Chat image download function (similar to ImagePreview logic)
+  const handleDownloadChatImage = async (imageUrl, messageId) => {
+    if (!imageUrl || typeof imageUrl !== 'string') {
+      toast.error('Error: Invalid image URL. Cannot download image.');
+      return;
+    }
+    
+    try {
+      // Extract filename from URL or generate one
+      const urlParts = imageUrl.split('/');
+      const originalFilename = urlParts[urlParts.length - 1];
+      let filename = originalFilename;
+      
+      // If filename doesn't have an extension or is just a hash, generate a proper name
+      if (!filename.includes('.') || filename.length < 5) {
+        // Try to determine file extension from URL or default to jpg
+        const extension = imageUrl.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)(\?|$)/i)?.[1] || 'jpg';
+        filename = `chat-image-${messageId || Date.now()}.${extension}`;
+      }
+      
+      // Try to fetch the image to handle CORS and get proper blob
+      try {
+        const response = await fetch(imageUrl, {
+          mode: 'cors',
+          cache: 'no-cache'
+        });
+        
+        if (response.ok) {
+          try {
+            const blob = await response.blob();
+            
+            // Validate blob
+            if (!blob || blob.size === 0) {
+              throw new Error('Downloaded image is empty or corrupted');
+            }
+            
+            const blobUrl = window.URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = filename;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Clean up blob URL
+            setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
+            
+            // Show success feedback
+            toast.success(`Image "${filename}" downloaded successfully!`);
+            return; // Exit early on success
+            
+          } catch (blobError) {
+            console.error('Blob processing error:', blobError);
+            throw new Error(`Failed to process image data: ${blobError.message}`);
+          }
+        } else {
+          // Handle specific HTTP error codes
+          let errorMessage = `Server error (${response.status}): `;
+          switch (response.status) {
+            case 404:
+              errorMessage += 'Image not found on server';
+              break;
+            case 403:
+              errorMessage += 'Access denied to image';
+              break;
+            case 500:
+              errorMessage += 'Server internal error';
+              break;
+            default:
+              errorMessage += 'Unable to fetch image';
+          }
+          throw new Error(errorMessage);
+        }
+      } catch (fetchError) {
+        console.warn('Fetch failed, trying direct download:', fetchError);
+        
+        // Show specific error for fetch failure
+        if (fetchError.name === 'TypeError' && fetchError.message.includes('Failed to fetch')) {
+          toast.warn('Network error: Trying alternative download method...');
+        } else if (fetchError.message.includes('CORS')) {
+          toast.warn('CORS error: Trying alternative download method...');
+        } else {
+          toast.warn(`Fetch error: ${fetchError.message}. Trying alternative download method...`);
+        }
+        
+        // Fallback to direct link download for CORS issues
+        try {
+          const link = document.createElement('a');
+          link.href = imageUrl;
+          link.download = filename;
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          link.style.display = 'none';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+          // Show info message for direct download attempt
+          toast.info('Alternative download initiated. If it doesn\'t start automatically, please try right-clicking the image and selecting "Save image as..."');
+          return; // Exit early on fallback attempt
+          
+        } catch (directDownloadError) {
+          console.error('Direct download failed:', directDownloadError);
+          throw new Error(`Direct download failed: ${directDownloadError.message}`);
+        }
+      }
+    } catch (error) {
+      console.error('Download process failed:', error);
+      
+      // Show error notification for the main download process failure
+      toast.error(`Download failed: ${error.message}. Attempting to open image in new tab...`);
+      
+      // Final fallback - open image in new tab
+      try {
+        const newWindow = window.open(imageUrl, '_blank', 'noopener,noreferrer');
+        
+        if (newWindow) {
+          toast.info('Image opened in new tab. You can right-click to save it manually.');
+        } else {
+          // Pop-up blocked
+          throw new Error('Pop-up blocked by browser');
+        }
+      } catch (openError) {
+        console.error('Failed to open image in new tab:', openError);
+        
+        // Final error - all methods failed
+        if (openError.message.includes('Pop-up blocked')) {
+          toast.error('Error: Pop-up blocked. Please allow pop-ups for this site or right-click the image and select "Save image as..."');
+        } else {
+          toast.error(`All download methods failed: ${openError.message}. Please right-click the image and select "Save image as..." or check your internet connection.`);
+        }
+      }
+    }
+  };
+
   const handleImageFiles = (files) => {
     // Check if adding these files would exceed the 10 image limit
     const totalFiles = (selectedFiles?.length || 0) + files.length;
@@ -4478,6 +4615,20 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-20 min-w-[180px] chat-options-menu">
                                 {(selectedMessageForHeaderOptions.senderEmail === currentUser.email) ? (
                                   <>
+                                    {/* Download option for image messages */}
+                                    {selectedMessageForHeaderOptions.imageUrl && (
+                                      <button
+                                        className="w-full px-4 py-2 text-left text-sm text-blue-600 hover:bg-blue-50 flex items-center gap-2"
+                                        onClick={() => { 
+                                          handleDownloadChatImage(selectedMessageForHeaderOptions.imageUrl, selectedMessageForHeaderOptions._id); 
+                                          setShowHeaderMoreMenu(false); 
+                                          setHeaderOptionsMessageId(null); 
+                                        }}
+                                      >
+                                        <FaDownload className="text-sm" />
+                                        Download Image
+                                      </button>
+                                    )}
                                     <button
                                       className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
                                       onClick={() => { showMessageInfo(selectedMessageForHeaderOptions); setShowHeaderMoreMenu(false); setHeaderOptionsMessageId(null); }}
@@ -4513,6 +4664,20 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                   </>
                                 ) : (
                                   <>
+                                    {/* Download option for image messages (for received messages) */}
+                                    {selectedMessageForHeaderOptions.imageUrl && (
+                                      <button
+                                        className="w-full px-4 py-2 text-left text-sm text-blue-600 hover:bg-blue-50 flex items-center gap-2"
+                                        onClick={() => { 
+                                          handleDownloadChatImage(selectedMessageForHeaderOptions.imageUrl, selectedMessageForHeaderOptions._id); 
+                                          setShowHeaderMoreMenu(false); 
+                                          setHeaderOptionsMessageId(null); 
+                                        }}
+                                      >
+                                        <FaDownload className="text-sm" />
+                                        Download Image
+                                      </button>
+                                    )}
                                     <button
                                       className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
                                       onClick={() => {
