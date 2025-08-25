@@ -1118,6 +1118,43 @@ export default function MyAppointments() {
         </div>
       )}
       </div>
+
+      {/* Export Chat Modal */}
+      <ExportChatModal
+        isOpen={showExportModal}
+        onClose={() => {
+          setShowExportModal(false);
+          setExportAppointment(null);
+          setExportComments([]);
+        }}
+        onExport={async (includeMedia) => {
+          try {
+            toast.info('Generating PDF...', { autoClose: 2000 });
+            // Determine the other party based on the export appointment
+            const otherParty = exportAppointment?.buyerId?._id === currentUser._id ? 
+              exportAppointment?.sellerId : exportAppointment?.buyerId;
+            
+            const result = await exportEnhancedChatToPDF(
+              exportAppointment, 
+              exportComments, 
+              currentUser, 
+              otherParty,
+              includeMedia
+            );
+            if (result.success) {
+              toast.success(`Chat transcript exported as ${result.filename}`);
+            } else {
+              toast.error(`Export failed: ${result.error}`);
+            }
+          } catch (error) {
+            toast.error('Failed to export chat transcript');
+            console.error('Export error:', error);
+          }
+        }}
+        appointment={exportAppointment}
+        messageCount={exportComments.filter(msg => !msg.deleted && (msg.message?.trim() || msg.imageUrl)).length}
+        imageCount={exportComments.filter(msg => msg.imageUrl && !msg.deleted).length}
+      />
     </div>
   );
 }
@@ -7595,43 +7632,6 @@ You can lock this chat again at any time from the options.</p>
         onClose={() => setShowImagePreview(false)}
         images={previewImages}
         initialIndex={previewIndex}
-      />
-
-      {/* Export Chat Modal */}
-      <ExportChatModal
-        isOpen={showExportModal}
-        onClose={() => {
-          setShowExportModal(false);
-          setExportAppointment(null);
-          setExportComments([]);
-        }}
-        onExport={async (includeMedia) => {
-          try {
-            toast.info('Generating PDF...', { autoClose: 2000 });
-            // Determine the other party based on the export appointment
-            const otherParty = exportAppointment?.buyerId?._id === currentUser._id ? 
-              exportAppointment?.sellerId : exportAppointment?.buyerId;
-            
-            const result = await exportEnhancedChatToPDF(
-              exportAppointment, 
-              exportComments, 
-              currentUser, 
-              otherParty,
-              includeMedia
-            );
-            if (result.success) {
-              toast.success(`Chat transcript exported as ${result.filename}`);
-            } else {
-              toast.error(`Export failed: ${result.error}`);
-            }
-          } catch (error) {
-            toast.error('Failed to export chat transcript');
-            console.error('Export error:', error);
-          }
-        }}
-        appointment={exportAppointment}
-        messageCount={exportComments.filter(msg => !msg.deleted && (msg.message?.trim() || msg.imageUrl)).length}
-        imageCount={exportComments.filter(msg => msg.imageUrl && !msg.deleted).length}
       />
 
     </>
