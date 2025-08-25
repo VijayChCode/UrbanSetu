@@ -1,13 +1,62 @@
 import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 /**
- * Export chat transcript to PDF with enhanced formatting
+ * Load image from URL and convert to base64
+ */
+const loadImageAsBase64 = (url) => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      // Calculate dimensions to fit within reasonable bounds
+      const maxWidth = 400;
+      const maxHeight = 300;
+      
+      let { width, height } = img;
+      
+      if (width > maxWidth || height > maxHeight) {
+        const ratio = Math.min(maxWidth / width, maxHeight / height);
+        width = width * ratio;
+        height = height * ratio;
+      }
+      
+      canvas.width = width;
+      canvas.height = height;
+      
+      ctx.drawImage(img, 0, 0, width, height);
+      
+      try {
+        const base64 = canvas.toDataURL('image/jpeg', 0.7);
+        resolve({ base64, width, height });
+      } catch (error) {
+        console.warn('Failed to convert image to base64:', error);
+        resolve(null);
+      }
+    };
+    
+    img.onerror = () => {
+      console.warn('Failed to load image:', url);
+      resolve(null);
+    };
+    
+    img.src = url;
+  });
+};
+
+/**
+ * Export chat transcript to PDF with enhanced formatting and optional media
  * @param {Object} appointment - The appointment object
  * @param {Array} comments - Array of chat messages
  * @param {Object} currentUser - Current user object
  * @param {Object} otherParty - Other party user object
+ * @param {boolean} includeMedia - Whether to include images in the PDF
  */
-export const exportEnhancedChatToPDF = async (appointment, comments, currentUser, otherParty) => {
+export const exportEnhancedChatToPDF = async (appointment, comments, currentUser, otherParty, includeMedia = false) => {
   try {
     const pdf = new jsPDF('p', 'mm', 'a4');
     const pageWidth = pdf.internal.pageSize.getWidth();
@@ -46,7 +95,7 @@ export const exportEnhancedChatToPDF = async (appointment, comments, currentUser
 
     // Appointment info box
     pdf.setFillColor(...lightGray);
-    pdf.roundedRect(margin, yPosition, pageWidth - (margin * 2), 35, 3, 3, 'F');
+    pdf.roundedRect(margin, yPosition, pageWidth - (margin * 2), 45, 3, 3, 'F');
     
     yPosition += 8;
     pdf.setFontSize(14);
@@ -57,10 +106,13 @@ export const exportEnhancedChatToPDF = async (appointment, comments, currentUser
     pdf.setFontSize(10);
     pdf.setFont('helvetica', 'normal');
     
+    const imageCount = comments.filter(msg => msg.imageUrl && !msg.deleted).length;
     const infoLines = [
       `Property: ${appointment.propertyName || 'N/A'}`,
       `Date & Time: ${new Date(appointment.date).toLocaleDateString()} at ${appointment.time || 'N/A'}`,
-      `Participants: ${appointment.buyerId?.username || 'Unknown'} & ${appointment.sellerId?.username || 'Unknown'}`
+      `Participants: ${appointment.buyerId?.username || 'Unknown'} & ${appointment.sellerId?.username || 'Unknown'}`,
+      `Export Type: ${includeMedia ? `With Media (${imageCount} images)` : 'Text Only'}`,
+      `Generated: ${new Date().toLocaleString()}`
     ];
 
     infoLines.forEach(line => {
@@ -85,12 +137,28 @@ export const exportEnhancedChatToPDF = async (appointment, comments, currentUser
       pdf.text('No messages in this conversation.', margin, yPosition);
     } else {
       const validMessages = comments
-        .filter(msg => !msg.deleted && msg.message && msg.message.trim())
+        .filter(msg => !msg.deleted && (msg.message?.trim() || msg.imageUrl))
         .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
       let currentDate = '';
 
-      validMessages.forEach((message, index) => {
+      // Pre-load all images if including media
+      const imageCache = {};
+      if (includeMedia) {
+        const imageMessages = validMessages.filter(msg => msg.imageUrl);
+        for (const message of imageMessages) {
+          try {
+            const imageData = await loadImageAsBase64(message.imageUrl);
+            if (imageData) {
+              imageCache[message.imageUrl] = imageData;
+            }
+          } catch (error) {
+            console.warn('Failed to load image for PDF:', message.imageUrl, error);
+          }
+        }
+      }
+
+      for (const message of validMessages) {
         const messageDate = new Date(message.timestamp).toDateString();
         
         // Add date separator if new day
@@ -111,60 +179,150 @@ export const exportEnhancedChatToPDF = async (appointment, comments, currentUser
           yPosition += 12;
         }
 
-        checkPageBreak(20);
-
         const isCurrentUser = message.senderEmail === currentUser.email;
         const senderName = isCurrentUser ? 'You' : 
           (otherParty?.username || 'Other Party');
 
-        // Message bubble effect
-        const bubbleWidth = Math.min(120, pageWidth - (margin * 2) - 20);
-        const messageLines = pdf.splitTextToSize(message.message.trim(), bubbleWidth - 10);
-        const bubbleHeight = (messageLines.length * 4) + 8;
+        // Handle image messages
+        if (message.imageUrl) {
+          const requiredSpace = includeMedia ? 80 : 25;
+          checkPageBreak(requiredSpace);
 
-        if (isCurrentUser) {
-          // Right-aligned bubble (current user)
-          pdf.setFillColor(...primaryColor);
-          pdf.roundedRect(pageWidth - margin - bubbleWidth, yPosition, bubbleWidth, bubbleHeight, 2, 2, 'F');
-          
-          pdf.setTextColor(255, 255, 255);
-          pdf.setFontSize(9);
-          pdf.setFont('helvetica', 'normal');
-          
-          messageLines.forEach((line, lineIndex) => {
-            pdf.text(line, pageWidth - margin - bubbleWidth + 5, yPosition + 8 + (lineIndex * 4));
+          // Sender name and timestamp for image
+          pdf.setTextColor(128, 128, 128);
+          pdf.setFontSize(7);
+          const timestamp = new Date(message.timestamp).toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit'
           });
-        } else {
-          // Left-aligned bubble (other party)
-          pdf.setFillColor(250, 250, 250);
-          pdf.roundedRect(margin + 20, yPosition, bubbleWidth, bubbleHeight, 2, 2, 'F');
           
+          if (isCurrentUser) {
+            pdf.text(`${senderName} ${timestamp}`, pageWidth - margin - 60, yPosition - 2);
+          } else {
+            pdf.text(`${senderName} ${timestamp}`, margin + 25, yPosition - 2);
+          }
+
+          if (includeMedia && imageCache[message.imageUrl]) {
+            // Include actual image
+            const imageData = imageCache[message.imageUrl];
+            const imgWidth = Math.min(60, imageData.width * 0.2);
+            const imgHeight = (imageData.height * imgWidth) / imageData.width;
+            
+            try {
+              if (isCurrentUser) {
+                pdf.addImage(imageData.base64, 'JPEG', pageWidth - margin - imgWidth - 5, yPosition, imgWidth, imgHeight);
+              } else {
+                pdf.addImage(imageData.base64, 'JPEG', margin + 25, yPosition, imgWidth, imgHeight);
+              }
+              yPosition += imgHeight + 5;
+            } catch (error) {
+              console.warn('Failed to add image to PDF:', error);
+              // Fall back to placeholder
+              pdf.setFillColor(240, 240, 240);
+              const placeholderWidth = 60;
+              const placeholderHeight = 40;
+              if (isCurrentUser) {
+                pdf.rect(pageWidth - margin - placeholderWidth - 5, yPosition, placeholderWidth, placeholderHeight, 'F');
+              } else {
+                pdf.rect(margin + 25, yPosition, placeholderWidth, placeholderHeight, 'F');
+              }
+              pdf.setTextColor(...textColor);
+              pdf.setFontSize(8);
+              pdf.text('[Image]', isCurrentUser ? pageWidth - margin - 35 : margin + 55, yPosition + 22, { align: 'center' });
+              yPosition += placeholderHeight + 5;
+            }
+          } else {
+            // Image placeholder
+            pdf.setFillColor(240, 240, 240);
+            const placeholderWidth = 60;
+            const placeholderHeight = 40;
+            
+            if (isCurrentUser) {
+              pdf.rect(pageWidth - margin - placeholderWidth - 5, yPosition, placeholderWidth, placeholderHeight, 'F');
+              pdf.setDrawColor(200, 200, 200);
+              pdf.rect(pageWidth - margin - placeholderWidth - 5, yPosition, placeholderWidth, placeholderHeight);
+            } else {
+              pdf.rect(margin + 25, yPosition, placeholderWidth, placeholderHeight, 'F');
+              pdf.setDrawColor(200, 200, 200);
+              pdf.rect(margin + 25, yPosition, placeholderWidth, placeholderHeight);
+            }
+            
+            pdf.setTextColor(...textColor);
+            pdf.setFontSize(8);
+            pdf.text('📷 Image', isCurrentUser ? pageWidth - margin - 35 : margin + 55, yPosition + 22, { align: 'center' });
+            yPosition += placeholderHeight + 5;
+          }
+
+          // Add image caption if exists
+          if (message.message && message.message.trim()) {
+            pdf.setTextColor(...textColor);
+            pdf.setFontSize(9);
+            const captionLines = pdf.splitTextToSize(message.message.trim(), 60);
+            captionLines.forEach(line => {
+              checkPageBreak();
+              if (isCurrentUser) {
+                pdf.text(line, pageWidth - margin - 65, yPosition);
+              } else {
+                pdf.text(line, margin + 25, yPosition);
+              }
+              yPosition += 4;
+            });
+          }
+
+          yPosition += 8;
+        } else if (message.message && message.message.trim()) {
+          // Regular text message
+          checkPageBreak(20);
+
+          // Message bubble effect
+          const bubbleWidth = Math.min(120, pageWidth - (margin * 2) - 20);
+          const messageLines = pdf.splitTextToSize(message.message.trim(), bubbleWidth - 10);
+          const bubbleHeight = (messageLines.length * 4) + 8;
+
+          if (isCurrentUser) {
+            // Right-aligned bubble (current user)
+            pdf.setFillColor(...primaryColor);
+            pdf.roundedRect(pageWidth - margin - bubbleWidth, yPosition, bubbleWidth, bubbleHeight, 2, 2, 'F');
+            
+            pdf.setTextColor(255, 255, 255);
+            pdf.setFontSize(9);
+            pdf.setFont('helvetica', 'normal');
+            
+            messageLines.forEach((line, lineIndex) => {
+              pdf.text(line, pageWidth - margin - bubbleWidth + 5, yPosition + 8 + (lineIndex * 4));
+            });
+          } else {
+            // Left-aligned bubble (other party)
+            pdf.setFillColor(250, 250, 250);
+            pdf.roundedRect(margin + 20, yPosition, bubbleWidth, bubbleHeight, 2, 2, 'F');
+            
+            pdf.setTextColor(...textColor);
+            pdf.setFontSize(9);
+            pdf.setFont('helvetica', 'normal');
+            
+            messageLines.forEach((line, lineIndex) => {
+              pdf.text(line, margin + 25, yPosition + 8 + (lineIndex * 4));
+            });
+          }
+
+          // Sender name and timestamp
+          pdf.setTextColor(128, 128, 128);
+          pdf.setFontSize(7);
+          const timestamp = new Date(message.timestamp).toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+          
+          if (isCurrentUser) {
+            pdf.text(`${senderName} ${timestamp}`, pageWidth - margin - bubbleWidth + 5, yPosition - 2);
+          } else {
+            pdf.text(`${senderName} ${timestamp}`, margin + 25, yPosition - 2);
+          }
+
+          yPosition += bubbleHeight + 8;
           pdf.setTextColor(...textColor);
-          pdf.setFontSize(9);
-          pdf.setFont('helvetica', 'normal');
-          
-          messageLines.forEach((line, lineIndex) => {
-            pdf.text(line, margin + 25, yPosition + 8 + (lineIndex * 4));
-          });
         }
-
-        // Sender name and timestamp
-        pdf.setTextColor(128, 128, 128);
-        pdf.setFontSize(7);
-        const timestamp = new Date(message.timestamp).toLocaleTimeString('en-US', {
-          hour: '2-digit',
-          minute: '2-digit'
-        });
-        
-        if (isCurrentUser) {
-          pdf.text(`${senderName} ${timestamp}`, pageWidth - margin - bubbleWidth + 5, yPosition - 2);
-        } else {
-          pdf.text(`${senderName} ${timestamp}`, margin + 25, yPosition - 2);
-        }
-
-        yPosition += bubbleHeight + 8;
-        pdf.setTextColor(...textColor);
-      });
+      }
     }
 
     // Footer on all pages
@@ -184,7 +342,8 @@ export const exportEnhancedChatToPDF = async (appointment, comments, currentUser
       pdf.text(`${i} / ${totalPages}`, pageWidth - margin, pageHeight - 5, { align: 'right' });
       
       // Export info
-      pdf.text(`Exported by ${currentUser.username} on ${new Date().toLocaleDateString()}`, margin, pageHeight - 5);
+      const exportInfo = `${includeMedia ? 'With Media' : 'Text Only'} - Exported by ${currentUser.username}`;
+      pdf.text(exportInfo, margin, pageHeight - 5);
     }
 
     // Generate filename
@@ -192,7 +351,8 @@ export const exportEnhancedChatToPDF = async (appointment, comments, currentUser
       appointment.propertyName.replace(/[^a-zA-Z0-9]/g, '_') : 
       'Chat';
     const dateStr = new Date().toISOString().split('T')[0];
-    const filename = `UrbanSetu_${propertyName}_${dateStr}.pdf`;
+    const mediaType = includeMedia ? 'WithMedia' : 'TextOnly';
+    const filename = `UrbanSetu_${propertyName}_${mediaType}_${dateStr}.pdf`;
 
     // Save the PDF
     pdf.save(filename);

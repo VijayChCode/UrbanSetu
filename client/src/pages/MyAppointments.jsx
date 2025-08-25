@@ -13,6 +13,7 @@ import Appointment from "../components/Appointment";
 import { toast, ToastContainer } from 'react-toastify';
 import { socket } from "../utils/socket";
 import { exportEnhancedChatToPDF } from '../utils/pdfExport';
+import ExportChatModal from '../components/ExportChatModal';
 import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -46,6 +47,11 @@ export default function MyAppointments() {
   const [notificationChatData, setNotificationChatData] = useState(null);
   const [shouldOpenChatFromNotification, setShouldOpenChatFromNotification] = useState(false);
   const [activeChatAppointmentId, setActiveChatAppointmentId] = useState(null);
+
+  // Export chat modal state
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportAppointment, setExportAppointment] = useState(null);
+  const [exportComments, setExportComments] = useState([]);
 
 
 
@@ -4707,25 +4713,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                               {filteredComments.length > 0 && (
                                 <button
                                   className="w-full px-4 py-2 text-left text-sm text-green-600 hover:bg-green-50 flex items-center gap-2"
-                                  onClick={async () => {
+                                  onClick={() => {
                                     setShowChatOptionsMenu(false);
-                                    try {
-                                      toast.info('Generating PDF...', { autoClose: 2000 });
-                                      const result = await exportEnhancedChatToPDF(
-                                        appt, 
-                                        filteredComments, 
-                                        currentUser, 
-                                        otherParty
-                                      );
-                                      if (result.success) {
-                                        toast.success(`Chat transcript exported as ${result.filename}`);
-                                      } else {
-                                        toast.error(`Export failed: ${result.error}`);
-                                      }
-                                    } catch (error) {
-                                      toast.error('Failed to export chat transcript');
-                                      console.error('Export error:', error);
-                                    }
+                                    setExportAppointment(appt);
+                                    setExportComments(filteredComments);
+                                    setShowExportModal(true);
                                   }}
                                 >
                                   <FaDownload className="text-sm" />
@@ -7598,6 +7590,39 @@ You can lock this chat again at any time from the options.</p>
         onClose={() => setShowImagePreview(false)}
         images={previewImages}
         initialIndex={previewIndex}
+      />
+
+      {/* Export Chat Modal */}
+      <ExportChatModal
+        isOpen={showExportModal}
+        onClose={() => {
+          setShowExportModal(false);
+          setExportAppointment(null);
+          setExportComments([]);
+        }}
+        onExport={async (includeMedia) => {
+          try {
+            toast.info('Generating PDF...', { autoClose: 2000 });
+            const result = await exportEnhancedChatToPDF(
+              exportAppointment, 
+              exportComments, 
+              currentUser, 
+              otherParty,
+              includeMedia
+            );
+            if (result.success) {
+              toast.success(`Chat transcript exported as ${result.filename}`);
+            } else {
+              toast.error(`Export failed: ${result.error}`);
+            }
+          } catch (error) {
+            toast.error('Failed to export chat transcript');
+            console.error('Export error:', error);
+          }
+        }}
+        appointment={exportAppointment}
+        messageCount={exportComments.filter(msg => !msg.deleted && (msg.message?.trim() || msg.imageUrl)).length}
+        imageCount={exportComments.filter(msg => msg.imageUrl && !msg.deleted).length}
       />
 
     </>
