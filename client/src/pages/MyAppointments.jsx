@@ -815,6 +815,11 @@ export default function MyAppointments() {
                       isArchived={true}
                       onCancelRefresh={handleCancelRefresh}
                       copyMessageToClipboard={copyMessageToClipboard}
+                      onExportChat={(appointment, comments) => {
+                        setExportAppointment(appointment);
+                        setExportComments(comments);
+                        setShowExportModal(true);
+                      }}
                     />
                   ))}
                 </tbody>
@@ -861,6 +866,11 @@ export default function MyAppointments() {
                       onChatOpened={() => {
                         setShouldOpenChatFromNotification(false);
                         setActiveChatAppointmentId(null);
+                      }}
+                      onExportChat={(appointment, comments) => {
+                        setExportAppointment(appointment);
+                        setExportComments(comments);
+                        setShowExportModal(true);
                       }}
                   />
                 ))}
@@ -1120,7 +1130,7 @@ function getDateLabel(date) {
   if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
   return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 }
-function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDelete, actionLoading, onShowOtherParty, onOpenReinitiate, handleArchiveAppointment, handleUnarchiveAppointment, isArchived, onCancelRefresh, copyMessageToClipboard, activeChatAppointmentId, shouldOpenChatFromNotification, onChatOpened }) {
+function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDelete, actionLoading, onShowOtherParty, onOpenReinitiate, handleArchiveAppointment, handleUnarchiveAppointment, isArchived, onCancelRefresh, copyMessageToClipboard, activeChatAppointmentId, shouldOpenChatFromNotification, onChatOpened, onExportChat }) {
   const [replyTo, setReplyTo] = useState(null);
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState(appt.comments || []);
@@ -2717,7 +2727,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
     const day = String(d.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   };
-
   // User-side cancel handler (buyer/seller)
   const handleUserCancel = async () => {
     setCancelReason('');
@@ -3928,7 +3937,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
               </div>
             </div>
           )}
-          
           <div className="bg-gradient-to-br from-white via-blue-50 to-purple-50 rounded-3xl shadow-2xl w-full h-full max-w-6xl max-h-full p-0 relative animate-fadeIn flex flex-col border border-gray-200 transform transition-all duration-500 hover:shadow-3xl overflow-hidden">
             { isChatDisabled ? (
               <div className="flex flex-col items-center justify-center flex-1 p-8 min-h-96 relative">
@@ -4715,9 +4723,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                   className="w-full px-4 py-2 text-left text-sm text-green-600 hover:bg-green-50 flex items-center gap-2"
                                   onClick={() => {
                                     setShowChatOptionsMenu(false);
-                                    setExportAppointment(appt);
-                                    setExportComments(filteredComments);
-                                    setShowExportModal(true);
+                                    onExportChat(appt, filteredComments);
                                   }}
                                 >
                                   <FaDownload className="text-sm" />
@@ -4932,7 +4938,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                     </div>
                   </div>
                 )}
-                
                 {/* Chat Content Area */}
                 <div className="flex-1 flex flex-col min-h-0">
                   {/* Pinned Messages Section */}
@@ -7603,6 +7608,10 @@ You can lock this chat again at any time from the options.</p>
         onExport={async (includeMedia) => {
           try {
             toast.info('Generating PDF...', { autoClose: 2000 });
+            // Determine the other party based on the export appointment
+            const otherParty = exportAppointment?.buyerId?._id === currentUser._id ? 
+              exportAppointment?.sellerId : exportAppointment?.buyerId;
+            
             const result = await exportEnhancedChatToPDF(
               exportAppointment, 
               exportComments, 

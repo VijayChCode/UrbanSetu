@@ -949,6 +949,11 @@ export default function AdminAppointments() {
                         setShowReactionsEmojiPicker={setShowReactionsEmojiPicker}
                         toggleReactionsBar={toggleReactionsBar}
                         toggleReactionsEmojiPicker={toggleReactionsEmojiPicker}
+                        onExportChat={(appointment, comments) => {
+                          setExportAppointment(appointment);
+                          setExportComments(comments);
+                          setShowExportModal(true);
+                        }}
                       />
                     ))}
                   </tbody>
@@ -1015,6 +1020,11 @@ export default function AdminAppointments() {
                       setShowReactionsEmojiPicker={setShowReactionsEmojiPicker}
                       toggleReactionsBar={toggleReactionsBar}
                       toggleReactionsEmojiPicker={toggleReactionsEmojiPicker}
+                      onExportChat={(appointment, comments) => {
+                        setExportAppointment(appointment);
+                        setExportComments(comments);
+                        setShowExportModal(true);
+                      }}
                     />
                   ))}
                 </tbody>
@@ -1185,7 +1195,8 @@ function AdminAppointmentRow({
   showReactionsEmojiPicker,
   setShowReactionsEmojiPicker,
   toggleReactionsBar,
-  toggleReactionsEmojiPicker
+  toggleReactionsEmojiPicker,
+  onExportChat
 }) {
   // Use parent comments directly for real-time sync, with local state for UI interactions
   const [localComments, setLocalComments] = React.useState(appt.comments || []);
@@ -3570,9 +3581,7 @@ function AdminAppointmentRow({
                                 className="w-full px-4 py-2 text-left text-sm text-green-600 hover:bg-green-50 flex items-center gap-2"
                                 onClick={() => {
                                   setShowChatOptionsMenu(false);
-                                  setExportAppointment(appt);
-                                  setExportComments(localComments);
-                                  setShowExportModal(true);
+                                  onExportChat(appt, localComments);
                                 }}
                               >
                                 <FaDownload className="text-sm" />
