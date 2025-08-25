@@ -392,6 +392,47 @@ export const exportEnhancedChatToPDF = async (appointment, comments, currentUser
             pdf.setFontSize(8);
             pdf.text('📷 Image', isCurrentUser ? pageWidth - margin - 35 : margin + 55, yPosition + 22, { align: 'center' });
             yPosition += placeholderHeight + 5;
+
+            // Add clickable image URL below the placeholder (for text-only export)
+            if (message.imageUrl) {
+              checkPageBreak();
+              
+              // Add "View Image:" label
+              pdf.setTextColor(128, 128, 128);
+              pdf.setFontSize(7);
+              const labelText = 'View Image:';
+              const labelX = isCurrentUser ? pageWidth - margin - placeholderWidth - 5 : margin + 25;
+              pdf.text(labelText, labelX, yPosition);
+              yPosition += 4;
+              
+              // Add clickable image URL
+              const linkColor = [59, 130, 246]; // Blue color for links
+              pdf.setTextColor(...linkColor);
+              pdf.setFontSize(7);
+              pdf.setFont('helvetica', 'normal');
+              
+              // Shorten URL for display if too long
+              let displayUrl = message.imageUrl;
+              const maxUrlLength = 45;
+              if (displayUrl.length > maxUrlLength) {
+                displayUrl = displayUrl.substring(0, maxUrlLength - 3) + '...';
+              }
+              
+              const urlX = isCurrentUser ? pageWidth - margin - placeholderWidth - 5 : margin + 25;
+              const textWidth = pdf.getTextWidth(displayUrl);
+              const underlineY = yPosition + 1;
+              
+              // Draw underline for the link
+              pdf.setDrawColor(...linkColor);
+              pdf.line(urlX, underlineY, urlX + textWidth, underlineY);
+              
+              // Add clickable link
+              pdf.link(urlX, yPosition - 3, textWidth, 4, { url: message.imageUrl });
+              
+              // Render link text
+              pdf.text(displayUrl, urlX, yPosition);
+              yPosition += 6;
+            }
           }
 
           // Add image caption if exists
