@@ -316,6 +316,46 @@ export const exportEnhancedChatToPDF = async (appointment, comments, currentUser
                 pdf.addImage(imageData.base64, 'JPEG', margin + 25, yPosition, imgWidth, imgHeight);
               }
               yPosition += imgHeight + 5;
+
+              // Add clickable image URL below the embedded image when includeMedia is true
+              checkPageBreak();
+              
+              // Add "Image Source:" label
+              pdf.setTextColor(128, 128, 128);
+              pdf.setFontSize(7);
+              const labelText = 'Image Source:';
+              const labelX = isCurrentUser ? pageWidth - margin - imgWidth - 5 : margin + 25;
+              pdf.text(labelText, labelX, yPosition);
+              yPosition += 4;
+              
+              // Add clickable image URL
+              const linkColor = [59, 130, 246]; // Blue color for links
+              pdf.setTextColor(...linkColor);
+              pdf.setFontSize(7);
+              pdf.setFont('helvetica', 'normal');
+              
+              // Shorten URL for display if too long
+              let displayUrl = message.imageUrl;
+              const maxUrlLength = 45;
+              if (displayUrl.length > maxUrlLength) {
+                displayUrl = displayUrl.substring(0, maxUrlLength - 3) + '...';
+              }
+              
+              const urlX = isCurrentUser ? pageWidth - margin - imgWidth - 5 : margin + 25;
+              const textWidth = pdf.getTextWidth(displayUrl);
+              const underlineY = yPosition + 1;
+              
+              // Draw underline for the link
+              pdf.setDrawColor(...linkColor);
+              pdf.line(urlX, underlineY, urlX + textWidth, underlineY);
+              
+              // Add clickable link
+              pdf.link(urlX, yPosition - 3, textWidth, 4, { url: message.imageUrl });
+              
+              // Render link text
+              pdf.text(displayUrl, urlX, yPosition);
+              yPosition += 6;
+              
             } catch (error) {
               console.warn('Failed to add image to PDF:', error);
               // Fall back to placeholder
@@ -333,7 +373,7 @@ export const exportEnhancedChatToPDF = async (appointment, comments, currentUser
               yPosition += placeholderHeight + 5;
             }
           } else {
-            // Image placeholder
+            // Image placeholder (when includeMedia is false)
             pdf.setFillColor(240, 240, 240);
             const placeholderWidth = 60;
             const placeholderHeight = 40;
