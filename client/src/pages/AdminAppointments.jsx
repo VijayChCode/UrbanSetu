@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
-import { FaTrash, FaSearch, FaPen, FaPaperPlane, FaUser, FaEnvelope, FaCalendar, FaPhone, FaUserShield, FaArchive, FaUndo, FaCommentDots, FaCheck, FaCheckDouble, FaBan, FaTimes, FaLightbulb, FaCopy, FaEllipsisV, FaInfoCircle, FaSync, FaStar, FaRegStar, FaFlag, FaCalendarAlt, FaCheckSquare } from "react-icons/fa";
+import { FaTrash, FaSearch, FaPen, FaPaperPlane, FaUser, FaEnvelope, FaCalendar, FaPhone, FaUserShield, FaArchive, FaUndo, FaCommentDots, FaCheck, FaCheckDouble, FaBan, FaTimes, FaLightbulb, FaCopy, FaEllipsisV, FaInfoCircle, FaSync, FaStar, FaRegStar, FaFlag, FaCalendarAlt, FaCheckSquare, FaDownload } from "react-icons/fa";
 import { formatLinksInText } from '../utils/linkFormatter.jsx';
 import UserAvatar from '../components/UserAvatar';
 import ImagePreview from '../components/ImagePreview';
@@ -11,6 +11,7 @@ import { Link } from "react-router-dom";
 import { toast, ToastContainer } from 'react-toastify';
 import { socket } from "../utils/socket";
 import { useSoundEffects } from "../components/SoundEffects";
+import { exportEnhancedChatToPDF } from '../utils/pdfExport';
 import axios from 'axios';
 // Note: Do not import server-only libs here
 
@@ -3557,6 +3558,36 @@ function AdminAppointmentRow({
                               <FaLightbulb className="text-sm" />
                               Tips & Guidelines
                             </button>
+                            {/* Export Chat option */}
+                            {localComments.length > 0 && (
+                              <button
+                                className="w-full px-4 py-2 text-left text-sm text-green-600 hover:bg-green-50 flex items-center gap-2"
+                                onClick={async () => {
+                                  setShowChatOptionsMenu(false);
+                                  try {
+                                    toast.info('Generating PDF...', { autoClose: 2000 });
+                                    const otherParty = appt.buyerId?._id === currentUser._id ? appt.sellerId : appt.buyerId;
+                                    const result = await exportEnhancedChatToPDF(
+                                      appt, 
+                                      localComments, 
+                                      currentUser, 
+                                      otherParty
+                                    );
+                                    if (result.success) {
+                                      toast.success(`Chat transcript exported as ${result.filename}`);
+                                    } else {
+                                      toast.error(`Export failed: ${result.error}`);
+                                    }
+                                  } catch (error) {
+                                    toast.error('Failed to export chat transcript');
+                                    console.error('Export error:', error);
+                                  }
+                                }}
+                              >
+                                <FaDownload className="text-sm" />
+                                Export Chat Transcript (PDF)
+                              </button>
+                            )}
                             {/* User details option for buyer */}
                             <button
                               className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"

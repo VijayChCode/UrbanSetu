@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo, FaCommentDots, FaCheckDouble, FaBan, FaPaperPlane, FaCalendar, FaLightbulb, FaCopy, FaEllipsisV, FaFlag, FaCircle, FaInfoCircle, FaSync, FaStar, FaRegStar, FaThumbtack, FaCalendarAlt, FaCheckSquare } from "react-icons/fa";
+import { FaTrash, FaSearch, FaPen, FaCheck, FaTimes, FaUserShield, FaUser, FaEnvelope, FaPhone, FaArchive, FaUndo, FaCommentDots, FaCheckDouble, FaBan, FaPaperPlane, FaCalendar, FaLightbulb, FaCopy, FaEllipsisV, FaFlag, FaCircle, FaInfoCircle, FaSync, FaStar, FaRegStar, FaThumbtack, FaCalendarAlt, FaCheckSquare, FaDownload } from "react-icons/fa";
 import { formatLinksInText } from '../utils/linkFormatter.jsx';
 import UserAvatar from '../components/UserAvatar';
 import ImagePreview from '../components/ImagePreview';
@@ -12,6 +12,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import Appointment from "../components/Appointment";
 import { toast, ToastContainer } from 'react-toastify';
 import { socket } from "../utils/socket";
+import { exportEnhancedChatToPDF } from '../utils/pdfExport';
 import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -4702,6 +4703,36 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                 Tips & Guidelines
                               </button>
                               
+                              {/* Export Chat option */}
+                              {filteredComments.length > 0 && (
+                                <button
+                                  className="w-full px-4 py-2 text-left text-sm text-green-600 hover:bg-green-50 flex items-center gap-2"
+                                  onClick={async () => {
+                                    setShowChatOptionsMenu(false);
+                                    try {
+                                      toast.info('Generating PDF...', { autoClose: 2000 });
+                                      const result = await exportEnhancedChatToPDF(
+                                        appt, 
+                                        filteredComments, 
+                                        currentUser, 
+                                        otherParty
+                                      );
+                                      if (result.success) {
+                                        toast.success(`Chat transcript exported as ${result.filename}`);
+                                      } else {
+                                        toast.error(`Export failed: ${result.error}`);
+                                      }
+                                    } catch (error) {
+                                      toast.error('Failed to export chat transcript');
+                                      console.error('Export error:', error);
+                                    }
+                                  }}
+                                >
+                                  <FaDownload className="text-sm" />
+                                  Export Chat Transcript (PDF)
+                                </button>
+                              )}
+
                               {/* Line divider */}
                               <div className="border-t border-gray-200 my-1"></div>
                               
