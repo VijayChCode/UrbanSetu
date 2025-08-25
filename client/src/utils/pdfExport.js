@@ -49,6 +49,107 @@ const loadImageAsBase64 = (url) => {
 };
 
 /**
+ * Process message text to handle links and split into lines
+ */
+const processMessageWithLinks = (message, pdf, maxWidth) => {
+  // URL regex pattern to match various link formats
+  const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+|[^\s]+\.[^\s]{2,})/gi;
+  
+  // Split message into parts (text and URLs)
+  const parts = message.split(urlRegex);
+  const lines = [];
+  let currentLine = '';
+  
+  parts.forEach((part, index) => {
+    // Check if this part is a URL
+    if (urlRegex.test(part)) {
+      // Ensure URL has protocol
+      let url = part;
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        url = 'https://' + url;
+      }
+      
+      // Add URL to current line or create new line if needed
+      const urlWithProtocol = url;
+      const displayUrl = part;
+      
+      if (currentLine.length + displayUrl.length <= maxWidth) {
+        currentLine += displayUrl;
+      } else {
+        if (currentLine.trim()) {
+          lines.push({ type: 'text', content: currentLine.trim() });
+        }
+        currentLine = displayUrl;
+      }
+      
+      // Add URL object to lines
+      lines.push({ type: 'url', content: displayUrl, url: urlWithProtocol });
+      currentLine = '';
+    } else {
+      // Regular text
+      if (currentLine.length + part.length <= maxWidth) {
+        currentLine += part;
+      } else {
+        if (currentLine.trim()) {
+          lines.push({ type: 'text', content: currentLine.trim() });
+        }
+        currentLine = part;
+      }
+    }
+  });
+  
+  // Add remaining text
+  if (currentLine.trim()) {
+    lines.push({ type: 'text', content: currentLine.trim() });
+  }
+  
+  return { lines, height: lines.length * 4 };
+};
+
+/**
+ * Render message lines with link support
+ */
+const renderMessageWithLinks = (pdf, lines, startX, startY, isCurrentUser) => {
+  let currentY = startY;
+  
+  lines.forEach((line, lineIndex) => {
+    if (line.type === 'url') {
+      // Render clickable link
+      const linkColor = isCurrentUser ? [255, 255, 255] : [59, 130, 246]; // White for current user, blue for other
+      
+      pdf.setTextColor(...linkColor);
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'normal');
+      
+      // Add underline for links
+      const textWidth = pdf.getTextWidth(line.content);
+      const underlineY = currentY + 1;
+      
+      // Draw underline
+      pdf.setDrawColor(...linkColor);
+      pdf.line(startX, underlineY, startX + textWidth, underlineY);
+      
+      // Add clickable link
+      pdf.link(startX, currentY - 3, textWidth, 4, { url: line.url });
+      
+      // Render link text
+      pdf.text(line.content, startX, currentY);
+      
+      currentY += 4;
+    } else {
+      // Render regular text
+      const textColor = isCurrentUser ? [255, 255, 255] : [51, 51, 51];
+      pdf.setTextColor(...textColor);
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'normal');
+      
+      pdf.text(line.content, startX, currentY);
+      currentY += 4;
+    }
+  });
+};
+
+/**
  * Export chat transcript to PDF with enhanced formatting and optional media
  * @param {Object} appointment - The appointment object
  * @param {Array} comments - Array of chat messages
@@ -255,15 +356,47 @@ export const exportEnhancedChatToPDF = async (appointment, comments, currentUser
 
           // Add image caption if exists
           if (message.message && message.message.trim()) {
-            pdf.setTextColor(...textColor);
-            pdf.setFontSize(9);
-            const captionLines = pdf.splitTextToSize(message.message.trim(), 60);
-            captionLines.forEach(line => {
+            // Process caption with link support
+            const processedCaption = processMessageWithLinks(message.message.trim(), pdf, 60);
+            
+            processedCaption.lines.forEach(line => {
               checkPageBreak();
-              if (isCurrentUser) {
-                pdf.text(line, pageWidth - margin - 65, yPosition);
+              if (line.type === 'url') {
+                // Render clickable link in caption
+                const linkColor = isCurrentUser ? [255, 255, 255] : [59, 130, 246];
+                pdf.setTextColor(...linkColor);
+                pdf.setFontSize(8);
+                pdf.setFont('helvetica', 'normal');
+                
+                // Add underline for links
+                const textWidth = pdf.getTextWidth(line.content);
+                const underlineY = yPosition + 1;
+                
+                // Draw underline
+                pdf.setDrawColor(...linkColor);
+                if (isCurrentUser) {
+                  pdf.line(pageWidth - margin - 65, underlineY, pageWidth - margin - 65 + textWidth, underlineY);
+                  // Add clickable link
+                  pdf.link(pageWidth - margin - 65, yPosition - 3, textWidth, 4, { url: line.url });
+                  pdf.text(line.content, pageWidth - margin - 65, yPosition);
+                } else {
+                  pdf.line(margin + 25, underlineY, margin + 25 + textWidth, underlineY);
+                  // Add clickable link
+                  pdf.link(margin + 25, yPosition - 3, textWidth, 4, { url: line.url });
+                  pdf.text(line.content, margin + 25, yPosition);
+                }
               } else {
-                pdf.text(line, margin + 25, yPosition);
+                // Regular text in caption
+                const textColor = isCurrentUser ? [255, 255, 255] : [51, 51, 51];
+                pdf.setTextColor(...textColor);
+                pdf.setFontSize(8);
+                pdf.setFont('helvetica', 'normal');
+                
+                if (isCurrentUser) {
+                  pdf.text(line.content, pageWidth - margin - 65, yPosition);
+                } else {
+                  pdf.text(line.content, margin + 25, yPosition);
+                }
               }
               yPosition += 4;
             });
@@ -271,12 +404,15 @@ export const exportEnhancedChatToPDF = async (appointment, comments, currentUser
 
           yPosition += 8;
         } else if (message.message && message.message.trim()) {
-          // Regular text message
+          // Regular text message with link handling
           checkPageBreak(20);
 
           // Message bubble effect
           const bubbleWidth = Math.min(120, pageWidth - (margin * 2) - 20);
-          const messageLines = pdf.splitTextToSize(message.message.trim(), bubbleWidth - 10);
+          
+          // Process message to handle links
+          const processedMessage = processMessageWithLinks(message.message.trim(), pdf, bubbleWidth - 10);
+          const messageLines = processedMessage.lines;
           const bubbleHeight = (messageLines.length * 4) + 8;
 
           if (isCurrentUser) {
@@ -284,25 +420,15 @@ export const exportEnhancedChatToPDF = async (appointment, comments, currentUser
             pdf.setFillColor(...primaryColor);
             pdf.roundedRect(pageWidth - margin - bubbleWidth, yPosition, bubbleWidth, bubbleHeight, 2, 2, 'F');
             
-            pdf.setTextColor(255, 255, 255);
-            pdf.setFontSize(9);
-            pdf.setFont('helvetica', 'normal');
-            
-            messageLines.forEach((line, lineIndex) => {
-              pdf.text(line, pageWidth - margin - bubbleWidth + 5, yPosition + 8 + (lineIndex * 4));
-            });
+            // Render message lines with link support
+            renderMessageWithLinks(pdf, messageLines, pageWidth - margin - bubbleWidth + 5, yPosition + 8, true);
           } else {
             // Left-aligned bubble (other party)
             pdf.setFillColor(250, 250, 250);
             pdf.roundedRect(margin + 20, yPosition, bubbleWidth, bubbleHeight, 2, 2, 'F');
             
-            pdf.setTextColor(...textColor);
-            pdf.setFontSize(9);
-            pdf.setFont('helvetica', 'normal');
-            
-            messageLines.forEach((line, lineIndex) => {
-              pdf.text(line, margin + 25, yPosition + 8 + (lineIndex * 4));
-            });
+            // Render message lines with link support
+            renderMessageWithLinks(pdf, messageLines, margin + 25, yPosition + 8, false);
           }
 
           // Sender name and timestamp
