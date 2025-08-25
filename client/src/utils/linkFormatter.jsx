@@ -1,3 +1,5 @@
+import React from 'react';
+
 // Utility function to detect and format links in text
 export const formatLinksInText = (text, isSentMessage = false) => {
   if (!text || typeof text !== 'string') return text;
@@ -37,4 +39,45 @@ export const formatLinksInText = (text, isSentMessage = false) => {
     
     return part;
   });
+};
+
+// Component wrapper for formatted text with links
+export const FormattedTextWithLinks = ({ text, isSentMessage = false, className = "" }) => {
+  if (!text || typeof text !== 'string') return <span className={className}>{text}</span>;
+
+  const formattedParts = formatLinksInText(text, isSentMessage);
+  
+  return (
+    <span className={className}>
+      {formattedParts}
+    </span>
+  );
+};
+
+// Component wrapper for formatted text with links and search highlighting
+export const FormattedTextWithLinksAndSearch = ({ text, isSentMessage = false, className = "", searchQuery = "" }) => {
+  if (!text || typeof text !== 'string') return <span className={className}>{text}</span>;
+
+  // First apply search highlighting
+  let processedText = text;
+  if (searchQuery) {
+    const regex = new RegExp(`(${searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const parts = text.split(regex);
+    
+    processedText = parts.map((part, index) => {
+      if (regex.test(part)) {
+        return `<span class="search-text-highlight bg-yellow-200 text-black px-1 rounded">${part}</span>`;
+      }
+      return part;
+    }).join('');
+  }
+
+  // Then apply link formatting
+  const formattedParts = formatLinksInText(processedText, isSentMessage);
+  
+  return (
+    <span className={className}>
+      {formattedParts}
+    </span>
+  );
 };

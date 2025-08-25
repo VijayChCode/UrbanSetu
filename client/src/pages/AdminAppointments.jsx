@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { FaTrash, FaSearch, FaPen, FaPaperPlane, FaUser, FaEnvelope, FaCalendar, FaPhone, FaUserShield, FaArchive, FaUndo, FaCommentDots, FaCheck, FaCheckDouble, FaBan, FaTimes, FaLightbulb, FaCopy, FaEllipsisV, FaInfoCircle, FaSync, FaStar, FaRegStar, FaFlag, FaCalendarAlt, FaCheckSquare, FaDownload } from "react-icons/fa";
-import { formatLinksInText } from '../utils/linkFormatter.jsx';
+import { FormattedTextWithLinks, FormattedTextWithLinksAndSearch } from '../utils/linkFormatter.jsx';
 import UserAvatar from '../components/UserAvatar';
 import ImagePreview from '../components/ImagePreview';
 import LinkPreview from '../components/LinkPreview';
@@ -4138,14 +4138,11 @@ function AdminAppointmentRow({
                                         return null;
                                       })()}
                                       
-                                      <span 
-                                        className="whitespace-pre-wrap break-words" 
-                                        dangerouslySetInnerHTML={{
-                                          __html: formatLinksInText(
-                                            highlightSearchedText((c.message || '').replace(/\n+$/, ''), searchQuery), 
-                                            isMe
-                                          )
-                                        }}
+                                      <FormattedTextWithLinksAndSearch 
+                                        text={(c.message || '').replace(/\n+$/, '')}
+                                        isSentMessage={isMe}
+                                        className="whitespace-pre-wrap break-words"
+                                        searchQuery={searchQuery}
                                       />
                                       {c.edited && (
                                         <span className="ml-2 text-[10px] italic text-gray-300 whitespace-nowrap">(Edited)</span>
@@ -5764,9 +5761,11 @@ function AdminAppointmentRow({
                                     </div>
                                   </div>
                                 ) : (
-                                  <span className="whitespace-pre-wrap break-words">
-                                    {formatLinksInText((message.message || '').replace(/\n+$/, ''), isMe)}
-                                  </span>
+                                  <FormattedTextWithLinks 
+                                    text={(message.message || '').replace(/\n+$/, '')}
+                                    isSentMessage={isMe}
+                                    className="whitespace-pre-wrap break-words"
+                                  />
                                 )}
                               </div>
                               
