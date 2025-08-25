@@ -1146,6 +1146,40 @@ export default function AdminAppointments() {
           </div>
         </div>
       )}
+
+      {/* Export Chat Modal */}
+      <ExportChatModal
+        isOpen={showExportModal}
+        onClose={() => {
+          setShowExportModal(false);
+          setExportAppointment(null);
+          setExportComments([]);
+        }}
+        onExport={async (includeMedia) => {
+          try {
+            toast.info('Generating PDF...', { autoClose: 2000 });
+            const otherParty = exportAppointment?.buyerId?._id === currentUser._id ? exportAppointment?.sellerId : exportAppointment?.buyerId;
+            const result = await exportEnhancedChatToPDF(
+              exportAppointment, 
+              exportComments, 
+              currentUser, 
+              otherParty,
+              includeMedia
+            );
+            if (result.success) {
+              toast.success(`Chat transcript exported as ${result.filename}`);
+            } else {
+              toast.error(`Export failed: ${result.error}`);
+            }
+          } catch (error) {
+            toast.error('Failed to export chat transcript');
+            console.error('Export error:', error);
+          }
+        }}
+        appointment={exportAppointment}
+        messageCount={exportComments.filter(msg => !msg.deleted && (msg.message?.trim() || msg.imageUrl)).length}
+        imageCount={exportComments.filter(msg => msg.imageUrl && !msg.deleted).length}
+      />
     </div>
   );
 }
@@ -5912,39 +5946,6 @@ function AdminAppointmentRow({
         initialIndex={previewIndex}
       />
 
-      {/* Export Chat Modal */}
-      <ExportChatModal
-        isOpen={showExportModal}
-        onClose={() => {
-          setShowExportModal(false);
-          setExportAppointment(null);
-          setExportComments([]);
-        }}
-        onExport={async (includeMedia) => {
-          try {
-            toast.info('Generating PDF...', { autoClose: 2000 });
-            const otherParty = exportAppointment?.buyerId?._id === currentUser._id ? exportAppointment?.sellerId : exportAppointment?.buyerId;
-            const result = await exportEnhancedChatToPDF(
-              exportAppointment, 
-              exportComments, 
-              currentUser, 
-              otherParty,
-              includeMedia
-            );
-            if (result.success) {
-              toast.success(`Chat transcript exported as ${result.filename}`);
-            } else {
-              toast.error(`Export failed: ${result.error}`);
-            }
-          } catch (error) {
-            toast.error('Failed to export chat transcript');
-            console.error('Export error:', error);
-          }
-        }}
-        appointment={exportAppointment}
-        messageCount={exportComments.filter(msg => !msg.deleted && (msg.message?.trim() || msg.imageUrl)).length}
-        imageCount={exportComments.filter(msg => msg.imageUrl && !msg.deleted).length}
-      />
       </td>
     </tr>
   );
