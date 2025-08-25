@@ -18,6 +18,24 @@ import {
   FaEyeSlash
 } from 'react-icons/fa';
 
+// Helper function to show toast messages
+const showToast = (message, type = 'info') => {
+  try {
+    // Try to use react-toastify if available
+    if (window.toast) {
+      window.toast[type](message);
+    } else if (typeof window !== 'undefined') {
+      // Fallback to console and basic alert for development
+      console[type === 'error' ? 'error' : 'info'](`ImagePreview: ${message}`);
+      if (type === 'error') {
+        alert(`Error: ${message}`);
+      }
+    }
+  } catch (error) {
+    console.error('Toast error:', error);
+  }
+};
+
 const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0 }) => {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [scale, setScale] = useState(1);
@@ -36,6 +54,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0 }) => {
   const [showSettings, setShowSettings] = useState(false);
   const [autoHideControls, setAutoHideControls] = useState(true);
   const [controlsTimeout, setControlsTimeout] = useState(null);
+  const [isDownloading, setIsDownloading] = useState(false);
   
   const imageRef = useRef(null);
   const slideshowRef = useRef(null);
@@ -269,13 +288,83 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0 }) => {
     setIsDragging(false);
   };
 
-  const handleDownload = () => {
-    const link = document.createElement('a');
-    link.href = images[currentIndex];
-    link.download = `property-image-${currentIndex + 1}.jpg`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleDownload = async () => {
+    if (isDownloading) return;
+    
+    setIsDownloading(true);
+    const imageUrl = images[currentIndex];
+    
+    try {
+      // Extract filename from URL or generate one
+      const urlParts = imageUrl.split('/');
+      const originalFilename = urlParts[urlParts.length - 1];
+      let filename = originalFilename;
+      
+      // If filename doesn't have an extension or is just a hash, generate a proper name
+      if (!filename.includes('.') || filename.length < 5) {
+        // Try to determine file extension from URL or default to jpg
+        const extension = imageUrl.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)(\?|$)/i)?.[1] || 'jpg';
+        filename = `property-image-${currentIndex + 1}.${extension}`;
+      }
+      
+      // Try to fetch the image to handle CORS and get proper blob
+      try {
+        const response = await fetch(imageUrl, {
+          mode: 'cors',
+          cache: 'no-cache'
+        });
+        
+        if (response.ok) {
+          const blob = await response.blob();
+          const blobUrl = window.URL.createObjectURL(blob);
+          
+          const link = document.createElement('a');
+          link.href = blobUrl;
+          link.download = filename;
+          link.style.display = 'none';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+          // Clean up blob URL
+          setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
+          
+          // Show success feedback
+          showToast('Image downloaded successfully!', 'success');
+        } else {
+          throw new Error('Failed to fetch image');
+        }
+      } catch (fetchError) {
+        // Fallback to direct link download for CORS issues
+        console.warn('Fetch failed, trying direct download:', fetchError);
+        
+        const link = document.createElement('a');
+        link.href = imageUrl;
+        link.download = filename;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Show info message
+        showToast('Download initiated. If it doesn\'t start, please try right-clicking the image and selecting "Save image as..."', 'info');
+      }
+    } catch (error) {
+      console.error('Download failed:', error);
+      
+      // Final fallback - open image in new tab
+      try {
+        window.open(imageUrl, '_blank', 'noopener,noreferrer');
+        showToast('Image opened in new tab. You can right-click to save it.', 'info');
+      } catch (openError) {
+        console.error('Failed to open image:', openError);
+        showToast('Download failed. Please try right-clicking the image and selecting "Save image as..."', 'error');
+      }
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   const toggleFullscreen = () => {
@@ -468,10 +557,20 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0 }) => {
         </button>
         <button
           onClick={handleDownload}
-          className="text-white hover:text-blue-300 p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200"
-          title="Download"
+          disabled={isDownloading}
+          className={`text-white p-2 rounded-lg transition-all duration-200 ${
+            isDownloading 
+              ? 'opacity-50 cursor-not-allowed' 
+              : 'hover:text-blue-300 hover:bg-white hover:bg-opacity-20'
+          }`}
+          title={isDownloading ? "Downloading..." : "Download Image"}
+          aria-label={isDownloading ? "Downloading image" : "Download image"}
         >
-          <FaDownload size={16} />
+          {isDownloading ? (
+            <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
+          ) : (
+            <FaDownload size={16} />
+          )}
         </button>
         <button
           onClick={handleShare}
@@ -554,10 +653,20 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0 }) => {
         </button>
         <button
           onClick={handleDownload}
-          className="text-white hover:text-blue-300 p-1.5 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200"
-          title="Download"
+          disabled={isDownloading}
+          className={`text-white p-1.5 rounded-lg transition-all duration-200 ${
+            isDownloading 
+              ? 'opacity-50 cursor-not-allowed' 
+              : 'hover:text-blue-300 hover:bg-white hover:bg-opacity-20'
+          }`}
+          title={isDownloading ? "Downloading..." : "Download Image"}
+          aria-label={isDownloading ? "Downloading image" : "Download image"}
         >
-          <FaDownload size={14} />
+          {isDownloading ? (
+            <div className="animate-spin w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full"></div>
+          ) : (
+            <FaDownload size={14} />
+          )}
         </button>
         <button
           onClick={() => setShowSettings(prev => !prev)}
