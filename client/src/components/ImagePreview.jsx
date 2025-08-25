@@ -23,16 +23,30 @@ const showToast = (message, type = 'info') => {
   try {
     // Try to use react-toastify if available
     if (window.toast) {
-      window.toast[type](message);
+      // Map warning to warn for react-toastify compatibility
+      const toastType = type === 'warning' ? 'warn' : type;
+      if (typeof window.toast[toastType] === 'function') {
+        window.toast[toastType](message);
+      } else {
+        // Fallback to info if type doesn't exist
+        window.toast.info(message);
+      }
     } else if (typeof window !== 'undefined') {
       // Fallback to console and basic alert for development
-      console[type === 'error' ? 'error' : 'info'](`ImagePreview: ${message}`);
+      const logLevel = type === 'error' ? 'error' : type === 'warning' ? 'warn' : 'info';
+      console[logLevel](`ImagePreview: ${message}`);
+      
+      // Show alert for errors and warnings in development
       if (type === 'error') {
         alert(`Error: ${message}`);
+      } else if (type === 'warning') {
+        console.warn(`Warning: ${message}`);
       }
     }
   } catch (error) {
     console.error('Toast error:', error);
+    // Ultimate fallback
+    console.info(`ImagePreview Toast: ${message}`);
   }
 };
 
@@ -294,6 +308,13 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0 }) => {
     setIsDownloading(true);
     const imageUrl = images[currentIndex];
     
+    // Validate image URL first
+    if (!imageUrl || typeof imageUrl !== 'string') {
+      showToast('Error: Invalid image URL. Cannot download image.', 'error');
+      setIsDownloading(false);
+      return;
+    }
+    
     try {
       // Extract filename from URL or generate one
       const urlParts = imageUrl.split('/');
@@ -315,52 +336,111 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0 }) => {
         });
         
         if (response.ok) {
-          const blob = await response.blob();
-          const blobUrl = window.URL.createObjectURL(blob);
-          
+          try {
+            const blob = await response.blob();
+            
+            // Validate blob
+            if (!blob || blob.size === 0) {
+              throw new Error('Downloaded image is empty or corrupted');
+            }
+            
+            const blobUrl = window.URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = filename;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Clean up blob URL
+            setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
+            
+            // Show success feedback
+            showToast(`Image "${filename}" downloaded successfully!`, 'success');
+            return; // Exit early on success
+            
+          } catch (blobError) {
+            console.error('Blob processing error:', blobError);
+            throw new Error(`Failed to process image data: ${blobError.message}`);
+          }
+        } else {
+          // Handle specific HTTP error codes
+          let errorMessage = `Server error (${response.status}): `;
+          switch (response.status) {
+            case 404:
+              errorMessage += 'Image not found on server';
+              break;
+            case 403:
+              errorMessage += 'Access denied to image';
+              break;
+            case 500:
+              errorMessage += 'Server internal error';
+              break;
+            default:
+              errorMessage += 'Unable to fetch image';
+          }
+          throw new Error(errorMessage);
+        }
+      } catch (fetchError) {
+        console.warn('Fetch failed, trying direct download:', fetchError);
+        
+        // Show specific error for fetch failure
+        if (fetchError.name === 'TypeError' && fetchError.message.includes('Failed to fetch')) {
+          showToast('Network error: Unable to fetch image. Trying alternative download method...', 'warning');
+        } else if (fetchError.message.includes('CORS')) {
+          showToast('CORS error: Trying alternative download method...', 'warning');
+        } else {
+          showToast(`Fetch error: ${fetchError.message}. Trying alternative download method...`, 'warning');
+        }
+        
+        // Fallback to direct link download for CORS issues
+        try {
           const link = document.createElement('a');
-          link.href = blobUrl;
+          link.href = imageUrl;
           link.download = filename;
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
           link.style.display = 'none';
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
           
-          // Clean up blob URL
-          setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
+          // Show info message for direct download attempt
+          showToast('Alternative download initiated. If it doesn\'t start automatically, please try right-clicking the image and selecting "Save image as..."', 'info');
+          return; // Exit early on fallback attempt
           
-          // Show success feedback
-          showToast('Image downloaded successfully!', 'success');
-        } else {
-          throw new Error('Failed to fetch image');
+        } catch (directDownloadError) {
+          console.error('Direct download failed:', directDownloadError);
+          throw new Error(`Direct download failed: ${directDownloadError.message}`);
         }
-      } catch (fetchError) {
-        // Fallback to direct link download for CORS issues
-        console.warn('Fetch failed, trying direct download:', fetchError);
-        
-        const link = document.createElement('a');
-        link.href = imageUrl;
-        link.download = filename;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        link.style.display = 'none';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        // Show info message
-        showToast('Download initiated. If it doesn\'t start, please try right-clicking the image and selecting "Save image as..."', 'info');
       }
     } catch (error) {
-      console.error('Download failed:', error);
+      console.error('Download process failed:', error);
+      
+      // Show error notification for the main download process failure
+      showToast(`Download failed: ${error.message}. Attempting to open image in new tab...`, 'error');
       
       // Final fallback - open image in new tab
       try {
-        window.open(imageUrl, '_blank', 'noopener,noreferrer');
-        showToast('Image opened in new tab. You can right-click to save it.', 'info');
+        const newWindow = window.open(imageUrl, '_blank', 'noopener,noreferrer');
+        
+        if (newWindow) {
+          showToast('Image opened in new tab. You can right-click to save it manually.', 'info');
+        } else {
+          // Pop-up blocked
+          throw new Error('Pop-up blocked by browser');
+        }
       } catch (openError) {
-        console.error('Failed to open image:', openError);
-        showToast('Download failed. Please try right-clicking the image and selecting "Save image as..."', 'error');
+        console.error('Failed to open image in new tab:', openError);
+        
+        // Final error - all methods failed
+        if (openError.message.includes('Pop-up blocked')) {
+          showToast('Error: Pop-up blocked. Please allow pop-ups for this site or right-click the image and select "Save image as..."', 'error');
+        } else {
+          showToast(`All download methods failed: ${openError.message}. Please right-click the image and select "Save image as..." or check your internet connection.`, 'error');
+        }
       }
     } finally {
       setIsDownloading(false);
