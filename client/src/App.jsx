@@ -43,6 +43,7 @@ const CreateListing = lazy(() => import("./pages/CreateListing"));
 const EditListing = lazy(() => import('./pages/EditListing'));
 const Listing = lazy(() => import("./pages/Listing"));
 const WishList = lazy(() => import("./pages/WishList"));
+const WatchlistExplore = lazy(() => import("./pages/WatchlistExplore"));
 const Appointment = lazy(() => import("./components/Appointment"));
 const AdminAppointments = lazy(() => import("./pages/AdminAppointments"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
@@ -537,6 +538,7 @@ function AppRoutes({ bootstrapped }) {
             <Route path='/user/update-listing/:listingId' element={<EditListing />} />
             <Route path="/user/listing/:listingId" element={<Listing key={location.pathname} />} />
             <Route path="/user/wishlist" element={<WishList />} />
+            <Route path="/user/watchlist/explore" element={<WatchlistExplore />} />
             <Route path="/user/appointment" element={<Appointment />} />
             <Route path="/user/my-appointments" element={<MyAppointments />} />
             <Route path="/user/my-listings" element={<MyListings />} />

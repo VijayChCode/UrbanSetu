@@ -56,24 +56,14 @@ const WishList = () => {
           </div>
         )}
       </div>
-      {/* Floating Plus Icon with Tooltip (ContactSupport style) */}
+      {/* Watchlist CTA Button */}
       <div className="fixed bottom-8 right-8 z-50">
         <button
-          onClick={() => navigate('/user/search')}
-          className="relative group w-16 h-16 rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-110 hover:rotate-12 flex items-center justify-center bg-gradient-to-r from-green-400 to-blue-500"
-          style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.15)' }}
-          title="Explore Properties"
+          onClick={() => navigate('/user/watchlist/explore')}
+          className="px-5 py-3 rounded-full shadow-2xl bg-gradient-to-r from-red-500 to-pink-500 text-white font-semibold hover:from-red-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-105"
+          title="Open Watchlist"
         >
-          <FaPlus className="w-7 h-7 text-white drop-shadow-lg" />
-          {/* Tooltip */}
-          <div className="absolute bottom-full right-0 mb-3 bg-white text-gray-800 text-sm px-4 py-2 rounded-xl shadow-2xl hidden group-hover:block z-10 whitespace-nowrap border border-gray-100 transform -translate-y-1 transition-all duration-200">
-            <div className="flex items-center gap-2">
-              <span className="text-lg">🏠</span>
-              <span className="font-medium">Explore properties</span>
-            </div>
-            {/* Tooltip arrow */}
-            <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-white"></div>
-          </div>
+          ❤️ Watchlist
         </button>
       </div>
     </div>

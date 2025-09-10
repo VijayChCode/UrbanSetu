@@ -1,6 +1,8 @@
 import { errorHandler } from "../utils/error.js";
 import Wishlist from "../models/wishlist.model.js";
 import Listing from "../models/listing.model.js";
+import User from "../models/user.model.js";
+import Notification from "../models/notification.model.js";
 
 // Get user's wishlist
 export const getUserWishlist = async (req, res, next) => {
@@ -112,3 +114,37 @@ export const getWishlistCount = async (req, res, next) => {
         next(error);
     }
 }; 
+
+// Get watchlist count for a specific listing
+export const getListingWatchlistCount = async (req, res, next) => {
+    try {
+        const { listingId } = req.params;
+        const count = await Wishlist.countDocuments({ listingId });
+        res.status(200).json({ listingId, count });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Admin: Get top most-watched properties
+export const getTopWatchedProperties = async (req, res, next) => {
+    try {
+        // Only admins/rootadmins can access
+        const user = req.user;
+        if (!user || ((user.role !== 'admin' || user.adminApprovalStatus !== 'approved') && user.role !== 'rootadmin')) {
+            return next(errorHandler(403, 'Admin access required'));
+        }
+        const limit = Math.min(parseInt(req.query.limit) || 10, 50);
+        const results = await Wishlist.aggregate([
+            { $group: { _id: "$listingId", count: { $sum: 1 } } },
+            { $sort: { count: -1 } },
+            { $limit: limit },
+            { $lookup: { from: "listings", localField: "_id", foreignField: "_id", as: "listing" } },
+            { $unwind: "$listing" },
+            { $project: { _id: 0, listing: 1, count: 1 } }
+        ]);
+        res.status(200).json(results);
+    } catch (error) {
+        next(error);
+    }
+};

@@ -151,11 +151,32 @@ export const deleteListing=async (req,res,next)=>{
           }
         }
 
+        // Get all wishlisters before deletion for notifications
+        const wishlisters = await Wishlist.find({ listingId: req.params.id }).select('userId');
+        const wishlisterIds = [...new Set(wishlisters.map(w => w.userId.toString()))];
+
         // Delete the listing
         await Listing.findByIdAndDelete(req.params.id)
-        
+
         // Delete all wishlist items associated with this listing
         await Wishlist.deleteMany({ listingId: req.params.id })
+
+        // Notify wishlisters the property is removed/sold
+        try {
+          if (wishlisterIds.length > 0) {
+            const notifications = wishlisterIds.map(uid => ({
+              userId: uid,
+              type: 'watchlist_property_removed',
+              title: 'A Watchlisted Property Was Removed',
+              message: `A property you watchlisted ("${listing.name}") is no longer available.`,
+              listingId: listing._id,
+              adminId: req.user.id
+            }));
+            await Notification.insertMany(notifications);
+          }
+        } catch (notifyErr) {
+          console.error('Failed to notify wishlisters about removal:', notifyErr);
+        }
         
         res.status(200).json({
           success: true,
@@ -195,6 +216,14 @@ export const updateListing=async (req,res,next)=>{
           updateData = dataWithoutUserRef;
         }
         
+        // Load existing to detect price drop
+        const prev = listing;
+        const prevEffectivePrice = (prev.offer && prev.discountPrice) ? prev.discountPrice : prev.regularPrice;
+        const willOffer = updateData.offer ?? prev.offer;
+        const willDiscount = updateData.discountPrice ?? prev.discountPrice;
+        const willRegular = updateData.regularPrice ?? prev.regularPrice;
+        const nextEffectivePrice = (willOffer && willDiscount) ? willDiscount : willRegular;
+
         const updateListing=await Listing.findByIdAndUpdate(req.params.id, updateData, {new:true})
         
         // Create notification if admin is editing someone else's property
@@ -229,6 +258,28 @@ export const updateListing=async (req,res,next)=>{
           }
         }
         
+        // Notify wishlisters on price drop
+        try {
+          if (typeof prevEffectivePrice === 'number' && typeof nextEffectivePrice === 'number' && nextEffectivePrice < prevEffectivePrice) {
+            const wishlisters = await Wishlist.find({ listingId: req.params.id }).select('userId');
+            const wishlisterIds = [...new Set(wishlisters.map(w => w.userId.toString()))];
+            if (wishlisterIds.length > 0) {
+              const dropPct = Math.round(((prevEffectivePrice - nextEffectivePrice) / prevEffectivePrice) * 100);
+              const notifications = wishlisterIds.map(uid => ({
+                userId: uid,
+                type: 'watchlist_price_drop',
+                title: 'Price Drop on Watchlisted Property',
+                message: `Good news! "${updateListing.name}" price dropped by ${isFinite(dropPct) ? dropPct + '%' : 'a discount'} to ₹${(nextEffectivePrice||0).toLocaleString('en-IN')}.`,
+                listingId: updateListing._id,
+                adminId: req.user.id
+              }));
+              await Notification.insertMany(notifications);
+            }
+          }
+        } catch (notifyErr) {
+          console.error('Failed to notify wishlisters about price drop:', notifyErr);
+        }
+
         return res.status(200).json({
             success: true,
             message: notificationMessage,

@@ -4,7 +4,9 @@ import {
     addToWishlist, 
     removeFromWishlist, 
     checkWishlistStatus,
-    getWishlistCount 
+    getWishlistCount,
+    getListingWatchlistCount,
+    getTopWatchedProperties
 } from '../controllers/wishlist.controller.js';
 import { verifyToken } from '../utils/verify.js';
 
@@ -27,5 +29,11 @@ router.get('/check/:listingId', checkWishlistStatus);
 
 // Get wishlist count
 router.get('/count', getWishlistCount);
+
+// Get watchlist count for a listing
+router.get('/listing/:listingId/count', getListingWatchlistCount);
+
+// Admin: Top watched properties
+router.get('/admin/top', getTopWatchedProperties);
 
 export default router; 

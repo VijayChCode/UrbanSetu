@@ -156,10 +156,16 @@ router.get('/listing/:listingId', async (req, res, next) => {
 // Get user's reviews
 router.get('/user', verifyToken, async (req, res, next) => {
   try {
-    const reviews = await Review.find({ userId: req.user.id })
+    const { includeRemoved } = req.query;
+    const baseQuery = { userId: req.user.id };
+    // By default, exclude removed reviews from user's list view
+    // Pass includeRemoved=true to fetch all statuses
+    if (!includeRemoved || includeRemoved === 'false') {
+      baseQuery.status = { $nin: ['removed', 'removed_by_user'] };
+    }
+    const reviews = await Review.find(baseQuery)
       .populate('listingId', 'name imageUrls city state')
       .sort({ createdAt: -1 });
-    
     res.status(200).json(reviews);
   } catch (error) {
     next(error);
