@@ -20,6 +20,7 @@ export default function AdminFraudManagement() {
   const [includeLowSeverity, setIncludeLowSeverity] = useState(false);
   const [resolvedListings, setResolvedListings] = useState(() => new Set(JSON.parse(localStorage.getItem('fraud_resolved_listings') || '[]')));
   const [resolvedReviews, setResolvedReviews] = useState(() => new Set(JSON.parse(localStorage.getItem('fraud_resolved_reviews') || '[]')));
+  const [showSelectMode, setShowSelectMode] = useState(false);
   const navigate = useNavigate();
 
   const fetchData = async () => {
@@ -393,18 +394,31 @@ export default function AdminFraudManagement() {
                 a.href = url; a.download = 'fraud-report.csv'; a.click();
                 URL.revokeObjectURL(url);
               }}>Export CSV</button>
-              <button className="px-3 py-2 bg-gray-800 text-white rounded-lg text-sm" onClick={()=>{
-                // Bulk resolve: persist hidden IDs and remove from current view
-                const newResolvedListings = new Set(JSON.parse(localStorage.getItem('fraud_resolved_listings') || '[]'));
-                selectedRows.listings.forEach(id => newResolvedListings.add(String(id)));
-                localStorage.setItem('fraud_resolved_listings', JSON.stringify(Array.from(newResolvedListings)));
-                const newResolvedReviews = new Set(JSON.parse(localStorage.getItem('fraud_resolved_reviews') || '[]'));
-                selectedRows.reviews.forEach(id => newResolvedReviews.add(String(id)));
-                localStorage.setItem('fraud_resolved_reviews', JSON.stringify(Array.from(newResolvedReviews)));
-                setListings(prev => prev.filter(x => !selectedRows.listings.has(x._id)));
-                setReviews(prev => prev.filter(x => !selectedRows.reviews.has(x._id)));
-                setSelectedRows({ listings: new Set(), reviews: new Set() });
-              }}>Resolve Selected</button>
+              {showSelectMode ? (
+                <div className="flex gap-2">
+                  <button className="px-3 py-2 bg-red-600 text-white rounded-lg text-sm" onClick={()=>{
+                    // Bulk resolve: persist hidden IDs and remove from current view
+                    const newResolvedListings = new Set(JSON.parse(localStorage.getItem('fraud_resolved_listings') || '[]'));
+                    selectedRows.listings.forEach(id => newResolvedListings.add(String(id)));
+                    localStorage.setItem('fraud_resolved_listings', JSON.stringify(Array.from(newResolvedListings)));
+                    const newResolvedReviews = new Set(JSON.parse(localStorage.getItem('fraud_resolved_reviews') || '[]'));
+                    selectedRows.reviews.forEach(id => newResolvedReviews.add(String(id)));
+                    localStorage.setItem('fraud_resolved_reviews', JSON.stringify(Array.from(newResolvedReviews)));
+                    setListings(prev => prev.filter(x => !selectedRows.listings.has(x._id)));
+                    setReviews(prev => prev.filter(x => !selectedRows.reviews.has(x._id)));
+                    setSelectedRows({ listings: new Set(), reviews: new Set() });
+                    setShowSelectMode(false);
+                  }}>Resolve Selected</button>
+                  <button className="px-3 py-2 bg-gray-500 text-white rounded-lg text-sm" onClick={()=>{
+                    setShowSelectMode(false);
+                    setSelectedRows({ listings: new Set(), reviews: new Set() });
+                  }}>Cancel</button>
+                </div>
+              ) : (
+                <button className="px-3 py-2 bg-blue-600 text-white rounded-lg text-sm" onClick={()=>{
+                  setShowSelectMode(true);
+                }}>Select</button>
+              )}
             </div>
 
             {(filter==='all' || filter==='listings') && (
@@ -414,11 +428,11 @@ export default function AdminFraudManagement() {
                   <table className="min-w-full border table-fixed text-xs sm:text-sm">
                     <thead className="bg-gray-100">
                       <tr>
-                        <th className="p-2 text-left w-8">Select</th>
+                        {showSelectMode && <th className="p-2 text-left w-8">Select</th>}
                         <th className="p-2 text-left">Name</th>
                         <th className="p-2 text-left hidden md:table-cell">City</th>
                         <th className="p-2 text-left">Reasons</th>
-                        <th className="p-2 text-left hidden sm:table-cell">Actions</th>
+                        <th className="p-2 text-left">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -445,14 +459,14 @@ export default function AdminFraudManagement() {
                         .slice((pageL-1)*pageSize, pageL*pageSize)
                         .map(l => (
                         <tr key={l._id} className="border-t">
-                          <td className="p-2 text-sm"><input type="checkbox" checked={selectedRows.listings.has(l._id)} onChange={(e)=>{
+                          {showSelectMode && <td className="p-2 text-sm"><input type="checkbox" checked={selectedRows.listings.has(l._id)} onChange={(e)=>{
                             const ns = new Set(selectedRows.listings); if (e.target.checked) ns.add(l._id); else ns.delete(l._id);
                             setSelectedRows(s => ({ ...s, listings: ns }));
-                          }} /></td>
+                          }} /></td>}
                           <td className="p-2">{l.name}</td>
                           <td className="p-2 hidden md:table-cell">{l.city}, {l.state}</td>
                           <td className="p-2">{(l._fraudReasons||[]).join(', ')}</td>
-                          <td className="p-2 hidden sm:table-cell"><div className="flex flex-wrap gap-2">
+                          <td className="p-2"><div className="flex flex-wrap gap-2">
                             <Link to={`/admin/listing/${l._id}`} className="px-2 py-1 bg-blue-600 text-white rounded text-xs sm:text-sm">Open</Link>
                             <button className="px-2 py-1 bg-gray-200 rounded text-xs sm:text-sm" onClick={() => window.open(`/admin/listing/${l._id}`, '_blank')}>New Tab</button>
                           </div></td>
@@ -467,7 +481,7 @@ export default function AdminFraudManagement() {
                       })
                         .filter(l => reasonFilter==='all' ? true : (l._fraudReasons||[]).includes(reasonFilter))
                         .length === 0 && (
-                        <tr><td className="p-3 text-sm text-gray-500" colSpan={5}>No suspicious listings</td></tr>
+                        <tr><td className="p-3 text-sm text-gray-500" colSpan={showSelectMode ? 5 : 4}>No suspicious listings</td></tr>
                       )}
                     </tbody>
                   </table>
@@ -488,12 +502,12 @@ export default function AdminFraudManagement() {
                   <table className="min-w-full border table-fixed text-xs sm:text-sm">
                     <thead className="bg-gray-100">
                       <tr>
-                        <th className="p-2 text-left w-8">Select</th>
+                        {showSelectMode && <th className="p-2 text-left w-8">Select</th>}
                         <th className="p-2 text-left">Listing</th>
                         <th className="p-2 text-left hidden md:table-cell">User</th>
                         <th className="p-2 text-left">Comment</th>
                         <th className="p-2 text-left">Reasons</th>
-                        <th className="p-2 text-left hidden sm:table-cell">Actions</th>
+                        <th className="p-2 text-left">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -519,15 +533,15 @@ export default function AdminFraudManagement() {
                         .slice((pageR-1)*pageSize, pageR*pageSize)
                         .map(r => (
                         <tr key={r._id} className="border-t">
-                          <td className="p-2 text-sm"><input type="checkbox" checked={selectedRows.reviews.has(r._id)} onChange={(e)=>{
+                          {showSelectMode && <td className="p-2 text-sm"><input type="checkbox" checked={selectedRows.reviews.has(r._id)} onChange={(e)=>{
                             const ns = new Set(selectedRows.reviews); if (e.target.checked) ns.add(r._id); else ns.delete(r._id);
                             setSelectedRows(s => ({ ...s, reviews: ns }));
-                          }} /></td>
+                          }} /></td>}
                           <td className="p-2">{r.listingId?.name || r.listingId}</td>
                           <td className="p-2 hidden md:table-cell">{r.userId?.email || r.userId}</td>
                           <td className="p-2 max-w-[10rem] sm:max-w-md truncate" title={r.comment}>{r.comment}</td>
                           <td className="p-2">{(r._fraudReasons||[]).join(', ')}</td>
-                          <td className="p-2 hidden sm:table-cell"><div className="flex flex-wrap gap-2">
+                          <td className="p-2"><div className="flex flex-wrap gap-2">
                             <a href={`/admin/listing/${r.listingId?._id || r.listingId}`} className="px-2 py-1 bg-blue-600 text-white rounded text-xs sm:text-sm">Open</a>
                             <button className="px-2 py-1 bg-gray-200 rounded text-xs sm:text-sm" onClick={() => window.open(`/admin/listing/${r.listingId?._id || r.listingId}`, '_blank')}>New Tab</button>
                           </div></td>
@@ -547,7 +561,7 @@ export default function AdminFraudManagement() {
                       })
                         .filter(r => reasonFilter==='all' ? true : (r._fraudReasons||[]).includes(reasonFilter))
                         .length === 0 && (
-                        <tr><td className="p-3 text-sm text-gray-500" colSpan={5}>No suspected fake reviews</td></tr>
+                        <tr><td className="p-3 text-sm text-gray-500" colSpan={showSelectMode ? 6 : 5}>No suspected fake reviews</td></tr>
                       )}
                     </tbody>
                   </table>
