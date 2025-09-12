@@ -836,6 +836,5 @@ export default function AdminFraudManagement() {
           </div>
         </div>
       </div>
-    </div>
   );
 }
