@@ -4,6 +4,7 @@ import { FaEye, FaEyeSlash, FaCheck, FaTimes, FaEdit } from "react-icons/fa";
 import Oauth from "../components/Oauth";
 import ContactSupportWrapper from "../components/ContactSupportWrapper";
 import { useSelector } from "react-redux";
+import { calculatePasswordStrength, getPasswordStrengthColor, getPasswordStrengthBgColor, getPasswordStrengthText, meetsMinimumRequirements } from "../utils/passwordStrength.js";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -17,12 +18,10 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
     mobileNumber: "",
   });
 
-  const [passwordValidity, setPasswordValidity] = useState({
-    length: false,
-    uppercase: false,
-    lowercase: false,
-    number: false,
-    specialChar: false,
+  const [passwordStrength, setPasswordStrength] = useState({
+    score: 0,
+    level: 'very-weak',
+    feedback: []
   });
 
   const [showPassword, setShowPassword] = useState(false);
@@ -52,14 +51,8 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
   const [canResend, setCanResend] = useState(true);
 
   const checkPasswordStrength = (password) => {
-    const validity = {
-      length: password.length >= 8,
-      uppercase: /[A-Z]/.test(password),
-      lowercase: /[a-z]/.test(password),
-      number: /[0-9]/.test(password),
-      specialChar: /[^A-Za-z0-9]/.test(password),
-    };
-    setPasswordValidity(validity);
+    const strength = calculatePasswordStrength(password);
+    setPasswordStrength(strength);
   };
 
   // Timer effect for resend OTP
@@ -558,37 +551,51 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                 </div>
               </div>
 
-              {/* Password Strength */}
-              <div className="space-y-2 text-sm">
-                <p className="font-medium text-gray-700 mb-2">Password Requirements:</p>
-                <div className="grid grid-cols-1 gap-1">
-                  <p className={`flex items-center ${
-                    passwordValidity.length ? "text-green-600" : "text-red-500"
-                  }`}>
-                    {passwordValidity.length ? "✔️" : "❌"} Minimum 8 characters
-                  </p>
-                  <p className={`flex items-center ${
-                    passwordValidity.uppercase ? "text-green-600" : "text-red-500"
-                  }`}>
-                    {passwordValidity.uppercase ? "✔️" : "❌"} At least one uppercase letter
-                  </p>
-                  <p className={`flex items-center ${
-                    passwordValidity.lowercase ? "text-green-600" : "text-red-500"
-                  }`}>
-                    {passwordValidity.lowercase ? "✔️" : "❌"} At least one lowercase letter
-                  </p>
-                  <p className={`flex items-center ${
-                    passwordValidity.number ? "text-green-600" : "text-red-500"
-                  }`}>
-                    {passwordValidity.number ? "✔️" : "❌"} At least one number
-                  </p>
-                  <p className={`flex items-center ${
-                    passwordValidity.specialChar ? "text-green-600" : "text-red-500"
-                  }`}>
-                    {passwordValidity.specialChar ? "✔️" : "❌"} At least one special character
-                  </p>
+              {/* Enhanced Password Strength */}
+              {formData.password && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Password Strength:</span>
+                    <span className={`text-sm font-semibold ${getPasswordStrengthColor(passwordStrength.level)}`}>
+                      {getPasswordStrengthText(passwordStrength.level)}
+                    </span>
+                  </div>
+                  
+                  {/* Strength Bar */}
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className={`h-2 rounded-full transition-all duration-300 ${
+                        passwordStrength.level === 'very-weak' ? 'bg-red-500 w-1/5' :
+                        passwordStrength.level === 'weak' ? 'bg-red-400 w-2/5' :
+                        passwordStrength.level === 'medium' ? 'bg-yellow-400 w-3/5' :
+                        passwordStrength.level === 'strong' ? 'bg-green-400 w-4/5' :
+                        'bg-green-500 w-full'
+                      }`}
+                    ></div>
+                  </div>
+                  
+                  {/* Feedback */}
+                  {passwordStrength.feedback.length > 0 && (
+                    <div className={`p-3 rounded-lg ${getPasswordStrengthBgColor(passwordStrength.level)}`}>
+                      <p className="text-sm font-medium text-gray-700 mb-1">To improve your password:</p>
+                      <ul className="text-xs space-y-1">
+                        {passwordStrength.feedback.map((item, index) => (
+                          <li key={index} className="flex items-center">
+                            <span className="mr-2">•</span>
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  
+                  {/* Security Tips */}
+                  <div className="text-xs text-gray-500 space-y-1">
+                    <p>💡 <strong>Tip:</strong> Use a unique password for this account</p>
+                    <p>🔒 <strong>Security:</strong> Consider using a password manager</p>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Confirm Password */}
               <div>
@@ -634,7 +641,7 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
               <button
                 disabled={
                   loading ||
-                  Object.values(passwordValidity).includes(false) ||
+                  !meetsMinimumRequirements(formData.password) ||
                   !emailVerified
                 }
                 className="w-full py-3 px-4 bg-gradient-to-r from-green-600 to-blue-600 text-white font-semibold rounded-lg hover:from-green-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105"

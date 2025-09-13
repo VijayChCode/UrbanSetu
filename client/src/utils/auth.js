@@ -1,4 +1,5 @@
 // Utility functions for handling authentication with cookie and localStorage fallbacks
+import { authenticatedFetch as csrfAuthenticatedFetch } from './csrf.js';
 
 // Check if cookies are working by setting and reading a test cookie
 export const areCookiesEnabled = () => {
@@ -61,10 +62,9 @@ export const createAuthenticatedFetchOptions = (options = {}) => {
   return fetchOptions;
 };
 
-// Enhanced fetch function that automatically handles authentication
+// Enhanced fetch function that automatically handles authentication and CSRF
 export const authenticatedFetch = async (url, options = {}) => {
-  const authOptions = createAuthenticatedFetchOptions(options);
-  return fetch(url, authOptions);
+  return csrfAuthenticatedFetch(url, options);
 };
 
 // Check if user is authenticated (has valid token)

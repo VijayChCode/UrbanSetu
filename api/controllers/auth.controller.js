@@ -3,6 +3,9 @@ import bcryptjs from "bcryptjs";
 import { errorHandler } from "../utils/error.js";
 import jwt from 'jsonwebtoken'
 import { generateOTP, sendSignupOTPEmail,sendLoginOTPEmail } from "../utils/emailService.js";
+import { generateTokenPair, setSecureCookies, clearAuthCookies } from "../utils/jwtUtils.js";
+import { trackFailedAttempt, clearFailedAttempts, logSecurityEvent, sendAdminAlert, isAccountLocked, checkSuspiciousLogin, checkSuspiciousSignup } from "../middleware/security.js";
+import { createSession, updateSessionActivity, detectConcurrentLogins, cleanupOldSessions } from "../utils/sessionManager.js";
 
 export const SignUp=async (req,res,next)=>{
     const {username,email,password,role,mobileNumber,address,emailVerified}=req.body;
@@ -27,12 +30,14 @@ export const SignUp=async (req,res,next)=>{
         // Check if email already exists
         const existingEmail = await User.findOne({ email: emailLower });
         if (existingEmail) {
+            logSecurityEvent('duplicate_signup_attempt', { email: emailLower, reason: 'email_exists' });
             return next(errorHandler(400, "An account with this email already exists. Please sign in instead!"));
         }
         
         // Check if mobile number already exists
         const existingMobile = await User.findOne({ mobileNumber });
         if (existingMobile) {
+            logSecurityEvent('duplicate_signup_attempt', { email: emailLower, mobileNumber, reason: 'mobile_exists' });
             return next(errorHandler(400, "An account with this mobile number already exists. Try signing in or use a different number."));
         }
         
@@ -52,6 +57,19 @@ export const SignUp=async (req,res,next)=>{
         })
         
         await newUser.save();
+        
+        // Check for suspicious signup patterns
+        const ip = req.ip || req.connection.remoteAddress;
+        const userAgent = req.get('User-Agent');
+        checkSuspiciousSignup(emailLower, ip, userAgent);
+        
+        // Log successful signup
+        logSecurityEvent('successful_signup', { 
+            email: emailLower, 
+            userId: newUser._id,
+            role: newUser.role,
+            ip
+        });
         
         if (role === "admin") {
             res.status(201).json({
@@ -74,17 +92,34 @@ export const SignUp=async (req,res,next)=>{
 export const SignIn=async(req,res,next)=>{
     const {email,password}=req.body 
     const emailLower = email.toLowerCase();
+    const identifier = req.ip || req.connection.remoteAddress;
+    
     try{
         const validUser=await User.findOne({email: emailLower})
         if (!validUser){
-            return next(errorHandler(404,"user not found"))
+            // Track failed attempt
+            trackFailedAttempt(identifier);
+            logSecurityEvent('failed_login', { email: emailLower, reason: 'user_not_found' });
+            return next(errorHandler(401,"Invalid credentials"))
         }
+        
+        // Check if account is locked
+        if (isAccountLocked(validUser._id)) {
+            logSecurityEvent('account_locked_attempt', { email: emailLower, userId: validUser._id });
+            return next(errorHandler(423, "Account is temporarily locked due to too many failed attempts. Please try again later."));
+        }
+        
         if (validUser.status === 'suspended') {
+            logSecurityEvent('suspended_account_attempt', { email: emailLower, userId: validUser._id });
             return next(errorHandler(403, "Your account is suspended. Please contact support."));
         }
+        
         const validPassword=await bcryptjs.compareSync(password,validUser.password)
         if (!validPassword){
-            return next(errorHandler(401,"Wrong Credentials"))
+            // Track failed attempt
+            trackFailedAttempt(identifier, validUser._id);
+            logSecurityEvent('failed_login', { email: emailLower, userId: validUser._id, reason: 'invalid_password' });
+            return next(errorHandler(401,"Invalid credentials"))
         }
         
         // Check if admin account is pending approval
@@ -97,13 +132,39 @@ export const SignIn=async(req,res,next)=>{
             return next(errorHandler(403, "Your admin account request has been rejected. Please contact support for more information."));
         }
         
-        const token=jwt.sign({id:validUser._id},process.env.JWT_TOKEN)
-        res.cookie('access_token',token,{
-            httpOnly:true,
-            sameSite: 'none',
-            secure: true,
-            path: '/'
-        }).status(200).json({
+        // Clear failed attempts on successful login
+        clearFailedAttempts(identifier);
+        
+        // Check for suspicious login patterns
+        const userAgent = req.get('User-Agent');
+        checkSuspiciousLogin(validUser._id, identifier, userAgent);
+        
+        // Create new session
+        const session = createSession(validUser._id, req);
+        
+        // Check for concurrent logins
+        const concurrentInfo = detectConcurrentLogins(validUser._id, session.sessionId);
+        
+        // Clean up old sessions (keep only last 5)
+        cleanupOldSessions(validUser._id);
+        
+        // Log successful login
+        logSecurityEvent('successful_login', { 
+            email: emailLower, 
+            userId: validUser._id,
+            ip: identifier,
+            userAgent,
+            sessionId: session.sessionId,
+            concurrentLogins: concurrentInfo.activeSessions
+        });
+        
+        // Generate token pair
+        const { accessToken, refreshToken } = generateTokenPair({ id: validUser._id });
+        
+        // Set secure cookies
+        setSecureCookies(res, accessToken, refreshToken);
+        
+        res.status(200).json({
             _id: validUser._id,
             username: validUser.username,
             email: validUser.email,
@@ -115,7 +176,7 @@ export const SignIn=async(req,res,next)=>{
             mobileNumber: validUser.mobileNumber,
             address: validUser.address,
             gender: validUser.gender,
-            token,
+            token: accessToken, // Keep for backward compatibility
         });
     }
     catch(error){
@@ -133,13 +194,13 @@ export const Google=async (req,res,next)=>{
             if (validUser.status === 'suspended') {
                 return next(errorHandler(403, "Your account is suspended. Please contact support."));
             }
-            const token=jwt.sign({id:validUser._id},process.env.JWT_TOKEN)
-            res.cookie('access_token',token,{
-                httpOnly:true,
-                sameSite: 'none',
-                secure: true,
-                path: '/'
-            }).status(200).json({
+            // Generate token pair
+            const { accessToken, refreshToken } = generateTokenPair({ id: validUser._id });
+            
+            // Set secure cookies
+            setSecureCookies(res, accessToken, refreshToken);
+            
+            res.status(200).json({
                 _id: validUser._id,
                 username: validUser.username,
                 email: validUser.email,
@@ -151,7 +212,7 @@ export const Google=async (req,res,next)=>{
                 mobileNumber: validUser.mobileNumber,
                 address: validUser.address,
                 gender: validUser.gender,
-                token,
+                token: accessToken, // Keep for backward compatibility
             });
         }
         else{
@@ -186,13 +247,14 @@ export const Google=async (req,res,next)=>{
                 isGeneratedMobile: true
             })
             await newUser.save()
-            const token=jwt.sign({id:newUser._id},process.env.JWT_TOKEN)
-            res.cookie('access_token',token,{
-                httpOnly:true,
-                sameSite: 'none',
-                secure: true,
-                path: '/'
-            }).status(200).json({
+            
+            // Generate token pair
+            const { accessToken, refreshToken } = generateTokenPair({ id: newUser._id });
+            
+            // Set secure cookies
+            setSecureCookies(res, accessToken, refreshToken);
+            
+            res.status(200).json({
                 _id: newUser._id,
                 username: newUser.username,
                 email: newUser.email,
@@ -205,7 +267,7 @@ export const Google=async (req,res,next)=>{
                 isGeneratedMobile: newUser.isGeneratedMobile,
                 address: newUser.address,
                 gender: newUser.gender,
-                token,
+                token: accessToken, // Keep for backward compatibility
             });
         }
     }
@@ -218,12 +280,7 @@ export const Google=async (req,res,next)=>{
 
 export const Signout = async (req, res, next) => {
     try {
-      res.clearCookie('access_token', {
-        httpOnly: true,
-        sameSite: 'none',
-        secure: true,
-        path: '/'
-      });
+      clearAuthCookies(res);
       res.status(200).json('User has been logged out!');
     } catch (error) {
       next(error);
@@ -232,24 +289,51 @@ export const Signout = async (req, res, next) => {
 
 export const verifyAuth = async (req, res, next) => {
     try {
-        const token = req.cookies.access_token;
+        const accessToken = req.cookies.access_token;
+        const refreshToken = req.cookies.refresh_token;
         
-        if (!token) {
-            return next(errorHandler(401, "Access token not found"));
+        if (!accessToken && !refreshToken) {
+            return next(errorHandler(401, "No authentication tokens found"));
         }
         
-        const decoded = jwt.verify(token, process.env.JWT_TOKEN);
+        let decoded;
+        
+        try {
+            // Try to verify access token first
+            decoded = jwt.verify(accessToken, process.env.JWT_TOKEN, {
+                issuer: 'urbansetu',
+                audience: 'urbansetu-users'
+            });
+        } catch (accessError) {
+            // If access token is invalid or expired, try refresh token
+            if (accessError.name === 'TokenExpiredError' && refreshToken) {
+                try {
+                    const refreshDecoded = jwt.verify(refreshToken, process.env.JWT_TOKEN, {
+                        issuer: 'urbansetu',
+                        audience: 'urbansetu-refresh'
+                    });
+                    
+                    // Generate new token pair
+                    const { accessToken: newAccessToken, refreshToken: newRefreshToken } = generateTokenPair({ id: refreshDecoded.id });
+                    
+                    // Set new cookies
+                    setSecureCookies(res, newAccessToken, newRefreshToken);
+                    
+                    decoded = refreshDecoded;
+                } catch (refreshError) {
+                    return next(errorHandler(401, "Session expired. Please sign in again."));
+                }
+            } else {
+                return next(errorHandler(401, "Invalid token"));
+            }
+        }
+        
         const user = await User.findById(decoded.id).select('-password');
         
         if (!user) {
             return next(errorHandler(404, "User not found"));
         }
-        res.cookie('access_token', token, {
-            httpOnly: true,
-            sameSite: 'none',
-            secure: true,
-            path: '/'
-        });
+        
         res.status(200).json(user);
     } catch (error) {
         if (error.name === 'JsonWebTokenError') {
@@ -261,6 +345,19 @@ export const verifyAuth = async (req, res, next) => {
         next(error);
     }
 };
+
+// Store for password reset tokens (in production, use Redis)
+const resetTokenStore = new Map();
+
+// Clean up expired reset tokens every 5 minutes
+setInterval(() => {
+    const now = Date.now();
+    for (const [token, data] of resetTokenStore.entries()) {
+        if (now > data.expiresAt) {
+            resetTokenStore.delete(token);
+        }
+    }
+}, 5 * 60 * 1000);
 
 // Forgot Password - Verify email only (mobile number verification removed)
 export const forgotPassword = async (req, res, next) => {
@@ -275,12 +372,33 @@ export const forgotPassword = async (req, res, next) => {
         // Find user with matching email
         const user = await User.findOne({ email: emailLower });
         
-        if (!user) {
-            return next(errorHandler(404, "No account found with that email."));
+        if (user) {
+            // Generate reset token (30 minutes expiry)
+            const resetToken = jwt.sign(
+                { 
+                    id: user._id, 
+                    email: emailLower,
+                    type: 'password_reset'
+                }, 
+                process.env.JWT_TOKEN, 
+                { expiresIn: '30m' }
+            );
+            
+            // Store reset token with expiration
+            resetTokenStore.set(resetToken, {
+                userId: user._id,
+                email: emailLower,
+                expiresAt: Date.now() + 30 * 60 * 1000, // 30 minutes
+                used: false
+            });
+            
+            // TODO: Send reset email with token
+            // For now, we'll just return success
         }
         
+        // Always return success message to prevent email enumeration
         res.status(200).json({ 
-            message: "User found. Please proceed with OTP verification.",
+            message: "If this email exists, we sent instructions.",
             success: true
         });
     } catch (error) {
@@ -291,9 +409,9 @@ export const forgotPassword = async (req, res, next) => {
 // Reset Password
 export const resetPassword = async (req, res, next) => {
     try {
-        const { userId, newPassword, confirmPassword } = req.body;
+        const { token, newPassword, confirmPassword } = req.body;
         
-        if (!userId || !newPassword || !confirmPassword) {
+        if (!token || !newPassword || !confirmPassword) {
             return next(errorHandler(400, "All fields are required"));
         }
         
@@ -307,16 +425,48 @@ export const resetPassword = async (req, res, next) => {
             return next(errorHandler(400, "Password must be at least 8 characters and include uppercase, lowercase, number, and special character"));
         }
         
+        // Verify reset token
+        let decoded;
+        try {
+            decoded = jwt.verify(token, process.env.JWT_TOKEN);
+            if (decoded.type !== 'password_reset') {
+                return next(errorHandler(400, "Invalid token type"));
+            }
+        } catch (error) {
+            return next(errorHandler(400, "Invalid or expired reset token"));
+        }
+        
+        // Check if token exists in store and is not used
+        const tokenData = resetTokenStore.get(token);
+        if (!tokenData || tokenData.used) {
+            return next(errorHandler(400, "Invalid or expired reset token"));
+        }
+        
+        // Check if token is expired
+        if (Date.now() > tokenData.expiresAt) {
+            resetTokenStore.delete(token);
+            return next(errorHandler(400, "Reset token has expired"));
+        }
+        
         // Find user by ID
-        const user = await User.findById(userId);
+        const user = await User.findById(tokenData.userId);
         
         if (!user) {
             return next(errorHandler(404, "User not found"));
         }
         
+        // Check if new password is different from current password
+        const isSamePassword = await bcryptjs.compare(newPassword, user.password);
+        if (isSamePassword) {
+            return next(errorHandler(400, "New password must be different from current password"));
+        }
+        
         // Update password
         user.password = bcryptjs.hashSync(newPassword, 10);
         await user.save();
+        
+        // Mark token as used
+        resetTokenStore.delete(token);
         
         res.status(200).json({ 
             message: "Password reset successful. You can now log in.",
@@ -344,9 +494,9 @@ export const sendLoginOTP = async (req, res, next) => {
         // Check if user exists with the email
         const user = await User.findOne({ email: emailLower });
         if (!user) {
-            return res.status(404).json({
-                success: false,
-                message: "No account found with that email address."
+            return res.status(200).json({
+                success: true,
+                message: "If this email exists, we sent instructions."
             });
         }
 
@@ -458,24 +608,19 @@ export const verifyLoginOTP = async (req, res, next) => {
             });
         }
 
-        // Generate JWT token
-        const token = jwt.sign({ id: user._id }, process.env.JWT_TOKEN);
+        // Generate token pair
+        const { accessToken, refreshToken } = generateTokenPair({ id: user._id });
         
         // Clear OTP from store
         loginOtpStore.delete(emailLower);
 
-        // Set cookie
-        res.cookie('access_token', token, {
-            httpOnly: true,
-            sameSite: 'none',
-            secure: true,
-            path: '/'
-        });
+        // Set secure cookies
+        setSecureCookies(res, accessToken, refreshToken);
 
         res.status(200).json({
             success: true,
             message: "Login successful",
-            token,
+            token: accessToken, // Keep for backward compatibility
             role: user.role,
             isDefaultAdmin: user.isDefaultAdmin,
             adminApprovalStatus: user.adminApprovalStatus,
