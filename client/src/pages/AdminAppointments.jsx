@@ -4,6 +4,7 @@ import { FormattedTextWithLinks, FormattedTextWithLinksAndSearch, FormattedTextW
 import UserAvatar from '../components/UserAvatar';
 import { focusWithoutKeyboard, focusWithKeyboard } from '../utils/mobileUtils';
 import ImagePreview from '../components/ImagePreview';
+import ChatMediaPreview from '../components/ChatMediaPreview';
 import LinkPreview from '../components/LinkPreview';
 import { EmojiButton } from '../components/EmojiPicker';
 import { useSelector } from "react-redux";
@@ -57,6 +58,11 @@ export default function AdminAppointments() {
   const [showExportModal, setShowExportModal] = useState(false);
   const [exportAppointment, setExportAppointment] = useState(null);
   const [exportComments, setExportComments] = useState([]);
+
+  // Unified chat media preview (images + videos)
+  const [showChatMediaPreview, setShowChatMediaPreview] = useState(false);
+  const [chatMediaItems, setChatMediaItems] = useState([]); // [{type:'image'|'video', url:string}]
+  const [chatMediaStartIndex, setChatMediaStartIndex] = useState(0);
 
    // Lock body scroll when admin action modals are open (cancel, reinitiate, archive, unarchive)
    useEffect(() => {
@@ -4992,12 +4998,17 @@ function AdminAppointmentRow({
                                           alt="Preserved image from deleted message"
                                           className="max-w-full max-h-64 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                                           onClick={() => {
-                                            const chatImages = (localComments || []).filter(msg => !!(msg.originalImageUrl || msg.imageUrl)).map(msg => msg.originalImageUrl || msg.imageUrl);
+                                            const media = (localComments || [])
+                                              .filter(msg => (msg.originalImageUrl || msg.imageUrl || msg.videoUrl))
+                                              .map(msg => {
+                                                if (msg.originalImageUrl || msg.imageUrl) return { type: 'image', url: msg.originalImageUrl || msg.imageUrl };
+                                                return { type: 'video', url: msg.videoUrl };
+                                              });
                                             const currentUrl = c.originalImageUrl || c.imageUrl;
-                                            const startIndex = Math.max(0, chatImages.indexOf(currentUrl));
-                                            setPreviewImages(chatImages);
-                                            setPreviewIndex(startIndex);
-                                            setShowImagePreview(true);
+                                            const startIndex = Math.max(0, media.findIndex(m => m.url === currentUrl));
+                                            setChatMediaItems(media);
+                                            setChatMediaStartIndex(startIndex);
+                                            setShowChatMediaPreview(true);
                                           }}
                                           onError={(e) => {
                                             e.target.src = "https://via.placeholder.com/300x200?text=Image+Not+Found";
@@ -5069,12 +5080,17 @@ function AdminAppointmentRow({
                                             alt="Shared image"
                                             className="max-w-full max-h-64 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                                             onClick={() => {
-                                              const chatImages = (localComments || []).filter(msg => !!(msg.originalImageUrl || msg.imageUrl)).map(msg => msg.originalImageUrl || msg.imageUrl);
+                                              const media = (localComments || [])
+                                                .filter(msg => (msg.originalImageUrl || msg.imageUrl || msg.videoUrl))
+                                                .map(msg => {
+                                                  if (msg.originalImageUrl || msg.imageUrl) return { type: 'image', url: msg.originalImageUrl || msg.imageUrl };
+                                                  return { type: 'video', url: msg.videoUrl };
+                                                });
                                               const currentUrl = c.originalImageUrl || c.imageUrl;
-                                              const startIndex = Math.max(0, chatImages.indexOf(currentUrl));
-                                              setPreviewImages(chatImages);
-                                              setPreviewIndex(startIndex);
-                                              setShowImagePreview(true);
+                                              const startIndex = Math.max(0, media.findIndex(m => m.url === currentUrl));
+                                              setChatMediaItems(media);
+                                              setChatMediaStartIndex(startIndex);
+                                              setShowChatMediaPreview(true);
                                             }}
                                             onError={(e) => {
                                               e.target.src = "https://via.placeholder.com/300x200?text=Image+Not+Found";
@@ -5093,13 +5109,16 @@ function AdminAppointmentRow({
                                             onClick={(e) => {
                                               e.preventDefault();
                                               e.stopPropagation();
-                                              if (e.target.requestFullscreen) {
-                                                e.target.requestFullscreen();
-                                              } else if (e.target.webkitRequestFullscreen) {
-                                                e.target.webkitRequestFullscreen();
-                                              } else if (e.target.msRequestFullscreen) {
-                                                e.target.msRequestFullscreen();
-                                              }
+                                              const media = (localComments || [])
+                                                .filter(msg => (msg.originalImageUrl || msg.imageUrl || msg.videoUrl))
+                                                .map(msg => {
+                                                  if (msg.originalImageUrl || msg.imageUrl) return { type: 'image', url: msg.originalImageUrl || msg.imageUrl };
+                                                  return { type: 'video', url: msg.videoUrl };
+                                                });
+                                              const startIndex = Math.max(0, media.findIndex(m => m.url === c.videoUrl));
+                                              setChatMediaItems(media);
+                                              setChatMediaStartIndex(startIndex);
+                                              setShowChatMediaPreview(true);
                                             }}
                                           />
                                           <div className={`mt-1 text-xs ${isMe ? 'text-blue-100' : 'text-gray-500'}`}>
@@ -6942,15 +6961,20 @@ function AdminAppointmentRow({
                                       src={message.originalImageUrl || message.imageUrl}
                                       alt="Shared image"
                                       className="max-w-full max-h-64 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                                                                              onClick={(e) => {
-                                          e.stopPropagation();
-                                          const chatImages = (localComments || []).filter(msg => !!(msg.originalImageUrl || msg.imageUrl)).map(msg => msg.originalImageUrl || msg.imageUrl);
-                                          const currentUrl = message.originalImageUrl || message.imageUrl;
-                                          const startIndex = Math.max(0, chatImages.indexOf(currentUrl));
-                                          setPreviewImages(chatImages);
-                                          setPreviewIndex(startIndex);
-                                          setShowImagePreview(true);
-                                        }}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        const media = (localComments || [])
+                                          .filter(msg => (msg.originalImageUrl || msg.imageUrl || msg.videoUrl))
+                                          .map(msg => {
+                                            if (msg.originalImageUrl || msg.imageUrl) return { type: 'image', url: msg.originalImageUrl || msg.imageUrl };
+                                            return { type: 'video', url: msg.videoUrl };
+                                          });
+                                        const currentUrl = message.originalImageUrl || message.imageUrl;
+                                        const startIndex = Math.max(0, media.findIndex(m => m.url === currentUrl));
+                                        setChatMediaItems(media);
+                                        setChatMediaStartIndex(startIndex);
+                                        setShowChatMediaPreview(true);
+                                      }}
                                       onError={(e) => {
                                         e.target.src = "https://via.placeholder.com/300x200?text=Image+Not+Found";
                                         e.target.className = "max-w-full max-h-64 rounded-lg opacity-50";
@@ -6968,13 +6992,16 @@ function AdminAppointmentRow({
                                       onClick={(e) => {
                                         e.preventDefault();
                                         e.stopPropagation();
-                                        if (e.target.requestFullscreen) {
-                                          e.target.requestFullscreen();
-                                        } else if (e.target.webkitRequestFullscreen) {
-                                          e.target.webkitRequestFullscreen();
-                                        } else if (e.target.msRequestFullscreen) {
-                                          e.target.msRequestFullscreen();
-                                        }
+                                        const media = (localComments || [])
+                                          .filter(msg => (msg.originalImageUrl || msg.imageUrl || msg.videoUrl))
+                                          .map(msg => {
+                                            if (msg.originalImageUrl || msg.imageUrl) return { type: 'image', url: msg.originalImageUrl || msg.imageUrl };
+                                            return { type: 'video', url: msg.videoUrl };
+                                          });
+                                        const startIndex = Math.max(0, media.findIndex(m => m.url === message.videoUrl));
+                                        setChatMediaItems(media);
+                                        setChatMediaStartIndex(startIndex);
+                                        setShowChatMediaPreview(true);
                                       }}
                                     />
                                   </div>
@@ -7226,6 +7253,15 @@ function AdminAppointmentRow({
           chatType: 'appointment'
         }}
       />
+
+      {showChatMediaPreview && (
+        <ChatMediaPreview
+          isOpen={showChatMediaPreview}
+          onClose={() => setShowChatMediaPreview(false)}
+          media={chatMediaItems}
+          initialIndex={chatMediaStartIndex}
+        />
+      )}
 
       {/* Video Preview Modal */}
       {showVideoPreviewModal && selectedVideo && (

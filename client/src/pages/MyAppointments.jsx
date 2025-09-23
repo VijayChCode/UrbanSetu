@@ -4,6 +4,7 @@ import { FormattedTextWithLinks, FormattedTextWithLinksAndSearch, FormattedTextW
 import UserAvatar from '../components/UserAvatar';
 import { focusWithoutKeyboard, focusWithKeyboard } from '../utils/mobileUtils';
 import ImagePreview from '../components/ImagePreview';
+import ChatMediaPreview from '../components/ChatMediaPreview';
 import LinkPreview from '../components/LinkPreview';
 import { EmojiButton } from '../components/EmojiPicker';
 import CustomEmojiPicker from '../components/EmojiPicker';
@@ -1673,6 +1674,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
   const [showImagePreview, setShowImagePreview] = useState(false);
   const [previewImages, setPreviewImages] = useState([]);
   const [previewIndex, setPreviewIndex] = useState(0);
+  // Unified chat media preview (images + videos)
+  const [showChatMediaPreview, setShowChatMediaPreview] = useState(false);
+  const [chatMediaItems, setChatMediaItems] = useState([]); // [{type:'image'|'video', url:string}]
+  const [chatMediaStartIndex, setChatMediaStartIndex] = useState(0);
   const [imageCaptions, setImageCaptions] = useState({});
   const [showImagePreviewModal, setShowImagePreviewModal] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -6224,11 +6229,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                             alt="Shared image"
                                             className="max-w-full max-h-64 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                                             onClick={() => {
-                                              const imageUrls = (comments || []).filter(msg => !!msg.imageUrl).map(msg => msg.imageUrl);
-                                              const startIndex = Math.max(0, imageUrls.indexOf(c.imageUrl));
-                                              setPreviewImages(imageUrls);
-                                              setPreviewIndex(startIndex);
-                                              setShowImagePreview(true);
+                                              const media = (comments || [])
+                                                .filter(msg => msg.imageUrl || msg.videoUrl)
+                                                .map(msg => msg.imageUrl ? ({ type: 'image', url: msg.imageUrl }) : ({ type: 'video', url: msg.videoUrl }));
+                                              const startIndex = Math.max(0, media.findIndex(m => m.url === c.imageUrl));
+                                              setChatMediaItems(media);
+                                              setChatMediaStartIndex(startIndex);
+                                              setShowChatMediaPreview(true);
                                             }}
                                             onError={(e) => {
                                               e.target.src = "https://via.placeholder.com/300x200?text=Image+Not+Found";
@@ -6248,13 +6255,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleAdminDele
                                               onClick={(e) => {
                                                 e.preventDefault();
                                                 e.stopPropagation();
-                                                if (e.target.requestFullscreen) {
-                                                  e.target.requestFullscreen();
-                                                } else if (e.target.webkitRequestFullscreen) {
-                                                  e.target.webkitRequestFullscreen();
-                                                } else if (e.target.msRequestFullscreen) {
-                                                  e.target.msRequestFullscreen();
-                                                }
+                                                const media = (comments || [])
+                                                  .filter(msg => msg.imageUrl || msg.videoUrl)
+                                                  .map(msg => msg.imageUrl ? ({ type: 'image', url: msg.imageUrl }) : ({ type: 'video', url: msg.videoUrl }));
+                                                const startIndex = Math.max(0, media.findIndex(m => m.url === c.videoUrl));
+                                                setChatMediaItems(media);
+                                                setChatMediaStartIndex(startIndex);
+                                                setShowChatMediaPreview(true);
                                               }}
                                             />
                                           </div>
@@ -9316,6 +9323,16 @@ You can lock this chat again at any time from the options.</p>
           chatType: 'appointment'
         }}
       />
+
+      {/* Unified Chat Media Preview (images + videos) */}
+      {showChatMediaPreview && (
+        <ChatMediaPreview
+          isOpen={showChatMediaPreview}
+          onClose={() => setShowChatMediaPreview(false)}
+          media={chatMediaItems}
+          initialIndex={chatMediaStartIndex}
+        />
+      )}
 
     </>
   );
