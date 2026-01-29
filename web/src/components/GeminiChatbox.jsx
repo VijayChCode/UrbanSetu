@@ -176,6 +176,22 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [isOpen]);
 
+    // Auto-resize textarea and manage expanded state
+    useEffect(() => {
+        if (inputRef.current) {
+            inputRef.current.style.height = 'auto';
+            const newHeight = Math.min(inputRef.current.scrollHeight, 250);
+            inputRef.current.style.height = `${newHeight}px`;
+
+            if (newHeight > 60) {
+                if (!isExpanded) setIsExpanded(true);
+            } else {
+                if (isExpanded) setIsExpanded(false);
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [inputMessage]);
+
     // Rate limiting state
     const [rateLimitInfo, setRateLimitInfo] = useState({
         role: currentUser ? (currentUser.role || 'user') : 'public',
@@ -2273,6 +2289,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
 
         setInputMessage('');
+        setIsExpanded(false);
         // Reset height
         if (inputRef.current) {
             inputRef.current.style.height = 'auto';
@@ -6332,9 +6349,6 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                 value={inputMessage}
                                                 onChange={(e) => {
                                                     handleInputChange(e);
-                                                    // Auto-resize
-                                                    e.target.style.height = 'auto';
-                                                    e.target.style.height = Math.min(e.target.scrollHeight, 250) + 'px';
                                                 }}
                                                 onKeyDown={(e) => {
                                                     // Handle Enter to send, Ctrl+Enter or Shift+Enter for new line
@@ -6352,12 +6366,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
                                                             setInputMessage(newValue);
 
-                                                            // Restore cursor position and resize after state update
+                                                            // Restore cursor position
                                                             setTimeout(() => {
                                                                 if (inputRef.current) {
                                                                     inputRef.current.selectionStart = inputRef.current.selectionEnd = start + 1;
-                                                                    inputRef.current.style.height = 'auto';
-                                                                    inputRef.current.style.height = Math.min(inputRef.current.scrollHeight, 250) + 'px';
                                                                 }
                                                             }, 0);
                                                         } else {
@@ -6386,13 +6398,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                     setInputMessage(history[nextIndex]);
                                                                 }
                                                             }
-                                                            // Auto-resize after restore
-                                                            setTimeout(() => {
-                                                                if (inputRef.current) {
-                                                                    inputRef.current.style.height = 'auto';
-                                                                    inputRef.current.style.height = Math.min(inputRef.current.scrollHeight, 250) + 'px';
-                                                                }
-                                                            }, 0);
+
                                                         }
                                                     }
 
@@ -6517,7 +6523,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         type="submit"
                                         onMouseDown={(e) => e.preventDefault()}
                                         disabled={!inputMessage.trim() || inputMessage.length > 2000 || isListening || isProcessingVoice || (rateLimitInfo.remaining <= 0 && rateLimitInfo.role !== 'rootadmin')}
-                                        className={`bg-gradient-to-r ${themeColors.primary} text-white p-2.5 rounded-full hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-110 flex-shrink-0 flex items-center justify-center w-12 h-12 group hover:shadow-2xl active:scale-95 shadow-lg border-b-4 border-black/10 ${isExpanded ? 'mb-[4px]' : ''}`}
+                                        className={`bg-gradient-to-r ${themeColors.primary} text-white p-2.5 rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-110 flex-shrink-0 flex items-center justify-center w-12 h-12 group hover:shadow-2xl active:scale-95 shadow-lg border-b-4 border-black/10 ${isExpanded ? 'mb-[4px]' : ''}`}
                                         aria-label="Send message"
                                         title="Send message"
                                     >
