@@ -24,6 +24,7 @@ import DailyQuote from "../components/DailyQuote";
 import { useSeasonalTheme } from "../hooks/useSeasonalTheme";
 import ThemeDetailModal from "../components/ThemeDetailModal";
 import { authenticatedFetch } from "../utils/auth";
+import { getLiveRecommendations } from "../utils/sentinelLiveEngine";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -37,6 +38,7 @@ export default function Home() {
   const [saleListings, setSaleListings] = useState([]);
   const [rentListings, setRentListings] = useState([]);
   const [recommendedListings, setRecommendedListings] = useState([]);
+  const [liveRecommendations, setLiveRecommendations] = useState([]);
   const [trendingListings, setTrendingListings] = useState([]);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [isSliderVisible, setIsSliderVisible] = useState(false);
@@ -134,6 +136,23 @@ export default function Home() {
     };
     fetchRecommended();
   }, [currentUser?._id]);
+
+  // STN-LIVE: Process local session recommendations
+  useEffect(() => {
+    const processLiveRecs = async () => {
+      if (loading) return;
+
+      // Combine all current data as candidates
+      const candidates = [...offerListings, ...rentListings, ...saleListings];
+      // Dedup candidates
+      const uniqueCandidates = Array.from(new Map(candidates.map(item => [item._id, item])).values());
+
+      const recs = await getLiveRecommendations(uniqueCandidates, 4);
+      setLiveRecommendations(recs);
+    };
+
+    processLiveRecs();
+  }, [loading, offerListings, rentListings, saleListings]);
 
   const handleSlideChange = (swiper) => {
     setCurrentSlideIndex(swiper.realIndex);
@@ -363,6 +382,43 @@ export default function Home() {
 
         {/* Categories / Listings Sections */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-20 py-16">
+
+          {/* Sentinel Live Section (Real-time Session Based) */}
+          {liveRecommendations.length > 0 && (
+            <section className="relative overflow-hidden p-1 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-blue-600/10 rounded-[2.5rem] mt-[-2rem]">
+              <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-8 rounded-[2.4rem] border border-white/50 dark:border-gray-700/50">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                  <div className="flex flex-col md:flex-row md:items-center gap-4">
+                    <h2 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white flex items-center gap-3">
+                      <span className="p-2 bg-blue-600 text-white rounded-xl shadow-lg ring-4 ring-blue-50 dark:ring-blue-900/10">
+                        <FaRobot className="animate-pulse" />
+                      </span>
+                      Sentinel Live
+                    </h2>
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 rounded-full w-fit">
+                        <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest flex items-center gap-2">
+                          Recommending based on your current session
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-1 font-medium italic">Tensor-mode active</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {liveRecommendations.map((listing) => (
+                    <div key={`live-${listing._id}`} className="relative group">
+                      <div className="absolute -top-2 -right-2 z-20 bg-blue-600 text-white text-[10px] font-black px-2 py-1 rounded-lg shadow-lg transform rotate-12 group-hover:rotate-0 transition-transform">
+                        {Math.round(listing.sentinelScore * 100)}% MATCH
+                      </div>
+                      <ListingItem listing={listing} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          )}
 
           {/* Recommended Listings (signed-in only) */}
           {currentUser && recommendedListings.length > 0 && (

@@ -93,7 +93,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [messages, setMessages] = useState([
         {
             role: 'assistant',
-            content: 'Hello! I\'m SetuAI your AI assistant powered by Groq. How can I help you with your real estate needs today?',
+            content: 'Hello! I\'m SetuAI your AI assistant powered by Groq and co-powered by Sentinel v2.0 Neural Engine (TensorFlow.js). How can I help you with your real estate needs today?',
             timestamp: new Date().toISOString()
         }
     ]);
@@ -8757,19 +8757,26 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         Powered By
                                     </h3>
                                     <div className={`p-6 rounded-2xl ${isDarkMode ? 'bg-gray-800/50' : 'bg-gray-50'}`}>
-                                        <div className="grid md:grid-cols-2 gap-6">
+                                        <div className="grid md:grid-cols-3 gap-6">
                                             <div className="space-y-2">
-                                                <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">Inference Engine</div>
-                                                <div className="text-xl font-bold font-mono">Groq LPU™</div>
-                                                <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                                                    Ultra-low latency inference for near-instant responses.
+                                                <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">Inference</div>
+                                                <div className="text-xl font-bold font-mono text-orange-500">Groq LPU™</div>
+                                                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                                    Ultra-low latency for instant chat responses.
                                                 </p>
                                             </div>
                                             <div className="space-y-2">
-                                                <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">LLM Model</div>
-                                                <div className="text-xl font-bold font-mono">Meta Llama 3</div>
-                                                <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                                                    State-of-the-art open source model fine-tuned for accuracy.
+                                                <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">Intelligence</div>
+                                                <div className="text-xl font-bold font-mono text-blue-500">Sentinel v2.0</div>
+                                                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                                    Neural engine & ESG scoring models.
+                                                </p>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">Real-time</div>
+                                                <div className="text-xl font-bold font-mono text-green-500">TensorFlow.js</div>
+                                                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                                    On-device recommendations & image auditing.
                                                 </p>
                                             </div>
                                         </div>

@@ -36,6 +36,7 @@ import SeasonalEffects from "../components/SeasonalEffects";
 import VerifiedModal from "../components/VerifiedModal";
 import PreBookingChatWrapper from "../components/PreBookingChatWrapper";
 import { authenticatedFetch } from "../utils/auth";
+import { trackInteraction } from "../utils/sentinelLiveEngine";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const UNAVAILABLE_STATUSES = ['reserved', 'under_contract', 'rented', 'sold', 'suspended'];
@@ -1379,6 +1380,7 @@ export default function Listing() {
   useEffect(() => {
     if (listing) {
       trackPropertyView();
+      trackInteraction(listing); // STN-LIVE: Record session activity
       fetchSimilarProperties();
       // Calculate days listed once
       const createdDate = new Date(listing.createdAt);

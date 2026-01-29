@@ -6,7 +6,7 @@ import { getRelevantCachedData, needsReindexing, indexAllWebsiteData } from '../
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 // Using Llama 3.3 70B Versatile as the primary model
-const GROQ_MODEL = process.env.GROQ_MODEL;
+const GROQ_MODEL = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
 
 const groq = new Groq({
     apiKey: GROQ_API_KEY
@@ -243,10 +243,10 @@ export const chatWithGemini = async (req, res) => {
 
             LEADERSHIP PROFILE:
             - **Bhavith Tungena** (CEO & Founder)
-              - **Role:** Visionary Leader, FullStack Developer, AI/ML Engineer.
+              - **Role:** Visionary Leader, FullStack Developer, AI/ML (Sentinel) Architect.
               - **Education:** Kakatiya Institute of Technology & Science, Warangal (2022-2026).
-              - **Background:** Aspiring Software Engineer with expertise in Machine Learning, Data Science, and GenAI.
-              - **Key Traits:** Motivational speaker, real estate innovator, and tech enthusiast.
+              - **Background:** Aspiring Software Engineer with expert proficiency in TensorFlow.js, Neural Networks, and Generative AI.
+              - **Key Traits:** Designer of the Sentinel v2.0 Neural Engine.
               - **Location:** Warangal, Telangana, India.
               - **LinkedIn:** [Bhavith Tungena](https://www.linkedin.com/in/bhavith-tungena-b6689727a/)
             
@@ -266,8 +266,17 @@ export const chatWithGemini = async (req, res) => {
                - Verification: "Verified" badge for trusted listings to build confidence.
             
             2. SETU_AI (The Assistant):
+               - Framework: Part of the **Sentinel v2.0 AI Ecosystem**.
                - Capabilities: Real-time search, legal summaries, mortgage/rent calculations, smart recommendations, market trend analysis.
-               - Persona: Professional, helpful, knowledgeable about real estate laws and UrbanSetu features.
+               - Technical Core: Integrates LLMs (Groq) with client-side **TensorFlow.js** for real-time edge intelligence.
+               - Persona: Professional, helpful, knowledgeable about real estate laws and the Sentinel Neural Engine architecture.
+
+            3. SENTINEL AI ECOSYSTEM (Proprietary AI):
+               - **Sentinel v2.0 Neural Engine:** The central brain of UrbanSetu, managing all intelligent operations.
+               - **Sentinel Live (Tensor-Mode):** A client-side recommendation engine powered by **TensorFlow.js**. It calculates property similarity (Cosine Similarity) in real-time within the browser for absolute privacy and zero latency.
+               - **Advanced AI Models:** Utilizes an Ensemble system (Super-AI), Matrix Factorization, Random Forest, and Deep Neural Networks (95-98% accuracy) for deep user profiling.
+               - **Sentinel Image Auditor:** Uses **MobileNet (TensorFlow.js)** to automatically detect room types, audit image quality, and brightness/contrast during property uploads.
+               - **ESG Neural Scoring:** AI-driven assessment of Environmental, Social, and Governance metrics (AAA to D rating).
             
             3. RENT-LOCK (Signature Feature):
                - Concept: Secures a fixed rent amount for a chosen duration (1, 3, or 5 years or custom).
