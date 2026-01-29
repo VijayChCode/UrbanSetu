@@ -16,7 +16,7 @@ import {
   FaHome, FaSearch, FaHeart, FaStar, FaMapMarkerAlt, FaPhone, FaEnvelope,
   FaShieldAlt, FaAward, FaUsers, FaChartLine, FaLightbulb, FaRocket, FaGem,
   FaQuoteLeft, FaQuoteRight, FaCheckCircle, FaClock, FaHandshake, FaGlobe,
-  FaMobile, FaDesktop, FaTablet, FaInfoCircle, FaArrowRight
+  FaMobile, FaDesktop, FaTablet, FaInfoCircle, FaArrowRight, FaRobot
 } from "react-icons/fa";
 import AdsterraBanner from "../components/AdsterraBanner";
 import SeasonalEffects from "../components/SeasonalEffects";
@@ -367,11 +367,18 @@ export default function Home() {
           {/* Recommended Listings (signed-in only) */}
           {currentUser && recommendedListings.length > 0 && (
             <section>
-              <div className="flex justify-between items-center mb-8">
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2 sm:gap-3">
-                  <span className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400"><FaStar className="text-lg sm:text-xl" /></span>
-                  Recommended for You
-                </h2>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                <div className="flex flex-col md:flex-row md:items-center gap-4">
+                  <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2 sm:gap-3">
+                    <span className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400"><FaStar className="text-lg sm:text-xl" /></span>
+                    Recommended for You
+                  </h2>
+                  <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-full h-fit w-fit">
+                    <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest flex items-center gap-2">
+                      <FaRobot className="animate-pulse text-xs" /> Powered by Sentinel
+                    </span>
+                  </div>
+                </div>
                 <Link to={`${linkPrefix}/search`} className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-medium hover:text-blue-800 dark:hover:text-blue-300 transition-colors text-sm sm:text-base whitespace-nowrap">
                   See More<span className="hidden sm:inline">Recommendations</span> <FaArrowRight />
                 </Link>
