@@ -120,6 +120,7 @@ export default function Home() {
   // Fetch recommended listings for logged-in users
   useEffect(() => {
     const fetchRecommended = async () => {
+      // ONLY show for regular logged-in users
       if (!currentUser?._id) {
         setRecommendedListings([]);
         return;
@@ -142,6 +143,12 @@ export default function Home() {
     const processLiveRecs = async () => {
       if (loading) return;
 
+      // ONLY process for logged-in regular users
+      if (!currentUser) {
+        setLiveRecommendations([]);
+        return;
+      }
+
       // Combine all current data as candidates
       const candidates = [...offerListings, ...rentListings, ...saleListings];
       // Dedup candidates
@@ -152,7 +159,7 @@ export default function Home() {
     };
 
     processLiveRecs();
-  }, [loading, offerListings, rentListings, saleListings]);
+  }, [loading, offerListings, rentListings, saleListings, currentUser?._id]);
 
   const handleSlideChange = (swiper) => {
     setCurrentSlideIndex(swiper.realIndex);

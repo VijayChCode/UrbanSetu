@@ -1379,8 +1379,12 @@ export default function Listing() {
   // Track property view when listing loads
   useEffect(() => {
     if (listing) {
-      trackPropertyView();
-      trackInteraction(listing); // STN-LIVE: Record session activity
+      // ONLY track/record for logged-in regular users (not guest, not admin, not rootadmin)
+      if (currentUser && currentUser.role !== 'admin' && currentUser.role !== 'rootadmin') {
+        trackPropertyView();
+        trackInteraction(listing); // STN-LIVE: Record session activity
+      }
+
       fetchSimilarProperties();
       // Calculate days listed once
       const createdDate = new Date(listing.createdAt);
@@ -1388,7 +1392,7 @@ export default function Listing() {
       const daysDiff = Math.floor((currentDate - createdDate) / (1000 * 60 * 60 * 24));
       setDaysListed(daysDiff);
     }
-  }, [listing]);
+  }, [listing, currentUser]); // Added currentUser to dependencies for re-check on login state change
 
   // Fetch owner details after listing is loaded
   useEffect(() => {
