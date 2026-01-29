@@ -6129,7 +6129,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
                         {/* Enhanced Features modal */}
                         {showFeatures && (
-                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-50 rounded-2xl">
+                            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 rounded-2xl">
                                 <div className="bg-white rounded-xl shadow-xl p-5 w-96 max-w-full max-h-[80vh] overflow-y-auto">
                                     <h4 className="font-semibold mb-3 flex items-center gap-2">
                                         <FaRobot className="text-blue-500" />
@@ -6262,7 +6262,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 </div>
                             )}
 
-                            <form onSubmit={handleSubmit} className={`flex space-x-2 ${isExpanded ? 'items-end' : 'items-center'}`}>
+                            <form onSubmit={handleSubmit} className="flex space-x-2 items-end">
                                 <div className="flex-1 relative">
                                     {/* Voice Meter / Input Box Toggle */}
                                     {(isListening || isProcessingVoice) ? (
@@ -6296,7 +6296,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         </div>
                                     ) : (
                                         <>
-                                            <div ref={inputOptionsRef} className={`absolute left-2 ${isExpanded ? 'bottom-0' : 'top-1/2 -translate-y-1/2'} h-[52px] flex items-center z-10`}>
+                                            <div ref={inputOptionsRef} className="absolute left-2 bottom-0.5 h-[52px] flex items-center z-10">
                                                 <button
                                                     type="button"
                                                     onClick={() => setShowInputOptions(!showInputOptions)}
@@ -6507,7 +6507,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                 }
                                             });
                                         }}
-                                        className={`bg-red-600 hover:bg-red-700 text-white p-2.5 rounded-full hover:opacity-90 transition-all duration-300 transform hover:scale-110 flex-shrink-0 flex items-center justify-center w-12 h-12 group hover:shadow-2xl active:scale-95 shadow-lg border-2 border-white/20 ${isExpanded ? 'mb-[4px]' : ''}`}
+                                        className="bg-red-600 hover:bg-red-700 text-white p-2.5 rounded-full hover:opacity-90 transition-all duration-300 transform hover:scale-110 flex-shrink-0 flex items-center justify-center w-12 h-12 group hover:shadow-2xl active:scale-95 shadow-lg border-2 border-white/20 mb-1"
                                         title="Stop generating"
                                         aria-label="Stop generating"
                                     >
@@ -6523,7 +6523,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         type="submit"
                                         onMouseDown={(e) => e.preventDefault()}
                                         disabled={!inputMessage.trim() || inputMessage.length > 2000 || isListening || isProcessingVoice || (rateLimitInfo.remaining <= 0 && rateLimitInfo.role !== 'rootadmin')}
-                                        className={`bg-gradient-to-r ${themeColors.primary} text-white p-2.5 rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-110 flex-shrink-0 flex items-center justify-center w-12 h-12 group hover:shadow-2xl active:scale-95 shadow-lg border-b-4 border-black/10 ${isExpanded ? 'mb-[4px]' : ''}`}
+                                        className={`bg-gradient-to-r ${themeColors.primary} text-white p-2.5 rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-110 flex-shrink-0 flex items-center justify-center w-12 h-12 group hover:shadow-2xl active:scale-95 shadow-lg border-b-4 border-black/10 mb-1`}
                                         aria-label="Send message"
                                         title="Send message"
                                     >
@@ -6540,7 +6540,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         </div>
                         {/* Quick Actions Modal */}
                         {showQuickActions && (
-                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-50 rounded-2xl animate-fadeIn">
+                            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 rounded-2xl animate-fadeIn">
                                 <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-xl p-5 w-96 max-w-full animate-scaleIn`}>
                                     <h4 className={`font-semibold mb-3 flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                                         <FaLightbulb className="text-yellow-500" />
@@ -6577,7 +6577,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         )}
                         {/* Bookmarks Modal */}
                         {showBookmarks && (
-                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-50 rounded-2xl animate-fadeIn">
+                            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 rounded-2xl animate-fadeIn">
                                 <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-xl p-5 w-96 max-w-full max-h-[80vh] overflow-y-auto animate-scaleIn`}>
                                     <div className="flex items-center justify-between mb-3">
                                         <h4 className={`font-semibold flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
@@ -6668,7 +6668,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
                         {/* Chat History Modal */}
                         {showHistory && (
-                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-50 rounded-2xl animate-fadeIn">
+                            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 rounded-2xl animate-fadeIn">
                                 <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-xl w-96 max-w-full max-h-[80vh] flex flex-col animate-scaleIn`}>
                                     {/* Fixed Header */}
                                     <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
