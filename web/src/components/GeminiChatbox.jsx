@@ -6296,7 +6296,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         </div>
                                     ) : (
                                         <>
-                                            <div ref={inputOptionsRef} className="absolute left-3 bottom-2 h-[52px] flex items-center z-10">
+                                            <div ref={inputOptionsRef} className="absolute left-3 bottom-0 h-[56px] flex items-center z-10">
                                                 <button
                                                     type="button"
                                                     onClick={() => setShowInputOptions(!showInputOptions)}
@@ -6507,7 +6507,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                 }
                                             });
                                         }}
-                                        className="bg-red-600 hover:bg-red-700 text-white p-2.5 rounded-2xl hover:opacity-90 transition-all duration-300 transform hover:scale-110 flex-shrink-0 flex items-center justify-center w-12 h-12 group hover:shadow-2xl active:scale-95 shadow-lg border-2 border-white/20"
+                                        className="bg-red-600 hover:bg-red-700 text-white p-2.5 rounded-xl hover:opacity-90 transition-all duration-300 transform hover:scale-110 flex-shrink-0 flex items-center justify-center w-12 h-12 mb-1 group hover:shadow-2xl active:scale-95 shadow-lg border-2 border-white/20"
                                         title="Stop generating"
                                         aria-label="Stop generating"
                                     >
@@ -6523,7 +6523,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         type="submit"
                                         onMouseDown={(e) => e.preventDefault()}
                                         disabled={!inputMessage.trim() || inputMessage.length > 2000 || isListening || isProcessingVoice || (rateLimitInfo.remaining <= 0 && rateLimitInfo.role !== 'rootadmin')}
-                                        className={`bg-gradient-to-r ${themeColors.primary} text-white p-2.5 rounded-2xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-110 flex-shrink-0 flex items-center justify-center w-12 h-12 group hover:shadow-2xl active:scale-95 shadow-lg border-b-4 border-black/10`}
+                                        className={`bg-gradient-to-r ${themeColors.primary} text-white p-2.5 rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-110 flex-shrink-0 flex items-center justify-center w-12 h-12 mb-1 group hover:shadow-2xl active:scale-95 shadow-lg border-b-4 border-black/10`}
                                         aria-label="Send message"
                                         title="Send message"
                                     >
