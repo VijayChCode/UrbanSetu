@@ -3324,11 +3324,25 @@ export default function Listing() {
 
           {/* Similar Properties Section */}
           {currentUser && similarProperties.length > 0 && (
-            <div className="mt-8 p-6 bg-white dark:bg-gray-800 shadow-md rounded-lg mb-6">
-              <h4 className="text-xl font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-                <FaHome className="text-blue-600" />
-                Similar Properties in {listing.city}
-              </h4>
+            <div className="mt-8 p-8 bg-white dark:bg-gray-800 shadow-xl rounded-[2.5rem] mb-8 border border-gray-100 dark:border-gray-700/50">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                <div>
+                  <h4 className="text-2xl font-black text-gray-900 dark:text-white flex items-center gap-2">
+                    <FaHome className="p-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl text-4xl" />
+                    Similar Properties in {listing.city}
+                  </h4>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm font-medium mt-1">Discover other handpicked properties matching your lifestyle in this area</p>
+                </div>
+                <div className="flex items-center gap-3 px-4 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-2xl border border-blue-100 dark:border-indigo-800/50 shadow-sm transition-all hover:scale-105 active:scale-95 group cursor-pointer h-fit w-fit self-start">
+                  <div className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-600/30 group-hover:rotate-12 transition-transform">
+                    <FaRobot className="animate-pulse" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em] leading-none mb-0.5">Neural Engine</span>
+                    <span className="text-sm font-black text-gray-900 dark:text-white leading-none">Powered by Sentinel v2.0</span>
+                  </div>
+                </div>
+              </div>
               {loadingSimilar ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {[...Array(3)].map((_, index) => (
