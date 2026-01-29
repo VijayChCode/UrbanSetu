@@ -120,8 +120,8 @@ export default function Home() {
   // Fetch recommended listings for logged-in users
   useEffect(() => {
     const fetchRecommended = async () => {
-      // ONLY show for regular logged-in users
-      if (!currentUser?._id) {
+      // ONLY show for regular logged-in users (not guests, not admins)
+      if (!currentUser?._id || currentUser.role === 'admin' || currentUser.role === 'rootadmin') {
         setRecommendedListings([]);
         return;
       }
@@ -136,15 +136,15 @@ export default function Home() {
       }
     };
     fetchRecommended();
-  }, [currentUser?._id]);
+  }, [currentUser?._id, currentUser?.role]);
 
   // STN-LIVE: Process local session recommendations
   useEffect(() => {
     const processLiveRecs = async () => {
       if (loading) return;
 
-      // ONLY process for logged-in regular users
-      if (!currentUser) {
+      // ONLY process for logged-in regular users (not guests, not admins)
+      if (!currentUser || currentUser.role === 'admin' || currentUser.role === 'rootadmin') {
         setLiveRecommendations([]);
         return;
       }
@@ -159,7 +159,7 @@ export default function Home() {
     };
 
     processLiveRecs();
-  }, [loading, offerListings, rentListings, saleListings, currentUser?._id]);
+  }, [loading, offerListings, rentListings, saleListings, currentUser?._id, currentUser?.role]);
 
   const handleSlideChange = (swiper) => {
     setCurrentSlideIndex(swiper.realIndex);
@@ -390,8 +390,8 @@ export default function Home() {
         {/* Categories / Listings Sections */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-20 py-16">
 
-          {/* Sentinel Live Section (Real-time Session Based) */}
-          {liveRecommendations.length > 0 && (
+          {/* Sentinel Live Section (Real-time Session Based) - regular users only */}
+          {currentUser && currentUser.role !== 'admin' && currentUser.role !== 'rootadmin' && liveRecommendations.length > 0 && (
             <section className="relative overflow-hidden p-1 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-blue-600/10 rounded-[2.5rem] mt-[-2rem]">
               <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-8 rounded-[2.4rem] border border-white/50 dark:border-gray-700/50">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
@@ -427,8 +427,8 @@ export default function Home() {
             </section>
           )}
 
-          {/* Recommended Listings (signed-in only) */}
-          {currentUser && recommendedListings.length > 0 && (
+          {/* Recommended Listings (signed-in regular users only) */}
+          {currentUser && currentUser.role !== 'admin' && currentUser.role !== 'rootadmin' && recommendedListings.length > 0 && (
             <section>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                 <div className="flex flex-col md:flex-row md:items-center gap-4">

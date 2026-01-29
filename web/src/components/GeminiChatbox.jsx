@@ -93,7 +93,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [messages, setMessages] = useState([
         {
             role: 'assistant',
-            content: 'Hello! I\'m SetuAI your AI assistant powered by Groq and co-powered by Sentinel v2.0 Neural Engine (TensorFlow.js). How can I help you with your real estate needs today?',
+            content: 'Hello! I\'m SetuAI your AI assistant powered by Groq and co-powered by Sentinel v2.0 Neural Engine (TensorFlow). How can I help you with your real estate needs today?',
             timestamp: new Date().toISOString()
         }
     ]);
@@ -6227,15 +6227,16 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         <FaLightbulb size={10} />
                                         Try asking:
                                     </div>
-                                    <div className="flex flex-wrap gap-2">
+                                    <div className="flex flex-wrap gap-2 py-1">
                                         {smartSuggestions.map((suggestion, index) => (
                                             <button
                                                 key={index}
                                                 onClick={() => handleSmartSuggestion(suggestion)}
-                                                className={`text-xs px-3 py-1.5 rounded-full border transition-all duration-200 hover:scale-105 ${isDarkMode
-                                                    ? 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'
-                                                    : `${themeColors.secondary} ${themeColors.border} ${themeColors.accent} hover:opacity-80`
+                                                className={`text-xs px-3.5 py-2 rounded-xl border transition-all duration-300 hover:scale-105 hover:shadow-md active:scale-95 animate-fadeIn ${isDarkMode
+                                                    ? 'bg-gray-800/80 border-gray-700 text-gray-300 hover:bg-gray-700 hover:border-blue-500/50 hover:text-blue-400'
+                                                    : `${themeColors.secondary} ${themeColors.border} ${themeColors.accent} hover:bg-white hover:border-blue-300 shadow-sm`
                                                     }`}
+                                                style={{ animationDelay: `${index * 50}ms` }}
                                             >
                                                 {suggestion}
                                             </button>
@@ -6244,7 +6245,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 </div>
                             )}
 
-                            <form onSubmit={handleSubmit} className="flex space-x-2 items-end">
+                            <form onSubmit={handleSubmit} className={`flex space-x-2 ${isExpanded ? 'items-end' : 'items-center'}`}>
                                 <div className="flex-1 relative">
                                     {/* Voice Meter / Input Box Toggle */}
                                     {(isListening || isProcessingVoice) ? (
@@ -6278,7 +6279,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         </div>
                                     ) : (
                                         <>
-                                            <div ref={inputOptionsRef} className="absolute left-2 bottom-0 h-[52px] flex items-center z-10">
+                                            <div ref={inputOptionsRef} className={`absolute left-2 ${isExpanded ? 'bottom-0' : 'top-1/2 -translate-y-1/2'} h-[52px] flex items-center z-10`}>
                                                 <button
                                                     type="button"
                                                     onClick={() => setShowInputOptions(!showInputOptions)}
@@ -6402,11 +6403,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                 aria-describedby="input-help"
                                                 role="textbox"
                                                 rows={1}
-                                                className={`w-full pl-10 ${inputMessage.length > 1800 ? 'pr-24' : 'pr-4'} py-[18px] border rounded-xl resize-none focus:outline-none focus:ring-2 ${themeColors.accent.replace('text-', 'focus:ring-').replace('-600', '-500')} focus:border-transparent text-sm ${isDarkMode
-                                                    ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400'
-                                                    : 'bg-white border-gray-300 text-gray-900'
+                                                className={`w-full pl-12 ${inputMessage.length > 1800 ? 'pr-24' : 'pr-12'} py-4 border rounded-2xl resize-none focus:outline-none focus:ring-2 ${themeColors.accent.replace('text-', 'focus:ring-').replace('-600', '-500')} focus:border-transparent text-sm transition-all duration-200 ${isDarkMode
+                                                    ? 'bg-gray-800/50 border-gray-700 text-white placeholder-gray-400 backdrop-blur-sm'
+                                                    : 'bg-white border-gray-200 text-gray-900 shadow-sm hover:border-gray-300'
                                                     }`}
-                                                style={{ minHeight: '52px', maxHeight: '250px' }}
+                                                style={{ minHeight: '56px', maxHeight: '250px' }}
                                                 disabled={(rateLimitInfo.remaining <= 0 && rateLimitInfo.role !== 'rootadmin')}
                                             />
                                             {inputMessage.length > 1800 && (
@@ -6491,30 +6492,40 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         onClick={() => {
                                             abortControllerRef.current?.abort();
                                             setIsLoading(false);
-                                            toast.info('Generating stopped.');
+                                            toast.info('Generating stopped.', {
+                                                icon: '🛑',
+                                                style: {
+                                                    borderRadius: '10px',
+                                                    background: isDarkMode ? '#333' : '#fff',
+                                                    color: isDarkMode ? '#fff' : '#333',
+                                                }
+                                            });
                                         }}
-                                        className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-full hover:opacity-90 transition-all duration-300 transform hover:scale-110 flex-shrink-0 flex items-center justify-center w-10 h-10 group hover:shadow-xl active:scale-95 mb-[6px]"
+                                        className={`bg-red-600 hover:bg-red-700 text-white p-2.5 rounded-full hover:opacity-90 transition-all duration-300 transform hover:scale-110 flex-shrink-0 flex items-center justify-center w-12 h-12 group hover:shadow-2xl active:scale-95 shadow-lg border-2 border-white/20 ${isExpanded ? 'mb-[4px]' : ''}`}
                                         title="Stop generating"
                                         aria-label="Stop generating"
                                     >
-                                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 6h12v12H6z" />
-                                        </svg>
+                                        <div className="relative flex items-center justify-center">
+                                            <div className="absolute inset-0 bg-white/20 rounded-full animate-ping opacity-25"></div>
+                                            <svg className="w-5 h-5 text-white relative z-10" fill="currentColor" viewBox="0 0 24 24">
+                                                <rect x="6" y="6" width="12" height="12" rx="2" />
+                                            </svg>
+                                        </div>
                                     </button>
                                 ) : (
                                     <button
                                         type="submit"
                                         onMouseDown={(e) => e.preventDefault()}
                                         disabled={!inputMessage.trim() || inputMessage.length > 2000 || isListening || isProcessingVoice || (rateLimitInfo.remaining <= 0 && rateLimitInfo.role !== 'rootadmin')}
-                                        className={`bg-gradient-to-r ${themeColors.primary} text-white p-2 rounded-full hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-110 flex-shrink-0 flex items-center justify-center w-10 h-10 group hover:shadow-xl active:scale-95 mb-[6px]`}
+                                        className={`bg-gradient-to-r ${themeColors.primary} text-white p-2.5 rounded-full hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-110 flex-shrink-0 flex items-center justify-center w-12 h-12 group hover:shadow-2xl active:scale-95 shadow-lg border-b-4 border-black/10 ${isExpanded ? 'mb-[4px]' : ''}`}
                                         aria-label="Send message"
                                         title="Send message"
                                     >
                                         <div className="relative">
                                             {sendIconSent ? (
-                                                <FaCheck className="text-white send-icon animate-sent" size={16} />
+                                                <FaCheck className="text-white send-icon animate-sent" size={20} />
                                             ) : (
-                                                <FaPaperPlane className={`text-white send-icon ${sendIconAnimating ? 'animate-fly' : ''} group-hover:scale-110 transition-all duration-300`} size={16} />
+                                                <FaPaperPlane className={`text-white send-icon ${sendIconAnimating ? 'animate-fly' : ''} group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300`} size={20} />
                                             )}
                                         </div>
                                     </button>
