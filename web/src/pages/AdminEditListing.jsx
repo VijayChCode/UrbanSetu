@@ -1081,51 +1081,53 @@ export default function AdminEditListing() {
                       onChange={(e) => handleCaptionChange(index, e.target.value)}
                       className="w-full md:flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-colors duration-300"
                     />
-                    <label className={`p-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all flex items-center gap-2 ${uploadingImages[index] ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => handleFileUpload(index, e.target.files[0])}
-                        disabled={uploadingImages[index]}
-                      />
-                      {uploadingImages[index] ? (
-                        <>
-                          <div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
-                          <span className="text-sm text-gray-600 dark:text-gray-400">Uploading...</span>
-                        </>
-                      ) : (
-                        <>
-                          <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                          </svg>
-                          <span className="text-sm text-gray-600 dark:text-gray-400">Upload</span>
-                        </>
-                      )}
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (!url) {
-                          toast.info("Please add an Image URL first to audit.");
-                          return;
-                        }
-                        auditByUrl(url, index, 'main');
-                      }}
-                      className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
-                      title="AI Audit this URL"
-                      disabled={isAuditing[`main_${index}`]}
-                    >
-                      <FaBrain className={isAuditing[`main_${index}`] ? 'animate-spin' : ''} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onHandleRemoveImage(index)}
-                      className="bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition"
-                      title="Remove this photo"
-                    >
-                      ×
-                    </button>
+                    <div className="flex items-center gap-2 w-full md:w-auto">
+                      <label className={`flex-1 md:flex-none justify-center p-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all flex items-center gap-2 ${uploadingImages[index] ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handleFileUpload(index, e.target.files[0])}
+                          disabled={uploadingImages[index]}
+                        />
+                        {uploadingImages[index] ? (
+                          <>
+                            <div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+                            <span className="text-sm text-gray-600 dark:text-gray-400">Uploading...</span>
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                            <span className="text-sm text-gray-600 dark:text-gray-400">Upload</span>
+                          </>
+                        )}
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!url) {
+                            toast.info("Please add an Image URL first to audit.");
+                            return;
+                          }
+                          auditByUrl(url, index, 'main');
+                        }}
+                        className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2"
+                        title="AI Audit this URL"
+                        disabled={isAuditing[`main_${index}`]}
+                      >
+                        <FaBrain className={isAuditing[`main_${index}`] ? 'animate-spin' : ''} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onHandleRemoveImage(index)}
+                        className="bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition flex items-center justify-center"
+                        title="Remove this photo"
+                      >
+                        ×
+                      </button>
+                    </div>
                   </div>
                   {imageErrors[index] && (
                     <p className="text-red-500 text-sm">{imageErrors[index]}</p>

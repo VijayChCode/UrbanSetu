@@ -1225,39 +1225,41 @@ export default function AdminCreateListing() {
                       onChange={(e) => handleCaptionChange(index, e.target.value)}
                       className="w-full md:flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-colors duration-300"
                     />
-                    <label className="bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 transition cursor-pointer">
-                      {uploadingImages[index] ? 'Uploading...' : 'Upload File'}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handleFileUpload(index, e.target.files[0])}
-                        className="hidden"
-                        disabled={uploadingImages[index]}
-                      />
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (!url) {
-                          toast.info("Please add an Image URL first to audit.");
-                          return;
-                        }
-                        auditByUrl(url, index, 'main');
-                      }}
-                      className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
-                      title="AI Audit this URL"
-                      disabled={isAuditing[`main_${index}`]}
-                    >
-                      <FaBrain className={isAuditing[`main_${index}`] ? 'animate-spin' : ''} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onHandleRemoveImage(index)}
-                      className="bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition"
-                      title="Remove this photo"
-                    >
-                      ×
-                    </button>
+                    <div className="flex items-center gap-2 w-full md:w-auto">
+                      <label className="flex-1 md:flex-none justify-center bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 transition cursor-pointer flex items-center">
+                        {uploadingImages[index] ? 'Uploading...' : 'Upload File'}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleFileUpload(index, e.target.files[0])}
+                          className="hidden"
+                          disabled={uploadingImages[index]}
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!url) {
+                            toast.info("Please add an Image URL first to audit.");
+                            return;
+                          }
+                          auditByUrl(url, index, 'main');
+                        }}
+                        className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2"
+                        title="AI Audit this URL"
+                        disabled={isAuditing[`main_${index}`]}
+                      >
+                        <FaBrain className={isAuditing[`main_${index}`] ? 'animate-spin' : ''} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onHandleRemoveImage(index)}
+                        className="bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition flex items-center justify-center"
+                        title="Remove this photo"
+                      >
+                        ×
+                      </button>
+                    </div>
                   </div>
                   {imageErrors[index] && (
                     <p className="text-red-500 text-sm">{imageErrors[index]}</p>
