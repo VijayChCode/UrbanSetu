@@ -430,7 +430,7 @@ export default function Home() {
           {/* Recommended Listings (signed-in regular users only) */}
           {currentUser && currentUser.role !== 'admin' && currentUser.role !== 'rootadmin' && recommendedListings.length > 0 && (
             <section>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+              <div className="flex flex-row items-center justify-between gap-4 mb-8">
                 <div className="flex flex-col md:flex-row md:items-center gap-4">
                   <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2 sm:gap-3">
                     <span className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400"><FaStar className="text-lg sm:text-xl" /></span>
