@@ -6262,7 +6262,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 </div>
                             )}
 
-                            <form onSubmit={handleSubmit} className="flex space-x-2 items-end">
+                            <form onSubmit={handleSubmit} className={`flex space-x-2 ${isExpanded ? 'items-end' : 'items-center'}`}>
                                 <div className="flex-1 relative">
                                     {/* Voice Meter / Input Box Toggle */}
                                     {(isListening || isProcessingVoice) ? (
