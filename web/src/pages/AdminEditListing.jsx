@@ -1065,13 +1065,13 @@ export default function AdminEditListing() {
             <div className="space-y-3">
               {formData.imageUrls.map((url, index) => (
                 <div key={index} className="space-y-2">
-                  <div className="flex gap-2 items-center">
+                  <div className="flex flex-col md:flex-row gap-2 md:items-center">
                     <input
                       type="text"
                       placeholder={`Image URL ${index + 1} (e.g., https://example.com/image.jpg)`}
                       value={url || ""}
                       onChange={(e) => handleImageChange(index, e.target.value)}
-                      className={`flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-colors duration-300 ${imageErrors[index] ? 'border-red-500' : ''
+                      className={`w-full md:flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-colors duration-300 ${imageErrors[index] ? 'border-red-500' : ''
                         }`}
                     />
                     <input
@@ -1079,7 +1079,7 @@ export default function AdminEditListing() {
                       placeholder="Image Name/Title (e.g. Master Bedroom)"
                       value={formData.imageCaptions?.[index] || ""}
                       onChange={(e) => handleCaptionChange(index, e.target.value)}
-                      className="flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-colors duration-300"
+                      className="w-full md:flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-colors duration-300"
                     />
                     <label className={`p-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all flex items-center gap-2 ${uploadingImages[index] ? 'opacity-50 cursor-not-allowed' : ''}`}>
                       <input

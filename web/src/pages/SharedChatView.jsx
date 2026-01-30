@@ -221,7 +221,7 @@ export default function SharedChatView() {
                                 className="hidden sm:flex items-center gap-2 text-sm font-medium text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-100 dark:hover:bg-purple-900/50 px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
                             >
                                 <FaDownload size={14} />
-                                {importing ? "Importing..." : "Import Chat"}
+                                {importing ? "Importing..." : "Import Chat to SetuAI"}
                             </button>
                         )}
                         <a href="/ai" className="hidden sm:block text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 px-4 py-2 rounded-lg transition-colors">
