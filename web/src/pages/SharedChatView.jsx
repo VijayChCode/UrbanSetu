@@ -235,14 +235,14 @@ export default function SharedChatView() {
             <main className="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 space-y-6">
                 {chatData.messages.map((msg, idx) => (
                     <div key={idx} className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${msg.role === 'user' ? 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${msg.role === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
                             }`}>
                             {msg.role === 'user' ? <FaUser size={14} /> : <FaRobot size={16} />}
                         </div>
 
                         <div className={`flex-1 max-w-[85%] rounded-2xl p-4 shadow-sm ${msg.role === 'user'
-                            ? 'bg-gradient-to-br from-gray-800 to-gray-900 dark:from-indigo-700 dark:to-blue-800 text-white rounded-tr-none'
-                            : 'bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-tl-none'
+                            ? 'bg-blue-600 text-white rounded-tr-none'
+                            : 'bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 text-gray-800 dark:text-gray-200 rounded-tl-none'
                             }`}>
                             {/* Check for restricted content */}
                             {msg.isRestricted ? (
@@ -251,12 +251,12 @@ export default function SharedChatView() {
                                     <span className="italic text-sm">Content hidden due to safety policy violation.</span>
                                 </div>
                             ) : (
-                                <div className="prose prose-sm max-w-none text-sm leading-relaxed">
+                                <div className={`prose prose-sm max-w-none text-sm leading-relaxed ${msg.role === 'user' ? 'text-white/90' : 'text-gray-800 dark:text-gray-300'}`}>
                                     {formatText(msg.content)}
                                 </div>
                             )}
-                            <div className={`mt-2 text-xs flex justify-end ${msg.role === 'user' ? 'text-gray-400' : 'text-gray-500 dark:text-gray-500'}`}>
-                                <FaClock className="mr-1 mt-0.5" />
+                            <div className={`mt-2 text-xs flex justify-end items-center ${msg.role === 'user' ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'}`}>
+                                <FaClock className="mr-1" size={10} />
                                 {msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                             </div>
                         </div>
