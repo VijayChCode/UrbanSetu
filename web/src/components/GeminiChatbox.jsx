@@ -1196,7 +1196,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             setMessages([
                                 {
                                     role: 'assistant',
-                                    content: 'Hello! I\'m SetuAI your AI assistant powered by Groq. How can I help you with your real estate needs today?',
+                                    content: 'Hello! I\'m SetuAI your AI assistant powered by Groq and co-powered by Sentinel v2.0 Neural Engine (TensorFlow). How can I help you with your real estate needs today?',
                                     timestamp: new Date().toISOString()
                                 }
                             ]);
@@ -1283,7 +1283,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         setMessages([
             {
                 role: 'assistant',
-                content: 'Hello! I\'m SetuAI your AI assistant powered by Groq. How can I help you with your real estate needs today?',
+                content: 'Hello! I\'m SetuAI your AI assistant powered by Groq and co-powered by Sentinel v2.0 Neural Engine (TensorFlow). How can I help you with your real estate needs today?',
                 timestamp: new Date().toISOString()
             }
         ]);
@@ -3505,7 +3505,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     // Ensure the first message is always the default welcome message
                     const defaultMessage = {
                         role: 'assistant',
-                        content: 'Hello! I\'m SetuAI your AI assistant powered by Groq. How can I help you with your real estate needs today?',
+                        content: 'Hello! I\'m SetuAI your AI assistant powered by Groq and co-powered by Sentinel v2.0 Neural Engine (TensorFlow). How can I help you with your real estate needs today?',
                         timestamp: new Date().toISOString()
                     };
 
@@ -3628,7 +3628,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     // Reset messages to default welcome message
                     const defaultMessage = {
                         role: 'assistant',
-                        content: 'Hello! I\'m SetuAI your AI assistant powered by Groq. How can I help you with your real estate needs today?',
+                        content: 'Hello! I\'m SetuAI your AI assistant powered by Groq and co-powered by Sentinel v2.0 Neural Engine (TensorFlow). How can I help you with your real estate needs today?',
                         timestamp: new Date().toISOString()
                     };
                     setMessages([defaultMessage]);
