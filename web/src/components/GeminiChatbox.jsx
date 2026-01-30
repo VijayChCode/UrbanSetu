@@ -6635,13 +6635,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                 highlightMessage(bookmark.key);
                                                                 setShowBookmarks(false);
                                                             }}
-                                                            className="text-xs px-2 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded"
+                                                            className={`text-xs px-2 py-1 rounded ${isDarkMode ? 'bg-blue-900/30 hover:bg-blue-800 text-blue-300' : 'bg-blue-100 hover:bg-blue-200 text-blue-700'}`}
                                                         >
                                                             Go to Message
                                                         </button>
                                                         <button
                                                             onClick={() => copyToClipboard(bookmark.content)}
-                                                            className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded"
+                                                            className={`text-xs px-2 py-1 rounded ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-100 hover:bg-gray-200 text-gray-800'}`}
                                                         >
                                                             Copy
                                                         </button>
@@ -6650,7 +6650,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                 const currentSessionId = getOrCreateSessionId();
                                                                 toggleBookmark(bookmark.messageIndex || 0, { content: bookmark.content, timestamp: bookmark.timestamp });
                                                             }}
-                                                            className="text-xs px-2 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded"
+                                                            className={`text-xs px-2 py-1 rounded ${isDarkMode ? 'bg-red-900/30 hover:bg-red-800 text-red-300' : 'bg-red-100 hover:bg-red-200 text-red-700'}`}
                                                         >
                                                             Remove
                                                         </button>
