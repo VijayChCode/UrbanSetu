@@ -1454,54 +1454,56 @@ export default function AdminCreateListing() {
             <div className="space-y-3">
               {(formData.virtualTourImages || []).map((url, index) => (
                 <div key={index} className="space-y-2">
-                  <div className="flex gap-2 items-center">
+                  <div className="flex flex-col md:flex-row gap-2 md:items-center">
                     <input
                       type="text"
                       placeholder={`360 Image URL ${index + 1}`}
                       value={url || ""}
                       onChange={(e) => handleVirtualTourUrlChange(index, e.target.value)}
-                      className={`flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-colors duration-300 ${virtualTourErrors[index] ? 'border-red-500' : ''}`}
+                      className={`w-full md:flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-colors duration-300 ${virtualTourErrors[index] ? 'border-red-500' : ''}`}
                     />
-                    <label className={`p-3 border-2 border-dashed border-indigo-300 dark:border-indigo-600 rounded-lg cursor-pointer hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-all flex items-center gap-2 ${uploadingVirtualTour[index] ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => handleVirtualTourUpload(index, e.target.files[0])}
-                        disabled={uploadingVirtualTour[index]}
-                      />
-                      {uploadingVirtualTour[index] ? (
-                        <>
-                          <div className="animate-spin w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full"></div>
-                          <span className="text-sm text-indigo-600 dark:text-indigo-400">Uploading...</span>
-                        </>
-                      ) : (
-                        <span className="text-sm text-indigo-600 dark:text-indigo-400 font-medium">Upload 360°</span>
-                      )}
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (!url) {
-                          toast.info("Please add a 360 Image URL first to audit.");
-                          return;
-                        }
-                        auditByUrl(url, index, 'tour');
-                      }}
-                      className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
-                      title="AI Audit this 360 URL"
-                      disabled={isAuditing[`tour_${index}`]}
-                    >
-                      <FaBrain className={isAuditing[`tour_${index}`] ? 'animate-spin' : ''} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onHandleRemoveVirtualTour(index)}
-                      className="bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition"
-                      title="Remove 360 image"
-                    >
-                      ×
-                    </button>
+                    <div className="flex items-center gap-2 w-full md:w-auto">
+                      <label className={`flex-1 md:flex-none justify-center p-3 border-2 border-dashed border-indigo-300 dark:border-indigo-600 rounded-lg cursor-pointer hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-all flex items-center gap-2 ${uploadingVirtualTour[index] ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handleVirtualTourUpload(index, e.target.files[0])}
+                          disabled={uploadingVirtualTour[index]}
+                        />
+                        {uploadingVirtualTour[index] ? (
+                          <>
+                            <div className="animate-spin w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full"></div>
+                            <span className="text-sm text-indigo-600 dark:text-indigo-400">Uploading...</span>
+                          </>
+                        ) : (
+                          <span className="text-sm text-indigo-600 dark:text-indigo-400 font-medium">Upload 360°</span>
+                        )}
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!url) {
+                            toast.info("Please add a 360 Image URL first to audit.");
+                            return;
+                          }
+                          auditByUrl(url, index, 'tour');
+                        }}
+                        className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2"
+                        title="AI Audit this 360 URL"
+                        disabled={isAuditing[`tour_${index}`]}
+                      >
+                        <FaBrain className={isAuditing[`tour_${index}`] ? 'animate-spin' : ''} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onHandleRemoveVirtualTour(index)}
+                        className="bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition flex items-center justify-center"
+                        title="Remove 360 image"
+                      >
+                        ×
+                      </button>
+                    </div>
                   </div>
                   {virtualTourErrors[index] && (
                     <p className="text-red-500 text-sm">{virtualTourErrors[index]}</p>
