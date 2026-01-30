@@ -2,6 +2,7 @@
 import { FaShareAlt, FaCopy, FaTrash, FaClock, FaCheck, FaTimes, FaGlobe, FaSync } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { authenticatedFetch } from '../utils/auth';
+import SocialSharePanel from './SocialSharePanel';
 
 export default function ShareChatModal({ isOpen, onClose, sessionId, currentChatName }) {
     const [loading, setLoading] = useState(false);
@@ -128,6 +129,15 @@ export default function ShareChatModal({ isOpen, onClose, sessionId, currentChat
         toast.success("Link copied!");
     };
 
+    const [showSocialPanel, setShowSocialPanel] = useState(false);
+
+    // ... (existing copy logic)
+
+    const handleSocialShare = () => {
+        if (!shareData) return;
+        setShowSocialPanel(true);
+    };
+
     if (!isOpen) return null;
 
     return (
@@ -232,10 +242,18 @@ export default function ShareChatModal({ isOpen, onClose, sessionId, currentChat
                                     </div>
                                     <button
                                         onClick={copyToClipboard}
-                                        className={`px-4 rounded-lg font-medium transition-colors ${copied ? 'bg-green-500 text-white' : 'bg-gray-800 dark:bg-gray-700 text-white hover:bg-gray-900 dark:hover:bg-gray-600'
+                                        className={`px-3 rounded-lg font-medium transition-colors ${copied ? 'bg-green-500 text-white' : 'bg-gray-800 dark:bg-gray-700 text-white hover:bg-gray-900 dark:hover:bg-gray-600'
                                             }`}
+                                        title="Copy Link"
                                     >
                                         {copied ? <FaCheck /> : <FaCopy />}
+                                    </button>
+                                    <button
+                                        onClick={handleSocialShare}
+                                        className="px-3 rounded-lg font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                                        title="Share on Social Media"
+                                    >
+                                        <FaShareAlt />
                                     </button>
                                 </div>
                             </div>
@@ -300,6 +318,15 @@ export default function ShareChatModal({ isOpen, onClose, sessionId, currentChat
                     )}
                 </div>
             </div>
+            {shareData && (
+                <SocialSharePanel
+                    isOpen={showSocialPanel}
+                    onClose={() => setShowSocialPanel(false)}
+                    url={`${window.location.origin}${shareData.url}`}
+                    title={shareData.title}
+                    description="Check out this chat I had with SetuAI!"
+                />
+            )}
         </div>
     );
 }
