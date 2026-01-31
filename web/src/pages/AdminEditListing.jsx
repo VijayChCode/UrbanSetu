@@ -133,6 +133,17 @@ export default function AdminEditListing() {
       if (data.aiAuditResults) {
         setAuditResults(data.aiAuditResults);
       }
+
+      // Check if Property Images are already present in 360 View
+      if (data.imageUrls && data.imageUrls.length > 0 && data.virtualTourImages && data.virtualTourImages.length > 0) {
+        const validPropertyImages = data.imageUrls.filter(url => url && url.trim() !== '');
+        if (validPropertyImages.length > 0) {
+          const isSynced = validPropertyImages.every(url => data.virtualTourImages.includes(url));
+          if (isSynced) {
+            setSyncImagesTo360(true);
+          }
+        }
+      }
     };
     fetchListing();
     // eslint-disable-next-line

@@ -116,6 +116,20 @@ export default function CreateListing() {
     }
   };
 
+  // Check if Property Images are already present in 360 View on load
+  useEffect(() => {
+    if (formData.imageUrls && formData.imageUrls.length > 0 && formData.virtualTourImages && formData.virtualTourImages.length > 0) {
+      const validPropertyImages = formData.imageUrls.filter(url => url && url.trim() !== '');
+      if (validPropertyImages.length > 0) {
+        const isSynced = validPropertyImages.every(url => formData.virtualTourImages.includes(url));
+        if (isSynced) {
+          setSyncImagesTo360(true);
+        }
+      }
+    }
+    // eslint-disable-next-line
+  }, []);
+
   // Update formData when location changes
   useEffect(() => {
     setFormData((prev) => ({
