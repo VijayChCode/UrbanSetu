@@ -680,9 +680,9 @@ export default function EditListing() {
           <div className="bg-red-100 dark:bg-red-900/30 p-4 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center transition-colors">
             <FaExclamationTriangle className="w-10 h-10 text-red-600 dark:text-red-400" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-3 transition-colors">Unable to Load Property</h2>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-3 transition-colors">Property Not Found</h2>
           <p className="text-gray-600 dark:text-gray-400 mb-8 leading-relaxed transition-colors">
-            {error || "The property you are currently looking for does not exist or has been removed."}
+            We couldn't find the property you're looking for. It may have been removed, or the link might be incorrect.
           </p>
           <button
             onClick={() => navigate(getPreviousPath())}
