@@ -24,6 +24,11 @@ export const useImageAuditor = () => {
                     img.onload = async () => {
                         try {
                             const result = await auditImage(img);
+
+                            if (!result) {
+                                throw new Error("AI returned null result");
+                            }
+
                             setAuditResults(prev => ({
                                 ...prev,
                                 [key]: result
@@ -68,6 +73,11 @@ export const useImageAuditor = () => {
                 img.onload = async () => {
                     try {
                         const result = await auditImage(img);
+
+                        if (!result) {
+                            throw new Error("AI Analysis returned no results (null)");
+                        }
+
                         setAuditResults(prev => ({
                             ...prev,
                             [key]: result
