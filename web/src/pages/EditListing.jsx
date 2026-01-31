@@ -1118,7 +1118,7 @@ export default function EditListing() {
 
                 <div className="flex items-center gap-2 px-3 py-1 bg-white dark:bg-gray-800 rounded-full border border-blue-100 dark:border-blue-700 shadow-sm">
                   <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest flex items-center gap-2">
-                    Powered by Sentinel v2.0 AI Image analyzer
+                    Powered by Sentinel v2.0 Image analyzer
                   </span>
                 </div>
               </div>
