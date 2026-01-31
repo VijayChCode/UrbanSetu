@@ -97,6 +97,7 @@ export default function AdminEditListing() {
   const [locationState, setLocationState] = useState({ state: "", district: "", city: "", cities: [] });
   const [previewVideo, setPreviewVideo] = useState(null);
   const [syncImagesTo360, setSyncImagesTo360] = useState(false);
+  const [noListingFound, setNoListingFound] = useState(false);
 
   // Image Preview State
   const [previewImages, setPreviewImages] = useState([]);
@@ -135,6 +136,7 @@ export default function AdminEditListing() {
       const data = await res.json();
       if (data.success === false) {
         setError(data.message);
+        setNoListingFound(true);
         return;
       }
       setFormData({
@@ -635,6 +637,28 @@ export default function AdminEditListing() {
       setLoading(false);
     }
   };
+
+  if (noListingFound) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900 px-4 transition-colors duration-300">
+        <div className="text-center p-8 bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-md w-full border border-gray-200 dark:border-gray-700 transition-colors duration-300">
+          <div className="bg-red-100 dark:bg-red-900/30 p-4 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center transition-colors">
+            <FaExclamationTriangle className="w-10 h-10 text-red-600 dark:text-red-400" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-3 transition-colors">Unable to Load Property</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-8 leading-relaxed transition-colors">
+            {error || "The property you are currently looking for does not exist or has been removed."}
+          </p>
+          <button
+            onClick={() => navigate(getPreviousPath())}
+            className="w-full py-3 px-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+          >
+            Go Back to Listings
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-gradient-to-br from-blue-50 to-purple-100 dark:from-gray-900 dark:to-gray-950 min-h-screen py-10 px-2 md:px-8 transition-colors duration-300">
