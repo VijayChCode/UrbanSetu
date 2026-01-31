@@ -24,8 +24,8 @@ export const auditImage = async (imageSource) => {
     try {
         const loadedModel = await loadModel();
 
-        // 1. Content Prediction (What is in the image?)
-        const predictions = await loadedModel.classify(imageSource);
+        // 1. Content Prediction (What is in the image?) - Get Top 5 Classifications
+        const predictions = await loadedModel.classify(imageSource, 5);
 
         // 2. Technical Quality (Blur & Brightness)
         const quality = await checkTechnicalQuality(imageSource);
@@ -66,27 +66,66 @@ const checkTechnicalQuality = async (imageSource) => {
  * Map generic ImageNet tags to Real Estate specific room names
  */
 const generateSuggestions = (predictions) => {
-    const tagMap = {
-        'dining table': 'Dining Room',
-        'studio couch': 'Living Room',
-        'sofa': 'Living Room',
-        'bed': 'Bedroom',
-        'bathtub': 'Bathroom',
-        'toilet': 'Washroom',
-        'refrigerator': 'Kitchen',
-        'microwave': 'Kitchen',
-        'stove': 'Kitchen',
-        'entertainment center': 'Media Room',
-        'patio': 'Outdoor/Patio'
-    };
+    const phraseMap = [
+        // LIVING ROOM
+        { keywords: ['studio couch', 'sofa', 'couch', 'convertible', 'loveseat'], tag: 'Living Room' },
+        { keywords: ['television', 'monitor', 'screen', 'home theater', 'entertainment center', 'remote control'], tag: 'Living Room' },
+        { keywords: ['window shade', 'window screen', 'curtain', 'drapes'], tag: 'Living Room' },
+        { keywords: ['rug', 'carpet', 'doormat', 'prayer rug', 'area rug'], tag: 'Living Room' },
+        { keywords: ['vase', 'potter', 'table lamp', 'lampshade'], tag: 'Living Room' },
+        { keywords: ['sliding door', 'folding chair', 'rocking chair'], tag: 'Living Room' },
+        { keywords: ['piano', 'grand piano', 'upright'], tag: 'Living Room' },
+
+        // BEDROOM
+        { keywords: ['bed', 'four-poster', 'quilt', 'comforter', 'duvet', 'sheets', 'bedroom'], tag: 'Bedroom' },
+        { keywords: ['pillow', 'cushion'], tag: 'Bedroom' },
+        { keywords: ['wardrobe', 'closet', 'chiffonier', 'dresser', 'chest of drawers'], tag: 'Bedroom' },
+        { keywords: ['crib', 'cradle', 'bassinet'], tag: 'Kids Room' },
+        { keywords: ['bunk bed'], tag: 'Kids Room' },
+
+        // KITCHEN & DINING
+        { keywords: ['refrigerator', 'icebox'], tag: 'Kitchen' },
+        { keywords: ['microwave', 'stove', 'oven', 'range', 'rotisserie'], tag: 'Kitchen' },
+        { keywords: ['dishwasher', 'washer', 'washing machine'], tag: 'Kitchen / Utility' },
+        { keywords: ['toaster', 'waffle iron', 'espresso', 'coffeepot', 'coffee mug', 'cup'], tag: 'Kitchen' },
+        { keywords: ['frying pan', 'wok', 'dutch oven', 'pot', 'pan'], tag: 'Kitchen' },
+        { keywords: ['plate rack', 'cabinet', 'cupboard'], tag: 'Kitchen' },
+        { keywords: ['dining table', 'restaurant', 'plate', 'platter'], tag: 'Dining Room' },
+
+        // BATHROOM
+        { keywords: ['bathtub', 'tub', 'jacuzzi'], tag: 'Bathroom' },
+        { keywords: ['shower', 'shower curtain'], tag: 'Bathroom' },
+        { keywords: ['toilet', 'toilet seat', 'bidet'], tag: 'Washroom / Bathroom' },
+        { keywords: ['washbasin', 'hand basin', 'sink'], tag: 'Bathroom' },
+        { keywords: ['medicine chest', 'soap dispenser', 'toilet tissue', 'paper towel'], tag: 'Bathroom' },
+
+        // STUDY / OFFICE
+        { keywords: ['desk', 'desk', 'typewriter', 'laptop', 'notebook', 'computer'], tag: 'Study / Office' },
+        { keywords: ['bookcase', 'bookshelf', 'library', 'binder', 'book'], tag: 'Study / Library' },
+        { keywords: ['file', 'filing cabinet'], tag: 'Study / Office' },
+
+        // OUTDOOR
+        { keywords: ['patio', 'deck', 'porch'], tag: 'Balcony / Patio' },
+        { keywords: ['picket fence', 'worm fence', 'fence'], tag: 'Garden / Exterior' },
+        { keywords: ['greenhouse', 'flower pot'], tag: 'Garden' },
+        { keywords: ['swimming pool', 'pool', 'scuba'], tag: 'Pool Area' },
+        { keywords: ['umbrella', 'sunshade'], tag: 'Outdoor' },
+        { keywords: ['mobile home', 'trailer truck'], tag: 'Exterior' },
+        { keywords: ['tile roof', 'shingle', 'thatch'], tag: 'Exterior' },
+        { keywords: ['lakeside', 'seashore', 'valley'], tag: 'View / Exterior' }
+    ];
 
     const detectedRooms = predictions
         .map(p => {
             const className = p.className.toLowerCase();
-            const foundTag = Object.keys(tagMap).find(tag => className.includes(tag));
-            return foundTag ? tagMap[foundTag] : null;
+            // Search through our map
+            const match = phraseMap.find(entry =>
+                entry.keywords.some(keyword => className.includes(keyword))
+            );
+            return match ? match.tag : null;
         })
         .filter(Boolean);
 
-    return [...new Set(detectedRooms)]; // Return unique room suggestions
+    // Filter duplicates
+    return [...new Set(detectedRooms)];
 };
