@@ -13,11 +13,16 @@ let classifier = null;
  * Uses a quantized version for fast browser performance.
  */
 export const loadModel = async () => {
-    if (!classifier) {
-        // 'Xenova/clip-vit-base-patch32' is a good balance of speed/accuracy
-        classifier = await pipeline('zero-shot-image-classification', 'Xenova/clip-vit-base-patch32');
+    try {
+        if (!classifier) {
+            // 'Xenova/clip-vit-base-patch32' is a good balance of speed/accuracy
+            classifier = await pipeline('zero-shot-image-classification', 'Xenova/clip-vit-base-patch32');
+        }
+        return classifier;
+    } catch (e) {
+        console.error("Failed to load AI model:", e);
+        throw new Error("Failed to load AI model");
     }
-    return classifier;
 };
 
 /**
