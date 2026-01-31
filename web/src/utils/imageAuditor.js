@@ -1,64 +1,45 @@
 import * as tf from '@tensorflow/tfjs';
-import { pipeline, env } from '@xenova/transformers';
-import { CANDIDATE_LABELS } from './aiMappings';
+import * as mobilenet from '@tensorflow-models/mobilenet';
+import { ROOM_IDENTIFICATION_MAP } from './aiMappings';
 
-// Configure transformers.js to use local cache and not block UI
-env.allowLocalModels = false; // Downloads from HuggingFace Hub on first use
-env.useBrowserCache = true;
-
-let classifier = null;
+let model = null;
 
 /**
- * Loads the Zero-Shot Image Classification pipeline (CLIP)
- * Uses a quantized version for fast browser performance.
+ * Loads the MobileNet model if not already loaded
  */
 export const loadModel = async () => {
     try {
-        if (!classifier) {
-            // 'Xenova/clip-vit-base-patch32' is a good balance of speed/accuracy
-            classifier = await pipeline('zero-shot-image-classification', 'Xenova/clip-vit-base-patch32');
+        if (!model) {
+            model = await mobilenet.load({
+                version: 2,
+                alpha: 1.0
+            });
         }
-        return classifier;
+        return model;
     } catch (e) {
-        console.error("Failed to load AI model:", e);
+        console.error("Failed to load MobileNet model:", e);
         throw new Error("Failed to load AI model");
     }
 };
 
 /**
- * Audit an image for quality and content using Zero-Shot AI
- * @param {HTMLImageElement|string} imageSource - Image element or URL
+ * Audit an image for quality and content
+ * @param {HTMLImageElement|HTMLCanvasElement|ImageData} imageSource 
  */
 export const auditImage = async (imageSource) => {
     try {
-        const pipe = await loadModel();
+        const loadedModel = await loadModel();
 
-        // 1. Zero-Shot Classification (Understand concepts, not just objects)
-        // src can be a URL or data URI. If it's an Image element, passed src.
-        const input = imageSource.src || imageSource;
+        // 1. Content Prediction (What is in the image?) - Get Top 5 Classifications
+        const predictions = await loadedModel.classify(imageSource, 5);
 
-        const output = await pipe(input, CANDIDATE_LABELS);
-
-        // Output format: [{ label: 'Bedroom', score: 0.95 }, ... ]
-        // We take the top suggestion if confident
-        const topMatch = output[0];
-        const suggestions = topMatch.score > 0.25 ? [topMatch.label] : ['Unidentified'];
-
-        // 2. Technical Quality (Blur & Brightness via TFJS)
-        // We still need the raw pixels for this, so we ensure we have an image element
-        let quality = { brightness: 'Unknown', contrast: 'Unknown', score: 0 };
-
-        if (imageSource instanceof HTMLImageElement || imageSource instanceof HTMLCanvasElement) {
-            quality = await checkTechnicalQuality(imageSource);
-        } else if (typeof imageSource === 'string') {
-            // If just a URL string passed, we might skip quality check or need to load it
-            // For now, gracefully handle if we can't inspect pixels easily
-        }
+        // 2. Technical Quality (Blur & Brightness)
+        const quality = await checkTechnicalQuality(imageSource);
 
         return {
-            predictions: output, // Return full analysis for debugging if needed
+            predictions,
             quality,
-            suggestions
+            suggestions: generateSuggestions(predictions)
         };
     } catch (error) {
         console.error('Image Audit Error:', error);
@@ -67,8 +48,7 @@ export const auditImage = async (imageSource) => {
 };
 
 /**
- * Analyzes brightness and basic contrast using TFJS
- * Kept from previous implementation as CLIP doesn't do pixel-level stats
+ * Analyzes brightness and basic contrast
  */
 const checkTechnicalQuality = async (imageSource) => {
     try {
@@ -91,4 +71,23 @@ const checkTechnicalQuality = async (imageSource) => {
         console.warn('Technical quality check failed:', err);
         return { brightness: 'Error', contrast: 'Error', score: 0 };
     }
+};
+
+/**
+ * Map generic ImageNet tags to Real Estate specific room names
+ */
+const generateSuggestions = (predictions) => {
+    const detectedRooms = predictions
+        .map(p => {
+            const className = p.className.toLowerCase();
+            // Search through our map
+            const match = ROOM_IDENTIFICATION_MAP.find(entry =>
+                entry.keywords.some(keyword => className.includes(keyword))
+            );
+            return match ? match.tag : null;
+        })
+        .filter(Boolean);
+
+    // Filter duplicates
+    return [...new Set(detectedRooms)];
 };
