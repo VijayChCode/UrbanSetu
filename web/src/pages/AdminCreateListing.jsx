@@ -11,6 +11,7 @@ import { usePageTitle } from '../hooks/usePageTitle';
 import { authenticatedFetch } from '../utils/auth';
 import { useImageAuditor } from '../hooks/useImageAuditor';
 import { FaBrain, FaExclamationTriangle, FaCheckCircle, FaLightbulb, FaMagic } from 'react-icons/fa';
+import ImagePreview from '../components/ImagePreview';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function AdminCreateListing() {
@@ -110,6 +111,23 @@ export default function AdminCreateListing() {
   const [locationState, setLocationState] = useState({ state: "", district: "", city: "", cities: [] });
   const [previewVideo, setPreviewVideo] = useState(null);
   const [syncImagesTo360, setSyncImagesTo360] = useState(false);
+
+  // Image Preview State
+  const [previewImages, setPreviewImages] = useState([]);
+  const [previewIndex, setPreviewIndex] = useState(0);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
+  const openPreview = (index, sourceArray) => {
+    const validImages = sourceArray.filter(url => url && url.length > 0);
+    const clickedUrl = sourceArray[index];
+    const validIndex = validImages.indexOf(clickedUrl);
+
+    if (validIndex !== -1) {
+      setPreviewImages(validImages);
+      setPreviewIndex(validIndex);
+      setIsPreviewOpen(true);
+    }
+  };
 
   // AI Image Auditor Hook
   const { performAudit, auditByUrl, auditResults, isAuditing, setAuditResults } = useImageAuditor();
@@ -1304,7 +1322,8 @@ export default function AdminCreateListing() {
                           <img
                             src={url}
                             alt={`Listing ${index + 1}`}
-                            className="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-105"
+                            className="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-105 cursor-pointer"
+                            onClick={() => openPreview(index, formData.imageUrls)}
                             onError={(e) => {
                               e.target.src = "https://via.placeholder.com/400x300?text=Image+Not+Found";
                               e.target.className = "w-full h-48 object-cover rounded-lg opacity-50";
@@ -1525,7 +1544,12 @@ export default function AdminCreateListing() {
                   {url && (
                     <div className="mt-2 flex flex-col md:flex-row gap-4 bg-white dark:bg-gray-800/50 p-3 rounded-lg border border-gray-100 dark:border-gray-700">
                       <div className="relative group flex-shrink-0">
-                        <img src={url} alt="360 Preview" className="h-24 w-32 rounded border border-gray-300 dark:border-gray-700 object-cover" />
+                        <img
+                          src={url}
+                          alt="360 Preview"
+                          className="h-24 w-32 rounded border border-gray-300 dark:border-gray-700 object-cover cursor-pointer"
+                          onClick={() => openPreview(index, formData.virtualTourImages)}
+                        />
                         {auditResults[`tour_${index}`] && (
                           <div className="absolute bottom-1 left-1 bg-blue-600/90 backdrop-blur-sm text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-1">
                             <FaBrain size={8} /> AI
@@ -1612,6 +1636,12 @@ export default function AdminCreateListing() {
             isOpen={!!previewVideo}
             onClose={() => setPreviewVideo(null)}
             videos={previewVideo ? [previewVideo] : []}
+          />
+          <ImagePreview
+            isOpen={isPreviewOpen}
+            onClose={() => setIsPreviewOpen(false)}
+            images={previewImages}
+            initialIndex={previewIndex}
           />
         </form>
       </div>
