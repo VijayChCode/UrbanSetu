@@ -82,7 +82,6 @@ export default function AdminCreateListing() {
     securityDepositMonths: 2,
     maintenanceCharges: 0,
     advanceRentMonths: 0,
-    advanceRentMonths: 0,
     customLockDuration: 12, // in months, if custom plan
     imageCaptions: {} // Map of index -> caption string
   });
