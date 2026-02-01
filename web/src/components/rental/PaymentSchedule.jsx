@@ -194,11 +194,19 @@ export default function PaymentSchedule({ wallet, contract, isTenant }) {
                             <p className="text-xl font-bold text-gray-800 dark:text-white mb-1">
                               ₹{payment.amount.toLocaleString('en-IN')}
                             </p>
+                            {contract?.maintenanceCharges > 0 && (
+                              <p className="text-xs text-gray-600 dark:text-gray-400">
+                                + Maintenance: ₹{contract.maintenanceCharges.toLocaleString('en-IN')}
+                              </p>
+                            )}
                             {payment.penaltyAmount > 0 && (
                               <p className="text-sm text-red-600 dark:text-red-400">
                                 + Penalty: ₹{payment.penaltyAmount.toLocaleString('en-IN')}
                               </p>
                             )}
+                            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mt-1">
+                              Total: ₹{(payment.amount + (payment.penaltyAmount || 0) + (contract?.maintenanceCharges || 0)).toLocaleString('en-IN')}
+                            </p>
                             {/* SetuCoins Earning Preview */}
                             {payment.status === 'pending' && payment.amount >= 1000 && (
                               <p className="text-xs text-yellow-600 font-semibold flex justify-end items-center gap-1 mt-1">

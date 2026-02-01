@@ -239,14 +239,15 @@ export default function RentPaymentHistory({ wallet, contract }) {
 
       // Table rows
       doc.setFont('helvetica', 'normal');
-      payments.forEach((payment, index) => {
+      payments.forEach((payment) => {
         checkPageBreak(20);
 
         const dueDate = new Date(payment.dueDate);
         const paidDate = payment.paidAt ? new Date(payment.paidAt) : null;
+        const maintenance = contract?.maintenanceCharges || 0;
         const amount = payment.amount.toFixed(2);
         const penalty = (payment.penaltyAmount || 0).toFixed(2);
-        const total = (payment.amount + (payment.penaltyAmount || 0)).toFixed(2);
+        const total = (payment.amount + (payment.penaltyAmount || 0) + maintenance).toFixed(2);
         const status = payment.status.charAt(0).toUpperCase() + payment.status.slice(1);
         const paidDateStr = paidDate ? paidDate.toLocaleDateString('en-GB') : '-';
         const paymentId = typeof payment.paymentId === 'object' ? (payment.paymentId?.paymentId || '-') : (payment.paymentId || '-');
@@ -302,15 +303,16 @@ export default function RentPaymentHistory({ wallet, contract }) {
 
     const completed = wallet.paymentSchedule.filter(p => p.status === 'completed' || p.status === 'paid');
     const pending = wallet.paymentSchedule.filter(p => p.status === 'pending' || p.status === 'overdue');
+    const maintenance = contract?.maintenanceCharges || 0;
 
     return {
       total: wallet.paymentSchedule.length,
       completed: completed.length,
       pending: pending.length,
-      totalPaid: completed.reduce((sum, p) => sum + p.amount + (p.penaltyAmount || 0), 0),
-      totalDue: pending.reduce((sum, p) => sum + p.amount + (p.penaltyAmount || 0), 0)
+      totalPaid: completed.reduce((sum, p) => sum + p.amount + (p.penaltyAmount || 0) + maintenance, 0),
+      totalDue: pending.reduce((sum, p) => sum + p.amount + (p.penaltyAmount || 0) + maintenance, 0)
     };
-  }, [wallet]);
+  }, [wallet, contract]);
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
@@ -359,6 +361,7 @@ export default function RentPaymentHistory({ wallet, contract }) {
           payments.map((payment, index) => {
             const dueDate = new Date(payment.dueDate);
             const isOverdue = payment.status === 'pending' && dueDate < new Date();
+            const maintenance = contract?.maintenanceCharges || 0;
 
             return (
               <div
@@ -419,13 +422,18 @@ export default function RentPaymentHistory({ wallet, contract }) {
                       <p className="text-xl font-bold mb-1">
                         ₹{payment.amount.toLocaleString('en-IN')}
                       </p>
+                      {maintenance > 0 && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          + Maintenance: ₹{maintenance.toLocaleString('en-IN')}
+                        </p>
+                      )}
                       {payment.penaltyAmount > 0 && (
                         <p className="text-sm text-red-600 dark:text-red-400 mb-1">
                           Penalty: ₹{payment.penaltyAmount.toLocaleString('en-IN')}
                         </p>
                       )}
                       <p className="text-lg font-semibold">
-                        Total: ₹{(payment.amount + (payment.penaltyAmount || 0)).toLocaleString('en-IN')}
+                        Total: ₹{(payment.amount + (payment.penaltyAmount || 0) + maintenance).toLocaleString('en-IN')}
                       </p>
                     </div>
                     {payment.status === 'completed' && (

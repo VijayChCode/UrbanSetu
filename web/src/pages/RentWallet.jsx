@@ -150,6 +150,8 @@ export default function RentWallet() {
   }
 
   // Calculate statistics
+  const maintenance = contract?.maintenanceCharges || 0;
+
   const overduePayments = wallet.paymentSchedule?.filter(p => {
     const now = new Date();
     const dueDate = new Date(p.dueDate);
@@ -163,8 +165,14 @@ export default function RentWallet() {
     return p.status === 'pending' && dueDate >= now && dueDate <= nextMonth;
   }) || [];
 
-  const totalOverdue = overduePayments.reduce((sum, p) => sum + p.amount + (p.penaltyAmount || 0), 0);
-  const totalUpcoming = upcomingPayments.reduce((sum, p) => sum + p.amount, 0);
+  const completedPayments = wallet.paymentSchedule?.filter(p => p.status === 'completed' || p.status === 'paid') || [];
+  const pendingPayments = wallet.paymentSchedule?.filter(p => p.status === 'pending' || p.status === 'overdue') || [];
+
+  const totalOverdue = overduePayments.reduce((sum, p) => sum + p.amount + (p.penaltyAmount || 0) + maintenance, 0);
+  const totalUpcoming = upcomingPayments.reduce((sum, p) => sum + p.amount + maintenance, 0);
+
+  const displayTotalPaid = completedPayments.reduce((sum, p) => sum + p.amount + (p.penaltyAmount || 0) + maintenance, 0);
+  const displayTotalDue = pendingPayments.reduce((sum, p) => sum + p.amount + (p.penaltyAmount || 0) + maintenance, 0);
 
   return (
     <div className="bg-gradient-to-br from-blue-50 to-purple-100 dark:from-gray-900 dark:to-gray-800 min-h-screen py-10 px-4 md:px-8">
@@ -254,7 +262,7 @@ export default function RentWallet() {
                   <FaCheckCircle className="text-green-600 dark:text-green-400 text-xl" />
                 </div>
                 <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                  ₹{wallet.totalPaid?.toLocaleString('en-IN') || '0'}
+                  ₹{displayTotalPaid.toLocaleString('en-IN')}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">All-time payments</p>
               </div>
@@ -266,7 +274,7 @@ export default function RentWallet() {
                   <FaMoneyBillWave className="text-blue-600 dark:text-blue-400 text-xl" />
                 </div>
                 <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                  ₹{wallet.totalDue?.toLocaleString('en-IN') || '0'}
+                  ₹{displayTotalDue.toLocaleString('en-IN')}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Remaining payments</p>
               </div>
@@ -366,7 +374,7 @@ export default function RentWallet() {
                         </div>
                         <div className="text-right">
                           <p className="font-semibold text-green-600 dark:text-green-400">
-                            ₹{payment.amount.toLocaleString('en-IN')}
+                            ₹{(payment.amount + (contract?.maintenanceCharges || 0)).toLocaleString('en-IN')}
                           </p>
                           {payment.penaltyAmount > 0 && (
                             <p className="text-xs text-red-600 dark:text-red-400">
