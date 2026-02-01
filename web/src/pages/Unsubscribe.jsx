@@ -134,6 +134,14 @@ export default function Unsubscribe() {
                                 <h1 className="text-4xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">
                                     Unsubscribe from <span className="text-emerald-600 dark:text-emerald-400">Emails</span>
                                 </h1>
+
+                                {email && (
+                                    <div className="mb-6 inline-flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-full text-sm font-medium text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 max-w-full truncate">
+                                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0"></span>
+                                        <span className="truncate">{email}</span>
+                                    </div>
+                                )}
+
                                 <p className="text-lg text-slate-600 dark:text-slate-400 mb-10 leading-relaxed max-w-sm mx-auto">
                                     We're sorry to see you go. If you're sure you want to unsubscribe from our promotional emails, please click the button below.
                                 </p>
