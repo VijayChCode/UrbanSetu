@@ -8,6 +8,10 @@ export default function ContractPreview({ contract, listing, tenant, landlord, o
   if (!contract) return null;
 
   const handleDownload = async () => {
+    if (onDownload) {
+      onDownload();
+      return;
+    }
     try {
       const response = await authenticatedFetch(`${API_BASE_URL}/api/rental/contracts/${contract.contractId || contract._id}/download`);
 
