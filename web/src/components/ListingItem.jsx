@@ -139,8 +139,8 @@ export default function ListingItem({ listing, onDelete, onWishToggle }) {
                 alt={listing.name || "Real Estate Property"}
                 className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
                 onError={(e) => {
-                  e.target.src = "https://via.placeholder.com/400x300?text=No+Image";
-                  e.target.className = "h-full w-full object-cover opacity-50";
+                  e.target.onerror = null;
+                  e.target.src = "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60";
                 }}
               />
               {/* AI Match Overlay */}
@@ -161,11 +161,12 @@ export default function ListingItem({ listing, onDelete, onWishToggle }) {
               )}
             </div>
           ) : (
-            <div className="aspect-[16/10] w-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-              <div className="text-center text-gray-500 dark:text-gray-400">
-                <div className="text-4xl mb-2">🏠</div>
-                <p className="text-sm">No Image</p>
-              </div>
+            <div className="aspect-[16/10] w-full overflow-hidden relative">
+              <img
+                src="https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+                alt="Property Placeholder"
+                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+              />
             </div>
           )}
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/50 to-transparent" />
