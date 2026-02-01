@@ -43,7 +43,7 @@ export const getGroqListingsRecommendation = async (queryText, limit = 5) => {
 
         let candidates = await Listing.find(queryCriteria)
             .limit(15)
-            .select('name description city regularPrice bedrooms bathrooms type furnished parking');
+            .select('name description city regularPrice bedrooms bathrooms type furnished parking imageUrls offer discountPrice address userRef isVerified');
 
         // If no city matches or not enough candidates, broaden search
         if (candidates.length < 5) {
@@ -52,7 +52,7 @@ export const getGroqListingsRecommendation = async (queryText, limit = 5) => {
                 availabilityStatus: 'available'
             })
                 .limit(15)
-                .select('name description city regularPrice bedrooms bathrooms type furnished parking');
+                .select('name description city regularPrice bedrooms bathrooms type furnished parking imageUrls offer discountPrice address userRef isVerified');
         }
 
         if (candidates.length === 0) return [];
