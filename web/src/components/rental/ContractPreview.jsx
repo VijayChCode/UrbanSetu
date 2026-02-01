@@ -28,10 +28,6 @@ export default function ContractPreview({ contract, listing, tenant, landlord, o
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
-
-      if (onDownload) {
-        onDownload();
-      }
     } catch (error) {
       console.error('Error downloading contract:', error);
     }
