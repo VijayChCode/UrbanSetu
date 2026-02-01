@@ -4000,12 +4000,7 @@ export default function Listing() {
               <h3 className="text-lg font-bold text-red-700 dark:text-red-500 flex items-center gap-2">
                 <FaBan /> Remove Property Owner
               </h3>
-              <button
-                onClick={() => setShowDeassignModal(false)}
-                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400"
-              >
-                <FaTimes />
-              </button>
+
             </div>
             <form onSubmit={handleDeassignOwnerSubmit} className="px-6 py-5 space-y-4">
               <p className="text-sm text-gray-600 dark:text-gray-400">

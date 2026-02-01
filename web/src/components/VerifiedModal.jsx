@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaShieldAlt, FaCheckCircle, FaTimes, FaUser, FaHome } from 'react-icons/fa';
+import { FaShieldAlt, FaCheckCircle, FaUser, FaHome } from 'react-icons/fa';
 
 const VerifiedModal = ({ isOpen, onClose }) => {
     if (!isOpen) return null;
@@ -18,12 +18,7 @@ const VerifiedModal = ({ isOpen, onClose }) => {
                     <h3 className="text-2xl font-bold text-gray-900 dark:text-white relative z-10">Verified Property</h3>
                     <p className="text-green-700 dark:text-green-300 font-medium text-sm mt-1 relative z-10">UrbanSetu Assured • 100% Genuine</p>
 
-                    <button
-                        onClick={onClose}
-                        className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors z-20 focus:outline-none"
-                    >
-                        <FaTimes className="text-xl" />
-                    </button>
+
                 </div>
 
                 {/* Content */}

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { FaCoins, FaCheckCircle, FaStar, FaTrophy, FaTimes } from 'react-icons/fa';
+import { FaCoins, FaCheckCircle, FaStar, FaTrophy } from 'react-icons/fa';
 
 const SetuCoinInfoModal = ({ isOpen, onClose }) => {
     // Handle Esc key to close
@@ -31,12 +31,7 @@ const SetuCoinInfoModal = ({ isOpen, onClose }) => {
             {/* Modal Container */}
             <div className="bg-white dark:bg-gray-800 max-w-lg w-full rounded-[2rem] shadow-2xl overflow-hidden relative z-10 animate-[scaleIn_0.4s_cubic-bezier(0.175,0.885,0.32,1.275)] flex flex-col max-h-[90vh]">
                 {/* Close Button */}
-                <button
-                    onClick={onClose}
-                    className="absolute top-4 right-4 p-2 rounded-full bg-slate-100/80 dark:bg-gray-700/80 text-slate-500 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-gray-600 hover:text-slate-800 dark:hover:text-white transition-all z-20 backdrop-blur-sm"
-                >
-                    <FaTimes />
-                </button>
+
 
                 {/* Modal Header */}
                 <div className="bg-gradient-to-br from-yellow-400 via-amber-500 to-orange-500 p-6 md:p-8 text-white relative shrink-0">
