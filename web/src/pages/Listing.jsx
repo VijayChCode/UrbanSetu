@@ -2041,13 +2041,24 @@ export default function Listing() {
               <h1 className="text-lg sm:text-2xl md:text-3xl font-bold text-gray-800 dark:text-white break-words flex items-center gap-2">
                 {listing.name}
                 {listing.isVerified && (
-                  <button
-                    onClick={() => setShowVerifiedModal(true)}
-                    className="ml-3 px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold flex items-center gap-1 cursor-pointer hover:bg-green-200 transition-colors focus:outline-none"
-                    title="Click to see whatVerified means"
-                  >
-                    <FaCheckCircle /> Verified Property
-                  </button>
+                  <>
+                    <button
+                      onClick={() => setShowVerifiedModal(true)}
+                      className="ml-3 px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold flex items-center gap-1 cursor-pointer hover:bg-green-200 transition-colors focus:outline-none"
+                      title="Click to see whatVerified means"
+                    >
+                      <FaCheckCircle /> Verified Property
+                    </button>
+                    {(currentUser?.role === 'rootadmin' || currentUser?.role === 'admin') && (
+                      <button
+                        onClick={() => openConfirm('root-unpublish', { message: 'Unpublish this property?' })}
+                        className="ml-3 px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold flex items-center gap-1 cursor-pointer hover:bg-red-200 transition-colors focus:outline-none"
+                        title="Unpublish this property"
+                      >
+                        <FaBan /> Unpublish
+                      </button>
+                    )}
+                  </>
                 )}
                 {/* Root Admin verification bypass button - ONLY for NOT verified */}
                 {currentUser?.role === 'rootadmin' && !listing.isVerified && (
@@ -3044,15 +3055,7 @@ export default function Listing() {
             </div>
           )}
 
-          {/* Root Admin Unpublish Button (For Verified Properties) - visible to admin/rootadmin */}
-          {(currentUser?.role === 'rootadmin' || currentUser?.role === 'admin') && listing.isVerified && (
-            <button
-              onClick={() => openConfirm('root-unpublish', { message: 'Unpublish this property?' })}
-              className="w-full bg-red-600 text-white py-3 rounded-lg font-bold hover:bg-red-700 transition-colors shadow-lg flex items-center justify-center gap-2 mt-3 mb-6"
-            >
-              <FaBan /> Unpublish Property
-            </button>
-          )}
+
 
           {/* Admin Information - Only show for admins */}
           {isAdmin && isAdminContext && (
@@ -3988,44 +3991,7 @@ export default function Listing() {
         </div>
       )}
 
-      {/* Confirm Modal */}
-      {confirmModal.open && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[999] p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-sm border border-transparent dark:border-gray-700">
-            <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 font-semibold text-gray-900 dark:text-white">Confirm</div>
-            <div className="px-4 py-4 text-gray-700 dark:text-gray-300 text-sm">
-              <p>{confirmModal.message}</p>
-              {confirmModal.type === 'root-verify' && (
-                <div className="mt-3">
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                    Verification Reason <span className="text-red-500">*</span>
-                  </label>
-                  <textarea
-                    className="w-full border border-gray-300 dark:border-gray-600 rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    placeholder="Enter reason for bypassing verification..."
-                    rows={3}
-                    value={rootVerificationReason}
-                    onChange={(e) => setRootVerificationReason(e.target.value)}
-                  />
-                </div>
-              )}
-            </div>
-            <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 flex gap-2 justify-end">
-              <button onClick={closeConfirm} className="px-4 py-2 rounded bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white text-sm hover:bg-gray-300 dark:hover:bg-gray-600">Cancel</button>
-              <button
-                onClick={confirmYes}
-                disabled={confirmModal.type === 'root-verify' && !rootVerificationReason.trim()}
-                className={`px-4 py-2 rounded text-white text-sm ${confirmModal.type === 'root-verify' && !rootVerificationReason.trim()
-                  ? 'bg-red-300 cursor-not-allowed'
-                  : 'bg-red-600 hover:bg-red-700'
-                  }`}
-              >
-                Yes
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+
       {/* Deassign Owner Modal */}
       {showDeassignModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50 p-4">
