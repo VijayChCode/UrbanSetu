@@ -1025,11 +1025,9 @@ export const getWallet = async (req, res, next) => {
         const baseRent = contract.lockedRentAmount || contract.rentAmount;
         const maintenance = contract.maintenanceCharges || 0;
 
-        // Ensure we calculate on base rent, not total (which might include maintenance)
-        // If entry.amount is total, we should derive base. 
-        // Logic: Penalty is usually on Rent only.
-        const penaltyPerDay = (baseRent * (lateFeePercentage / 100));
-        const newPenaltyAmount = Math.round(penaltyPerDay * diffDays);
+        // One-time fixed penalty (not per day)
+        const fixedPenaltyAmount = Math.round(baseRent * (lateFeePercentage / 100));
+        const newPenaltyAmount = fixedPenaltyAmount;
 
         if (entry.status !== 'overdue' || entry.penaltyAmount !== newPenaltyAmount) {
           entry.status = 'overdue';
@@ -1110,7 +1108,19 @@ export const updateAutoDebit = async (req, res, next) => {
     const userId = req.user.id;
 
     // Verify contract and user access
-    const contract = await RentLockContract.findById(contractId);
+    let contract = await RentLockContract.findOne({ contractId });
+
+    if (!contract) {
+      try {
+        const mongoose = await import('mongoose');
+        if (mongoose.default.Types.ObjectId.isValid(contractId)) {
+          contract = await RentLockContract.findById(contractId);
+        }
+      } catch (error) {
+        // Continue
+      }
+    }
+
     if (!contract || contract.tenantId.toString() !== userId) {
       return res.status(403).json({ message: "Unauthorized." });
     }
@@ -4157,4 +4167,5 @@ export const rejectContractForBooking = async (bookingId, rejectedById, rejectio
     return { success: false, error: error.message };
   }
 };
+
 

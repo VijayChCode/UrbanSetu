@@ -11765,7 +11765,7 @@ export const sendRentPaymentOverdueEmail = async (email, overdueDetails) => {
                 </div>
                 ${penalty > 0 ? `
                 <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #dc2626;">
-                  <span>Late Fee Penalty</span>
+                  <span>Late Fee Penalty (One-time)</span>
                   <span>+ ₹${penalty.toLocaleString('en-IN')}</span>
                 </div>` : ''}
               </div>
@@ -11777,7 +11777,7 @@ export const sendRentPaymentOverdueEmail = async (email, overdueDetails) => {
             </div>
             
             <p style="color: #4b5563; font-size: 14px; line-height: 1.6; text-align: center; margin-bottom: 30px;">
-              Please complete your payment immediately to avoid further penalties and legal complications.
+              Please complete your payment immediately. This is a one-time penalty for late payment.
             </p>
             
             <div style="text-align: center;">

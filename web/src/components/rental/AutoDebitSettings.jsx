@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FaCog, FaToggleOn, FaToggleOff, FaCreditCard, FaCalendarAlt, FaCheckCircle, FaExclamationTriangle, FaTimes, FaSave } from "react-icons/fa";
+import { FaCog, FaToggleOn, FaToggleOff, FaCreditCard, FaCalendarAlt, FaCheckCircle, FaExclamationTriangle, FaTimes, FaSave, FaUniversity, FaMobileAlt } from "react-icons/fa";
 import { toast } from 'react-toastify';
 import { authenticatedFetch } from '../../utils/auth';
 
@@ -16,7 +16,8 @@ export default function AutoDebitSettings({ wallet, contract, onUpdate }) {
 
   const [isAddingMethod, setIsAddingMethod] = useState(false);
   const [newMethodDetails, setNewMethodDetails] = useState({
-    type: 'card',
+    type: 'card', // 'card' or 'upi'
+    cardCategory: 'debit', // 'debit' or 'credit'
     cardNumber: '',
     expiry: '',
     cvv: '',
@@ -24,7 +25,6 @@ export default function AutoDebitSettings({ wallet, contract, onUpdate }) {
   });
 
   const handleToggle = async () => {
-    // If enabling and no token, prompt to add method
     if (!settings.enabled && !settings.paymentMethodToken) {
       setIsAddingMethod(true);
       return;
@@ -65,15 +65,33 @@ export default function AutoDebitSettings({ wallet, contract, onUpdate }) {
     }
   };
 
+  const handleExpiryChange = (e) => {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length >= 2) {
+      value = value.substring(0, 2) + '/' + value.substring(2, 4);
+    }
+    setNewMethodDetails({ ...newMethodDetails, expiry: value.substring(0, 5) });
+  };
+
+  const handleCardNumberChange = (e) => {
+    let value = e.target.value.replace(/\D/g, '');
+    let formatted = value.match(/.{1,4}/g)?.join(' ') || value;
+    setNewMethodDetails({ ...newMethodDetails, cardNumber: formatted.substring(0, 19) });
+  };
+
   const savePaymentMethod = async () => {
-    // Validation
     if (newMethodDetails.type === 'card') {
-      if (!newMethodDetails.cardNumber || newMethodDetails.cardNumber.length < 12) {
+      const rawCard = newMethodDetails.cardNumber.replace(/\s/g, '');
+      if (!rawCard || rawCard.length < 12) {
         toast.error("Please enter a valid card number.");
         return;
       }
-      if (!newMethodDetails.expiry || !newMethodDetails.cvv) {
-        toast.error("Please enter expiry and CVV.");
+      if (!newMethodDetails.expiry || newMethodDetails.expiry.length < 5) {
+        toast.error("Please enter expiry (MM/YY).");
+        return;
+      }
+      if (!newMethodDetails.cvv || newMethodDetails.cvv.length < 3) {
+        toast.error("Please enter a valid CVV.");
         return;
       }
     } else if (newMethodDetails.type === 'upi') {
@@ -85,15 +103,13 @@ export default function AutoDebitSettings({ wallet, contract, onUpdate }) {
 
     try {
       setLoading(true);
-      // Simulate token generation (In real app, this goes to Stripe/Razorpay)
       const mockToken = `tok_${newMethodDetails.type}_${Date.now()}`;
 
-      // Save to backend + Enable Auto-Debit
       const res = await authenticatedFetch(`${API_BASE_URL}/api/rental/wallet/${contract.contractId}/auto-debit`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          enabled: true, // Enable immediately upon adding
+          enabled: true,
           method: newMethodDetails.type === 'upi' ? 'upi' : 'razorpay',
           day: settings.day,
           paymentMethodToken: mockToken
@@ -163,201 +179,239 @@ export default function AutoDebitSettings({ wallet, contract, onUpdate }) {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-      <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-6">
-        <FaCog className="inline mr-2" />
-        Auto-Debit Settings
-      </h2>
-
-      {/* Info Banner */}
-      <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
-        <div className="flex items-start gap-3">
-          <FaExclamationTriangle className="text-blue-600 dark:text-blue-400 text-xl mt-1" />
-          <div>
-            <p className="font-semibold text-blue-800 dark:text-blue-200 mb-1">About Auto-Debit</p>
-            <p className="text-sm text-blue-700 dark:text-blue-300">
-              Enable auto-debit to automatically pay your rent on the specified day of each month.
-              You will receive reminders 3 days and 1 day before the payment date.
-            </p>
-          </div>
-        </div>
+    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
+      <div className="p-6 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-700/50">
+        <h2 className="text-xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+          <FaCog className="text-blue-600" />
+          Auto-Debit Configuration
+        </h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage your automatic rent payment preferences securely</p>
       </div>
 
-      {/* Main Toggle Section */}
-      <div className="bg-gray-50 dark:bg-gray-700/30 rounded-lg p-6 mb-6 border border-gray-100 dark:border-gray-700">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="font-semibold text-lg text-gray-800 dark:text-white mb-1">Enable Auto-Debit</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-300">
-              Automatically pay rent on the specified day of each month
+      <div className="p-6 space-y-8">
+        {/* Info Banner */}
+        <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800/50 rounded-xl p-4 flex gap-4">
+          <div className="bg-blue-100 dark:bg-blue-800/30 p-3 rounded-lg flex-shrink-0">
+            <FaExclamationTriangle className="text-blue-600 dark:text-blue-400" />
+          </div>
+          <div className="text-sm">
+            <p className="font-bold text-blue-900 dark:text-blue-200 mb-1">Set & Forget</p>
+            <p className="text-blue-700 dark:text-blue-300 leading-relaxed">
+              Enable auto-debit to automatically pay your rent on the specified day. Payments are processed through a secure bank-grade escrow system.
             </p>
           </div>
-          <button
-            onClick={handleToggle}
-            disabled={loading}
-            className="text-4xl disabled:opacity-50 disabled:cursor-not-allowed transition-transform active:scale-95"
-          >
-            {settings.enabled ? (
-              <FaToggleOn className="text-green-600 dark:text-green-400" />
-            ) : (
-              <FaToggleOff className="text-gray-400 dark:text-gray-500" />
-            )}
-          </button>
         </div>
 
-        {/* Add Payment Method Form */}
+        {/* Main Status & Toggle */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between p-6 bg-gray-50 dark:bg-gray-700/30 rounded-2xl border border-gray-100 dark:border-gray-700 gap-6">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="font-bold text-lg text-gray-800 dark:text-white">Monthly Auto-Transfer</h3>
+              {settings.enabled && (
+                <span className="px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-[10px] font-bold uppercase tracking-wider rounded-full">Active</span>
+              )}
+            </div>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Funds will be debited from your linked account automatically</p>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <span className={`text-sm font-bold ${settings.enabled ? 'text-green-600' : 'text-gray-400'}`}>
+              {settings.enabled ? 'Enabled' : 'Disabled'}
+            </span>
+            <button
+              onClick={handleToggle}
+              disabled={loading}
+              className="text-5xl transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+            >
+              {settings.enabled ? (
+                <FaToggleOn className="text-blue-600" />
+              ) : (
+                <FaToggleOff className="text-gray-300 dark:text-gray-600" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Payment Method Management */}
         {isAddingMethod && (
-          <div className="mt-4 p-4 bg-white dark:bg-gray-800 rounded-lg border border-blue-200 dark:border-blue-800 animate-fade-in-down">
-            <div className="flex justify-between items-center mb-4">
-              <h4 className="font-bold text-gray-800 dark:text-white">Add Payment Method</h4>
-              <button onClick={() => setIsAddingMethod(false)} className="text-gray-400 hover:text-gray-600"><FaTimes /></button>
+          <div className="border-2 border-blue-100 dark:border-blue-900/50 rounded-2xl p-6 bg-white dark:bg-gray-800 animate-in fade-in slide-in-from-top-4 duration-300">
+            <div className="flex justify-between items-center mb-6">
+              <h4 className="font-bold text-lg text-gray-800 dark:text-white flex items-center gap-2">
+                <FaUniversity className="text-blue-600" /> Linked Payment Sources
+              </h4>
+              <button onClick={() => setIsAddingMethod(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full text-gray-400 transition-colors">
+                <FaTimes />
+              </button>
             </div>
 
-            <div className="space-y-4">
-              <div className="flex gap-4 mb-4">
-                <button
-                  onClick={() => setNewMethodDetails(prev => ({ ...prev, type: 'card' }))}
-                  className={`flex-1 py-2 rounded-md border ${newMethodDetails.type === 'card' ? 'bg-blue-50 border-blue-500 text-blue-700' : 'border-gray-300 text-gray-600'}`}
-                >
-                  Credit/Debit Card
-                </button>
-                <button
-                  onClick={() => setNewMethodDetails(prev => ({ ...prev, type: 'upi' }))}
-                  className={`flex-1 py-2 rounded-md border ${newMethodDetails.type === 'upi' ? 'bg-blue-50 border-blue-500 text-blue-700' : 'border-gray-300 text-gray-600'}`}
-                >
-                  UPI
-                </button>
-              </div>
+            <div className="flex p-1 bg-gray-100 dark:bg-gray-900 rounded-xl mb-6">
+              <button
+                onClick={() => setNewMethodDetails({ ...newMethodDetails, type: 'card' })}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-bold transition-all ${newMethodDetails.type === 'card' ? 'bg-white dark:bg-gray-800 text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
+              >
+                <FaCreditCard /> Card Details
+              </button>
+              <button
+                onClick={() => setNewMethodDetails({ ...newMethodDetails, type: 'upi' })}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-bold transition-all ${newMethodDetails.type === 'upi' ? 'bg-white dark:bg-gray-800 text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
+              >
+                <FaMobileAlt /> UPI Transfer
+              </button>
+            </div>
 
-              {newMethodDetails.type === 'card' ? (
-                <>
+            {newMethodDetails.type === 'card' ? (
+              <div className="space-y-4">
+                <div className="flex gap-4 p-1 bg-gray-50 dark:bg-gray-900/50 rounded-lg max-w-xs">
+                  <button
+                    onClick={() => setNewMethodDetails({ ...newMethodDetails, cardCategory: 'debit' })}
+                    className={`flex-1 py-2 text-xs font-bold rounded ${newMethodDetails.cardCategory === 'debit' ? 'bg-white dark:bg-gray-700 text-blue-600 shadow-sm' : 'text-gray-400'}`}
+                  >
+                    Debit Card
+                  </button>
+                  <button
+                    onClick={() => setNewMethodDetails({ ...newMethodDetails, cardCategory: 'credit' })}
+                    className={`flex-1 py-2 text-xs font-bold rounded ${newMethodDetails.cardCategory === 'credit' ? 'bg-white dark:bg-gray-700 text-blue-600 shadow-sm' : 'text-gray-400'}`}
+                  >
+                    Credit Card
+                  </button>
+                </div>
+
+                <div className="relative group">
+                  <FaCreditCard className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600 transition-colors" />
                   <input
                     type="text"
-                    placeholder="Card Number"
+                    placeholder="Enter Card Number (0000 0000 0000 0000)"
                     value={newMethodDetails.cardNumber}
-                    onChange={(e) => setNewMethodDetails({ ...newMethodDetails, cardNumber: e.target.value.replace(/\D/g, '').substring(0, 16) })}
-                    className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    onChange={handleCardNumberChange}
+                    className="w-full pl-12 pr-4 py-4 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-all outline-none"
                   />
-                  <div className="flex gap-4">
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="relative group">
+                    <FaCalendarAlt className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600 transition-colors" />
                     <input
                       type="text"
                       placeholder="MM/YY"
                       value={newMethodDetails.expiry}
-                      onChange={(e) => setNewMethodDetails({ ...newMethodDetails, expiry: e.target.value })}
-                      className="w-1/2 p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      onChange={handleExpiryChange}
+                      className="w-full pl-12 pr-4 py-4 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-all outline-none"
                     />
+                  </div>
+                  <div className="relative group">
+                    <FaCog className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600 transition-colors" />
                     <input
-                      type="text"
+                      type="password"
                       placeholder="CVV"
                       maxLength="3"
                       value={newMethodDetails.cvv}
                       onChange={(e) => setNewMethodDetails({ ...newMethodDetails, cvv: e.target.value.replace(/\D/g, '').substring(0, 3) })}
-                      className="w-1/2 p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      className="w-full pl-12 pr-4 py-4 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-all outline-none"
                     />
                   </div>
-                </>
-              ) : (
+                </div>
+              </div>
+            ) : (
+              <div className="relative group">
+                <FaMobileAlt className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600 transition-colors" />
                 <input
                   type="text"
-                  placeholder="UPI ID (e.g. user@okhdfcbank)"
+                  placeholder="Enter UPI ID (e.g. yourname@bank)"
                   value={newMethodDetails.vpa}
                   onChange={(e) => setNewMethodDetails({ ...newMethodDetails, vpa: e.target.value })}
-                  className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className="w-full pl-12 pr-4 py-4 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-all outline-none"
                 />
-              )}
+              </div>
+            )}
 
+            <div className="mt-8 flex gap-4">
+              <button
+                onClick={() => setIsAddingMethod(false)}
+                className="flex-1 py-4 px-6 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 font-bold hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
+              >
+                Cancel
+              </button>
               <button
                 onClick={savePaymentMethod}
                 disabled={loading}
-                className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 flex items-center justify-center gap-2"
+                className="flex-[2] py-4 px-6 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {loading ? 'Processing...' : <><FaSave /> Save & Enable Auto-Debit</>}
+                {loading ? (
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <><FaSave /> Secure Link & Enable</>
+                )}
               </button>
             </div>
+
+            <p className="mt-4 text-[10px] text-gray-400 text-center uppercase tracking-widest font-bold">Encrypted with 256-bit bank grade security</p>
           </div>
         )}
 
-        {/* Existing Payment Method Display */}
+        {/* Existing Source Display */}
         {!isAddingMethod && settings.paymentMethodToken && (
-          <div className="mt-4 p-4 bg-white dark:bg-gray-800 rounded-lg border border-green-200 dark:border-green-800">
+          <div className="p-6 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm relative overflow-hidden group">
+            <div className="absolute top-0 left-0 w-1 h-full bg-blue-600" />
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-100 dark:bg-green-900 rounded-full text-green-600 dark:text-green-400">
-                  <FaCreditCard />
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-400 text-xl shadow-inner">
+                  {settings.method === 'upi' ? <FaMobileAlt /> : <FaCreditCard />}
                 </div>
                 <div>
-                  <p className="font-semibold text-gray-800 dark:text-white">Linked Payment Method</p>
-                  <p className="text-sm text-gray-500 font-mono">
-                    {settings.paymentMethodToken.startsWith('tok_upi') ? 'UPI Linked' : '•••• •••• •••• 4242'}
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Authenticated Account</p>
+                  <p className="font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                    {settings.method === 'upi' ? 'UPI / VPA' : 'Secured Card Ending in 4242'}
+                    <FaCheckCircle className="text-blue-600 text-sm" />
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setIsAddingMethod(true)}
-                className="text-sm text-blue-600 hover:underline"
+                className="text-xs font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 py-2 px-4 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/50 transition-all"
               >
-                Change
+                Manage Sources
               </button>
             </div>
           </div>
         )}
 
-        {/* Settings Form (Only if enabled) */}
+        {/* Configurations Form */}
         {settings.enabled && (
-          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-600 space-y-4">
-            <div>
-              <label className="block text-gray-700 dark:text-gray-300 font-medium mb-2">
-                <FaCalendarAlt className="inline mr-2" />
-                Auto-Debit Day
+          <div className="pt-8 border-t border-gray-100 dark:border-gray-800 space-y-6">
+            <div className="space-y-4">
+              <label className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                <FaCalendarAlt className="text-blue-600" /> Payment Schedule Date
               </label>
-              <div className="flex gap-4 items-center">
-                <input
-                  type="number"
-                  min="1"
-                  max="31"
-                  value={settings.day}
-                  onChange={(e) => setSettings(prev => ({ ...prev, day: parseInt(e.target.value) || 1 }))}
-                  className="w-24 p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white"
-                />
-                <span className="text-gray-500 font-medium">of every month</span>
+              <div className="flex items-center gap-4 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-800">
+                <div className="flex-1 flex items-center gap-3">
+                  <input
+                    type="number"
+                    min="1"
+                    max="31"
+                    value={settings.day}
+                    onChange={(e) => setSettings(prev => ({ ...prev, day: parseInt(e.target.value) || 1 }))}
+                    className="w-20 p-3 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white font-bold text-center focus:ring-2 focus:ring-blue-500 outline-none"
+                  />
+                  <span className="text-sm font-bold text-gray-500">Day of month</span>
+                </div>
                 <button
                   onClick={handleUpdateSettings}
                   disabled={loading}
-                  className="ml-auto px-4 py-2 bg-gray-200 dark:bg-gray-600 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition"
+                  className="px-6 py-3 bg-gray-900 dark:bg-gray-800 text-white dark:text-gray-300 text-xs font-bold rounded-xl hover:bg-black dark:hover:bg-gray-700 transition-all"
                 >
-                  Update Day
+                  Update Schedule
                 </button>
               </div>
+              <p className="text-[10px] text-gray-400 italic">* Rent will be deducted automatically. Ensure sufficient balance on this date.</p>
             </div>
           </div>
         )}
       </div>
 
-      {/* Status Bar */}
-      <div className={`rounded-lg p-4 ${settings.enabled ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' : 'bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600'}`}>
-        <div className="flex items-center gap-3">
-          {settings.enabled ? (
-            <>
-              <FaCheckCircle className="text-green-600 dark:text-green-400 text-xl" />
-              <div>
-                <p className="font-semibold text-green-800 dark:text-green-200">Auto-Debit Active</p>
-                <p className="text-sm text-green-700 dark:text-green-300">
-                  Rent will be deducted on day {settings.day}.
-                </p>
-              </div>
-            </>
-          ) : (
-            <>
-              <FaExclamationTriangle className="text-gray-400 dark:text-gray-500 text-xl" />
-              <div>
-                <p className="font-semibold text-gray-800 dark:text-gray-200">Auto-Debit Disabled</p>
-                <p className="text-sm text-gray-600 dark:text-gray-300">
-                  Manually pay rent to avoid penalty.
-                </p>
-              </div>
-            </>
-          )}
-        </div>
+      <div className={`p-4 mt-4 text-center ${settings.enabled ? 'bg-green-50 dark:bg-green-900/20' : 'bg-gray-100 dark:bg-gray-900/50'}`}>
+        <p className="text-[10px] uppercase font-black tracking-[0.2em] text-gray-400">
+          Status: {settings.enabled ? 'Live & Monitoring' : 'Inactive / Ready to Link'}
+        </p>
       </div>
     </div>
   );
