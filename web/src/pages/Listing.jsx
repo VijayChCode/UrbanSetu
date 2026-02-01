@@ -4263,7 +4263,7 @@ export default function Listing() {
                           <tr className="bg-gray-50/80 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
                             <th className="px-4 py-4 sm:px-6 sm:py-5 text-left text-gray-600 dark:text-gray-300 font-bold uppercase text-xs tracking-wider w-1/5 sticky left-0 bg-gray-50 dark:bg-gray-900 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Feature</th>
                             {comparisonProperties.map((property) => (
-                              <th key={property._id} className="px-4 py-4 sm:px-6 sm:py-5 text-left w-[20%] min-w-[200px] hover:bg-gray-50 transition-colors relative group">
+                              <th key={property._id} className="px-4 py-4 sm:px-6 sm:py-5 text-left w-[20%] min-w-[200px] hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors relative group">
                                 <div className="space-y-3">
                                   <div className="relative aspect-video rounded-lg overflow-hidden shadow-sm">
                                     <img
@@ -4302,9 +4302,9 @@ export default function Listing() {
                             ))}
                             {/* Empty columns filter filler */}
                             {[...Array(4 - comparisonProperties.length)].map((_, i) => (
-                              <th key={`empty-${i}`} className="px-4 py-4 sm:px-6 sm:py-5 w-[20%] bg-gray-50/30">
-                                <div className="border-2 border-dashed border-gray-200 rounded-xl h-full min-h-[160px] flex flex-col items-center justify-center gap-2 p-4 text-gray-400">
-                                  <div className="p-3 bg-gray-50 rounded-full">
+                              <th key={`empty-${i}`} className="px-4 py-4 sm:px-6 sm:py-5 w-[20%] bg-gray-50/30 dark:bg-gray-800/30">
+                                <div className="border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl h-full min-h-[160px] flex flex-col items-center justify-center gap-2 p-4 text-gray-400">
+                                  <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-full">
                                     <FaHome className="text-xl opacity-30" />
                                   </div>
                                   <span className="text-xs font-medium">Add Property</span>
@@ -4313,7 +4313,7 @@ export default function Listing() {
                                       setShowComparisonModal(false);
                                       setShowPropertySearch(true);
                                     }}
-                                    className="px-3 py-1.5 bg-white border border-gray-300 text-gray-600 hover:border-indigo-300 hover:text-indigo-600 rounded-lg text-xs font-semibold transition-all shadow-sm"
+                                    className="px-3 py-1.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-indigo-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg text-xs font-semibold transition-all shadow-sm"
                                   >
                                     + Add
                                   </button>
@@ -4642,7 +4642,7 @@ export default function Listing() {
 
                                   <div className="flex items-end justify-between gap-2 mt-2">
                                     <div>
-                                      <div className="text-lg sm:text-xl font-bold text-gray-900 group-hover:text-indigo-700 transition-colors">
+                                      <div className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white group-hover:text-indigo-700 dark:group-hover:text-indigo-400 transition-colors">
                                         ₹{(property.offer ? property.discountPrice : property.regularPrice).toLocaleString('en-IN')}
                                         {property.type === 'rent' && <span className="text-xs text-gray-500 font-normal">/mo</span>}
                                       </div>
@@ -4803,14 +4803,14 @@ export default function Listing() {
                   )}
 
                   {/* Enhanced Footer Actions */}
-                  <div className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl p-4 sm:p-6 mt-8 border border-gray-200">
+                  <div className="bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-900/20 rounded-xl p-4 sm:p-6 mt-8 border border-gray-200 dark:border-gray-700">
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
                       <div className="flex items-center gap-3 sm:gap-4">
-                        <div className="bg-white rounded-lg px-4 py-2 shadow-sm">
-                          <div className="text-sm font-medium text-gray-700">
+                        <div className="bg-white dark:bg-gray-800 rounded-lg px-4 py-2 shadow-sm">
+                          <div className="text-sm font-medium text-gray-700 dark:text-gray-200">
                             {comparisonProperties.length} of 4 properties selected
                           </div>
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
                             {comparisonProperties.length >= 2 ? 'Ready to compare!' : 'Add more properties to compare'}
                           </div>
                         </div>
