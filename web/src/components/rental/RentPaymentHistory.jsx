@@ -420,7 +420,7 @@ export default function RentPaymentHistory({ wallet, contract }) {
                   <div className="flex flex-row md:flex-col items-center md:items-end justify-between w-full md:w-auto gap-4">
                     <div className="text-left md:text-right text-gray-800 dark:text-gray-200">
                       <p className="text-xl font-bold mb-1">
-                        ₹{payment.amount.toLocaleString('en-IN')}
+                        ₹{(payment.amount - (maintenance || 0)).toLocaleString('en-IN')}
                       </p>
                       {maintenance > 0 && (
                         <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -433,7 +433,7 @@ export default function RentPaymentHistory({ wallet, contract }) {
                         </p>
                       )}
                       <p className="text-lg font-semibold">
-                        Total: ₹{(payment.amount + (payment.penaltyAmount || 0) + (maintenance || 0)).toLocaleString('en-IN')}
+                        Total: ₹{(payment.amount + (payment.penaltyAmount || 0)).toLocaleString('en-IN')}
                       </p>
                     </div>
                     {payment.status === 'completed' && (
