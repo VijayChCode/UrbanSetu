@@ -168,6 +168,17 @@ export const generateRentLockContractPDF = (contract, tenant, landlord, listing,
   doc.moveDown(0.5);
 
   if (contract.landlordSignature?.signed) {
+    if (contract.landlordSignature.signatureData) {
+      try {
+        const signatureImage = contract.landlordSignature.signatureData.split('base64,')[1];
+        if (signatureImage) {
+          doc.image(Buffer.from(signatureImage, 'base64'), { width: 150, height: 60 });
+          doc.moveDown(0.2);
+        }
+      } catch (e) {
+        console.error('Error adding landlord signature to PDF:', e);
+      }
+    }
     doc.fontSize(11).fillColor('#10b981').text('✓ Signed Electronically', { indent: 20 });
     doc.fontSize(10).fillColor('#6b7280');
     doc.text(`Signed At: ${new Date(contract.landlordSignature.signedAt).toLocaleString('en-GB')}`, { indent: 20 });
@@ -184,6 +195,17 @@ export const generateRentLockContractPDF = (contract, tenant, landlord, listing,
   doc.moveDown(0.5);
 
   if (contract.tenantSignature?.signed) {
+    if (contract.tenantSignature.signatureData) {
+      try {
+        const signatureImage = contract.tenantSignature.signatureData.split('base64,')[1];
+        if (signatureImage) {
+          doc.image(Buffer.from(signatureImage, 'base64'), { width: 150, height: 60 });
+          doc.moveDown(0.2);
+        }
+      } catch (e) {
+        console.error('Error adding tenant signature to PDF:', e);
+      }
+    }
     doc.fontSize(11).fillColor('#10b981').text('✓ Signed Electronically', { indent: 20 });
     doc.fontSize(10).fillColor('#6b7280');
     doc.text(`Signed At: ${new Date(contract.tenantSignature.signedAt).toLocaleString('en-GB')}`, { indent: 20 });

@@ -256,33 +256,55 @@ export default function ContractPreview({ contract, listing, tenant, landlord, o
           <h3 className="font-semibold text-lg mb-3 text-gray-800 dark:text-white">Signatures Status</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border dark:border-gray-600">
-              <div>
-                <p className="font-semibold text-gray-800 dark:text-white">Tenant</p>
+              <div className="flex-1">
+                <p className="font-semibold text-gray-800 dark:text-white mb-2">Tenant</p>
                 {contract.tenantSignature?.signed && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Signed: {new Date(contract.tenantSignature.signedAt).toLocaleDateString('en-GB')}
-                  </p>
+                  <>
+                    {contract.tenantSignature.signatureData && (
+                      <div className="mb-2 p-2 bg-white border border-gray-200 rounded max-w-[200px]">
+                        <img
+                          src={contract.tenantSignature.signatureData}
+                          alt="Tenant Signature"
+                          className="h-12 object-contain"
+                        />
+                      </div>
+                    )}
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Signed: {new Date(contract.tenantSignature.signedAt).toLocaleDateString('en-GB')}
+                    </p>
+                  </>
                 )}
               </div>
               {contract.tenantSignature?.signed ? (
-                <FaCheckCircle className="text-green-600 dark:text-green-400 text-2xl" />
+                <FaCheckCircle className="text-green-600 dark:text-green-400 text-2xl flex-shrink-0 ml-4" />
               ) : (
-                <span className="text-yellow-600 dark:text-yellow-400 font-semibold">Pending</span>
+                <span className="text-yellow-600 dark:text-yellow-400 font-semibold flex-shrink-0 ml-4">Pending</span>
               )}
             </div>
             <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border dark:border-gray-600">
-              <div>
-                <p className="font-semibold text-gray-800 dark:text-white">Landlord</p>
+              <div className="flex-1">
+                <p className="font-semibold text-gray-800 dark:text-white mb-2">Landlord</p>
                 {contract.landlordSignature?.signed && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Signed: {new Date(contract.landlordSignature.signedAt).toLocaleDateString('en-GB')}
-                  </p>
+                  <>
+                    {contract.landlordSignature.signatureData && (
+                      <div className="mb-2 p-2 bg-white border border-gray-200 rounded max-w-[200px]">
+                        <img
+                          src={contract.landlordSignature.signatureData}
+                          alt="Landlord Signature"
+                          className="h-12 object-contain"
+                        />
+                      </div>
+                    )}
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Signed: {new Date(contract.landlordSignature.signedAt).toLocaleDateString('en-GB')}
+                    </p>
+                  </>
                 )}
               </div>
               {contract.landlordSignature?.signed ? (
-                <FaCheckCircle className="text-green-600 dark:text-green-400 text-2xl" />
+                <FaCheckCircle className="text-green-600 dark:text-green-400 text-2xl flex-shrink-0 ml-4" />
               ) : (
-                <span className="text-yellow-600 dark:text-yellow-400 font-semibold">Pending</span>
+                <span className="text-yellow-600 dark:text-yellow-400 font-semibold flex-shrink-0 ml-4">Pending</span>
               )}
             </div>
           </div>
