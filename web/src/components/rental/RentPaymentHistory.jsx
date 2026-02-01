@@ -298,13 +298,17 @@ export default function RentPaymentHistory({ wallet, contract }) {
 
   // Calculate statistics
   const stats = useMemo(() => {
-    if (!wallet?.paymentSchedule) return { total: 0, totalPaid: 0 };
+    if (!wallet?.paymentSchedule) return { total: 0, completed: 0, pending: 0, totalPaid: 0, totalDue: 0 };
 
     const completed = wallet.paymentSchedule.filter(p => p.status === 'completed' || p.status === 'paid');
+    const pending = wallet.paymentSchedule.filter(p => p.status === 'pending' || p.status === 'overdue');
 
     return {
-      total: completed.length,
-      totalPaid: completed.reduce((sum, p) => sum + p.amount + (p.penaltyAmount || 0), 0)
+      total: wallet.paymentSchedule.length,
+      completed: completed.length,
+      pending: pending.length,
+      totalPaid: completed.reduce((sum, p) => sum + p.amount + (p.penaltyAmount || 0), 0),
+      totalDue: pending.reduce((sum, p) => sum + p.amount + (p.penaltyAmount || 0), 0)
     };
   }, [wallet]);
 
