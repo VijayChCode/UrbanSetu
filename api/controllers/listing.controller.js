@@ -6,7 +6,7 @@ import { notifyWatchersOnChange } from "./propertyWatchlist.controller.js"
 import User from "../models/user.model.js"
 import Notification from "../models/notification.model.js"
 import { errorHandler } from "../utils/error.js"
-import { sendPropertyListingPublishedEmail, sendPropertyEditNotificationEmail, sendPropertyDeletionConfirmationEmail, sendOwnerDeassignedEmail, sendOwnerAssignedEmail, sendPropertyCreatedPendingVerificationEmail, sendPropertyVerificationReminderEmail, sendPropertyPublishedAfterVerificationEmail } from "../utils/emailService.js"
+import { sendPropertyListingPublishedEmail, sendPropertyEditNotificationEmail, sendPropertyDeletionConfirmationEmail, sendOwnerDeassignedEmail, sendOwnerAssignedEmail, sendPropertyCreatedPendingVerificationEmail, sendPropertyVerificationReminderEmail, sendPropertyPublishedAfterVerificationEmail, sendListingUnpublishedEmail } from "../utils/emailService.js"
 import DeletedListing from "../models/deletedListing.model.js"
 import crypto from 'crypto'
 import PropertyVerification from "../models/propertyVerification.model.js";
@@ -1371,5 +1371,82 @@ export const getAgentListings = async (req, res, next) => {
     res.status(200).json(listings);
   } catch (error) {
     next(error);
+  }
+};
+
+// Root Admin: Unpublish/Revoke Verification
+export const rootUnpublishListing = async (req, res, next) => {
+  try {
+    // 1. Check permissions (Root Admin or Admin)
+    if (req.user.role !== 'rootadmin' && req.user.role !== 'admin' && !req.user.isDefaultAdmin) {
+      return next(errorHandler(401, "Unauthorized: Only admins can unpublish listings"));
+    }
+
+    const listingId = req.params.id;
+    const { reason } = req.body;
+
+    if (!reason || reason.trim() === '') {
+      return next(errorHandler(400, "A reason is required to unpublish a listing"));
+    }
+
+    // 2. Find Listing
+    const listing = await Listing.findById(listingId);
+    if (!listing) {
+      return next(errorHandler(404, "Listing not found"));
+    }
+
+    // 3. Update Listing Status (Unpublish & Unverify)
+    listing.isVerified = false;
+    listing.verificationStatus = 'unverified'; // Or 'rejected' if you prefer, but 'unverified' fits 'unpublished' context
+
+    await listing.save();
+
+    // 4. Update PropertyVerification Record if exists (to reflect revoked status)
+    const verificationRecord = await PropertyVerification.findOne({ listingId: listing._id });
+    if (verificationRecord) {
+      verificationRecord.status = 'rejected'; // Or 'revoked' if enum supports
+      verificationRecord.adminComments = `Unpublished by Admin: ${reason}`;
+      verificationRecord.verifiedAt = null;
+      await verificationRecord.save();
+    }
+
+    // 5. Notify Owner via Email
+    const owner = await User.findById(listing.userRef);
+    if (owner && owner.email) {
+      try {
+        await sendListingUnpublishedEmail(owner.email, {
+          propertyName: listing.name,
+          reason: reason
+        });
+      } catch (emailErr) {
+        console.error("Failed to send unpublish email:", emailErr);
+      }
+    }
+
+    // 6. Notify Owner via In-App Notification
+    try {
+      const notification = await Notification.create({
+        userId: listing.userRef,
+        type: 'verification_rejected', // Reuse existing type or new 'listing_unpublished'
+        title: 'Listing Unpublished',
+        message: `Your listing "${listing.name}" has been unpublished. Reason: ${reason}`,
+        listingId: listing._id,
+        adminId: req.user.id
+      });
+      const io = req.app.get('io');
+      if (io) io.to(listing.userRef.toString()).emit('notificationCreated', notification);
+    } catch (notifErr) {
+      console.error("Failed to create in-app notification:", notifErr);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Listing has been unpublished and owner notified.",
+      listing: listing
+    });
+
+  } catch (error) {
+    console.error("Error unpublishing listing:", error);
+    next(errorHandler(500, "Failed to unpublish listing"));
   }
 };

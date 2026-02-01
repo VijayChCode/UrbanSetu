@@ -183,6 +183,7 @@ export default function Listing() {
   const [isInWatchlist, setIsInWatchlist] = useState(false);
   const [watchlistLoading, setWatchlistLoading] = useState(false);
   const [rootVerificationReason, setRootVerificationReason] = useState("");
+  const [rootUnpublishReason, setRootUnpublishReason] = useState("");
   const [watchlistCount, setWatchlistCount] = useState(0);
   const [wishlistCount, setWishlistCount] = useState(0);
   const [showAIRecommendations, setShowAIRecommendations] = useState(false);
@@ -486,6 +487,34 @@ export default function Listing() {
           window.location.reload();
         } else {
           toast.error(data.message || 'Failed to verify property');
+        }
+      } catch (error) {
+        console.error(error);
+        toast.error('Error connecting to server');
+      }
+    }
+
+    if (type === 'root-unpublish') {
+      if (!rootUnpublishReason || !rootUnpublishReason.trim()) {
+        toast.error('A reason is required to unpublish this listing');
+        return; // Don't close modal if invalid
+      }
+
+      try {
+        const res = await authenticatedFetch(`${API_BASE_URL}/api/listing/root-unpublish/${listing._id}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ reason: rootUnpublishReason })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          toast.success('Property has been unpublished and owner notified.');
+          setRootUnpublishReason(""); // reset
+          window.location.reload();
+        } else {
+          toast.error(data.message || 'Failed to unpublish property');
         }
       } catch (error) {
         console.error(error);
@@ -3015,6 +3044,16 @@ export default function Listing() {
             </div>
           )}
 
+          {/* Root Admin Unpublish Button (For Verified Properties) - visible to admin/rootadmin */}
+          {(currentUser?.role === 'rootadmin' || currentUser?.role === 'admin') && listing.isVerified && (
+            <button
+              onClick={() => openConfirm('root-unpublish', { message: 'Unpublish this property?' })}
+              className="w-full bg-red-600 text-white py-3 rounded-lg font-bold hover:bg-red-700 transition-colors shadow-lg flex items-center justify-center gap-2 mt-3 mb-6"
+            >
+              <FaBan /> Unpublish Property
+            </button>
+          )}
+
           {/* Admin Information - Only show for admins */}
           {isAdmin && isAdminContext && (
             <>
@@ -4908,6 +4947,64 @@ export default function Listing() {
         title={selectedComparisonProperty ? `${selectedComparisonProperty.name} - ${selectedComparisonProperty.type} in ${selectedComparisonProperty.address}` : "Check out this property!"}
         description={selectedComparisonProperty ? `Amazing ${selectedComparisonProperty.type} property in ${selectedComparisonProperty.address}. ${selectedComparisonProperty.description || ''}` : "Amazing property listing"}
       />
+
+      {/* Generic Confirmation Modal */}
+      {confirmModal.open && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-[60] p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6 animate-fade-in-up border border-gray-200 dark:border-gray-700">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Confirm Action</h3>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">{confirmModal.message || "Are you sure you want to proceed?"}</p>
+
+            {/* Root Verification Input */}
+            {confirmModal.type === 'root-verify' && (
+              <div className="mb-4">
+                <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">
+                  Verification Reason/Notes (Optional):
+                </label>
+                <textarea
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                  rows="3"
+                  placeholder="Enter notes about this verification..."
+                  value={rootVerificationReason}
+                  onChange={(e) => setRootVerificationReason(e.target.value)}
+                />
+              </div>
+            )}
+
+            {/* Root Unpublish Input */}
+            {confirmModal.type === 'root-unpublish' && (
+              <div className="mb-4">
+                <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">
+                  Reason for Unpublishing (Required):
+                </label>
+                <textarea
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                  rows="3"
+                  placeholder="Explain why this property is being unpublished (sent to owner)..."
+                  value={rootUnpublishReason}
+                  onChange={(e) => setRootUnpublishReason(e.target.value)}
+                />
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={closeConfirm}
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmYes}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold shadow-lg"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <ContactSupportWrapper />
     </>
   );

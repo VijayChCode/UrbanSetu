@@ -806,6 +806,56 @@ export const sendUpdateAnnouncementEmail = async (email, update) => {
   }
 };
 
+// Send notification email when a listing is unpublished
+export const sendListingUnpublishedEmail = async (email, details) => {
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: `Important: Your Property Update - UrbanSetu`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;">
+        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #dc2626; margin: 0; font-size: 28px;">UrbanSetu</h1>
+            <p style="color: #6b7280; margin: 10px 0 0 0;">Property Status Update</p>
+          </div>
+          
+          <div style="background-color: #fef2f2; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #dc2626;">
+            <h2 style="color: #1f2937; margin: 0 0 15px 0; font-size: 20px;">Listing Unpublished</h2>
+            <p style="color: #4b5563; margin: 0 0 15px 0; line-height: 1.6;">
+              This is to inform you that your listing <strong>"${details.propertyName}"</strong> has been unpublished and its verification status has been revoked.
+            </p>
+            
+            <div style="background-color: #fff; padding: 15px; border-radius: 8px; border: 1px solid #fee2e2; margin: 20px 0;">
+              <p style="color: #7f1d1d; font-weight: bold; margin: 0 0 5px 0;">Reason for Unpublishing:</p>
+              <p style="color: #4b5563; margin: 0; font-style: italic;">"${details.reason}"</p>
+            </div>
+            
+            <p style="color: #6b7280; margin: 0 0 15px 0; line-height: 1.6;">
+              <strong>Action Required:</strong> You may need to review and update your listing to comply with our guidelines before requesting verification again.
+            </p>
+          </div>
+          
+          <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+            <p style="color: #9ca3af; margin: 0; font-size: 12px;">
+              © ${new Date().getFullYear()} UrbanSetu. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </div>
+    `
+  };
+
+  try {
+    const result = await sendEmailWithRetry(mailOptions);
+    return result.success ?
+      createSuccessResponse(result.messageId, 'listing_unpublished') :
+      createErrorResponse(new Error(result.error), 'listing_unpublished');
+  } catch (error) {
+    return createErrorResponse(error, 'listing_unpublished');
+  }
+};
+
 export const sendAgentApprovalEmail = async (email, name) => {
   const clientBaseUrl = process.env.CLIENT_URL || 'https://urbansetu.vercel.app';
   const mailOptions = {
