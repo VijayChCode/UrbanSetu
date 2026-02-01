@@ -4267,8 +4267,9 @@ export default function Listing() {
                                 <div className="space-y-3">
                                   <div className="relative aspect-video rounded-lg overflow-hidden shadow-sm">
                                     <img
-                                      src={property.imageUrls?.[0] || '/placeholder-property.jpg'}
+                                      src={property.imageUrls?.[0] || 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'}
                                       alt={property.name}
+                                      onError={(e) => { e.target.onerror = null; e.target.src = 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'; }}
                                       className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
                                     />
                                     <div className="absolute top-2 right-2">
@@ -4596,8 +4597,9 @@ export default function Listing() {
                               <div className="flex gap-4 sm:gap-5">
                                 <div className="relative w-24 sm:w-32 aspect-square flex-shrink-0">
                                   <img
-                                    src={property.imageUrls?.[0] || '/placeholder-property.jpg'}
+                                    src={property.imageUrls?.[0] || 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'}
                                     alt={property.name}
+                                    onError={(e) => { e.target.onerror = null; e.target.src = 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'; }}
                                     className="w-full h-full object-cover rounded-xl shadow-md transform group-hover:scale-105 transition-transform duration-500"
                                   />
                                   {property.offer && (
@@ -4728,8 +4730,9 @@ export default function Listing() {
                             <div key={property._id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 hover:shadow-lg transition-all duration-300 hover:border-blue-300">
                               <div className="flex gap-3">
                                 <img
-                                  src={property.imageUrls?.[0] || '/placeholder-property.jpg'}
+                                  src={property.imageUrls?.[0] || 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'}
                                   alt={property.name}
+                                  onError={(e) => { e.target.onerror = null; e.target.src = 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'; }}
                                   className="w-16 h-16 object-cover rounded-lg shadow-sm"
                                 />
                                 <div className="flex-1">
