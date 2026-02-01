@@ -224,7 +224,7 @@ export default function ContractPreview({ contract, listing, tenant, landlord, o
           <ul className="list-disc list-inside space-y-2 text-sm text-gray-700 dark:text-gray-300">
             <li>Rent must be paid on or before day {contract.dueDate || 1} of each month</li>
             {contract.lateFeePercentage && contract.lateFeePercentage > 0 && (
-              <li>Late payment fee: {contract.lateFeePercentage}% of rent amount per day of delay</li>
+              <li>Late payment fee: {contract.lateFeePercentage}% of rent amount (one-time penalty)</li>
             )}
             <li>All payments will be processed through UrbanSetu platform via escrow system</li>
             <li>Rent remains fixed at ₹{contract.lockedRentAmount?.toLocaleString('en-IN') || contract.rentAmount?.toLocaleString('en-IN') || '0'}/month for the entire {contract.lockDuration}-month lock period</li>

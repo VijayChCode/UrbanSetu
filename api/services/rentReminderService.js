@@ -59,8 +59,9 @@ export const checkAndSendRentReminders = async () => {
                 if (daysOverdue > 0) {
                     const baseRent = contract.lockedRentAmount || contract.rentAmount || (payment.amount - (contract.maintenanceCharges || 0));
                     const lateFeePercentage = contract.lateFeePercentage || 5;
-                    const penaltyPerDay = (baseRent * (lateFeePercentage / 100));
-                    const newPenaltyAmount = Math.round(penaltyPerDay * daysOverdue);
+                    // One-time fixed penalty
+                    const fixedPenaltyAmount = Math.round(baseRent * (lateFeePercentage / 100));
+                    const newPenaltyAmount = fixedPenaltyAmount;
 
                     if (payment.status !== 'overdue' || payment.penaltyAmount !== newPenaltyAmount) {
                         payment.status = 'overdue';

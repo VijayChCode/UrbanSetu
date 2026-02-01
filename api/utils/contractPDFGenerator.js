@@ -113,7 +113,7 @@ export const generateRentLockContractPDF = (contract, tenant, landlord, listing,
   doc.fontSize(12).fillColor('#374151');
   doc.text(`1. Rent must be paid on or before day ${contract.dueDate || 1} of each month.`, { indent: 20 });
   if (contract.lateFeePercentage && contract.lateFeePercentage > 0) {
-    doc.text(`2. Late payment fee: ${contract.lateFeePercentage}% of rent amount per day of delay.`, { indent: 20 });
+    doc.text(`2. Late payment fee: ${contract.lateFeePercentage}% of rent amount (one-time penalty).`, { indent: 20 });
   } else {
     doc.text(`2. Late payment penalties apply as per UrbanSetu terms.`, { indent: 20 });
   }
