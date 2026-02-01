@@ -159,6 +159,7 @@ const AdminAgents = lazy(() => import('./pages/AdminAgents'));
 const AgentDashboard = lazy(() => import('./pages/Agents/AgentDashboard'));
 const MarketTrends = lazy(() => import('./pages/MarketTrends'));
 const AdminSponsorIntelligence = lazy(() => import('./pages/AdminSponsorIntelligence'));
+const AdminRentWallet = lazy(() => import('./pages/AdminRentWallet'));
 
 
 // Helper for Help Center Redirects
@@ -1023,6 +1024,7 @@ function AppRoutes({ bootstrapped }) {
               <Route path="/admin/property-verification" element={<AdminPropertyVerification />} />
               <Route path="/admin/rental-ratings" element={<AdminRentalRatings />} />
               <Route path="/admin/rental-contracts" element={<AdminRentalContracts />} />
+              <Route path="/admin/rent-wallet" element={<AdminRentWallet />} />
               <Route path="/admin/rental-loans" element={<AdminRentalLoans />} />
               <Route path="/admin/disputes" element={<AdminDisputeResolution />} />
               <Route path="/admin/coin-stats" element={<AdminCoinStats />} />

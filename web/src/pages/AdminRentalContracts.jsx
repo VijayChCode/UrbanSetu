@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { FaFileContract, FaDownload, FaEye, FaCalendarAlt, FaMoneyBillWave, FaLock, FaCheckCircle, FaTimesCircle, FaSpinner, FaSearch, FaBan, FaCheck, FaUser, FaHome, FaGavel, FaWallet, FaCreditCard, FaExclamationTriangle, FaClock, FaTimes } from 'react-icons/fa';
+import { FaFileContract, FaDownload, FaEye, FaCalendarAlt, FaMoneyBillWave, FaLock, FaCheckCircle, FaTimesCircle, FaSpinner, FaSearch, FaBan, FaCheck, FaUser, FaHome, FaGavel, FaWallet, FaCreditCard, FaExclamationTriangle, FaClock, FaTimes, FaHistory } from 'react-icons/fa';
 import { usePageTitle } from '../hooks/usePageTitle';
 import ContractPreview from '../components/rental/ContractPreview';
 import AdminRentalContractsSkeleton from '../components/skeletons/AdminRentalContractsSkeleton';
@@ -530,12 +530,20 @@ export default function AdminRentalContracts() {
                           )}
                         </>
                       )}
+                      {contract.status === 'active' && (
+                        <button
+                          onClick={() => navigate(`/admin/rent-wallet?contractId=${contract._id}`)}
+                          className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center justify-center gap-2"
+                        >
+                          <FaWallet /> Monitor Rent
+                        </button>
+                      )}
                       {contract.status === 'active' && contract.walletId && (
                         <button
                           onClick={() => navigate(`/admin/payments?contractId=${contract._id}`)}
                           className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center justify-center gap-2"
                         >
-                          <FaWallet /> View Payments
+                          <FaHistory /> Payment History
                         </button>
                       )}
                     </div>

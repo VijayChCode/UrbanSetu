@@ -374,9 +374,14 @@ export const getContract = async (req, res, next) => {
       return res.status(404).json({ message: "Contract not found." });
     }
 
-    // Verify user has access (tenant or landlord)
-    if (contract.tenantId._id.toString() !== userId && contract.landlordId._id.toString() !== userId) {
-      return res.status(403).json({ message: "Unauthorized." });
+    // Verify user has access (tenant or landlord or admin)
+    const userRole = req.user.role;
+    const isAdmin = userRole === 'admin' || userRole === 'rootadmin';
+    const isTenant = contract.tenantId._id.toString() === userId;
+    const isLandlord = contract.landlordId._id.toString() === userId;
+
+    if (!isTenant && !isLandlord && !isAdmin) {
+      return res.status(403).json({ message: "Unauthorized. Access restricted to tenant, landlord, or admin." });
     }
 
     res.json({
