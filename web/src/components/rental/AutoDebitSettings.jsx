@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FaCog, FaToggleOn, FaToggleOff, FaCreditCard, FaCalendarAlt, FaCheckCircle, FaExclamationTriangle, FaTimes, FaSave, FaUniversity, FaMobileAlt, FaTrash, FaShieldAlt, FaLock, FaTrashAlt, FaExclamationCircle, FaStopCircle } from "react-icons/fa";
+import { FaCog, FaToggleOn, FaToggleOff, FaCreditCard, FaCalendarAlt, FaCheckCircle, FaExclamationTriangle, FaTimes, FaSave, FaUniversity, FaMobileAlt, FaTrash, FaShieldAlt, FaLock, FaTrashAlt, FaExclamationCircle, FaStopCircle, FaPaypal } from "react-icons/fa";
 import { toast } from 'react-toastify';
 import { authenticatedFetch } from '../../utils/auth';
 
@@ -16,6 +16,7 @@ export default function AutoDebitSettings({ wallet, contract, onUpdate }) {
 
   const [isAddingMethod, setIsAddingMethod] = useState(false);
   const [newMethodDetails, setNewMethodDetails] = useState({
+    gateway: 'razorpay', // 'razorpay' or 'paypal'
     type: 'card', // 'card' or 'upi'
     cardCategory: 'debit', // 'debit' or 'credit'
     cardNumber: '',
@@ -120,7 +121,7 @@ export default function AutoDebitSettings({ wallet, contract, onUpdate }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           enabled: true,
-          method: newMethodDetails.type === 'upi' ? 'upi' : 'razorpay',
+          method: newMethodDetails.type === 'upi' ? 'upi' : newMethodDetails.gateway,
           day: settings.day,
           paymentMethodToken: mockToken
         })
@@ -135,7 +136,7 @@ export default function AutoDebitSettings({ wallet, contract, onUpdate }) {
         ...prev,
         enabled: true,
         paymentMethodToken: mockToken,
-        method: newMethodDetails.type === 'upi' ? 'upi' : 'razorpay'
+        method: newMethodDetails.type === 'upi' ? 'upi' : newMethodDetails.gateway
       }));
 
       if (onUpdate && data.wallet) {
@@ -336,19 +337,47 @@ export default function AutoDebitSettings({ wallet, contract, onUpdate }) {
               </button>
             </div>
 
-            <div className="flex p-1 bg-gray-100 dark:bg-gray-900 rounded-xl mb-6">
-              <button
-                onClick={() => setNewMethodDetails({ ...newMethodDetails, type: 'card' })}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-bold transition-all ${newMethodDetails.type === 'card' ? 'bg-white dark:bg-gray-800 text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
-              >
-                <FaCreditCard /> Card Details
-              </button>
-              <button
-                onClick={() => setNewMethodDetails({ ...newMethodDetails, type: 'upi' })}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-bold transition-all ${newMethodDetails.type === 'upi' ? 'bg-white dark:bg-gray-800 text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
-              >
-                <FaMobileAlt /> UPI Transfer
-              </button>
+            <div className="mb-6 space-y-4">
+              <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Select Provider</label>
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  onClick={() => setNewMethodDetails({ ...newMethodDetails, gateway: 'razorpay' })}
+                  className={`flex flex-col items-center justify-center gap-2 py-4 rounded-2xl border-2 transition-all ${newMethodDetails.gateway === 'razorpay' ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-600 text-blue-600' : 'bg-gray-50 dark:bg-gray-900/50 border-transparent text-gray-400'}`}
+                >
+                  <span className="font-black text-sm">RAZORPAY</span>
+                  <span className="text-[10px] opacity-60">India & Local</span>
+                </button>
+                <button
+                  onClick={() => setNewMethodDetails({ ...newMethodDetails, gateway: 'paypal', type: 'card' })}
+                  className={`flex flex-col items-center justify-center gap-2 py-4 rounded-2xl border-2 transition-all ${newMethodDetails.gateway === 'paypal' ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-600 text-blue-600' : 'bg-gray-50 dark:bg-gray-900/50 border-transparent text-gray-400'}`}
+                >
+                  <div className="flex items-center gap-1">
+                    <FaPaypal />
+                    <span className="font-black text-sm">PAYPAL</span>
+                  </div>
+                  <span className="text-[10px] opacity-60">International</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="mb-6 space-y-4">
+              <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Payment Type</label>
+              <div className="flex p-1 bg-gray-100 dark:bg-gray-900 rounded-xl">
+                <button
+                  onClick={() => setNewMethodDetails({ ...newMethodDetails, type: 'card' })}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-bold transition-all ${newMethodDetails.type === 'card' ? 'bg-white dark:bg-gray-800 text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
+                >
+                  <FaCreditCard /> Card Details
+                </button>
+                {newMethodDetails.gateway === 'razorpay' && (
+                  <button
+                    onClick={() => setNewMethodDetails({ ...newMethodDetails, type: 'upi' })}
+                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-bold transition-all ${newMethodDetails.type === 'upi' ? 'bg-white dark:bg-gray-800 text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
+                  >
+                    <FaMobileAlt /> UPI Transfer
+                  </button>
+                )}
+              </div>
             </div>
 
             {newMethodDetails.type === 'card' ? (
@@ -454,12 +483,12 @@ export default function AutoDebitSettings({ wallet, contract, onUpdate }) {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-400 text-xl shadow-inner">
-                  {settings.method === 'upi' ? <FaMobileAlt /> : <FaCreditCard />}
+                  {settings.method === 'upi' ? <FaMobileAlt /> : settings.method === 'paypal' ? <FaPaypal /> : <FaCreditCard />}
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Authenticated Account</p>
                   <p className="font-bold text-gray-800 dark:text-white flex items-center gap-2">
-                    {settings.method === 'upi' ? 'UPI / VPA' : 'Secured Card Ending in 4242'}
+                    {settings.method === 'upi' ? 'UPI / VPA' : settings.method === 'paypal' ? 'Linked PayPal Account' : 'Secured Card Details'}
                     <FaCheckCircle className="text-blue-600 text-sm" />
                   </p>
                 </div>

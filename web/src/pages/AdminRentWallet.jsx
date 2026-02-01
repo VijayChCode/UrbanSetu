@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { toast } from 'react-toastify';
-import { FaWallet, FaCalendarAlt, FaHistory, FaCog, FaMoneyBillWave, FaExclamationTriangle, FaCheckCircle, FaClock, FaSpinner, FaDownload, FaTrophy, FaArrowRight, FaUserAlt, FaCreditCard, FaShieldAlt } from "react-icons/fa";
+import { FaWallet, FaCalendarAlt, FaHistory, FaCog, FaMoneyBillWave, FaExclamationTriangle, FaCheckCircle, FaClock, FaSpinner, FaDownload, FaTrophy, FaArrowRight, FaUserAlt, FaCreditCard, FaShieldAlt, FaPaypal } from "react-icons/fa";
 import { usePageTitle } from '../hooks/usePageTitle';
 import PaymentSchedule from '../components/rental/PaymentSchedule';
 import AutoDebitSettings from '../components/rental/AutoDebitSettings';
@@ -345,11 +345,14 @@ export default function AdminRentWallet() {
                                 <div className="bg-gray-800/50 backdrop-blur-xl border border-gray-700 rounded-3xl p-6 shadow-xl">
                                     <h3 className="text-white font-black text-sm uppercase tracking-widest mb-6">Auto-Debit Monitor</h3>
                                     <div className="flex flex-col items-center p-6 bg-gray-900/60 rounded-3xl border border-gray-700 shadow-inner">
-                                        <div className={`w-16 h-16 rounded-3xl flex items-center justify-center text-3xl mb-4 ${wallet.autoDebitEnabled ? 'bg-green-500 text-white shadow-lg shadow-green-500/20' : 'bg-gray-700 text-gray-400'}`}>
-                                            <FaShieldAlt />
+                                        <div className={`w-16 h-16 rounded-3xl flex items-center justify-center text-3xl mb-4 ${wallet.autoDebitEnabled
+                                                ? (wallet.autoDebitMethod === 'paypal' ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20' : 'bg-green-500 text-white shadow-lg shadow-green-500/20')
+                                                : 'bg-gray-700 text-gray-400'
+                                            }`}>
+                                            {wallet.autoDebitMethod === 'paypal' ? <FaPaypal /> : <FaShieldAlt />}
                                         </div>
-                                        <p className={`text-lg font-black ${wallet.autoDebitEnabled ? 'text-green-500' : 'text-gray-400'}`}>
-                                            {wallet.autoDebitEnabled ? 'Service Active' : 'Service Inactive'}
+                                        <p className={`text-lg font-black ${wallet.autoDebitEnabled ? 'text-white' : 'text-gray-400'}`}>
+                                            {wallet.autoDebitEnabled ? (wallet.autoDebitMethod === 'paypal' ? 'PayPal Active' : 'Razorpay Active') : 'Service Inactive'}
                                         </p>
                                         <p className="text-[10px] text-gray-500 mt-2 text-center uppercase tracking-widest font-black italic">Monitoring Enabled</p>
                                     </div>
@@ -359,19 +362,18 @@ export default function AdminRentWallet() {
                                             <div className="p-4 bg-gray-900/40 rounded-2xl border border-gray-700">
                                                 <p className="text-[10px] text-gray-500 uppercase font-black">Linked Account Details</p>
                                                 <div className="flex items-center gap-3 mt-2">
-                                                    <FaCreditCard className="text-blue-400 text-xl" />
+                                                    {wallet.autoDebitMethod === 'paypal' ? <FaPaypal className="text-indigo-400 text-xl" /> : <FaCreditCard className="text-blue-400 text-xl" />}
                                                     <div className="flex-1">
                                                         <p className="text-white font-bold text-sm">•••• •••• •••• {wallet.paymentMethodToken ? wallet.paymentMethodToken.slice(-4) : 'XXXX'}</p>
                                                         <p className="text-[10px] text-gray-500">Secure Tokenization ID: {wallet.paymentMethodToken || 'Not Available'}</p>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="p-4 bg-blue-500/10 rounded-2xl border border-blue-500/20">
-                                                <p className="text-blue-300 text-[10px] font-bold">NEXT RUN: Day {wallet.autoDebitDay} of next month</p>
+                                            <div className={`p-4 rounded-2xl border ${wallet.autoDebitMethod === 'paypal' ? 'bg-indigo-500/10 border-indigo-500/20' : 'bg-blue-500/10 border-blue-500/20'}`}>
+                                                <p className={`${wallet.autoDebitMethod === 'paypal' ? 'text-indigo-300' : 'text-blue-300'} text-[10px] font-bold uppercase`}>NEXT RUN: Day {wallet.autoDebitDay} of month</p>
                                             </div>
                                         </div>
-                                    )}
-                                </div>
+                                    )}                   </div>
 
                                 <div className="bg-indigo-600 rounded-3xl p-6 shadow-xl shadow-indigo-500/20">
                                     <h3 className="text-white font-black text-sm uppercase tracking-widest mb-4">Admin Audit</h3>
@@ -418,11 +420,14 @@ export default function AdminRentWallet() {
                             </div>
                             <div className="p-8 space-y-8">
                                 <div className="bg-gray-900/60 p-6 rounded-3xl border border-gray-700 flex items-center gap-6">
-                                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-2xl ${wallet.autoDebitEnabled ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400'}`}>
-                                        <FaCog />
+                                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-2xl ${wallet.autoDebitEnabled
+                                            ? (wallet.autoDebitMethod === 'paypal' ? 'bg-indigo-600 text-white' : 'bg-blue-600 text-white')
+                                            : 'bg-gray-700 text-gray-400'
+                                        }`}>
+                                        {wallet.autoDebitMethod === 'paypal' ? <FaPaypal /> : <FaCog />}
                                     </div>
                                     <div className="flex-1">
-                                        <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">Selected Method</p>
+                                        <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">Active Provider</p>
                                         <p className="text-xl font-black text-white">{wallet.autoDebitMethod?.toUpperCase() || 'NONE SELECTED'}</p>
                                     </div>
                                 </div>
