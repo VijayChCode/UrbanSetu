@@ -433,7 +433,7 @@ export default function RentPaymentHistory({ wallet, contract }) {
                         </p>
                       )}
                       <p className="text-lg font-semibold">
-                        Total: ₹{(payment.amount + (payment.penaltyAmount || 0) + maintenance).toLocaleString('en-IN')}
+                        Total: ₹{(payment.amount + (payment.penaltyAmount || 0) + (maintenance || 0)).toLocaleString('en-IN')}
                       </p>
                     </div>
                     {payment.status === 'completed' && (
