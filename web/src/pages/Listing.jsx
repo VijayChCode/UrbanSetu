@@ -1789,9 +1789,9 @@ export default function Listing() {
                     {comparisonProperties.length < 4 && (
                       <button
                         onClick={openPropertySearch}
-                        className="w-full py-3 border-2 border-dashed border-indigo-200 rounded-xl text-indigo-500 text-xs sm:text-sm font-medium hover:bg-indigo-50 hover:border-indigo-300 transition-all flex items-center justify-center gap-2"
+                        className="w-full py-3 border-2 border-dashed border-indigo-200 dark:border-gray-600 rounded-xl text-indigo-500 dark:text-indigo-400 text-xs sm:text-sm font-medium hover:bg-indigo-50 dark:hover:bg-gray-700 hover:border-indigo-300 dark:hover:border-indigo-500 transition-all flex items-center justify-center gap-2"
                       >
-                        <div className="bg-indigo-100 p-1 rounded-full">
+                        <div className="bg-indigo-100 dark:bg-indigo-900/30 p-1 rounded-full">
                           <FaSearch size={10} />
                         </div>
                         Add Property
