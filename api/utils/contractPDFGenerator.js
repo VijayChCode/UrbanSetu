@@ -173,7 +173,7 @@ export const generateRentLockContractPDF = (contract, tenant, landlord, listing,
         const signatureImage = contract.landlordSignature.signatureData.split('base64,')[1];
         if (signatureImage) {
           doc.image(Buffer.from(signatureImage, 'base64'), { width: 150, height: 60 });
-          doc.moveDown(0.2);
+          doc.y += 65;
         }
       } catch (e) {
         console.error('Error adding landlord signature to PDF:', e);
@@ -200,7 +200,7 @@ export const generateRentLockContractPDF = (contract, tenant, landlord, listing,
         const signatureImage = contract.tenantSignature.signatureData.split('base64,')[1];
         if (signatureImage) {
           doc.image(Buffer.from(signatureImage, 'base64'), { width: 150, height: 60 });
-          doc.moveDown(0.2);
+          doc.y += 65;
         }
       } catch (e) {
         console.error('Error adding tenant signature to PDF:', e);
