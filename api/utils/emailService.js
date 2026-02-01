@@ -11709,17 +11709,22 @@ export const sendRentPaymentReminderEmail = async (email, reminderDetails) => {
 };
 
 // Send rent payment overdue email
+// Send rent payment overdue email
 export const sendRentPaymentOverdueEmail = async (email, overdueDetails) => {
   try {
     const {
       propertyName,
       totalOverdue,
-      overdueCount,
+      amount,
+      penalty,
+      daysOverdue,
+      month,
       contractId,
-      walletUrl
+      walletUrl,
+      paymentUrl
     } = overdueDetails;
 
-    const subject = `⚠️ Rent Payment Overdue - ${propertyName}`;
+    const subject = `⚠️ Action Required: Rent Overdue for ${propertyName}`;
 
     const html = `
       <!DOCTYPE html>
@@ -11730,35 +11735,61 @@ export const sendRentPaymentOverdueEmail = async (email, overdueDetails) => {
         <title>Rent Payment Overdue - UrbanSetu</title>
       </head>
       <body>
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
-          <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+        <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+          <div style="background-color: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
             <div style="text-align: center; margin-bottom: 30px;">
-              <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #ef4444, #dc2626); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: 0 8px 16px rgba(239, 68, 68, 0.3);">
-                <span style="color: #ffffff; font-size: 36px; font-weight: bold;">⚠️</span>
+              <div style="width: 72px; height: 72px; background: #fee2e2; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+                <span style="font-size: 32px;">⚠️</span>
               </div>
-              <h1 style="color: #1f2937; margin: 0; font-size: 28px;">Payment Overdue</h1>
-              <p style="color: #6b7280; margin: 10px 0 0 0;">Immediate action required</p>
-            </div>
-            
-            <div style="background-color: #fef2f2; padding: 25px; border-radius: 8px; border-left: 4px solid #ef4444; margin-bottom: 25px;">
-              <h2 style="color: #991b1b; margin: 0 0 15px 0; font-size: 20px;">Overdue Payment Notice</h2>
-              <div style="background-color: white; padding: 15px; border-radius: 6px; margin: 15px 0;">
-                <p style="color: #4b5563; margin: 0 0 10px 0;"><strong>Property:</strong> ${propertyName}</p>
-                <p style="color: #dc2626; margin: 0 0 10px 0; font-size: 18px; font-weight: bold;"><strong>Total Overdue:</strong> ₹${totalOverdue}</p>
-                <p style="color: #4b5563; margin: 0;"><strong>Overdue Payments:</strong> ${overdueCount}</p>
-              </div>
-              <p style="color: #991b1b; margin: 15px 0 0; font-size: 14px; line-height: 1.6;">
-                You have overdue rent payment(s). Please pay immediately to avoid further penalties and potential contract issues. Late fees may continue to accrue until payment is received.
+              <h1 style="color: #991b1b; margin: 0; font-size: 24px;">Rent Payment Overdue</h1>
+              <p style="color: #7f1d1d; margin: 10px 0 0 0; font-size: 16px;">
+                Your payment is <strong>${daysOverdue} days</strong> late
               </p>
             </div>
             
-            ${walletUrl ? `<div style="text-align: center; margin-top: 30px;">
-              <a href="${walletUrl}" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; padding: 15px 25px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block; box-shadow: 0 4px 6px rgba(239, 68, 68, 0.3);">Pay Now</a>
-            </div>` : ''}
+            <div style="background-color: #fff1f2; padding: 25px; border-radius: 8px; border: 1px solid #fecaca; margin-bottom: 25px;">
+              <div style="margin-bottom: 20px;">
+                 <p style="color: #6b7280; font-size: 14px; margin: 0 0 5px;">Property</p>
+                 <p style="color: #1f2937; font-size: 16px; font-weight: 600; margin: 0;">${propertyName}</p>
+              </div>
+              
+              <div style="margin-bottom: 20px;">
+                 <p style="color: #6b7280; font-size: 14px; margin: 0 0 5px;">Billing Period</p>
+                 <p style="color: #1f2937; font-size: 16px; font-weight: 600; margin: 0;">${month}</p>
+              </div>
+
+              <div style="border-top: 1px dashed #fecaca; border-bottom: 1px dashed #fecaca; padding: 15px 0; margin: 15px 0;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                  <span style="color: #4b5563;">Base Rent</span>
+                  <span style="color: #1f2937; font-weight: 500;">₹${(amount || 0).toLocaleString('en-IN')}</span>
+                </div>
+                ${penalty > 0 ? `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #dc2626;">
+                  <span>Late Fee Penalty</span>
+                  <span>+ ₹${penalty.toLocaleString('en-IN')}</span>
+                </div>` : ''}
+              </div>
+
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                <span style="color: #1f2937; font-weight: 700;">Total Amount Due</span>
+                <span style="color: #dc2626; font-size: 20px; font-weight: 700;">₹${totalOverdue.toLocaleString('en-IN')}</span>
+              </div>
+            </div>
             
-            <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-              <p style="color: #9ca3af; margin: 0; font-size: 12px;">This is an automated notification from UrbanSetu.</p>
-              <p style="color: #9ca3af; margin: 10px 0 0; font-size: 12px;">© ${new Date().getFullYear()} UrbanSetu. All rights reserved.</p>
+            <p style="color: #4b5563; font-size: 14px; line-height: 1.6; text-align: center; margin-bottom: 30px;">
+              Please complete your payment immediately to avoid further penalties and legal complications.
+            </p>
+            
+            <div style="text-align: center;">
+              <a href="${paymentUrl || walletUrl}" style="background-color: #dc2626; color: white; padding: 14px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px; display: inline-block; box-shadow: 0 4px 6px rgba(220, 38, 38, 0.2);">
+                Pay Now ₹${totalOverdue.toLocaleString('en-IN')}
+              </a>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #f3f4f6;">
+               <p style="color: #9ca3af; margin: 0; font-size: 12px;">
+                 Contract ID: ${contractId} • <a href="${walletUrl}" style="color: #6b7280; text-decoration: underline;">View Lease Details</a>
+               </p>
             </div>
           </div>
         </div>

@@ -381,9 +381,21 @@ export default function NotificationBell({ mobile = false }) {
           </div>
         );
       case 'property_deleted':
+      case 'rent_contract_rejected':
+      case 'rent_contract_terminated':
+      case 'move_in_rejected':
+      case 'move_out_rejected':
         return (
           <div className={`${containerBase} bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400`}>
             <FaTrash className={iconBase} />
+          </div>
+        );
+      case 'appointment_cancelled_by_seller':
+      case 'appointment_cancelled_by_buyer':
+      case 'appointment_cancelled_by_admin':
+        return (
+          <div className={`${containerBase} bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400`}>
+            <FaTimes className={iconBase} />
           </div>
         );
       case 'appointment_updated':
@@ -393,6 +405,8 @@ export default function NotificationBell({ mobile = false }) {
           </div>
         );
       case 'admin_message':
+      case 'rent_payment_reminder':
+      case 'rent_dispute_resolved':
         return (
           <div className={`${containerBase} bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400`}>
             <FaEnvelope className={iconBase} />
@@ -404,15 +418,11 @@ export default function NotificationBell({ mobile = false }) {
             <FaCalendarAlt className={iconBase} />
           </div>
         );
-      case 'appointment_cancelled_by_seller':
-      case 'appointment_cancelled_by_buyer':
-      case 'appointment_cancelled_by_admin':
-        return (
-          <div className={`${containerBase} bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400`}>
-            <FaTimes className={iconBase} />
-          </div>
-        );
       case 'appointment_accepted_by_seller':
+      case 'rent_contract_signed':
+      case 'rent_contract_accepted':
+      case 'move_in_approved':
+      case 'move_out_approved':
         return (
           <div className={`${containerBase} bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400`}>
             <FaCheck className={iconBase} />
@@ -431,6 +441,8 @@ export default function NotificationBell({ mobile = false }) {
           </div>
         );
       case 'client_error_report':
+      case 'rent_payment_overdue':
+      case 'rent_dispute_raised':
         return (
           <div className={`${containerBase} bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400`}>
             <FaExclamationTriangle className={iconBase} />

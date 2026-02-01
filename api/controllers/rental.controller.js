@@ -40,8 +40,6 @@ import { markListingUnderContract, markListingAsRented, releaseListingLock } fro
 export const sendPaymentReminders = async () => {
   try {
     const now = new Date();
-    const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
-    const oneDayFromNow = new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000);
 
     // Find all active contracts with upcoming payments
     const activeContracts = await RentLockContract.find({ status: 'active' })
@@ -50,15 +48,17 @@ export const sendPaymentReminders = async () => {
       .populate('listingId', 'name');
 
     const reminders = [];
+    let activeRemindersCount = 0;
 
     for (const contract of activeContracts) {
       const wallet = await RentWallet.findOne({ contractId: contract._id, userId: contract.tenantId._id });
+      let walletUpdated = false;
 
       if (!wallet || !wallet.paymentSchedule) continue;
 
       // Find upcoming payments (5 days before and each day until due date or overdue)
       const upcomingPayments = wallet.paymentSchedule.filter(payment => {
-        if (payment.status === 'completed') return false;
+        if (payment.status === 'completed' || payment.status === 'paid') return false;
 
         const dueDate = new Date(payment.dueDate);
         const daysUntilDue = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
@@ -70,12 +70,27 @@ export const sendPaymentReminders = async () => {
       for (const payment of upcomingPayments) {
         const dueDate = new Date(payment.dueDate);
         const daysUntilDue = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        const paymentKey = `${payment.month}-${payment.year}`;
+
+        // UPDATE PENALTY IF OVERDUE
+        if (daysUntilDue < 0) {
+          const daysOverdue = Math.abs(daysUntilDue);
+          const baseRent = contract.lockedRentAmount || contract.rentAmount || (payment.amount - (contract.maintenanceCharges || 0));
+          const lateFeePercentage = contract.lateFeePercentage || 5;
+          const penaltyPerDay = (baseRent * (lateFeePercentage / 100));
+          const newPenaltyAmount = Math.round(penaltyPerDay * daysOverdue);
+
+          if (payment.status !== 'overdue' || payment.penaltyAmount !== newPenaltyAmount) {
+            payment.status = 'overdue';
+            payment.penaltyAmount = newPenaltyAmount;
+            walletUpdated = true;
+          }
+        }
 
         // Check if reminder should be sent today
         // Send reminder starting 5 days before and each day until paid
         if (daysUntilDue <= 5) {
           const today = new Date().toDateString();
-          const paymentKey = `${payment.month}-${payment.year}`;
 
           // Track last reminder date per payment (initialize if needed)
           if (!wallet.paymentReminders) {
@@ -114,17 +129,28 @@ export const sendPaymentReminders = async () => {
 
             // Track last reminder date per payment
             wallet.paymentReminders[paymentKey] = new Date();
+            walletUpdated = true;
           }
         }
       }
 
-      // Save wallet if reminders were sent
-      if (reminders.length > 0 || upcomingPayments.some(p => p.reminderSent3Days || p.reminderSent1Day)) {
+      // Save wallet if reminders were sent or penalties updated
+      if (walletUpdated) {
+        // Recalculate totals
+        const maintenance = contract.maintenanceCharges || 0;
+        const pendingPayments = wallet.paymentSchedule.filter(p => p.status === 'pending' || p.status === 'overdue');
+        const completedPayments = wallet.paymentSchedule.filter(p => p.status === 'completed' || p.status === 'paid');
+
+        wallet.totalPaid = completedPayments.reduce((sum, p) => sum + p.amount + (p.penaltyAmount || 0) + maintenance, 0);
+        wallet.totalDue = pendingPayments.reduce((sum, p) => sum + p.amount + (p.penaltyAmount || 0) + maintenance, 0);
+
+        wallet.markModified('paymentSchedule');
+        wallet.markModified('paymentReminders');
         await wallet.save();
       }
     }
 
-    // Send email reminders
+    // Send email reminders and notifications
     const { sendRentPaymentReminderEmail, sendRentPaymentOverdueEmail } = await import('../utils/emailService.js');
 
     for (const reminder of reminders) {
@@ -133,17 +159,41 @@ export const sendPaymentReminders = async () => {
         const daysLeft = Math.max(0, reminder.daysUntilDue);
         const isOverdue = reminder.daysUntilDue < 0;
         const daysOverdue = isOverdue ? Math.abs(reminder.daysUntilDue) : 0;
+        const penaltyAmount = reminder.payment.penaltyAmount || 0;
+        const totalAmount = reminder.amount + penaltyAmount;
 
         if (isOverdue) {
           // Send overdue email
+          // Send overdue email
+          const paymentUrl = `${process.env.FRONTEND_URL || 'https://urbansetu.vercel.app'}/user/pay-monthly-rent?contractId=${reminder.contract._id}&scheduleIndex=${reminder.wallet.paymentSchedule.indexOf(reminder.payment)}`;
+
           await sendRentPaymentOverdueEmail(reminder.tenantEmail, {
             propertyName: reminder.propertyName,
-            totalOverdue: reminder.amount + (reminder.payment.penaltyAmount || 0),
-            overdueCount: 1,
+            totalOverdue: totalAmount,
+            amount: reminder.amount,
+            penalty: penaltyAmount,
+            month: reminder.paymentKey,
+            daysOverdue,
             contractId: reminder.contractId,
             walletUrl: `${process.env.FRONTEND_URL || 'https://urbansetu.vercel.app'}/user/rent-wallet?contractId=${reminder.contract._id}`,
-            daysOverdue
+            paymentUrl
           });
+
+          // Send In-App Notification
+          await sendRentalNotification({
+            userId: reminder.contract.tenantId._id,
+            type: 'rent_payment_overdue',
+            title: '⚠️ Rent Payment Overdue',
+            message: `Your rent payment of ₹${reminder.amount} for ${reminder.propertyName} is overdue by ${daysOverdue} days. Total amount due: ₹${totalAmount}.`,
+            meta: {
+              contractId: reminder.contract._id,
+              listingId: reminder.contract.listingId._id,
+              paymentId: reminder.payment._id
+            },
+            actionUrl: `/user/rent-wallet?contractId=${reminder.contract._id}`
+            // Note: 'io' is missing here, but the service handles DB notification which works for the Bell
+          });
+
         } else {
           // Send reminder email
           await sendRentPaymentReminderEmail(reminder.tenantEmail, {
@@ -153,18 +203,33 @@ export const sendPaymentReminders = async () => {
             daysLeft: daysLeft,
             contractId: reminder.contractId,
             walletUrl: `${process.env.FRONTEND_URL || 'https://urbansetu.vercel.app'}/user/rent-wallet?contractId=${reminder.contract._id}`,
-            penaltyAmount: reminder.payment.penaltyAmount || 0
+            penaltyAmount: 0 // No penalty if not overdue
           });
+
+          // Send In-App Notification (Optional, maybe only for 5 days and 1 day)
+          if (daysLeft === 5 || daysLeft === 1) {
+            await sendRentalNotification({
+              userId: reminder.contract.tenantId._id,
+              type: 'rent_payment_reminder',
+              title: 'Rent Payment Reminder',
+              message: `Your rent payment for ${reminder.propertyName} is due in ${daysLeft} days.`,
+              meta: {
+                contractId: reminder.contract._id,
+                listingId: reminder.contract.listingId._id,
+                paymentId: reminder.payment._id
+              },
+              actionUrl: `/user/rent-wallet?contractId=${reminder.contract._id}`
+            });
+          }
         }
       } catch (error) {
-        console.error(`Error sending reminder email to ${reminder.tenantEmail}:`, error);
+        console.error(`Error sending reminder email/notification to ${reminder.tenantEmail}:`, error);
       }
     }
 
     return {
       success: true,
-      remindersSent: reminders.length + overduePayments.length,
-      reminders: [...reminders, ...overduePayments]
+      remindersSent: reminders.length
     };
   } catch (error) {
     console.error("Error sending payment reminders:", error);
@@ -935,13 +1000,45 @@ export const getWallet = async (req, res, next) => {
       return res.status(404).json({ message: "Wallet not found for this contract." });
     }
 
-    // CLEANUP: Check for stuck 'processing' payments
+    // Check for overdue payments and calculate penalty
+    // Also cleanup stuck processing payments
     let walletUpdated = false;
     const now = new Date();
-    // Import Payment model to check status
+    const lateFeePercentage = contract.lateFeePercentage || 5;
+
+    // Import Payment model to check status for cleanup
     const Payment = (await import('../models/payment.model.js')).default;
 
     for (const entry of wallet.paymentSchedule) {
+      const dueDate = new Date(entry.dueDate);
+
+      // 1. Check for overdue and calculate penalty
+      if ((entry.status === 'pending' || entry.status === 'overdue') && dueDate < now) {
+        // Calculate days overdue
+        const diffTime = Math.abs(now - dueDate);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        // Calculate penalty: (Rent * Rate/100) * Days
+        // Use lockedRentAmount or rentAmount from contract, fallback to entry.amount if not found (though entry.amount includes maintenance)
+        // Better to use entry.amount - maintenance if possible, or just contract.lockedRentAmount
+        const baseRent = contract.lockedRentAmount || contract.rentAmount;
+        const maintenance = contract.maintenanceCharges || 0;
+
+        // Ensure we calculate on base rent, not total (which might include maintenance)
+        // If entry.amount is total, we should derive base. 
+        // Logic: Penalty is usually on Rent only.
+        const penaltyPerDay = (baseRent * (lateFeePercentage / 100));
+        const newPenaltyAmount = Math.round(penaltyPerDay * diffDays);
+
+        if (entry.status !== 'overdue' || entry.penaltyAmount !== newPenaltyAmount) {
+          entry.status = 'overdue';
+          entry.penaltyAmount = newPenaltyAmount;
+          walletUpdated = true;
+          // console.log(`⚠️ Payment for ${entry.month}/${entry.year} marked overdue. Penalty: ${newPenaltyAmount}`);
+        }
+      }
+
+      // 2. Cleanup stuck 'processing' payments
       if (entry.status === 'processing' && entry.paymentId) {
         // If it's a populated object, use ._id, otherwise use it directly
         const paymentId = entry.paymentId._id || entry.paymentId;
@@ -968,24 +1065,31 @@ export const getWallet = async (req, res, next) => {
         }
 
         if (shouldRevert) {
-          const dueDate = new Date(entry.dueDate);
           // Restore to overdue if dueDate is past, otherwise pending
-          entry.status = dueDate < now ? 'overdue' : 'pending';
-          // Keep paymentId for reference or clear it? Better to clear to allow fresh retry.
-          // However, if we clear it, we lose history of the attempt. 
-          // But since it's staying in the schedule array, clearing the pointer essentially resets the slot.
-          entry.paymentId = null;
-          walletUpdated = true;
-          console.log(`♻️ Restored stuck processing payment for ${entry.month}/${entry.year} to ${entry.status}`);
+          const newStatus = dueDate < now ? 'overdue' : 'pending';
+
+          if (entry.status !== newStatus) {
+            entry.status = newStatus;
+            entry.paymentId = null;
+            walletUpdated = true;
+            console.log(`♻️ Restored stuck processing payment for ${entry.month}/${entry.year} to ${entry.status}`);
+          }
         }
       }
     }
 
     if (walletUpdated) {
       wallet.markModified('paymentSchedule');
+      // Recalculate totals
+      const pendingPayments = wallet.paymentSchedule.filter(p => p.status === 'pending' || p.status === 'overdue');
+      const completedPayments = wallet.paymentSchedule.filter(p => p.status === 'completed' || p.status === 'paid');
+
+      const maintenance = contract.maintenanceCharges || 0;
+
+      wallet.totalPaid = completedPayments.reduce((sum, p) => sum + p.amount + (p.penaltyAmount || 0) + maintenance, 0);
+      wallet.totalDue = pendingPayments.reduce((sum, p) => sum + p.amount + (p.penaltyAmount || 0) + maintenance, 0);
+
       await wallet.save();
-      // Re-populate if we saved, to ensure clean response
-      // Optional: could just return the modified wallet object as is
     }
 
     res.json({
