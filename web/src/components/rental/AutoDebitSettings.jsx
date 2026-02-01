@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FaCog, FaToggleOn, FaToggleOff, FaCreditCard, FaCalendarAlt, FaCheckCircle, FaExclamationTriangle, FaTimes, FaSave, FaUniversity, FaMobileAlt, FaTrash } from "react-icons/fa";
+import { FaCog, FaToggleOn, FaToggleOff, FaCreditCard, FaCalendarAlt, FaCheckCircle, FaExclamationTriangle, FaTimes, FaSave, FaUniversity, FaMobileAlt, FaTrash, FaShieldAlt, FaLock } from "react-icons/fa";
 import { toast } from 'react-toastify';
 import { authenticatedFetch } from '../../utils/auth';
 
@@ -235,9 +235,9 @@ export default function AutoDebitSettings({ wallet, contract, onUpdate }) {
             <FaExclamationTriangle className="text-blue-600 dark:text-blue-400" />
           </div>
           <div className="text-sm">
-            <p className="font-bold text-blue-900 dark:text-blue-200 mb-1">Set & Forget</p>
+            <p className="font-bold text-blue-900 dark:text-blue-200 mb-1">Set & Forget • Secure Payments</p>
             <p className="text-blue-700 dark:text-blue-300 leading-relaxed">
-              Enable auto-debit to automatically pay your rent on the specified day. Payments are processed through a secure bank-grade escrow system.
+              Enable auto-debit to automatically pay your rent. UrbanSetu <strong>does not store or have access</strong> to your card details. All transactions are handled by PCI-DSS compliant payment partners via secure bank-grade encryption.
             </p>
           </div>
         </div>
@@ -364,6 +364,13 @@ export default function AutoDebitSettings({ wallet, contract, onUpdate }) {
               </div>
             )}
 
+            <div className="mt-6 flex items-center justify-center gap-3 p-3 bg-gray-50 dark:bg-gray-900/40 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
+              <FaShieldAlt className="text-blue-500" />
+              <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-tight">
+                <strong>Your Data Security:</strong> UrbanSetu uses tokenization to process payments. We never see, save, or share your full card number or CVV. Your financial privacy is strictly protected.
+              </p>
+            </div>
+
             <div className="mt-8 flex gap-4">
               <button
                 onClick={() => setIsAddingMethod(false)}
@@ -458,9 +465,13 @@ export default function AutoDebitSettings({ wallet, contract, onUpdate }) {
         )}
       </div>
 
-      <div className={`p-4 mt-4 text-center ${settings.enabled ? 'bg-green-50 dark:bg-green-900/20' : 'bg-gray-100 dark:bg-gray-900/50'}`}>
+      <div className={`p-4 mt-4 flex items-center justify-center gap-4 ${settings.enabled ? 'bg-green-50 dark:bg-green-900/20' : 'bg-gray-100 dark:bg-gray-900/50'}`}>
         <p className="text-[10px] uppercase font-black tracking-[0.2em] text-gray-400">
           Status: {settings.enabled ? 'Live & Monitoring' : 'Inactive / Ready to Link'}
+        </p>
+        <div className="h-4 w-px bg-gray-300 dark:bg-gray-700" />
+        <p className="text-[10px] flex items-center gap-1 font-bold text-gray-400 uppercase tracking-widest">
+          <FaLock className="text-[8px]" /> 256-Bit SSL Secured
         </p>
       </div>
     </div>
