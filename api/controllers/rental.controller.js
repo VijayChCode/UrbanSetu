@@ -1134,7 +1134,7 @@ export const updateAutoDebit = async (req, res, next) => {
     wallet.autoDebitEnabled = enabled !== undefined ? enabled : wallet.autoDebitEnabled;
     wallet.autoDebitMethod = method || wallet.autoDebitMethod;
     wallet.autoDebitDay = day || wallet.autoDebitDay;
-    wallet.paymentMethodToken = paymentMethodToken || wallet.paymentMethodToken;
+    wallet.paymentMethodToken = paymentMethodToken !== undefined ? paymentMethodToken : wallet.paymentMethodToken;
 
     await wallet.save();
 

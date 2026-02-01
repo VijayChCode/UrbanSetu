@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FaCog, FaToggleOn, FaToggleOff, FaCreditCard, FaCalendarAlt, FaCheckCircle, FaExclamationTriangle, FaTimes, FaSave, FaUniversity, FaMobileAlt } from "react-icons/fa";
+import { FaCog, FaToggleOn, FaToggleOff, FaCreditCard, FaCalendarAlt, FaCheckCircle, FaExclamationTriangle, FaTimes, FaSave, FaUniversity, FaMobileAlt, FaTrash } from "react-icons/fa";
 import { toast } from 'react-toastify';
 import { authenticatedFetch } from '../../utils/auth';
 
@@ -137,6 +137,46 @@ export default function AutoDebitSettings({ wallet, contract, onUpdate }) {
     } catch (error) {
       console.error("Error saving payment method:", error);
       toast.error(error.message || "Failed to save payment method.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const removePaymentMethod = async () => {
+    if (!window.confirm("Are you sure you want to remove this payment method? Auto-debit will be disabled.")) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const res = await authenticatedFetch(`${API_BASE_URL}/api/rental/wallet/${contract.contractId}/auto-debit`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          enabled: false,
+          paymentMethodToken: '' // Clear the token
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to remove payment method");
+      }
+
+      setSettings(prev => ({
+        ...prev,
+        enabled: false,
+        paymentMethodToken: ''
+      }));
+
+      if (onUpdate && data.wallet) {
+        onUpdate(data.wallet);
+      }
+
+      toast.success("Payment method removed successfully.");
+    } catch (error) {
+      console.error("Error removing payment method:", error);
+      toast.error(error.message || "Failed to remove payment method.");
     } finally {
       setLoading(false);
     }
@@ -365,12 +405,22 @@ export default function AutoDebitSettings({ wallet, contract, onUpdate }) {
                   </p>
                 </div>
               </div>
-              <button
-                onClick={() => setIsAddingMethod(true)}
-                className="text-xs font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 py-2 px-4 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/50 transition-all"
-              >
-                Manage Sources
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setIsAddingMethod(true)}
+                  className="text-xs font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 py-2 px-4 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/50 transition-all"
+                >
+                  Manage Sources
+                </button>
+                <button
+                  onClick={removePaymentMethod}
+                  disabled={loading}
+                  className="text-xs font-bold text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 py-2 px-4 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/50 transition-all flex items-center gap-1"
+                  title="Remove payment method"
+                >
+                  <FaTrash className="text-[10px]" /> Remove Account
+                </button>
+              </div>
             </div>
           </div>
         )}
