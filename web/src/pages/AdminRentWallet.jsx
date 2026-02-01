@@ -318,21 +318,35 @@ export default function AdminRentWallet() {
                                             wallet.paymentSchedule
                                                 .sort((a, b) => new Date(b.dueDate) - new Date(a.dueDate))
                                                 .slice(0, 5)
-                                                .map((payment, idx) => (
-                                                    <div key={idx} className="bg-gray-900/60 p-4 rounded-2xl border border-gray-700 flex items-center justify-between">
-                                                        <div className="flex items-center gap-4">
-                                                            <div className={`w-2 h-10 rounded-full ${payment.status === 'completed' ? 'bg-green-500' : payment.status === 'overdue' ? 'bg-red-500' : 'bg-gray-600'}`}></div>
-                                                            <div>
-                                                                <p className="text-white font-bold">{new Date(payment.dueDate).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}</p>
-                                                                <p className="text-xs text-gray-500">Status: {payment.status?.toUpperCase()}</p>
+                                                .map((payment, idx) => {
+                                                    const pId = payment.paymentId?.paymentId || payment.paymentId;
+                                                    return (
+                                                        <div
+                                                            key={idx}
+                                                            onClick={() => pId && navigate(`/admin/payments?paymentId=${pId}`)}
+                                                            className={`bg-gray-900/60 p-4 rounded-2xl border border-gray-700 flex items-center justify-between transition-all ${pId ? 'cursor-pointer hover:bg-gray-900 hover:border-blue-500/50 hover:shadow-lg active:scale-95' : ''}`}
+                                                        >
+                                                            <div className="flex items-center gap-4">
+                                                                <div className={`w-2 h-10 rounded-full ${payment.status === 'completed' ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.3)]' : payment.status === 'overdue' ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.3)]' : 'bg-gray-600'}`}></div>
+                                                                <div>
+                                                                    <p className="text-white font-bold">{new Date(payment.dueDate).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}</p>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <p className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">{payment.status}</p>
+                                                                        {pId && <p className="text-[10px] text-blue-400 font-mono">{pId}</p>}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <p className="text-white font-bold">₹{(payment.amount + maintenance).toLocaleString('en-IN')}</p>
+                                                                {payment.paidAt ? (
+                                                                    <p className="text-[10px] text-green-500 font-bold uppercase italic">Paid {new Date(payment.paidAt).toLocaleDateString('en-GB')}</p>
+                                                                ) : (
+                                                                    payment.status === 'overdue' && <p className="text-[10px] text-red-500 font-bold uppercase">Overdue</p>
+                                                                )}
                                                             </div>
                                                         </div>
-                                                        <div className="text-right">
-                                                            <p className="text-white font-bold">₹{(payment.amount + maintenance).toLocaleString('en-IN')}</p>
-                                                            {payment.paidAt && <p className="text-[10px] text-green-500">Paid on {new Date(payment.paidAt).toLocaleDateString('en-GB')}</p>}
-                                                        </div>
-                                                    </div>
-                                                ))
+                                                    );
+                                                })
                                         ) : (
                                             <p className="text-gray-500 text-center py-8">No payment timeline available yet.</p>
                                         )}
@@ -346,8 +360,8 @@ export default function AdminRentWallet() {
                                     <h3 className="text-white font-black text-sm uppercase tracking-widest mb-6">Auto-Debit Monitor</h3>
                                     <div className="flex flex-col items-center p-6 bg-gray-900/60 rounded-3xl border border-gray-700 shadow-inner">
                                         <div className={`w-16 h-16 rounded-3xl flex items-center justify-center text-3xl mb-4 ${wallet.autoDebitEnabled
-                                                ? (wallet.autoDebitMethod === 'paypal' ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20' : 'bg-green-500 text-white shadow-lg shadow-green-500/20')
-                                                : 'bg-gray-700 text-gray-400'
+                                            ? (wallet.autoDebitMethod === 'paypal' ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20' : 'bg-green-500 text-white shadow-lg shadow-green-500/20')
+                                            : 'bg-gray-700 text-gray-400'
                                             }`}>
                                             {wallet.autoDebitMethod === 'paypal' ? <FaPaypal /> : <FaShieldAlt />}
                                         </div>
@@ -421,8 +435,8 @@ export default function AdminRentWallet() {
                             <div className="p-8 space-y-8">
                                 <div className="bg-gray-900/60 p-6 rounded-3xl border border-gray-700 flex items-center gap-6">
                                     <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-2xl ${wallet.autoDebitEnabled
-                                            ? (wallet.autoDebitMethod === 'paypal' ? 'bg-indigo-600 text-white' : 'bg-blue-600 text-white')
-                                            : 'bg-gray-700 text-gray-400'
+                                        ? (wallet.autoDebitMethod === 'paypal' ? 'bg-indigo-600 text-white' : 'bg-blue-600 text-white')
+                                        : 'bg-gray-700 text-gray-400'
                                         }`}>
                                         {wallet.autoDebitMethod === 'paypal' ? <FaPaypal /> : <FaCog />}
                                     </div>

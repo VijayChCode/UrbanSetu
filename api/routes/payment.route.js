@@ -3272,12 +3272,13 @@ router.get('/admin/list', verifyToken, async (req, res) => {
     if (user.role !== 'admin' && user.role !== 'rootadmin') {
       return res.status(403).json({ message: 'Unauthorized' });
     }
-    const { currency, status, gateway, paymentType, page = 1, limit = 20, q, fromDate, toDate } = req.query;
+    const { currency, status, gateway, paymentType, page = 1, limit = 20, q, fromDate, toDate, contractId } = req.query;
     const query = {};
     if (currency) query.currency = currency.toUpperCase();
     if (status) query.status = status;
     if (gateway) query.gateway = gateway;
     if (paymentType) query.paymentType = paymentType;
+    if (contractId) query.contractId = contractId;
     if (q) {
       const rx = new RegExp(q, 'i');
       query.$or = [

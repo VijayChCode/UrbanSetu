@@ -89,8 +89,16 @@ const PaymentDashboard = () => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const paymentId = params.get('paymentId');
+    const contractId = params.get('contractId');
 
-    if (!paymentId) return;
+    if (!paymentId && !contractId) return;
+
+    if (contractId && !paymentId) {
+      if (activeTab !== 'history') {
+        setActiveTab('history');
+      }
+      return;
+    }
 
     const findAndOpenPayment = async () => {
       // Switch to history tab if not there
@@ -250,9 +258,12 @@ const PaymentDashboard = () => {
       const q = qSel ? qSel.value : '';
       const fromDate = fromSel ? fromSel.value : '';
       const toDate = toSel ? toSel.value : '';
+      const urlParams = new URLSearchParams(window.location.search);
+      const contractId = urlParams.get('contractId') || '';
+
       const [usdRes, inrRes] = await Promise.all([
-        authenticatedFetch(`${import.meta.env.VITE_API_BASE_URL}/api/payments/admin/list?currency=USD&limit=1000&status=${encodeURIComponent(status)}&gateway=${encodeURIComponent(gateway)}&paymentType=${encodeURIComponent(paymentType)}&q=${encodeURIComponent(q)}&fromDate=${encodeURIComponent(fromDate)}&toDate=${encodeURIComponent(toDate)}`),
-        authenticatedFetch(`${import.meta.env.VITE_API_BASE_URL}/api/payments/admin/list?currency=INR&limit=1000&status=${encodeURIComponent(status)}&gateway=${encodeURIComponent(gateway)}&paymentType=${encodeURIComponent(paymentType)}&q=${encodeURIComponent(q)}&fromDate=${encodeURIComponent(fromDate)}&toDate=${encodeURIComponent(toDate)}`)
+        authenticatedFetch(`${import.meta.env.VITE_API_BASE_URL}/api/payments/admin/list?currency=USD&limit=1000&status=${encodeURIComponent(status)}&gateway=${encodeURIComponent(gateway)}&paymentType=${encodeURIComponent(paymentType)}&q=${encodeURIComponent(q)}&fromDate=${encodeURIComponent(fromDate)}&toDate=${encodeURIComponent(toDate)}${contractId ? `&contractId=${contractId}` : ''}`),
+        authenticatedFetch(`${import.meta.env.VITE_API_BASE_URL}/api/payments/admin/list?currency=INR&limit=1000&status=${encodeURIComponent(status)}&gateway=${encodeURIComponent(gateway)}&paymentType=${encodeURIComponent(paymentType)}&q=${encodeURIComponent(q)}&fromDate=${encodeURIComponent(fromDate)}&toDate=${encodeURIComponent(toDate)}${contractId ? `&contractId=${contractId}` : ''}`)
       ]);
       const usdData = await usdRes.json();
       const inrData = await inrRes.json();
@@ -554,6 +565,45 @@ const PaymentDashboard = () => {
 
           {activeTab === 'history' && (
             <div className="space-y-6">
+              <div className="flex flex-wrap gap-3">
+                {new URLSearchParams(window.location.search).get('contractId') && (
+                  <div className="flex items-center gap-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-3 py-2 rounded-xl text-xs font-bold border border-indigo-100 dark:border-indigo-800 animate-in fade-in slide-in-from-left-2 shadow-sm">
+                    <FaWallet className="text-sm" />
+                    <span>Contract Audit: {new URLSearchParams(window.location.search).get('contractId')}</span>
+                    <button
+                      onClick={() => {
+                        const url = new URL(window.location.href);
+                        url.searchParams.delete('contractId');
+                        navigate(url.pathname + url.search);
+                        fetchAdminPayments();
+                      }}
+                      className="ml-2 bg-white dark:bg-gray-800 p-1 rounded-full hover:bg-white/80 dark:hover:bg-gray-700 transition-all text-indigo-500 shadow-sm"
+                      title="Clear Contract Filter"
+                    >
+                      <FaTimes />
+                    </button>
+                  </div>
+                )}
+                {new URLSearchParams(window.location.search).get('paymentId') && (
+                  <div className="flex items-center gap-2 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-3 py-2 rounded-xl text-xs font-bold border border-purple-100 dark:border-purple-800 animate-in fade-in slide-in-from-left-2 shadow-sm">
+                    <FaCreditCard className="text-sm" />
+                    <span>Focus Payment: {new URLSearchParams(window.location.search).get('paymentId')}</span>
+                    <button
+                      onClick={() => {
+                        const url = new URL(window.location.href);
+                        url.searchParams.delete('paymentId');
+                        navigate(url.pathname + url.search);
+                        fetchAdminPayments();
+                      }}
+                      className="ml-2 bg-white dark:bg-gray-800 p-1 rounded-full hover:bg-white/80 dark:hover:bg-gray-700 transition-all text-purple-500 shadow-sm"
+                      title="Clear Payment Highlight"
+                    >
+                      <FaTimes />
+                    </button>
+                  </div>
+                )}
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-4 items-end">
                 <div>
                   <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">Search</label>
@@ -888,295 +938,229 @@ const PaymentDashboard = () => {
       </div>
 
       {/* Payment Preview Modal */}
-      {
-        showPreviewModal && selectedPayment && (
-          <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50" onClick={closePreviewModal}>
-            <div className="flex min-h-full items-center justify-center p-4">
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full relative" onClick={(e) => e.stopPropagation()}>
-                <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 z-10 p-4 sm:p-6 pb-3 sm:pb-4 rounded-t-xl">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
-                      <FaEye className="text-blue-600" />
-                      Payment Details
-                    </h3>
-                    <button
-                      onClick={closePreviewModal}
-                      className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors bg-gray-100 dark:bg-gray-700 rounded-full p-2"
-                    >
-                      <FaTimes className="text-xl" />
-                    </button>
+      {showPreviewModal && selectedPayment && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50" onClick={closePreviewModal}>
+          <div className="flex min-h-full items-center justify-center p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full relative" onClick={(e) => e.stopPropagation()}>
+              <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 z-10 p-4 sm:p-6 pb-3 sm:pb-4 rounded-t-xl">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                    <FaEye className="text-blue-600" />
+                    Payment Details
+                  </h3>
+                  <button
+                    onClick={closePreviewModal}
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors bg-gray-100 dark:bg-gray-700 rounded-full p-2"
+                  >
+                    <FaTimes className="text-xl" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-4 sm:p-6 space-y-6">
+                {/* Payment Overview */}
+                <div className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg p-4 sm:p-6 border border-blue-200 dark:border-blue-900">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white break-words">{selectedPayment.appointmentId?.propertyName || 'Property Payment'}</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Buyer: {selectedPayment.userId?.username || 'N/A'}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 break-all">Payment ID: <span className="font-mono text-xs">{selectedPayment.paymentId}</span></p>
+                    </div>
+                    <div className="text-left sm:text-right flex-shrink-0">
+                      <div className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100 break-words">
+                        {selectedPayment.currency === 'INR' ? '₹' : '$'}{Number(selectedPayment.amount).toFixed(2)}
+                      </div>
+                      <div className="mt-2">{statusBadge(selectedPayment.status)}</div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="p-4 sm:p-6 space-y-6">
-                  {/* Payment Overview */}
-                  <div className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg p-4 sm:p-6 border border-blue-200 dark:border-blue-900">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-                      <div className="flex-1 min-w-0">
-                        <h4 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white break-words">{selectedPayment.appointmentId?.propertyName || 'Property Payment'}</h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Buyer: {selectedPayment.userId?.username || 'N/A'}</p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 break-all">Payment ID: <span className="font-mono text-xs">{selectedPayment.paymentId}</span></p>
-                      </div>
-                      <div className="text-left sm:text-right flex-shrink-0">
-                        <div className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100 break-words">
-                          {selectedPayment.currency === 'INR' ? '₹' : '$'}{Number(selectedPayment.amount).toFixed(2)}
-                        </div>
-                        <div className="mt-2">{statusBadge(selectedPayment.status)}</div>
-                      </div>
+                {/* Payment Information Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                    <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Payment Type</div>
+                    <div className="font-semibold text-gray-800 dark:text-white">
+                      {selectedPayment.paymentType ? (
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${selectedPayment.paymentType === 'monthly_rent' ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300' :
+                          selectedPayment.paymentType === 'advance' ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300' :
+                            selectedPayment.paymentType === 'security_deposit' ? 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300' :
+                              'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                          }`}>
+                          {selectedPayment.paymentType === 'monthly_rent' ? 'Monthly Rent' :
+                            selectedPayment.paymentType === 'advance' ? 'Advance Payment' :
+                              selectedPayment.paymentType === 'security_deposit' ? 'Security Deposit' :
+                                selectedPayment.paymentType?.replace('_', ' ')}
+                        </span>
+                      ) : 'N/A'}
                     </div>
                   </div>
-
-                  {/* Payment Information Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                    <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Gateway</div>
+                    <div className="font-semibold text-gray-800 dark:text-white">{selectedPayment.gateway?.toUpperCase() || 'N/A'}</div>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                    <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Currency</div>
+                    <div className="font-semibold text-gray-800 dark:text-white">{selectedPayment.currency || 'N/A'}</div>
+                  </div>
+                  {selectedPayment.paymentType === 'monthly_rent' && selectedPayment.rentMonth && selectedPayment.rentYear && (
+                    <div className="bg-indigo-50 dark:bg-indigo-900/30 rounded-lg p-4">
+                      <div className="text-sm text-indigo-600 dark:text-indigo-300 mb-1">Rent Period</div>
+                      <div className="font-semibold text-indigo-800 dark:text-indigo-200">
+                        {new Date(selectedPayment.rentYear, selectedPayment.rentMonth - 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}
+                      </div>
+                    </div>
+                  )}
+                  {selectedPayment.escrowStatus && (
+                    <div className={`rounded-lg p-4 ${selectedPayment.escrowStatus === 'released' ? 'bg-green-50 dark:bg-green-900/30' :
+                      selectedPayment.escrowStatus === 'held' ? 'bg-orange-50 dark:bg-orange-900/30' :
+                        'bg-gray-50 dark:bg-gray-700/50'
+                      }`}>
+                      <div className={`text-sm mb-1 ${selectedPayment.escrowStatus === 'released' ? 'text-green-600 dark:text-green-400' :
+                        selectedPayment.escrowStatus === 'held' ? 'text-orange-600 dark:text-orange-400' :
+                          'text-gray-600 dark:text-gray-400'
+                        }`}>Escrow Status</div>
+                      <div className={`font-semibold ${selectedPayment.escrowStatus === 'released' ? 'text-green-800 dark:text-green-200' :
+                        selectedPayment.escrowStatus === 'held' ? 'text-orange-800 dark:text-orange-200' :
+                          'text-gray-800 dark:text-gray-200'
+                        }`}>{selectedPayment.escrowStatus.charAt(0).toUpperCase() + selectedPayment.escrowStatus.slice(1)}</div>
+                      {selectedPayment.escrowReleasedAt && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          Released: {new Date(selectedPayment.escrowReleasedAt).toLocaleDateString('en-GB')}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {selectedPayment.completedAt && (
                     <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
-                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Payment Type</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Paid Date</div>
                       <div className="font-semibold text-gray-800 dark:text-white">
-                        {selectedPayment.paymentType ? (
-                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${selectedPayment.paymentType === 'monthly_rent' ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300' :
-                            selectedPayment.paymentType === 'advance' ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300' :
-                              selectedPayment.paymentType === 'security_deposit' ? 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300' :
-                                'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                            }`}>
-                            {selectedPayment.paymentType === 'monthly_rent' ? 'Monthly Rent' :
-                              selectedPayment.paymentType === 'advance' ? 'Advance Payment' :
-                                selectedPayment.paymentType === 'security_deposit' ? 'Security Deposit' :
-                                  selectedPayment.paymentType?.replace('_', ' ')}
-                          </span>
-                        ) : 'N/A'}
-                      </div>
-                    </div>
-                    <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
-                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Gateway</div>
-                      <div className="font-semibold text-gray-800 dark:text-white">{selectedPayment.gateway?.toUpperCase() || 'N/A'}</div>
-                    </div>
-                    <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
-                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Currency</div>
-                      <div className="font-semibold text-gray-800 dark:text-white">{selectedPayment.currency || 'N/A'}</div>
-                    </div>
-                    {selectedPayment.paymentType === 'monthly_rent' && selectedPayment.rentMonth && selectedPayment.rentYear && (
-                      <div className="bg-indigo-50 dark:bg-indigo-900/30 rounded-lg p-4">
-                        <div className="text-sm text-indigo-600 dark:text-indigo-300 mb-1">Rent Period</div>
-                        <div className="font-semibold text-indigo-800 dark:text-indigo-200">
-                          {new Date(selectedPayment.rentYear, selectedPayment.rentMonth - 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}
-                        </div>
-                      </div>
-                    )}
-                    {selectedPayment.escrowStatus && (
-                      <div className={`rounded-lg p-4 ${selectedPayment.escrowStatus === 'released' ? 'bg-green-50 dark:bg-green-900/30' :
-                        selectedPayment.escrowStatus === 'held' ? 'bg-orange-50 dark:bg-orange-900/30' :
-                          'bg-gray-50 dark:bg-gray-700/50'
-                        }`}>
-                        <div className={`text-sm mb-1 ${selectedPayment.escrowStatus === 'released' ? 'text-green-600 dark:text-green-400' :
-                          selectedPayment.escrowStatus === 'held' ? 'text-orange-600 dark:text-orange-400' :
-                            'text-gray-600 dark:text-gray-400'
-                          }`}>Escrow Status</div>
-                        <div className={`font-semibold ${selectedPayment.escrowStatus === 'released' ? 'text-green-800 dark:text-green-200' :
-                          selectedPayment.escrowStatus === 'held' ? 'text-orange-800 dark:text-orange-200' :
-                            'text-gray-800 dark:text-gray-200'
-                          }`}>{selectedPayment.escrowStatus.charAt(0).toUpperCase() + selectedPayment.escrowStatus.slice(1)}</div>
-                        {selectedPayment.escrowReleasedAt && (
-                          <div className="text-xs text-gray-500 mt-1">
-                            Released: {new Date(selectedPayment.escrowReleasedAt).toLocaleDateString('en-GB')}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    {selectedPayment.completedAt && (
-                      <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
-                        <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Paid Date</div>
-                        <div className="font-semibold text-gray-800 dark:text-white">
-                          {new Date(selectedPayment.completedAt).toLocaleDateString('en-GB', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                          })}
-                        </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                          {new Date(selectedPayment.completedAt).toLocaleTimeString('en-GB')}
-                        </div>
-                      </div>
-                    )}
-                    <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
-                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Created Date</div>
-                      <div className="font-semibold text-gray-800 dark:text-white">
-                        {new Date(selectedPayment.createdAt).toLocaleDateString('en-GB', {
+                        {new Date(selectedPayment.completedAt).toLocaleDateString('en-GB', {
                           year: 'numeric',
                           month: 'long',
                           day: 'numeric'
                         })}
                       </div>
                       <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                        {new Date(selectedPayment.createdAt).toLocaleTimeString('en-GB')}
+                        {new Date(selectedPayment.completedAt).toLocaleTimeString('en-GB')}
                       </div>
                     </div>
-                    {selectedPayment.refundedAt && (
-                      <div className="bg-red-50 dark:bg-red-900/30 rounded-lg p-4">
-                        <div className="text-sm text-red-600 dark:text-red-400 mb-1">Refunded Date</div>
-                        <div className="font-semibold text-red-800 dark:text-red-200">
-                          {new Date(selectedPayment.refundedAt).toLocaleDateString('en-GB', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                          })}
-                        </div>
-                        <div className="text-xs text-red-500 dark:text-red-400/70 mt-1">
-                          {new Date(selectedPayment.refundedAt).toLocaleTimeString('en-GB')}
-                        </div>
-                      </div>
-                    )}
-                    {selectedPayment.refundAmount > 0 && (
-                      <div className="bg-red-50 dark:bg-red-900/30 rounded-lg p-4">
-                        <div className="text-sm text-red-600 dark:text-red-400 mb-1">Refund Amount</div>
-                        <div className="font-semibold text-red-800 dark:text-red-200">
-                          {selectedPayment.currency === 'INR' ? '₹' : '$'}{Number(selectedPayment.refundAmount).toFixed(2)}
-                        </div>
-                      </div>
-                    )}
+                  )}
+                  <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                    <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Created Date</div>
+                    <div className="font-semibold text-gray-800 dark:text-white">
+                      {new Date(selectedPayment.createdAt).toLocaleDateString('en-GB', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                      {new Date(selectedPayment.createdAt).toLocaleTimeString('en-GB')}
+                    </div>
                   </div>
+                  {selectedPayment.refundedAt && (
+                    <div className="bg-red-50 dark:bg-red-900/30 rounded-lg p-4">
+                      <div className="text-sm text-red-600 dark:text-red-400 mb-1">Refunded Date</div>
+                      <div className="font-semibold text-red-800 dark:text-red-200">
+                        {new Date(selectedPayment.refundedAt).toLocaleDateString('en-GB', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </div>
+                      <div className="text-xs text-red-500 dark:text-red-400/70 mt-1">
+                        {new Date(selectedPayment.refundedAt).toLocaleTimeString('en-GB')}
+                      </div>
+                    </div>
+                  )}
+                  {selectedPayment.refundAmount > 0 && (
+                    <div className="bg-red-50 dark:bg-red-900/30 rounded-lg p-4">
+                      <div className="text-sm text-red-600 dark:text-red-400 mb-1">Refund Amount</div>
+                      <div className="font-semibold text-red-800 dark:text-red-200">
+                        {selectedPayment.currency === 'INR' ? '₹' : '$'}{Number(selectedPayment.refundAmount).toFixed(2)}
+                      </div>
+                    </div>
+                  )}
+                </div>
 
-                  {/* Actions */}
-                  <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-                    {selectedPayment.receiptUrl && (
-                      <button
-                        onClick={() => {
-                          downloadReceipt(selectedPayment.receiptUrl);
-                          closePreviewModal();
-                        }}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-                      >
-                        <FaDownload /> Download Receipt
-                      </button>
-                    )}
+                {/* Actions */}
+                <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                  {selectedPayment.receiptUrl && (
                     <button
                       onClick={() => {
-                        sharePayment(selectedPayment);
+                        downloadReceipt(selectedPayment.receiptUrl);
                         closePreviewModal();
                       }}
-                      className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2"
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
                     >
-                      <FaShare /> Share Payment
+                      <FaDownload /> Download Receipt
                     </button>
-                    <button
-                      onClick={() => {
-                        copyPaymentLink(
-                          window.location.origin + `/admin/payments?paymentId=${selectedPayment.paymentId}`,
-                          `Payment Details:\nProperty: ${selectedPayment.appointmentId?.propertyName || 'N/A'}\nBuyer: ${selectedPayment.userId?.username || 'N/A'}\nAmount: ${selectedPayment.currency === 'INR' ? '₹' : '$'}${Number(selectedPayment.amount).toFixed(2)}\nStatus: ${selectedPayment.status}\nPayment ID: ${selectedPayment.paymentId}`
-                        );
-                      }}
-                      className={`px-4 py-2 text-white rounded-lg transition-all duration-300 flex items-center gap-2 ${copySuccess ? 'bg-green-600' : 'bg-gray-600 hover:bg-gray-700'}`}
-                    >
-                      {copySuccess ? <FaCheck /> : <FaCopy />} {copySuccess ? 'Copied' : 'Copy Details'}
-                    </button>
-                  </div>
+                  )}
+                  <button
+                    onClick={() => {
+                      sharePayment(selectedPayment);
+                      closePreviewModal();
+                    }}
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2"
+                  >
+                    <FaShare /> Share Payment
+                  </button>
+                  <button
+                    onClick={() => {
+                      copyPaymentLink(
+                        window.location.origin + `/admin/payments?paymentId=${selectedPayment.paymentId}`,
+                        `Payment Details:\nProperty: ${selectedPayment.appointmentId?.propertyName || 'N/A'}\nBuyer: ${selectedPayment.userId?.username || 'N/A'}\nAmount: ${selectedPayment.currency === 'INR' ? '₹' : '$'}{Number(selectedPayment.amount).toFixed(2)}\nStatus: ${selectedPayment.status}\nPayment ID: ${selectedPayment.paymentId}`
+                      );
+                    }}
+                    className={`px-4 py-2 text-white rounded-lg transition-all duration-300 flex items-center gap-2 ${copySuccess ? 'bg-green-600' : 'bg-gray-600 hover:bg-gray-700'}`}
+                  >
+                    {copySuccess ? <FaCheck /> : <FaCopy />} {copySuccess ? 'Copied' : 'Copy Details'}
+                  </button>
                 </div>
               </div>
             </div>
           </div>
-        )
-      }
+        </div>
+      )}
 
-      {/* Export Password Modal */}
-      {
-        showExportPasswordModal && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+      {showExportPasswordModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6 sm:p-8 border border-gray-200 dark:border-gray-700 animate-in fade-in zoom-in duration-300">
+            <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Confirm Export</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6 font-medium">Please enter your administrator password to download the full payment report.</p>
             <form
-              className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-xs flex flex-col gap-4"
-              onSubmit={async (e) => {
+              onSubmit={(e) => {
                 e.preventDefault();
-                setExportPasswordLoading(true);
-                setExportPasswordError("");
-                try {
-                  const { data } = await axios.post(`${API_BASE_URL}/api/auth/verify-password`,
-                    { password: exportPassword },
-                    {
-                      withCredentials: true,
-                      headers: { "Content-Type": "application/json" }
-                    }
-                  );
-                  if (data.success) {
-                    // Reset attempts on successful password
-                    localStorage.removeItem('adminPaymentExportPwAttempts');
-                    setShowExportPasswordModal(false);
-                    setExportPassword("");
-                    setExportPasswordError("");
-
-                    // Download export file
-                    try {
-                      const res = await authenticatedFetch(`${API_BASE_URL}/api/payments/admin/export`);
-                      if (!res.ok) {
-                        toast.error('Failed to export payments');
-                        return;
-                      }
-                      const blob = await res.blob();
-                      const url = window.URL.createObjectURL(blob);
-                      const a = document.createElement('a');
-                      a.href = url;
-                      a.download = 'payments_export.csv';
-                      document.body.appendChild(a);
-                      a.click();
-                      a.remove();
-                      window.URL.revokeObjectURL(url);
-                      toast.success('Payments exported successfully');
-                    } catch (exportError) {
-                      toast.error('Failed to export payments');
-                    }
-                  }
-                } catch (err) {
-                  // Track wrong attempts locally (allow up to 3 attempts before logout)
-                  const key = 'adminPaymentExportPwAttempts';
-                  const prev = parseInt(localStorage.getItem(key) || '0');
-                  const next = prev + 1;
-                  localStorage.setItem(key, String(next));
-
-                  if (next >= 3) {
-                    // Sign out and redirect on third wrong attempt
-                    localStorage.removeItem(key);
-                    setShowExportPasswordModal(false);
-                    setExportPassword("");
-                    setExportPasswordError("");
-                    toast.error("Too many incorrect attempts. You've been signed out for security.");
-                    dispatch(signoutUserStart());
-                    try {
-                      const signoutRes = await authenticatedFetch(`${API_BASE_URL}/api/auth/signout`);
-                      const signoutData = await signoutRes.json();
-                      if (signoutData.success === false) {
-                        dispatch(signoutUserFailure(signoutData.message));
-                      } else {
-                        dispatch(signoutUserSuccess(signoutData));
-                      }
-                    } catch (signoutErr) {
-                      dispatch(signoutUserFailure(signoutErr.message));
-                    }
-                    setTimeout(() => {
-                      navigate('/sign-in');
-                    }, 800);
-                    setExportPasswordLoading(false);
-                    return;
-                  } else {
-                    // Keep modal open and show remaining attempts
-                    const remaining = 3 - next;
-                    setExportPasswordError(`Incorrect password. ${remaining} attempt${remaining === 1 ? '' : 's'} left before logout.`);
-                  }
-                } finally {
-                  setExportPasswordLoading(false);
-                }
+                handleExportConfirm();
               }}
+              className="space-y-4"
             >
-              <h3 className="text-lg font-bold text-blue-700 dark:text-blue-400 flex items-center gap-2"><FaLock /> Confirm Password</h3>
-              <input
-                type="password"
-                className="border dark:border-gray-700 rounded p-2 w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                placeholder="Enter your password"
-                value={exportPassword}
-                onChange={e => setExportPassword(e.target.value)}
-                autoFocus
-                required
-              />
-              {exportPasswordError && <div className="text-red-600 dark:text-red-400 text-sm font-medium">{exportPasswordError}</div>}
-              <div className="flex gap-2 justify-end">
+              <div>
+                <label className="block text-sm font-black text-gray-700 dark:text-gray-300 uppercase tracking-widest mb-2">Password</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                    <FaLock />
+                  </div>
+                  <input
+                    type="password"
+                    value={exportPassword}
+                    onChange={(e) => setExportPassword(e.target.value)}
+                    placeholder="Enter admin password"
+                    className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white font-bold"
+                    required
+                    autoFocus
+                  />
+                </div>
+                {exportPasswordError && (
+                  <p className="mt-2 text-sm text-red-600 font-bold flex items-center gap-2">
+                    <FaExclamationTriangle /> {exportPasswordError}
+                  </p>
+                )}
+              </div>
+              <div className="flex gap-4 pt-2">
                 <button
                   type="button"
-                  className="px-4 py-2 rounded bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 font-semibold hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
+                  className="flex-1 py-3 text-gray-600 dark:text-gray-400 font-bold hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all"
                   onClick={() => {
                     setShowExportPasswordModal(false);
                     setExportPassword("");
@@ -1187,16 +1171,17 @@ const PaymentDashboard = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded bg-blue-700 text-white font-semibold"
+                  className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition-all active:scale-95"
                   disabled={exportPasswordLoading}
                 >
-                  {exportPasswordLoading ? 'Verifying...' : 'Confirm'}
+                  {exportPasswordLoading ? 'Verifying...' : 'Download CSV'}
                 </button>
               </div>
             </form>
           </div>
-        )
-      }
+        </div>
+      )}
+
       <SocialSharePanel
         isOpen={showSharePanel}
         onClose={() => setShowSharePanel(false)}
@@ -1228,7 +1213,7 @@ const PaymentDashboard = () => {
           </div>
         </div>
       )}
-    </div >
+    </div>
   );
 };
 
