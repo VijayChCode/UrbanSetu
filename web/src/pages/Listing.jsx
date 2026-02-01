@@ -3131,8 +3131,8 @@ export default function Listing() {
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Last Updated</p>
-                  <p className="font-semibold text-gray-800">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Last Updated</p>
+                  <p className="font-semibold text-gray-800 dark:text-gray-200">
                     {new Date(listing.updatedAt).toLocaleDateString('en-GB')}
                   </p>
                 </div>
