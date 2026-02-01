@@ -1416,7 +1416,8 @@ export const rootUnpublishListing = async (req, res, next) => {
       try {
         await sendListingUnpublishedEmail(owner.email, {
           propertyName: listing.name,
-          reason: reason
+          reason: reason,
+          propertyId: listing._id
         });
       } catch (emailErr) {
         console.error("Failed to send unpublish email:", emailErr);

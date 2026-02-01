@@ -834,6 +834,11 @@ export const sendListingUnpublishedEmail = async (email, details) => {
             <p style="color: #6b7280; margin: 0 0 15px 0; line-height: 1.6;">
               <strong>Action Required:</strong> You may need to review and update your listing to comply with our guidelines before requesting verification again.
             </p>
+            
+            <div style="text-align: center; margin-top: 25px; margin-bottom: 15px;">
+              <a href="${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}/listing/${details.propertyId}" style="display: inline-block; background-color: #dc2626; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-right: 10px; margin-bottom: 10px;">View Property</a>
+              <a href="${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}/contact" style="display: inline-block; background-color: #ffffff; color: #4b5563; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; border: 1px solid #d1d5db; margin-bottom: 10px;">Contact Support</a>
+            </div>
           </div>
           
           <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
