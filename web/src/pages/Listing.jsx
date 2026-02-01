@@ -848,8 +848,17 @@ export default function Listing() {
       if (res.ok) {
         const responseData = await res.json();
         if (responseData.success && responseData.data.length > 0) {
-          // Filter out current listing and limit to 3
-          setSimilarProperties(responseData.data.filter(prop => prop._id !== listing._id).slice(0, 3));
+          // Filter out current listing and strictly match city
+          const filteredProps = responseData.data.filter(prop =>
+            prop._id !== listing._id &&
+            prop.city?.toLowerCase() === listing.city?.toLowerCase()
+          );
+
+          if (filteredProps.length > 0) {
+            setSimilarProperties(filteredProps.slice(0, 3));
+          } else {
+            throw new Error("No AI results found in the same city");
+          }
         } else {
           throw new Error("No AI results found");
         }
