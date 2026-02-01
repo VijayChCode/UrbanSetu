@@ -48,6 +48,7 @@ export default function Search() {
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [isFiltersOpen, setIsFiltersOpen] = useState(false); // Mobile filter toggle
     const [useAI, setUseAI] = useState(false); // AI Search Toggle
+    const [aiPrompt, setAiPrompt] = useState(""); // AI Search Input State
 
     useEffect(() => {
         const urlParams = new URLSearchParams(location.search);
@@ -75,6 +76,9 @@ export default function Search() {
         // Initialize AI mode from URL
         const isAiMode = urlParams.get("mode") === "ai";
         setUseAI(isAiMode);
+        if (isAiMode) {
+            setAiPrompt(urlParams.get("searchTerm") || "");
+        }
 
         const fetchListings = async () => {
             setLoading(true);
@@ -166,7 +170,11 @@ export default function Search() {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        const urlParams = new URLSearchParams(formData);
+        const dataToSubmit = { ...formData };
+        if (useAI) {
+            dataToSubmit.searchTerm = aiPrompt;
+        }
+        const urlParams = new URLSearchParams(dataToSubmit);
         navigate(`?${urlParams.toString()}`);
     };
 
@@ -794,7 +802,7 @@ export default function Search() {
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col font-sans text-slate-800 dark:text-gray-200 transition-colors duration-300">
             {/* Search Header / Hero */}
-            <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900 pb-20 pt-10 px-4 shadow-lg mb-8 relative overflow-hidden transition-colors duration-300">
+            <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900 pb-20 pt-10 px-4 shadow-lg mb-8 relative transition-colors duration-300">
                 {/* Abstract shapes for visual interest */}
                 <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-10 pointer-events-none">
                     <div className="absolute top-[-50%] left-[-10%] w-[500px] h-[500px] rounded-full bg-white mix-blend-overlay filter blur-3xl animate-float"></div>
@@ -845,9 +853,9 @@ export default function Search() {
                                 type="text"
                                 placeholder={useAI ? "Describe your dream home... (e.g., 'Modern villa near a park with morning sunlight')" : "Enter an address, neighborhood, city, or ZIP code"}
                                 className="w-full bg-transparent border-none focus:ring-0 text-gray-700 dark:text-gray-200 placeholder-gray-400 text-sm sm:text-lg h-12 sm:h-14 font-medium"
-                                value={useAI ? formData.searchTerm : smartQuery}
-                                onChange={useAI ? handleChanges : (e) => setSmartQuery(e.target.value)}
-                                name={useAI ? "searchTerm" : "smartQuery"}
+                                value={useAI ? aiPrompt : smartQuery}
+                                onChange={useAI ? (e) => setAiPrompt(e.target.value) : (e) => setSmartQuery(e.target.value)}
+                                name={useAI ? "aiPrompt" : "smartQuery"}
                                 autoComplete="off"
                                 onFocus={handleSearchInputFocus}
                                 onBlur={handleSearchInputBlur}
@@ -858,10 +866,10 @@ export default function Search() {
                             </button>
 
                             <SearchSuggestions
-                                searchTerm={useAI ? formData.searchTerm : smartQuery}
+                                searchTerm={useAI ? aiPrompt : smartQuery}
                                 onSuggestionClick={(s) => {
                                     if (useAI) {
-                                        setFormData(p => ({ ...p, searchTerm: s.displayText }));
+                                        setAiPrompt(s.displayText);
                                     } else {
                                         setSmartQuery(s.displayText);
                                     }
