@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FaCog, FaToggleOn, FaToggleOff, FaCreditCard, FaCalendarAlt, FaCheckCircle, FaExclamationTriangle, FaTimes, FaSave, FaUniversity, FaMobileAlt, FaTrash, FaShieldAlt, FaLock } from "react-icons/fa";
+import { FaCog, FaToggleOn, FaToggleOff, FaCreditCard, FaCalendarAlt, FaCheckCircle, FaExclamationTriangle, FaTimes, FaSave, FaUniversity, FaMobileAlt, FaTrash, FaShieldAlt, FaLock, FaTrashAlt, FaExclamationCircle, FaStopCircle } from "react-icons/fa";
 import { toast } from 'react-toastify';
 import { authenticatedFetch } from '../../utils/auth';
 
@@ -23,6 +23,9 @@ export default function AutoDebitSettings({ wallet, contract, onUpdate }) {
     cvv: '',
     vpa: ''
   });
+  const [showRemovalConfirm, setShowRemovalConfirm] = useState(false);
+  const [showScheduleConfirm, setShowScheduleConfirm] = useState(false);
+  const [showDisableConfirm, setShowDisableConfirm] = useState(false);
 
   const handleToggle = async () => {
     if (!settings.enabled && !settings.paymentMethodToken) {
@@ -33,6 +36,13 @@ export default function AutoDebitSettings({ wallet, contract, onUpdate }) {
     try {
       setLoading(true);
       const newEnabled = !settings.enabled;
+
+      // If user is disabling and has active details, show confirmation instead
+      if (settings.enabled && settings.paymentMethodToken) {
+        setLoading(false);
+        setShowDisableConfirm(true);
+        return;
+      }
 
       const res = await authenticatedFetch(`${API_BASE_URL}/api/rental/wallet/${contract.contractId}/auto-debit`, {
         method: 'PUT',
@@ -142,10 +152,12 @@ export default function AutoDebitSettings({ wallet, contract, onUpdate }) {
     }
   };
 
+  const handleRemoveClick = () => {
+    setShowRemovalConfirm(true);
+  };
+
   const removePaymentMethod = async () => {
-    if (!window.confirm("Are you sure you want to remove this payment method? Auto-debit will be disabled.")) {
-      return;
-    }
+    setShowRemovalConfirm(false);
 
     try {
       setLoading(true);
@@ -182,12 +194,52 @@ export default function AutoDebitSettings({ wallet, contract, onUpdate }) {
     }
   };
 
-  const handleUpdateSettings = async () => {
+  const confirmDisable = async () => {
+    setShowDisableConfirm(false);
+    try {
+      setLoading(true);
+      const res = await authenticatedFetch(`${API_BASE_URL}/api/rental/wallet/${contract.contractId}/auto-debit`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          enabled: false,
+          paymentMethodToken: '' // Clear token as per user requirement when disabling
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to disable auto-debit");
+      }
+
+      setSettings(prev => ({
+        ...prev,
+        enabled: false,
+        paymentMethodToken: ''
+      }));
+
+      if (onUpdate && data.wallet) {
+        onUpdate(data.wallet);
+      }
+
+      toast.success("Auto-debit disabled and payment details removed.");
+    } catch (error) {
+      toast.error(error.message || "Failed to disable auto-debit.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateSettings = () => {
     if (settings.day < 1 || settings.day > 31) {
       toast.error("Auto-debit day must be between 1 and 31.");
       return;
     }
+    setShowScheduleConfirm(true);
+  };
 
+  const confirmUpdateSettings = async () => {
+    setShowScheduleConfirm(false);
     try {
       setLoading(true);
       const res = await authenticatedFetch(`${API_BASE_URL}/api/rental/wallet/${contract.contractId}/auto-debit`, {
@@ -210,7 +262,7 @@ export default function AutoDebitSettings({ wallet, contract, onUpdate }) {
         onUpdate(data.wallet);
       }
 
-      toast.success("Auto-debit settings updated successfully.");
+      toast.success(`Schedule updated to day ${settings.day} of the month!`);
     } catch (error) {
       toast.error(error.message || "Failed to update settings.");
     } finally {
@@ -229,14 +281,14 @@ export default function AutoDebitSettings({ wallet, contract, onUpdate }) {
       </div>
 
       <div className="p-6 space-y-8">
-        {/* Info Banner */}
-        <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800/50 rounded-xl p-4 flex gap-4">
-          <div className="bg-blue-100 dark:bg-blue-800/30 p-3 rounded-lg flex-shrink-0">
-            <FaExclamationTriangle className="text-blue-600 dark:text-blue-400" />
+        {/* Info Banner - Fixed colors to match warning icon */}
+        <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/50 rounded-xl p-4 flex gap-4">
+          <div className="bg-amber-100 dark:bg-amber-800/30 p-3 rounded-lg flex-shrink-0 text-amber-600 dark:text-amber-400">
+            <FaExclamationTriangle className="text-xl" />
           </div>
           <div className="text-sm">
-            <p className="font-bold text-blue-900 dark:text-blue-200 mb-1">Set & Forget • Secure Payments</p>
-            <p className="text-blue-700 dark:text-blue-300 leading-relaxed">
+            <p className="font-bold text-amber-900 dark:text-amber-200 mb-1">Set & Forget • Secure Payments</p>
+            <p className="text-amber-800/80 dark:text-amber-300/80 leading-relaxed">
               Enable auto-debit to automatically pay your rent. UrbanSetu <strong>does not store or have access</strong> to your card details. All transactions are handled by PCI-DSS compliant payment partners via secure bank-grade encryption.
             </p>
           </div>
@@ -420,7 +472,7 @@ export default function AutoDebitSettings({ wallet, contract, onUpdate }) {
                   Manage Sources
                 </button>
                 <button
-                  onClick={removePaymentMethod}
+                  onClick={handleRemoveClick}
                   disabled={loading}
                   className="text-xs font-bold text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 py-2 px-4 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/50 transition-all flex items-center gap-1"
                   title="Remove payment method"
@@ -474,6 +526,103 @@ export default function AutoDebitSettings({ wallet, contract, onUpdate }) {
           <FaLock className="text-[8px]" /> 256-Bit SSL Secured
         </p>
       </div>
+
+      {/* Removal Confirmation Modal */}
+      {showRemovalConfirm && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowRemovalConfirm(false)} />
+          <div className="relative bg-white dark:bg-gray-800 rounded-3xl p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-20 h-20 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center text-red-600 dark:text-red-400 text-3xl mb-6">
+                <FaExclamationCircle />
+              </div>
+              <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-2">Remove Account?</h3>
+              <p className="text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">
+                This will disconnect your payment method and <strong>disable auto-debit</strong>. You will need to link a new source to resume automatic payments.
+              </p>
+              <div className="flex w-full gap-4">
+                <button
+                  onClick={() => setShowRemovalConfirm(false)}
+                  className="flex-1 py-4 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-bold rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={removePaymentMethod}
+                  className="flex-1 py-4 bg-red-600 text-white font-bold rounded-2xl hover:bg-red-700 shadow-lg shadow-red-500/20 active:scale-95 transition-all"
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Disable Confirmation Modal */}
+      {showDisableConfirm && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowDisableConfirm(false)} />
+          <div className="relative bg-white dark:bg-gray-800 rounded-3xl p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-20 h-20 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center text-amber-600 dark:text-amber-400 text-3xl mb-6">
+                <FaStopCircle />
+              </div>
+              <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-2">Disable Auto-Debit?</h3>
+              <p className="text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">
+                If you disable this service, your <strong>payment schedule and saved details will be deleted</strong>. You will have to pay manually until you link a new source.
+              </p>
+              <div className="flex w-full gap-4">
+                <button
+                  onClick={() => setShowDisableConfirm(false)}
+                  className="flex-1 py-4 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-bold rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
+                >
+                  Keep Active
+                </button>
+                <button
+                  onClick={confirmDisable}
+                  className="flex-1 py-4 bg-amber-600 text-white font-bold rounded-2xl hover:bg-amber-700 shadow-lg shadow-amber-500/20 active:scale-95 transition-all"
+                >
+                  Disable & Clear
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Schedule Update Confirmation Modal */}
+      {showScheduleConfirm && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowScheduleConfirm(false)} />
+          <div className="relative bg-white dark:bg-gray-800 rounded-3xl p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-400 text-3xl mb-6">
+                <FaCalendarAlt />
+              </div>
+              <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-2">Update Schedule?</h3>
+              <p className="text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">
+                You are changing your auto-debit date to the <strong>{settings.day}{settings.day === 1 ? 'st' : settings.day === 2 ? 'nd' : settings.day === 3 ? 'rd' : 'th'} of every month</strong>.
+                Payments will be processed automatically on this date.
+              </p>
+              <div className="flex w-full gap-4">
+                <button
+                  onClick={() => setShowScheduleConfirm(false)}
+                  className="flex-1 py-4 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-bold rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
+                >
+                  Go Back
+                </button>
+                <button
+                  onClick={confirmUpdateSettings}
+                  className="flex-1 py-4 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 shadow-lg shadow-blue-500/20 active:scale-95 transition-all"
+                >
+                  Confirm
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
