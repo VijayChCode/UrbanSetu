@@ -419,7 +419,7 @@ export default function AutoDebitSettings({ wallet, contract, onUpdate }) {
             <div className="mt-6 flex items-center justify-center gap-3 p-3 bg-gray-50 dark:bg-gray-900/40 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
               <FaShieldAlt className="text-blue-500" />
               <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-tight">
-                <strong>Your Data Security:</strong> UrbanSetu uses tokenization to process payments. We never see, save, or share your full card number or CVV. Your financial privacy is strictly protected.
+                <strong>Your Data Security:</strong> UrbanSetu uses secure tokenization and bank-grade encryption to process payments. We never store, access, or share your full card details or CVV. Your financial information remains completely private and protected.
               </p>
             </div>
 
