@@ -338,29 +338,6 @@ export default function AutoDebitSettings({ wallet, contract, onUpdate }) {
             </div>
 
             <div className="mb-6 space-y-4">
-              <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Select Provider</label>
-              <div className="grid grid-cols-2 gap-4">
-                <button
-                  onClick={() => setNewMethodDetails({ ...newMethodDetails, gateway: 'razorpay' })}
-                  className={`flex flex-col items-center justify-center gap-2 py-4 rounded-2xl border-2 transition-all ${newMethodDetails.gateway === 'razorpay' ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-600 text-blue-600' : 'bg-gray-50 dark:bg-gray-900/50 border-transparent text-gray-400'}`}
-                >
-                  <span className="font-black text-sm">RAZORPAY</span>
-                  <span className="text-[10px] opacity-60">India & Local</span>
-                </button>
-                <button
-                  onClick={() => setNewMethodDetails({ ...newMethodDetails, gateway: 'paypal', type: 'card' })}
-                  className={`flex flex-col items-center justify-center gap-2 py-4 rounded-2xl border-2 transition-all ${newMethodDetails.gateway === 'paypal' ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-600 text-blue-600' : 'bg-gray-50 dark:bg-gray-900/50 border-transparent text-gray-400'}`}
-                >
-                  <div className="flex items-center gap-1">
-                    <FaPaypal />
-                    <span className="font-black text-sm">PAYPAL</span>
-                  </div>
-                  <span className="text-[10px] opacity-60">International</span>
-                </button>
-              </div>
-            </div>
-
-            <div className="mb-6 space-y-4">
               <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Payment Type</label>
               <div className="flex p-1 bg-gray-100 dark:bg-gray-900 rounded-xl">
                 <button
@@ -379,6 +356,31 @@ export default function AutoDebitSettings({ wallet, contract, onUpdate }) {
                 )}
               </div>
             </div>
+
+            {newMethodDetails.type === 'card' && (
+              <div className="mb-6 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Select Provider</label>
+                <div className="grid grid-cols-2 gap-4">
+                  <button
+                    onClick={() => setNewMethodDetails({ ...newMethodDetails, gateway: 'razorpay' })}
+                    className={`flex flex-col items-center justify-center gap-2 py-4 rounded-2xl border-2 transition-all ${newMethodDetails.gateway === 'razorpay' ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-600 text-blue-600' : 'bg-gray-50 dark:bg-gray-900/50 border-transparent text-gray-400'}`}
+                  >
+                    <span className="font-black text-sm">RAZORPAY</span>
+                    <span className="text-[10px] opacity-60">India & Local</span>
+                  </button>
+                  <button
+                    onClick={() => setNewMethodDetails({ ...newMethodDetails, gateway: 'paypal', type: 'card' })}
+                    className={`flex flex-col items-center justify-center gap-2 py-4 rounded-2xl border-2 transition-all ${newMethodDetails.gateway === 'paypal' ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-600 text-blue-600' : 'bg-gray-50 dark:bg-gray-900/50 border-transparent text-gray-400'}`}
+                  >
+                    <div className="flex items-center gap-1">
+                      <FaPaypal />
+                      <span className="font-black text-sm">PAYPAL</span>
+                    </div>
+                    <span className="text-[10px] opacity-60">International</span>
+                  </button>
+                </div>
+              </div>
+            )}
 
             {newMethodDetails.type === 'card' ? (
               <div className="space-y-4">
