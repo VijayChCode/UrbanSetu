@@ -3,7 +3,7 @@ import {
   FaFacebook, FaLinkedin, FaWhatsapp,
   FaTelegram, FaCopy, FaCheck, FaTimes, FaShareAlt,
   FaReddit, FaPinterest, FaTumblr, FaVk, FaOdnoklassniki,
-  FaEnvelope, FaChevronLeft, FaChevronRight, FaEllipsisH, FaComments
+  FaChevronLeft, FaChevronRight, FaEllipsisH, FaComments
 } from 'react-icons/fa';
 import { FaXTwitter } from 'react-icons/fa6';
 import { SiKakaotalk, SiMix, SiGmail } from 'react-icons/si';
@@ -121,13 +121,6 @@ const SocialSharePanel = ({ isOpen, onClose, url, title = "Join UrbanSetu!", des
       color: 'bg-[#000000]',
       hover: 'hover:bg-[#333333]',
       link: `https://x.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(`${title}\n${description}`)}`
-    },
-    {
-      name: 'Email',
-      icon: <FaEnvelope />,
-      color: 'bg-gray-500',
-      hover: 'hover:bg-gray-600',
-      link: `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(`${description}\n\n${url}`)}`
     },
     {
       name: 'Reddit',
