@@ -109,9 +109,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
       // Inject high quality f_auto,q_auto:best if not present
       if (!newUrl.includes('q_auto')) {
         // q_auto:best - Highest bitrate for maximum clarity
-        // vc_h264 - Specific codec for compatibility and quality
-        // br_auto - Optimized bitrate
-        newUrl = newUrl.replace('/upload/', '/upload/f_auto,q_auto:best,vc_h264,br_auto/');
+        newUrl = newUrl.replace('/upload/', '/upload/f_auto,q_auto:best/');
       }
       return newUrl;
     }
@@ -178,7 +176,12 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
 
       try {
         setIsLoading(true);
-        const response = await authenticatedFetch(currentVideoUrl);
+        // USE standard fetch for Cloudinary to avoid CORS 'credentials/wildcard' issues
+        const isCloudinary = currentVideoUrl.includes('cloudinary.com');
+        const response = isCloudinary
+          ? await fetch(currentVideoUrl)
+          : await authenticatedFetch(currentVideoUrl);
+
         if (!response.ok) throw new Error('Network response was not ok');
         const blob = await response.blob();
 
@@ -636,7 +639,10 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
     showFeedback("Downloading...");
 
     try {
-      const response = await authenticatedFetch(url);
+      const isCloudinary = url.includes('cloudinary.com');
+      const response = isCloudinary
+        ? await fetch(url)
+        : await authenticatedFetch(url);
       const blob = await response.blob();
       const blobUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
