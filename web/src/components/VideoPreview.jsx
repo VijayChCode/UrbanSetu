@@ -221,20 +221,22 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
       if (e.target.tagName === 'INPUT') return;
 
       switch (e.key.toLowerCase()) {
-        case ' ':
+        case ' ': // Space - Play/Pause
         case 'k':
           e.preventDefault();
           togglePlay();
           break;
-        case 'm':
+        case 'm': // Mute
+          e.preventDefault();
           setVolume(v => {
             const newV = v === 0 ? 1 : 0;
             showFeedback(newV === 0 ? "Muted" : "Unmuted");
             return newV;
           });
           break;
-        case 'arrowright':
-        case 'l':
+        case 'arrowright': // Forward 5s or Next video
+        case 'l': // +10s
+          e.preventDefault();
           if (scale === 1 && videos.length > 1 && e.ctrlKey) {
             setCurrentIndex(prev => prev < videos.length - 1 ? prev + 1 : 0);
           } else if (videoRef.current) {
@@ -242,8 +244,9 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
             handleSeek(seekTime);
           }
           break;
-        case 'arrowleft':
-        case 'j':
+        case 'arrowleft': // Rewind 5s or Prev video
+        case 'j': // -10s
+          e.preventDefault();
           if (scale === 1 && videos.length > 1 && e.ctrlKey) {
             setCurrentIndex(prev => prev > 0 ? prev - 1 : videos.length - 1);
           } else if (videoRef.current) {
@@ -251,14 +254,16 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
             handleSeek(seekTime);
           }
           break;
-        case 'arrowup':
+        case 'arrowup': // Volume Up or Pan Up
+          e.preventDefault();
           if (scale > 1) {
             setPosition(p => ({ ...p, y: p.y + 20 }));
           } else {
             setVolume(v => Math.min(v + 0.1, 1));
           }
           break;
-        case 'arrowdown':
+        case 'arrowdown': // Volume Down or Pan Down
+          e.preventDefault();
           if (scale > 1) {
             setPosition(p => ({ ...p, y: p.y - 20 }));
           } else {
@@ -267,28 +272,26 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
           break;
         case '+': // Zoom In
         case '=':
+          e.preventDefault();
           handleZoomIn();
           break;
         case '-': // Zoom Out
+          e.preventDefault();
           handleZoomOut();
           break;
         case '0': // Reset
+          e.preventDefault();
           handleReset();
           break;
         case 'f': // Fullscreen
+          e.preventDefault();
           toggleFullscreen();
           break;
         case 'escape':
-          // If in fullscreen, let browser exit (or we force exit) but DO NOT show modal
+          e.preventDefault();
           if (document.fullscreenElement) {
+            document.exitFullscreen().catch(() => { });
             return;
-          }
-          if (videoRef.current) {
-            wasPlayingRef.current = !videoRef.current.paused;
-            if (!videoRef.current.paused) {
-              videoRef.current.pause();
-              setIsPlaying(false);
-            }
           }
           setShowCloseConfirm(true);
           break;
@@ -298,7 +301,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, scale, videos.length]);
+  }, [isOpen, scale, videos.length, isPlaying, isEnded]);
 
   // Volume Effect
   useEffect(() => {
@@ -554,9 +557,16 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
         }
         setIsEnded(false);
         setIsPlaying(true);
+        videoRef.current.play().catch(() => { });
       }
     } else {
-      setIsPlaying(!isPlaying);
+      setIsPlaying(prev => {
+        if (videoRef.current) {
+          if (prev) videoRef.current.pause();
+          else videoRef.current.play().catch(() => { });
+        }
+        return !prev;
+      });
     }
   };
 
