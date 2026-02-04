@@ -776,7 +776,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
     const url = videos[currentIndex];
     const filename = `video-${currentIndex + 1}.mp4`;
 
-    showFeedback("Downloading...");
+    showFeedback("Download started.");
 
     try {
       const isCloudinary = url.includes('cloudinary.com');
