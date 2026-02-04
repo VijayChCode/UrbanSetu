@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useSelector } from 'react-redux';
-import { FaBell, FaTimes, FaCheck, FaTrash, FaEye, FaCalendarAlt, FaEdit, FaEnvelope, FaPaperPlane, FaUsers, FaUser, FaRedo, FaUndo, FaSearch, FaFilter, FaCopy, FaExclamationTriangle } from 'react-icons/fa';
+import { FaBell, FaTimes, FaCheck, FaTrash, FaEye, FaCalendarAlt, FaEdit, FaEnvelope, FaPaperPlane, FaUsers, FaUser, FaRedo, FaUndo, FaSearch, FaFilter, FaCopy, FaExclamationTriangle, FaHome } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { socket } from '../utils/socket.js';
 import { useNavigate } from 'react-router-dom';
@@ -42,6 +42,9 @@ export default function NotificationBell({ mobile = false }) {
   const [allUsersTitle, setAllUsersTitle] = useState('');
   const [allUsersMessage, setAllUsersMessage] = useState('');
   const [copiedId, setCopiedId] = useState(null);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
   const bellRef = useRef(null);
 
   // Scroll lock effect: prevent background scroll when notification dropdown/modal is open
@@ -501,18 +504,48 @@ export default function NotificationBell({ mobile = false }) {
       currentUser.isAdmin;
   };
 
-  // Filter notifications based on search and filter criteria
+  // Notification Categories for filtering
+  const NOTIFICATION_CATEGORIES = useMemo(() => [
+    { id: 'All', icon: FaBell, label: 'All Alerts' },
+    { id: 'Properties', icon: FaHome, label: 'Real Estate', types: ['property_edited', 'property_deleted', 'property_reported', 'watchlist_price_drop', 'watchlist_property_sold', 'watchlist_price_update', 'watchlist_property_removed', 'watchlist_property_trending', 'watchlist_status_update', 'watchlist_update', 'property_assigned', 'property_deassigned'] },
+    { id: 'Community', icon: FaUsers, label: 'Community', types: ['community_report'] },
+    { id: 'Appointments', icon: FaCalendarAlt, label: 'Appointments', types: ['appointment_booked', 'appointment_updated', 'appointment_accepted_by_seller', 'appointment_cancelled_by_seller', 'appointment_cancelled_by_buyer', 'appointment_cancelled_by_admin', 'appointment_accepted_by_seller'] },
+    { id: 'Financial', icon: FaEnvelope, label: 'Payments', types: ['rent_payment_reminder', 'rent_dispute_resolved', 'rent_payment_overdue', 'rent_dispute_raised', 'rent_auto_debit_failed', 'rent_auto_debit_success', 'rent_contract_signed', 'rent_contract_accepted', 'rent_contract_rejected', 'rent_contract_terminated'] },
+    { id: 'System', icon: FaExclamationTriangle, label: 'System', types: ['admin_message', 'client_error_report'] }
+  ], []);
+
+  // Filter notifications based on search, status, date, and category criteria
   const filteredNotifications = useMemo(() => {
     let filtered = [...allNotifications];
 
-    // Filter by read/unread status
+    // 1. Filter by read/unread status
     if (notificationFilter === 'unread') {
       filtered = filtered.filter(n => !n.isRead);
     } else if (notificationFilter === 'read') {
       filtered = filtered.filter(n => n.isRead);
     }
 
-    // Filter by search query
+    // 2. Filter by Category
+    if (selectedCategory !== 'All') {
+      const category = NOTIFICATION_CATEGORIES.find(c => c.id === selectedCategory);
+      if (category && category.types) {
+        filtered = filtered.filter(n => category.types.includes(n.type));
+      }
+    }
+
+    // 3. Filter by Date Range
+    if (startDate) {
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+      filtered = filtered.filter(n => new Date(n.createdAt) >= start);
+    }
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      filtered = filtered.filter(n => new Date(n.createdAt) <= end);
+    }
+
+    // 4. Filter by search query
     if (notificationSearch.trim()) {
       const searchLower = notificationSearch.trim().toLowerCase();
       filtered = filtered.filter(n =>
@@ -523,7 +556,7 @@ export default function NotificationBell({ mobile = false }) {
     }
 
     return filtered;
-  }, [allNotifications, notificationFilter, notificationSearch]);
+  }, [allNotifications, notificationFilter, notificationSearch, selectedCategory, startDate, endDate, NOTIFICATION_CATEGORIES]);
 
   useEffect(() => {
     setNotifications(filteredNotifications);
@@ -723,21 +756,88 @@ export default function NotificationBell({ mobile = false }) {
                             <FaFilter className="w-4 h-4" />
                           </button>
                         </div>
-                        {/* Filter Pill Row */}
+                        {/* Filter Pill Row - Categories and Status */}
                         {showFilters && (
-                          <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
-                            {['all', 'unread', 'read'].map((filter) => (
+                          <div className="space-y-4 animate-fadeIn">
+                            {/* Categories */}
+                            <div className="flex flex-col gap-2">
+                              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Categories</span>
+                              <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+                                {NOTIFICATION_CATEGORIES.map((cat) => (
+                                  <button
+                                    key={cat.id}
+                                    onClick={() => setSelectedCategory(prev => prev === cat.id ? 'All' : cat.id)}
+                                    className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-2 ${selectedCategory === cat.id
+                                      ? 'bg-blue-600 text-white shadow-md'
+                                      : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                      }`}
+                                  >
+                                    <cat.icon className="w-3.5 h-3.5" />
+                                    {cat.label}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Status */}
+                            <div className="flex flex-col gap-2">
+                              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Status</span>
+                              <div className="flex items-center gap-2">
+                                {['all', 'unread', 'read'].map((filter) => (
+                                  <button
+                                    key={filter}
+                                    onClick={() => setNotificationFilter(filter)}
+                                    className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex-1 border ${notificationFilter === filter
+                                      ? 'bg-gray-900 border-gray-900 text-white shadow-md'
+                                      : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-100 dark:border-gray-700 hover:bg-gray-50'
+                                      }`}
+                                  >
+                                    {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Date Range */}
+                            <div className="flex flex-col gap-2">
+                              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Date Range</span>
+                              <div className="grid grid-cols-2 gap-2">
+                                <div className="space-y-1">
+                                  <span className="text-[9px] font-bold text-gray-400 px-1">From</span>
+                                  <input
+                                    type="date"
+                                    value={startDate}
+                                    onChange={(e) => setStartDate(e.target.value)}
+                                    className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl text-xs font-bold text-gray-900 dark:text-white"
+                                  />
+                                </div>
+                                <div className="space-y-1">
+                                  <span className="text-[9px] font-bold text-gray-400 px-1">To</span>
+                                  <input
+                                    type="date"
+                                    value={endDate}
+                                    onChange={(e) => setEndDate(e.target.value)}
+                                    className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl text-xs font-bold text-gray-900 dark:text-white"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Reset Filters */}
+                            {(selectedCategory !== 'All' || notificationFilter !== 'all' || startDate || endDate) && (
                               <button
-                                key={filter}
-                                onClick={() => setNotificationFilter(filter)}
-                                className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${notificationFilter === filter
-                                  ? 'bg-blue-600 text-white shadow-md'
-                                  : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
-                                  }`}
+                                onClick={() => {
+                                  setSelectedCategory('All');
+                                  setNotificationFilter('all');
+                                  setStartDate('');
+                                  setEndDate('');
+                                }}
+                                className="w-full py-2 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-red-100 transition-colors flex items-center justify-center gap-2"
                               >
-                                {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                                <FaUndo className="w-3 h-3" />
+                                Reset Filters
                               </button>
-                            ))}
+                            )}
                           </div>
                         )}
 
@@ -1350,19 +1450,84 @@ export default function NotificationBell({ mobile = false }) {
                       </div>
 
                       {showFilters && (
-                        <div className="px-6 pb-4 flex gap-2">
-                          {['all', 'unread', 'read'].map((f) => (
+                        <div className="px-6 pb-5 space-y-4 animate-fadeIn border-b border-gray-100/50 dark:border-gray-800/50 bg-gray-50/30 dark:bg-gray-800/20">
+                          {/* Categories Grid */}
+                          <div className="space-y-2">
+                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Categories</span>
+                            <div className="grid grid-cols-3 gap-2">
+                              {NOTIFICATION_CATEGORIES.map((cat) => (
+                                <button
+                                  key={cat.id}
+                                  onClick={() => setSelectedCategory(prev => prev === cat.id ? 'All' : cat.id)}
+                                  className={`px-2 py-2 rounded-xl text-[10px] font-bold transition-all flex flex-col items-center justify-center gap-1.5 border ${selectedCategory === cat.id
+                                    ? 'bg-blue-600 border-blue-600 text-white shadow-md'
+                                    : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-100 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-800'
+                                    }`}
+                                >
+                                  <cat.icon className={`w-3.5 h-3.5 ${selectedCategory === cat.id ? 'text-white' : 'text-blue-500'}`} />
+                                  <span className="truncate w-full text-center">{cat.label}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Date Range & Status Row */}
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Status</span>
+                              <div className="flex p-1 bg-gray-100 dark:bg-gray-800 rounded-xl">
+                                {['all', 'unread', 'read'].map((f) => (
+                                  <button
+                                    key={f}
+                                    onClick={() => setNotificationFilter(f)}
+                                    className={`flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${notificationFilter === f
+                                      ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                                      : 'text-gray-400 hover:text-gray-600'
+                                      }`}
+                                  >
+                                    {f}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="space-y-2">
+                              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Date Range</span>
+                              <div className="flex items-center gap-1">
+                                <input
+                                  type="date"
+                                  value={startDate}
+                                  onChange={(e) => setStartDate(e.target.value)}
+                                  className="flex-1 min-w-0 px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-lg text-[10px] font-bold text-gray-900 dark:text-white focus:ring-1 focus:ring-blue-500"
+                                  title="Start Date"
+                                />
+                                <span className="text-gray-300">-</span>
+                                <input
+                                  type="date"
+                                  value={endDate}
+                                  onChange={(e) => setEndDate(e.target.value)}
+                                  className="flex-1 min-w-0 px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-lg text-[10px] font-bold text-gray-900 dark:text-white focus:ring-1 focus:ring-blue-500"
+                                  title="End Date"
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Reset Action */}
+                          {(selectedCategory !== 'All' || notificationFilter !== 'all' || startDate || endDate) && (
                             <button
-                              key={f}
-                              onClick={() => setNotificationFilter(f)}
-                              className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all whitespace-nowrap ${notificationFilter === f
-                                ? 'bg-gray-900 text-white'
-                                : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
-                                }`}
+                              onClick={() => {
+                                setSelectedCategory('All');
+                                setNotificationFilter('all');
+                                setStartDate('');
+                                setEndDate('');
+                              }}
+                              className="w-full py-2 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-red-100 transition-colors flex items-center justify-center gap-2"
                             >
-                              {f}
+                              <FaUndo className="w-3 h-3" />
+                              Reset All Filters
                             </button>
-                          ))}
+                          )}
                         </div>
                       )}
 
