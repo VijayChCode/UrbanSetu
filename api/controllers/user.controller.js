@@ -31,6 +31,7 @@ import Blog from "../models/blog.model.js";
 import Route from "../models/Route.js";
 import CalculationHistory from "../models/calculationHistory.model.js";
 import Subscription from "../models/subscription.model.js";
+import VisitorLog from "../models/visitorLog.model.js";
 
 // EXPORT_CACHE_EXPIRY remains relevant for setting the expiration Date object, 
 // though Mongo TTL handles the actual deletion.
@@ -750,7 +751,40 @@ export const exportData = async (req, res, next) => {
                 { $match: { "comments.user": user._id } },
                 { $project: { _id: 1, title: 1, comment: "$comments" } }
             ]).catch(() => []),
-            referrals: () => User.countDocuments({ "gamification.referredBy": userId }).catch(() => 0)
+            referrals: () => User.countDocuments({ "gamification.referredBy": userId }).catch(() => 0),
+            clientErrors: async () => {
+                if (user.role !== 'admin' && user.role !== 'rootadmin') return [];
+                const errors = await VisitorLog.aggregate([
+                    {
+                        $match: {
+                            'pageViews': {
+                                $elemMatch: {
+                                    'errorLogs.0': { $exists: true }
+                                }
+                            }
+                        }
+                    },
+                    { $unwind: '$pageViews' },
+                    { $unwind: '$pageViews.errorLogs' },
+                    {
+                        $project: {
+                            _id: 0,
+                            message: '$pageViews.errorLogs.message',
+                            source: '$pageViews.errorLogs.source',
+                            stack: '$pageViews.errorLogs.stack',
+                            timestamp: '$pageViews.errorLogs.timestamp',
+                            path: '$pageViews.path',
+                            visitorId: '$_id',
+                            location: 1,
+                            device: 1,
+                            browser: 1,
+                            os: 1
+                        }
+                    },
+                    { $sort: { timestamp: -1 } }
+                ]);
+                return errors;
+            }
         };
 
         // Determine which modules to fetch (default to all if not specified)
@@ -797,6 +831,7 @@ export const exportData = async (req, res, next) => {
         const calculationHistoryItems = results.investments || [];
         const blogCommentsAgg = results.blogComments || [];
         const referralCount = typeof results.referrals === 'number' ? results.referrals : 0;
+        const clientErrors = results.clientErrors || [];
 
         // Phase 2: Dependent data - Reviews Received (depends on Listings)
         let reviewsReceived = [];
@@ -859,6 +894,9 @@ export const exportData = async (req, res, next) => {
         if (modulesToFetch.includes('investments')) userData.statistics.calculationsCount = calculationHistoryItems.length;
         if (modulesToFetch.includes('blogComments')) userData.statistics.blogCommentsCount = blogCommentsAgg.length;
         if (modulesToFetch.includes('calls')) userData.statistics.totalCalls = callHistoryLogs.length;
+        if (modulesToFetch.includes('clientErrors') && (user.role === 'admin' || user.role === 'rootadmin')) {
+            userData.statistics.clientErrorsCount = clientErrors.length;
+        }
 
         // Remove statistics object if it remains empty
         if (Object.keys(userData.statistics).length === 0) {
@@ -1047,6 +1085,13 @@ export const exportData = async (req, res, next) => {
                 result: calc.result,
                 createdAt: calc.createdAt
             }));
+        }
+
+        if (modulesToFetch.includes('clientErrors') && (user.role === 'admin' || user.role === 'rootadmin')) {
+            userData.clientErrorsSummary = {
+                totalErrors: clientErrors.length,
+                errors: clientErrors.slice(0, 1000) // Limit to 1000 for size
+            };
         }
 
         // Add metadata

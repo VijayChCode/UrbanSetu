@@ -50,7 +50,7 @@ const EXPORT_MODULES = [
   { key: 'routes', label: 'Saved Routes', icon: FaMapMarkedAlt, color: 'text-blue-600' },
   { key: 'investments', label: 'Investment Calculations', icon: FaChartLine, color: 'text-emerald-500' },
   { key: 'referrals', label: 'Referrals', icon: FaUsers, color: 'text-yellow-600' },
-  { key: 'clientErrors', label: 'Client Errors', icon: FaExclamationTriangle, color: 'text-red-600' },
+  { key: 'clientErrors', label: 'Client Errors', icon: FaExclamationTriangle, color: 'text-red-600', adminOnly: true },
 ];
 
 
@@ -2081,9 +2081,9 @@ export default function Settings() {
                   <input
                     type="checkbox"
                     className="form-checkbox h-5 w-5 text-green-500 rounded border-gray-300 focus:ring-green-500"
-                    checked={selectedExportModules.length === EXPORT_MODULES.length}
+                    checked={selectedExportModules.length === EXPORT_MODULES.filter(m => !m.adminOnly || (currentUser.role === 'admin' || currentUser.role === 'rootadmin')).length}
                     onChange={(e) => {
-                      if (e.target.checked) setSelectedExportModules(EXPORT_MODULES.map(m => m.key));
+                      if (e.target.checked) setSelectedExportModules(EXPORT_MODULES.filter(m => !m.adminOnly || (currentUser.role === 'admin' || currentUser.role === 'rootadmin')).map(m => m.key));
                       else setSelectedExportModules([]);
                     }}
                   />
@@ -2095,7 +2095,7 @@ export default function Settings() {
 
             <div className="p-6 py-2 overflow-y-auto custom-scrollbar flex-1">
               <div className="space-y-3">
-                {EXPORT_MODULES.map((item) => (
+                {EXPORT_MODULES.filter(item => !item.adminOnly || (currentUser.role === 'admin' || currentUser.role === 'rootadmin')).map((item) => (
                   <label key={item.key} className="flex items-center p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors">
                     <input
                       type="checkbox"
