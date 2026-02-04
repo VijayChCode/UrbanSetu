@@ -11790,6 +11790,9 @@ export const sendRentPaymentOverdueEmail = async (email, overdueDetails) => {
                <p style="color: #9ca3af; margin: 0; font-size: 12px;">
                  Contract ID: ${contractId} • <a href="${walletUrl}" style="color: #6b7280; text-decoration: underline;">View Lease Details</a>
                </p>
+               <p style="color: #9ca3af; margin: 10px 0 0; font-size: 12px;">
+                 © ${new Date().getFullYear()} UrbanSetu. All rights reserved.
+               </p>
             </div>
           </div>
         </div>
