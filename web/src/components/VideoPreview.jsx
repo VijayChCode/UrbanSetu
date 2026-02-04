@@ -32,6 +32,7 @@ import SocialSharePanel from './SocialSharePanel';
 const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
   // Playback States
   const [currentIndex, setCurrentIndex] = useState(initialIndex || 0);
+  const [retryId, setRetryId] = useState(0); // For network recovery/retries
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [loadedProgress, setLoadedProgress] = useState(0);
@@ -178,14 +179,10 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
         if (active) {
           objectUrl = URL.createObjectURL(blob);
           setVideoBlobUrl(objectUrl);
-          // Don't auto-hide loading here, let video events handle it (onCanPlay etc)
-          // But since we have the blob, it should load fast. 
-          // However, <video> still needs to buffer/parse the blob data.
         }
       } catch (err) {
         console.error("Failed to load video blob:", err);
         if (active) {
-          // Fallback to direct URL
           setVideoBlobUrl(currentVideoUrl);
         }
       }
@@ -201,7 +198,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
         URL.revokeObjectURL(objectUrl);
       }
     };
-  }, [currentVideoUrl, isOpen]);
+  }, [currentVideoUrl, isOpen, retryId]);
 
   // Keyboard Shortcuts
   useEffect(() => {
@@ -305,6 +302,41 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
+
+  // Network Recovery Logic
+  useEffect(() => {
+    const handleOnline = () => {
+      if (isOpen) {
+        toast.info("Connection restored. Retrying playback...");
+        setRetryId(prev => prev + 1);
+        if (videoRef.current) {
+          // If it's in a bad state or still loading, force a reload
+          if (videoRef.current.networkState === 3 || videoRef.current.error || isLoading) {
+            const currentTime = videoRef.current.currentTime;
+            videoRef.current.load();
+            videoRef.current.currentTime = currentTime;
+            if (isPlaying) {
+              videoRef.current.play().catch(e => console.warn("Failed to auto-resume:", e));
+            }
+          }
+        }
+      }
+    };
+
+    const handleOffline = () => {
+      if (isOpen) {
+        toast.warning("Connection lost. Video might stall.");
+      }
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [isOpen, isPlaying, isLoading]);
 
   // Feedback Toast Helper
   const showFeedback = (msg) => {
@@ -1202,9 +1234,20 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
         onClick={handleVideoAreaClick}
       >
         {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
-            <div className="bg-black/40 backdrop-blur-sm p-4 rounded-full">
-              <FaSpinner className="text-white animate-spin text-4xl" />
+          <div className="absolute inset-0 flex items-center justify-center z-[60] pointer-events-none">
+            <div className="flex flex-col items-center gap-4">
+              <div className="bg-black/60 backdrop-blur-md p-6 rounded-full shadow-2xl ring-1 ring-white/10">
+                <FaSpinner className="text-blue-500 animate-spin text-5xl" />
+              </div>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setRetryId(id => id + 1);
+                }}
+                className="pointer-events-auto bg-white/10 hover:bg-white/20 backdrop-blur-md px-4 py-2 rounded-xl text-white/90 text-sm font-semibold transition-all border border-white/5 shadow-xl active:scale-95"
+              >
+                Connection slow? Tap to Retry
+              </button>
             </div>
           </div>
         )}
@@ -1230,6 +1273,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
           autoPlay
           onLoadStart={() => setIsLoading(true)}
           onWaiting={() => setIsLoading(true)}
+          onStalled={() => setIsLoading(true)}
           onLoadedData={() => setIsLoading(false)}
           onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
           onDurationChange={(e) => setDuration(e.currentTarget.duration)}
