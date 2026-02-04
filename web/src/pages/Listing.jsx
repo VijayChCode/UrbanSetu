@@ -1977,15 +1977,23 @@ export default function Listing() {
                         })()
                       )}
 
-                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 flex items-center justify-center">
-                        <div className="bg-white bg-opacity-90 rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                          <FaExpand className="text-gray-700" />
-                        </div>
+                      {/* Dynamic action label on hover */}
+                      <div className="absolute bottom-4 right-4 z-30 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none">
+                        <span className="bg-black/70 backdrop-blur-md text-white text-[10px] sm:text-xs px-3 py-1.5 rounded-full font-bold uppercase tracking-wider shadow-lg border border-white/20 flex items-center gap-2">
+                          {item.type === 'image' ? (
+                            <>
+                              <FaExpand size={12} className="text-blue-400" />
+                              Click to view
+                            </>
+                          ) : (
+                            <>
+                              <FaPlay size={12} className="text-red-500" />
+                              Click to play
+                            </>
+                          )}
+                        </span>
                       </div>
-                      {/* Click to expand text */}
-                      <div className="absolute bottom-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                        Click to expand
-                      </div>
+
                       {/* Invisible clickable overlay */}
                       <button
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
