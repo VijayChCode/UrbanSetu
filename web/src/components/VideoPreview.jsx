@@ -1788,10 +1788,10 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
               {/* Preview Thumbnail Overlay */}
               {showPreview && (
                 <div
-                  className="absolute bottom-6 -translate-x-1/2 flex flex-col items-center gap-1 pointer-events-none z-[100] animate-fadeIn"
+                  className="absolute bottom-8 -translate-x-1/2 flex flex-col items-center gap-2 pointer-events-none z-[100] animate-fadeIn"
                   style={{ left: `${previewPos}%` }}
                 >
-                  <div className="w-40 h-24 sm:w-48 sm:h-28 bg-black border-2 border-white/30 rounded-lg overflow-hidden shadow-[0_0_20px_rgba(0,0,0,0.8)] relative">
+                  <div className="w-40 h-24 sm:w-48 sm:h-28 bg-black border-[3px] border-white/40 rounded-xl overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.8)]">
                     <video
                       ref={previewVideoRef}
                       src={videoBlobUrl || ""}
@@ -1801,13 +1801,10 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
                       playsInline
                       onLoadedData={(e) => e.target.currentTime = previewTime}
                     />
-                    <div className="absolute inset-x-0 bottom-0 bg-black/60 py-1 flex justify-center">
-                      <span className="text-white text-xs font-medium font-mono">
-                        {formatTime(previewTime)}
-                      </span>
-                    </div>
                   </div>
-                  <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-white/30" />
+                  <span className="text-white text-sm font-bold font-mono drop-shadow-[0_2px_4px_rgba(0,0,0,1)] tracking-wider">
+                    {formatTime(previewTime)}
+                  </span>
                 </div>
               )}
 
