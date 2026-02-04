@@ -24,7 +24,9 @@ import {
   FaClone,
   FaWindowRestore,
   FaTrashAlt,
-  FaShareAlt
+  FaShareAlt,
+  FaRedo,
+  FaWifi
 } from 'react-icons/fa';
 
 import SocialSharePanel from './SocialSharePanel';
@@ -57,6 +59,8 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
   const [scale, setScale] = useState(1);
   const [rotation, setRotation] = useState(0);
   const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isEnded, setIsEnded] = useState(false);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [isLoading, setIsLoading] = useState(true);
@@ -102,12 +106,12 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
     // Check if it's a Cloudinary URL
     if (url.includes('cloudinary.com') && url.includes('/upload/')) {
       let newUrl = url;
-      // Inject f_auto,q_auto if not present
+      // Inject high quality f_auto,q_auto:best if not present
       if (!newUrl.includes('q_auto')) {
-        // f_auto: Format Auto (WebM for Chrome/FF, MP4 for others)
-        // q_auto: Quality Auto
-        // vc_auto: Video Codec Auto (Often helps with ensuring streamable profile)
-        newUrl = newUrl.replace('/upload/', '/upload/f_auto,q_auto,vc_auto/');
+        // q_auto:best - Highest bitrate for maximum clarity
+        // vc_h264 - Specific codec for compatibility and quality
+        // br_auto - Optimized bitrate
+        newUrl = newUrl.replace('/upload/', '/upload/f_auto,q_auto:best,vc_h264,br_auto/');
       }
       return newUrl;
     }
@@ -138,6 +142,8 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
       setShowControls(true);
       setShowSettings(false);
       setShowCloseConfirm(false);
+      setIsEnded(false);
+      setIsOffline(!navigator.onLine);
     } else {
       document.body.style.overflow = '';
       setIsPlaying(false);
@@ -306,11 +312,11 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
   // Network Recovery Logic
   useEffect(() => {
     const handleOnline = () => {
+      setIsOffline(false);
       if (isOpen) {
         toast.info("Connection restored. Retrying playback...");
         setRetryId(prev => prev + 1);
         if (videoRef.current) {
-          // If it's in a bad state or still loading, force a reload
           if (videoRef.current.networkState === 3 || videoRef.current.error || isLoading) {
             const currentTime = videoRef.current.currentTime;
             videoRef.current.load();
@@ -324,6 +330,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
     };
 
     const handleOffline = () => {
+      setIsOffline(true);
       if (isOpen) {
         toast.warning("Connection lost. Video might stall.");
       }
@@ -518,7 +525,15 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
 
   const togglePlay = (e) => {
     e?.stopPropagation();
-    setIsPlaying(!isPlaying);
+    if (isEnded) {
+      if (videoRef.current) {
+        videoRef.current.currentTime = 0;
+        setIsEnded(false);
+        setIsPlaying(true);
+      }
+    } else {
+      setIsPlaying(!isPlaying);
+    }
   };
 
   const toggleMiniMode = (e) => {
@@ -1233,7 +1248,19 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
         onMouseDown={handleMouseDown}
         onClick={handleVideoAreaClick}
       >
-        {isLoading && (
+        {isOffline ? (
+          <div className="absolute inset-0 flex items-center justify-center z-[60] bg-black/40 backdrop-blur-sm pointer-events-none">
+            <div className="flex flex-col items-center gap-4 animate-fadeIn">
+              <div className="bg-red-500/20 p-6 rounded-full ring-2 ring-red-500/30">
+                <FaWifi className="text-red-500 text-5xl animate-pulse" />
+              </div>
+              <div className="text-center">
+                <h3 className="text-white font-bold text-lg">No Internet Connection</h3>
+                <p className="text-white/60 text-sm">Please check your network</p>
+              </div>
+            </div>
+          </div>
+        ) : isLoading && (
           <div className="absolute inset-0 flex items-center justify-center z-[60] pointer-events-none">
             <div className="flex flex-col items-center gap-4">
               <div className="bg-black/60 backdrop-blur-md p-6 rounded-full shadow-2xl ring-1 ring-white/10">
@@ -1252,11 +1279,15 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
           </div>
         )}
 
-        {/* Big Play Button Overlay - Hide in Mini Mode */}
+        {/* Big Play/Replay Button Overlay - Hide in Mini Mode */}
         {!isPlaying && !isLoading && !isMiniMode && (
           <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
             <div className="bg-black/40 backdrop-blur-sm p-6 rounded-full shadow-lg">
-              <FaPlay className="text-white text-4xl ml-1 opacity-80" />
+              {isEnded ? (
+                <FaRedo className="text-white text-4xl opacity-80" />
+              ) : (
+                <FaPlay className="text-white text-4xl ml-1 opacity-80" />
+              )}
             </div>
           </div>
         )}
@@ -1278,12 +1309,12 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
           onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
           onDurationChange={(e) => setDuration(e.currentTarget.duration)}
           onCanPlay={() => setIsLoading(false)}
-          onPlaying={() => setIsLoading(false)}
+          onPlaying={() => { setIsLoading(false); setIsEnded(false); }}
           onError={handleVideoError}
 
           onTimeUpdate={handleTimeUpdate}
           onProgress={handleProgress}
-          onEnded={() => { setIsPlaying(false); setShowControls(true); }}
+          onEnded={() => { setIsPlaying(false); setIsEnded(true); setShowControls(true); }}
           style={{
             maxWidth: '100%',
             maxHeight: '100%',
@@ -1325,7 +1356,9 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
                     : 'opacity-0 scale-90 pointer-events-none'
                 }`}
             >
-              {isPlaying && !isLoading ? (
+              {isEnded ? (
+                <FaRedo className="text-4xl" />
+              ) : isPlaying && !isLoading ? (
                 <FaPause className="text-4xl" />
               ) : (
                 <FaPlay className="text-4xl pl-2" />
