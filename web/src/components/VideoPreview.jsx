@@ -1325,7 +1325,9 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
           onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
           onDurationChange={(e) => setDuration(e.currentTarget.duration)}
           onCanPlay={() => setIsLoading(false)}
-          onPlaying={() => { setIsLoading(false); setIsEnded(false); }}
+          onPlay={() => setIsPlaying(true)}
+          onPlaying={() => { setIsLoading(false); setIsEnded(false); setIsPlaying(true); }}
+          onPause={() => setIsPlaying(false)}
           onError={handleVideoError}
           onTimeUpdate={handleTimeUpdate}
           onProgress={handleProgress}
