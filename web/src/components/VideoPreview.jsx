@@ -1214,12 +1214,12 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
         hasMovedRef.current = true;
         ignoreClickRef.current = true;
 
-        const deltaY = gestureRef.current.startY - touch.clientY; // Up is positive
-        const sensitivity = 0.005;
+        const deltaY = touch.clientY - gestureRef.current.startY;
+        const sensitivity = 0.01;
         const change = deltaY * sensitivity;
 
         if (gestureRef.current.type === 'volume') {
-          const newVal = Math.min(Math.max(gestureRef.current.startVal + change, 0), 1);
+          const newVal = Math.min(Math.max(gestureRef.current.startVal - change, 0), 1);
           setVolume(newVal);
           showFeedback(
             <div className="flex items-center gap-3">
@@ -1228,7 +1228,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
             </div>
           );
         } else if (gestureRef.current.type === 'brightness') {
-          const newVal = Math.min(Math.max(gestureRef.current.startVal + change, 0.2), 2.0);
+          const newVal = Math.min(Math.max(gestureRef.current.startVal - change, 0.2), 2.0);
           setBrightness(newVal);
           showFeedback(
             <div className="flex items-center gap-3">
