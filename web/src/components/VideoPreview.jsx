@@ -359,7 +359,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
         case '<': // Speed Down (Shift + ,)
           e.preventDefault();
           if (e.shiftKey || e.key === '<') {
-            const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
+            const speeds = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
             const currentIndex = speeds.indexOf(playbackRate);
             const nextIndex = currentIndex > 0 ? currentIndex - 1 : speeds.length - 1;
             setPlaybackRate(speeds[nextIndex]);
@@ -844,7 +844,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
 
   const toggleSpeed = (e) => {
     e?.stopPropagation();
-    const speeds = [0.5, 1, 1.5, 2];
+    const speeds = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
     const nextIdx = (speeds.indexOf(playbackRate) + 1) % speeds.length;
     setPlaybackRate(speeds[nextIdx]);
     showFeedback(`${speeds[nextIdx]}x Speed`);
