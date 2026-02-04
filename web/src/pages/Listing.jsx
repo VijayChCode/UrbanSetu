@@ -61,8 +61,8 @@ const LOCK_REASON_MESSAGES = {
 const getVideoPoster = (url) => {
   if (!url) return "";
   if (url.includes('cloudinary.com')) {
-    // Cloudinary video thumbnail trick: replace extension with .jpg and add so_auto or so_1
-    return url.replace(/\.[^/.]+$/, ".jpg").replace("/upload/", "/upload/so_auto,f_auto,q_auto/");
+    // Cloudinary video thumbnail trick: replace extension with .jpg and add so_1 for better frame capture
+    return url.replace(/\.[^/.]+$/, ".jpg").replace("/upload/", "/upload/so_1,f_auto,q_auto/");
   }
   return "";
 };
@@ -1881,19 +1881,21 @@ export default function Listing() {
                           }}
                         />
                       ) : (
-                        <video
-                          src={`${item.url}#t=0.001`}
-                          poster={getVideoPoster(item.url)}
-                          className="w-full h-40 sm:h-64 md:h-96 object-cover bg-black"
-                          onError={(e) => {
-                            if (!e.target.poster) {
-                              e.target.poster = "https://via.placeholder.com/800x600?text=Video+Not+Available";
-                            }
-                          }}
-                          muted
-                          playsInline
-                          preload="metadata"
-                        />
+                        <div className="relative w-full h-40 sm:h-64 md:h-96 bg-black overflow-hidden flex items-center justify-center">
+                          <img
+                            src={getVideoPoster(item.url) || "https://via.placeholder.com/800x600?text=Video+Tour"}
+                            className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105 opacity-80"
+                            onError={(e) => {
+                              e.target.src = "https://via.placeholder.com/800x600?text=Video+Preview";
+                            }}
+                          />
+                          {/* Centered Play Button Overlay */}
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div className="bg-white/20 backdrop-blur-md p-4 rounded-full border border-white/30 shadow-2xl transform transition-transform group-hover:scale-110">
+                              <FaPlay className="text-white text-2xl sm:text-4xl drop-shadow-lg" />
+                            </div>
+                          </div>
+                        </div>
                       )}
                       {/* Media type and AI Room Label Badge */}
                       {item.type === 'image' && (
