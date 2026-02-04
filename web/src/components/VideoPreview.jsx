@@ -414,11 +414,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
           break;
         case 'escape':
           e.preventDefault();
-          if (document.fullscreenElement) {
-            document.exitFullscreen().catch(() => { });
-            return;
-          }
-          setShowCloseConfirm(true);
+          handleCloseRequest();
           break;
       }
       setShowControls(true);
