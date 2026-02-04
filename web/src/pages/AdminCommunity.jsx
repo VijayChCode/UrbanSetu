@@ -658,6 +658,13 @@ export default function AdminCommunity() {
         }));
     };
 
+    const toggleSummary = (postId) => {
+        setExpandedSummaries(prev => ({
+            ...prev,
+            [postId]: !prev[postId]
+        }));
+    };
+
     const handleAddComment = async (e, postId) => {
         e.preventDefault();
         const content = commentText[postId];
