@@ -808,6 +808,7 @@ export default function NotificationBell({ mobile = false }) {
                                     type="date"
                                     value={startDate}
                                     onChange={(e) => setStartDate(e.target.value)}
+                                    max={new Date().toISOString().split('T')[0]}
                                     className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl text-xs font-bold text-gray-900 dark:text-white"
                                   />
                                 </div>
@@ -817,6 +818,7 @@ export default function NotificationBell({ mobile = false }) {
                                     type="date"
                                     value={endDate}
                                     onChange={(e) => setEndDate(e.target.value)}
+                                    max={new Date().toISOString().split('T')[0]}
                                     className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl text-xs font-bold text-gray-900 dark:text-white"
                                   />
                                 </div>
@@ -1498,6 +1500,7 @@ export default function NotificationBell({ mobile = false }) {
                                   type="date"
                                   value={startDate}
                                   onChange={(e) => setStartDate(e.target.value)}
+                                  max={new Date().toISOString().split('T')[0]}
                                   className="flex-1 min-w-0 px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-lg text-[10px] font-bold text-gray-900 dark:text-white focus:ring-1 focus:ring-blue-500"
                                   title="Start Date"
                                 />
@@ -1506,6 +1509,7 @@ export default function NotificationBell({ mobile = false }) {
                                   type="date"
                                   value={endDate}
                                   onChange={(e) => setEndDate(e.target.value)}
+                                  max={new Date().toISOString().split('T')[0]}
                                   className="flex-1 min-w-0 px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-lg text-[10px] font-bold text-gray-900 dark:text-white focus:ring-1 focus:ring-blue-500"
                                   title="End Date"
                                 />
