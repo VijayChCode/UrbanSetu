@@ -587,20 +587,20 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
 
   // Auto-Hide Controls Logic
   useEffect(() => {
-    if (showControls && isPlaying && !showSettings && !isDragging) {
+    if (showControls && isPlaying && !showSettings && !isDragging && !showPreview) {
       if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
       controlsTimeoutRef.current = setTimeout(() => {
         setShowControls(false);
       }, 2500);
     } else {
-      // If paused or dragging, clear timeout (keep controls visible)
+      // If paused, dragging, or hovering seeker (showPreview), keep controls visible
       if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
     }
 
     return () => {
       if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
     };
-  }, [showControls, isPlaying, showSettings, isDragging]);
+  }, [showControls, isPlaying, showSettings, isDragging, showPreview]);
 
   // Playback effect
   useEffect(() => {
@@ -1764,6 +1764,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
             <div
               className="w-full h-1.5 bg-white/30 rounded-full cursor-pointer relative group/slider"
               onMouseMove={(e) => {
+                setShowControls(true);
                 const rect = e.currentTarget.getBoundingClientRect();
                 const pos = (e.clientX - rect.left) / rect.width;
                 const time = pos * (duration || videoRef.current?.duration || 0);
