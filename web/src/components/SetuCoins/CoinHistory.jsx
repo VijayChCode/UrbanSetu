@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaArrowUp, FaArrowDown, FaExchangeAlt, FaHistory, FaCalendarAlt, FaChevronDown, FaChevronUp, FaUserFriends, FaStar, FaCheck } from 'react-icons/fa';
+import { FaArrowUp, FaArrowDown, FaExchangeAlt, FaHistory, FaCalendarAlt, FaChevronDown, FaChevronUp, FaUserFriends, FaStar, FaCheck, FaHome, FaCoins } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { authenticatedFetch } from '../../utils/auth';
@@ -69,19 +69,26 @@ const CoinHistory = ({ initialOpen = false, refreshTrigger = 0 }) => {
                                     <div className={`mt-1 p-2 rounded-lg ${tx.source === 'referral' ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400' :
                                         tx.source === 'profile_completion' ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400' :
                                             tx.source === 'admin_adjustment' ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400' :
-                                                tx.type === 'credit' ? 'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400'
+                                                tx.source === 'rent_payment' ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400' :
+                                                    tx.source === 'payment_reward' ? 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-600 dark:text-yellow-400' :
+                                                        tx.type === 'credit' ? 'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400'
                                         }`}>
                                         {tx.source === 'referral' ? <FaUserFriends size={14} /> :
                                             tx.source === 'profile_completion' ? <FaCheck size={14} /> :
                                                 tx.source === 'admin_adjustment' ? <FaStar size={14} /> :
-                                                    tx.type === 'credit' ? <FaArrowUp className="text-xs" /> : <FaArrowDown className="text-xs" />}
+                                                    tx.source === 'rent_payment' ? <FaHome size={14} /> :
+                                                        tx.source === 'payment_reward' ? <FaCoins size={14} /> :
+                                                            tx.type === 'credit' ? <FaArrowUp className="text-xs" /> : <FaArrowDown className="text-xs" />}
                                     </div>
                                     <div>
                                         <p className="font-medium text-gray-800 dark:text-gray-100">{tx.description}</p>
                                         <div className="flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1">
                                             <span className="flex items-center gap-1"><FaCalendarAlt className="text-[10px]" /> {new Date(tx.createdAt).toLocaleDateString()}</span>
-                                            <span className={`px-1.5 rounded uppercase text-[10px] tracking-wider ${tx.source === 'referral' ? 'bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300 font-bold' : 'bg-gray-200 dark:bg-gray-700 dark:text-gray-300'
-                                                }`}>{tx.source.replace('_', ' ')}</span>
+                                            <span className={`px-1.5 rounded uppercase text-[10px] tracking-wider ${tx.source === 'referral' ? 'bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300 font-bold' :
+                                                tx.source === 'rent_payment' ? 'bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 font-bold' :
+                                                    tx.source === 'payment_reward' ? 'bg-yellow-100 dark:bg-yellow-900/60 text-yellow-700 dark:text-yellow-300 font-bold' :
+                                                        'bg-gray-200 dark:bg-gray-700 dark:text-gray-300'
+                                                }`}>{tx.source.replace(/_/g, ' ')}</span>
                                             {tx.type === 'credit' && tx.expiryDate && (
                                                 <span className="text-orange-600 dark:text-orange-400 font-bold bg-orange-50 dark:bg-orange-900/20 px-1.5 rounded text-[10px] border border-orange-100 dark:border-orange-800">
                                                     Exp: {new Date(tx.expiryDate).toLocaleDateString()}
