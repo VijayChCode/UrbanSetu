@@ -115,6 +115,12 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
   const [showStats, setShowStats] = useState(false);
   const contextMenuRef = useRef(null);
 
+  // Preview Thumbnail States
+  const [previewTime, setPreviewTime] = useState(0);
+  const [previewPos, setPreviewPos] = useState(0);
+  const [showPreview, setShowPreview] = useState(false);
+  const previewVideoRef = useRef(null);
+
   // Helper to optimize Cloudinary URLs
   const optimizeVideoUrl = (url) => {
     if (!url) return '';
@@ -1757,15 +1763,53 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
           <div className="w-full space-y-3">
             <div
               className="w-full h-1.5 bg-white/30 rounded-full cursor-pointer relative group/slider"
-              onClick={(e) => {
+              onMouseMove={(e) => {
                 const rect = e.currentTarget.getBoundingClientRect();
                 const pos = (e.clientX - rect.left) / rect.width;
+                const time = pos * (duration || videoRef.current?.duration || 0);
+                setPreviewTime(time);
+                setPreviewPos(pos * 100); // Store percentage
+                setShowPreview(true);
+                if (previewVideoRef.current) {
+                  previewVideoRef.current.currentTime = time;
+                }
+              }}
+              onMouseLeave={() => setShowPreview(false)}
+              onClick={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const pos = (rect.width > 0) ? (e.clientX - rect.left) / rect.width : 0;
                 if (videoRef.current && isFinite(videoRef.current.duration)) {
                   videoRef.current.currentTime = pos * videoRef.current.duration;
                   setProgress(pos * 100);
                 }
               }}
             >
+              {/* Preview Thumbnail Overlay */}
+              {showPreview && (
+                <div
+                  className="absolute bottom-6 -translate-x-1/2 flex flex-col items-center gap-1 pointer-events-none z-[100] animate-fadeIn"
+                  style={{ left: `${previewPos}%` }}
+                >
+                  <div className="w-40 h-24 sm:w-48 sm:h-28 bg-black border-2 border-white/30 rounded-lg overflow-hidden shadow-[0_0_20px_rgba(0,0,0,0.8)] relative">
+                    <video
+                      ref={previewVideoRef}
+                      src={videoBlobUrl || ""}
+                      className="w-full h-full object-cover"
+                      muted
+                      preload="auto"
+                      playsInline
+                      onLoadedData={(e) => e.target.currentTime = previewTime}
+                    />
+                    <div className="absolute inset-x-0 bottom-0 bg-black/60 py-1 flex justify-center">
+                      <span className="text-white text-xs font-medium font-mono">
+                        {formatTime(previewTime)}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-white/30" />
+                </div>
+              )}
+
               <div className="absolute inset-y-0 left-0 bg-white/40 transition-all" style={{ width: `${loadedProgress}%` }} />
               <div className="absolute inset-y-0 left-0 bg-blue-500 transition-all" style={{ width: `${progress}%` }} />
               <div className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-lg scale-0 group-hover/slider:scale-100 transition-transform" style={{ left: `${progress}%` }} />
@@ -1795,46 +1839,53 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
             </div>
           </div>
         </div>
-      )}
+      )
+      }
 
       {/* Modals & Helpers */}
-      {isMiniMode && (isMiniDraggingRef.current || isTrashClosing) && (
-        <div className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-[100000] flex flex-col items-center justify-center transition-all duration-300 ${isOverTrash ? 'scale-125 opacity-100' : 'scale-100 opacity-70'}`}>
-          <div className={`p-4 rounded-full transition-colors duration-300 ${isOverTrash ? 'bg-red-600 text-white shadow-[0_0_20px_rgba(220,38,38,0.7)]' : 'bg-black/60 text-white/70 border-2 border-dashed border-white/30'}`}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="overflow-visible">
-              <g className={`transition-transform duration-300 ease-out origin-[21px_6px] ${isOverTrash ? 'rotate-[25deg]' : 'rotate-0'}`}><path d="M3 6h18" /><path d="M16 6V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" /></g>
-              <path d="M19 6v14c0 1.1-.9 2-2 2H7c-1.1 0-2-.9-2-2V6" /><path d="M10 11v6" /><path d="M14 11v6" />
-            </svg>
+      {
+        isMiniMode && (isMiniDraggingRef.current || isTrashClosing) && (
+          <div className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-[100000] flex flex-col items-center justify-center transition-all duration-300 ${isOverTrash ? 'scale-125 opacity-100' : 'scale-100 opacity-70'}`}>
+            <div className={`p-4 rounded-full transition-colors duration-300 ${isOverTrash ? 'bg-red-600 text-white shadow-[0_0_20px_rgba(220,38,38,0.7)]' : 'bg-black/60 text-white/70 border-2 border-dashed border-white/30'}`}>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="overflow-visible">
+                <g className={`transition-transform duration-300 ease-out origin-[21px_6px] ${isOverTrash ? 'rotate-[25deg]' : 'rotate-0'}`}><path d="M3 6h18" /><path d="M16 6V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" /></g>
+                <path d="M19 6v14c0 1.1-.9 2-2 2H7c-1.1 0-2-.9-2-2V6" /><path d="M10 11v6" /><path d="M14 11v6" />
+              </svg>
+            </div>
+            <span className={`mt-2 font-bold text-sm bg-black/50 px-2 py-1 rounded backdrop-blur ${isOverTrash ? 'text-red-500' : 'text-white/70'}`}>Drag here to close</span>
           </div>
-          <span className={`mt-2 font-bold text-sm bg-black/50 px-2 py-1 rounded backdrop-blur ${isOverTrash ? 'text-red-500' : 'text-white/70'}`}>Drag here to close</span>
-        </div>
-      )}
+        )
+      }
 
-      {!isMiniMode && (
-        <>
-          <div className={`absolute left-6 top-1/2 -translate-y-1/2 h-48 w-12 bg-black/60 backdrop-blur-md rounded-2xl overflow-hidden flex flex-col justify-end border border-white/10 transition-opacity duration-300 pointer-events-none z-50 ${activeGesture === 'brightness' ? 'opacity-100' : 'opacity-0'}`}>
-            <div className="absolute inset-x-0 bottom-0 bg-white transition-all duration-75" style={{ height: `${Math.min(Math.max((brightness - 0.2) / 1.8, 0), 1) * 100}%` }} />
-            <div className="absolute bottom-4 left-0 right-0 flex justify-center z-10"><FaSun className="text-blue-500 drop-shadow-md text-xl" /></div>
-          </div>
-          <div className={`absolute right-6 top-1/2 -translate-y-1/2 h-48 w-12 bg-black/60 backdrop-blur-md rounded-2xl overflow-hidden flex flex-col justify-end border border-white/10 transition-opacity duration-300 pointer-events-none z-50 ${activeGesture === 'volume' ? 'opacity-100' : 'opacity-0'}`}>
-            <div className="absolute inset-x-0 bottom-0 bg-white transition-all duration-75" style={{ height: `${volume * 100}%` }} />
-            <div className="absolute bottom-4 left-0 right-0 flex justify-center z-10">{getVolumeIcon(volume, { className: "text-blue-500 drop-shadow-md text-xl" })}</div>
-          </div>
-        </>
-      )}
+      {
+        !isMiniMode && (
+          <>
+            <div className={`absolute left-6 top-1/2 -translate-y-1/2 h-48 w-12 bg-black/60 backdrop-blur-md rounded-2xl overflow-hidden flex flex-col justify-end border border-white/10 transition-opacity duration-300 pointer-events-none z-50 ${activeGesture === 'brightness' ? 'opacity-100' : 'opacity-0'}`}>
+              <div className="absolute inset-x-0 bottom-0 bg-white transition-all duration-75" style={{ height: `${Math.min(Math.max((brightness - 0.2) / 1.8, 0), 1) * 100}%` }} />
+              <div className="absolute bottom-4 left-0 right-0 flex justify-center z-10"><FaSun className="text-blue-500 drop-shadow-md text-xl" /></div>
+            </div>
+            <div className={`absolute right-6 top-1/2 -translate-y-1/2 h-48 w-12 bg-black/60 backdrop-blur-md rounded-2xl overflow-hidden flex flex-col justify-end border border-white/10 transition-opacity duration-300 pointer-events-none z-50 ${activeGesture === 'volume' ? 'opacity-100' : 'opacity-0'}`}>
+              <div className="absolute inset-x-0 bottom-0 bg-white transition-all duration-75" style={{ height: `${volume * 100}%` }} />
+              <div className="absolute bottom-4 left-0 right-0 flex justify-center z-10">{getVolumeIcon(volume, { className: "text-blue-500 drop-shadow-md text-xl" })}</div>
+            </div>
+          </>
+        )
+      }
 
-      {showCloseConfirm && (
-        <div className="absolute inset-0 z-[10001] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn" onClick={cancelClose}>
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-2xl max-w-sm w-full mx-4 transform scale-100 transition-all border border-gray-200 dark:border-gray-700" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Close Video?</h3>
-            <p className="text-gray-600 dark:text-gray-300 mb-6">Are you sure you want to close the video player?</p>
-            <div className="flex justify-end gap-3"><button onClick={cancelClose} className="px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors font-medium border border-gray-300 dark:border-gray-600">Cancel</button><button onClick={confirmClose} className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors font-medium shadow-lg shadow-red-500/30">Close</button></div>
+      {
+        showCloseConfirm && (
+          <div className="absolute inset-0 z-[10001] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn" onClick={cancelClose}>
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-2xl max-w-sm w-full mx-4 transform scale-100 transition-all border border-gray-200 dark:border-gray-700" onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Close Video?</h3>
+              <p className="text-gray-600 dark:text-gray-300 mb-6">Are you sure you want to close the video player?</p>
+              <div className="flex justify-end gap-3"><button onClick={cancelClose} className="px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors font-medium border border-gray-300 dark:border-gray-600">Cancel</button><button onClick={confirmClose} className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors font-medium shadow-lg shadow-red-500/30">Close</button></div>
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       <SocialSharePanel isOpen={showSharePanel} onClose={() => { setShowSharePanel(false); if (wasPlayingRef.current) setIsPlaying(true); }} url={videos[currentIndex] || ""} title="Check out this video on UrbanSetu!" />
-    </div>
+    </div >
   );
 
   return createPortal(content, document.body);
