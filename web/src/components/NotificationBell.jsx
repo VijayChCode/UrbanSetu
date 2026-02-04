@@ -443,6 +443,7 @@ export default function NotificationBell({ mobile = false }) {
       case 'client_error_report':
       case 'rent_payment_overdue':
       case 'rent_dispute_raised':
+      case 'community_report':
         return (
           <div className={`${containerBase} bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400`}>
             <FaExclamationTriangle className={iconBase} />

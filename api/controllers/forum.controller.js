@@ -2,6 +2,7 @@
 import User from '../models/user.model.js';
 import { errorHandler } from '../utils/error.js';
 import { sendCommunityPostConfirmationEmail, sendCommunityReportAcknowledgementEmail, sendPostLockedEmail, sendPostDeletedEmail, sendPostEditedEmail, sendPostUnlockedEmail } from '../utils/emailService.js';
+import { notifyAdminsOfCommunityReport } from './notification.controller.js';
 
 const maskUser = (user) => {
     if (user && (user.profileVisibility === 'private' || user.profileVisibility === 'friends')) {
@@ -735,6 +736,13 @@ export const reportPost = async (req, res, next) => {
             }
         });
 
+        // Notify admins
+        User.findById(req.user.id).then(reporter => {
+            if (reporter) {
+                notifyAdminsOfCommunityReport(req.app, reporter, post, 'Post', req.body.reason || 'Spam/Inappropriate', post.content);
+            }
+        });
+
         res.status(200).json('Post reported successfully');
     } catch (error) {
         next(error);
@@ -769,6 +777,13 @@ export const reportComment = async (req, res, next) => {
                     req.body.reason || 'Spam/Inappropriate',
                     post._id
                 ).catch(err => console.error("Failed to send report email:", err));
+            }
+        });
+
+        // Notify admins
+        User.findById(req.user.id).then(reporter => {
+            if (reporter) {
+                notifyAdminsOfCommunityReport(req.app, reporter, post, 'Comment', req.body.reason || 'Spam/Inappropriate', comment.content);
             }
         });
 
@@ -809,6 +824,13 @@ export const reportReply = async (req, res, next) => {
                     req.body.reason || 'Spam/Inappropriate',
                     post._id
                 ).catch(err => console.error("Failed to send report email:", err));
+            }
+        });
+
+        // Notify admins
+        User.findById(req.user.id).then(reporter => {
+            if (reporter) {
+                notifyAdminsOfCommunityReport(req.app, reporter, post, 'Reply', req.body.reason || 'Spam/Inappropriate', reply.content);
             }
         });
 

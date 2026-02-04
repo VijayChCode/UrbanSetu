@@ -1248,7 +1248,6 @@ export const notifyWatchlistUsers = async (app, { listing, changeType, oldPrice,
         message,
         link: `/listing/${listing._id}`
       });
-
       notifications.push(notification);
 
       if (io) {
@@ -1260,5 +1259,50 @@ export const notifyWatchlistUsers = async (app, { listing, changeType, oldPrice,
   } catch (error) {
     console.error('Failed to notify watchlist users:', error);
     return [];
+  }
+};
+
+// Notify all admins about a community report (post, comment, or reply)
+export const notifyAdminsOfCommunityReport = async (app, reporter, targetPost, reportType, reason, targetContent = null) => {
+  try {
+    const admins = await User.find({
+      status: { $ne: 'suspended' },
+      $or: [
+        { role: 'rootadmin' },
+        { role: 'admin', adminApprovalStatus: 'approved' },
+      ],
+    }, '_id');
+
+    if (admins.length === 0) return;
+
+    const title = `Community ${reportType} Reported`;
+    const message = `A community ${reportType.toLowerCase()} was reported by ${reporter.username}.\nPost: "${targetPost.title}"\nReason: ${reason}${targetContent ? `\nContent snippet: "${targetContent.substring(0, 100)}..."` : ''}`;
+
+    const notifications = admins.map(admin => ({
+      userId: admin._id,
+      type: 'community_report',
+      title,
+      message,
+      link: `/admin/community/post/${targetPost._id}`,
+      meta: {
+        postId: targetPost._id,
+        reportType,
+        reason,
+        reporterId: reporter._id
+      }
+    }));
+
+    const createdNotifications = await Notification.insertMany(notifications);
+
+    const io = app.get('io');
+    if (io) {
+      createdNotifications.forEach(n => {
+        io.to(n.userId.toString()).emit('notificationCreated', n);
+      });
+    }
+
+    return createdNotifications;
+  } catch (error) {
+    console.error('Failed to notify admins of community report:', error);
   }
 };
