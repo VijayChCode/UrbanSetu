@@ -3,7 +3,7 @@ import {
   FaFacebook, FaLinkedin, FaWhatsapp,
   FaTelegram, FaCopy, FaCheck, FaTimes, FaShareAlt,
   FaReddit, FaPinterest, FaTumblr, FaVk, FaOdnoklassniki,
-  FaChevronLeft, FaChevronRight, FaEllipsisH, FaComments
+  FaChevronLeft, FaChevronRight, FaEllipsisH, FaComments, FaBlogger
 } from 'react-icons/fa';
 import { FaXTwitter } from 'react-icons/fa6';
 import { SiKakaotalk, SiMix, SiGmail } from 'react-icons/si';
@@ -177,6 +177,13 @@ const SocialSharePanel = ({ isOpen, onClose, url, title = "Join UrbanSetu!", des
       color: 'bg-[#ff8226]',
       hover: 'hover:bg-[#f37215]',
       link: `https://mix.com/add?url=${encodeURIComponent(url)}`
+    },
+    {
+      name: 'Blogger',
+      icon: <FaBlogger />,
+      color: 'bg-[#ff5722]',
+      hover: 'hover:bg-[#e64a19]',
+      link: `https://www.blogger.com/blog-this.g?u=${encodeURIComponent(url)}&n=${encodeURIComponent(title)}&t=${encodeURIComponent(description)}`
     }
   ];
 
