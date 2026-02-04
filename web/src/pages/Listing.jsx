@@ -58,6 +58,15 @@ const LOCK_REASON_MESSAGES = {
   default: 'This property is temporarily unavailable. Please check back later.'
 };
 
+const getVideoPoster = (url) => {
+  if (!url) return "";
+  if (url.includes('cloudinary.com')) {
+    // Cloudinary video thumbnail trick: replace extension with .jpg and add so_auto or so_1
+    return url.replace(/\.[^/.]+$/, ".jpg").replace("/upload/", "/upload/so_auto,f_auto,q_auto/");
+  }
+  return "";
+};
+
 export default function Listing() {
   const listingSchema = (listing) => {
     if (!listing) return null;
@@ -1874,9 +1883,12 @@ export default function Listing() {
                       ) : (
                         <video
                           src={`${item.url}#t=0.001`}
+                          poster={getVideoPoster(item.url)}
                           className="w-full h-40 sm:h-64 md:h-96 object-cover bg-black"
                           onError={(e) => {
-                            e.target.poster = "https://via.placeholder.com/800x600?text=Video+Not+Available";
+                            if (!e.target.poster) {
+                              e.target.poster = "https://via.placeholder.com/800x600?text=Video+Not+Available";
+                            }
                           }}
                           muted
                           playsInline
