@@ -26,7 +26,14 @@ import {
   FaTrashAlt,
   FaShareAlt,
   FaRedo,
-  FaWifi
+  FaWifi,
+  FaLink,
+  FaCode,
+  FaInfoCircle,
+  FaTools,
+  FaChartLine,
+  FaHistory,
+  FaInfinity
 } from 'react-icons/fa';
 
 import SocialSharePanel from './SocialSharePanel';
@@ -101,6 +108,12 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
   const gestureRef = useRef({ type: null, startY: 0, startVal: 0 });
   const gestureTimeoutRef = useRef(null);
   const [activeGesture, setActiveGesture] = useState(null);
+
+  // Custom Context Menu & Advanced States
+  const [contextMenu, setContextMenu] = useState({ show: false, x: 0, y: 0 });
+  const [isLooping, setIsLooping] = useState(false);
+  const [showStats, setShowStats] = useState(false);
+  const contextMenuRef = useRef(null);
 
   // Helper to optimize Cloudinary URLs
   const optimizeVideoUrl = (url) => {
@@ -408,6 +421,17 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, scale, videos.length, isPlaying, isEnded, playbackRate]);
+
+  // Context Menu Outside Click
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (contextMenu.show && contextMenuRef.current && !contextMenuRef.current.contains(e.target)) {
+        setContextMenu({ ...contextMenu, show: false });
+      }
+    };
+    window.addEventListener('click', handleClick);
+    return () => window.removeEventListener('click', handleClick);
+  }, [contextMenu]);
 
   // Volume Effect
   useEffect(() => {
@@ -799,6 +823,44 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
       link.click();
       document.body.removeChild(link);
     }
+  };
+
+  const handleContextMenu = (e) => {
+    e.preventDefault();
+    if (isMiniMode) return;
+
+    // Calculate position taking into account the viewport
+    const menuWidth = 240;
+    const menuHeight = 300;
+    let x = e.clientX;
+    let y = e.clientY;
+
+    if (x + menuWidth > window.innerWidth) x -= menuWidth;
+    if (y + menuHeight > window.innerHeight) y -= menuHeight;
+
+    setContextMenu({ show: true, x, y });
+  };
+
+  const copyToClipboard = async (text, message) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success(message || "Copied to clipboard!");
+    } catch (err) {
+      toast.error("Failed to copy");
+    }
+    setContextMenu(prev => ({ ...prev, show: false }));
+  };
+
+  const getDebugInfo = () => {
+    const info = {
+      url: videos[currentIndex],
+      resolution: `${videoRef.current?.videoWidth}x${videoRef.current?.videoHeight}`,
+      duration: videoRef.current?.duration,
+      currentTime: videoRef.current?.currentTime,
+      browser: navigator.userAgent,
+      timestamp: new Date().toISOString()
+    };
+    return JSON.stringify(info, null, 2);
   };
 
   const handleZoomIn = (e) => {
@@ -1321,7 +1383,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
         ? 'rounded-xl shadow-2xl border border-gray-700 overflow-hidden bg-black'
         : 'fixed inset-0 bg-black z-[9999] flex items-center justify-center select-none touch-none'
         } transition-shadow duration-300`}
-      onContextMenu={(e) => e.preventDefault()}
+      onContextMenu={handleContextMenu}
       onMouseMove={isMiniMode ? handleMiniMouseMove : handleMouseMove}
       onMouseUp={isMiniMode ? handleMiniMouseUp : handleMouseUp}
       onMouseDown={isMiniMode ? handleMiniMouseDown : undefined}
@@ -1465,7 +1527,16 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
           onError={handleVideoError}
           onTimeUpdate={handleTimeUpdate}
           onProgress={handleProgress}
-          onEnded={() => { setIsPlaying(false); setIsEnded(true); setShowControls(true); }}
+          onEnded={() => {
+            if (isLooping && videoRef.current) {
+              videoRef.current.currentTime = 0;
+              videoRef.current.play().catch(() => { });
+            } else {
+              setIsPlaying(false);
+              setIsEnded(true);
+              setShowControls(true);
+            }
+          }}
           style={{
             maxWidth: '100%',
             maxHeight: '100%',
@@ -1502,6 +1573,105 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
             {zoomMessage}
           </div>
         </div>
+
+        {/* Stats for Nerds Overlay */}
+        {showStats && !isMiniMode && (
+          <div className="absolute top-4 left-4 z-[60] bg-black/80 backdrop-blur-md p-4 rounded-xl border border-white/10 text-[10px] font-mono text-white/90 pointer-events-none min-w-[200px] shadow-2xl animate-fadeIn">
+            <div className="flex justify-between border-b border-white/10 pb-2 mb-2">
+              <span className="font-bold text-blue-400">STATS FOR NERDS</span>
+              <span className="text-white/40">v1.2</span>
+            </div>
+            <div className="space-y-1">
+              <p>Video ID: <span className="text-blue-300">{currentIndex + 1}</span></p>
+              <p>Resolution: <span className="text-blue-300">{videoRef.current?.videoWidth}x{videoRef.current?.videoHeight}</span></p>
+              <p>Buffer: <span className="text-green-400">{Math.round(loadedProgress)}%</span></p>
+              <p>Speed: <span className="text-yellow-400">{playbackRate}x</span></p>
+              <p>Volume: <span className="text-purple-400">{Math.round(volume * 100)}%</span></p>
+              <p>Time: <span className="text-white/60">{Math.round(videoRef.current?.currentTime)}s / {Math.round(duration)}s</span></p>
+              <p>Connection: <span className={isOffline ? "text-red-400" : "text-green-400"}>{isOffline ? "Offline" : "Excellent"}</span></p>
+            </div>
+          </div>
+        )}
+
+        {/* Custom Context Menu */}
+        {contextMenu.show && (
+          <div
+            ref={contextMenuRef}
+            style={{
+              position: 'fixed',
+              left: contextMenu.x,
+              top: contextMenu.y,
+              zIndex: 100000
+            }}
+            className="w-64 bg-[#1a1a1a]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl py-2 animate-scaleIn overflow-hidden"
+          >
+            <div
+              className="px-4 py-2.5 hover:bg-white/10 flex items-center gap-3 cursor-pointer transition-colors group"
+              onClick={() => { setIsLooping(!isLooping); setContextMenu({ ...contextMenu, show: false }); }}
+            >
+              <FaInfinity className={`text-sm ${isLooping ? 'text-blue-400' : 'text-white/60 group-hover:text-white'}`} />
+              <div className="flex-1 flex justify-between items-center">
+                <span className="text-[13px] text-white/90">Loop</span>
+                {isLooping && <div className="w-1.5 h-1.5 rounded-full bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.6)]" />}
+              </div>
+            </div>
+
+            <div className="h-[1px] bg-white/5 my-1" />
+
+            <div
+              className="px-4 py-2.5 hover:bg-white/10 flex items-center gap-3 cursor-pointer transition-colors group"
+              onClick={() => copyToClipboard(videos[currentIndex], "Video URL copied!")}
+            >
+              <FaLink className="text-sm text-white/60 group-hover:text-white" />
+              <span className="text-[13px] text-white/90">Copy video URL</span>
+            </div>
+
+            <div
+              className="px-4 py-2.5 hover:bg-white/10 flex items-center gap-3 cursor-pointer transition-colors group"
+              onClick={() => {
+                const time = Math.floor(videoRef.current?.currentTime || 0);
+                copyToClipboard(`${videos[currentIndex]}?t=${time}`, `URL copied at ${time}s!`);
+              }}
+            >
+              <FaHistory className="text-sm text-white/60 group-hover:text-white" />
+              <span className="text-[13px] text-white/90">Copy URL at current time</span>
+            </div>
+
+            <div
+              className="px-4 py-2.5 hover:bg-white/10 flex items-center gap-3 cursor-pointer transition-colors group"
+              onClick={() => copyToClipboard(`<iframe src="${videos[currentIndex]}" allowfullscreen></iframe>`, "Embed code copied!")}
+            >
+              <FaCode className="text-sm text-white/60 group-hover:text-white" />
+              <span className="text-[13px] text-white/90">Copy embed code</span>
+            </div>
+
+            <div className="h-[1px] bg-white/5 my-1" />
+
+            <div
+              className="px-4 py-2.5 hover:bg-white/10 flex items-center gap-3 cursor-pointer transition-colors group"
+              onClick={() => copyToClipboard(getDebugInfo(), "Debug info copied!")}
+            >
+              <FaInfoCircle className="text-sm text-white/60 group-hover:text-white" />
+              <span className="text-[13px] text-white/90">Copy debug info</span>
+            </div>
+
+            <div
+              className="px-4 py-2.5 hover:bg-white/10 flex items-center gap-3 cursor-pointer transition-colors group"
+              onClick={() => { window.location.reload(); }}
+            >
+              <FaTools className="text-sm text-white/60 group-hover:text-white" />
+              <span className="text-[13px] text-white/90">Troubleshoot playback</span>
+            </div>
+
+            <div
+              className="px-4 py-2.5 hover:bg-white/10 flex items-center gap-3 cursor-pointer transition-colors group"
+              onClick={() => { setShowStats(!showStats); setContextMenu({ ...contextMenu, show: false }); }}
+            >
+              <FaChartLine className={`text-sm ${showStats ? 'text-blue-400' : 'text-white/60 group-hover:text-white'}`} />
+              <span className="text-[13px] text-white/90">Stats for nerds</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Bottom Controls Bar */}
