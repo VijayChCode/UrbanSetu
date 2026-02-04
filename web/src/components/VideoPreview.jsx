@@ -1576,19 +1576,72 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
 
         {/* Stats for Nerds Overlay */}
         {showStats && !isMiniMode && (
-          <div className="absolute top-4 left-4 z-[60] bg-black/80 backdrop-blur-md p-4 rounded-xl border border-white/10 text-[10px] font-mono text-white/90 pointer-events-none min-w-[200px] shadow-2xl animate-fadeIn">
-            <div className="flex justify-between border-b border-white/10 pb-2 mb-2">
-              <span className="font-bold text-blue-400">STATS FOR NERDS</span>
-              <span className="text-white/40">v1.2</span>
+          <div className="absolute top-4 left-4 z-[60] bg-[#121212]/90 backdrop-blur-md p-3 rounded-md border border-white/5 text-[11px] font-mono text-white/80 pointer-events-auto min-w-[320px] shadow-2xl animate-fadeIn select-text">
+            <div className="flex justify-between items-center mb-3">
+              <span className="font-bold text-white/30 tracking-wider">STATS FOR NERDS</span>
+              <button
+                onClick={() => setShowStats(false)}
+                className="hover:bg-white/10 p-1 rounded transition-colors text-white/40 hover:text-white"
+              >
+                <FaTimes size={10} />
+              </button>
             </div>
-            <div className="space-y-1">
-              <p>Video ID: <span className="text-blue-300">{currentIndex + 1}</span></p>
-              <p>Resolution: <span className="text-blue-300">{videoRef.current?.videoWidth}x{videoRef.current?.videoHeight}</span></p>
-              <p>Buffer: <span className="text-green-400">{Math.round(loadedProgress)}%</span></p>
-              <p>Speed: <span className="text-yellow-400">{playbackRate}x</span></p>
-              <p>Volume: <span className="text-purple-400">{Math.round(volume * 100)}%</span></p>
-              <p>Time: <span className="text-white/60">{Math.round(videoRef.current?.currentTime)}s / {Math.round(duration)}s</span></p>
-              <p>Connection: <span className={isOffline ? "text-red-400" : "text-green-400"}>{isOffline ? "Offline" : "Excellent"}</span></p>
+
+            <div className="grid grid-cols-[110px_1fr] gap-y-1">
+              <span className="text-white/40">Video ID / sCPN</span>
+              <span className="text-white/90 truncate">V-{currentIndex + 1}_URBANSETU / {Math.random().toString(36).substr(2, 8).toUpperCase()}</span>
+
+              <span className="text-white/40">Viewport / Frames</span>
+              <span className="text-white/90">{videoRef.current?.offsetWidth}x{videoRef.current?.offsetHeight}*{scale.toFixed(2)} / 0 dropped of {Math.round(videoRef.current?.currentTime * 30 || 0)}</span>
+
+              <span className="text-white/40">Current / Optimal Res</span>
+              <span className="text-white/90">{videoRef.current?.videoWidth}x{videoRef.current?.videoHeight}@30 / {videoRef.current?.videoWidth}x{videoRef.current?.videoHeight}@30</span>
+
+              <span className="text-white/40">Volume / Normalized</span>
+              <span className="text-white/90">{Math.round(volume * 100)}% / {Math.round(volume * 100)}%</span>
+
+              <span className="text-white/40">Codecs</span>
+              <span className="text-white/90">av01.0.05M.08 / mp4a.40.2 (140)</span>
+
+              <div className="h-1" /> <div className="h-1" />
+
+              <span className="text-white/40">Connection Speed</span>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                  <div className="h-full bg-blue-500/50 w-[85%]" />
+                </div>
+                <span className="text-white/90 w-16">74821 Kbps</span>
+              </div>
+
+              <span className="text-white/40">Network Activity</span>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                  <div className="h-full bg-green-500/50 w-[10%]" />
+                </div>
+                <span className="text-white/90 w-16">0 KB</span>
+              </div>
+
+              <span className="text-white/40">Buffer Health</span>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                  <div className="h-full bg-orange-500/50" style={{ width: `${loadedProgress}%` }} />
+                </div>
+                <span className="text-white/90 w-16">{((loadedProgress / 100) * (duration || 0)).toFixed(2)} s</span>
+              </div>
+
+              <span className="text-white/40">Live Latency</span>
+              <span className="text-white/90">0.00s</span>
+
+              <span className="text-white/40">Live Mode</span>
+              <span className="text-white/90 truncate">Manifestless, VOD-Optimized</span>
+
+              <span className="text-white/40">Mystery Text</span>
+              <span className="text-white/90 truncate">SSI IFA, SABR, s:4 t:{Math.round(Date.now() / 1000000)} b:{Math.round(loadedProgress)}</span>
+
+              <div className="h-2" /> <div className="h-2" />
+
+              <span className="text-white/40">Date</span>
+              <span className="text-white/60 text-[10px] leading-tight">{new Date().toString()}</span>
             </div>
           </div>
         )}
@@ -1605,6 +1658,16 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
             }}
             className="w-64 bg-[#1a1a1a]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl py-2 animate-scaleIn overflow-hidden"
           >
+            {!isFullscreen && (
+              <div
+                className="px-4 py-2.5 hover:bg-white/10 flex items-center gap-3 cursor-pointer transition-colors group"
+                onClick={() => { toggleMiniMode(); setContextMenu({ ...contextMenu, show: false }); }}
+              >
+                <FaClone className="text-sm text-white/60 group-hover:text-white" />
+                <span className="text-[13px] text-white/90">Miniplayer</span>
+              </div>
+            )}
+
             <div
               className="px-4 py-2.5 hover:bg-white/10 flex items-center gap-3 cursor-pointer transition-colors group"
               onClick={() => { setIsLooping(!isLooping); setContextMenu({ ...contextMenu, show: false }); }}
