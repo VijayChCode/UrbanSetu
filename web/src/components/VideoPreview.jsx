@@ -363,7 +363,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
             const currentIndex = speeds.indexOf(playbackRate);
             const nextIndex = currentIndex > 0 ? currentIndex - 1 : speeds.length - 1;
             setPlaybackRate(speeds[nextIndex]);
-            showFeedback(`${speeds[nextIndex]}x`);
+            showFeedback(`${speeds[nextIndex]}x Speed`);
           } else if (videoRef.current) {
             videoRef.current.currentTime -= 0.05;
             showFeedback("Frame -");
