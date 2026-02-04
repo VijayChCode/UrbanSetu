@@ -349,7 +349,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
         case '>': // Speed Up (Shift + .)
           e.preventDefault();
           if (e.shiftKey || e.key === '>') {
-            toggleSpeed();
+            speedUp();
           } else if (videoRef.current) {
             videoRef.current.currentTime += 0.05;
             showFeedback("Frame +");
@@ -359,11 +359,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
         case '<': // Speed Down (Shift + ,)
           e.preventDefault();
           if (e.shiftKey || e.key === '<') {
-            const speeds = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
-            const currentIndex = speeds.indexOf(playbackRate);
-            const nextIndex = currentIndex > 0 ? currentIndex - 1 : speeds.length - 1;
-            setPlaybackRate(speeds[nextIndex]);
-            showFeedback(`${speeds[nextIndex]}x Speed`);
+            speedDown();
           } else if (videoRef.current) {
             videoRef.current.currentTime -= 0.05;
             showFeedback("Frame -");
@@ -411,7 +407,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, scale, videos.length, isPlaying, isEnded]);
+  }, [isOpen, scale, videos.length, isPlaying, isEnded, playbackRate]);
 
   // Volume Effect
   useEffect(() => {
@@ -842,12 +838,30 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
     showFeedback("Reset");
   };
 
+  const speedUp = () => {
+    const speeds = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+    setPlaybackRate(prev => {
+      const nextIdx = (speeds.indexOf(prev) + 1) % speeds.length;
+      const newVal = speeds[nextIdx];
+      showFeedback(`${newVal}x Speed`);
+      return newVal;
+    });
+  };
+
+  const speedDown = () => {
+    const speeds = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+    setPlaybackRate(prev => {
+      const currIdx = speeds.indexOf(prev);
+      const nextIdx = currIdx > 0 ? currIdx - 1 : speeds.length - 1;
+      const newVal = speeds[nextIdx];
+      showFeedback(`${newVal}x Speed`);
+      return newVal;
+    });
+  };
+
   const toggleSpeed = (e) => {
     e?.stopPropagation();
-    const speeds = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
-    const nextIdx = (speeds.indexOf(playbackRate) + 1) % speeds.length;
-    setPlaybackRate(speeds[nextIdx]);
-    showFeedback(`${speeds[nextIdx]}x Speed`);
+    speedUp();
   };
 
   const handleCloseRequest = (e) => {
