@@ -1873,13 +1873,14 @@ export default function Listing() {
                         />
                       ) : (
                         <video
-                          src={item.url}
+                          src={`${item.url}#t=0.001`}
                           className="w-full h-40 sm:h-64 md:h-96 object-cover bg-black"
                           onError={(e) => {
                             e.target.poster = "https://via.placeholder.com/800x600?text=Video+Not+Available";
                           }}
                           muted
                           playsInline
+                          preload="metadata"
                         />
                       )}
                       {/* Media type and AI Room Label Badge */}
