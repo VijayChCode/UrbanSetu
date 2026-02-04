@@ -770,7 +770,32 @@ router.post("/verify", verifyToken, async (req, res) => {
       }
     }
 
+    // --- SetuCoins Consistency: Reward general payments > 1000 INR / $12 ---
     if (payment.paymentType !== 'monthly_rent') {
+      try {
+        const CoinService = (await import('../services/coinService.js')).default;
+        let earnedCoins = 0;
+        if (payment.currency === 'USD') {
+          earnedCoins = Math.floor(payment.amount / 12);
+        } else {
+          earnedCoins = Math.floor(payment.amount / 1000);
+        }
+
+        if (earnedCoins > 0) {
+          await CoinService.credit({
+            userId: payment.userId,
+            amount: earnedCoins,
+            source: 'payment_reward',
+            description: `Reward for ${payment.paymentType.replace('_', ' ')} (${payment.paymentId})`,
+            referenceId: payment._id,
+            referenceModel: 'Payment'
+          });
+          console.log(`🪙 [PayPal] Credited ${earnedCoins} SetuCoins for general payment ${payment.paymentId}`);
+        }
+      } catch (coinError) {
+        console.error('Error processing SetuCoins for general payment:', coinError);
+      }
+
       // Send payment success email to buyer
       try {
         await sendPaymentSuccessEmail(user.email, {
@@ -1222,7 +1247,7 @@ router.post('/razorpay/verify', verifyToken, async (req, res) => {
             await CoinService.credit({
               userId: payment.userId,
               amount: earnedCoins,
-              source: 'rent_payment_reward',
+              source: 'rent_payment',
               description: `Reward for rent payment (${payment.rentMonth}/${payment.rentYear})`,
               referenceId: payment._id,
               referenceModel: 'Payment'
@@ -1360,7 +1385,34 @@ router.post('/razorpay/verify', verifyToken, async (req, res) => {
           status: 'pending' // Confirm it's active now
         });
       }
-    } else if (payment.paymentType !== 'monthly_rent') {
+    }
+
+    // --- SetuCoins Consistency: Reward general payments > 1000 INR / $12 ---
+    if (payment.paymentType !== 'monthly_rent') {
+      try {
+        const CoinService = (await import('../services/coinService.js')).default;
+        let earnedCoins = 0;
+        if (payment.currency === 'USD') {
+          earnedCoins = Math.floor(payment.amount / 12);
+        } else {
+          earnedCoins = Math.floor(payment.amount / 1000);
+        }
+
+        if (earnedCoins > 0) {
+          await CoinService.credit({
+            userId: payment.userId,
+            amount: earnedCoins,
+            source: 'payment_reward',
+            description: `Reward for ${payment.paymentType.replace('_', ' ')} (${payment.paymentId})`,
+            referenceId: payment._id,
+            referenceModel: 'Payment'
+          });
+          console.log(`🪙 [Razorpay] Credited ${earnedCoins} SetuCoins for general payment ${payment.paymentId}`);
+        }
+      } catch (coinError) {
+        console.error('Error processing SetuCoins for general payment:', coinError);
+      }
+
       // Send payment success email to buyer (reusing existing appointment, user, listing variables)
       try {
         await sendPaymentSuccessEmail(user.email, {

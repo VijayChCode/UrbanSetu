@@ -441,17 +441,24 @@ export default function Rewards() {
                                                             <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${tx.source === 'referral' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400' :
                                                                 tx.source === 'profile_completion' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' :
                                                                     tx.source === 'admin_adjustment' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400' :
-                                                                        tx.type === 'credit' ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                                                                        tx.source === 'rent_payment' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' :
+                                                                            tx.source === 'payment_reward' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400' :
+                                                                                tx.type === 'credit' ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
                                                                 }`}>
                                                                 {tx.source === 'referral' ? <FaUserFriends /> :
                                                                     tx.source === 'profile_completion' ? <FaCheck /> :
                                                                         tx.source === 'admin_adjustment' ? <FaStar /> :
-                                                                            tx.type === 'credit' ? <FaArrowUp /> : <FaArrowDown />}
+                                                                            tx.source === 'rent_payment' ? <FaHome /> :
+                                                                                tx.source === 'payment_reward' ? <FaCoins /> :
+                                                                                    tx.type === 'credit' ? <FaArrowUp /> : <FaArrowDown />}
                                                             </div>
                                                             <div>
                                                                 <p className="font-bold text-slate-800 dark:text-gray-200 text-sm">{tx.description}</p>
-                                                                <p className={`text-[10px] font-bold tracking-wide uppercase ${tx.source === 'referral' ? 'text-purple-600 dark:text-purple-400' : 'text-slate-400 dark:text-gray-500'
-                                                                    }`}>{tx.source.replace('_', ' ')}</p>
+                                                                <p className={`text-[10px] font-bold tracking-wide uppercase ${tx.source === 'referral' ? 'text-purple-600 dark:text-purple-400' :
+                                                                    tx.source === 'rent_payment' ? 'text-indigo-600 dark:text-indigo-400' :
+                                                                        tx.source === 'payment_reward' ? 'text-yellow-600 dark:text-yellow-400' :
+                                                                            'text-slate-400 dark:text-gray-500'
+                                                                    }`}>{tx.source.replace(/_/g, ' ')}</p>
                                                             </div>
                                                         </div>
                                                     </td>

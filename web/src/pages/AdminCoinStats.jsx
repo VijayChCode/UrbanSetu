@@ -467,9 +467,12 @@ export default function AdminCoinStats() {
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4">
-                                                        <span className={`px-2 py-0.5 rounded text-[10px] font-black tracking-widest uppercase ${tx.source === 'referral' ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                                                        <span className={`px-2 py-0.5 rounded text-[10px] font-black tracking-widest uppercase ${tx.source === 'referral' ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300' :
+                                                            tx.source === 'rent_payment' ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300' :
+                                                                tx.source === 'payment_reward' ? 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300' :
+                                                                    'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                                                             }`}>
-                                                            {tx.source.replace('_', ' ')}
+                                                            {tx.source.replace(/_/g, ' ')}
                                                         </span>
                                                     </td>
                                                     <td className="px-6 py-4 text-xs font-medium text-gray-500">

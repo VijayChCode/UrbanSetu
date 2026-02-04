@@ -26,6 +26,7 @@ const coinTransactionSchema = new mongoose.Schema({
             "rent_streak_bonus",
             "review_reward",
             "referral",
+            "payment_reward",
             "admin_adjustment",
             "redemption_rent_fee",
             "redemption_coupon",
