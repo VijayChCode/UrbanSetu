@@ -309,13 +309,92 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
           e.preventDefault();
           handleZoomOut();
           break;
-        case '0': // Reset
+        case 'z': // Reset Zoom (Replaced '0' to match YouTube seeking)
           e.preventDefault();
           handleReset();
           break;
         case 'f': // Fullscreen
           e.preventDefault();
           toggleFullscreen();
+          break;
+        case 'i': // Mini Player Toggle (YouTube style)
+          e.preventDefault();
+          toggleMiniMode();
+          break;
+        case 'r': // Rotate (Custom)
+          e.preventDefault();
+          handleRotate();
+          break;
+        case 's': // Share
+          e.preventDefault();
+          toggleShare();
+          break;
+        case 'd': // Download
+          e.preventDefault();
+          handleDownload(e);
+          break;
+        case '[': // Previous Video
+          e.preventDefault();
+          if (videos.length > 1) {
+            setCurrentIndex(prev => prev > 0 ? prev - 1 : videos.length - 1);
+          }
+          break;
+        case ']': // Next Video
+          e.preventDefault();
+          if (videos.length > 1) {
+            setCurrentIndex(prev => prev < videos.length - 1 ? prev + 1 : 0);
+          }
+          break;
+        case '.': // Frame Forward (or Speed Up if Shift)
+          e.preventDefault();
+          if (e.shiftKey) {
+            toggleSpeed(); // Cycles speed
+          } else if (videoRef.current) {
+            videoRef.current.currentTime += 0.05; // ~1 frame at 20fps
+            showFeedback("Frame +");
+          }
+          break;
+        case ',': // Frame Backward (or Speed Down if Shift)
+          e.preventDefault();
+          if (e.shiftKey) {
+            // Speed down logic (Manual reverse cycle or similar)
+            const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
+            const currentIndex = speeds.indexOf(playbackRate);
+            const nextIndex = currentIndex > 0 ? currentIndex - 1 : speeds.length - 1;
+            setPlaybackRate(speeds[nextIndex]);
+            showFeedback(`${speeds[nextIndex]}x`);
+          } else if (videoRef.current) {
+            videoRef.current.currentTime -= 0.05;
+            showFeedback("Frame -");
+          }
+          break;
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9': // Seek to percentage
+          e.preventDefault();
+          if (videoRef.current) {
+            const percent = parseInt(e.key);
+            const targetTime = (percent / 10) * videoRef.current.duration;
+            if (isFinite(targetTime)) {
+              videoRef.current.currentTime = targetTime;
+              showFeedback(`${percent * 10}%`);
+            }
+          }
+          break;
+        case 'home':
+          e.preventDefault();
+          if (videoRef.current) videoRef.current.currentTime = 0;
+          break;
+        case 'end':
+          e.preventDefault();
+          if (videoRef.current) videoRef.current.currentTime = videoRef.current.duration;
           break;
         case 'escape':
           e.preventDefault();
