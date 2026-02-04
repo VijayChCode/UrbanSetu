@@ -1839,7 +1839,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
                   <button onClick={toggleMute} className="hover:text-blue-400 p-2">
                     {isMuted || volume === 0 ? <FaVolumeMute size={20} /> : <FaVolumeUp size={20} />}
                   </button>
-                  <div className={`overflow-hidden transition-all duration-300 flex items-center ${isVolumeHovered ? 'w-28 opacity-100 ml-2' : 'w-0 opacity-0'}`}>
+                  <div className={`overflow-hidden transition-all duration-300 flex items-center ${isVolumeHovered ? 'w-32 opacity-100 ml-2' : 'w-0 opacity-0'}`}>
                     <input
                       type="range"
                       min="0"
@@ -1852,8 +1852,19 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
                         setActiveGesture('volume');
                         if (gestureTimeoutRef.current) clearTimeout(gestureTimeoutRef.current);
                         gestureTimeoutRef.current = setTimeout(() => setActiveGesture(null), 1000);
+
+                        // Show center toast feedback
+                        showFeedback(
+                          <div className="flex items-center gap-3 bg-black/80 px-4 py-2 rounded-xl backdrop-blur-md border border-white/10 shadow-2xl">
+                            {getVolumeIcon(newVal, { size: 24, className: "text-blue-400" })}
+                            <span className="font-bold text-lg">Volume: {Math.round(newVal * 100)}%</span>
+                          </div>
+                        );
                       }}
-                      className="w-24 h-1 bg-white/20 rounded-full appearance-none cursor-pointer accent-blue-500 hover:bg-white/40 transition-all"
+                      className="w-28 h-1 rounded-full appearance-none cursor-pointer transition-all volume-slider-custom"
+                      style={{
+                        background: `linear-gradient(to right, #3b82f6 ${volume * 100}%, rgba(255,255,255,0.2) ${volume * 100}%)`,
+                      }}
                     />
                   </div>
                 </div>
