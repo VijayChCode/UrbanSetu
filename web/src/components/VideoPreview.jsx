@@ -1589,24 +1589,24 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
 
             <div className="grid grid-cols-[110px_1fr] gap-y-1">
               <span className="text-white/40">Video ID / sCPN</span>
-              <span className="text-white/90 truncate">V-{currentIndex + 1}_URB / {Math.random().toString(36).substr(2, 6).toUpperCase()}..{Math.round(Date.now() / 10000).toString(16)}</span>
+              <span className="text-blue-400 truncate">V-{currentIndex + 1}_URB / {Math.random().toString(36).substr(2, 6).toUpperCase()}..{Math.round(Date.now() / 10000).toString(16)}</span>
 
               <span className="text-white/40">Viewport / Frames</span>
-              <span className="text-white/90">
+              <span className="text-green-400">
                 {videoRef.current?.offsetWidth}x{videoRef.current?.offsetHeight}*{scale.toFixed(2)} /
-                {videoRef.current?.getVideoPlaybackQuality?.()?.droppedVideoFrames || 0} dropped of {videoRef.current?.getVideoPlaybackQuality?.()?.totalVideoFrames || Math.round(videoRef.current?.currentTime * 30 || 0)}
+                <span className="text-red-400">{videoRef.current?.getVideoPlaybackQuality?.()?.droppedVideoFrames || 0} dropped</span> of {videoRef.current?.getVideoPlaybackQuality?.()?.totalVideoFrames || Math.round(videoRef.current?.currentTime * 30 || 0)}
               </span>
 
               <span className="text-white/40">Current / Optimal Res</span>
-              <span className="text-white/90">
+              <span className="text-yellow-400">
                 {videoRef.current?.videoWidth}x{videoRef.current?.videoHeight} / {videoRef.current?.videoWidth}x{videoRef.current?.videoHeight}
               </span>
 
               <span className="text-white/40">Volume / Normalized</span>
-              <span className="text-white/90">{Math.round(volume * 100)}% / {Math.round(volume * 100)}%</span>
+              <span className="text-purple-400">{Math.round(volume * 100)}% / {Math.round(volume * 100)}%</span>
 
               <span className="text-white/40">Codecs</span>
-              <span className="text-white/90 truncate">
+              <span className="text-cyan-400 truncate">
                 {videoRef.current?.currentSrc?.includes('vp9') ? 'vp09.00.51' : 'av01.0.05M'} / mp4a.40.2
               </span>
 
@@ -1620,7 +1620,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
                     style={{ width: `${Math.min((navigator.connection?.downlink || 10) * 10, 100)}%` }}
                   />
                 </div>
-                <span className="text-white/90 w-16">{(navigator.connection?.downlink * 1000 || 54200).toFixed(0)} Kbps</span>
+                <span className="text-blue-400 w-16">{(navigator.connection?.downlink * 1000 || 54200).toFixed(0)} Kbps</span>
               </div>
 
               <span className="text-white/40">Network Activity</span>
@@ -1630,7 +1630,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
                     className={`h-full bg-green-500/50 transition-all duration-300 ${isLoading ? 'w-full animate-pulse' : 'w-0'}`}
                   />
                 </div>
-                <span className="text-white/90 w-16">{isLoading ? '542 KB' : '0 KB'}</span>
+                <span className="text-green-400 w-16">{isLoading ? '542 KB' : '0 KB'}</span>
               </div>
 
               <span className="text-white/40">Buffer Health</span>
@@ -1638,11 +1638,11 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
                 <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
                   <div className="h-full bg-orange-500/50 transition-all" style={{ width: `${loadedProgress}%` }} />
                 </div>
-                <span className="text-white/90 w-16">{(loadedProgress * (duration || 0) / 100).toFixed(2)} s</span>
+                <span className="text-orange-400 w-16">{(loadedProgress * (duration || 0) / 100).toFixed(2)} s</span>
               </div>
 
               <span className="text-white/40">Live Latency</span>
-              <span className="text-white/90">0.00s (VOD)</span>
+              <span className="text-red-400">0.00s (VOD)</span>
 
               <span className="text-white/40">Live Mode</span>
               <span className="text-white/90 truncate">VOD-Optimized</span>
