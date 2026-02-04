@@ -1432,7 +1432,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
       )}
 
       {/* Close Button */}
-      {!isMiniMode && (
+      {!isMiniMode && !isFullscreen && (
         <button
           onClick={handleCloseRequest}
           className={`absolute top-4 right-4 text-white hover:text-red-400 z-50 bg-black/50 backdrop-blur rounded-full p-3 transition-all duration-300 hover:bg-black/80 hover:scale-110 ${showControls ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}
