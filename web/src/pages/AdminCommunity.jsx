@@ -1193,6 +1193,12 @@ export default function AdminCommunity() {
                                             </div>
                                         </div>
                                         <div className="flex flex-wrap items-center gap-2 justify-end">
+                                            {/* Reported Badge for ANY reported content in this post tree */}
+                                            {((post.reports?.length || 0) + (post.comments?.reduce((acc, c) => acc + (c.reports?.length || 0) + (c.replies?.reduce((acc2, r) => acc2 + (r.reports?.length || 0), 0) || 0), 0) || 0)) > 0 && (
+                                                <span className="bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1 animate-pulse">
+                                                    <FaFlag className="text-[8px]" /> Reported
+                                                </span>
+                                            )}
                                             {stats.trendingTopics?.findIndex(t => t._id === post._id) !== -1 && (
                                                 <span className="bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1 animate-pulse">
                                                     <FaFire className="text-[8px]" /> Trending #{stats.trendingTopics?.findIndex(t => t._id === post._id) + 1}
@@ -1317,20 +1323,74 @@ export default function AdminCommunity() {
                                         {/* {post.images && post.images.length > 0 && (...)} */}
 
                                         {/* Report Details (Admin View) */}
-                                        {post.reports && post.reports.length > 0 && (
-                                            <div className="mt-4 bg-red-50/50 dark:bg-red-900/10 rounded-xl p-4 border border-red-100/50 dark:border-red-900/30">
-                                                <div className="flex items-center gap-2 text-red-600 dark:text-red-400 font-bold text-sm mb-2">
-                                                    <FaFlag className="text-xs" />
-                                                    <span>User Reports ({post.reports.length})</span>
+                                        {/* Comprehensive Report Summary (Admin View) */}
+                                        {((post.reports?.length || 0) + (post.comments?.reduce((acc, c) => acc + (c.reports?.length || 0) + (c.replies?.reduce((acc2, r) => acc2 + (r.reports?.length || 0), 0) || 0), 0) || 0)) > 0 && (
+                                            <div className="mt-4 bg-red-50/30 dark:bg-red-900/10 rounded-xl p-4 border border-red-100 dark:border-red-900/30">
+                                                <div className="flex items-center gap-2 text-red-600 dark:text-red-400 font-bold text-sm mb-3">
+                                                    <FaExclamationTriangle className="text-sm" />
+                                                    <span>Moderation Summary</span>
                                                 </div>
-                                                <div className="space-y-2">
-                                                    {post.reports.map((report, rIdx) => (
-                                                        <div key={rIdx} className="bg-white/80 dark:bg-gray-800/80 p-2 rounded-lg text-xs border border-red-50 dark:border-red-900/20 shadow-sm flex items-start gap-2">
-                                                            <div className="bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded font-bold uppercase text-[10px]">Flag</div>
-                                                            <p className="text-gray-700 dark:text-gray-300 leading-normal italic">"{report.reason}"</p>
+                                                <div className="space-y-3">
+                                                    {/* Post Reports */}
+                                                    {post.reports && post.reports.length > 0 && (
+                                                        <div className="space-y-1.5">
+                                                            <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider pl-1">Post Reports ({post.reports.length})</div>
+                                                            {post.reports.map((report, rIdx) => (
+                                                                <div key={`post-r-${rIdx}`} className="bg-white/80 dark:bg-gray-800/80 p-2 rounded-lg text-xs border border-red-100/50 dark:border-red-900/20 shadow-sm flex items-start gap-2">
+                                                                    <div className="bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded font-bold uppercase text-[9px] shrink-0">Post</div>
+                                                                    <p className="text-gray-700 dark:text-gray-300 italic">"{report.reason}"</p>
+                                                                </div>
+                                                            ))}
                                                         </div>
-                                                    ))}
+                                                    )}
+
+                                                    {/* Comment Reports */}
+                                                    {post.comments?.some(c => c.reports?.length > 0) && (
+                                                        <div className="space-y-1.5">
+                                                            <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider pl-1">Comment Reports</div>
+                                                            {post.comments.filter(c => c.reports?.length > 0).map((comment, cIdx) => (
+                                                                <div key={`comment-r-${cIdx}`} className="space-y-1">
+                                                                    {comment.reports.map((report, rIdx) => (
+                                                                        <div key={`comment-r-${cIdx}-${rIdx}`} className="bg-white/80 dark:bg-gray-800/80 p-2 rounded-lg text-xs border border-orange-100/50 dark:border-orange-900/20 shadow-sm flex items-start gap-2">
+                                                                            <div className="bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 px-1.5 py-0.5 rounded font-bold uppercase text-[9px] shrink-0">Comment</div>
+                                                                            <div className="flex-1 min-w-0">
+                                                                                <p className="text-gray-500 dark:text-gray-400 text-[10px] truncate mb-0.5">On: "{comment.content.substring(0, 40)}..."</p>
+                                                                                <p className="text-gray-700 dark:text-gray-300 italic font-medium">"{report.reason}"</p>
+                                                                            </div>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+
+                                                    {/* Reply Reports */}
+                                                    {post.comments?.some(c => c.replies?.some(r => r.reports?.length > 0)) && (
+                                                        <div className="space-y-1.5">
+                                                            <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider pl-1">Reply Reports</div>
+                                                            {post.comments.flatMap(c => c.replies || []).filter(r => r.reports?.length > 0).map((reply, rIdx) => (
+                                                                <div key={`reply-r-${rIdx}`} className="space-y-1">
+                                                                    {reply.reports.map((report, rrIdx) => (
+                                                                        <div key={`reply-r-${rIdx}-${rrIdx}`} className="bg-white/80 dark:bg-gray-800/80 p-2 rounded-lg text-xs border border-amber-100/50 dark:border-amber-900/20 shadow-sm flex items-start gap-2">
+                                                                            <div className="bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded font-bold uppercase text-[9px] shrink-0">Reply</div>
+                                                                            <div className="flex-1 min-w-0">
+                                                                                <p className="text-gray-500 dark:text-gray-400 text-[10px] truncate mb-0.5">On: "{reply.content.substring(0, 40)}..."</p>
+                                                                                <p className="text-gray-700 dark:text-gray-300 italic font-medium">"{report.reason}"</p>
+                                                                            </div>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
                                                 </div>
+                                                <button
+                                                    onClick={() => toggleComments(post._id)}
+                                                    className="mt-3 w-full py-1.5 bg-red-600/10 hover:bg-red-600/20 text-red-600 dark:text-red-400 text-[10px] font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
+                                                >
+                                                    {expandedComments[post._id] ? 'Hide Content Details' : 'View Content Details to Moderate'}
+                                                    <FaArrowRight className={`text-[8px] transform transition-transform ${expandedComments[post._id] ? '-rotate-90' : 'rotate-90'}`} />
+                                                </button>
                                             </div>
                                         )}
                                     </div>

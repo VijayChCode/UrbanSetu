@@ -1181,7 +1181,7 @@ export default function Community() {
                                             </span>
                                             {currentUser && currentUser._id !== post.author?._id && (
                                                 <button
-                                                    onClick={() => setReportModal({ isOpen: true, postId: post._id })}
+                                                    onClick={() => setReportModal({ isOpen: true, type: 'post', id: post._id, commentId: null, replyId: null })}
                                                     className={`p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-all ${post.reports?.some(r => r.user === currentUser._id) ? 'text-red-500' : 'text-gray-300 dark:text-gray-600 hover:text-red-500'}`}
                                                     title="Report Post"
                                                 >

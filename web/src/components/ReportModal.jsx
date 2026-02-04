@@ -7,12 +7,17 @@ export default function ReportModal({ isOpen, onClose, onReport, title = "Report
 
     if (!isOpen) return null;
 
+    const handleClose = () => {
+        setReason('');
+        setCategory('Inappropriate Content');
+        onClose();
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
         if (!reason.trim()) return;
         onReport(`${category}: ${reason}`);
-        setReason('');
-        onClose();
+        handleClose();
     };
 
     const categories = [
@@ -34,12 +39,6 @@ export default function ReportModal({ isOpen, onClose, onReport, title = "Report
                         </div>
                         <h3 className="text-xl font-bold">{title}</h3>
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
-                    >
-                        <FaTimes />
-                    </button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
@@ -77,7 +76,7 @@ export default function ReportModal({ isOpen, onClose, onReport, title = "Report
                     <div className="flex gap-3 pt-2">
                         <button
                             type="button"
-                            onClick={onClose}
+                            onClick={handleClose}
                             className="flex-1 px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                         >
                             Cancel
