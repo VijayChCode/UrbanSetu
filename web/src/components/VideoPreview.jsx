@@ -1254,19 +1254,14 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
         onMouseDown={handleMouseDown}
         onClick={handleVideoAreaClick}
       >
-        {isOffline ? (
-          <div className="absolute inset-0 flex items-center justify-center z-[60] bg-black/40 backdrop-blur-sm pointer-events-none">
-            <div className="flex flex-col items-center gap-4 animate-fadeIn">
-              <div className="bg-red-500/20 p-6 rounded-full ring-2 ring-red-500/30">
-                <FaWifi className="text-red-500 text-5xl animate-pulse" />
-              </div>
-              <div className="text-center">
-                <h3 className="text-white font-bold text-lg">No Internet Connection</h3>
-                <p className="text-white/60 text-sm">Please check your network</p>
-              </div>
-            </div>
+        {isOffline && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[70] bg-red-600/90 backdrop-blur-md py-2 px-6 rounded-full flex items-center justify-center gap-3 animate-slide-down shadow-2xl border border-white/10 pointer-events-none whitespace-nowrap">
+            <FaWifi className="text-white text-sm animate-pulse" />
+            <span className="text-white text-[10px] sm:text-xs font-bold tracking-widest uppercase">Offline: Check your network</span>
           </div>
-        ) : isLoading && (
+        )}
+
+        {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center z-[60] pointer-events-none">
             <div className="flex flex-col items-center gap-4">
               <div className="bg-black/60 backdrop-blur-md p-6 rounded-full shadow-2xl ring-1 ring-white/10">
