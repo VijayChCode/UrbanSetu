@@ -259,7 +259,22 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
           if (scale > 1) {
             setPosition(p => ({ ...p, y: p.y + 20 }));
           } else {
-            setVolume(v => Math.min(v + 0.1, 1));
+            setVolume(v => {
+              const newVal = Math.min(v + 0.1, 1);
+              // Show side indicator
+              setActiveGesture('volume');
+              if (gestureTimeoutRef.current) clearTimeout(gestureTimeoutRef.current);
+              gestureTimeoutRef.current = setTimeout(() => setActiveGesture(null), 1000);
+
+              // Show center toast
+              showFeedback(
+                <div className="flex items-center gap-3">
+                  {getVolumeIcon(newVal)}
+                  <span>Volume: {Math.round(newVal * 100)}%</span>
+                </div>
+              );
+              return newVal;
+            });
           }
           break;
         case 'arrowdown': // Volume Down or Pan Down
@@ -267,7 +282,22 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
           if (scale > 1) {
             setPosition(p => ({ ...p, y: p.y - 20 }));
           } else {
-            setVolume(v => Math.max(v - 0.1, 0));
+            setVolume(v => {
+              const newVal = Math.max(v - 0.1, 0);
+              // Show side indicator
+              setActiveGesture('volume');
+              if (gestureTimeoutRef.current) clearTimeout(gestureTimeoutRef.current);
+              gestureTimeoutRef.current = setTimeout(() => setActiveGesture(null), 1000);
+
+              // Show center toast
+              showFeedback(
+                <div className="flex items-center gap-3">
+                  {getVolumeIcon(newVal)}
+                  <span>Volume: {Math.round(newVal * 100)}%</span>
+                </div>
+              );
+              return newVal;
+            });
           }
           break;
         case '+': // Zoom In
