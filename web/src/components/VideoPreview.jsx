@@ -1853,11 +1853,11 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
                         if (gestureTimeoutRef.current) clearTimeout(gestureTimeoutRef.current);
                         gestureTimeoutRef.current = setTimeout(() => setActiveGesture(null), 1000);
 
-                        // Show center toast feedback
+                        // Show center toast feedback with percentage
                         showFeedback(
-                          <div className="flex items-center gap-3 bg-black/80 px-4 py-2 rounded-xl backdrop-blur-md border border-white/10 shadow-2xl">
-                            {getVolumeIcon(newVal, { size: 24, className: "text-blue-400" })}
-                            <span className="font-bold text-lg">Volume: {Math.round(newVal * 100)}%</span>
+                          <div className="flex items-center gap-3">
+                            {getVolumeIcon(newVal, { size: 24 })}
+                            <span>Volume: {Math.round(newVal * 100)}%</span>
                           </div>
                         );
                       }}
