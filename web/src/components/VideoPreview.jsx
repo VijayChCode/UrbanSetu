@@ -113,6 +113,8 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
   const [contextMenu, setContextMenu] = useState({ show: false, x: 0, y: 0 });
   const [isLooping, setIsLooping] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  const [showRemainingTime, setShowRemainingTime] = useState(false);
+  const [isVolumeHovered, setIsVolumeHovered] = useState(false);
   const contextMenuRef = useRef(null);
 
   // Preview Thumbnail States
@@ -612,6 +614,14 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
       }
     }
   }, [isPlaying, currentIndex, playbackRate]);
+
+  // Volume & Mute effect
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.volume = volume;
+      videoRef.current.muted = isMuted;
+    }
+  }, [volume, isMuted]);
 
   // Auto-fit logic for rotation
   useEffect(() => {
@@ -1298,8 +1308,15 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
     setTimeout(() => { isTouchRef.current = false; }, 500);
   };
 
-  const formatTime = (seconds) => {
-    if (!seconds) return "0:00";
+  const formatTime = (seconds, isRemaining = false) => {
+    if (!seconds && !isRemaining) return "0:00";
+    if (isRemaining) {
+      const total = duration || videoRef.current?.duration || 0;
+      const diff = Math.max(0, total - seconds);
+      const mins = Math.floor(diff / 60);
+      const secs = Math.floor(diff % 60);
+      return `-${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    }
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
@@ -1814,11 +1831,40 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
                 <button onClick={togglePlay} className="hover:text-blue-400 transition-transform active:scale-95">
                   {isPlaying && !isLoading ? <FaPause size={20} /> : <FaPlay size={20} />}
                 </button>
-                <button onClick={toggleMute} className="hover:text-blue-400">
-                  {isMuted || volume === 0 ? <FaVolumeMute size={20} /> : <FaVolumeUp size={20} />}
-                </button>
-                <span className="text-xs font-mono opacity-80 select-none">
-                  {formatTime(videoRef.current?.currentTime)} / {formatTime(duration || videoRef.current?.duration)}
+                <div
+                  className="flex items-center group/volume-container"
+                  onMouseEnter={() => setIsVolumeHovered(true)}
+                  onMouseLeave={() => setIsVolumeHovered(false)}
+                >
+                  <button onClick={toggleMute} className="hover:text-blue-400 p-2">
+                    {isMuted || volume === 0 ? <FaVolumeMute size={20} /> : <FaVolumeUp size={20} />}
+                  </button>
+                  <div className={`overflow-hidden transition-all duration-300 flex items-center ${isVolumeHovered ? 'w-28 opacity-100 ml-2' : 'w-0 opacity-0'}`}>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.01"
+                      value={volume}
+                      onChange={(e) => {
+                        const newVal = parseFloat(e.target.value);
+                        setVolume(newVal);
+                        setActiveGesture('volume');
+                        if (gestureTimeoutRef.current) clearTimeout(gestureTimeoutRef.current);
+                        gestureTimeoutRef.current = setTimeout(() => setActiveGesture(null), 1000);
+                      }}
+                      className="w-24 h-1 bg-white/20 rounded-full appearance-none cursor-pointer accent-blue-500 hover:bg-white/40 transition-all"
+                    />
+                  </div>
+                </div>
+                <span
+                  className="text-xs font-mono opacity-80 select-none cursor-pointer hover:opacity-100 transition-opacity flex items-center gap-1"
+                  onClick={() => setShowRemainingTime(!showRemainingTime)}
+                  title={showRemainingTime ? "Show elapsed time" : "Show remaining time"}
+                >
+                  {formatTime(videoRef.current?.currentTime, showRemainingTime)}
+                  <span className="opacity-40">/</span>
+                  {formatTime(duration || videoRef.current?.duration)}
                 </span>
               </div>
 
