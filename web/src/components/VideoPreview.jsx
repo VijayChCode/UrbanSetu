@@ -1653,7 +1653,9 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
               <div className="h-2" /> <div className="h-2" />
 
               <span className="text-white/40">Date</span>
-              <span className="text-white/60 text-[10px] leading-tight">{new Date().toLocaleString()}</span>
+              <span className="text-white/60 text-[10px] leading-tight">
+                {new Date().toLocaleDateString('en-GB')} {new Date().toLocaleTimeString()}
+              </span>
             </div>
           </div>
         )}
