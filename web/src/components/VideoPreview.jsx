@@ -345,19 +345,20 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
             setCurrentIndex(prev => prev < videos.length - 1 ? prev + 1 : 0);
           }
           break;
-        case '.': // Frame Forward (or Speed Up if Shift)
+        case '.': // Frame Forward
+        case '>': // Speed Up (Shift + .)
           e.preventDefault();
-          if (e.shiftKey) {
-            toggleSpeed(); // Cycles speed
+          if (e.shiftKey || e.key === '>') {
+            toggleSpeed();
           } else if (videoRef.current) {
-            videoRef.current.currentTime += 0.05; // ~1 frame at 20fps
+            videoRef.current.currentTime += 0.05;
             showFeedback("Frame +");
           }
           break;
-        case ',': // Frame Backward (or Speed Down if Shift)
+        case ',': // Frame Backward
+        case '<': // Speed Down (Shift + ,)
           e.preventDefault();
-          if (e.shiftKey) {
-            // Speed down logic (Manual reverse cycle or similar)
+          if (e.shiftKey || e.key === '<') {
             const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
             const currentIndex = speeds.indexOf(playbackRate);
             const nextIndex = currentIndex > 0 ? currentIndex - 1 : speeds.length - 1;
