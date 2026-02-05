@@ -70,6 +70,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [isOnlineRecently, setIsOnlineRecently] = useState(false);
   const [isManualRetrying, setIsManualRetrying] = useState(false);
+  const [showRetryButton, setShowRetryButton] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [isLoading, setIsLoading] = useState(true);
@@ -141,6 +142,21 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
   };
 
   const currentVideoUrl = optimizeVideoUrl(videos[currentIndex]);
+
+  // Loading Delay for Retry Button
+  useEffect(() => {
+    let timeout;
+    if (isLoading) {
+      // Only show retry button if loading takes more than 6 seconds
+      timeout = setTimeout(() => {
+        setShowRetryButton(true);
+      }, 6000);
+    } else {
+      setShowRetryButton(false);
+      setIsManualRetrying(false);
+    }
+    return () => clearTimeout(timeout);
+  }, [isLoading]);
 
 
 
@@ -1511,7 +1527,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
               <div className="bg-black/60 backdrop-blur-md p-6 rounded-full shadow-2xl ring-1 ring-white/10">
                 <FaSpinner className="text-blue-500 animate-spin text-5xl" />
               </div>
-              {!isManualRetrying && (
+              {showRetryButton && !isManualRetrying && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
