@@ -631,18 +631,26 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
 
   // Playback effect
   useEffect(() => {
-    if (videoRef.current) {
+    if (videoRef.current && videoBlobUrl) {
       videoRef.current.playbackRate = playbackRate;
       if (isPlaying) {
-        videoRef.current.play().catch(e => {
-          console.warn("Autoplay interrupted", e);
-          setIsPlaying(false);
-        });
+        // Use a small delay or check for readyState if still failing, 
+        // but adding videoBlobUrl to dependencies should fix the race condition.
+        const playPromise = videoRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(e => {
+            console.warn("Autoplay interrupted or failed:", e);
+            // Only set to false if it's a "real" interruption, not just a source change
+            if (e.name !== 'AbortError') {
+              setIsPlaying(false);
+            }
+          });
+        }
       } else {
         videoRef.current.pause();
       }
     }
-  }, [isPlaying, currentIndex, playbackRate]);
+  }, [isPlaying, currentIndex, playbackRate, videoBlobUrl]);
 
   // Volume & Mute effect
   useEffect(() => {
@@ -718,6 +726,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
       console.log("Retrying with original source fallback...");
       setVideoBlobUrl(originalUrl);
       setIsLoading(true);
+      setIsPlaying(true);
       toast.info("Retrying with original source...");
       return;
     }
