@@ -130,15 +130,26 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
     // Check if it's a Cloudinary URL
     if (url.includes('cloudinary.com') && url.includes('/upload/')) {
       let newUrl = url;
-      // Inject high quality f_auto,q_auto:best if not present
+      // Inject high quality q_auto:best if not present
       if (!newUrl.includes('q_auto')) {
-        // Use q_auto (auto bitrate) but avoid f_auto (format conversion) for large files
-        // as dual transformations (f_auto + q_auto) on large files are prone to 423 Locks.
         newUrl = newUrl.replace('/upload/', '/upload/q_auto:best/');
       }
       return newUrl;
     }
     return url;
+  };
+
+  // NEW: Helper to get image thumbnail at specific time for Cloudinary
+  const getThumbnailUrl = (url, time) => {
+    if (!url || !url.includes('cloudinary.com')) return null;
+
+    // Replace extension with .jpg and add start offset (so_) transformation
+    // We use w_320 to keep it very light
+    const timeInSec = Math.floor(time || 0);
+    return url
+      .replace(/\/v\d+\//, '/') // Remove version for cleaner transform
+      .replace('/upload/', `/upload/so_${timeInSec},w_320,f_auto,q_auto/`)
+      .replace(/\.[^/.]+$/, '.jpg');
   };
 
   const currentVideoUrl = optimizeVideoUrl(videos[currentIndex]);
@@ -1832,17 +1843,29 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
                   className="absolute bottom-8 -translate-x-1/2 flex flex-col items-center gap-2 pointer-events-none z-[100] animate-fadeIn"
                   style={{ left: `${previewPos}%` }}
                 >
-                  <div className="w-40 h-24 sm:w-48 sm:h-28 bg-black border-[3px] border-white/40 rounded-xl overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.8)]">
-                    <video
-                      ref={previewVideoRef}
-                      src={videoBlobUrl || ""}
-                      className="w-full h-full object-cover"
-                      muted
-                      preload="auto"
-                      playsInline
-                      crossOrigin="anonymous"
-                      onLoadedData={(e) => e.target.currentTime = previewTime}
-                    />
+                  <div className="w-40 h-24 sm:w-48 sm:h-28 bg-gray-900 border-[3px] border-white/40 rounded-xl overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.8)] relative">
+                    {getThumbnailUrl(videos[currentIndex], previewTime) ? (
+                      <img
+                        src={getThumbnailUrl(videos[currentIndex], previewTime)}
+                        alt="preview"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <video
+                        ref={previewVideoRef}
+                        src={videoBlobUrl || ""}
+                        className="w-full h-full object-cover"
+                        muted
+                        preload="auto"
+                        playsInline
+                        crossOrigin="anonymous"
+                        onLoadedData={(e) => e.target.currentTime = previewTime}
+                      />
+                    )}
+                    {/* Tiny loading overlay if neither is ready */}
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    </div>
                   </div>
                   <span className="text-white text-sm font-bold font-mono drop-shadow-[0_2px_4px_rgba(0,0,0,1)] tracking-wider">
                     {formatTime(previewTime)}
