@@ -114,6 +114,13 @@ export const updateUser = async (req, res, next) => {
         if (req.body.address) updateFields.address = req.body.address.trim();
         if (req.body.gender) updateFields.gender = req.body.gender;
         if (req.body.profileVisibility) updateFields.profileVisibility = req.body.profileVisibility;
+
+        // Handle nested settings updates
+        if (req.body.settings && typeof req.body.settings === 'object') {
+            Object.keys(req.body.settings).forEach(key => {
+                updateFields[`settings.${key}`] = req.body.settings[key];
+            });
+        }
         // If mobile number is being updated and is different, set isGeneratedMobile to false
         if (req.body.mobileNumber && req.body.mobileNumber !== user.mobileNumber) {
             updateFields.isGeneratedMobile = false;

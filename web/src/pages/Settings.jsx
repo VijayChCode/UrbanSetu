@@ -152,63 +152,50 @@ export default function Settings() {
   const navigate = useNavigate();
 
   // Notification Preferences
-  const [emailNotifications, setEmailNotifications] = useState(() => {
-    const saved = localStorage.getItem('emailNotifications');
-    return saved !== null ? saved === 'true' : true;
-  });
-  const [inAppNotifications, setInAppNotifications] = useState(() => {
-    const saved = localStorage.getItem('inAppNotifications');
-    return saved !== null ? saved === 'true' : true;
-  });
-  const [pushNotifications, setPushNotifications] = useState(() => {
-    const saved = localStorage.getItem('pushNotifications');
-    return saved !== null ? saved === 'true' : false;
-  });
-  const [notificationSound, setNotificationSound] = useState(() => {
-    return localStorage.getItem('notificationSound') || 'default';
-  });
+  const [emailNotifications, setEmailNotifications] = useState(currentUser?.settings?.emailNotifications ?? true);
+  const [inAppNotifications, setInAppNotifications] = useState(currentUser?.settings?.inAppNotifications ?? true);
+  const [pushNotifications, setPushNotifications] = useState(currentUser?.settings?.pushNotifications ?? false);
+  const [notificationSound, setNotificationSound] = useState(currentUser?.settings?.notificationSound ?? 'default');
 
   // Privacy Settings
-  const [profileVisibility, setProfileVisibility] = useState(() => {
-    return currentUser?.profileVisibility || localStorage.getItem('profileVisibility') || 'friends';
-  });
-  const [showEmail, setShowEmail] = useState(() => {
-    const saved = localStorage.getItem('showEmail');
-    return saved !== null ? saved === 'true' : false;
-  });
-  const [showPhone, setShowPhone] = useState(() => {
-    const saved = localStorage.getItem('showPhone');
-    return saved !== null ? saved === 'true' : false;
-  });
-  const [dataSharing, setDataSharing] = useState(() => {
-    const saved = localStorage.getItem('dataSharing');
-    return saved !== null ? saved === 'true' : true;
-  });
-  const [allowLocationAccess, setAllowLocationAccess] = useState(() => {
-    const saved = localStorage.getItem('allowLocationAccess');
-    return saved !== null ? saved === 'true' : false;
-  });
+  const [profileVisibility, setProfileVisibility] = useState(currentUser?.profileVisibility || 'friends');
+  const [showEmail, setShowEmail] = useState(currentUser?.settings?.showEmail ?? false);
+  const [showPhone, setShowPhone] = useState(currentUser?.settings?.showPhone ?? false);
+  const [dataSharing, setDataSharing] = useState(currentUser?.settings?.dataSharing ?? true);
+  const [allowLocationAccess, setAllowLocationAccess] = useState(currentUser?.settings?.allowLocationAccess ?? false);
   const [isRequestingLocation, setIsRequestingLocation] = useState(false);
   const [isRequestingPush, setIsRequestingPush] = useState(false);
 
   // Language & Region
-  const [language, setLanguage] = useState(() => {
-    return i18n.language || localStorage.getItem('language') || 'en';
-  });
-  const [timezone, setTimezone] = useState(() => {
-    return localStorage.getItem('timezone') || Intl.DateTimeFormat().resolvedOptions().timeZone;
-  });
-  const [dateFormat, setDateFormat] = useState(() => {
-    return localStorage.getItem('dateFormat') || 'MM/DD/YYYY';
-  });
+  const [language, setLanguage] = useState(currentUser?.settings?.language ?? i18n.language ?? 'en');
+  const [timezone, setTimezone] = useState(currentUser?.settings?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone);
+  const [dateFormat, setDateFormat] = useState(currentUser?.settings?.dateFormat ?? 'MM/DD/YYYY');
 
   // Appearance
-  const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('theme') || 'light';
-  });
-  const [fontSize, setFontSize] = useState(() => {
-    return localStorage.getItem('fontSize') || 'medium';
-  });
+  const [theme, setTheme] = useState(currentUser?.settings?.theme ?? 'light');
+  const [fontSize, setFontSize] = useState(currentUser?.settings?.fontSize ?? 'medium');
+
+  // Utility to update user settings in DB
+  const updateUserSetting = async (settingsToUpdate) => {
+    try {
+      dispatch(updateUserStart());
+      const res = await authenticatedFetch(`${API_BASE_URL}/api/user/update/${currentUser._id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ settings: settingsToUpdate }),
+      });
+      const data = await res.json();
+      if (data.status === "error" || data.success === false) {
+        dispatch(updateUserFailure(data.message || 'Update failed'));
+        return false;
+      }
+      dispatch(updateUserSuccess(data.updatedUser));
+      return true;
+    } catch (error) {
+      dispatch(updateUserFailure(error.message));
+      return false;
+    }
+  };
 
   // Data Export
   const [exportingData, setExportingData] = useState(false);
@@ -914,17 +901,19 @@ export default function Settings() {
   };
 
 
-  const handleEmailNotificationsChange = (value) => {
+  const handleEmailNotificationsChange = async (value) => {
     scrollPositionRef.current = window.scrollY;
     setEmailNotifications(value);
     localStorage.setItem('emailNotifications', value.toString());
+    await updateUserSetting({ emailNotifications: value });
     showToast(t('messages.email_pref_saved'));
   };
 
-  const handleInAppNotificationsChange = (value) => {
+  const handleInAppNotificationsChange = async (value) => {
     scrollPositionRef.current = window.scrollY;
     setInAppNotifications(value);
     localStorage.setItem('inAppNotifications', value.toString());
+    await updateUserSetting({ inAppNotifications: value });
     showToast(t('messages.in_app_pref_saved'));
   };
 
@@ -949,13 +938,15 @@ export default function Settings() {
     }
     setPushNotifications(value);
     localStorage.setItem('pushNotifications', value.toString());
+    await updateUserSetting({ pushNotifications: value });
     showToast(t('messages.push_pref_saved'));
   };
 
-  const handleNotificationSoundChange = (value) => {
+  const handleNotificationSoundChange = async (value) => {
     scrollPositionRef.current = window.scrollY;
     setNotificationSound(value);
     localStorage.setItem('notificationSound', value);
+    await updateUserSetting({ notificationSound: value });
     showToast(t('messages.sound_pref_saved'));
   };
 
@@ -988,32 +979,35 @@ export default function Settings() {
     }
   };
 
-  const handleShowEmailChange = (value) => {
+  const handleShowEmailChange = async (value) => {
     scrollPositionRef.current = window.scrollY;
     setShowEmail(value);
     localStorage.setItem('showEmail', value.toString());
+    await updateUserSetting({ showEmail: value });
     // Dispatch custom event to notify Profile page
     window.dispatchEvent(new Event('settingsUpdated'));
     showToast(t('messages.email_vis_updated'));
   };
 
-  const handleShowPhoneChange = (value) => {
+  const handleShowPhoneChange = async (value) => {
     scrollPositionRef.current = window.scrollY;
     setShowPhone(value);
     localStorage.setItem('showPhone', value.toString());
+    await updateUserSetting({ showPhone: value });
     // Dispatch custom event to notify Profile page
     window.dispatchEvent(new Event('settingsUpdated'));
     showToast(t('messages.phone_vis_updated'));
   };
 
-  const handleDataSharingChange = (value) => {
+  const handleDataSharingChange = async (value) => {
     scrollPositionRef.current = window.scrollY;
     setDataSharing(value);
     localStorage.setItem('dataSharing', value.toString());
+    await updateUserSetting({ dataSharing: value });
     showToast(t('messages.data_sharing_saved'));
   };
 
-  const handleLocationAccessChange = (value) => {
+  const handleLocationAccessChange = async (value) => {
     scrollPositionRef.current = window.scrollY;
 
     if (value) {
@@ -1024,9 +1018,10 @@ export default function Settings() {
 
       setIsRequestingLocation(true);
       navigator.geolocation.getCurrentPosition(
-        () => {
+        async () => {
           setAllowLocationAccess(true);
           localStorage.setItem('allowLocationAccess', 'true');
+          await updateUserSetting({ allowLocationAccess: true });
           showToast('Location access granted preference saved');
           setIsRequestingLocation(false);
         },
@@ -1045,36 +1040,41 @@ export default function Settings() {
     } else {
       setAllowLocationAccess(false);
       localStorage.setItem('allowLocationAccess', 'false');
+      await updateUserSetting({ allowLocationAccess: false });
       showToast('Location access disabled');
     }
   };
 
-  const handleLanguageChange = (value) => {
+  const handleLanguageChange = async (value) => {
     scrollPositionRef.current = window.scrollY;
     setLanguage(value);
     i18n.changeLanguage(value);
     localStorage.setItem('language', value);
+    await updateUserSetting({ language: value });
     showToast(t('messages.language_saved'));
   };
 
-  const handleTimezoneChange = (value) => {
+  const handleTimezoneChange = async (value) => {
     scrollPositionRef.current = window.scrollY;
     setTimezone(value);
     localStorage.setItem('timezone', value);
+    await updateUserSetting({ timezone: value });
     showToast(t('messages.timezone_updated'));
   };
 
-  const handleDateFormatChange = (value) => {
+  const handleDateFormatChange = async (value) => {
     scrollPositionRef.current = window.scrollY;
     setDateFormat(value);
     localStorage.setItem('dateFormat', value);
+    await updateUserSetting({ dateFormat: value });
     showToast(t('messages.date_format_updated'));
   };
 
-  const handleThemeChange = (value) => {
+  const handleThemeChange = async (value) => {
     scrollPositionRef.current = window.scrollY;
     setTheme(value);
     localStorage.setItem('theme', value);
+    await updateUserSetting({ theme: value });
     window.dispatchEvent(new CustomEvent('theme-change', { detail: { theme: value } }));
 
     if (value === 'system') {
@@ -1087,10 +1087,11 @@ export default function Settings() {
     showToast(t('messages.theme_updated'));
   };
 
-  const handleFontSizeChange = (value) => {
+  const handleFontSizeChange = async (value) => {
     scrollPositionRef.current = window.scrollY;
     setFontSize(value);
     localStorage.setItem('fontSize', value);
+    await updateUserSetting({ fontSize: value });
     document.documentElement.style.fontSize = value === 'small' ? '14px' : value === 'large' ? '18px' : '16px';
     showToast(t('messages.font_size_updated'));
   };

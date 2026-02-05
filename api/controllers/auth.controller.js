@@ -455,6 +455,7 @@ export const SignIn = async (req, res, next) => {
             mobileNumber: validUser.mobileNumber,
             address: validUser.address,
             gender: validUser.gender,
+            settings: validUser.settings,
             token: accessToken, // Keep for backward compatibility
             refreshToken, // Send for cross-domain storage
             sessionId: session.sessionId,
@@ -615,6 +616,7 @@ export const Google = async (req, res, next) => {
                 mobileNumber: validUser.mobileNumber,
                 address: validUser.address,
                 gender: validUser.gender,
+                settings: validUser.settings,
                 token: accessToken, // Keep for backward compatibility
                 refreshToken, // Send for cross-domain storage
                 sessionId: session.sessionId,
@@ -797,6 +799,7 @@ export const Google = async (req, res, next) => {
                 isGeneratedMobile: newUser.isGeneratedMobile,
                 address: newUser.address,
                 gender: newUser.gender,
+                settings: newUser.settings,
                 token: accessToken, // Keep for backward compatibility
                 refreshToken, // Send for cross-domain storage
                 isNewUser: true,

@@ -151,6 +151,23 @@ const userSchema = new mongoose.Schema({
     default: 'public'
   },
 
+  // User Preferences & Settings
+  settings: {
+    emailNotifications: { type: Boolean, default: true },
+    inAppNotifications: { type: Boolean, default: true },
+    pushNotifications: { type: Boolean, default: false },
+    notificationSound: { type: String, default: 'default' },
+    showEmail: { type: Boolean, default: false },
+    showPhone: { type: Boolean, default: false },
+    dataSharing: { type: Boolean, default: true },
+    allowLocationAccess: { type: Boolean, default: false },
+    language: { type: String, default: 'en' },
+    timezone: { type: String, default: 'Asia/Kolkata' },
+    dateFormat: { type: String, default: 'MM/DD/YYYY' },
+    theme: { type: String, default: 'light' },
+    fontSize: { type: String, default: 'medium' },
+  },
+
   // Rental Profile
   rentalProfile: {
     isTenant: {
