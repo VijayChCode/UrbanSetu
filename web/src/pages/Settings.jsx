@@ -154,7 +154,10 @@ export default function Settings() {
   // Notification Preferences
   const [emailNotifications, setEmailNotifications] = useState(currentUser?.settings?.emailNotifications ?? true);
   const [inAppNotifications, setInAppNotifications] = useState(currentUser?.settings?.inAppNotifications ?? true);
-  const [pushNotifications, setPushNotifications] = useState(currentUser?.settings?.pushNotifications ?? false);
+  const [pushNotifications, setPushNotifications] = useState(() => {
+    const saved = localStorage.getItem('pushNotifications');
+    return saved !== null ? saved === 'true' : (currentUser?.settings?.pushNotifications ?? false);
+  });
   const [notificationSound, setNotificationSound] = useState(currentUser?.settings?.notificationSound ?? 'default');
 
   // Privacy Settings
@@ -162,7 +165,10 @@ export default function Settings() {
   const [showEmail, setShowEmail] = useState(currentUser?.settings?.showEmail ?? false);
   const [showPhone, setShowPhone] = useState(currentUser?.settings?.showPhone ?? false);
   const [dataSharing, setDataSharing] = useState(currentUser?.settings?.dataSharing ?? true);
-  const [allowLocationAccess, setAllowLocationAccess] = useState(currentUser?.settings?.allowLocationAccess ?? false);
+  const [allowLocationAccess, setAllowLocationAccess] = useState(() => {
+    const saved = localStorage.getItem('allowLocationAccess');
+    return saved !== null ? saved === 'true' : (currentUser?.settings?.allowLocationAccess ?? false);
+  });
   const [isRequestingLocation, setIsRequestingLocation] = useState(false);
   const [isRequestingPush, setIsRequestingPush] = useState(false);
 
