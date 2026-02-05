@@ -131,8 +131,8 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
       let newUrl = url;
       // Inject high quality f_auto,q_auto:best if not present
       if (!newUrl.includes('q_auto')) {
-        // q_auto:best - Highest bitrate for maximum clarity
-        newUrl = newUrl.replace('/upload/', '/upload/f_auto,q_auto:best/');
+        // q_auto - Auto bitrate for efficient streaming/loading
+        newUrl = newUrl.replace('/upload/', '/upload/f_auto,q_auto/');
       }
       return newUrl;
     }
@@ -193,8 +193,9 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
     const loadVideo = async () => {
       if (!currentVideoUrl || !isOpen) return;
 
-      // If already a blob (local preview), just use it
-      if (currentVideoUrl.startsWith('blob:')) {
+      // If already a blob (local preview) OR a Cloudinary URL, use it directly to enable browser streaming
+      // (Fetching 86MB+ as a blob into memory causes timeouts and crashes)
+      if (currentVideoUrl.startsWith('blob:') || currentVideoUrl.includes('cloudinary.com')) {
         setVideoBlobUrl(currentVideoUrl);
         return;
       }
@@ -1531,6 +1532,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
           src={videoBlobUrl || ""}
           className={`w-full h-full object-contain transition-transform duration-100 ${isDragging ? 'cursor-grabbing' : scale > 1 ? 'cursor-grab' : 'cursor-pointer'}`}
           playsInline
+          crossOrigin="anonymous"
           preload="auto"
           autoPlay
           onLoadStart={() => setIsLoading(true)}
@@ -1812,6 +1814,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
                       muted
                       preload="auto"
                       playsInline
+                      crossOrigin="anonymous"
                       onLoadedData={(e) => e.target.currentTime = previewTime}
                     />
                   </div>
