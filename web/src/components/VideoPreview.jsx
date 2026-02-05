@@ -134,7 +134,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
       if (!newUrl.includes('q_auto')) {
         // Use q_auto (auto bitrate) but avoid f_auto (format conversion) for large files
         // as dual transformations (f_auto + q_auto) on large files are prone to 423 Locks.
-        newUrl = newUrl.replace('/upload/', '/upload/q_auto/');
+        newUrl = newUrl.replace('/upload/', '/upload/q_auto:best/');
       }
       return newUrl;
     }
