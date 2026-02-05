@@ -131,8 +131,9 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
       let newUrl = url;
       // Inject high quality f_auto,q_auto:best if not present
       if (!newUrl.includes('q_auto')) {
-        // q_auto - Auto bitrate for efficient streaming/loading
-        newUrl = newUrl.replace('/upload/', '/upload/f_auto,q_auto/');
+        // Use q_auto (auto bitrate) but avoid f_auto (format conversion) for large files
+        // as dual transformations (f_auto + q_auto) on large files are prone to 423 Locks.
+        newUrl = newUrl.replace('/upload/', '/upload/q_auto/');
       }
       return newUrl;
     }
@@ -682,12 +683,21 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
   };
 
   const handleVideoError = () => {
-    // Only show error if we aren't loading (sometimes error triggers during blob fetch switch)
-    // But generally, if <video> errors, it's real.
     console.error("Video playback error");
+
+    // Check if we can fallback to the original URL
+    const originalUrl = videos[currentIndex];
+    if (videoBlobUrl !== originalUrl) {
+      console.log("Retrying with original source fallback...");
+      setVideoBlobUrl(originalUrl);
+      setIsLoading(true);
+      toast.info("Retrying with original source...");
+      return;
+    }
+
     toast.error("Unable to play video.");
     setIsPlaying(false);
-    setIsLoading(false); // Stop spinner
+    setIsLoading(false);
   };
 
   const togglePlay = (e) => {
