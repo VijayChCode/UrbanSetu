@@ -1730,17 +1730,18 @@ body.modal-open {
     transform: perspective(500px) rotateY(0deg) skewY(0deg);
   }
 }
+
 /* Custom Volume Slider Thumb Styling */
 .volume-slider-custom::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
   width: 14px;
   height: 14px;
-  background: #3b82f6;
+  background: white;
   border-radius: 50%;
   cursor: pointer;
-  border: 2px solid white;
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+  border: none;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.4);
   transition: transform 0.1s ease-in-out;
 }
 
@@ -1751,11 +1752,11 @@ body.modal-open {
 .volume-slider-custom::-moz-range-thumb {
   width: 14px;
   height: 14px;
-  background: #3b82f6;
+  background: white;
   border-radius: 50%;
   cursor: pointer;
-  border: 2px solid white;
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+  border: none;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.4);
   transition: transform 0.1s ease-in-out;
 }
 

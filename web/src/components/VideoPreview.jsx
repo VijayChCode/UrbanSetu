@@ -585,20 +585,20 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
 
   // Auto-Hide Controls Logic
   useEffect(() => {
-    if (showControls && isPlaying && !showSettings && !isDragging && !showPreview) {
+    if (showControls && isPlaying && !showSettings && !isDragging && !showPreview && !isVolumeHovered) {
       if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
       controlsTimeoutRef.current = setTimeout(() => {
         setShowControls(false);
       }, 2500);
     } else {
-      // If paused, dragging, or hovering seeker (showPreview), keep controls visible
+      // If paused, dragging, hovering seeker (showPreview), or volume toggler, keep controls visible
       if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
     }
 
     return () => {
       if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
     };
-  }, [showControls, isPlaying, showSettings, isDragging, showPreview]);
+  }, [showControls, isPlaying, showSettings, isDragging, showPreview, isVolumeHovered]);
 
   // Playback effect
   useEffect(() => {
