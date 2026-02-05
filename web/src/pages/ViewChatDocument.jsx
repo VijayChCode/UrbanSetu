@@ -78,7 +78,13 @@ export default function ViewChatDocument() {
             // Fetch blob for PDF or Text to view safely
             if (derivedType === 'pdf' || derivedType === 'text') {
                 setLoading(true);
-                authenticatedFetch(url, { mode: 'cors' })
+                // Fix: Standard fetch for Cloudinary to avoid CORS 'credentials/wildcard' issues
+                const isCloudinary = url.includes('cloudinary.com');
+                const fetchPromise = isCloudinary
+                    ? fetch(url, { mode: 'cors' })
+                    : authenticatedFetch(url, { mode: 'cors' });
+
+                fetchPromise
                     .then(r => r.blob())
                     .then(blob => {
                         // Force correct MIME type for PDF, otherwise trust blob for text
@@ -146,7 +152,12 @@ export default function ViewChatDocument() {
             // For other files, direct open/download
             // Use fetch to trigger download to avoid browser opening it in tab if possible
             try {
-                const response = await authenticatedFetch(docUrl, { mode: 'cors' });
+                // Fix: Standard fetch for Cloudinary to avoid CORS 'credentials/wildcard' issues
+                const isCloudinary = docUrl.includes('cloudinary.com');
+                const response = isCloudinary
+                    ? await fetch(docUrl, { mode: 'cors' })
+                    : await authenticatedFetch(docUrl, { mode: 'cors' });
+
                 const blob = await response.blob();
                 const blobUrl = window.URL.createObjectURL(blob);
                 const link = window.document.createElement('a');

@@ -53,7 +53,13 @@ export default function ViewDocument() {
                 setFileType(derivedType);
 
                 if (derivedType === 'pdf' && !isMobile) {
-                    authenticatedFetch(url, { mode: 'cors' })
+                    // Fix: Standard fetch for Cloudinary to avoid CORS 'credentials/wildcard' issues
+                    const isCloudinary = url.includes('cloudinary.com');
+                    const fetchPromise = isCloudinary
+                        ? fetch(url, { mode: 'cors' })
+                        : authenticatedFetch(url, { mode: 'cors' });
+
+                    fetchPromise
                         .then(r => r.blob())
                         .then(blob => {
                             const cleanBlob = new Blob([blob], { type: 'application/pdf' });
@@ -106,7 +112,12 @@ export default function ViewDocument() {
                     // If PDF and NOT mobile, fetch blob immediately to render locally
                     if (type === 'pdf' && !isMobile) {
                         try {
-                            const fileRes = await authenticatedFetch(data.document.url, { mode: 'cors' });
+                            // Fix: Standard fetch for Cloudinary to avoid CORS 'credentials/wildcard' issues
+                            const isCloudinary = data.document.url.includes('cloudinary.com');
+                            const fileRes = isCloudinary
+                                ? await fetch(data.document.url, { mode: 'cors' })
+                                : await authenticatedFetch(data.document.url, { mode: 'cors' });
+
                             const blob = await fileRes.blob();
                             const cleanBlob = new Blob([blob], { type: 'application/pdf' });
                             const blobUrl = URL.createObjectURL(cleanBlob);
