@@ -1861,7 +1861,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
                           </div>
                         );
                       }}
-                      className="w-28 h-1 rounded-full appearance-none cursor-pointer transition-all volume-slider-custom"
+                      className="w-28 h-6 appearance-none bg-transparent cursor-pointer transition-all volume-slider-custom"
                       style={{
                         background: `linear-gradient(to right, #3b82f6 ${volume * 100}%, rgba(255,255,255,0.2) ${volume * 100}%)`,
                       }}
