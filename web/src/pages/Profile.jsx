@@ -11,7 +11,7 @@ import AdminCoinCard from "../components/SetuCoins/AdminCoinCard";
 import CoinHistory from "../components/SetuCoins/CoinHistory";
 import RecaptchaWidget from "../components/RecaptchaWidget";
 import SocialSharePanel from "../components/SocialSharePanel";
-import { authenticatedFetch, createAuthenticatedFetchOptions, getCSRFToken } from '../utils/csrf';
+import { authenticatedFetch, createAuthenticatedFetchOptions } from '../utils/csrf';
 import {
   updateUserStart,
   updateUserSuccess,
