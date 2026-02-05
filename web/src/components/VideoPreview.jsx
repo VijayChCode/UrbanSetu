@@ -116,6 +116,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
   const [showStats, setShowStats] = useState(false);
   const [showRemainingTime, setShowRemainingTime] = useState(false);
   const [isVolumeHovered, setIsVolumeHovered] = useState(false);
+  const [isBottomControlsHovered, setIsBottomControlsHovered] = useState(false);
   const contextMenuRef = useRef(null);
 
   // Preview Thumbnail States
@@ -614,7 +615,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
 
   // Auto-Hide Controls Logic
   useEffect(() => {
-    if (showControls && isPlaying && !showSettings && !isDragging && !showPreview && !isVolumeHovered) {
+    if (showControls && isPlaying && !showSettings && !isDragging && !showPreview && !isVolumeHovered && !isBottomControlsHovered) {
       if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
       controlsTimeoutRef.current = setTimeout(() => {
         setShowControls(false);
@@ -627,7 +628,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
     return () => {
       if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
     };
-  }, [showControls, isPlaying, showSettings, isDragging, showPreview, isVolumeHovered]);
+  }, [showControls, isPlaying, showSettings, isDragging, showPreview, isVolumeHovered, isBottomControlsHovered]);
 
   // Playback effect
   useEffect(() => {
@@ -1820,7 +1821,11 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
 
       {/* Bottom Controls Bar */}
       {!isMiniMode && (
-        <div className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 to-transparent px-4 pb-4 pt-10 transition-all duration-300 ${showControls ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full pointer-events-none'}`}>
+        <div
+          className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 to-transparent px-4 pb-4 pt-10 transition-all duration-300 ${showControls ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full pointer-events-none'}`}
+          onMouseEnter={() => setIsBottomControlsHovered(true)}
+          onMouseLeave={() => setIsBottomControlsHovered(false)}
+        >
           <div className="w-full space-y-3">
             <div
               className="w-full h-1.5 bg-white/30 rounded-full cursor-pointer relative group/slider"
