@@ -184,6 +184,35 @@ export const authenticatedFetch = async (url, options = {}) => {
       }
     }
 
+    // Intercept 403 and try to refresh CSRF token if expired
+    if (response.status === 403 && !options._csrfRetry) {
+      const cloned = response.clone();
+      let isCsrfExpired = false;
+      try {
+        const errorData = await cloned.json();
+        if (errorData.message === 'CSRF token expired') {
+          isCsrfExpired = true;
+        }
+      } catch (e) {
+        const text = await cloned.text();
+        if (text.includes('CSRF token expired')) {
+          isCsrfExpired = true;
+        }
+      }
+
+      if (isCsrfExpired) {
+        console.log('CSRF token expired, retrying with fresh token...');
+        try {
+          // Clear cache and fetch a new one
+          clearCSRFTokenCache();
+          const newOptions = await createAuthenticatedFetchOptions({ ...options, _csrfRetry: true });
+          return await fetch(url, newOptions);
+        } catch (retryError) {
+          console.error('CSRF retry failed:', retryError);
+        }
+      }
+    }
+
     if (!response.ok) {
       const cloned = response.clone();
       let errorData = null;
