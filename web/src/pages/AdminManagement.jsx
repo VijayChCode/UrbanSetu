@@ -562,10 +562,25 @@ export default function AdminManagement() {
   };
 
   const handleToggleSubscription = async (id, currentStatus, reason = null) => {
-    // If we are unsubscribing and no reason is provided yet, show the modal
+    // Case 1: Unsubscribing - Show reason modal first
     if (currentStatus && !reason && !showUnsubscribeReasonModal) {
       setUnsubscribeReasonText("");
       setShowUnsubscribeReasonModal(true);
+      return;
+    }
+
+    // Case 2: Subscribing - Show simple confirmation modal
+    if (!currentStatus && !reason) {
+      showConfirmation(
+        'Confirm Subscription',
+        `Are you sure you want to resubscribe ${selectedAccount?.username || 'this user'} to promotional emails?`,
+        () => handleToggleSubscription(id, false, "Resubscribed by Administrator"),
+        {
+          confirmText: 'Subscribe',
+          confirmButtonClass: 'bg-green-500 hover:bg-green-600',
+          userId: id
+        }
+      );
       return;
     }
 
@@ -597,8 +612,9 @@ export default function AdminManagement() {
         // Update admins list
         setAdmins(prev => prev.map(a => a._id === id ? { ...a, isSubscribed: !currentStatus } : a));
 
-        // Close modal if it was open
+        // Close modals if they were open
         setShowUnsubscribeReasonModal(false);
+        setShowConfirmModal(false);
       } else {
         toast.error(data.message || "Failed to update subscription status");
       }
