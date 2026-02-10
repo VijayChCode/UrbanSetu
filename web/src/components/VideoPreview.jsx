@@ -176,12 +176,18 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
 
 
 
-  // Initialize and Fetch Blob
+  // Sync currentIndex with initialIndex only on OPEN
   useEffect(() => {
     if (isOpen) {
       setCurrentIndex(initialIndex || 0);
+    }
+  }, [isOpen, initialIndex]);
+
+  // Main Reset & Cleanup Effect - runs on Open or Index Change
+  useEffect(() => {
+    if (isOpen) {
       document.body.style.overflow = isMiniMode ? '' : 'hidden';
-      // Reset states
+      // Reset playback states
       setIsLoading(true);
       setIsPlaying(true);
       setDuration(0);
@@ -217,7 +223,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
         videoRef.current.load();
       }
     };
-  }, [isOpen, initialIndex]);
+  }, [isOpen, currentIndex]);
 
   // Fetch Blob Effect
   useEffect(() => {
