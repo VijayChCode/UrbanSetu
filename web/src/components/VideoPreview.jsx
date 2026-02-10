@@ -1875,12 +1875,6 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
                   Close
                 </button>
               </div>
-              <button
-                onClick={() => setShowAboutPlayer(false)}
-                className="absolute top-3 right-3 p-2 text-white/40 hover:text-white transition-colors"
-              >
-                <FaTimes size={16} />
-              </button>
             </div>
           </div>
         )}
