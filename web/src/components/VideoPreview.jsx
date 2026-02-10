@@ -1969,7 +1969,9 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
                 <path d="M19 6v14c0 1.1-.9 2-2 2H7c-1.1 0-2-.9-2-2V6" /><path d="M10 11v6" /><path d="M14 11v6" />
               </svg>
             </div>
-            <span className={`mt-2 font-bold text-sm bg-black/50 px-2 py-1 rounded backdrop-blur ${isOverTrash ? 'text-red-500' : 'text-white/70'}`}>Drag here to close</span>
+            <span className={`mt-2 font-bold text-sm bg-black/50 px-2 py-1 rounded backdrop-blur ${isOverTrash ? 'text-red-500' : 'text-white/70'}`}>
+              {isOverTrash ? 'Drop to Close' : 'Drag here to close'}
+            </span>
           </div>
         )
       }
