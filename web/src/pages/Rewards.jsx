@@ -33,15 +33,30 @@ export default function Rewards() {
     const location = useLocation();
     const navigate = useNavigate();
 
+    const tabs = [
+        { id: 'overview', label: 'Overview', icon: <FaRocket /> },
+        { id: 'rewards', label: 'Redeem', icon: <FaGift /> },
+        { id: 'activities', label: 'Earn More', icon: <FaStar /> },
+        { id: 'referrals', label: 'Referrals', icon: <FaUserFriends /> },
+        { id: 'history', label: 'History', icon: <FaHistory /> },
+        { id: 'leaderboard', label: 'Leaderboard', icon: <FaTrophy /> },
+    ];
+
     // TAB management
     const queryParams = new URLSearchParams(location.search);
-    const tabParam = queryParams.get('tab') || 'overview';
-    const [activeTab, setActiveTab] = useState(tabParam);
+    const tabParam = queryParams.get('tab');
+    const [activeTab, setActiveTab] = useState(() => {
+        return tabs.some(t => t.id === tabParam) ? tabParam : 'overview';
+    });
 
     // Sync state with URL when it changes
     useEffect(() => {
-        const currentTab = new URLSearchParams(location.search).get('tab') || 'overview';
-        setActiveTab(currentTab);
+        const currentTab = new URLSearchParams(location.search).get('tab');
+        if (currentTab && tabs.some(t => t.id === currentTab)) {
+            setActiveTab(currentTab);
+        } else {
+            setActiveTab('overview');
+        }
     }, [location.search]);
 
     const isProfileComplete = currentUser && currentUser.gender && currentUser.address && currentUser.mobileNumber;
@@ -142,14 +157,6 @@ export default function Rewards() {
         }
     };
 
-    const tabs = [
-        { id: 'overview', label: 'Overview', icon: <FaRocket /> },
-        { id: 'rewards', label: 'Redeem', icon: <FaGift /> },
-        { id: 'activities', label: 'Earn More', icon: <FaStar /> },
-        { id: 'referrals', label: 'Referrals', icon: <FaUserFriends /> },
-        { id: 'history', label: 'History', icon: <FaHistory /> },
-        { id: 'leaderboard', label: 'Leaderboard', icon: <FaTrophy /> },
-    ];
 
     // Earn Activities (Static for now, but linked to features)
     const earnActivities = [
