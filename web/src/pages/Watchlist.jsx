@@ -718,7 +718,7 @@ export default function Watchlist() {
                   <FaCheck className="text-sm" />
                   {selectedItems.length === filteredAndSortedItems.length ? 'Deselect All' : 'Select All'}
                 </button>
-                <span className="text-sm text-gray-600 text-center sm:text-left">
+                <span className="text-sm text-gray-600 dark:text-gray-200 text-center sm:text-left">
                   {selectedItems.length} of {filteredAndSortedItems.length} selected
                 </span>
               </div>
