@@ -1,10 +1,16 @@
 import React from 'react';
 import { Cookie, Shield, BarChart, FileText, Settings, Info, CheckCircle2, XCircle, ExternalLink, Mail, Phone, MapPin } from 'lucide-react';
 import ContactSupportWrapper from '../components/ContactSupportWrapper';
+import SEO from '../components/SEO';
 
 const UserCookiePolicy = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-300">
+      <SEO
+        title="Cookie Policy - Manage Your Preferences | UrbanSetu"
+        description="Understand how UrbanSetu uses cookies to enhance your property search experience. Manage your cookie preferences and learn about our data practices."
+        keywords="UrbanSetu cookie policy, website cookies, manage cookie preferences, user cookie policy"
+      />
       {/* Hero Section */}
       <div className="relative bg-gradient-to-r from-blue-700 to-indigo-800 dark:from-blue-900 dark:to-indigo-950 text-white py-24 overflow-hidden transition-colors duration-300">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1557804506-669a67965ba0?ixlib=rb-1.2.1&auto=format&fit=crop&w=1567&q=80')] opacity-10 bg-cover bg-center"></div>
