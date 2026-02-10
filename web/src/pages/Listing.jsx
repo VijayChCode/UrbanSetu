@@ -3373,7 +3373,7 @@ export default function Listing() {
           </div>
 
           {/* Neighborhood Insights */}
-          {neighborhood && (
+          {currentUser && neighborhood && (
             <div className="mt-8 p-4 bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-100 dark:border-gray-700">
               <h4 className="text-xl font-bold text-gray-800 dark:text-white mb-3">Neighborhood Insights</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
