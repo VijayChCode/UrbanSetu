@@ -1637,7 +1637,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
           <div className="absolute inset-0 flex items-center justify-center z-[60] pointer-events-none">
             <div className="flex flex-col items-center gap-4">
               <div className="bg-black/60 backdrop-blur-md p-6 rounded-full shadow-2xl ring-1 ring-white/10">
-                <FaSpinner className="text-blue-500 animate-spin text-5xl" />
+                <FaSpinner className="text-white animate-spin text-5xl" />
               </div>
               {showRetryButton && !isManualRetrying && (
                 <button
