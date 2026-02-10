@@ -17,7 +17,8 @@ import {
   FaRegHeart,
   FaCog,
   FaEye,
-  FaEyeSlash
+  FaEyeSlash,
+  FaInfoCircle
 } from 'react-icons/fa';
 import { useImageFavorites } from '../contexts/ImageFavoritesContext';
 import SocialSharePanel from './SocialSharePanel';
@@ -73,6 +74,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
   const [controlsTimeout, setControlsTimeout] = useState(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [showSocialShare, setShowSocialShare] = useState(false);
+  const [showAboutViewer, setShowAboutViewer] = useState(false);
   const [autoScale, setAutoScale] = useState(1);
 
   const imageRef = useRef(null);
@@ -151,6 +153,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
       setShowControls(true);
       setShowInfo(false);
       setShowSettings(false);
+      setShowAboutViewer(false);
     }
   }, [isOpen, initialIndex]);
 
@@ -1204,11 +1207,21 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
                   <span>Rotate Image</span>
                 </div>
               </button>
+              <button
+                onClick={() => { setShowAboutViewer(true); setShowSettings(false); }}
+                className="w-full text-left p-2 rounded-lg text-white hover:text-blue-300 hover:bg-white hover:bg-opacity-20 transition-all duration-200 border-t border-gray-600 mt-2 pt-3"
+              >
+                <div className="flex items-center gap-2">
+                  <FaInfoCircle size={14} />
+                  <span>About Viewer</span>
+                </div>
+              </button>
             </div>
+
             {/* Mobile-only options */}
             <div className="md:hidden space-y-2 pt-2 border-t border-gray-600">
               <button
-                onClick={() => setShowInfo(prev => !prev)}
+                onClick={() => { setShowInfo(prev => !prev); setShowSettings(false); }}
                 className={`w-full text-left p-2 rounded-lg transition-all duration-200 ${showInfo
                   ? 'text-blue-400 bg-blue-400 bg-opacity-20'
                   : 'text-white hover:text-blue-300 hover:bg-white hover:bg-opacity-20'
@@ -1220,7 +1233,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
                 </div>
               </button>
               <button
-                onClick={handleShare}
+                onClick={() => { handleShare(); setShowSettings(false); }}
                 className="w-full text-left p-2 rounded-lg text-white hover:text-blue-300 hover:bg-white hover:bg-opacity-20 transition-all duration-200"
               >
                 <div className="flex items-center gap-2">
@@ -1229,7 +1242,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
                 </div>
               </button>
               <button
-                onClick={toggleFullscreen}
+                onClick={() => { toggleFullscreen(); setShowSettings(false); }}
                 className="w-full text-left p-2 rounded-lg text-white hover:text-blue-300 hover:bg-white hover:bg-opacity-20 transition-all duration-200"
               >
                 <div className="flex items-center gap-2">
@@ -1238,12 +1251,21 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
                 </div>
               </button>
               <button
-                onClick={handleRotate}
+                onClick={() => { handleRotate(); setShowSettings(false); }}
                 className="w-full text-left p-2 rounded-lg text-white hover:text-blue-300 hover:bg-white hover:bg-opacity-20 transition-all duration-200"
               >
                 <div className="flex items-center gap-2">
                   <FaUndo size={14} />
                   <span>Rotate Image</span>
+                </div>
+              </button>
+              <button
+                onClick={() => { setShowAboutViewer(true); setShowSettings(false); }}
+                className="w-full text-left p-2 rounded-lg text-white hover:text-blue-300 hover:bg-white hover:bg-opacity-20 transition-all duration-200 border-t border-gray-600 mt-2 pt-3"
+              >
+                <div className="flex items-center gap-2">
+                  <FaInfoCircle size={14} />
+                  <span>About Viewer</span>
                 </div>
               </button>
             </div>
@@ -1290,14 +1312,12 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
         </div>
       )}
 
-      {/* Central Feedback Toast (Like VideoPreview) */}
+      {/* Central Feedback Toast */}
       <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 pointer-events-none transition-opacity duration-300 ${feedbackMessage ? 'opacity-100' : 'opacity-0'}`}>
         <div className="bg-black/70 backdrop-blur-md text-white text-3xl font-bold px-6 py-4 rounded-xl shadow-2xl whitespace-nowrap">
           {feedbackMessage}
         </div>
       </div>
-
-
 
       {/* Slideshow Indicator */}
       {isSlideshow && (
@@ -1317,6 +1337,58 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
         title="Check out this property image!"
         description="Amazing property image from our listing"
       />
+
+      {/* About Viewer Modal */}
+      {showAboutViewer && (
+        <div className="absolute inset-0 flex items-center justify-center z-[100] p-4">
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-md pointer-events-auto"
+            onClick={() => setShowAboutViewer(false)}
+          />
+          <div className="relative w-full max-w-sm bg-[#1a1a1a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden pointer-events-auto animate-scaleIn">
+            <div className="bg-gradient-to-br from-blue-600/20 to-purple-600/20 p-6 flex flex-col items-center">
+              <div className="relative group mb-4">
+                <div className="absolute -inset-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full blur opacity-40 group-hover:opacity-60 transition duration-500"></div>
+                <div className="relative w-20 h-20 bg-black rounded-full flex items-center justify-center border border-white/20">
+                  <FaEye className="text-white text-3xl" />
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-1">UrbanSetu Image Viewer</h3>
+              <p className="text-blue-400 text-sm font-medium tracking-wide">Version 1.8.0 "Darpan"</p>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="mt-1 w-1.5 h-1.5 rounded-full bg-blue-500" />
+                  <div>
+                    <p className="text-white/90 text-sm font-medium">Smart Rendering</p>
+                    <p className="text-white/40 text-xs">High-fidelity image processing with adaptive scaling for any display.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="mt-1 w-1.5 h-1.5 rounded-full bg-purple-500" />
+                  <div>
+                    <p className="text-white/90 text-sm font-medium">Smooth Navigation</p>
+                    <p className="text-white/40 text-xs">Intuitive zoom, rotate, and swipe gestures for natural browsing.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-white/5 flex flex-col gap-2">
+                <p className="text-white/30 text-[10px] uppercase tracking-widest text-center">Built by VijayChCode</p>
+              </div>
+
+              <button
+                onClick={() => setShowAboutViewer(false)}
+                className="w-full py-3 bg-white/5 hover:bg-white/10 text-white/90 rounded-xl font-semibold text-sm transition-all active:scale-95 border border-white/5 mt-2"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 
