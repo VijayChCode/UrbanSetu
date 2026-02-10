@@ -109,6 +109,9 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
   const gestureRef = useRef({ type: null, startY: 0, startVal: 0 });
   const gestureTimeoutRef = useRef(null);
   const [activeGesture, setActiveGesture] = useState(null);
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const [isAnimatingSwipe, setIsAnimatingSwipe] = useState(false);
 
   // Custom Context Menu & Advanced States
   const [contextMenu, setContextMenu] = useState({ show: false, x: 0, y: 0 });
@@ -452,8 +455,16 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
       setShowControls(true);
     };
 
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('resize', handleResize);
+    };
   }, [isOpen, scale, videos.length, isPlaying, isEnded, playbackRate]);
 
   // Context Menu Outside Click
@@ -986,6 +997,34 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
     speedUp();
   };
 
+  const changeVideo = (dir) => { // dir: 1 (Next), -1 (Prev)
+    if (isAnimatingSwipe) return;
+    setIsAnimatingSwipe(true);
+    const screenW = window.innerWidth;
+    const exitTo = dir === 1 ? -screenW : screenW;
+
+    setSwipeOffset(exitTo); // Animate out
+
+    setTimeout(() => {
+      setCurrentIndex(prev => {
+        if (dir === 1) return prev < videos.length - 1 ? prev + 1 : prev;
+        return prev > 0 ? prev - 1 : prev;
+      });
+
+      // Prep Entry
+      setIsAnimatingSwipe(false);
+      setSwipeOffset(dir === 1 ? screenW : -screenW);
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setIsAnimatingSwipe(true);
+          setSwipeOffset(0);
+          setTimeout(() => setIsAnimatingSwipe(false), 300);
+        });
+      });
+    }, 300);
+  };
+
   const handleCloseRequest = (e) => {
     e?.stopPropagation();
 
@@ -1326,8 +1365,12 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
               setActiveGesture(type);
 
               hasMovedRef.current = true;
-              ignoreClickRef.current = true;
             }
+          } else if (scale === 1 && !gestureRef.current.type && touchStartRef.current && !isAnimatingSwipe) {
+            // Mobile Swipe Tracking (Scale 1)
+            const dx = touch.clientX - touchStartRef.current.x;
+            if (Math.abs(dx) > 10) hasMovedRef.current = true;
+            setSwipeOffset(dx);
           }
         }
       }
@@ -1351,8 +1394,36 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
     if ((isDragging || pinchStartDistRef.current) && hasMovedRef.current) {
       ignoreClickRef.current = true;
     }
+
+    // Swipe Navigation (only if scale 1, not moved as drag)
+    if (scale === 1 && touchStartRef.current && !gestureRef.current.type) {
+      if (Math.abs(swipeOffset) > 50) {
+        // >0 (Right) -> Prev (-1)
+        // <0 (Left) -> Next (1)
+        const dir = swipeOffset > 0 ? -1 : 1;
+
+        // Check boundaries
+        if ((dir === 1 && currentIndex >= videos.length - 1) || (dir === -1 && currentIndex <= 0)) {
+          // Snap back
+          setIsAnimatingSwipe(true);
+          setSwipeOffset(0);
+          setTimeout(() => setIsAnimatingSwipe(false), 300);
+        } else {
+          changeVideo(dir);
+        }
+      } else {
+        // Snap back
+        if (swipeOffset !== 0) {
+          setIsAnimatingSwipe(true);
+          setSwipeOffset(0);
+          setTimeout(() => setIsAnimatingSwipe(false), 300);
+        }
+      }
+    }
+
     setIsDragging(false);
     setActiveGesture(null);
+    touchStartRef.current = null;
     setTimeout(() => { isTouchRef.current = false; }, 500);
   };
 
@@ -1503,20 +1574,24 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
       )}
 
       {/* Navigation */}
-      {!isMiniMode && videos.length > 1 && (
+      {!isMiniMode && !isMobile && videos.length > 1 && (
         <>
-          <button
-            onClick={(e) => { e.stopPropagation(); setCurrentIndex(prev => prev > 0 ? prev - 1 : videos.length - 1); }}
-            className={`absolute left-4 top-1/2 -translate-y-1/2 text-white hover:text-blue-300 z-40 bg-black/50 backdrop-blur rounded-full p-4 hover:bg-black/80 hover:scale-110 transition-all duration-300 ${showControls ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}
-          >
-            <FaChevronLeft size={24} />
-          </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); setCurrentIndex(prev => prev < videos.length - 1 ? prev + 1 : 0); }}
-            className={`absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-blue-300 z-40 bg-black/50 backdrop-blur rounded-full p-4 hover:bg-black/80 hover:scale-110 transition-all duration-300 ${showControls ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4'}`}
-          >
-            <FaChevronRight size={24} />
-          </button>
+          {currentIndex > 0 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setCurrentIndex(prev => prev - 1); }}
+              className={`absolute left-4 top-1/2 -translate-y-1/2 text-white hover:text-blue-300 z-40 bg-black/50 backdrop-blur rounded-full p-4 hover:bg-black/80 hover:scale-110 transition-all duration-300 ${showControls ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}
+            >
+              <FaChevronLeft size={24} />
+            </button>
+          )}
+          {currentIndex < videos.length - 1 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setCurrentIndex(prev => prev + 1); }}
+              className={`absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-blue-300 z-40 bg-black/50 backdrop-blur rounded-full p-4 hover:bg-black/80 hover:scale-110 transition-all duration-300 ${showControls ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4'}`}
+            >
+              <FaChevronRight size={24} />
+            </button>
+          )}
         </>
       )}
 
@@ -1608,9 +1683,9 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
           style={{
             maxWidth: '100%',
             maxHeight: '100%',
-            transform: `scale(${scale * autoScale}) rotate(${rotation}deg) translate(${position.x}px, ${position.y}px)`,
+            transform: `scale(${scale * autoScale}) rotate(${rotation}deg) translate(${position.x + swipeOffset}px, ${position.y}px)`,
             filter: `brightness(${brightness})`,
-            transition: isDragging ? 'none' : 'transform 0.2s ease-out'
+            transition: (isDragging || (swipeOffset !== 0 && !isAnimatingSwipe)) ? 'none' : 'transform 0.3s ease-out'
           }}
           draggable={false}
         />
