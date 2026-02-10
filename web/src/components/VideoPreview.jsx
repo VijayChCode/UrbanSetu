@@ -120,6 +120,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
   const [showRemainingTime, setShowRemainingTime] = useState(false);
   const [isVolumeHovered, setIsVolumeHovered] = useState(false);
   const [isBottomControlsHovered, setIsBottomControlsHovered] = useState(false);
+  const [showAboutPlayer, setShowAboutPlayer] = useState(false);
   const contextMenuRef = useRef(null);
 
   // Preview Thumbnail States
@@ -204,6 +205,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
       setIsPlaying(false);
       setIsMiniMode(false);
       setMiniSize({ width: 320, height: 192 });
+      setShowAboutPlayer(false);
       setVideoBlobUrl(null);
     }
     return () => {
@@ -1819,6 +1821,64 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
           </div>
         )}
 
+        {/* About Player Modal */}
+        {showAboutPlayer && (
+          <div className="absolute inset-0 flex items-center justify-center z-[70] p-4">
+            <div
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm pointer-events-auto"
+              onClick={() => setShowAboutPlayer(false)}
+            />
+            <div className="relative w-full max-w-sm bg-[#1a1a1a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden pointer-events-auto animate-scaleIn">
+              <div className="bg-gradient-to-br from-blue-600/20 to-purple-600/20 p-6 flex flex-col items-center">
+                <div className="relative group mb-4">
+                  <div className="absolute -inset-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full blur opacity-40 group-hover:opacity-60 transition duration-500"></div>
+                  <div className="relative w-20 h-20 bg-black rounded-full flex items-center justify-center border border-white/20">
+                    <FaPlay className="text-white text-3xl ml-1" />
+                  </div>
+                </div>
+                <h3 className="text-xl font-bold text-white mb-1">UrbanSetu Native Player</h3>
+                <p className="text-blue-400 text-sm font-medium tracking-wide">Version 2.5.0 "Dhurandhar"</p>
+              </div>
+
+              <div className="p-6 space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-1 w-1.5 h-1.5 rounded-full bg-blue-500" />
+                    <div>
+                      <p className="text-white/90 text-sm font-medium">Native Performance</p>
+                      <p className="text-white/40 text-xs">Optimized for high-bitrate property tours and cinematic views.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="mt-1 w-1.5 h-1.5 rounded-full bg-purple-500" />
+                    <div>
+                      <p className="text-white/90 text-sm font-medium">Smart Buffering</p>
+                      <p className="text-white/40 text-xs">Adaptive quality and offline recovery for seamless playback.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-white/5 flex flex-col gap-2">
+                  <p className="text-white/30 text-[10px] uppercase tracking-widest text-center">Built by VijayCh</p>
+                </div>
+
+                <button
+                  onClick={() => setShowAboutPlayer(false)}
+                  className="w-full py-3 bg-white/5 hover:bg-white/10 text-white/90 rounded-xl font-semibold text-sm transition-all active:scale-95 border border-white/5 mt-2"
+                >
+                  Close
+                </button>
+              </div>
+              <button
+                onClick={() => setShowAboutPlayer(false)}
+                className="absolute top-3 right-3 p-2 text-white/40 hover:text-white transition-colors"
+              >
+                <FaTimes size={16} />
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Custom Context Menu */}
         {contextMenu.show && (
           <div
@@ -1905,6 +1965,14 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
             >
               <FaChartLine className={`text-sm ${showStats ? 'text-blue-400' : 'text-white/60 group-hover:text-white'}`} />
               <span className="text-[13px] text-white/90">Stats for nerds</span>
+            </div>
+
+            <div
+              className="px-4 py-2.5 hover:bg-white/10 flex items-center gap-3 cursor-pointer transition-colors group border-t border-white/5 mt-1 pt-3"
+              onClick={() => { setShowAboutPlayer(true); setContextMenu({ ...contextMenu, show: false }); }}
+            >
+              <FaInfoCircle className="text-sm text-white/60 group-hover:text-white" />
+              <span className="text-[13px] text-white/90">About Player</span>
             </div>
           </div>
         )}
