@@ -2008,8 +2008,8 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
                   >
                     {isMuted || volume === 0 ? <FaVolumeMute size={20} /> : <FaVolumeUp size={20} />}
                   </button>
-                  <div className={`transition-all duration-300 flex items-center ${isMobile
-                    ? 'absolute bottom-full left-0 mb-4 bg-black/90 backdrop-blur-xl p-3 rounded-2xl border border-white/20 shadow-2xl z-50 w-40 justify-center'
+                  <div className={`transition-all duration-300 flex items-center gap-2 ${isMobile
+                    ? 'absolute bottom-full left-0 mb-4 bg-black/90 backdrop-blur-xl p-3 pr-2 rounded-2xl border border-white/20 shadow-2xl z-50 w-48 justify-between'
                     : `overflow-hidden ml-2 ${isVolumeHovered ? 'w-32 opacity-100' : 'w-0 opacity-0'}`
                     } ${isMobile && isVolumeHovered ? 'opacity-100 scale-100 translate-y-0' : isMobile ? 'opacity-0 scale-95 translate-y-2 pointer-events-none' : ''}`}>
                     <input
@@ -2039,6 +2039,18 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
                         background: `linear-gradient(to right, #3b82f6 ${volume * 100}%, rgba(255,255,255,0.2) ${volume * 100}%)`,
                       }}
                     />
+                    {isMobile && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsVolumeHovered(false);
+                        }}
+                        className="p-1.5 hover:bg-white/10 rounded-full text-white/50 hover:text-white transition-colors"
+                        title="Close volume control"
+                      >
+                        <FaTimes size={16} />
+                      </button>
+                    )}
                   </div>
                 </div>
                 <span
