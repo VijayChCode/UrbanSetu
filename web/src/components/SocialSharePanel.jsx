@@ -19,10 +19,20 @@ const SocialSharePanel = ({ isOpen, onClose, url, title = "Join UrbanSetu!", des
   useEffect(() => {
     if (isOpen) {
       setIsVisible(true);
+      // Prevent background scrolling
+      document.body.style.overflow = 'hidden';
     } else {
+      // Re-enable background scrolling
+      document.body.style.overflow = '';
       const timer = setTimeout(() => setIsVisible(false), 300);
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+      };
     }
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = '';
+    };
   }, [isOpen]);
 
   const copyToClipboard = async () => {
