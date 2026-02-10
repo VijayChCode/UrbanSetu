@@ -278,6 +278,11 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 function normalizeRoute(path, role) {
   if (path.length > 1 && path.endsWith('/')) path = path.slice(0, -1);
 
+  // Redirect authenticated users away from public root/home
+  if ((path === "/" || path === "/home") && role !== "public") {
+    return role === "admin" ? "/admin" : "/user";
+  }
+
   // Redirect authenticated users away from auth pages
   // We check isAuthenticated() to avoid redirect loops if Redux state is stale (user executing signout or token expired)
   if (role !== "public" && isAuthenticated() && ["/sign-in", "/sign-up", "/forgot-password", "/oauth"].includes(path)) {
@@ -863,8 +868,8 @@ function AppRoutes({ bootstrapped }) {
             {/* Simpler approach: Make HelpCenter component handle the redirect if mounted on public route with auth? No, typically App.jsx handles it. */}
             {/* Let's use a wrapper component for the redirect to extract params correctly */}
             <Route path="/help-center/article/:slug" element={<ArticleViewRedirect />} />
-            <Route path="/" element={currentUser ? <NotFound /> : <PublicHome bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
-            <Route path="/home" element={currentUser ? <NotFound /> : <PublicHome bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
+            <Route path="/" element={<PublicHome bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
+            <Route path="/home" element={<PublicHome bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
             <Route path="/about" element={currentUser ? <Navigate to="/user/about" /> : <PublicAbout bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
             <Route path="/blogs" element={currentUser ? <Navigate to="/user/blogs" /> : <PublicBlogs bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
             <Route path="/blog/:slug" element={currentUser ? <BlogRedirect /> : <PublicBlogDetail bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />

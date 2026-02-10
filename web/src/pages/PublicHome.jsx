@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import PublicHomeSkeleton from "../components/skeletons/PublicHomeSkeleton";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination, EffectFade } from "swiper/modules";
 import "swiper/css/bundle";
@@ -29,6 +30,20 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function PublicHome() {
   const theme = useSeasonalTheme();
+  const navigate = useNavigate();
+  const { currentUser } = useSelector((state) => state.user);
+
+  // Redirect if logged in
+  useEffect(() => {
+    if (currentUser) {
+      if (currentUser.role === 'admin' || currentUser.role === 'rootadmin') {
+        navigate('/admin');
+      } else {
+        navigate('/user');
+      }
+    }
+  }, [currentUser, navigate]);
+
   const [offerListings, setOfferListings] = useState([]);
   const [saleListings, setSaleListings] = useState([]);
   const [rentListings, setRentListings] = useState([]);
