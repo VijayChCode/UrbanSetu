@@ -1848,12 +1848,12 @@ export default function Listing() {
             >
               {/* Custom Navigation */}
               <div
-                className={`swiper-button-prev-custom absolute top-1/2 left-4 z-20 -translate-y-1/2 w-12 h-12 bg-black/30 hover:bg-black/60 text-white rounded-full flex items-center justify-center backdrop-blur-md cursor-pointer transition-all hover:scale-110 shadow-lg border border-white/10 ${selectedImageIndex === 0 ? 'hidden' : 'hidden group-hover:flex'}`}
+                className={`swiper-button-prev-custom absolute top-1/2 left-4 z-20 -translate-y-1/2 w-12 h-12 bg-black/30 hover:bg-black/60 text-white rounded-full items-center justify-center backdrop-blur-md cursor-pointer transition-all hover:scale-110 shadow-lg border border-white/10 ${selectedImageIndex === 0 ? 'hidden' : 'hidden md:flex'}`}
               >
                 <FaChevronLeft size={22} />
               </div>
               <div
-                className={`swiper-button-next-custom absolute top-1/2 right-4 z-20 -translate-y-1/2 w-12 h-12 bg-black/30 hover:bg-black/60 text-white rounded-full flex items-center justify-center backdrop-blur-md cursor-pointer transition-all hover:scale-110 shadow-lg border border-white/10 ${selectedImageIndex === (listing.imageUrls?.length || 0) + (listing.videoUrls?.length || 0) - 1 ? 'hidden' : 'hidden group-hover:flex'}`}
+                className={`swiper-button-next-custom absolute top-1/2 right-4 z-20 -translate-y-1/2 w-12 h-12 bg-black/30 hover:bg-black/60 text-white rounded-full items-center justify-center backdrop-blur-md cursor-pointer transition-all hover:scale-110 shadow-lg border border-white/10 ${selectedImageIndex === (listing.imageUrls?.length || 0) + (listing.videoUrls?.length || 0) - 1 ? 'hidden' : 'hidden md:flex'}`}
               >
                 <FaChevronRight size={22} />
               </div>
@@ -1977,8 +1977,8 @@ export default function Listing() {
                         })()
                       )}
 
-                      {/* Dynamic action label on hover */}
-                      <div className="absolute bottom-4 right-4 z-30 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none">
+                      {/* Dynamic action label */}
+                      <div className="absolute bottom-4 right-4 z-30 transition-all duration-300 pointer-events-none">
                         <span className="bg-black/70 backdrop-blur-md text-white text-[10px] sm:text-xs px-3 py-1.5 rounded-full font-bold uppercase tracking-wider shadow-lg border border-white/20 flex items-center gap-2">
                           {item.type === 'image' ? (
                             <>
@@ -2023,6 +2023,13 @@ export default function Listing() {
                 )
               })()}
             </Swiper>
+          </div>
+
+          {/* Mobile Swipe Indicator */}
+          <div className="md:hidden flex items-center justify-center gap-2 mb-4 text-gray-400 animate-pulse">
+            <FaChevronLeft className="text-[10px]" />
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Swipe to view more media</span>
+            <FaChevronRight className="text-[10px]" />
           </div>
 
           {/* Share and Report Buttons */}
