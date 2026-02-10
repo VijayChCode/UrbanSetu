@@ -23,6 +23,13 @@ export default function NotFound() {
 
   useEffect(() => {
     const fetchListings = async () => {
+      // Hide recommendations for admins
+      if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) {
+        setLoading(false);
+        setRecommendations([]);
+        return;
+      }
+
       try {
         setLoading(true);
         // Fetch public listings as candidates
@@ -31,8 +38,8 @@ export default function NotFound() {
         const data = await res.json();
         const listings = Array.isArray(data) ? data : (data?.listings || []);
 
-        if (currentUser && currentUser.role !== 'admin' && currentUser.role !== 'rootadmin') {
-          // Sentinel Live: Use TensorFlow-based session analysis
+        if (currentUser) {
+          // Sentinel Live: Use TensorFlow-based session analysis for regular users
           const recs = await getLiveRecommendations(listings, 4);
           if (recs.length > 0) {
             setRecommendations(recs);
@@ -41,7 +48,7 @@ export default function NotFound() {
             setRecommendations(listings.sort(() => 0.5 - Math.random()).slice(0, 4));
           }
         } else {
-          // Public/Admin users: Randomize
+          // Public users: Randomize
           setRecommendations(listings.sort(() => 0.5 - Math.random()).slice(0, 4));
         }
       } catch (error) {
