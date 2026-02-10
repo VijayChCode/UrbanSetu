@@ -495,6 +495,18 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
+  // Close floating volume on mobile when clicking elsewhere
+  useEffect(() => {
+    if (!isMobile || !isVolumeHovered || !isOpen) return;
+    const handleGlobalClick = (e) => {
+      if (!e.target.closest('.group/volume-container')) {
+        setIsVolumeHovered(false);
+      }
+    };
+    window.addEventListener('click', handleGlobalClick);
+    return () => window.removeEventListener('click', handleGlobalClick);
+  }, [isMobile, isVolumeHovered, isOpen]);
+
   // Network Recovery Logic
   useEffect(() => {
     const handleOnline = () => {
@@ -1973,20 +1985,36 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
                   {isPlaying && !isLoading ? <FaPause size={20} /> : <FaPlay size={20} />}
                 </button>
                 <div
-                  className="flex items-center group/volume-container"
-                  onMouseEnter={() => setIsVolumeHovered(true)}
-                  onMouseLeave={() => setIsVolumeHovered(false)}
+                  className={`flex items-center group/volume-container ${isMobile ? 'relative' : ''}`}
+                  onMouseEnter={() => !isMobile && setIsVolumeHovered(true)}
+                  onMouseLeave={() => !isMobile && setIsVolumeHovered(false)}
                 >
-                  <button onClick={toggleMute} className="hover:text-blue-400 p-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (isMobile) {
+                        setIsVolumeHovered(!isVolumeHovered);
+                        // Auto-hide slider after 4 seconds of inactivity
+                        if (gestureTimeoutRef.current) clearTimeout(gestureTimeoutRef.current);
+                        gestureTimeoutRef.current = setTimeout(() => setIsVolumeHovered(false), 4000);
+                      }
+                      toggleMute(e);
+                    }}
+                    className="hover:text-blue-400 p-2"
+                  >
                     {isMuted || volume === 0 ? <FaVolumeMute size={20} /> : <FaVolumeUp size={20} />}
                   </button>
-                  <div className={`overflow-hidden transition-all duration-300 flex items-center ${isVolumeHovered ? 'w-32 opacity-100 ml-2' : 'w-0 opacity-0'}`}>
+                  <div className={`transition-all duration-300 flex items-center ${isMobile
+                    ? 'absolute bottom-full left-0 mb-4 bg-black/90 backdrop-blur-xl p-3 rounded-2xl border border-white/20 shadow-2xl z-50 w-40 justify-center'
+                    : `overflow-hidden ml-2 ${isVolumeHovered ? 'w-32 opacity-100' : 'w-0 opacity-0'}`
+                    } ${isMobile && isVolumeHovered ? 'opacity-100 scale-100 translate-y-0' : isMobile ? 'opacity-0 scale-95 translate-y-2 pointer-events-none' : ''}`}>
                     <input
                       type="range"
                       min="0"
                       max="1"
                       step="0.01"
                       value={volume}
+                      onClick={(e) => e.stopPropagation()}
                       onChange={(e) => {
                         const newVal = parseFloat(e.target.value);
                         setVolume(newVal);
@@ -2010,7 +2038,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
                   </div>
                 </div>
                 <span
-                  className="text-xs font-mono opacity-80 select-none cursor-pointer hover:opacity-100 transition-opacity flex items-center gap-1"
+                  className="text-[10px] sm:text-xs font-mono opacity-80 select-none cursor-pointer hover:opacity-100 transition-opacity flex items-center gap-1"
                   onClick={() => setShowRemainingTime(!showRemainingTime)}
                   title={showRemainingTime ? "Show elapsed time" : "Show remaining time"}
                 >
