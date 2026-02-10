@@ -1376,7 +1376,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
               </div>
 
               <div className="pt-4 border-t border-white/5 flex flex-col gap-2">
-                <p className="text-white/30 text-[10px] uppercase tracking-widest text-center">Built by VijayChCode</p>
+                <p className="text-white/30 text-[10px] uppercase tracking-widest text-center">Built by VijayCh</p>
               </div>
 
               <button
