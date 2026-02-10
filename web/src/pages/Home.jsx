@@ -189,14 +189,22 @@ export default function Home() {
       // Combine all current data as candidates
       const candidates = [...offerListings, ...rentListings, ...saleListings];
       // Dedup candidates and filter valid objects
-      const uniqueCandidates = Array.from(new Map(candidates.filter(c => c && c._id).map(item => [item._id, item])).values());
+      let uniqueCandidates = Array.from(new Map(candidates.filter(c => c && c._id).map(item => [item._id, item])).values());
+
+      // Filter out own properties (User should not get recommended their own listings)
+      if (currentUser) {
+        uniqueCandidates = uniqueCandidates.filter(c =>
+          c.userRef !== currentUser._id &&
+          c.sellerId !== currentUser._id
+        );
+      }
 
       // Combine wishlist and watchlist interactions
       const userPreferences = [...wishlistItems, ...watchlistItems];
       const uniquePreferences = Array.from(new Map(userPreferences.filter(p => p && p._id).map(item => [item._id, item])).values());
 
-      // Request more recommendations (e.g. 24) to allow "View More"
-      const recs = await getLiveRecommendations(uniqueCandidates, 24, uniquePreferences);
+      // Request all matches (limit 1000) to allow infinite "View More"
+      const recs = await getLiveRecommendations(uniqueCandidates, 1000, uniquePreferences);
       setLiveRecommendations(recs);
     };
 
