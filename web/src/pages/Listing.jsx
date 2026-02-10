@@ -1376,6 +1376,7 @@ export default function Listing() {
 
   useEffect(() => {
     const fetchNeighborhood = async () => {
+      if (!currentUser) return;
       try {
         const res = await authenticatedFetch(`${API_BASE_URL}/api/ai/neighborhood/${params.listingId}`);
         if (res.ok) {
@@ -1385,12 +1386,12 @@ export default function Listing() {
       } catch (_) { }
     };
     fetchNeighborhood();
-  }, [params.listingId]);
+  }, [params.listingId, currentUser]);
 
   // Fetch real-time analytics (market, location, weather, investment)
   useEffect(() => {
     const fetchRtAnalytics = async () => {
-      if (!listing || !listing._id) return;
+      if (!listing || !listing._id || !currentUser) return;
       try {
         setRtAnalyticsLoading(true);
         setRtAnalyticsError(null);
@@ -1409,14 +1410,14 @@ export default function Listing() {
           averagePriceNearby: data?.marketData?.averagePrice || (prev && prev.averagePriceNearby) || undefined,
           nearbyAmenities: prev && prev.nearbyAmenities ? prev.nearbyAmenities : Object.keys(data?.locationData?.amenities || {})
         }));
-      } catch (err) {
-        setRtAnalyticsError(err.message || 'Analytics error');
+      } catch (error) {
+        setRtAnalyticsError(error.message);
       } finally {
         setRtAnalyticsLoading(false);
       }
     };
     fetchRtAnalytics();
-  }, [listing]);
+  }, [listing?._id, currentUser]);
 
   // Reset view tracking when listing ID changes
   useEffect(() => {
