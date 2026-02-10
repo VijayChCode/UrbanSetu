@@ -955,7 +955,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-slate-900 dark:via-indigo-950/20 dark:to-purple-950/20 min-h-screen pb-12 transition-colors duration-500 relative overflow-hidden">
-      <SeasonalEffects />
       {/* Enhanced Header Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="relative overflow-hidden bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-3xl shadow-2xl border border-white/20 dark:border-gray-700 mb-10 mt-8 transform transition-all hover:scale-[1.01] duration-500">
