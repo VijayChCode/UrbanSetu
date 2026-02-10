@@ -1319,8 +1319,8 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
         setPosition(prev => getClampedPosition(prev.x + dx / scale, prev.y + dy / scale, scale));
 
         lastDragRef.current = { x: touch.clientX, y: touch.clientY };
-      } else if (gestureRef.current.type) {
-        // Active Gesture Control
+      } else if (gestureRef.current.type === 'volume' || gestureRef.current.type === 'brightness') {
+        // Active Volume/Brightness Gesture Control
         e.preventDefault();
         hasMovedRef.current = true;
         ignoreClickRef.current = true;
@@ -1348,41 +1348,45 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
             </div>
           );
         }
-      } else if (speedTimeoutRef.current && !isSpeedingRef.current) {
-        // Detection Logic
+      } else if (scale === 1 && !isSpeedingRef.current) {
+        // Not long-pressing for speed, so we are either detecting OR swiping
         const dx = touch.clientX - touchStartRef.current.x;
         const dy = touch.clientY - touchStartRef.current.y;
         const dist = Math.abs(dx) + Math.abs(dy);
 
         if (dist > 10) {
-          // Movement detected - Cancel Speed Timeout
+          // Motion detected - Cancel Speed Timeout
           if (speedTimeoutRef.current) {
             clearTimeout(speedTimeoutRef.current);
             speedTimeoutRef.current = null;
           }
 
-          // Check if Vertical Swipe (Gesture Start)
-          if (Math.abs(dy) > Math.abs(dx) * 1.5) { // Vertical dominant
-            gestureRef.current.startY = touch.clientY;
-            const width = window.innerWidth;
-            const x = touch.clientX;
+          if (!gestureRef.current.type) {
+            // Check if Vertical Swipe (Gesture Start)
+            if (Math.abs(dy) > Math.abs(dx) * 1.5) { // Vertical dominant
+              const width = window.innerWidth;
+              const x = touch.clientX;
+              let type = null;
+              if (x > width * 0.85) type = 'volume';    // Right 15%
+              else if (x < width * 0.15) type = 'brightness'; // Left 15%
 
-            let type = null;
-            if (x > width * 0.85) type = 'volume';    // Right 15%
-            else if (x < width * 0.15) type = 'brightness'; // Left 15%
-
-            if (type) {
-              gestureRef.current.type = type;
-              gestureRef.current.startVal = type === 'volume' ? volume : brightness;
-              setActiveGesture(type);
-
-              hasMovedRef.current = true;
+              if (type) {
+                gestureRef.current.type = type;
+                gestureRef.current.startY = touch.clientY;
+                gestureRef.current.startVal = type === 'volume' ? volume : brightness;
+                setActiveGesture(type);
+                hasMovedRef.current = true;
+                ignoreClickRef.current = true;
+              }
+            } else if (Math.abs(dx) > 10) {
+              // Horizontal major -> Start Swipe
+              gestureRef.current.type = 'swipe';
             }
-          } else if (scale === 1 && !gestureRef.current.type && touchStartRef.current && !isAnimatingSwipe) {
-            // Mobile Swipe Tracking (Scale 1)
-            const dx = touch.clientX - touchStartRef.current.x;
-            if (Math.abs(dx) > 10) hasMovedRef.current = true;
+          }
+
+          if (gestureRef.current.type === 'swipe' && !isAnimatingSwipe) {
             setSwipeOffset(dx);
+            hasMovedRef.current = true;
           }
         }
       }
@@ -1408,7 +1412,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
     }
 
     // Swipe Navigation (only if scale 1, not moved as drag)
-    if (scale === 1 && touchStartRef.current && !gestureRef.current.type) {
+    if (scale === 1 && touchStartRef.current && (gestureRef.current.type === 'swipe' || !gestureRef.current.type)) {
       if (Math.abs(swipeOffset) > 50) {
         // >0 (Right) -> Prev (-1)
         // <0 (Left) -> Next (1)
