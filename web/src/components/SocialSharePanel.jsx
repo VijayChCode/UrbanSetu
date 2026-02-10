@@ -242,7 +242,7 @@ const SocialSharePanel = ({ isOpen, onClose, url, title = "Join UrbanSetu!", des
             {canScrollLeft && (
               <button
                 onClick={() => scroll('left')}
-                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 z-10 w-8 h-8 bg-white dark:bg-[#2a2a2a] rounded-full shadow-lg border border-gray-100 dark:border-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#333] transition-all"
+                className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 z-10 w-8 h-8 bg-white dark:bg-[#2a2a2a] rounded-full shadow-lg border border-gray-100 dark:border-gray-700 items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#333] transition-all"
               >
                 <FaChevronLeft size={12} />
               </button>
@@ -286,7 +286,7 @@ const SocialSharePanel = ({ isOpen, onClose, url, title = "Join UrbanSetu!", des
             {canScrollRight && (
               <button
                 onClick={() => scroll('right')}
-                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 z-10 w-8 h-8 bg-white dark:bg-[#2a2a2a] rounded-full shadow-lg border border-gray-100 dark:border-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#333] transition-all"
+                className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 z-10 w-8 h-8 bg-white dark:bg-[#2a2a2a] rounded-full shadow-lg border border-gray-100 dark:border-gray-700 items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#333] transition-all"
               >
                 <FaChevronRight size={12} />
               </button>
