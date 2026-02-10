@@ -193,12 +193,18 @@ export const updateUser = async (req, res, next) => {
             });
         }
 
-        // Send profile update confirmation email
-        try {
-            await sendProfileUpdateSuccessEmail(updatedUser.email, updatedUser.username, updatedUser.role, coinsEarned);
-        } catch (emailErr) {
-            console.error('Failed to send profile update email:', emailErr);
-            // Non-blocking error
+        // Send profile update confirmation email only if core profile fields were changed
+        // This avoids sending emails for minor setting changes made in Settings.jsx
+        const profileFields = ['username', 'email', 'avatar', 'mobileNumber', 'address', 'gender'];
+        const isProfileInfoUpdate = profileFields.some(field => field in req.body);
+
+        if (isProfileInfoUpdate || coinsEarned > 0) {
+            try {
+                await sendProfileUpdateSuccessEmail(updatedUser.email, updatedUser.username, updatedUser.role, coinsEarned);
+            } catch (emailErr) {
+                console.error('Failed to send profile update email:', emailErr);
+                // Non-blocking error
+            }
         }
 
         res.status(200).json({ status: "success", updatedUser: userObj });
