@@ -1171,8 +1171,8 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
       gestureTimeoutRef.current = setTimeout(() => setActiveGesture(null), 1000);
     };
 
-    // Left 30% - Brightness
-    if (x < width * 0.3) {
+    // Left 15% - Brightness
+    if (x < width * 0.15) {
       const step = 0.1;
       const direction = delta > 0 ? -1 : 1; // Scroll Down (positive) -> Decrease
       const newVal = Math.min(Math.max(brightness + (direction * step), 0.2), 2.0);
@@ -1187,8 +1187,8 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
       );
       clearGesture();
     }
-    // Right 30% - Volume
-    else if (x > width * 0.7) {
+    // Right 15% - Volume
+    else if (x > width * 0.85) {
       const step = 0.05;
       const direction = delta > 0 ? -1 : 1;
       const newVal = Math.min(Math.max(volume + (direction * step), 0), 1);
@@ -1356,8 +1356,8 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
             const x = touch.clientX;
 
             let type = null;
-            if (x > width * 0.7) type = 'volume';    // Right 30%
-            else if (x < width * 0.3) type = 'brightness'; // Left 30%
+            if (x > width * 0.85) type = 'volume';    // Right 15%
+            else if (x < width * 0.15) type = 'brightness'; // Left 15%
 
             if (type) {
               gestureRef.current.type = type;
