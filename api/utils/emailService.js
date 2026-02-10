@@ -788,7 +788,7 @@ export const sendUpdateAnnouncementEmail = async (email, update) => {
               You received this email because you are a registered user of UrbanSetu.
               <br><br>
               Don't want to receive these emails? 
-              <a href="${unsubscribeUrl}" style="color: #9ca3af; text-decoration: underline;">Unsubscribe here</a>
+              <a href="${unsubscribeUrl}" style="color: #9ca3af; text-decoration: underline;">Unsubscribe</a> from these emails.
             </p>
           </div>
         </div>
@@ -1319,7 +1319,7 @@ export const sendReferralReminderEmail = async (email, username, referralLink) =
           <div style="margin-top: 15px; border-top: 1px solid #eeeeee; padding-top: 15px;">
             <p style="color: #999999; font-size: 12px; margin: 0;">
               Don't want to receive these emails? 
-              <a href="${unsubscribeUrl}" style="color: #4f46e5; text-decoration: underline;">Unsubscribe here</a>
+              <a href="${unsubscribeUrl}" style="color: #4f46e5; text-decoration: underline;">Unsubscribe</a> from these emails.
             </p>
           </div>
         </div>
@@ -14019,7 +14019,7 @@ export const sendReEngagementEmail = async (email, username) => {
             <div style="margin-top: 15px; border-top: 1px solid #eeeeee; padding-top: 15px;">
               <p style="color: #999999; font-size: 12px; margin: 0;">
                 Don't want to receive these emails? 
-                <a href="${unsubscribeUrl}" style="color: #2563eb; text-decoration: underline;">Unsubscribe here</a>
+                <a href="${unsubscribeUrl}" style="color: #2563eb; text-decoration: underline;">Unsubscribe</a> from these emails.
               </p>
             </div>
           </div>
@@ -14132,7 +14132,7 @@ export const sendTrendingUpdateEmail = async (email, username, newProperties, tr
               <p style="margin: 5px 0;">This email was sent to ${email} as part of your UrbanSetu subscription.</p>
               <p style="margin: 5px 0;">© ${new Date().getFullYear()} UrbanSetu. All rights reserved.</p>
               <p style="margin: 10px 0 0 0;">
-                <a href="${unsubscribeUrl}" style="color: #2563eb; text-decoration: underline;">Unsubscribe from these updates</a>
+                <a href="${unsubscribeUrl}" style="color: #2563eb; text-decoration: underline;">Unsubscribe</a> from these updates.
               </p>
             </div>
           </div>
@@ -14994,7 +14994,7 @@ export const sendYearInReviewEmail = async (email, username, year, role = 'user'
                     Making property journeys simpler and more beautiful.
                   </p>
                   <p style="margin: 0; font-size: 11px; color: #475569;">
-                    Too many recaps? <a href="${unsubscribeUrl}" style="color: #3b82f6; text-decoration: underline;">Unsubscribe from promotional emails</a>
+                    Too many recaps? <a href="${unsubscribeUrl}" style="color: #3b82f6; text-decoration: underline;">Unsubscribe</a> from promotional emails.
                   </p>
                 </div>
               </div>
@@ -15339,7 +15339,7 @@ export const sendFestivalGreetingEmail = async (email, username, theme) => {
               You received this email because you are a valued member of our community.
             </p>
             <p style="margin: 15px 0 0 0; font-size: 11px; color: #9ca3af;">
-              Don't want these greetings? <a href="${unsubscribeUrl}" style="color: #6b7280; text-decoration: underline;">Unsubscribe here</a>
+              Don't want these greetings? <a href="${unsubscribeUrl}" style="color: #6b7280; text-decoration: underline;">Unsubscribe</a> from these greetings.
             </p>
           </div>
         </div>

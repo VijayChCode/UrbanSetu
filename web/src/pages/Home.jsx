@@ -47,6 +47,11 @@ export default function Home() {
   const navigate = useNavigate();
   const [showThemeInfo, setShowThemeInfo] = useState(false);
 
+  // New State for Enhanced Recommendations
+  const [wishlistItems, setWishlistItems] = useState([]);
+  const [watchlistItems, setWatchlistItems] = useState([]);
+  const [visibleRecsCount, setVisibleRecsCount] = useState(4);
+
   // Helper to determine if we are in user dashboard context for links
   const isUser = true; // Since this is Home.jsx, it usually implies a logged-in user context or main entry. 
   // Original code checked window.location.pathname.startsWith('/user'). 
@@ -138,7 +143,39 @@ export default function Home() {
     fetchRecommended();
   }, [currentUser?._id, currentUser?.role]);
 
-  // STN-LIVE: Process local session recommendations
+  // Fetch Wishlist and Watchlist for enhanced recommendations
+  useEffect(() => {
+    const fetchUserLists = async () => {
+      // ONLY fetch for regular logged-in users
+      if (!currentUser?._id || currentUser.role === 'admin' || currentUser.role === 'rootadmin') {
+        setWishlistItems([]);
+        setWatchlistItems([]);
+        return;
+      }
+      try {
+        const [wishRes, watchRes] = await Promise.all([
+          authenticatedFetch(`${API_BASE_URL}/api/wishlist/user/${currentUser._id}`),
+          authenticatedFetch(`${API_BASE_URL}/api/watchlist/user/${currentUser._id}`)
+        ]);
+
+        if (wishRes.ok) {
+          const data = await wishRes.json();
+          // Extract listing objects safely
+          setWishlistItems(Array.isArray(data) ? data.filter(x => x.listingId).map(x => x.listingId) : []);
+        }
+
+        if (watchRes.ok) {
+          const data = await watchRes.json();
+          setWatchlistItems(Array.isArray(data) ? data.filter(x => x.listingId).map(x => x.listingId) : []);
+        }
+      } catch (error) {
+        console.error("Error fetching user lists for recommendations", error);
+      }
+    };
+    fetchUserLists();
+  }, [currentUser?._id, currentUser?.role]);
+
+  // STN-LIVE: Process local session recommendations + Wishlist/Watchlist
   useEffect(() => {
     const processLiveRecs = async () => {
       if (loading) return;
@@ -151,15 +188,20 @@ export default function Home() {
 
       // Combine all current data as candidates
       const candidates = [...offerListings, ...rentListings, ...saleListings];
-      // Dedup candidates
-      const uniqueCandidates = Array.from(new Map(candidates.map(item => [item._id, item])).values());
+      // Dedup candidates and filter valid objects
+      const uniqueCandidates = Array.from(new Map(candidates.filter(c => c && c._id).map(item => [item._id, item])).values());
 
-      const recs = await getLiveRecommendations(uniqueCandidates, 4);
+      // Combine wishlist and watchlist interactions
+      const userPreferences = [...wishlistItems, ...watchlistItems];
+      const uniquePreferences = Array.from(new Map(userPreferences.filter(p => p && p._id).map(item => [item._id, item])).values());
+
+      // Request more recommendations (e.g. 24) to allow "View More"
+      const recs = await getLiveRecommendations(uniqueCandidates, 24, uniquePreferences);
       setLiveRecommendations(recs);
     };
 
     processLiveRecs();
-  }, [loading, offerListings, rentListings, saleListings, currentUser?._id, currentUser?.role]);
+  }, [loading, offerListings, rentListings, saleListings, wishlistItems, watchlistItems, currentUser?._id, currentUser?.role]);
 
   const handleSlideChange = (swiper) => {
     setCurrentSlideIndex(swiper.realIndex);
@@ -414,7 +456,7 @@ export default function Home() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {liveRecommendations.map((listing) => (
+                  {liveRecommendations.slice(0, visibleRecsCount).map((listing) => (
                     <div key={`live-${listing._id}`} className="relative group">
                       <div className="absolute -top-2 -right-2 z-20 bg-blue-600 text-white text-[10px] font-black px-2 py-1 rounded-lg shadow-lg transform rotate-12 group-hover:rotate-0 transition-transform">
                         {Math.round(listing.sentinelScore * 100)}% MATCH
@@ -423,6 +465,17 @@ export default function Home() {
                     </div>
                   ))}
                 </div>
+
+                {liveRecommendations.length > visibleRecsCount && (
+                  <div className="mt-8 text-center">
+                    <button
+                      onClick={() => setVisibleRecsCount(prev => prev + 4)}
+                      className="px-6 py-3 bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 font-bold rounded-xl shadow-lg border border-blue-100 dark:border-blue-900 hover:bg-blue-50 dark:hover:bg-gray-700 transition-all transform hover:scale-105 flex items-center gap-2 mx-auto"
+                    >
+                      View More Recommendations <FaArrowRight />
+                    </button>
+                  </div>
+                )}
               </div>
             </section>
           )}

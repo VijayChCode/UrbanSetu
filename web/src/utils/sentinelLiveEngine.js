@@ -57,9 +57,38 @@ const vectorize = (listing, maxPrice, maxBeds, maxBaths) => {
 /**
  * Uses TensorFlow.js to calculate similarity scores between user history and candidates
  */
-export const getLiveRecommendations = async (allCandidates, limit = 4) => {
+export const getLiveRecommendations = async (allCandidates, limit = 4, additionalInteractions = []) => {
     try {
-        const rawInteractions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+        let rawInteractions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+
+        // Merge with additional interactions (Wishlist/Watchlist) if provided
+        // We add them to the beginning to verify they are treated as "recent/important"
+        if (additionalInteractions && additionalInteractions.length > 0) {
+            // Standardize format: ensure they have necessary fields
+            const formattedAdditional = additionalInteractions.map(item => ({
+                _id: item._id,
+                city: item.city?.toLowerCase() || '',
+                type: item.type || '',
+                price: item.offer ? item.discountPrice : item.regularPrice,
+                bedrooms: Number(item.bedrooms) || 0,
+                bathrooms: Number(item.bathrooms) || 0,
+                parking: !!item.parking,
+                furnished: !!item.furnished,
+                timestamp: Date.now() // Treat as fresh
+            }));
+
+            // Combine: External items first (high priority), then local history
+            rawInteractions = [...formattedAdditional, ...rawInteractions];
+
+            // Deduplicate by ID
+            const seen = new Set();
+            rawInteractions = rawInteractions.filter(item => {
+                if (seen.has(item._id)) return false;
+                seen.add(item._id);
+                return true;
+            });
+        }
+
         if (rawInteractions.length === 0 || !allCandidates || allCandidates.length === 0) {
             return [];
         }

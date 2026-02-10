@@ -20,6 +20,7 @@ export default function NotFound() {
   const { currentUser } = useSelector((state) => state.user);
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [visibleRecsCount, setVisibleRecsCount] = useState(4);
 
   useEffect(() => {
     const fetchListings = async () => {
@@ -40,7 +41,23 @@ export default function NotFound() {
 
         if (currentUser) {
           // Sentinel Live: Use TensorFlow-based session analysis for regular users
-          const recs = await getLiveRecommendations(listings, 4);
+          // Fetch user preferences (Wishlist/Watchlist) for enhanced recommendations
+          let userPreferences = [];
+          try {
+            const [wishRes, watchRes] = await Promise.all([
+              authenticatedFetch(`${API_BASE_URL}/api/wishlist/user/${currentUser._id}`),
+              authenticatedFetch(`${API_BASE_URL}/api/watchlist/user/${currentUser._id}`)
+            ]);
+            const wishData = wishRes.ok ? await wishRes.json() : [];
+            const watchData = watchRes.ok ? await watchRes.json() : [];
+            const wishItems = Array.isArray(wishData) ? wishData.filter(x => x.listingId).map(x => x.listingId) : [];
+            const watchItems = Array.isArray(watchData) ? watchData.filter(x => x.listingId).map(x => x.listingId) : [];
+            userPreferences = [...wishItems, ...watchItems];
+          } catch (e) {
+            console.error("Error fetching user preferences:", e);
+          }
+
+          const recs = await getLiveRecommendations(listings, 24, userPreferences);
           if (recs.length > 0) {
             setRecommendations(recs);
           } else {
@@ -173,7 +190,7 @@ export default function NotFound() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {recommendations.map((listing) => (
+                  {recommendations.slice(0, visibleRecsCount).map((listing) => (
                     <div key={`rec-${listing._id}`} className="relative group overflow-visible">
                       {listing.isLiveMatch && (
                         <div className="absolute -top-2 -right-2 z-20 bg-blue-600 text-white text-[10px] font-black px-2 py-1 rounded-lg shadow-lg transform rotate-12 group-hover:rotate-0 transition-transform">
@@ -184,6 +201,17 @@ export default function NotFound() {
                     </div>
                   ))}
                 </div>
+
+                {recommendations.length > visibleRecsCount && (
+                  <div className="mt-8 text-center">
+                    <button
+                      onClick={() => setVisibleRecsCount(prev => prev + 4)}
+                      className="px-6 py-3 bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 font-bold rounded-xl shadow-lg border border-blue-100 dark:border-blue-900 hover:bg-blue-50 dark:hover:bg-gray-700 transition-all transform hover:scale-105 flex items-center gap-2 mx-auto"
+                    >
+                      View More Recommendations <FaArrowRight />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
