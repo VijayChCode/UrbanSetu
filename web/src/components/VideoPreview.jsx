@@ -2157,7 +2157,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
               </svg>
             </div>
             <span className={`mt-2 font-bold text-sm bg-black/50 px-2 py-1 rounded backdrop-blur ${isOverTrash ? 'text-red-500' : 'text-white/70'}`}>
-              {isOverTrash ? 'Drop to Close' : 'Drag here to close'}
+              {isOverTrash ? 'Drop to close' : 'Drag here to close'}
             </span>
           </div>
         )
