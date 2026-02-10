@@ -193,9 +193,9 @@ export const updateUser = async (req, res, next) => {
             });
         }
 
-        // Send profile update confirmation email only if core profile fields were changed
-        // This avoids sending emails for minor setting changes made in Settings.jsx
-        const profileFields = ['username', 'email', 'avatar', 'mobileNumber', 'address', 'gender'];
+        // Send profile update confirmation email only if core profile fields or profile visibility was changed
+        // This avoids sending emails for minor setting changes made in Settings.jsx (like notification prefs)
+        const profileFields = ['username', 'email', 'avatar', 'mobileNumber', 'address', 'gender', 'profileVisibility'];
         const isProfileInfoUpdate = profileFields.some(field => field in req.body);
 
         if (isProfileInfoUpdate || coinsEarned > 0) {
