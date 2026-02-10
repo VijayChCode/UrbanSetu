@@ -33,8 +33,8 @@ export default function NotFound() {
 
       try {
         setLoading(true);
-        // Fetch public listings as candidates
-        const res = await authenticatedFetch(`${API_BASE_URL}/api/listing/get?limit=24&visibility=public`);
+        // Fetch public listings (High limit for better "Infinite" recommendations)
+        const res = await authenticatedFetch(`${API_BASE_URL}/api/listing/get?limit=100&visibility=public`);
         if (!res.ok) return;
         const data = await res.json();
         const listings = Array.isArray(data) ? data : (data?.listings || []);
@@ -57,7 +57,14 @@ export default function NotFound() {
             console.error("Error fetching user preferences:", e);
           }
 
-          const recs = await getLiveRecommendations(listings, 24, userPreferences);
+          // Filter out own properties
+          const validListings = listings.filter(l =>
+            l.userRef !== currentUser._id &&
+            l.sellerId !== currentUser._id
+          );
+
+          // Get all matches (limit 1000)
+          const recs = await getLiveRecommendations(validListings, 1000, userPreferences);
           if (recs.length > 0) {
             setRecommendations(recs);
           } else {
