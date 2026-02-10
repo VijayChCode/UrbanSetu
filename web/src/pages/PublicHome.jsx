@@ -394,7 +394,8 @@ export default function PublicHome() {
                     <img
                       src={image.url}
                       alt={image.title}
-                      className="w-full h-full object-cover transform transition-transform duration-700 hover:scale-105"
+                      className="w-full h-full object-cover transform transition-transform duration-[10s] hover:scale-110"
+                      style={{ animation: 'panImage 20s linear infinite alternate' }}
                     />
                     <div className="absolute bottom-0 left-0 w-full p-8 md:p-12 z-20 bg-gradient-to-t from-black/90 via-black/50 to-transparent">
                       <div className="max-w-3xl animate-fade-in-up text-left">
