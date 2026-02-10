@@ -640,21 +640,21 @@ export default function Watchlist() {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               <div className="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-lg shadow-sm border border-transparent dark:border-gray-700">
                 <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Total Properties</p>
-                <p className="text-lg sm:text-2xl font-bold text-purple-600">{items.length}</p>
+                <p className="text-lg sm:text-2xl font-bold text-purple-600 dark:text-purple-400">{items.length}</p>
               </div>
               <div className="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-lg shadow-sm border border-transparent dark:border-gray-700">
                 <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Average Price</p>
-                <p className="text-sm sm:text-2xl font-bold text-green-600">₹{watchlistStats.averagePrice.toLocaleString('en-IN')}</p>
+                <p className="text-sm sm:text-2xl font-bold text-green-600 dark:text-green-400">₹{watchlistStats.averagePrice.toLocaleString('en-IN')}</p>
               </div>
               <div className="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-lg shadow-sm col-span-2 lg:col-span-1 border border-transparent dark:border-gray-700">
                 <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Price Range</p>
-                <p className="text-xs sm:text-lg font-bold text-blue-600">
+                <p className="text-xs sm:text-lg font-bold text-blue-600 dark:text-blue-400">
                   ₹{watchlistStats.priceRange.min.toLocaleString('en-IN')} - ₹{watchlistStats.priceRange.max.toLocaleString('en-IN')}
                 </p>
               </div>
               <div className="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-lg shadow-sm col-span-2 lg:col-span-1 border border-transparent dark:border-gray-700">
                 <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Total Value</p>
-                <p className="text-sm sm:text-2xl font-bold text-indigo-600">₹{watchlistStats.totalValue.toLocaleString('en-IN')}</p>
+                <p className="text-sm sm:text-2xl font-bold text-indigo-600 dark:text-indigo-400">₹{watchlistStats.totalValue.toLocaleString('en-IN')}</p>
               </div>
             </div>
 
@@ -665,15 +665,15 @@ export default function Watchlist() {
                 <div className="space-y-2">
                   {Object.entries(watchlistStats.typeDistribution).map(([type, count]) => (
                     <div key={type} className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600 capitalize">{type}</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-400 capitalize">{type}</span>
                       <div className="flex items-center gap-2">
-                        <div className="w-20 bg-gray-200 rounded-full h-2">
+                        <div className="w-20 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                           <div
                             className="bg-purple-500 h-2 rounded-full"
                             style={{ width: `${(count / items.length) * 100}%` }}
                           ></div>
                         </div>
-                        <span className="text-sm font-semibold text-gray-800">{count}</span>
+                        <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{count}</span>
                       </div>
                     </div>
                   ))}
@@ -688,15 +688,15 @@ export default function Watchlist() {
                     .slice(0, 5)
                     .map(([city, count]) => (
                       <div key={city} className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">{city}</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">{city}</span>
                         <div className="flex items-center gap-2">
-                          <div className="w-20 bg-gray-200 rounded-full h-2">
+                          <div className="w-20 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                             <div
                               className="bg-pink-500 h-2 rounded-full"
                               style={{ width: `${(count / items.length) * 100}%` }}
                             ></div>
                           </div>
-                          <span className="text-sm font-semibold text-gray-800">{count}</span>
+                          <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{count}</span>
                         </div>
                       </div>
                     ))}

@@ -3,6 +3,9 @@ import { useSelector, useDispatch } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
 import { FaKey, FaTrash, FaSignOutAlt, FaUser, FaTools, FaCloudUploadAlt, FaClipboardList, FaMobileAlt, FaCrown, FaTimes, FaCheck, FaBell, FaEnvelope, FaLock, FaGlobe, FaPalette, FaDownload, FaHistory, FaCode, FaShieldAlt, FaEye, FaEyeSlash, FaMoon, FaSun, FaLanguage, FaClock, FaFileDownload, FaDatabase, FaExclamationTriangle, FaPhone, FaVideo, FaInfoCircle, FaUsers, FaSpinner, FaBullhorn, FaDesktop, FaLocationArrow, FaChartLine, FaComments, FaMapMarkedAlt, FaRocket } from "react-icons/fa";
 import { authenticatedFetch } from '../utils/auth';
+import { useSeasonalTheme } from "../hooks/useSeasonalTheme.jsx";
+import ThemeDetailModal from "../components/ThemeDetailModal";
+import ThemeToggle from "../components/ThemeToggle.jsx";
 import {
   deleteUserStart,
   deleteUserSuccess,
@@ -146,7 +149,9 @@ export default function Settings() {
   const { t, i18n } = useTranslation();
   usePageTitle(`${t('settings.title')} - ${t('settings.subtitle')}`);
 
-  const { currentUser } = useSelector((state) => state.user);
+  const { currentUser, loading, error } = useSelector((state) => state.user);
+  const seasonalTheme = useSeasonalTheme();
+  const [showThemeInfo, setShowThemeInfo] = useState(false);
   const { signout } = useSignout();
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -1237,10 +1242,19 @@ export default function Settings() {
 
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-2 flex items-center gap-3">
+            <span className={`${seasonalTheme?.textGradient || 'bg-gradient-to-r from-blue-600 to-purple-600'} bg-clip-text text-transparent`}>
               {t('settings.title')}
             </span>
+            {seasonalTheme && (
+              <span
+                className="text-2xl cursor-pointer hover:scale-110 transition-transform filter drop-shadow-md animate-bounce"
+                title={seasonalTheme.name}
+                onClick={() => setShowThemeInfo(true)}
+              >
+                {seasonalTheme.icon}
+              </span>
+            )}
           </h1>
           <p className="text-gray-600 dark:text-gray-400">{t('settings.subtitle')}</p>
         </div>
@@ -1428,33 +1442,35 @@ export default function Settings() {
 
         {/* Appearance */}
         <SettingSection title={t('settings.section_appearance')} icon={FaPalette}>
-          <div className="space-y-0">
-            <div className="py-3 border-b border-gray-200 dark:border-gray-700">
-              <p className="font-medium text-gray-800 dark:text-gray-200 mb-2">{t('settings.theme')}</p>
-              <div className="flex gap-4">
-                <button
-                  onClick={() => handleThemeChange('light')}
-                  className={`flex-1 p-3 rounded-lg border-2 transition-all ${theme === 'light' ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 dark:text-gray-300'}`}
-                >
-                  <FaSun className="w-5 h-5 mx-auto mb-1 text-yellow-500" />
-                  <span className="text-sm font-medium">{t('settings.theme_light')}</span>
-                </button>
-                <button
-                  onClick={() => handleThemeChange('dark')}
-                  className={`flex-1 p-3 rounded-lg border-2 transition-all ${theme === 'dark' ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 dark:text-gray-300'}`}
-                >
-                  <FaMoon className="w-5 h-5 mx-auto mb-1 text-blue-500" />
-                  <span className="text-sm font-medium">{t('settings.theme_dark')}</span>
-                </button>
-                <button
-                  onClick={() => handleThemeChange('system')}
-                  className={`flex-1 p-3 rounded-lg border-2 transition-all ${theme === 'system' ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 dark:text-gray-300'}`}
-                >
-                  <FaDesktop className="w-5 h-5 mx-auto mb-1 text-gray-500" />
-                  <span className="text-sm font-medium">{t('settings.theme_system') === 'settings.theme_system' ? 'System' : t('settings.theme_system')}</span>
-                </button>
-              </div>
+          <div className="space-y-6">
+            <div className="py-2">
+              <p className="font-medium text-gray-800 dark:text-gray-200 mb-3">{t('settings.theme')}</p>
+              <ThemeToggle mobile={true} className="!p-0 !bg-transparent" />
             </div>
+
+            {seasonalTheme && (
+              <div
+                onClick={() => setShowThemeInfo(true)}
+                className={`p-4 rounded-xl cursor-pointer transition-all duration-300 transform hover:scale-[1.02] border border-white/20 shadow-lg relative overflow-hidden group ${seasonalTheme.textGradient || 'bg-gradient-to-r from-blue-600 to-indigo-700'}`}
+              >
+                <div className="absolute top-0 right-0 p-2 opacity-20 transform translate-x-1/4 -translate-y-1/4 transition-transform duration-700 group-hover:scale-125">
+                  <span className="text-6xl">{seasonalTheme.icon}</span>
+                </div>
+                <div className="relative z-10 text-white">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xl animate-bounce">{seasonalTheme.icon}</span>
+                    <h4 className="font-bold text-lg">{seasonalTheme.name} Theme Active</h4>
+                  </div>
+                  <p className="text-white/80 text-sm">
+                    {seasonalTheme.greeting} Click to see special effects and details!
+                  </p>
+                </div>
+                <div className="absolute bottom-2 right-4 text-white/40 text-xs flex items-center gap-1 group-hover:text-white/60 transition-colors">
+                  <FaInfoCircle /> Details
+                </div>
+              </div>
+            )}
+
             <SelectOption
               label={t('settings.font_size')}
               value={fontSize}
@@ -2422,6 +2438,11 @@ export default function Settings() {
           </div>
         )}
       </AnimatePresence>
+      <ThemeDetailModal
+        theme={seasonalTheme}
+        isOpen={showThemeInfo}
+        onClose={() => setShowThemeInfo(false)}
+      />
     </div>
   );
 }

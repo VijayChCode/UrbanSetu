@@ -430,10 +430,10 @@ const WishList = () => {
           <div className="mb-6 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/10 dark:to-pink-900/10 p-6 rounded-lg border border-purple-200 dark:border-purple-800">
             <h3 className="text-lg font-semibold text-purple-800 dark:text-purple-300 mb-4 flex items-center gap-2"><FaChartLine className="text-purple-600" />Wishlist Statistics</h3>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-              <div className="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-lg shadow-sm border border-transparent dark:border-gray-700"><p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Total Properties</p><p className="text-lg sm:text-2xl font-bold text-purple-600">{items.length}</p></div>
-              <div className="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-lg shadow-sm border border-transparent dark:border-gray-700"><p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Average Price</p><p className="text-sm sm:text-2xl font-bold text-green-600">₹{stats.averagePrice.toLocaleString('en-IN')}</p></div>
-              <div className="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-lg shadow-sm col-span-2 lg:col-span-1 border border-transparent dark:border-gray-700"><p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Price Range</p><p className="text-xs sm:text-lg font-bold text-blue-600">₹{stats.priceRange.min.toLocaleString('en-IN')} - ₹{stats.priceRange.max.toLocaleString('en-IN')}</p></div>
-              <div className="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-lg shadow-sm col-span-2 lg:col-span-1 border border-transparent dark:border-gray-700"><p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Total Value</p><p className="text-sm sm:text-2xl font-bold text-indigo-600">₹{stats.totalValue.toLocaleString('en-IN')}</p></div>
+              <div className="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-lg shadow-sm border border-transparent dark:border-gray-700"><p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Total Properties</p><p className="text-lg sm:text-2xl font-bold text-purple-600 dark:text-purple-400">{items.length}</p></div>
+              <div className="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-lg shadow-sm border border-transparent dark:border-gray-700"><p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Average Price</p><p className="text-sm sm:text-2xl font-bold text-green-600 dark:text-green-400">₹{stats.averagePrice.toLocaleString('en-IN')}</p></div>
+              <div className="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-lg shadow-sm col-span-2 lg:col-span-1 border border-transparent dark:border-gray-700"><p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Price Range</p><p className="text-xs sm:text-lg font-bold text-blue-600 dark:text-blue-400">₹{stats.priceRange.min.toLocaleString('en-IN')} - ₹{stats.priceRange.max.toLocaleString('en-IN')}</p></div>
+              <div className="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-lg shadow-sm col-span-2 lg:col-span-1 border border-transparent dark:border-gray-700"><p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Total Value</p><p className="text-sm sm:text-2xl font-bold text-indigo-600 dark:text-indigo-400">₹{stats.totalValue.toLocaleString('en-IN')}</p></div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
               <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-transparent dark:border-gray-700">
@@ -441,10 +441,10 @@ const WishList = () => {
                 <div className="space-y-2">
                   {Object.entries(stats.typeDistribution).map(([type, count]) => (
                     <div key={type} className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600 capitalize">{type}</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-400 capitalize">{type}</span>
                       <div className="flex items-center gap-2">
-                        <div className="w-20 bg-gray-200 rounded-full h-2"><div className="bg-purple-500 h-2 rounded-full" style={{ width: `${(count / items.length) * 100}%` }}></div></div>
-                        <span className="text-sm font-semibold text-gray-800">{count}</span>
+                        <div className="w-20 bg-gray-200 dark:bg-gray-700 rounded-full h-2"><div className="bg-purple-500 h-2 rounded-full" style={{ width: `${(count / items.length) * 100}%` }}></div></div>
+                        <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{count}</span>
                       </div>
                     </div>
                   ))}
@@ -455,10 +455,10 @@ const WishList = () => {
                 <div className="space-y-2">
                   {Object.entries(stats.cityDistribution).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([city, count]) => (
                     <div key={city} className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">{city}</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">{city}</span>
                       <div className="flex items-center gap-2">
-                        <div className="w-20 bg-gray-200 rounded-full h-2"><div className="bg-pink-500 h-2 rounded-full" style={{ width: `${(count / items.length) * 100}%` }}></div></div>
-                        <span className="text-sm font-semibold text-gray-800">{count}</span>
+                        <div className="w-20 bg-gray-200 dark:bg-gray-700 rounded-full h-2"><div className="bg-pink-500 h-2 rounded-full" style={{ width: `${(count / items.length) * 100}%` }}></div></div>
+                        <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{count}</span>
                       </div>
                     </div>
                   ))}
