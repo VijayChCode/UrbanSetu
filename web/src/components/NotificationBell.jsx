@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useSelector } from 'react-redux';
-import { FaBell, FaTimes, FaCheck, FaTrash, FaEye, FaCalendarAlt, FaEdit, FaEnvelope, FaPaperPlane, FaUsers, FaUser, FaRedo, FaUndo, FaSearch, FaFilter, FaCopy, FaExclamationTriangle, FaHome } from 'react-icons/fa';
+import { FaBell, FaTimes, FaCheck, FaTrash, FaEye, FaCalendarAlt, FaEdit, FaEnvelope, FaPaperPlane, FaUsers, FaUser, FaRedo, FaUndo, FaSearch, FaFilter, FaCopy, FaExclamationTriangle, FaHome, FaVideo } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { socket } from '../utils/socket.js';
 import { useNavigate } from 'react-router-dom';
@@ -443,11 +443,16 @@ export default function NotificationBell({ mobile = false }) {
             <FaTimes className={iconBase} />
           </div>
         );
+      case 'video_issue_report':
+        return (
+          <div className={`${containerBase} bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400`}>
+            <FaVideo className={iconBase} />
+          </div>
+        );
       case 'client_error_report':
       case 'rent_payment_overdue':
       case 'rent_dispute_raised':
       case 'community_report':
-      case 'video_issue_report':
         return (
           <div className={`${containerBase} bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400`}>
             <FaExclamationTriangle className={iconBase} />
@@ -506,14 +511,23 @@ export default function NotificationBell({ mobile = false }) {
   };
 
   // Notification Categories for filtering
-  const NOTIFICATION_CATEGORIES = useMemo(() => [
-    { id: 'All', icon: FaBell, label: 'All Alerts' },
-    { id: 'Properties', icon: FaHome, label: 'Real Estate', types: ['property_edited', 'property_deleted', 'property_reported', 'watchlist_price_drop', 'watchlist_property_sold', 'watchlist_price_update', 'watchlist_property_removed', 'watchlist_property_trending', 'watchlist_status_update', 'watchlist_update', 'property_assigned', 'property_deassigned'] },
-    { id: 'Community', icon: FaUsers, label: 'Community', types: ['community_report', 'video_issue_report'] },
-    { id: 'Appointments', icon: FaCalendarAlt, label: 'Appointments', types: ['appointment_booked', 'appointment_updated', 'appointment_accepted_by_seller', 'appointment_cancelled_by_seller', 'appointment_cancelled_by_buyer', 'appointment_cancelled_by_admin', 'appointment_accepted_by_seller'] },
-    { id: 'Financial', icon: FaEnvelope, label: 'Payments', types: ['rent_payment_reminder', 'rent_dispute_resolved', 'rent_payment_overdue', 'rent_dispute_raised', 'rent_auto_debit_failed', 'rent_auto_debit_success', 'rent_contract_signed', 'rent_contract_accepted', 'rent_contract_rejected', 'rent_contract_terminated'] },
-    { id: 'System', icon: FaExclamationTriangle, label: 'System', types: ['admin_message', 'client_error_report'] }
-  ], []);
+  const NOTIFICATION_CATEGORIES = useMemo(() => {
+    const categories = [
+      { id: 'All', icon: FaBell, label: 'All Alerts' },
+      { id: 'Properties', icon: FaHome, label: 'Real Estate', types: ['property_edited', 'property_deleted', 'property_reported', 'watchlist_price_drop', 'watchlist_property_sold', 'watchlist_price_update', 'watchlist_property_removed', 'watchlist_property_trending', 'watchlist_status_update', 'watchlist_update', 'property_assigned', 'property_deassigned'] },
+      { id: 'Community', icon: FaUsers, label: 'Community', types: ['community_report'] },
+      { id: 'Appointments', icon: FaCalendarAlt, label: 'Appointments', types: ['appointment_booked', 'appointment_updated', 'appointment_accepted_by_seller', 'appointment_cancelled_by_seller', 'appointment_cancelled_by_buyer', 'appointment_cancelled_by_admin', 'appointment_accepted_by_seller'] },
+      { id: 'Financial', icon: FaEnvelope, label: 'Payments', types: ['rent_payment_reminder', 'rent_dispute_resolved', 'rent_payment_overdue', 'rent_dispute_raised', 'rent_auto_debit_failed', 'rent_auto_debit_success', 'rent_contract_signed', 'rent_contract_accepted', 'rent_contract_rejected', 'rent_contract_terminated'] },
+      { id: 'System', icon: FaExclamationTriangle, label: 'System', types: ['admin_message', 'client_error_report'] }
+    ];
+
+    if (isAdmin()) {
+      // Add Video Issues for admins at a prominent position
+      categories.splice(3, 0, { id: 'VideoIssues', icon: FaVideo, label: 'Video Issues', types: ['video_issue_report'] });
+    }
+
+    return categories;
+  }, [currentUser]);
 
   // Filter notifications based on search, status, date, and category criteria
   const filteredNotifications = useMemo(() => {

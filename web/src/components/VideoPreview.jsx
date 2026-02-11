@@ -968,7 +968,11 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
         // We'll keep the reported state but close the modal after a delay
         setTimeout(() => {
           setShowReportModal(false);
-          setIsReported(false); // Reset for next time if they open modal again
+          // Wait for modal animation to finish before resetting states
+          setTimeout(() => {
+            setIsReported(false);
+            setReportIssueType(null);
+          }, 400);
         }, 2000);
       } else {
         const errorData = await res.json();
@@ -2291,19 +2295,14 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
                   key={item.id}
                   disabled={reportingIssue || isReported}
                   onClick={() => handleIssueSubmit(item.id)}
-                  className={`w-full group flex items-start gap-5 p-4 rounded-2xl transition-all border text-left ${reportIssueType === item.id
-                    ? 'bg-blue-600/20 border-blue-500/50'
-                    : 'bg-white/5 border-transparent hover:bg-white/10 hover:border-white/10'
-                    }`}
+                  className="w-full group flex items-start gap-5 p-4 rounded-2xl transition-all border border-transparent bg-white/5 hover:bg-white/10 hover:border-white/10 text-left"
                 >
-                  <div className={`mt-0.5 p-3 rounded-xl transition-colors ${reportIssueType === item.id ? 'bg-blue-600 text-white' : 'bg-white/5 text-gray-400 group-hover:text-white'
-                    }`}>
+                  <div className="mt-0.5 p-3 rounded-xl transition-colors bg-white/5 text-gray-400 group-hover:text-white">
                     <item.icon className="w-5 h-5" />
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
                       <span className="text-base font-bold text-white mb-1">{item.label}</span>
-                      {reportIssueType === item.id && <FaCheckCircle className="text-emerald-400" />}
                     </div>
                     <p className="text-sm text-gray-500 leading-relaxed font-medium group-hover:text-gray-400 transition-colors">
                       {item.sub}
