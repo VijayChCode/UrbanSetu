@@ -983,7 +983,7 @@ export default function NotificationBell({ mobile = false }) {
                                           {formatDate(notification.createdAt)}
                                         </span>
                                       </div>
-                                      <p className={`text-xs mt-1 leading-relaxed whitespace-pre-wrap ${!notification.isRead ? 'text-gray-600 dark:text-gray-300 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
+                                      <p className={`text-xs mt-1 leading-relaxed whitespace-pre-wrap break-all ${!notification.isRead ? 'text-gray-600 dark:text-gray-300 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
                                         {notification.link ? (
                                           <button
                                             onClick={() => {
@@ -1584,7 +1584,7 @@ export default function NotificationBell({ mobile = false }) {
                                           {formatDate(n.createdAt)}
                                         </span>
                                       </div>
-                                      <p className={`text-[11px] mt-1.5 leading-relaxed whitespace-pre-wrap ${!n.isRead ? 'text-gray-600 dark:text-gray-300 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
+                                      <p className={`text-[11px] mt-1.5 leading-relaxed whitespace-pre-wrap break-all ${!n.isRead ? 'text-gray-600 dark:text-gray-300 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
                                         {n.link ? (
                                           <button
                                             onClick={() => {
