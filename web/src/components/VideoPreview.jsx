@@ -1637,6 +1637,17 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
         </div>
       )}
 
+      {/* Report Button */}
+      {!isMiniMode && !isFullscreen && (
+        <button
+          onClick={(e) => { e.stopPropagation(); setShowReportModal(true); }}
+          className={`absolute top-4 left-4 text-white hover:text-yellow-400 z-50 bg-black/50 backdrop-blur rounded-full p-3 transition-all duration-300 hover:bg-black/80 hover:scale-110 ${showControls ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}
+          title="Report an Issue"
+        >
+          <FaExclamationTriangle size={20} />
+        </button>
+      )}
+
       {/* Close Button */}
       {!isMiniMode && !isFullscreen && (
         <button
