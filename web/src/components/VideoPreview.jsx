@@ -149,7 +149,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
       let newUrl = url;
       // Inject standard q_auto for better reliability and faster startup
       if (!newUrl.includes('q_auto')) {
-        newUrl = newUrl.replace('/upload/', '/upload/q_auto/');
+        newUrl = newUrl.replace('/upload/', '/upload/q_auto:best/');
       }
       return newUrl;
     }
