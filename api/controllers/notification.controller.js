@@ -1324,7 +1324,8 @@ export const reportVideoIssue = async (req, res, next) => {
     if (admins.length === 0) return res.status(200).json({ success: true });
 
     const title = `Video Issue Reported: ${issueType}`;
-    const message = `A video issue was reported by ${reporter.username}.\nVideo Index: ${currentIndex}\nIssue: ${issueType}\nDescription: ${description ? `\nNote: ${description}` : ''}\nLink: ${videoUrl}`;
+    const reporterName = reporter?.username || 'Guest User';
+    const message = `A video issue was reported by ${reporterName}.\nVideo Index: ${currentIndex}\nIssue: ${issueType}\nDescription: ${description ? `\nNote: ${description}` : ''}\nLink: ${videoUrl}`;
 
     const notifications = admins.map(admin => ({
       userId: admin._id,
@@ -1337,7 +1338,7 @@ export const reportVideoIssue = async (req, res, next) => {
         issueType,
         description,
         currentIndex,
-        reporterId: reporter._id,
+        reporterId: reporter?._id || null,
       }
     }));
 

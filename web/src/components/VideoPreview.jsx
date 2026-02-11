@@ -147,7 +147,8 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
     // Check if it's a Cloudinary URL
     if (url.includes('cloudinary.com') && url.includes('/upload/')) {
       let newUrl = url;
-      // Inject standard q_auto for better reliability and faster startup
+      // NOTE: Using 'q_auto:best' to get best quality 
+      // which occur during high-quality on-the-fly generation and break seamless playback.
       if (!newUrl.includes('q_auto')) {
         newUrl = newUrl.replace('/upload/', '/upload/q_auto:best/');
       }
