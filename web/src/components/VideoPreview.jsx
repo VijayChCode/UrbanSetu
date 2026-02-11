@@ -44,6 +44,8 @@ import {
 
 import SocialSharePanel from './SocialSharePanel';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingId = null }) => {
   // Playback States
   const [currentIndex, setCurrentIndex] = useState(initialIndex || 0);
