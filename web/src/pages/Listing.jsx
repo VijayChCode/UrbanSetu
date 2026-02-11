@@ -1892,8 +1892,8 @@ export default function Listing() {
                           />
                           {/* Centered Play Button Overlay */}
                           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <div className="bg-white/20 backdrop-blur-md p-4 rounded-full border border-white/30 shadow-2xl transform transition-transform group-hover:scale-110">
-                              <FaPlay className="text-white text-2xl sm:text-4xl drop-shadow-lg" />
+                            <div className={`backdrop-blur-md p-4 rounded-full border shadow-2xl transform transition-all group-hover:scale-110 ${showVideoPreview && selectedVideoIndex === item.vIndex ? 'bg-red-500/20 border-red-500/50' : 'bg-white/20 border-white/30'}`}>
+                              <FaPlay className={`text-2xl sm:text-4xl drop-shadow-lg ${showVideoPreview && selectedVideoIndex === item.vIndex ? 'text-red-400 animate-pulse' : 'text-white'}`} />
                             </div>
                           </div>
                         </div>
@@ -1914,9 +1914,9 @@ export default function Listing() {
                       )}
                       {item.type === 'video' && (
                         <div className="absolute top-4 right-4 z-30">
-                          <span className="bg-black/70 backdrop-blur-md text-white text-[10px] sm:text-xs px-3 py-1.5 rounded-full font-bold uppercase tracking-wider shadow-lg flex items-center gap-2 border border-white/20">
-                            <FaPlay className="text-red-500" />
-                            Video Tour
+                          <span className={`bg-black/70 backdrop-blur-md text-white text-[10px] sm:text-xs px-3 py-1.5 rounded-full font-bold uppercase tracking-wider shadow-lg flex items-center gap-2 border ${showVideoPreview && selectedVideoIndex === item.vIndex ? 'border-red-500 ring-1 ring-red-500/50 animate-pulse' : 'border-white/20'}`}>
+                            <FaPlay className={showVideoPreview && selectedVideoIndex === item.vIndex ? 'text-red-400' : 'text-red-500'} />
+                            {showVideoPreview && selectedVideoIndex === item.vIndex ? 'Currently Playing' : 'Video Tour'}
                           </span>
                         </div>
                       )}
@@ -1980,7 +1980,7 @@ export default function Listing() {
 
                       {/* Dynamic action label */}
                       <div className="absolute bottom-4 right-4 z-30 transition-all duration-300 pointer-events-none">
-                        <span className="bg-black/70 backdrop-blur-md text-white text-[10px] sm:text-xs px-3 py-1.5 rounded-full font-bold uppercase tracking-wider shadow-lg border border-white/20 flex items-center gap-2">
+                        <span className={`bg-black/70 backdrop-blur-md text-white text-[10px] sm:text-xs px-3 py-1.5 rounded-full font-bold uppercase tracking-wider shadow-lg border flex items-center gap-2 ${item.type === 'video' && showVideoPreview && selectedVideoIndex === item.vIndex ? 'border-red-500 text-red-400' : 'border-white/20'}`}>
                           {item.type === 'image' ? (
                             <>
                               <FaExpand size={12} className="text-blue-400" />
@@ -1988,8 +1988,8 @@ export default function Listing() {
                             </>
                           ) : (
                             <>
-                              <FaPlay size={12} className="text-red-500" />
-                              Click to play
+                              <FaPlay size={12} className={showVideoPreview && selectedVideoIndex === item.vIndex ? 'text-red-400 animate-pulse' : 'text-red-500'} />
+                              {showVideoPreview && selectedVideoIndex === item.vIndex ? 'Active Player' : 'Click to play'}
                             </>
                           )}
                         </span>
@@ -2463,7 +2463,14 @@ export default function Listing() {
                 )}
                 {listing.droneVideoUrl && (
                   <div className="border rounded-lg p-3 bg-white">
-                    <h4 className="font-semibold text-gray-800 mb-2">Drone View</h4>
+                    <h4 className="font-semibold text-gray-800 mb-2 flex items-center justify-between">
+                      Drone View
+                      {showDronePreview && (
+                        <span className="flex items-center gap-1.5 px-2 py-0.5 bg-red-100 text-red-600 rounded-full text-[10px] font-black uppercase tracking-widest animate-pulse border border-red-200">
+                          <div className="w-1.5 h-1.5 bg-red-600 rounded-full animate-ping" /> Active
+                        </span>
+                      )}
+                    </h4>
                     <div className="relative w-full h-64 rounded bg-black group cursor-pointer overflow-hidden" onClick={() => setShowDronePreview(true)}>
                       <video src={listing.droneVideoUrl} className="w-full h-full object-cover opacity-80" muted playsInline />
                       <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/30 transition-colors">
