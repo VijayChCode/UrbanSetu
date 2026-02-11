@@ -2271,10 +2271,10 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
       {/* Report Issue Modal */}
       {showReportModal && (
         <div className="absolute inset-0 z-[10001] flex items-center justify-center bg-black/70 backdrop-blur-sm animate-fadeIn" onClick={() => setShowReportModal(false)}>
-          <div className="bg-[#1a1a1a] border border-white/10 p-7 rounded-3xl shadow-2xl max-w-lg w-full mx-4 transform scale-100 transition-all text-left relative overflow-hidden" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-[#1a1a1a] border border-white/10 p-7 max-sm:p-5 rounded-3xl shadow-2xl max-w-lg w-full mx-4 max-sm:mx-2 transform scale-100 transition-all text-left relative overflow-hidden" onClick={(e) => e.stopPropagation()}>
             {/* Header */}
-            <div className="flex items-center justify-between mb-8">
-              <h3 className="text-2xl font-black text-white tracking-tight">Report an Issue</h3>
+            <div className="flex items-center justify-between mb-8 max-sm:mb-5">
+              <h3 className="text-2xl max-sm:text-xl font-black text-white tracking-tight">Report an Issue</h3>
               <button
                 onClick={() => setShowReportModal(false)}
                 className="text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl p-2.5 transition-all"
@@ -2284,7 +2284,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
             </div>
 
             {/* Issue Options */}
-            <div className="space-y-4">
+            <div className="space-y-4 max-sm:space-y-3">
               {[
                 { id: 'Buffering and Connection Issues', icon: FaWifi, label: 'Buffering and Connection Issues', sub: "Frequent buffering, playback won't start, or similar problems" },
                 { id: 'Video Quality', icon: FaVideo, label: 'Video Quality', sub: "Video is blurry, cuts out, or looks strange in some way" },
@@ -2295,16 +2295,16 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
                   key={item.id}
                   disabled={reportingIssue || isReported}
                   onClick={() => handleIssueSubmit(item.id)}
-                  className="w-full group flex items-start gap-5 p-4 rounded-2xl transition-all border border-transparent bg-white/5 hover:bg-white/10 hover:border-white/10 text-left"
+                  className="w-full group flex items-start gap-5 max-sm:gap-4 p-4 max-sm:p-3.5 rounded-2xl transition-all border border-transparent bg-white/5 hover:bg-white/10 hover:border-white/10 text-left"
                 >
-                  <div className="mt-0.5 p-3 rounded-xl transition-colors bg-white/5 text-gray-400 group-hover:text-white">
-                    <item.icon className="w-5 h-5" />
+                  <div className="mt-0.5 p-3 max-sm:p-2.5 rounded-xl transition-colors bg-white/5 text-gray-400 group-hover:text-white">
+                    <item.icon className="w-5 h-5 max-sm:w-4 max-sm:h-4" />
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-base font-bold text-white mb-1">{item.label}</span>
+                      <span className="text-base max-sm:text-[15px] font-bold text-white mb-1">{item.label}</span>
                     </div>
-                    <p className="text-sm text-gray-500 leading-relaxed font-medium group-hover:text-gray-400 transition-colors">
+                    <p className="text-sm max-sm:text-[12px] text-gray-500 leading-relaxed font-medium group-hover:text-gray-400 transition-colors">
                       {item.sub}
                     </p>
                   </div>
@@ -2327,8 +2327,11 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
             )}
 
             {reportingIssue && (
-              <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center z-20">
-                <FaSpinner className="w-10 h-10 text-blue-500 animate-spin" />
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-md flex flex-col items-center justify-center z-20 animate-fadeIn">
+                <div className="flex flex-col items-center gap-4">
+                  <FaSpinner className="w-10 h-10 text-blue-500 animate-spin" />
+                  <span className="text-white font-bold tracking-widest text-xs uppercase animate-pulse">Reporting...</span>
+                </div>
               </div>
             )}
           </div>
