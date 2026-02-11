@@ -156,7 +156,6 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
     }
     return url;
   };
-
   // NEW: Helper to get image thumbnail at specific time for Cloudinary
   const getThumbnailUrl = (url, time) => {
     if (!url || !url.includes('cloudinary.com')) return null;
