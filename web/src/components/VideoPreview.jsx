@@ -147,9 +147,9 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
     // Check if it's a Cloudinary URL
     if (url.includes('cloudinary.com') && url.includes('/upload/')) {
       let newUrl = url;
-      // Inject high quality q_auto:best if not present
+      // Inject standard q_auto for better reliability and faster startup
       if (!newUrl.includes('q_auto')) {
-        newUrl = newUrl.replace('/upload/', '/upload/q_auto:best/');
+        newUrl = newUrl.replace('/upload/', '/upload/q_auto/');
       }
       return newUrl;
     }
@@ -675,26 +675,38 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
 
   // Playback effect
   useEffect(() => {
-    if (videoRef.current && videoBlobUrl) {
+    let active = true;
+    if (videoRef.current && videoBlobUrl && isOpen) {
       videoRef.current.playbackRate = playbackRate;
-      if (isPlaying) {
-        // Use a small delay or check for readyState if still failing, 
-        // but adding videoBlobUrl to dependencies should fix the race condition.
-        const playPromise = videoRef.current.play();
-        if (playPromise !== undefined) {
-          playPromise.catch(e => {
-            console.warn("Autoplay interrupted or failed:", e);
-            // Only set to false if it's a "real" interruption, not just a source change
-            if (e.name !== 'AbortError') {
-              setIsPlaying(false);
+
+      const applyPlayback = async () => {
+        if (!active) return;
+        try {
+          if (isPlaying) {
+            // Only call play if paused to avoid AbortError "interrupted by play()"
+            if (videoRef.current.paused) {
+              const playPromise = videoRef.current.play();
+              if (playPromise !== undefined) {
+                await playPromise;
+              }
             }
-          });
+          } else {
+            if (!videoRef.current.paused) {
+              videoRef.current.pause();
+            }
+          }
+        } catch (e) {
+          // Silently handle AbortError which is common during rapid source changes
+          if (e.name !== 'AbortError' && e.name !== 'NotAllowedError') {
+            console.warn("Playback control error:", e);
+          }
         }
-      } else {
-        videoRef.current.pause();
-      }
+      };
+
+      applyPlayback();
     }
-  }, [isPlaying, currentIndex, playbackRate, videoBlobUrl]);
+    return () => { active = false; };
+  }, [isPlaying, currentIndex, playbackRate, videoBlobUrl, isOpen]);
 
   // Volume & Mute effect
   useEffect(() => {
@@ -1745,7 +1757,6 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
           playsInline
           crossOrigin="anonymous"
           preload="auto"
-          autoPlay
           onLoadStart={() => setIsLoading(true)}
           onWaiting={() => setIsLoading(true)}
           onStalled={() => setIsLoading(true)}
