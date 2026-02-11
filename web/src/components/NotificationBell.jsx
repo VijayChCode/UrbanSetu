@@ -447,6 +447,7 @@ export default function NotificationBell({ mobile = false }) {
       case 'rent_payment_overdue':
       case 'rent_dispute_raised':
       case 'community_report':
+      case 'video_issue_report':
         return (
           <div className={`${containerBase} bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400`}>
             <FaExclamationTriangle className={iconBase} />
@@ -508,7 +509,7 @@ export default function NotificationBell({ mobile = false }) {
   const NOTIFICATION_CATEGORIES = useMemo(() => [
     { id: 'All', icon: FaBell, label: 'All Alerts' },
     { id: 'Properties', icon: FaHome, label: 'Real Estate', types: ['property_edited', 'property_deleted', 'property_reported', 'watchlist_price_drop', 'watchlist_property_sold', 'watchlist_price_update', 'watchlist_property_removed', 'watchlist_property_trending', 'watchlist_status_update', 'watchlist_update', 'property_assigned', 'property_deassigned'] },
-    { id: 'Community', icon: FaUsers, label: 'Community', types: ['community_report'] },
+    { id: 'Community', icon: FaUsers, label: 'Community', types: ['community_report', 'video_issue_report'] },
     { id: 'Appointments', icon: FaCalendarAlt, label: 'Appointments', types: ['appointment_booked', 'appointment_updated', 'appointment_accepted_by_seller', 'appointment_cancelled_by_seller', 'appointment_cancelled_by_buyer', 'appointment_cancelled_by_admin', 'appointment_accepted_by_seller'] },
     { id: 'Financial', icon: FaEnvelope, label: 'Payments', types: ['rent_payment_reminder', 'rent_dispute_resolved', 'rent_payment_overdue', 'rent_dispute_raised', 'rent_auto_debit_failed', 'rent_auto_debit_success', 'rent_contract_signed', 'rent_contract_accepted', 'rent_contract_rejected', 'rent_contract_terminated'] },
     { id: 'System', icon: FaExclamationTriangle, label: 'System', types: ['admin_message', 'client_error_report'] }

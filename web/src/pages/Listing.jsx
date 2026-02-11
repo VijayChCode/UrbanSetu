@@ -3943,6 +3943,7 @@ export default function Listing() {
           onClose={() => setShowVideoPreview(false)}
           videos={listing.videoUrls}
           initialIndex={selectedVideoIndex}
+          listingId={listing._id}
         />
       )}
 
@@ -3953,6 +3954,7 @@ export default function Listing() {
           onClose={() => setShowDronePreview(false)}
           videos={[listing.droneVideoUrl]}
           initialIndex={0}
+          listingId={listing._id}
         />
       )}
 

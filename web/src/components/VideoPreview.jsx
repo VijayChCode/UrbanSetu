@@ -33,12 +33,18 @@ import {
   FaTools,
   FaChartLine,
   FaHistory,
-  FaInfinity
+  FaInfinity,
+  FaExclamationTriangle,
+  FaCommentAlt,
+  FaVideo,
+  FaVolumeUp as FaVolumeIcon,
+  FaClosedCaptioning,
+  FaCheckCircle
 } from 'react-icons/fa';
 
 import SocialSharePanel from './SocialSharePanel';
 
-const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
+const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingId = null }) => {
   // Playback States
   const [currentIndex, setCurrentIndex] = useState(initialIndex || 0);
   const [retryId, setRetryId] = useState(0); // For network recovery/retries
@@ -121,6 +127,10 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
   const [isVolumeHovered, setIsVolumeHovered] = useState(false);
   const [isBottomControlsHovered, setIsBottomControlsHovered] = useState(false);
   const [showAboutPlayer, setShowAboutPlayer] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportIssueType, setReportIssueType] = useState(null);
+  const [reportingIssue, setReportingIssue] = useState(false);
+  const [isReported, setIsReported] = useState(false);
   const contextMenuRef = useRef(null);
 
   // Preview Thumbnail States
@@ -930,6 +940,44 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
     if (y + menuHeight > window.innerHeight) y -= menuHeight;
 
     setContextMenu({ show: true, x, y });
+  };
+
+  const handleIssueSubmit = async (type, desc = '') => {
+    setReportingIssue(true);
+    try {
+      const res = await authenticatedFetch(`${API_BASE_URL}/api/notifications/report-video`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          videoUrl: videos[currentIndex],
+          issueType: type,
+          description: desc,
+          currentIndex,
+          listingId: listingId
+        })
+      });
+
+      if (res.ok) {
+        setIsReported(true);
+        setReportIssueType(type);
+        toast.success("Issue reported successfully");
+        // We'll keep the reported state but close the modal after a delay
+        setTimeout(() => {
+          setShowReportModal(false);
+          setIsReported(false); // Reset for next time if they open modal again
+        }, 2000);
+      } else {
+        const errorData = await res.json();
+        toast.error(errorData.message || "Failed to report issue");
+      }
+    } catch (error) {
+      console.error('Report error:', error);
+      toast.error("Network error occurred");
+    } finally {
+      setReportingIssue(false);
+    }
   };
 
   const copyToClipboard = async (text, message) => {
@@ -1974,6 +2022,19 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
               <FaInfoCircle className="text-sm text-white/60 group-hover:text-white" />
               <span className="text-[13px] text-white/90">About Player</span>
             </div>
+
+            <div className="h-[1px] bg-white/5 my-1" />
+
+            <div
+              className="px-4 py-2.5 hover:bg-white/10 flex items-center gap-3 cursor-pointer transition-colors group"
+              onClick={() => { setShowReportModal(true); setContextMenu({ ...contextMenu, show: false }); }}
+            >
+              <FaExclamationTriangle className="text-sm text-white/60 group-hover:text-white" />
+              <div className="flex-1 flex justify-between items-center">
+                <span className="text-[13px] text-white/90">Report an Issue</span>
+                {isReported && <FaCheckCircle className="text-xs text-emerald-400 animate-fadeIn" />}
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -2188,6 +2249,79 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0 }) => {
             </div>
           </div>
         )
+      }
+
+      {/* Report Issue Modal */}
+      {showReportModal && (
+        <div className="absolute inset-0 z-[10001] flex items-center justify-center bg-black/70 backdrop-blur-sm animate-fadeIn" onClick={() => setShowReportModal(false)}>
+          <div className="bg-[#1a1a1a] border border-white/10 p-7 rounded-3xl shadow-2xl max-w-lg w-full mx-4 transform scale-100 transition-all text-left relative overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-2xl font-black text-white tracking-tight">Report an Issue</h3>
+              <button
+                onClick={() => setShowReportModal(false)}
+                className="text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl p-2.5 transition-all"
+              >
+                <FaTimes className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Issue Options */}
+            <div className="space-y-4">
+              {[
+                { id: 'Buffering and Connection Issues', icon: FaWifi, label: 'Buffering and Connection Issues', sub: "Frequent buffering, playback won't start, or similar problems" },
+                { id: 'Video Quality', icon: FaVideo, label: 'Video Quality', sub: "Video is blurry, cuts out, or looks strange in some way" },
+                { id: 'Audio Quality', icon: FaVolumeIcon, label: 'Audio Quality', sub: "Audio is hard to hear, mismatched with video, or missing in certain parts" },
+                { id: 'Subtitles and Captions', icon: FaClosedCaptioning, label: 'Subtitles and Captions', sub: "Missing, hard to read, mismatched with audio, misspelt or poor translation" }
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  disabled={reportingIssue || isReported}
+                  onClick={() => handleIssueSubmit(item.id)}
+                  className={`w-full group flex items-start gap-5 p-4 rounded-2xl transition-all border text-left ${reportIssueType === item.id
+                    ? 'bg-blue-600/20 border-blue-500/50'
+                    : 'bg-white/5 border-transparent hover:bg-white/10 hover:border-white/10'
+                    }`}
+                >
+                  <div className={`mt-0.5 p-3 rounded-xl transition-colors ${reportIssueType === item.id ? 'bg-blue-600 text-white' : 'bg-white/5 text-gray-400 group-hover:text-white'
+                    }`}>
+                    <item.icon className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-base font-bold text-white mb-1">{item.label}</span>
+                      {reportIssueType === item.id && <FaCheckCircle className="text-emerald-400" />}
+                    </div>
+                    <p className="text-sm text-gray-500 leading-relaxed font-medium group-hover:text-gray-400 transition-colors">
+                      {item.sub}
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {/* Reported Overlay/Feedback */}
+            {isReported && (
+              <div className="absolute inset-0 bg-[#1a1a1a]/90 backdrop-blur-md flex flex-col items-center justify-center animate-fadeIn z-10">
+                <div className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center mb-6 animate-scaleIn shadow-[0_0_30px_rgba(16,185,129,0.3)]">
+                  <FaCheckCircle className="w-10 h-10 text-white" />
+                </div>
+                <h4 className="text-2xl font-black text-white mb-2 tracking-tight">Reported</h4>
+                <p className="text-gray-400 font-medium">Thank you for reporting this issue.</p>
+                <div className="mt-8 px-5 py-2.5 bg-white/5 rounded-xl border border-white/10 text-xs font-bold text-gray-400 uppercase tracking-widest">
+                  Confirmed: {reportIssueType}
+                </div>
+              </div>
+            )}
+
+            {reportingIssue && (
+              <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center z-20">
+                <FaSpinner className="w-10 h-10 text-blue-500 animate-spin" />
+              </div>
+            )}
+          </div>
+        </div>
+      )
       }
 
       <SocialSharePanel isOpen={showSharePanel} onClose={() => { setShowSharePanel(false); if (wasPlayingRef.current) setIsPlaying(true); }} url={videos[currentIndex] || ""} title="Check out this video on UrbanSetu!" />

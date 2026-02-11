@@ -1306,3 +1306,52 @@ export const notifyAdminsOfCommunityReport = async (app, reporter, targetPost, r
     console.error('Failed to notify admins of community report:', error);
   }
 };
+
+// Report a video issue: create notifications for all admins/rootadmins
+export const reportVideoIssue = async (req, res, next) => {
+  const { videoUrl, issueType, description, currentIndex, listingId } = req.body;
+  const reporter = req.user;
+
+  try {
+    const admins = await User.find({
+      status: { $ne: 'suspended' },
+      $or: [
+        { role: 'rootadmin' },
+        { role: 'admin', adminApprovalStatus: 'approved' },
+      ],
+    }, '_id');
+
+    if (admins.length === 0) return res.status(200).json({ success: true });
+
+    const title = `Video Issue Reported: ${issueType}`;
+    const message = `A video issue was reported by ${reporter.username}.\nVideo Index: ${currentIndex}\nIssue: ${issueType}\nDescription: ${description ? `\nNote: ${description}` : ''}\nLink: ${videoUrl}`;
+
+    const notifications = admins.map(admin => ({
+      userId: admin._id,
+      type: 'video_issue_report',
+      title,
+      message,
+      listingId: listingId || null,
+      meta: {
+        videoUrl,
+        issueType,
+        description,
+        currentIndex,
+        reporterId: reporter._id,
+      }
+    }));
+
+    const createdNotifications = await Notification.insertMany(notifications);
+
+    const io = req.app.get('io');
+    if (io) {
+      createdNotifications.forEach(n => {
+        io.to(n.userId.toString()).emit('notificationCreated', n);
+      });
+    }
+
+    res.status(200).json({ success: true, message: 'Issue reported successfully' });
+  } catch (error) {
+    next(error);
+  }
+};

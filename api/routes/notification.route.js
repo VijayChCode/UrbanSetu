@@ -18,6 +18,7 @@ import {
   getReviewReports,
   getPropertyReports,
   getReportedMessageIds,
+  reportVideoIssue,
 } from '../controllers/notification.controller.js';
 import { verifyToken } from '../utils/verify.js';
 
@@ -57,6 +58,9 @@ router.post('/report-chat', verifyToken, reportChatMessage);
 
 // Report entire chat conversation (any authenticated user)
 router.post('/report-chat-conversation', verifyToken, reportChatConversation);
+
+// Report video issue (any authenticated user)
+router.post('/report-video', verifyToken, reportVideoIssue);
 
 // Admin: fetch structured reported notifications
 router.get('/reports', verifyToken, getReportedNotifications);
