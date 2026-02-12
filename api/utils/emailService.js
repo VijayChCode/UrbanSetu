@@ -2694,16 +2694,14 @@ export const sendAppointmentReminderEmail = async (email, appointmentDetails, us
             
             <!-- CTA Buttons -->
             <div style="text-align: center; margin: 30px 0; padding: 0 10px;">
-              <div class="btn-container">
-                <a href="${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}/user/myappointments" class="btn btn-primary">
+                <a href="${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}/user/myappointments" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block; margin: 10px; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);">
                   📅 View Appointment Details
                 </a>
                 ${listingId ? `
-                  <a href="${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}/listing/${listingId}" class="btn btn-secondary">
+                  <a href="${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}/listing/${listingId}" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block; margin: 10px; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);">
                     🏠 View Property Listing
                   </a>
                 ` : ''}
-              </div>
             </div>
             
             <!-- Footer -->
@@ -2851,14 +2849,12 @@ export const sendPriceDropAlertEmail = async (email, priceDropDetails) => {
             
             <!-- CTA Buttons -->
             <div style="text-align: center; margin: 30px 0; padding: 0 10px;">
-              <div class="btn-container">
-                <a href="${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}/listing/${listingId}" class="btn btn-primary">
+                <a href="${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}/listing/${listingId}" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block; margin: 10px; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);">
                   View Property Details
                 </a>
-                <a href="${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}/user/watchlist" class="btn btn-secondary">
+                <a href="${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}/user/watchlist" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block; margin: 10px; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);">
                   Go to Watchlist
                 </a>
-              </div>
             </div>
             
             <!-- Footer -->
