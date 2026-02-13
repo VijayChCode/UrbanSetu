@@ -2329,12 +2329,6 @@ export default function Settings() {
                   <FaFileDownload className="mr-2 text-green-500" />
                   What's included?
                 </h3>
-                <button
-                  onClick={() => setShowExportInfoModal(false)}
-                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                >
-                  <FaTimes className="w-5 h-5" />
-                </button>
               </div>
 
               <div className="max-h-[60vh] overflow-y-auto mb-6 pr-2 custom-scrollbar">
