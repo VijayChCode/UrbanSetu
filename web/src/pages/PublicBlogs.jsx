@@ -170,10 +170,15 @@ const PublicBlogs = () => {
         if (data.data && data.data.status) {
           // If approved but not subscribed to BLOG, treat as not subscribed
           if (data.data.status === 'approved' && (!data.data.preferences || !data.data.preferences.blog)) {
-            setSubscriptionStatus('not_subscribed');
+            // Check if they have a pending blog request while already being approved for something else
+            if (data.data.pendingPreferences?.blog) {
+              setSubscriptionStatus('pending');
+            } else {
+              setSubscriptionStatus('not_subscribed');
+            }
           }
-          // If pending, but the pending request is NOT for blog (e.g. they asked for Guide), treat as not subscribed here
-          else if (data.data.status === 'pending' && (!data.data.preferences || !data.data.preferences.blog)) {
+          // If pending, but specifically NOT for blog (e.g. they only asked for Guide), treat as not subscribed here
+          else if (data.data.status === 'pending' && !data.data.pendingPreferences?.blog) {
             setSubscriptionStatus('not_subscribed');
           }
           else {
@@ -816,12 +821,35 @@ const PublicBlogs = () => {
             <div className="inline-block p-3 bg-white/10 rounded-2xl mb-6 backdrop-blur-sm">
               <Mail className="w-8 h-8 text-blue-300" />
             </div>
-            <h3 className="text-3xl md:text-4xl font-bold mb-4">
-              Get insights delivered to your inbox
-            </h3>
-            <p className="text-slate-300 mb-8 max-w-2xl mx-auto text-lg">
-              Join our weekly newsletter to get the latest real estate trends, investment tips, and market analysis.
-            </p>
+            {(() => {
+              const hasActiveSub = isSubscribed || (currentUser && subscriptionStatus && ['approved', 'pending'].includes(subscriptionStatus));
+
+              if (hasActiveSub) {
+                return (
+                  <>
+                    <h3 className="text-3xl md:text-4xl font-bold mb-4">
+                      {subscriptionStatus === 'pending' ? "Almost Ready!" : "Welcome to the Community"}
+                    </h3>
+                    <p className="text-slate-300 mb-8 max-w-2xl mx-auto text-lg">
+                      {subscriptionStatus === 'pending'
+                        ? "Your request is being processed. You'll start receiving insights as soon as it's approved."
+                        : "You're all set! You'll now receive our deep-dive market analysis and real estate trends directly."}
+                    </p>
+                  </>
+                );
+              }
+
+              return (
+                <>
+                  <h3 className="text-3xl md:text-4xl font-bold mb-4">
+                    Get insights delivered to your inbox
+                  </h3>
+                  <p className="text-slate-300 mb-8 max-w-2xl mx-auto text-lg">
+                    Join our weekly newsletter to get the latest real estate trends, investment tips, and market analysis.
+                  </p>
+                </>
+              );
+            })()}
             {currentUser && subscriptionStatus && subscriptionStatus !== 'not_subscribed' ? (
               <div className="bg-white/10 backdrop-blur-md border border-blue-500/30 rounded-2xl p-6 inline-flex flex-col items-center animate-fade-in-up">
                 <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 shadow-lg 
@@ -839,12 +867,8 @@ const PublicBlogs = () => {
                 <p className="text-gray-300 mb-4">
                   {/* Derived Status Message */}
                   {(() => {
-                    // Check granular status first
-                    const isPendingBlog = subscriptionStatus === 'pending' || (subscriptionStatus === 'approved' && (!currentUser.preferences?.blog && currentUser.pendingPreferences?.blog));
-                    const isApprovedBlog = subscriptionStatus === 'approved' && currentUser.preferences?.blog;
-
-                    if (isPendingBlog) return 'Your subscription is awaiting approval.';
-                    if (isApprovedBlog) return 'You will receive updates for new blogs.';
+                    if (subscriptionStatus === 'pending') return 'Your blog subscription is awaiting approval.';
+                    if (subscriptionStatus === 'approved') return 'You will receive updates for new blogs.';
                     if (subscriptionStatus === 'rejected') return 'Your subscription was unfortunately rejected.';
                     if (subscriptionStatus === 'revoked') return 'Your subscription has been revoked.';
                     if (subscriptionStatus === 'opted_out') return 'You have opted out of emails.';

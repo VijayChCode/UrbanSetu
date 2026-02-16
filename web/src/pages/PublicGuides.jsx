@@ -192,10 +192,15 @@ const PublicGuides = () => {
                 if (data.data && data.data.status) {
                     // If approved but not subscribed to GUIDE, treat as not subscribed
                     if (data.data.status === 'approved' && (!data.data.preferences || !data.data.preferences.guide)) {
-                        setSubscriptionStatus('not_subscribed');
+                        // Check if they have a pending guide request while already being approved for something else
+                        if (data.data.pendingPreferences?.guide) {
+                            setSubscriptionStatus('pending');
+                        } else {
+                            setSubscriptionStatus('not_subscribed');
+                        }
                     }
-                    // If pending, but the pending request is NOT for guide (e.g. they asked for Blog), treat as not subscribed here
-                    else if (data.data.status === 'pending' && (!data.data.preferences || !data.data.preferences.guide)) {
+                    // If pending, but specifically NOT for guide (e.g. they only asked for Blog), treat as not subscribed here
+                    else if (data.data.status === 'pending' && !data.data.pendingPreferences?.guide) {
                         setSubscriptionStatus('not_subscribed');
                     }
                     else {
@@ -733,8 +738,31 @@ const PublicGuides = () => {
                     <div className="absolute -top-24 -left-24 w-64 h-64 bg-purple-600 rounded-full blur-[100px] opacity-40"></div>
                     <div className="relative z-10 max-w-2xl mx-auto">
                         <Lightbulb className="w-12 h-12 text-yellow-400 mx-auto mb-6" />
-                        <h2 className="text-3xl md:text-4xl font-black mb-4">Master Real Estate Investment</h2>
-                        <p className="text-gray-400 mb-8 text-lg">Join 10,000+ subscribers getting our weekly deep-dive guides and market analysis.</p>
+                        {(() => {
+                            const hasActiveSub = isSubscribed || (currentUser && subscriptionStatus && ['approved', 'pending'].includes(subscriptionStatus));
+
+                            if (hasActiveSub) {
+                                return (
+                                    <>
+                                        <h2 className="text-3xl md:text-4xl font-black mb-4">
+                                            {subscriptionStatus === 'pending' ? "Journey Starting Soon!" : "Your Path to Mastery"}
+                                        </h2>
+                                        <p className="text-gray-400 mb-8 text-lg">
+                                            {subscriptionStatus === 'pending'
+                                                ? "We've received your request to join our guide community. Quality insights are worth the wait!"
+                                                : "Glad to have you on board! You'll receive our deep-dive guides and investment strategies as they drop."}
+                                        </p>
+                                    </>
+                                );
+                            }
+
+                            return (
+                                <>
+                                    <h2 className="text-3xl md:text-4xl font-black mb-4">Master Real Estate Investment</h2>
+                                    <p className="text-gray-400 mb-8 text-lg">Join 10,000+ subscribers getting our weekly deep-dive guides and market analysis.</p>
+                                </>
+                            );
+                        })()}
 
                         {currentUser && subscriptionStatus && subscriptionStatus !== 'not_subscribed' ? (
                             <div className="bg-white/10 backdrop-blur-md border border-green-500/30 rounded-2xl p-6 inline-flex flex-col items-center animate-fade-in-up">
@@ -753,12 +781,8 @@ const PublicGuides = () => {
                                 <p className="text-gray-300 mb-4">
                                     {/* Derived Status Message */}
                                     {(() => {
-                                        // Check granular status first
-                                        const isPendingGuide = subscriptionStatus === 'pending' || (subscriptionStatus === 'approved' && (!currentUser.preferences?.guide && currentUser.pendingPreferences?.guide));
-                                        const isApprovedGuide = subscriptionStatus === 'approved' && currentUser.preferences?.guide;
-
-                                        if (isPendingGuide) return 'Your subscription is awaiting approval.';
-                                        if (isApprovedGuide) return 'You will receive updates for new guides.';
+                                        if (subscriptionStatus === 'pending') return 'Your guide subscription is awaiting approval.';
+                                        if (subscriptionStatus === 'approved') return 'You will receive updates for new guides.';
                                         if (subscriptionStatus === 'rejected') return 'Your subscription was unfortunately rejected.';
                                         if (subscriptionStatus === 'revoked') return 'Your subscription has been revoked.';
                                         if (subscriptionStatus === 'opted_out') return 'You have opted out of emails.';
