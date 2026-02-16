@@ -922,9 +922,7 @@ const PublicBlogs = () => {
                   <div className="absolute bottom-0 left-0 w-48 h-48 bg-black opacity-10 rounded-full -ml-24 -mb-24 blur-2xl"></div>
 
                   <div className="relative z-10 max-w-2xl mx-auto">
-                    <div className="w-16 h-16 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-6">
-                      <Mail className="w-8 h-8 text-white" />
-                    </div>
+
 
 
                     {subscribeStep === 'INPUT_EMAIL' ? (
