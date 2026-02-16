@@ -925,10 +925,7 @@ const PublicBlogs = () => {
                     <div className="w-16 h-16 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-6">
                       <Mail className="w-8 h-8 text-white" />
                     </div>
-                    <h2 className="text-3xl font-bold mb-4">Subscribe to Our Newsletter</h2>
-                    <p className="text-blue-100 mb-8 text-lg">
-                      Get the latest real estate insights, market trends, and property tips delivered straight to your inbox.
-                    </p>
+
 
                     {subscribeStep === 'INPUT_EMAIL' ? (
                       <>
