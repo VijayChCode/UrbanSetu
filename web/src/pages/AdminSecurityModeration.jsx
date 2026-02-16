@@ -28,6 +28,11 @@ export default function AdminSecurityModeration() {
   const [otpRefreshing, setOtpRefreshing] = useState(false);
   const [passwordRefreshing, setPasswordRefreshing] = useState(false);
 
+  // Modal State
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmingAction, setConfirmingAction] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
+
   const fetchStats = async () => {
     setLoading(true);
     setError('');
@@ -441,21 +446,32 @@ export default function AdminSecurityModeration() {
                       </td>
                       <td className="py-3 px-4">
                         <button
-                          onClick={async () => {
-                            try {
-                              if (r.email) {
-                                const res = await authenticatedFetch(`${API_BASE_URL}/api/auth/otp/unlock-email`, {
-                                  method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: r.email })
-                                });
-                                await res.json();
-                              } else if (r.ipAddress) {
-                                const res = await authenticatedFetch(`${API_BASE_URL}/api/auth/otp/unlock-ip`, {
-                                  method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ip: r.ipAddress })
-                                });
-                                await res.json();
+                          onClick={() => {
+                            setConfirmingAction({
+                              title: 'Confirm OTP Unlock',
+                              message: `Are you sure you want to unlock OTP restrictions for ${r.email || r.ipAddress}?`,
+                              onConfirm: async () => {
+                                setActionLoading(true);
+                                try {
+                                  if (r.email) {
+                                    const res = await authenticatedFetch(`${API_BASE_URL}/api/auth/otp/unlock-email`, {
+                                      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: r.email })
+                                    });
+                                    await res.json();
+                                  } else if (r.ipAddress) {
+                                    const res = await authenticatedFetch(`${API_BASE_URL}/api/auth/otp/unlock-ip`, {
+                                      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ip: r.ipAddress })
+                                    });
+                                    await res.json();
+                                  }
+                                  fetchStats();
+                                  setShowConfirmModal(false);
+                                } catch (_) { } finally {
+                                  setActionLoading(false);
+                                }
                               }
-                            } catch (_) { }
-                            fetchStats();
+                            });
+                            setShowConfirmModal(true);
                           }}
                           className="inline-flex items-center gap-1 px-3 py-1.5 text-xs bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105"
                           title="Unlock restriction"
@@ -646,18 +662,29 @@ export default function AdminSecurityModeration() {
                       </td>
                       <td className="py-3 px-4">
                         <button
-                          onClick={async () => {
-                            try {
-                              if (r.email) {
-                                await unlockPasswordByEmailOrUser({ email: r.email });
-                              } else if (r.userId) {
-                                await unlockPasswordByEmailOrUser({ userId: r.userId });
-                              } else if (r.ipAddress) {
-                                await unlockPasswordByIp(r.ipAddress);
-                              } else if (r.identifier) {
-                                await unlockPasswordByIdentifier(r.identifier);
+                          onClick={() => {
+                            setConfirmingAction({
+                              title: 'Confirm Password Unlock',
+                              message: `Are you sure you want to unlock password restrictions for ${r.email || r.identifier || r.ipAddress || r.userId}?`,
+                              onConfirm: async () => {
+                                setActionLoading(true);
+                                try {
+                                  if (r.email) {
+                                    await unlockPasswordByEmailOrUser({ email: r.email });
+                                  } else if (r.userId) {
+                                    await unlockPasswordByEmailOrUser({ userId: r.userId });
+                                  } else if (r.ipAddress) {
+                                    await unlockPasswordByIp(r.ipAddress);
+                                  } else if (r.identifier) {
+                                    await unlockPasswordByIdentifier(r.identifier);
+                                  }
+                                  setShowConfirmModal(false);
+                                } catch (_) { } finally {
+                                  setActionLoading(false);
+                                }
                               }
-                            } catch (_) { }
+                            });
+                            setShowConfirmModal(true);
                           }}
                           className="inline-flex items-center gap-1 px-3 py-1.5 text-xs bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105"
                           title="Unlock password restriction"
@@ -686,6 +713,50 @@ export default function AdminSecurityModeration() {
           </div>
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      {showConfirmModal && confirmingAction && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-scale-in border border-gray-100 dark:border-gray-700">
+            <div className="p-6">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="p-3 bg-red-100 dark:bg-red-900/40 rounded-full">
+                  <FaExclamationTriangle className="w-6 h-6 text-red-600 dark:text-red-400" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                  {confirmingAction.title}
+                </h3>
+              </div>
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
+                {confirmingAction.message}
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowConfirmModal(false)}
+                  className="px-4 py-2 text-gray-600 dark:text-gray-400 font-semibold hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50"
+                  disabled={actionLoading}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmingAction.onConfirm}
+                  disabled={actionLoading}
+                  className="px-6 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold rounded-lg shadow-lg hover:shadow-red-500/20 transition-all transform hover:scale-105 disabled:opacity-70 flex items-center gap-2"
+                >
+                  {actionLoading ? (
+                    <>
+                      <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
+                      Processing...
+                    </>
+                  ) : (
+                    'Confirm Unlock'
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
