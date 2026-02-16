@@ -311,6 +311,24 @@ const userSchema = new mongoose.Schema({
   unsubscribeToken: {
     type: String,
     select: false
+  },
+  // Temporary Subscription Fields
+  tempSubscriptionOtp: {
+    type: String,
+    select: false
+  },
+  tempSubscriptionOtpExpires: {
+    type: Date,
+    select: false
+  },
+  tempSubscriptionType: {
+    type: String,
+    enum: ['blog', 'guide'],
+    select: false
+  },
+  tempSubscriptionSource: {
+    type: String,
+    select: false
   }
 }, { timestamps: true });
 

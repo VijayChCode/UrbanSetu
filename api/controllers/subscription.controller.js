@@ -303,31 +303,13 @@ export const sendSubscriptionOtp = async (req, res, next) => {
         const otp = generateOTP();
         const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
 
-        if (!subscription) {
-            // Create a temporary record
-            subscription = new Subscription({
-                email,
-                source,
-                status: 'verifying',
-                verificationOtp: otp,
-                verificationOtpExpires: otpExpires,
-                preferences: { blog: false, guide: false }, // Initially false until verified & approved
-                pendingPreferences: {
-                    blog: type === 'blog',
-                    guide: type === 'guide'
-                }
-            });
-        } else {
-            // Update existing subscription
-            subscription.verificationOtp = otp;
-            subscription.verificationOtpExpires = otpExpires;
-            subscription.source = source;
-            // We don't update preferences here yet, only after verification
-            // But we must ensure the temp state knows what we are verifying for?
-            // Actually, verifySubscriptionOtp uses source to determine which preference to flip.
-        }
+        // Store OTP in USER model temporarily
+        user.tempSubscriptionOtp = otp;
+        user.tempSubscriptionOtpExpires = otpExpires;
+        user.tempSubscriptionType = type;
+        user.tempSubscriptionSource = source;
+        await user.save();
 
-        await subscription.save();
         await sendSubscriptionOtpEmail(email, otp);
 
         res.status(200).json({ success: true, message: 'OTP sent to your email. Please verify to complete subscription.' });
@@ -344,25 +326,45 @@ export const verifySubscriptionOtp = async (req, res, next) => {
     }
 
     try {
-        const subscription = await Subscription.findOne({ email }).select('+verificationOtp +verificationOtpExpires');
+        const user = await User.findOne({ email }).select('+tempSubscriptionOtp +tempSubscriptionOtpExpires +tempSubscriptionType +tempSubscriptionSource');
 
-        if (!subscription) {
-            return next(errorHandler(404, 'Subscription request not found.'));
+        if (!user) {
+            return next(errorHandler(404, 'User not found.'));
         }
 
-        if (subscription.verificationOtp !== otp) {
+        if (!user.tempSubscriptionOtp || user.tempSubscriptionOtp !== otp) {
             return next(errorHandler(400, 'Invalid OTP'));
         }
 
-        if (subscription.verificationOtpExpires < Date.now()) {
+        if (user.tempSubscriptionOtpExpires < Date.now()) {
             return next(errorHandler(400, 'OTP has expired. Please request a new one.'));
         }
 
-        const type = source === 'blogs_page' ? 'blog' : 'guide';
+        const type = user.tempSubscriptionType || (source === 'blogs_page' ? 'blog' : 'guide');
+        const finalSource = user.tempSubscriptionSource || source;
 
-        // OTP Valid
-        subscription.verificationOtp = undefined;
-        subscription.verificationOtpExpires = undefined;
+        // Find or Create subscription record
+        let subscription = await Subscription.findOne({ email });
+
+        if (!subscription) {
+            subscription = new Subscription({
+                email,
+                source: finalSource,
+                status: 'pending',
+                preferences: { blog: false, guide: false },
+                pendingPreferences: {
+                    blog: type === 'blog',
+                    guide: type === 'guide'
+                }
+            });
+        }
+
+        // Clear user's temp OTP fields
+        user.tempSubscriptionOtp = undefined;
+        user.tempSubscriptionOtpExpires = undefined;
+        user.tempSubscriptionType = undefined;
+        user.tempSubscriptionSource = undefined;
+        await user.save();
 
         let message = '';
 
