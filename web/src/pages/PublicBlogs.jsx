@@ -915,97 +915,89 @@ const PublicBlogs = () => {
                 <p className="text-gray-300">Keep an eye on your inbox for our next blog post.</p>
               </div>
             ) : (
-              /* Subscription Box */
+              /* Subscription Box - Clean and Merged */
               !isSubscribed && subscriptionStatus !== 'pending' && subscriptionStatus !== 'approved' && (
-                <div className="bg-blue-600 dark:bg-blue-600 rounded-3xl p-8 text-center text-white mb-16 relative overflow-hidden animate-fade-in-up delay-200">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -mr-32 -mt-32 blur-3xl"></div>
-                  <div className="absolute bottom-0 left-0 w-48 h-48 bg-black opacity-10 rounded-full -ml-24 -mb-24 blur-2xl"></div>
-
-                  <div className="relative z-10 max-w-2xl mx-auto">
-
-
-
-                    {subscribeStep === 'INPUT_EMAIL' ? (
-                      <>
-                        <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-                          <input
-                            type="email"
-                            placeholder="Enter your email address"
-                            value={email}
-                            onChange={(e) => {
-                              setEmail(e.target.value);
-                              setOtpError('');
-                            }}
-                            className={`flex-1 px-6 py-4 rounded-xl bg-white/10 backdrop-blur border ${otpError ? 'border-red-400' : 'border-white/20'} text-white placeholder-blue-200 focus:outline-none focus:bg-white/20 focus:border-white/40 transition-all font-medium`}
-                          />
-                          <button
-                            onClick={handleSendSubscribeOtp}
-                            disabled={sendingOtp}
-                            className="px-8 py-4 bg-white text-blue-600 font-bold rounded-xl hover:bg-blue-50 transition-all transform hover:scale-105 shadow-lg shadow-blue-900/20 disabled:opacity-70 disabled:cursor-not-allowed whitespace-nowrap"
-                          >
-                            {sendingOtp ? 'Sending...' : 'Subscribe'}
-                          </button>
+                <div className="max-w-md mx-auto animate-fade-in-up">
+                  {subscribeStep === 'INPUT_EMAIL' ? (
+                    <>
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <input
+                          type="email"
+                          placeholder="Enter your email address"
+                          value={email}
+                          onChange={(e) => {
+                            setEmail(e.target.value);
+                            setOtpError('');
+                          }}
+                          className={`flex-1 px-6 py-4 rounded-xl bg-white/10 backdrop-blur border ${otpError ? 'border-red-400' : 'border-white/20'} text-white placeholder-slate-400 focus:outline-none focus:bg-white/20 focus:border-white/40 transition-all font-medium`}
+                        />
+                        <button
+                          onClick={handleSendSubscribeOtp}
+                          disabled={sendingOtp}
+                          className="px-8 py-4 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all transform hover:scale-105 shadow-lg shadow-blue-900/40 disabled:opacity-70 disabled:cursor-not-allowed whitespace-nowrap"
+                        >
+                          {sendingOtp ? 'Sending...' : 'Subscribe'}
+                        </button>
+                      </div>
+                      {otpError && <p className="text-red-300 text-sm mt-2 text-center font-medium animate-pulse">{otpError}</p>}
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex flex-col sm:flex-row gap-3 animate-fade-in">
+                        <input
+                          type="text"
+                          placeholder="Enter OTP"
+                          value={subscribeOtp}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, '');
+                            setSubscribeOtp(value);
+                            setOtpError('');
+                          }}
+                          maxLength={6}
+                          className={`flex-1 px-6 py-4 rounded-xl bg-white/10 backdrop-blur border ${otpError ? 'border-red-400' : 'border-white/20'} text-white placeholder-slate-400 focus:outline-none focus:bg-white/20 focus:border-white/40 transition-all font-medium text-center tracking-widest text-xl`}
+                        />
+                        <button
+                          onClick={handleVerifySubscribeOtp}
+                          disabled={verifyingOtp || sendingOtp}
+                          className="px-8 py-4 bg-white text-blue-600 font-bold rounded-xl hover:bg-blue-50 transition-all transform hover:scale-105 shadow-lg shadow-blue-900/20 disabled:opacity-70 disabled:cursor-not-allowed whitespace-nowrap"
+                        >
+                          {verifyingOtp ? 'Verifying...' : 'Verify'}
+                        </button>
+                      </div>
+                      {otpError && <p className="text-red-300 text-sm mt-2 text-center font-medium animate-pulse">{otpError}</p>}
+                      <div className="flex items-center justify-between mt-4">
+                        <div className="flex items-center gap-2">
+                          {resendTimer > 0 ? (
+                            <span className="text-sm text-blue-100 italic transition-all animate-pulse">
+                              Resend OTP in {resendTimer}s
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={handleSendSubscribeOtp}
+                              disabled={sendingOtp || verifyingOtp || !canResend}
+                              className="text-sm text-white hover:text-blue-100 font-bold underline transition-colors disabled:opacity-50 flex items-center gap-1.5"
+                            >
+                              <RotateCcw className={`w-4 h-4 ${sendingOtp ? 'animate-spin' : ''}`} /> {sendingOtp ? 'Sending...' : 'Resend OTP'}
+                            </button>
+                          )}
                         </div>
-                        {otpError && <p className="text-red-300 text-sm mt-2 text-center font-medium animate-pulse">{otpError}</p>}
-                      </>
-                    ) : (
-                      <>
-                        <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto animate-fade-in">
-                          <input
-                            type="text"
-                            placeholder="Enter OTP"
-                            value={subscribeOtp}
-                            onChange={(e) => {
-                              const value = e.target.value.replace(/\D/g, '');
-                              setSubscribeOtp(value);
-                              setOtpError('');
-                            }}
-                            maxLength={6}
-                            className={`flex-1 px-6 py-4 rounded-xl bg-white/10 backdrop-blur border ${otpError ? 'border-red-400' : 'border-white/20'} text-white placeholder-blue-200 focus:outline-none focus:bg-white/20 focus:border-white/40 transition-all font-medium text-center tracking-widest text-xl`}
-                          />
-                          <button
-                            onClick={handleVerifySubscribeOtp}
-                            disabled={verifyingOtp || sendingOtp}
-                            className="px-8 py-4 bg-white text-blue-600 font-bold rounded-xl hover:bg-blue-50 transition-all transform hover:scale-105 shadow-lg shadow-blue-900/20 disabled:opacity-70 disabled:cursor-not-allowed whitespace-nowrap"
-                          >
-                            {verifyingOtp ? 'Verifying...' : 'Verify'}
-                          </button>
-                        </div>
-                        {otpError && <p className="text-red-300 text-sm mt-2 text-center font-medium animate-pulse">{otpError}</p>}
-                        <div className="flex items-center justify-between mt-4 max-w-md mx-auto">
-                          <div className="flex items-center gap-2">
-                            {resendTimer > 0 ? (
-                              <span className="text-sm text-blue-100 italic transition-all animate-pulse">
-                                Resend OTP in {resendTimer}s
-                              </span>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={handleSendSubscribeOtp}
-                                disabled={sendingOtp || verifyingOtp || !canResend}
-                                className="text-sm text-white hover:text-blue-100 font-bold underline transition-colors disabled:opacity-50 flex items-center gap-1.5"
-                              >
-                                <RotateCcw className={`w-4 h-4 ${sendingOtp ? 'animate-spin' : ''}`} /> {sendingOtp ? 'Sending...' : 'Resend OTP'}
-                              </button>
-                            )}
-                          </div>
-                          <button
-                            onClick={() => {
-                              setSubscribeStep('INPUT_EMAIL');
-                              setResendTimer(0);
-                              setCanResend(true);
-                            }}
-                            className="text-sm text-white/70 hover:text-white font-medium underline transition-colors"
-                          >
-                            Change Email
-                          </button>
-                        </div>
-                      </>
-                    )}
-                    <p className="mt-4 text-sm text-blue-200">
-                      Join 10,000+ subscribers for weekly updates. No spam, ever.
-                    </p>
-                  </div>
+                        <button
+                          onClick={() => {
+                            setSubscribeStep('INPUT_EMAIL');
+                            setResendTimer(0);
+                            setCanResend(true);
+                          }}
+                          className="text-sm text-white/70 hover:text-white font-medium underline transition-colors"
+                        >
+                          Change Email
+                        </button>
+                      </div>
+                    </>
+                  )}
+                  <p className="mt-6 text-sm text-slate-400 text-center">
+                    Join 10,000+ subscribers for weekly updates. No spam, ever.
+                  </p>
                 </div>
               )
             )}
