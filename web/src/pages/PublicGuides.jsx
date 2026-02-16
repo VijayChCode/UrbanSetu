@@ -12,6 +12,8 @@ import {
 import { usePageTitle } from '../hooks/usePageTitle';
 import { authenticatedFetch } from '../utils/auth';
 import SEO from '../components/SEO';
+import RecaptchaWidget from '../components/RecaptchaWidget';
+import { useRef } from 'react';
 
 const PublicGuides = () => {
     // Set page title
@@ -62,6 +64,20 @@ const PublicGuides = () => {
     const [canResend, setCanResend] = useState(true);
     const [sendingOtp, setSendingOtp] = useState(false);
     const [verifyingOtp, setVerifyingOtp] = useState(false);
+
+    // reCAPTCHA states
+    const [recaptchaToken, setRecaptchaToken] = useState(null);
+    const [showRecaptcha, setShowRecaptcha] = useState(false);
+    const [requiresCaptcha, setRequiresCaptcha] = useState(false);
+    const [recaptchaKey, setRecaptchaKey] = useState(0);
+    const recaptchaRef = useRef(null);
+
+    // Unsubscribe reCAPTCHA states
+    const [unsubRecaptchaToken, setUnsubRecaptchaToken] = useState(null);
+    const [showUnsubRecaptcha, setShowUnsubRecaptcha] = useState(false);
+    const [unsubRequiresCaptcha, setUnsubRequiresCaptcha] = useState(false);
+    const [unsubRecaptchaKey, setUnsubRecaptchaKey] = useState(0);
+    const unsubRecaptchaRef = useRef(null);
 
     // Timer effect for resend OTP
     useEffect(() => {
@@ -233,6 +249,12 @@ const PublicGuides = () => {
             return;
         }
 
+        if (requiresCaptcha && !recaptchaToken) {
+            setOtpError('Please verify you are not a robot');
+            setShowRecaptcha(true);
+            return;
+        }
+
         // Always use the email field value, not currentUser.email
         // This allows logged-in users to subscribe with a different email
         setSendingOtp(true);
@@ -241,7 +263,11 @@ const PublicGuides = () => {
             const response = await fetch(`${API_BASE_URL}/api/subscription/send-subscribe-otp`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: email, source: 'guides_page' })
+                body: JSON.stringify({
+                    email: email,
+                    source: 'guides_page',
+                    ...(recaptchaToken && { recaptchaToken })
+                })
             });
             const data = await response.json();
 
@@ -250,9 +276,18 @@ const PublicGuides = () => {
                 setSubscribeStep('VERIFY_OTP');
                 setResendTimer(30);
                 setCanResend(false);
+                setRequiresCaptcha(false);
+                setShowRecaptcha(false);
+                setRecaptchaToken(null);
             } else {
-                setOtpError(data.message || 'Failed to send OTP');
-                toast.error(data.message || 'Failed to send OTP');
+                if (data.requiresCaptcha) {
+                    setRequiresCaptcha(true);
+                    setShowRecaptcha(true);
+                    setOtpError('reCAPTCHA verification is required');
+                } else {
+                    setOtpError(data.message || 'Failed to send OTP');
+                    toast.error(data.message || 'Failed to send OTP');
+                }
             }
         } catch (error) {
             setOtpError('Failed to send OTP. Please try again.');
@@ -287,14 +322,17 @@ const PublicGuides = () => {
                 if (currentUser) fetchSubscriptionStatus();
                 setSubscribeStep('INPUT_EMAIL');
                 setSubscribeOtp('');
-                setEmail('');
             } else {
-                setOtpError(data.message || 'Invalid OTP');
-                toast.error(data.message || 'Invalid OTP');
+                if (data.message && data.message.toLowerCase().includes("too many failed attempts")) {
+                    setOtpError("Too many failed attempts. Please try again in 15 minutes.");
+                } else {
+                    setOtpError(data.message || 'Invalid OTP');
+                    toast.error(data.message || 'Verification failed');
+                }
             }
         } catch (error) {
-            setOtpError('Failed to verify OTP. Please try again.');
-            toast.error('Failed to verify OTP');
+            setOtpError('Verification failed. Please try again.');
+            toast.error('Verification failed');
         } finally {
             setVerifyingOtp(false);
         }
@@ -309,11 +347,21 @@ const PublicGuides = () => {
 
     const handleSendUnsubscribeOtp = async () => {
         setOtpError('');
+
+        if (unsubRequiresCaptcha && !unsubRecaptchaToken) {
+            setOtpError('Please verify you are not a robot');
+            setShowUnsubRecaptcha(true);
+            return;
+        }
+
         setSendingOtp(true);
         try {
             const response = await authenticatedFetch(`${API_BASE_URL}/api/subscription/send-unsubscribe-otp`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ...(unsubRecaptchaToken && { recaptchaToken: unsubRecaptchaToken })
+                })
             });
             const data = await response.json();
             if (response.ok && data.success) {
@@ -321,9 +369,18 @@ const PublicGuides = () => {
                 setUnsubscribeStep('VERIFY_OTP');
                 setResendTimer(30);
                 setCanResend(false);
+                setUnsubRequiresCaptcha(false);
+                setShowUnsubRecaptcha(false);
+                setUnsubRecaptchaToken(null);
             } else {
-                setOtpError(data.message || 'Failed to send OTP');
-                toast.error(data.message || 'Failed to send OTP');
+                if (data.requiresCaptcha) {
+                    setUnsubRequiresCaptcha(true);
+                    setShowUnsubRecaptcha(true);
+                    setOtpError('reCAPTCHA verification is required');
+                } else {
+                    setOtpError(data.message || 'Failed to send OTP');
+                    toast.error(data.message || 'Failed to send OTP');
+                }
             }
         } catch (error) {
             setOtpError('Failed to send OTP');
@@ -342,7 +399,7 @@ const PublicGuides = () => {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ reason: optOutReason, otp: unsubscribeOtp })
+                body: JSON.stringify({ email: currentUser?.email, reason: optOutReason, otp: unsubscribeOtp })
             });
             const data = await response.json();
             if (response.ok && data.success) {
@@ -356,9 +413,13 @@ const PublicGuides = () => {
                 setUnsubscribeStep('REASON');
                 setOtpError('');
             } else {
-                const errorMsg = data.message || 'Invalid OTP. Please try again.';
-                setOtpError(errorMsg);
-                toast.error(errorMsg);
+                if (data.message && data.message.toLowerCase().includes("too many failed attempts")) {
+                    setOtpError("Too many failed attempts. Please try again in 15 minutes.");
+                } else {
+                    const errorMsg = data.message || 'Invalid OTP. Please try again.';
+                    setOtpError(errorMsg);
+                    toast.error(errorMsg);
+                }
             }
         } catch (error) {
             const errorMsg = 'Failed to verify OTP. Please try again.';
@@ -855,6 +916,28 @@ const PublicGuides = () => {
                                                 {sendingOtp ? 'Sending...' : 'Subscribe'}
                                             </button>
                                         </div>
+
+                                        {showRecaptcha && (
+                                            <div className="mt-4 flex justify-center">
+                                                <RecaptchaWidget
+                                                    key={recaptchaKey}
+                                                    onVerify={(token) => {
+                                                        setRecaptchaToken(token);
+                                                        setOtpError('');
+                                                        setTimeout(() => setShowRecaptcha(false), 1000);
+                                                    }}
+                                                    onExpire={() => {
+                                                        setRecaptchaToken(null);
+                                                        setRecaptchaKey(k => k + 1);
+                                                    }}
+                                                    onError={() => {
+                                                        setRecaptchaToken(null);
+                                                        setRecaptchaKey(k => k + 1);
+                                                    }}
+                                                />
+                                            </div>
+                                        )}
+
                                         {otpError && <p className="text-red-300 text-sm mt-2 text-center font-medium animate-pulse">{otpError}</p>}
                                     </>
                                 ) : (
@@ -940,21 +1023,46 @@ const PublicGuides = () => {
                                         value={optOutReason}
                                         onChange={(e) => setOptOutReason(e.target.value)}
                                         placeholder="Reason for unsubscribing..."
-                                        className="w-full h-32 px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 dark:text-white text-sm mb-4"
+                                        className="w-full h-32 px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white text-sm mb-4"
                                     />
+
+                                    {showUnsubRecaptcha && (
+                                        <div className="mb-4 flex justify-center">
+                                            <RecaptchaWidget
+                                                key={unsubRecaptchaKey}
+                                                onVerify={(token) => {
+                                                    setUnsubRecaptchaToken(token);
+                                                    setOtpError('');
+                                                    setTimeout(() => setShowUnsubRecaptcha(false), 1000);
+                                                }}
+                                                onExpire={() => {
+                                                    setUnsubRecaptchaToken(null);
+                                                    setUnsubRecaptchaKey(k => k + 1);
+                                                }}
+                                                onError={() => {
+                                                    setUnsubRecaptchaToken(null);
+                                                    setUnsubRecaptchaKey(k => k + 1);
+                                                }}
+                                            />
+                                        </div>
+                                    )}
+
+                                    {otpError && <p className="text-red-600 dark:text-red-400 text-xs mt-1 mb-4 text-center font-medium animate-pulse">{otpError}</p>}
+
                                     <div className="flex justify-end gap-3">
                                         <button
                                             onClick={() => setShowOptOutModal(false)}
                                             className="px-4 py-2 text-gray-600 dark:text-gray-400 font-semibold hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                                            disabled={sendingOtp}
                                         >
                                             Cancel
                                         </button>
                                         <button
                                             onClick={handleSendUnsubscribeOtp}
-                                            disabled={otpLoading}
+                                            disabled={sendingOtp}
                                             className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors disabled:opacity-70"
                                         >
-                                            {otpLoading ? 'Sending...' : 'Next'}
+                                            {sendingOtp ? 'Sending OTP...' : 'Next'}
                                         </button>
                                     </div>
                                 </>

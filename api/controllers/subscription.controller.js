@@ -10,6 +10,9 @@ import {
     sendOptOutOtpEmail
 } from '../utils/emailService.js';
 import crypto from 'crypto';
+import { logSecurityEvent, isAccountLocked, getAccountLockRemainingMs } from '../middleware/security.js';
+import { sendAccountLockoutEmail } from '../utils/emailService.js';
+import { getLocationFromIP } from '../utils/sessionManager.js';
 
 export const subscribeToNewsletter = async (req, res, next) => {
     const { email, source = 'guides_page' } = req.body;
@@ -263,14 +266,27 @@ const generateOTP = () => {
 
 export const sendSubscriptionOtp = async (req, res, next) => {
     const { email, source = 'website' } = req.body;
+    const { otpTracking, requiresCaptcha } = req;
+    const ipAddress = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || req.connection.remoteAddress;
 
     if (!email) {
         return next(errorHandler(400, 'Email is required'));
     }
 
     try {
+        const emailLower = email.toLowerCase();
+
+        // Check active lockout due to excessive OTP requests
+        if (otpTracking && otpTracking.isLocked && otpTracking.isLocked()) {
+            return res.status(429).json({
+                success: false,
+                message: "Too many OTP requests. Please try again in 15 minutes.",
+                requiresCaptcha: false
+            });
+        }
+
         // IMPORTANT: Check if email exists in User database
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email: emailLower });
 
         if (!user) {
             return res.status(400).json({
@@ -279,7 +295,27 @@ export const sendSubscriptionOtp = async (req, res, next) => {
             });
         }
 
-        let subscription = await Subscription.findOne({ email });
+        // Block OTP sending for suspended accounts
+        if (user.status === 'suspended') {
+            return res.status(403).json({
+                success: false,
+                message: "Your account has been suspended. Please contact support."
+            });
+        }
+
+        // Block OTP sending if account is password-locked
+        try {
+            if (await isAccountLocked(user._id)) {
+                const remainingMs = await getAccountLockRemainingMs(user._id, user.email);
+                const remainingMinutes = Math.max(1, Math.ceil(remainingMs / (60 * 1000)));
+                return res.status(423).json({
+                    success: false,
+                    message: `Account is temporarily locked due to too many failed attempts. Try again in about ${remainingMinutes} minute${remainingMinutes > 1 ? 's' : ''}.`
+                });
+            }
+        } catch (_) { }
+
+        let subscription = await Subscription.findOne({ email: emailLower });
         const type = source === 'blogs_page' ? 'blog' : 'guide';
 
         if (subscription) {
@@ -289,14 +325,28 @@ export const sendSubscriptionOtp = async (req, res, next) => {
             }
 
             // Check if already pending for this specific type
-            // It's only truly pending if status is 'pending' AND the specific preference is flagged.
-            // If status is 'verifying', we should allow them to send a new OTP.
             const isPending = subscription.status === 'pending' &&
                 ((subscription.pendingPreferences && subscription.pendingPreferences[type]) ||
                     (subscription.preferences && subscription.preferences[type]));
 
             if (isPending) {
                 return res.status(200).json({ success: false, message: `Your ${type} subscription is already pending approval.` });
+            }
+        }
+
+        // Increment OTP request count
+        if (otpTracking) {
+            await otpTracking.incrementOtpRequest();
+
+            // If 5 requests within 15 minutes -> 15 min lockout
+            const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+            if (otpTracking.otpRequestCount >= 5 && otpTracking.lastOtpTimestamp >= fifteenMinutesAgo) {
+                await otpTracking.registerLockout(15 * 60 * 1000);
+                return res.status(429).json({
+                    success: false,
+                    message: "Too many OTP requests. Please try again in 15 minutes.",
+                    requiresCaptcha: false
+                });
             }
         }
 
@@ -310,9 +360,37 @@ export const sendSubscriptionOtp = async (req, res, next) => {
         user.tempSubscriptionSource = source;
         await user.save();
 
-        await sendSubscriptionOtpEmail(email, otp);
+        const emailResult = await sendSubscriptionOtpEmail(emailLower, otp);
 
-        res.status(200).json({ success: true, message: 'OTP sent to your email. Please verify to complete subscription.' });
+        if (!emailResult.success) {
+            return res.status(500).json({
+                success: false,
+                message: "Failed to send OTP. Please try again."
+            });
+        }
+
+        // Log successful OTP request
+        logSecurityEvent('subscription_otp_request_successful', {
+            email: emailLower,
+            userId: user._id,
+            ip: ipAddress,
+            requiresCaptcha: requiresCaptcha
+        });
+
+        // If 3 OTP requests within 5 minutes -> require captcha on subsequent requests
+        if (otpTracking) {
+            const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+            if (otpTracking.otpRequestCount >= 3 && otpTracking.lastOtpTimestamp >= fiveMinutesAgo) {
+                otpTracking.requiresCaptcha = true;
+                await otpTracking.save();
+            }
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'OTP sent to your email. Please verify to complete subscription.',
+            requiresCaptcha: false
+        });
     } catch (error) {
         next(error);
     }
@@ -320,20 +398,64 @@ export const sendSubscriptionOtp = async (req, res, next) => {
 
 export const verifySubscriptionOtp = async (req, res, next) => {
     const { email, otp, source } = req.body;
+    const ipAddress = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || req.connection.remoteAddress;
 
     if (!email || !otp) {
         return next(errorHandler(400, 'Email and OTP are required'));
     }
 
     try {
-        const user = await User.findOne({ email }).select('+tempSubscriptionOtp +tempSubscriptionOtpExpires +tempSubscriptionType +tempSubscriptionSource');
+        const emailLower = email.toLowerCase();
+        const user = await User.findOne({ email: emailLower }).select('+tempSubscriptionOtp +tempSubscriptionOtpExpires +tempSubscriptionType +tempSubscriptionSource');
 
         if (!user) {
             return next(errorHandler(404, 'User not found.'));
         }
 
+        // Get OTP tracking
+        const OtpTracking = (await import('../models/otpTracking.model.js')).default;
+        const otpTracking = await OtpTracking.getOrCreateTracking(emailLower, ipAddress);
+
+        if (otpTracking && otpTracking.isLocked && otpTracking.isLocked()) {
+            return res.status(429).json({
+                success: false,
+                message: "Too many failed attempts. Please try again in 15 minutes.",
+                requiresCaptcha: false
+            });
+        }
+
         if (!user.tempSubscriptionOtp || user.tempSubscriptionOtp !== otp) {
-            return next(errorHandler(400, 'Invalid OTP'));
+            if (otpTracking) {
+                await otpTracking.incrementFailedAttempt();
+
+                // If 5 wrong attempts within 15 minutes -> 15 min lock
+                const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+                if (otpTracking.failedOtpAttempts >= 5 && otpTracking.lastFailedAttemptTimestamp >= fifteenMinutesAgo) {
+                    await otpTracking.registerLockout(15 * 60 * 1000);
+                    try {
+                        const location = getLocationFromIP(ipAddress);
+                        await sendAccountLockoutEmail(user.email, {
+                            username: user.username,
+                            attempts: 5,
+                            lockoutDuration: '15 minutes',
+                            ipAddress: ipAddress,
+                            location,
+                            device: 'Unknown (Subscription OTP Verification)',
+                            reason: 'Excessive Failed OTP Attempts'
+                        });
+                    } catch (e) {
+                        console.error('Failed to send OTP lockout email:', e);
+                    }
+                }
+            }
+
+            logSecurityEvent('subscription_otp_verification_failed', {
+                email: emailLower,
+                userId: user._id,
+                ip: ipAddress
+            });
+
+            return next(errorHandler(400, otpTracking?.failedOtpAttempts >= 5 ? "Too many incorrect attempts. Please try again in 15 minutes." : "Invalid OTP"));
         }
 
         if (user.tempSubscriptionOtpExpires < Date.now()) {
@@ -344,11 +466,11 @@ export const verifySubscriptionOtp = async (req, res, next) => {
         const finalSource = user.tempSubscriptionSource || source;
 
         // Find or Create subscription record
-        let subscription = await Subscription.findOne({ email });
+        let subscription = await Subscription.findOne({ email: emailLower });
 
         if (!subscription) {
             subscription = new Subscription({
-                email,
+                email: emailLower,
                 source: finalSource,
                 status: 'pending',
                 preferences: { blog: false, guide: false },
@@ -366,29 +488,35 @@ export const verifySubscriptionOtp = async (req, res, next) => {
         user.tempSubscriptionSource = undefined;
         await user.save();
 
+        // Reset tracking on success
+        if (otpTracking) {
+            await otpTracking.resetTracking();
+            await otpTracking.clearLockout?.();
+        }
+
         let message = '';
 
-        // NEW LOGIC: Every subscription request (blog or guide) must be approved by admin
-        // regardless of whether the user is already approved for another type.
-        // This ensures separate management for Blogs and Guides.
-
-        subscription.status = 'pending'; // Always return to pending for the new request
+        subscription.status = 'pending';
 
         if (!subscription.pendingPreferences) subscription.pendingPreferences = {};
         subscription.pendingPreferences[type] = true;
 
-        // We do NOT touch subscription.preferences[type] here. 
-        // We keep it false if it was false, or keep it true if they were already subscribed (though the controller already checks for current subscription before sending OTP).
-
         subscription.rejectionReason = undefined;
-        subscription.source = source || subscription.source;
+        subscription.source = finalSource || subscription.source;
         subscription.statusUpdatedAt = new Date();
         message = 'Your subscription request has been submitted for approval.';
 
         await subscription.save();
 
+        // Log successful verification
+        logSecurityEvent('subscription_otp_verification_successful', {
+            email: emailLower,
+            userId: user._id,
+            ip: ipAddress
+        });
+
         // Send 'Received' email since it's now a pending request
-        await sendSubscriptionReceivedEmail(email, subscription.source);
+        await sendSubscriptionReceivedEmail(emailLower, subscription.source);
 
         res.status(200).json({ success: true, message });
     } catch (error) {
@@ -397,13 +525,41 @@ export const verifySubscriptionOtp = async (req, res, next) => {
 };
 
 export const sendUnsubscribeOtp = async (req, res, next) => {
-    const email = req.user.email; // Authenticated user
+    const email = req.user.email;
+    const { otpTracking, requiresCaptcha } = req;
+    const ipAddress = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || req.connection.remoteAddress;
 
     try {
-        const subscription = await Subscription.findOne({ email });
+        const emailLower = email.toLowerCase();
+
+        // Check active lockout
+        if (otpTracking && otpTracking.isLocked && otpTracking.isLocked()) {
+            return res.status(429).json({
+                success: false,
+                message: "Too many OTP requests. Please try again in 15 minutes.",
+                requiresCaptcha: false
+            });
+        }
+
+        const subscription = await Subscription.findOne({ email: emailLower });
 
         if (!subscription) {
             return next(errorHandler(404, 'Subscription not found'));
+        }
+
+        // Increment OTP request count
+        if (otpTracking) {
+            await otpTracking.incrementOtpRequest();
+
+            const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+            if (otpTracking.otpRequestCount >= 5 && otpTracking.lastOtpTimestamp >= fifteenMinutesAgo) {
+                await otpTracking.registerLockout(15 * 60 * 1000);
+                return res.status(429).json({
+                    success: false,
+                    message: "Too many OTP requests. Please try again in 15 minutes.",
+                    requiresCaptcha: false
+                });
+            }
         }
 
         const otp = generateOTP();
@@ -413,27 +569,98 @@ export const sendUnsubscribeOtp = async (req, res, next) => {
         subscription.verificationOtpExpires = otpExpires;
         await subscription.save();
 
-        await sendOptOutOtpEmail(email, otp);
+        await sendOptOutOtpEmail(emailLower, otp);
 
-        res.status(200).json({ success: true, message: 'OTP sent for unsubscription verification.' });
+        // Log successful OTP request
+        logSecurityEvent('unsubscribe_otp_request_successful', {
+            email: emailLower,
+            userId: req.user._id,
+            ip: ipAddress,
+            requiresCaptcha: requiresCaptcha
+        });
+
+        // 3 OTP requests within 5 minutes -> require captcha
+        if (otpTracking) {
+            const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+            if (otpTracking.otpRequestCount >= 3 && otpTracking.lastOtpTimestamp >= fiveMinutesAgo) {
+                otpTracking.requiresCaptcha = true;
+                await otpTracking.save();
+            }
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'OTP sent for unsubscription verification.',
+            requiresCaptcha: false
+        });
     } catch (error) {
         next(error);
     }
 };
 
 export const verifyUnsubscribeOtp = async (req, res, next) => {
-    const { otp, reason } = req.body;
-    const email = req.user.email;
+    const { otp, reason, email: providedEmail } = req.body;
+    const email = req.user?.email || providedEmail;
+    const ipAddress = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || req.connection.remoteAddress;
+
+    if (!email || !otp) {
+        return next(errorHandler(400, 'Email and OTP are required'));
+    }
 
     try {
-        const subscription = await Subscription.findOne({ email }).select('+verificationOtp +verificationOtpExpires');
+        const emailLower = email.toLowerCase();
+
+        // Get OTP tracking
+        const OtpTracking = (await import('../models/otpTracking.model.js')).default;
+        const otpTracking = await OtpTracking.getOrCreateTracking(emailLower, ipAddress);
+
+        if (otpTracking && otpTracking.isLocked && otpTracking.isLocked()) {
+            return res.status(429).json({
+                success: false,
+                message: "Too many failed attempts. Please try again in 15 minutes.",
+                requiresCaptcha: false
+            });
+        }
+
+        const subscription = await Subscription.findOne({ email: emailLower }).select('+verificationOtp +verificationOtpExpires');
 
         if (!subscription) {
             return next(errorHandler(404, 'Subscription not found'));
         }
 
         if (subscription.verificationOtp !== otp) {
-            return next(errorHandler(400, 'Invalid OTP'));
+            if (otpTracking) {
+                await otpTracking.incrementFailedAttempt();
+
+                const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+                if (otpTracking.failedOtpAttempts >= 5 && otpTracking.lastFailedAttemptTimestamp >= fifteenMinutesAgo) {
+                    await otpTracking.registerLockout(15 * 60 * 1000);
+                    try {
+                        const user = await User.findOne({ email: emailLower });
+                        if (user) {
+                            const location = getLocationFromIP(ipAddress);
+                            await sendAccountLockoutEmail(user.email, {
+                                username: user.username,
+                                attempts: 5,
+                                lockoutDuration: '15 minutes',
+                                ipAddress: ipAddress,
+                                location,
+                                device: 'Unknown (Unsubscribe OTP Verification)',
+                                reason: 'Excessive Failed OTP Attempts'
+                            });
+                        }
+                    } catch (e) {
+                        console.error('Failed to send OTP lockout email:', e);
+                    }
+                }
+            }
+
+            logSecurityEvent('unsubscribe_otp_verification_failed', {
+                email: emailLower,
+                ip: ipAddress
+            });
+
+            return next(errorHandler(400, otpTracking?.failedOtpAttempts >= 5 ? "Too many incorrect attempts. Please try again in 15 minutes." : "Invalid OTP"));
         }
 
         if (subscription.verificationOtpExpires < Date.now()) {
@@ -449,6 +676,18 @@ export const verifyUnsubscribeOtp = async (req, res, next) => {
             subscription.rejectionReason = reason;
         }
         await subscription.save();
+
+        // Reset tracking on success
+        if (otpTracking) {
+            await otpTracking.resetTracking();
+            await otpTracking.clearLockout?.();
+        }
+
+        // Log successful verification
+        logSecurityEvent('unsubscribe_otp_verification_successful', {
+            email: emailLower,
+            ip: ipAddress
+        });
 
         res.status(200).json({ success: true, message: 'You have been successfully unsubscribed.' });
     } catch (error) {
