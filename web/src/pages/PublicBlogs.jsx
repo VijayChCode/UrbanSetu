@@ -177,9 +177,13 @@ const PublicBlogs = () => {
               setSubscriptionStatus('not_subscribed');
             }
           }
-          // If pending, but specifically NOT for blog (e.g. they only asked for Guide), treat as not subscribed here
-          else if (data.data.status === 'pending' && !data.data.pendingPreferences?.blog) {
-            setSubscriptionStatus('not_subscribed');
+          // If pending, check if it's specifically for blog (modern or legacy)
+          else if (data.data.status === 'pending') {
+            if (data.data.pendingPreferences?.blog || data.data.preferences?.blog) {
+              setSubscriptionStatus('pending');
+            } else {
+              setSubscriptionStatus('not_subscribed');
+            }
           }
           // If verifying (OTP sent), treat as not subscribed in this check.
           // The local UI state 'subscribeStep' handles showing the OTP input on the current page.

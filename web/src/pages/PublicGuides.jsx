@@ -199,9 +199,13 @@ const PublicGuides = () => {
                             setSubscriptionStatus('not_subscribed');
                         }
                     }
-                    // If pending, but specifically NOT for guide (e.g. they only asked for Blog), treat as not subscribed here
-                    else if (data.data.status === 'pending' && !data.data.pendingPreferences?.guide) {
-                        setSubscriptionStatus('not_subscribed');
+                    // If pending, check if it's specifically for guide (modern or legacy)
+                    else if (data.data.status === 'pending') {
+                        if (data.data.pendingPreferences?.guide || data.data.preferences?.guide) {
+                            setSubscriptionStatus('pending');
+                        } else {
+                            setSubscriptionStatus('not_subscribed');
+                        }
                     }
                     // If verifying (OTP sent), treat as not subscribed in this check.
                     // The local UI state 'subscribeStep' handles showing the OTP input on the current page.

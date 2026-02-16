@@ -446,8 +446,8 @@ const AdminBlogs = ({ type }) => {
         const pendingPref = isBlog ? sub.pendingPreferences?.blog : (isGuide ? sub.pendingPreferences?.guide : null);
 
         let effectiveStatus = sub.status;
-        if (activePref) effectiveStatus = 'approved';
-        else if (pendingPref) effectiveStatus = 'pending';
+        if (activePref && sub.status === 'approved') effectiveStatus = 'approved';
+        else if (pendingPref || (activePref && sub.status === 'pending')) effectiveStatus = 'pending';
 
         if (effectiveStatus !== subscriberFilterStatus) return false;
       }
@@ -1095,10 +1095,10 @@ const AdminBlogs = ({ type }) => {
                             const activePref = isBlog ? sub.preferences?.blog : (isGuide ? sub.preferences?.guide : null);
                             const pendingPref = isBlog ? sub.pendingPreferences?.blog : (isGuide ? sub.pendingPreferences?.guide : null);
 
-                            if (activePref) {
+                            if (activePref && sub.status === 'approved') {
                               displayStatus = 'approved';
                               statusColor = 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
-                            } else if (pendingPref) {
+                            } else if (pendingPref || (activePref && sub.status === 'pending')) {
                               displayStatus = 'pending';
                               statusColor = 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
                             } else if (sub.status === 'rejected') {
@@ -1125,7 +1125,7 @@ const AdminBlogs = ({ type }) => {
                               const activePref = isBlog ? sub.preferences?.blog : (isGuide ? sub.preferences?.guide : null);
                               const pendingPref = isBlog ? sub.pendingPreferences?.blog : (isGuide ? sub.pendingPreferences?.guide : null);
 
-                              if (pendingPref) {
+                              if (pendingPref || (activePref && sub.status === 'pending')) {
                                 return (
                                   <>
                                     <button
