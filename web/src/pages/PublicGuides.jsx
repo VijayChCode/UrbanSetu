@@ -203,6 +203,12 @@ const PublicGuides = () => {
                     else if (data.data.status === 'pending' && !data.data.pendingPreferences?.guide) {
                         setSubscriptionStatus('not_subscribed');
                     }
+                    // If verifying (OTP sent), treat as not subscribed in this check.
+                    // The local UI state 'subscribeStep' handles showing the OTP input on the current page.
+                    // This also prevents a Blog verification from showing "Verifying" on the Guides page.
+                    else if (data.data.status === 'verifying') {
+                        setSubscriptionStatus('not_subscribed');
+                    }
                     else {
                         setSubscriptionStatus(data.data.status);
                     }
