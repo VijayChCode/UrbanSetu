@@ -720,8 +720,8 @@ export default function AdminSecurityModeration() {
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-scale-in border border-gray-100 dark:border-gray-700">
             <div className="p-6">
               <div className="flex items-center gap-4 mb-4">
-                <div className="p-3 bg-red-100 dark:bg-red-900/40 rounded-full">
-                  <FaExclamationTriangle className="w-6 h-6 text-red-600 dark:text-red-400" />
+                <div className="p-3 bg-green-100 dark:bg-green-900/40 rounded-full">
+                  <FaUnlockAlt className="w-6 h-6 text-green-600 dark:text-green-400" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white">
                   {confirmingAction.title}
@@ -741,7 +741,7 @@ export default function AdminSecurityModeration() {
                 <button
                   onClick={confirmingAction.onConfirm}
                   disabled={actionLoading}
-                  className="px-6 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold rounded-lg shadow-lg hover:shadow-red-500/20 transition-all transform hover:scale-105 disabled:opacity-70 flex items-center gap-2"
+                  className="px-6 py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-bold rounded-lg shadow-lg hover:shadow-green-500/20 transition-all transform hover:scale-105 disabled:opacity-70 flex items-center gap-2"
                 >
                   {actionLoading ? (
                     <>
