@@ -438,8 +438,18 @@ const AdminBlogs = ({ type }) => {
       if (subscriberSearchTerm && !sub.email.toLowerCase().includes(subscriberSearchTerm.toLowerCase())) {
         return false;
       }
-      if (subscriberFilterStatus !== 'all' && sub.status !== subscriberFilterStatus) {
-        return false;
+      if (subscriberFilterStatus !== 'all') {
+        const isBlog = subscriberFilterType === 'blog';
+        const isGuide = subscriberFilterType === 'guide';
+
+        const activePref = isBlog ? sub.preferences?.blog : (isGuide ? sub.preferences?.guide : null);
+        const pendingPref = isBlog ? sub.pendingPreferences?.blog : (isGuide ? sub.pendingPreferences?.guide : null);
+
+        let effectiveStatus = sub.status;
+        if (activePref) effectiveStatus = 'approved';
+        else if (pendingPref) effectiveStatus = 'pending';
+
+        if (effectiveStatus !== subscriberFilterStatus) return false;
       }
       // Filter by context/type (Blog vs Guide)
       // Show user if:
@@ -1074,53 +1084,94 @@ const AdminBlogs = ({ type }) => {
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <span className={`px-2 py-1 rounded-full text-xs font-bold ${sub.status === 'approved' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                            sub.status === 'pending' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' :
-                              sub.status === 'rejected' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
-                                (sub.status === 'revoked' || sub.status === 'opted_out') ? 'bg-gray-100 text-gray-700 dark:bg-gray-700/50 dark:text-gray-400' :
-                                  'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
-                            }`}>
-                            {sub.status ? sub.status.toUpperCase().replace('_', ' ') : (sub.isActive ? 'ACTIVE (LEGACY)' : 'OD')}
-                          </span>
+                          {(() => {
+                            const isBlog = subscriberFilterType === 'blog';
+                            const isGuide = subscriberFilterType === 'guide';
+
+                            // Determine status based on specific preference
+                            let displayStatus = sub.status;
+                            let statusColor = 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400';
+
+                            const activePref = isBlog ? sub.preferences?.blog : (isGuide ? sub.preferences?.guide : null);
+                            const pendingPref = isBlog ? sub.pendingPreferences?.blog : (isGuide ? sub.pendingPreferences?.guide : null);
+
+                            if (activePref) {
+                              displayStatus = 'approved';
+                              statusColor = 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+                            } else if (pendingPref) {
+                              displayStatus = 'pending';
+                              statusColor = 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
+                            } else if (sub.status === 'rejected') {
+                              displayStatus = 'rejected';
+                              statusColor = 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+                            } else if (sub.status === 'revoked' || sub.status === 'opted_out') {
+                              displayStatus = sub.status;
+                              statusColor = 'bg-gray-100 text-gray-700 dark:bg-gray-700/50 dark:text-gray-400';
+                            }
+
+                            return (
+                              <span className={`px-2 py-1 rounded-full text-xs font-bold ${statusColor}`}>
+                                {displayStatus.toUpperCase().replace('_', ' ')}
+                              </span>
+                            );
+                          })()}
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex justify-end gap-2">
-                            {sub.status === 'pending' && (
-                              <>
-                                <button
-                                  onClick={() => openApproveModal(sub)}
-                                  className="p-1.5 bg-green-100 text-green-600 rounded-lg hover:bg-green-200"
-                                  title="Approve"
-                                >
-                                  <CheckCircle className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={() => openRejectModal(sub)}
-                                  className="p-1.5 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
-                                  title="Reject"
-                                >
-                                  <XCircle className="w-4 h-4" />
-                                </button>
-                              </>
-                            )}
-                            {sub.status === 'approved' && (
-                              <button
-                                onClick={() => openRevokeModal(sub)}
-                                className="p-1.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200"
-                                title="Revoke"
-                              >
-                                <Ban className="w-4 h-4" />
-                              </button>
-                            )}
-                            {(sub.status === 'rejected' || sub.status === 'revoked' || sub.status === 'opted_out') && (
-                              <button
-                                onClick={() => openApproveModal(sub)}
-                                className="p-1.5 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200"
-                                title="Re-approve"
-                              >
-                                <CheckCircle className="w-4 h-4" />
-                              </button>
-                            )}
+                            {(() => {
+                              const isBlog = subscriberFilterType === 'blog';
+                              const isGuide = subscriberFilterType === 'guide';
+
+                              const activePref = isBlog ? sub.preferences?.blog : (isGuide ? sub.preferences?.guide : null);
+                              const pendingPref = isBlog ? sub.pendingPreferences?.blog : (isGuide ? sub.pendingPreferences?.guide : null);
+
+                              if (pendingPref) {
+                                return (
+                                  <>
+                                    <button
+                                      onClick={() => openApproveModal(sub)}
+                                      className="p-1.5 bg-green-100 text-green-600 rounded-lg hover:bg-green-200"
+                                      title="Approve"
+                                    >
+                                      <CheckCircle className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                      onClick={() => openRejectModal(sub)}
+                                      className="p-1.5 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
+                                      title="Reject"
+                                    >
+                                      <XCircle className="w-4 h-4" />
+                                    </button>
+                                  </>
+                                );
+                              }
+
+                              if (activePref) {
+                                return (
+                                  <button
+                                    onClick={() => openRevokeModal(sub)}
+                                    className="p-1.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200"
+                                    title="Revoke"
+                                  >
+                                    <Ban className="w-4 h-4" />
+                                  </button>
+                                );
+                              }
+
+                              if (sub.status === 'rejected' || sub.status === 'revoked' || sub.status === 'opted_out') {
+                                return (
+                                  <button
+                                    onClick={() => openApproveModal(sub)}
+                                    className="p-1.5 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200"
+                                    title="Re-approve"
+                                  >
+                                    <CheckCircle className="w-4 h-4" />
+                                  </button>
+                                );
+                              }
+
+                              return null;
+                            })()}
                           </div>
                         </td>
                       </tr>

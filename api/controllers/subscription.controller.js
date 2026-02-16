@@ -23,44 +23,31 @@ export const subscribeToNewsletter = async (req, res, next) => {
         const type = source === 'blogs_page' ? 'blog' : 'guide';
 
         if (subscription) {
-            // Already subscribed logic refactored for granular preferences
-            if (subscription.status === 'approved') {
-                if (subscription.preferences && subscription.preferences[type]) {
-                    return res.status(200).json({ success: true, message: `You are already subscribed to our ${type}s!` });
-                } else {
-                    // Approved generally, but adding new preference
-                    subscription.preferences[type] = true;
-                    subscription.source = source; // Update last source
-                    await subscription.save();
-                    return res.status(200).json({ success: true, message: `Successfully subscribed to ${type}s!` });
-                }
+            // Check if already has this exact preference active
+            if (subscription.preferences && subscription.preferences[type]) {
+                return res.status(200).json({ success: true, message: `You are already subscribed to our ${type}s!` });
             }
 
-            // If pending, allow updating preference
-            if (subscription.status === 'pending') {
-                if (!subscription.preferences[type]) {
-                    subscription.preferences[type] = true;
-                    subscription.source = source;
-                    await subscription.save();
-                }
-                return res.status(200).json({ success: true, message: 'Your subscription is already pending approval.' });
+            // Check if already pending for this type
+            if (subscription.pendingPreferences && subscription.pendingPreferences[type]) {
+                return res.status(200).json({ success: true, message: `Your ${type} subscription is already pending approval.` });
             }
 
-            if (subscription.status === 'rejected' || subscription.status === 'opted_out' || subscription.status === 'revoked') {
-                // Re-subscribe attempt
-                subscription.status = 'pending';
-                subscription.source = source;
-                subscription.preferences = subscription.preferences || { blog: false, guide: false };
-                subscription.preferences[type] = true;
-                subscription.rejectionReason = null; // Clear reason
-                subscription.statusUpdatedAt = new Date();
-                await subscription.save();
+            // If not active and not pending, add to pending
+            subscription.status = 'pending';
+            if (!subscription.pendingPreferences) subscription.pendingPreferences = {};
+            subscription.pendingPreferences[type] = true;
+            subscription.source = source;
+            subscription.statusUpdatedAt = new Date();
+            await subscription.save();
 
-                // Send "Received" email
-                await sendSubscriptionReceivedEmail(email, source);
+            // Send "Received" email
+            await sendSubscriptionReceivedEmail(email, source);
 
-                return res.status(200).json({ success: true, message: 'Welcome back! Your subscription request has been received and is pending approval.' });
-            }
+            return res.status(200).json({
+                success: true,
+                message: 'Your subscription request has been received and is pending approval.'
+            });
         } else {
             // New subscription
             subscription = new Subscription({
@@ -376,36 +363,27 @@ export const verifySubscriptionOtp = async (req, res, next) => {
 
         let message = '';
 
-        // Ensure preference is set
-        // If user was already approved, we keep them approved AND activate the preference immediately.
-        // Trust propagates for existing verified users.
-        if (subscription.status === 'approved') {
-            subscription.preferences[type] = true;
-            if (subscription.pendingPreferences) subscription.pendingPreferences[type] = false; // Clear pending if any
+        // NEW LOGIC: Every subscription request (blog or guide) must be approved by admin
+        // regardless of whether the user is already approved for another type.
+        // This ensures separate management for Blogs and Guides.
 
-            subscription.source = source;
-            message = `You have successfully subscribed to ${type}s!`;
-        } else {
-            // If Pending/New: Mark as PENDING request.
-            // Do NOT set preference=true yet. Admin must approve.
-            subscription.status = 'pending';
+        subscription.status = 'pending'; // Always return to pending for the new request
 
-            if (!subscription.pendingPreferences) subscription.pendingPreferences = {};
-            subscription.pendingPreferences[type] = true;
-            subscription.preferences[type] = false; // Ensure it's not active yet
+        if (!subscription.pendingPreferences) subscription.pendingPreferences = {};
+        subscription.pendingPreferences[type] = true;
 
-            subscription.rejectionReason = undefined;
-            subscription.source = source || subscription.source;
-            message += 'Your subscription request has been submitted for approval.';
-        }
+        // We do NOT touch subscription.preferences[type] here. 
+        // We keep it false if it was false, or keep it true if they were already subscribed (though the controller already checks for current subscription before sending OTP).
 
+        subscription.rejectionReason = undefined;
+        subscription.source = source || subscription.source;
         subscription.statusUpdatedAt = new Date();
+        message = 'Your subscription request has been submitted for approval.';
+
         await subscription.save();
 
-        // Send 'Received' email ONLY if status changed to pending (meaning it wasn't approved already)
-        if (subscription.status === 'pending') {
-            await sendSubscriptionReceivedEmail(email, subscription.source);
-        }
+        // Send 'Received' email since it's now a pending request
+        await sendSubscriptionReceivedEmail(email, subscription.source);
 
         res.status(200).json({ success: true, message });
     } catch (error) {
