@@ -238,7 +238,7 @@ const PublicBlogs = () => {
     setSendingOtp(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/subscription/send-subscribe-otp`, {
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/subscription/send-subscribe-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -286,7 +286,7 @@ const PublicBlogs = () => {
     setVerifyingOtp(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/subscription/verify-subscribe-otp`, {
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/subscription/verify-subscribe-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email, otp: subscribeOtp, source: 'blogs_page' })
