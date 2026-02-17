@@ -553,10 +553,11 @@ export default function RentalContracts() {
                             <AnimatePresence>
                               {expandedStatus[contractIdentifier] && contract.wallet.paymentSchedule.length > 6 && (
                                 <motion.div
-                                  initial={{ opacity: 0, width: 0 }}
-                                  animate={{ opacity: 1, width: 'auto' }}
-                                  exit={{ opacity: 0, width: 0 }}
-                                  className="flex flex-wrap gap-2 overflow-hidden"
+                                  initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                                  animate={{ opacity: 1, height: 'auto', marginTop: 8 }}
+                                  exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                                  className="flex flex-wrap gap-2 overflow-hidden w-full items-center"
                                 >
                                   {contract.wallet.paymentSchedule
                                     .sort((a, b) => {
