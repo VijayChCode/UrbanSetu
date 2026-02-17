@@ -1799,43 +1799,43 @@ export default function RentProperty() {
         {/* Step 4: Payment */}
         {step === 4 && contract && listing && (
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-            <h2 className="text-2xl font-bold text-blue-700 mb-6 flex items-center gap-2">
+            <h2 className="text-2xl font-bold text-blue-700 dark:text-blue-400 mb-6 flex items-center gap-2">
               <FaMoneyBillWave /> Payment Required
             </h2>
 
             {/* Payment Summary */}
-            <div className="bg-blue-50 p-6 rounded-lg mb-6">
-              <h3 className="font-semibold text-lg mb-4">Payment Summary</h3>
+            <div className="bg-blue-50 dark:bg-gray-700/50 p-6 rounded-lg mb-6 border border-blue-100 dark:border-gray-600">
+              <h3 className="font-semibold text-lg mb-4 text-gray-800 dark:text-white">Payment Summary</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-700 dark:text-gray-200">Monthly Rent (Locked):</span>
-                  <span className="font-semibold">₹{(contract.lockedRentAmount || listing?.monthlyRent || listing?.discountPrice || listing?.regularPrice || 0).toLocaleString('en-IN')}</span>
+                  <span className="text-gray-700 dark:text-gray-300">Monthly Rent (Locked):</span>
+                  <span className="font-semibold text-gray-900 dark:text-gray-100">₹{(contract.lockedRentAmount || listing?.monthlyRent || listing?.discountPrice || listing?.regularPrice || 0).toLocaleString('en-IN')}</span>
                 </div>
                 {(contract.depositPlan !== 'zero') && (
                   <div className="flex justify-between">
-                    <span className="text-gray-700 dark:text-gray-200">Security Deposit:</span>
-                    <span className="font-semibold">₹{(contract.securityDeposit || 0).toLocaleString('en-IN')}</span>
+                    <span className="text-gray-700 dark:text-gray-300">Security Deposit:</span>
+                    <span className="font-semibold text-gray-900 dark:text-gray-100">₹{(contract.securityDeposit || 0).toLocaleString('en-IN')}</span>
                     <span className="text-xs text-gray-500 dark:text-gray-400">(Refundable)</span>
                   </div>
                 )}
                 {contract.depositPlan === 'low' && contract.extraMonthlyCharge > 0 && (
                   <div className="flex justify-between">
-                    <span className="text-gray-700 dark:text-gray-200">Extra Monthly Charge:</span>
-                    <span className="font-semibold text-amber-600">₹{contract.extraMonthlyCharge.toLocaleString('en-IN')}/month</span>
+                    <span className="text-gray-700 dark:text-gray-300">Extra Monthly Charge:</span>
+                    <span className="font-semibold text-amber-600 dark:text-amber-500">₹{contract.extraMonthlyCharge.toLocaleString('en-IN')}/month</span>
                   </div>
                 )}
                 {contract.depositPlan === 'zero' && contract.insuranceFee > 0 && (
                   <div className="flex justify-between">
-                    <span className="text-gray-700 dark:text-gray-200">Insurance Fee (monthly):</span>
-                    <span className="font-semibold text-amber-600">₹{contract.insuranceFee.toLocaleString('en-IN')}/month</span>
+                    <span className="text-gray-700 dark:text-gray-300">Insurance Fee (monthly):</span>
+                    <span className="font-semibold text-amber-600 dark:text-amber-500">₹{contract.insuranceFee.toLocaleString('en-IN')}/month</span>
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span className="text-gray-700 dark:text-gray-200">First Month Rent:</span>
-                  <span className="font-semibold">₹{(contract.lockedRentAmount || listing?.monthlyRent || listing?.discountPrice || listing?.regularPrice || 0).toLocaleString('en-IN')}</span>
+                  <span className="text-gray-700 dark:text-gray-300">First Month Rent:</span>
+                  <span className="font-semibold text-gray-900 dark:text-gray-100">₹{(contract.lockedRentAmount || listing?.monthlyRent || listing?.discountPrice || listing?.regularPrice || 0).toLocaleString('en-IN')}</span>
                 </div>
-                <div className="flex justify-between border-t pt-2 mt-2">
-                  <span className="font-semibold text-lg dark:text-gray-200">Total Amount:</span>
+                <div className="flex justify-between border-t border-gray-200 dark:border-gray-600 pt-2 mt-2">
+                  <span className="font-semibold text-lg text-gray-800 dark:text-white">Total Amount:</span>
                   <span className="font-bold text-lg text-blue-600 dark:text-blue-400">
                     ₹{(
                       (contract.securityDeposit || 0) +
@@ -1845,7 +1845,7 @@ export default function RentProperty() {
                   </span>
                 </div>
                 {contract.depositPlan && contract.depositPlan !== 'standard' && (
-                  <div className="mt-2 pt-2 border-t border-blue-200 dark:border-blue-600">
+                  <div className="mt-2 pt-2 border-t border-blue-200 dark:border-gray-600">
                     <p className="text-xs text-gray-600 dark:text-gray-400">
                       <span className="font-semibold">Deposit Plan:</span> {
                         contract.depositPlan === 'low' ? 'Low Deposit (Extra ₹' + (contract.extraMonthlyCharge || 0) + '/month)' :
@@ -1858,19 +1858,19 @@ export default function RentProperty() {
               </div>
             </div>
 
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
               Please complete the payment for security deposit and first month's rent to proceed with move-in. Choose your preferred payment method below.
             </p>
 
             {/* Payment Options */}
-            <div className="bg-white border-2 border-blue-200 rounded-lg p-4 mb-6">
-              <p className="text-sm text-gray-600 mb-2">Payment methods available:</p>
-              <div className="flex items-center gap-4 text-sm">
+            <div className="bg-white dark:bg-gray-700/50 border-2 border-blue-200 dark:border-gray-600 rounded-lg p-4 mb-6">
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">Payment methods available:</p>
+              <div className="flex items-center gap-4 text-sm text-gray-700 dark:text-gray-200">
                 <span className="flex items-center gap-2">
-                  <FaCreditCard className="text-blue-600" /> Razorpay
+                  <FaCreditCard className="text-blue-600 dark:text-blue-400" /> Razorpay
                 </span>
                 <span className="flex items-center gap-2">
-                  <FaCreditCard className="text-yellow-600" /> PayPal
+                  <FaCreditCard className="text-yellow-600 dark:text-yellow-500" /> PayPal
                 </span>
               </div>
             </div>
@@ -1929,7 +1929,7 @@ export default function RentProperty() {
 
         {/* Step 5: Move-in */}
         {step === 5 && contract && (
-          <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
             <h2 className="text-2xl font-bold text-blue-700 dark:text-blue-200 mb-6 flex items-center gap-2">
               <FaHome /> Move-in Checklist
             </h2>
@@ -1937,7 +1937,7 @@ export default function RentProperty() {
               <p className="text-gray-600 dark:text-gray-200">
                 Complete your move-in checklist to document the property condition. This will help protect you during move-out.
               </p>
-              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 dark:bg-gray-800 dark:border-gray-600">
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 dark:bg-gray-700/50 dark:border-gray-600">
                 <h3 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">What to do:</h3>
                 <ul className="list-disc list-inside space-y-1 text-sm text-blue-700 dark:text-blue-200">
                   <li>Upload photos/videos of each room</li>
