@@ -550,6 +550,7 @@ export default function RentalLoans() {
               loanId: paymentLoan._id,
               emiIndex: paymentIndex,
               amount: paymentLoan.emiAmount,
+              penaltyAmount: paymentEMI.penaltyAmount || 0,
               month: paymentEMI.month,
               year: paymentEMI.year
             }}

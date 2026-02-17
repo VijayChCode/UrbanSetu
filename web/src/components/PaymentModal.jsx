@@ -1244,21 +1244,43 @@ const PaymentModal = ({ isOpen, onClose, appointment, onPaymentSuccess, existing
                         </div>
                       )}
 
-                      <div className="flex justify-between">
-                        <span className="text-gray-600 dark:text-gray-300">
-                          {isEMIPayment ? 'Loan EMI Installment' : (appointment.paymentType === 'monthly_rent' ? 'Monthly Rent Payment' : 'Advance Payment (Flat)')}
-                        </span>
-                        <span className="font-medium text-gray-800 dark:text-white">
-                          {preferredMethod === 'razorpay' ? `₹ ${Number((paymentData?.payment?.amount || (paymentData?.payment?.currency === 'INR' ? 100 : 0))).toFixed(2)}` : `$ ${Number((paymentData?.payment?.amount || (paymentData?.payment?.currency === 'USD' ? 5 : 0))).toFixed(2)}`}
-                        </span>
-                      </div>
+                      {/* EMI Breakdown */}
+                      {isEMIPayment && emiDetails ? (
+                        <>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600 dark:text-gray-300">Base EMI Amount</span>
+                            <span className="font-medium text-gray-800 dark:text-white">
+                              {preferredMethod === 'razorpay' ? `₹ ${Number(emiDetails.amount).toFixed(2)}` : `$ ${Number(emiDetails.amount / 83).toFixed(2)}`}
+                            </span>
+                          </div>
+                          {emiDetails.penaltyAmount > 0 && (
+                            <div className="flex justify-between text-sm text-red-600 dark:text-red-400">
+                              <span>Penalty Amount</span>
+                              <span>
+                                {preferredMethod === 'razorpay' ? `+ ₹ ${Number(emiDetails.penaltyAmount).toFixed(2)}` : `+ $ ${Number(emiDetails.penaltyAmount / 83).toFixed(2)}`}
+                              </span>
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 dark:text-gray-300">
+                            {appointment.paymentType === 'monthly_rent' ? 'Monthly Rent Payment' : 'Advance Payment (Flat)'}
+                          </span>
+                          <span className="font-medium text-gray-800 dark:text-white">
+                            {preferredMethod === 'razorpay' ? `₹ ${Number((paymentData?.payment?.amount || (paymentData?.payment?.currency === 'INR' ? 100 : 0))).toFixed(2)}` : `$ ${Number((paymentData?.payment?.amount || (paymentData?.payment?.currency === 'USD' ? 5 : 0))).toFixed(2)}`}
+                          </span>
+                        </div>
+                      )}
 
                       <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
                         <span>Note</span>
                         <span>
-                          {appointment.paymentType === 'monthly_rent'
-                            ? (preferredMethod === 'razorpay' ? 'Rent payment via Razorpay' : 'Rent payment via PayPal')
-                            : (preferredMethod === 'razorpay' ? '₹100 advance to confirm booking' : '$5 advance to confirm booking')}
+                          {isEMIPayment
+                            ? (preferredMethod === 'razorpay' ? 'Loan EMI payment via Razorpay' : 'Loan EMI payment via PayPal')
+                            : appointment.paymentType === 'monthly_rent'
+                              ? (preferredMethod === 'razorpay' ? 'Rent payment via Razorpay' : 'Rent payment via PayPal')
+                              : (preferredMethod === 'razorpay' ? '₹100 advance to confirm booking' : '$5 advance to confirm booking')}
                         </span>
                       </div>
                     </div>
