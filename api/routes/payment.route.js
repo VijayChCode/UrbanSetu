@@ -796,7 +796,7 @@ router.post("/verify", verifyToken, async (req, res) => {
 
 
     // --- SetuCoins Consistency: Reward general payments > 1000 INR / $12 ---
-    if (payment.paymentType !== 'monthly_rent') {
+    if (payment.paymentType !== 'monthly_rent' && payment.paymentType !== 'emi') {
       try {
         const CoinService = (await import('../services/coinService.js')).default;
         let earnedCoins = 0;
@@ -993,6 +993,9 @@ router.post('/razorpay/verify', verifyToken, async (req, res) => {
     payment.userAgent = userAgent || req.headers['user-agent'];
     // DELAYED SAVE
     // await payment.save();
+
+    const clientUrl = process.env.CLIENT_URL || 'https://urbansetu.vercel.app';
+    const receiptUrl = payment.receiptUrl || `${clientUrl}/api/payments/${payment.paymentId}/receipt`;
 
     await Booking.findByIdAndUpdate(payment.appointmentId, {
       paymentConfirmed: true,
@@ -1432,8 +1435,8 @@ router.post('/razorpay/verify', verifyToken, async (req, res) => {
             // Send success email
             try {
               const { sendLoanEMIPaymentSuccessEmail } = await import('../utils/emailService.js');
-              await sendLoanEMIPaymentSuccessEmail(loan.userId.email, {
-                propertyName: loan.contractId?.listingId?.name || 'Property',
+              await sendLoanEMIPaymentSuccessEmail(loan.userId?.email || user.email, {
+                propertyName: loan.contractId?.listingId?.name || listing?.name || 'Property',
                 loanType: loan.loanType.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
                 amount: payment.amount,
                 baseAmount: loan.emiAmount,
@@ -1443,7 +1446,8 @@ router.post('/razorpay/verify', verifyToken, async (req, res) => {
                 emiMonth: emiToUpdate.month,
                 emiYear: emiToUpdate.year,
                 remainingBalance: loan.totalRemaining,
-                loanUrl: `${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}/user/rental-loans?loanId=${loan.loanId}`
+                loanUrl: `${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}/user/rental-loans?loanId=${loan.loanId}`,
+                receiptUrl: receiptUrl
               });
               console.log(`✅ Loan EMI success email sent to ${loan.userId.email}`);
             } catch (emailError) {
@@ -1502,7 +1506,7 @@ router.post('/razorpay/verify', verifyToken, async (req, res) => {
     }
 
     // --- SetuCoins Consistency: Reward general payments > 1000 INR / $12 ---
-    if (payment.paymentType !== 'monthly_rent') {
+    if (payment.paymentType !== 'monthly_rent' && payment.paymentType !== 'emi') {
       try {
         const CoinService = (await import('../services/coinService.js')).default;
         let earnedCoins = 0;

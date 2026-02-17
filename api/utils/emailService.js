@@ -13507,14 +13507,19 @@ export const sendLoanEMIPaymentSuccessEmail = async (email, details) => {
               
               <p style="margin: 8px 0 5px 0; color: #1e40af; font-size: 16px; border-top: 1px dashed #bfdbfe; padding-top: 5px;"><strong>Total Paid:</strong> ₹${details.amount}</p>
               <p style="margin: 5px 0; color: #4b5563;"><strong>Total Remaining Balance:</strong> ₹${details.remainingBalance}</p>
+              ${details.receiptUrl ? `
+              <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #bfdbfe; text-align: center;">
+                <a href="${details.receiptUrl}" style="color: #2563eb; text-decoration: underline; font-size: 14px;">📄 Download Payment Receipt</a>
+              </div>` : ''}
             </div>
             
-            <p style="color: #4b5563; margin: 0 0 15px 0; line-height: 1.6;">
-              Thank you for making your payment on time! You can view your updated loan status and payment history in your dashboard.
+            <p style="color: #4b5563; margin: 0 0 15px 0; line-height: 1.6; font-size: 14px;">
+              Thank you for making your payment on time! You can view your updated loan status and download receipts anytime in your dashboard.
             </p>
             
             <div style="text-align:center; margin-top: 20px;">
-              <a href="${details.loanUrl}" style="display:inline-block; background-color:#2563eb; color:#ffffff; text-decoration:none; padding:12px 24px; border-radius:6px; font-weight:600;">View Loan Status</a>
+              <a href="${details.loanUrl}" style="display:inline-block; background-color:#2563eb; color:#ffffff; text-decoration:none; padding:12px 24px; border-radius:6px; font-weight:600; margin-right: 10px;">View Loan Status</a>
+              ${details.receiptUrl ? `<a href="${details.receiptUrl}" style="display:inline-block; background-color: #f0f7ff; color:#2563eb; text-decoration:none; padding:12px 24px; border-radius:6px; font-weight:600; border: 1px solid #2563eb;">Download Receipt</a>` : ''}
             </div>
           </div>
           
