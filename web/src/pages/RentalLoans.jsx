@@ -325,52 +325,69 @@ export default function RentalLoans() {
         </div>
 
         {/* Contracts Available for Loan */}
-        {contracts.length > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6">
-            <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-              <FaHome /> Available for Loan Application
-            </h2>
-            <div className="space-y-3">
-              {contracts
-                .filter(contract => {
-                  // Check if any active loans exist for this contract
-                  const hasActiveLoan = loans.some(loan =>
-                    (loan.contractId?._id?.toString() === contract._id || loan.contractId?.toString() === contract._id) &&
-                    ['pending', 'approved', 'disbursed'].includes(loan.status)
-                  );
-                  return !hasActiveLoan;
-                })
-                .slice(0, 5)
-                .map(contract => {
-                  const listingId = contract.listingId?._id || contract.listingId;
-                  const listingName = contract.listingId?.name || 'Property';
-                  return (
-                    <div key={contract._id} className="border dark:border-gray-700 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 dark:bg-gray-700/50">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-gray-800 dark:text-white">
-                          {listingId ? (
-                            <Link to={`/listing/${listingId}`} className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline">
-                              {listingName}
-                            </Link>
-                          ) : (
-                            listingName
-                          )}
-                        </h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-300">Contract ID: {contract.contractId}</p>
-                        <p className="text-sm text-gray-600 dark:text-gray-300">Rent: {formatCurrency(contract.lockedRentAmount)}/month</p>
-                      </div>
-                      <button
-                        onClick={() => handleApplyForLoan(contract)}
-                        className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2"
-                      >
-                        <FaCreditCard /> Apply for Loan
-                      </button>
+        {/* Contracts Available for Loan */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6">
+          <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+            <FaHome /> Available for Loan Application
+          </h2>
+          <div className="space-y-3">
+            {(() => {
+              const available = contracts.filter(contract => {
+                const hasActiveLoan = loans.some(loan =>
+                  (loan.contractId?._id?.toString() === contract._id || loan.contractId?.toString() === contract._id) &&
+                  ['pending', 'approved', 'disbursed'].includes(loan.status)
+                );
+                return !hasActiveLoan;
+              });
+
+              if (available.length === 0) {
+                return (
+                  <div className="text-center py-8 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg">
+                    <FaHome className="mx-auto h-12 w-12 text-gray-300 dark:text-gray-600 mb-3" />
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No Properties Available for Loan</h3>
+                    <p className="text-gray-500 dark:text-gray-400 mb-4 max-w-md mx-auto">
+                      You need to have an active rental contract without an existing loan to apply. Rent a property to get started!
+                    </p>
+                    <Link
+                      to="/explore"
+                      className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none"
+                    >
+                      Explore Properties
+                    </Link>
+                  </div>
+                );
+              }
+
+              return available.slice(0, 5).map(contract => {
+                const listingId = contract.listingId?._id || contract.listingId;
+                const listingName = contract.listingId?.name || 'Property';
+                return (
+                  <div key={contract._id} className="border dark:border-gray-700 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 dark:bg-gray-700/50">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-800 dark:text-white">
+                        {listingId ? (
+                          <Link to={`/listing/${listingId}`} className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline">
+                            {listingName}
+                          </Link>
+                        ) : (
+                          listingName
+                        )}
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">Contract ID: {contract.contractId}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">Rent: {formatCurrency(contract.lockedRentAmount)}/month</p>
                     </div>
-                  );
-                })}
-            </div>
+                    <button
+                      onClick={() => handleApplyForLoan(contract)}
+                      className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2"
+                    >
+                      <FaCreditCard /> Apply for Loan
+                    </button>
+                  </div>
+                );
+              });
+            })()}
           </div>
-        )}
+        </div>
 
         {/* Loans List */}
         {filteredLoans.length === 0 ? (
