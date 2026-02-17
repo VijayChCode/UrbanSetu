@@ -994,18 +994,15 @@ router.post('/razorpay/verify', verifyToken, async (req, res) => {
     // DELAYED SAVE
     // await payment.save();
 
-    const clientUrl = process.env.CLIENT_URL || 'https://urbansetu.vercel.app';
+    const clientUrl = process.env.CLIENT_URL || `${req.protocol}://${req.get('host')}`;
     const receiptUrl = payment.receiptUrl || `${clientUrl}/api/payments/${payment.paymentId}/receipt`;
+    payment.receiptUrl = receiptUrl;
 
     await Booking.findByIdAndUpdate(payment.appointmentId, {
       paymentConfirmed: true,
       visibleToBuyer: true,
       visibleToSeller: true
     });
-
-    const base = `${req.protocol}://${req.get('host')}`;
-    const receiptUrl = `${base}/api/payments/${payment.paymentId}/receipt`;
-    payment.receiptUrl = receiptUrl;
 
     // DELAYED SAVE: Do not save here to prevent race condition.
     // await payment.save();
@@ -1149,7 +1146,6 @@ router.post('/razorpay/verify', verifyToken, async (req, res) => {
           const listing = contract.listingId;
           const clientUrl = process.env.CLIENT_URL || 'https://urbansetu.vercel.app';
           const walletUrl = `${clientUrl}/user/rent-wallet?contractId=${contract._id}`;
-          const receiptUrl = payment.receiptUrl || `${clientUrl}/api/payments/${payment.paymentId}/receipt`;
           const io = req.app.get('io');
 
           // Generate PDF Receipt Buffer
@@ -1299,7 +1295,6 @@ router.post('/razorpay/verify', verifyToken, async (req, res) => {
           const listing = contract.listingId;
           const clientUrl = process.env.CLIENT_URL || 'https://urbansetu.vercel.app';
           const walletUrl = `${clientUrl}/user/rent-wallet?contractId=${contract._id}`;
-          const receiptUrl = payment.receiptUrl || `${clientUrl}/api/payments/${payment.paymentId}/receipt`;
 
           // Generate PDF Receipt Buffer
           let receiptBuffer = null;
