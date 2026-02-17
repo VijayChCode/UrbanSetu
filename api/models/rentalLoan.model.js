@@ -62,7 +62,7 @@ const rentalLoanSchema = new mongoose.Schema({
   // Status
   status: {
     type: String,
-    enum: ['pending', 'approved', 'disbursed', 'rejected', 'repaid', 'defaulted'],
+    enum: ['pending', 'approved', 'disbursed', 'rejected', 'repaid', 'defaulted', 'settled', 'written_off'],
     default: 'pending',
     index: true
   },

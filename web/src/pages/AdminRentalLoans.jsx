@@ -70,6 +70,14 @@ export default function AdminRentalLoans() {
   const [disbursedAmount, setDisbursedAmount] = useState('');
   const [disbursementReference, setDisbursementReference] = useState('');
 
+  // Defaulted Loan Actions
+  const [showLegalNoticeModal, setShowLegalNoticeModal] = useState(false);
+  const [showWriteOffModal, setShowWriteOffModal] = useState(false);
+  const [showBlockUserModal, setShowBlockUserModal] = useState(false);
+  const [writeOffAction, setWriteOffAction] = useState('settle');
+  const [writeOffNotes, setWriteOffNotes] = useState('');
+  const [writeOffAmount, setWriteOffAmount] = useState('');
+
   useEffect(() => {
     if (!currentUser) {
       navigate('/sign-in');
@@ -263,6 +271,81 @@ export default function AdminRentalLoans() {
     } catch (error) {
       console.error('Error disbursing loan:', error);
       toast.error('Failed to disburse loan');
+    } finally {
+      setActionLoading('');
+    }
+  };
+
+  const handleSendLegalNotice = async () => {
+    if (!selectedLoan) return;
+    try {
+      setActionLoading('legal_notice');
+      const res = await authenticatedFetch(`${API_BASE_URL}/api/rental/loans/${selectedLoan._id}/send-legal-notice`, {
+        method: 'POST'
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success(data.message);
+        setShowLegalNoticeModal(false);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to send notice');
+    } finally {
+      setActionLoading('');
+    }
+  };
+
+  const handleWriteOff = async () => {
+    if (!selectedLoan) return;
+    try {
+      setActionLoading('write_off');
+      const res = await authenticatedFetch(`${API_BASE_URL}/api/rental/loans/${selectedLoan._id}/write-off`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: writeOffAction,
+          notes: writeOffNotes,
+          amount: writeOffAmount ? parseFloat(writeOffAmount) : undefined
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success(data.message);
+        setShowWriteOffModal(false);
+        setWriteOffNotes('');
+        setWriteOffAmount('');
+        fetchAllLoans();
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to update loan');
+    } finally {
+      setActionLoading('');
+    }
+  };
+
+  const handleBlockUser = async () => {
+    if (!selectedLoan) return;
+    try {
+      setActionLoading('block_user');
+      const res = await authenticatedFetch(`${API_BASE_URL}/api/rental/loans/${selectedLoan._id}/block-user`, {
+        method: 'POST'
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success(data.message);
+        setShowBlockUserModal(false);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to block user');
     } finally {
       setActionLoading('');
     }
@@ -534,6 +617,40 @@ export default function AdminRentalLoans() {
                         >
                           <FaDownload /> Disburse
                         </button>
+                      )}
+                      {loan.status === 'defaulted' && (
+                        <>
+                          <button
+                            onClick={() => {
+                              setSelectedLoan(loan);
+                              setShowLegalNoticeModal(true);
+                            }}
+                            className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 flex items-center justify-center gap-2"
+                          >
+                            <FaFile /> Legal Notice
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedLoan(loan);
+                              setWriteOffAmount(loan.totalRemaining?.toString() || '');
+                              setWriteOffNotes('');
+                              setWriteOffAction('settle');
+                              setShowWriteOffModal(true);
+                            }}
+                            className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center justify-center gap-2"
+                          >
+                            <FaMoneyBillWave /> Settle/Write-off
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedLoan(loan);
+                              setShowBlockUserModal(true);
+                            }}
+                            className="px-4 py-2 bg-red-800 text-white rounded-lg hover:bg-red-900 flex items-center justify-center gap-2"
+                          >
+                            <FaBan /> Block User
+                          </button>
+                        </>
                       )}
                     </div>
                   </div>
@@ -865,6 +982,130 @@ export default function AdminRentalLoans() {
                     )}
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Legal Notice Modal */}
+      {showLegalNoticeModal && selectedLoan && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50">
+          <div className="flex min-h-full items-center justify-center p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-sm w-full p-6 relative text-center">
+              <FaFile className="text-5xl text-orange-500 mx-auto mb-4" />
+              <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2">Send Legal Notice?</h2>
+              <p className="text-gray-600 dark:text-gray-300 mb-6">
+                This will send a formal legal warning to <strong>{selectedLoan.userId?.username}</strong> regarding their default status.
+              </p>
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={() => setShowLegalNoticeModal(false)}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSendLegalNotice}
+                  disabled={actionLoading === 'legal_notice'}
+                  className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 flex items-center gap-2 disabled:opacity-50"
+                >
+                  {actionLoading === 'legal_notice' ? <FaSpinner className="animate-spin" /> : 'Send Notice'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Write Off Modal */}
+      {showWriteOffModal && selectedLoan && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50">
+          <div className="flex min-h-full items-center justify-center p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full p-6 relative">
+              <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">Settle or Write Off Loan</h2>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-gray-700 dark:text-gray-300 font-semibold mb-2">Action Type</label>
+                  <select
+                    value={writeOffAction}
+                    onChange={(e) => setWriteOffAction(e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  >
+                    <option value="settle">Settle (Payment Received)</option>
+                    <option value="write_off">Write Off (Bad Debt)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-gray-700 dark:text-gray-300 font-semibold mb-2">
+                    {writeOffAction === 'settle' ? 'Settlement Amount' : 'Amount Written Off'}
+                  </label>
+                  <input
+                    type="number"
+                    value={writeOffAmount}
+                    onChange={(e) => setWriteOffAmount(e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-gray-700 dark:text-gray-300 font-semibold mb-2">Notes/Reason</label>
+                  <textarea
+                    value={writeOffNotes}
+                    onChange={(e) => setWriteOffNotes(e.target.value)}
+                    rows={3}
+                    className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    placeholder="Enter details about the settlement or write-off..."
+                  />
+                </div>
+
+                <div className="flex gap-3 mt-6">
+                  <button
+                    onClick={() => setShowWriteOffModal(false)}
+                    className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleWriteOff}
+                    disabled={actionLoading === 'write_off'}
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {actionLoading === 'write_off' ? <FaSpinner className="animate-spin" /> : 'Confirm'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Block User Modal */}
+      {showBlockUserModal && selectedLoan && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50">
+          <div className="flex min-h-full items-center justify-center p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-sm w-full p-6 relative text-center">
+              <FaBan className="text-5xl text-red-600 mx-auto mb-4" />
+              <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2">Block User?</h2>
+              <p className="text-gray-600 dark:text-gray-300 mb-6">
+                Are you sure you want to suspend <strong>{selectedLoan.userId?.username}</strong>? This will define them as 'Suspended' and prevent further access.
+              </p>
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={() => setShowBlockUserModal(false)}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleBlockUser}
+                  disabled={actionLoading === 'block_user'}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-2 disabled:opacity-50"
+                >
+                  {actionLoading === 'block_user' ? <FaSpinner className="animate-spin" /> : 'Block User'}
+                </button>
               </div>
             </div>
           </div>

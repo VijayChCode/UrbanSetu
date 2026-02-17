@@ -16542,3 +16542,135 @@ export const sendOptOutOtpEmail = async (email, otp) => {
     return createErrorResponse(error, 'optout_otp');
   }
 };
+
+// Send Legal Notice Email for Defaulted Loans
+export const sendLoanLegalNoticeEmail = async (email, details) => {
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: `LEGAL NOTICE: Default on Loan Repayment - ${details.loanId}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;">
+        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #dc2626; margin: 0; font-size: 28px; text-transform: uppercase;">Legal Notice</h1>
+            <p style="color: #6b7280; margin: 10px 0 0 0;">Strict Action Warning</p>
+          </div>
+          
+          <div style="background-color: #fef2f2; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #dc2626;">
+            <p style="color: #7f1d1d; margin: 0 0 15px 0; line-height: 1.6;">
+              Dear <strong>${details.userName}</strong>,
+            </p>
+            <p style="color: #7f1d1d; margin: 0 0 15px 0; line-height: 1.6;">
+              This is a formal notice regarding the default on your rental loan (Loan ID: <strong>${details.loanId}</strong>).
+            </p>
+            <p style="color: #7f1d1d; margin: 0 0 15px 0; line-height: 1.6;">
+              Despite multiple reminders, you have failed to clear your outstanding dues. Your loan has been classified as <strong>Defaulted</strong>.
+            </p>
+
+            <div style="background-color: #fff; padding: 15px; border-radius: 6px; margin: 15px 0; border: 1px solid #fca5a5;">
+              <p style="margin: 5px 0; color: #374151;"><strong>Outstanding Balance:</strong> ${details.outstandingAmount}</p>
+              <p style="margin: 5px 0; color: #374151;"><strong>Overdue Since:</strong> ${details.defaultedDate}</p>
+            </div>
+            
+            <p style="color: #dc2626; font-weight: bold; margin: 0 0 15px 0; line-height: 1.6;">
+              CONSEQUENCES OF NON-PAYMENT:
+            </p>
+            <ul style="color: #7f1d1d; margin: 0 0 15px 0; padding-left: 20px;">
+              <li>Immediate reporting to Credit Bureaus (CIBIL/Experian), severely impacting your credit score.</li>
+              <li>Permanent suspension of your UrbanSetu account.</li>
+              <li>Initiation of civil/criminal legal proceedings for recovery of dues.</li>
+            </ul>
+
+            <p style="color: #4b5563; margin: 0 0 15px 0; line-height: 1.6;">
+              You are hereby advised to clear the dues immediately or contact us for a one-time settlement within <strong>3 days</strong> of receiving this notice.
+            </p>
+            
+            <div style="text-align:center; margin-top: 20px;">
+              <a href="${details.contactUrl}" style="display:inline-block; background-color:#dc2626; color:#ffffff; text-decoration:none; padding:12px 24px; border-radius:6px; font-weight:600;">Contact Legal Team</a>
+            </div>
+          </div>
+          
+          <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+            <p style="color: #9ca3af; margin: 0; font-size: 12px;">
+              © ${new Date().getFullYear()} UrbanSetu Legal Department.
+            </p>
+          </div>
+        </div>
+      </div>
+    `
+  };
+
+  try {
+    const result = await sendEmailWithRetry(mailOptions);
+    return result.success ?
+      createSuccessResponse(result.messageId, 'loan_legal_notice') :
+      createErrorResponse(new Error(result.error), 'loan_legal_notice');
+  } catch (error) {
+    return createErrorResponse(error, 'loan_legal_notice');
+  }
+};
+
+// Send Loan Written Off / Settlement Email
+export const sendLoanSettlementEmail = async (email, details) => {
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: `Loan Settlement Confirmation - ${details.loanId}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;">
+        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #4b5563; margin: 0; font-size: 28px;">UrbanSetu</h1>
+            <p style="color: #6b7280; margin: 10px 0 0 0;">Loan Status Update</p>
+          </div>
+          
+          <div style="padding: 20px;">
+            <p style="color: #374151; margin: 0 0 15px 0; line-height: 1.6;">
+              Dear <strong>${details.userName}</strong>,
+            </p>
+            <p style="color: #374151; margin: 0 0 15px 0; line-height: 1.6;">
+              This email is to confirm that your loan (ID: <strong>${details.loanId}</strong>) has been marked as <strong>${details.status}</strong>.
+            </p>
+            
+            ${details.status === 'Separately Settled' || details.status === 'Settled' ? `
+            <p style="color: #374151; margin: 0 0 15px 0; line-height: 1.6;">
+               The settlement of <strong>${details.amount}</strong> has been recorded and the loan account is now closed. 
+               No further dues are pending against this loan ID.
+            </p>
+            ` : `
+            <p style="color: #374151; margin: 0 0 15px 0; line-height: 1.6;">
+               Your loan account has been closed. Please refer to prior communications regarding the final status of this account.
+            </p>
+            `}
+
+            <div style="text-align:center; margin-top: 30px; margin-bottom: 30px;">
+               <span style="display:inline-block; padding: 10px 20px; background-color: #f3f4f6; color: #374151; border-radius: 4px; font-weight: bold; border: 1px solid #d1d5db;">
+                  Account Closed
+               </span>
+            </div>
+            
+            <p style="color: #6b7280; font-size: 14px; margin: 0 0 15px 0;">
+              Please keep this email for your records.
+            </p>
+          </div>
+          
+          <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+            <p style="color: #9ca3af; margin: 0; font-size: 12px;">
+              © ${new Date().getFullYear()} UrbanSetu. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </div>
+    `
+  };
+
+  try {
+    const result = await sendEmailWithRetry(mailOptions);
+    return result.success ?
+      createSuccessResponse(result.messageId, 'loan_settlement') :
+      createErrorResponse(new Error(result.error), 'loan_settlement');
+  } catch (error) {
+    return createErrorResponse(error, 'loan_settlement');
+  }
+};

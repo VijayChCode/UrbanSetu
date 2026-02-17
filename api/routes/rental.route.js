@@ -45,7 +45,10 @@ import {
   updateContractStatus,
   getRentalLoanDocument,
   getPublicRentalLoanDocument,
-  proxyDocumentDownload
+  proxyDocumentDownload,
+  sendLegalNotice,
+  writeOffLoan,
+  blockLoanUser
 } from '../controllers/rental.controller.js';
 import { draftLegalClause } from '../controllers/legalAssistant.controller.js';
 
@@ -130,6 +133,11 @@ router.get("/loans", verifyToken, listRentalLoans);
 router.post("/loans/:loanId/approve", verifyToken, approveRentalLoan);
 router.post("/loans/:loanId/reject", verifyToken, rejectRentalLoan);
 router.post("/loans/:loanId/disburse", verifyToken, disburseRentalLoan);
+
+// Default Loan Actions
+router.post("/loans/:loanId/send-legal-notice", verifyToken, sendLegalNotice);
+router.post("/loans/:loanId/write-off", verifyToken, writeOffLoan);
+router.post("/loans/:loanId/block-user", verifyToken, blockLoanUser);
 
 // AI Rent Prediction & Locality Score Routes
 router.post("/predictions/:listingId", verifyToken, generateRentPrediction);

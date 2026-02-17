@@ -32,7 +32,9 @@ import {
   sendLoanDisbursedEmail,
   sendDisputeRaisedAcknowledgementEmail,
   sendMoveInChecklistApprovedEmail,
-  sendMoveOutChecklistApprovedEmail
+  sendMoveOutChecklistApprovedEmail,
+  sendLoanLegalNoticeEmail,
+  sendLoanSettlementEmail
 } from "../utils/emailService.js";
 import { markListingUnderContract, markListingAsRented, releaseListingLock } from "../utils/listingAvailability.js";
 
@@ -4177,6 +4179,139 @@ export const rejectContractForBooking = async (bookingId, rejectedById, rejectio
   } catch (error) {
     console.error("Error rejecting contract for booking:", error);
     return { success: false, error: error.message };
+  }
+};
+
+// Send Legal Notice for Defaulted Loan
+export const sendLegalNotice = async (req, res, next) => {
+  try {
+    const { loanId } = req.params;
+    const userId = req.user.id;
+
+    // Check if user is admin
+    const user = await User.findById(userId);
+    if (!user || (user.role !== 'admin' && user.role !== 'rootadmin')) {
+      return res.status(403).json({ message: "Unauthorized." });
+    }
+
+    const loan = await RentalLoan.findById(loanId).populate('userId');
+    if (!loan) {
+      return res.status(404).json({ message: "Loan not found." });
+    }
+
+    if (loan.status !== 'defaulted') {
+      return res.status(400).json({ message: "Legal notice can only be sent for defaulted loans." });
+    }
+
+    // Send Email
+    await sendLoanLegalNoticeEmail(loan.userId.email, {
+      userName: loan.userId.username,
+      loanId: loan.loanId,
+      outstandingAmount: `₹${(loan.totalRemaining || 0).toLocaleString()}`,
+      defaultedDate: new Date(loan.defaultedAt || Date.now()).toLocaleDateString(),
+      contactUrl: `${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}/contact`
+    });
+
+    res.json({
+      success: true,
+      message: "Legal notice sent successfully."
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Write Off / Settle Loan (Admin Only)
+export const writeOffLoan = async (req, res, next) => {
+  try {
+    const { loanId } = req.params;
+    const { action, notes, amount } = req.body; // action: 'settle' or 'write_off'
+    const userId = req.user.id;
+
+    // Check if user is admin
+    const user = await User.findById(userId);
+    if (!user || (user.role !== 'admin' && user.role !== 'rootadmin')) {
+      return res.status(403).json({ message: "Unauthorized." });
+    }
+
+    const loan = await RentalLoan.findById(loanId).populate('userId');
+    if (!loan) {
+      return res.status(404).json({ message: "Loan not found." });
+    }
+
+    const newStatus = action === 'settle' ? 'settled' : 'written_off';
+
+    loan.status = newStatus;
+    if (newStatus === 'settled') {
+      loan.repaidAt = new Date(); // Treat as repaid/closed
+    }
+
+    // Update totalRemaining if settled? Maybe set to 0?
+    if (newStatus === 'settled' || newStatus === 'written_off') {
+      loan.totalRemaining = 0; // Debt is cleared/gone
+    }
+
+    if (notes) {
+      loan.defaultReason = (loan.defaultReason ? loan.defaultReason + " | " : "") + `${action === 'settle' ? 'Settlement' : 'Write-off'} Note: ${notes}`;
+    }
+
+    await loan.save();
+
+    // Send Email
+    await sendLoanSettlementEmail(loan.userId.email, {
+      userName: loan.userId.username,
+      loanId: loan.loanId,
+      status: newStatus === 'settled' ? 'Settled' : 'Written Off',
+      amount: amount ? `₹${amount.toLocaleString()}` : 'N/A'
+    });
+
+    res.json({
+      success: true,
+      message: `Loan has been marked as ${newStatus}.`,
+      loan
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Block User for Loan Default
+export const blockLoanUser = async (req, res, next) => {
+  try {
+    const { loanId } = req.params;
+    const userId = req.user.id;
+
+    // Check if user is admin
+    const admin = await User.findById(userId);
+    if (!admin || (admin.role !== 'admin' && admin.role !== 'rootadmin')) {
+      return res.status(403).json({ message: "Unauthorized." });
+    }
+
+    const loan = await RentalLoan.findById(loanId).populate('userId');
+    if (!loan) {
+      return res.status(404).json({ message: "Loan not found." });
+    }
+
+    const userToBlockId = loan.userId._id || loan.userId;
+    const userToBlock = await User.findById(userToBlockId);
+
+    if (!userToBlock) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    userToBlock.status = 'suspended';
+    userToBlock.suspendedAt = new Date();
+    userToBlock.suspendedBy = userId;
+    userToBlock.lockReason = `Loan Default: ${loan.loanId}`;
+
+    await userToBlock.save();
+
+    res.json({
+      success: true,
+      message: `User ${userToBlock.username} has been blocked/suspended.`
+    });
+  } catch (error) {
+    next(error);
   }
 };
 
