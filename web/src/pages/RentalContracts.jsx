@@ -54,6 +54,9 @@ export default function RentalContracts() {
   const [signingContract, setSigningContract] = useState(null);
   const [actionLoading, setActionLoading] = useState('');
   const [loans, setLoans] = useState([]);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [contractToReject, setContractToReject] = useState(null);
+  const [rejectionReason, setRejectionReason] = useState('');
 
   useEffect(() => {
     // Only fetch on initial load, not on filter changes
@@ -274,25 +277,30 @@ export default function RentalContracts() {
     }
   };
 
-  // Handle reject appointment (for seller/landlord)
-  const handleRejectAppointment = async (contract) => {
+  // Handle reject appointment (for seller/landlord) - Open Modal
+  const handleRejectAppointment = (contract) => {
     if (!contract.bookingId?._id && !contract.bookingId) {
       toast.error("Booking not found for this contract.");
       return;
     }
+    setContractToReject(contract);
+    setShowRejectModal(true);
+    setRejectionReason(''); // Reset reason
+  };
 
-    const bookingId = contract.bookingId?._id || contract.bookingId;
-    const rejectionReason = prompt("Please provide a reason for rejecting this appointment (optional):");
+  // Confirm Reject Appointment (API Call)
+  const confirmRejectAppointment = async () => {
+    if (!contractToReject) return;
 
-    if (rejectionReason === null) {
-      // User cancelled the prompt
-      return;
-    }
+    const bookingId = contractToReject.bookingId?._id || contractToReject.bookingId;
+    if (!bookingId) return;
 
-    setActionLoading(`reject-${contract._id}`);
+    setActionLoading(`reject-${contractToReject._id}`);
 
     try {
-      const { data } = await axios.patch(
+      // Logic from previous handleReject, status: 'rejected'
+      // Note: Endpoint likely expects { status, rejectionReason }
+      await axios.patch(
         `${API_BASE_URL}/api/bookings/${bookingId}/status`,
         {
           status: 'rejected',
@@ -304,10 +312,13 @@ export default function RentalContracts() {
         }
       );
 
-      // Refresh contracts (contract will be auto-rejected by backend)
+      // Refresh contracts
       await fetchContracts();
 
       toast.success("Appointment rejected. The rental contract has been cancelled.");
+      setShowRejectModal(false);
+      setContractToReject(null);
+      setRejectionReason('');
     } catch (err) {
       if (err.response?.status === 401) {
         toast.error("Session expired or unauthorized. Please sign in again.");
@@ -917,6 +928,56 @@ export default function RentalContracts() {
                 userName={currentUser?.username || 'Landlord'}
                 disabled={actionLoading === 'signing'}
               />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Rejection Modal */}
+      {showRejectModal && contractToReject && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full p-6 animate-scale-in">
+            <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">Reject Appointment</h3>
+            <p className="text-gray-600 dark:text-gray-300 mb-4 text-sm">
+              Are you sure you want to reject this appointment? This action cannot be undone and the contract will be cancelled.
+            </p>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Reason for rejection (optional)
+              </label>
+              <textarea
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                placeholder="e.g., Property no longer available, Scheduling conflict..."
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent dark:bg-gray-700 dark:text-white resize-none"
+                rows="3"
+              />
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowRejectModal(false);
+                  setContractToReject(null);
+                  setRejectionReason('');
+                }}
+                disabled={actionLoading !== ''}
+                className="px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmRejectAppointment}
+                disabled={actionLoading !== ''}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2 disabled:opacity-50"
+              >
+                {actionLoading === `reject-${contractToReject._id}` ? (
+                  <><FaSpinner className="animate-spin" /> Rejecting...</>
+                ) : (
+                  'Reject Appointment'
+                )}
+              </button>
             </div>
           </div>
         </div>
