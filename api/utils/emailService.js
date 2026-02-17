@@ -13494,14 +13494,19 @@ export const sendLoanEMIPaymentSuccessEmail = async (email, details) => {
           <div style="background-color: #eff6ff; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #2563eb;">
             <h2 style="color: #1e40af; margin: 0 0 15px 0; font-size: 20px;">Payment Successful</h2>
             <p style="color: #1e3a8a; margin: 0 0 15px 0; line-height: 1.6;">
-              We have successfully received your EMI payment of <strong>₹${details.amount}</strong> for the <strong>${details.loanType}</strong> loan on <strong>${details.propertyName}</strong>.
+              We have successfully received your EMI payment for the <strong>${details.loanType}</strong> loan on <strong>${details.propertyName}</strong>.
             </p>
             
             <div style="background-color: #fff; padding: 15px; border-radius: 6px; margin: 15px 0; border: 1px solid #bfdbfe;">
               <p style="margin: 5px 0; color: #374151;"><strong>Transaction ID:</strong> ${details.paymentId}</p>
               <p style="margin: 5px 0; color: #374151;"><strong>EMI for:</strong> ${details.emiMonth}/${details.emiYear}</p>
-              <p style="margin: 5px 0; color: #374151;"><strong>Paid Amount:</strong> ₹${details.amount}</p>
-              <p style="margin: 5px 0; color: #1e40af; font-weight: bold;"><strong>Amount to be paid:</strong> ₹${details.remainingBalance}</p>
+              <p style="margin: 5px 0; color: #374151;"><strong>Base Amount:</strong> ₹${details.baseAmount || details.amount}</p>
+              
+              ${details.penaltyAmount > 0 ? `<p style="margin: 5px 0; color: #dc2626;"><strong>Penalty Paid:</strong> ₹${details.penaltyAmount}</p>` : ''}
+              ${details.discountApplied > 0 ? `<p style="margin: 5px 0; color: #059669;"><strong>SetuCoins Discount:</strong> -₹${details.discountApplied}</p>` : ''}
+              
+              <p style="margin: 8px 0 5px 0; color: #1e40af; font-size: 16px; border-top: 1px dashed #bfdbfe; padding-top: 5px;"><strong>Total Paid:</strong> ₹${details.amount}</p>
+              <p style="margin: 5px 0; color: #4b5563;"><strong>Total Remaining Balance:</strong> ₹${details.remainingBalance}</p>
             </div>
             
             <p style="color: #4b5563; margin: 0 0 15px 0; line-height: 1.6;">

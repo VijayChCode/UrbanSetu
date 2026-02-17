@@ -1420,9 +1420,11 @@ router.post('/razorpay/verify', verifyToken, async (req, res) => {
             emiToUpdate.paidAt = new Date();
             emiToUpdate.paymentId = payment._id;
 
-            // Update totals
-            loan.totalPaid = (loan.totalPaid || 0) + (payment.emiDetails.originalAmount || payment.amount);
-            loan.totalRemaining = Math.max(0, (loan.totalRemaining || loan.loanAmount) - (payment.emiDetails.originalAmount || payment.amount));
+            // Update totals: Only count the base EMI towards paying off the loan
+            // Penalties do not reduce the principal/interest balance of the loan itself
+            const baseEmiContribution = loan.emiAmount;
+            loan.totalPaid = (loan.totalPaid || 0) + baseEmiContribution;
+            loan.totalRemaining = Math.max(0, (loan.totalRemaining || loan.loanAmount) - baseEmiContribution);
 
             // Check if fully repaid
             const totalScheduled = loan.emiSchedule.reduce((sum, e) => sum + loan.emiAmount, 0);
@@ -1433,7 +1435,10 @@ router.post('/razorpay/verify', verifyToken, async (req, res) => {
               await sendLoanEMIPaymentSuccessEmail(loan.userId.email, {
                 propertyName: loan.contractId?.listingId?.name || 'Property',
                 loanType: loan.loanType.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
-                amount: payment.emiDetails.originalAmount || payment.amount,
+                amount: payment.amount,
+                baseAmount: loan.emiAmount,
+                penaltyAmount: (payment.emiDetails.originalAmount || 0) - loan.emiAmount,
+                discountApplied: payment.emiDetails.discountApplied || 0,
                 paymentId: payment.paymentId,
                 emiMonth: emiToUpdate.month,
                 emiYear: emiToUpdate.year,
