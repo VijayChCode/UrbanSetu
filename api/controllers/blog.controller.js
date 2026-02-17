@@ -429,7 +429,6 @@ export const createBlog = async (req, res, next) => {
             propertyId: propertyId || null,
             author,
             tags: tags || [],
-            tags: tags || [],
             category: category || 'Real Estate Tips',
             type: type || 'blog',
             featured: featured || false,
