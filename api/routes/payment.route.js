@@ -2027,6 +2027,8 @@ router.post("/loan-emi", verifyToken, async (req, res) => {
         month: emiEntry.month,
         year: emiEntry.year,
         emiIndex: emiIndex,
+        baseAmount: amount,
+        penaltyAmount: emiEntry.penaltyAmount || 0,
         originalAmount: baseAmountInr,
         discountApplied: coinDiscount,
         coinsRedeemed: redeemedCoins

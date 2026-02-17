@@ -34,7 +34,7 @@ export const generateReceiptPdf = (payment) => {
                 .text('PAYMENT RECEIPT', 50, 160, { width: 495, align: 'center' });
 
             // --- Payment Details Box ---
-            doc.rect(50, 200, 495, 230).stroke('#cccccc');
+            doc.rect(50, 200, 495, 280).stroke('#cccccc');
 
             const leftX = 70;
             const rightX = 300;
@@ -76,12 +76,34 @@ export const generateReceiptPdf = (payment) => {
             // Rent/EMI Period
             if (payment.emiDetails?.month && payment.emiDetails?.year) {
                 addRow('EMI Period:', `${payment.emiDetails.month}/${payment.emiDetails.year}`);
+            } else if (payment.metadata?.get && payment.metadata.get('month') && payment.metadata.get('year')) {
+                addRow('EMI Period:', `${payment.metadata.get('month')}/${payment.metadata.get('year')}`);
+            } else if (payment.metadata?.month && payment.metadata?.year) {
+                addRow('EMI Period:', `${payment.metadata.month}/${payment.metadata.year}`);
             } else if (payment.rentMonth && payment.rentYear) {
                 addRow('Rent Period:', `${payment.rentMonth}/${payment.rentYear}`);
             }
 
             // Payment Method
             addRow('Payment Method:', (payment.gateway || 'Online').toUpperCase());
+
+            // --- Payment Breakdown (for EMI) ---
+            if (payment.paymentType === 'emi') {
+                y += 5;
+                const getVal = (field) => {
+                    if (payment.emiDetails && payment.emiDetails[field] !== undefined) return payment.emiDetails[field];
+                    if (payment.metadata?.get) return payment.metadata.get(field);
+                    return payment.metadata ? payment.metadata[field] : undefined;
+                };
+
+                const baseAmount = getVal('baseAmount') || getVal('emiAmount') || 0;
+                const penaltyAmount = getVal('penaltyAmount') || 0;
+                const discount = getVal('discountApplied') || 0;
+
+                if (baseAmount > 0) addRow('Base EMI Amount:', `INR ${baseAmount.toLocaleString('en-IN')}`);
+                if (penaltyAmount > 0) addRow('Late Fee / Penalty:', `INR ${penaltyAmount.toLocaleString('en-IN')}`);
+                if (discount > 0) addRow('SetuCoins Discount:', `- INR ${discount.toLocaleString('en-IN')}`);
+            }
 
             // --- Amount Section ---
             doc.rect(50, y + 20, 495, 50).fillAndStroke('#f0f9ff', '#cccccc');

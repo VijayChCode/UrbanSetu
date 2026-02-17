@@ -21,7 +21,7 @@ const paymentSchema = new mongoose.Schema({
     ref: 'Listing',
     required: true
   },
-  
+
   // Payment details
   amount: {
     type: Number,
@@ -37,7 +37,7 @@ const paymentSchema = new mongoose.Schema({
     enum: ['advance', 'monthly_rent', 'security_deposit', 'booking_fee', 'emi', 'split_payment', 'refund'],
     required: true
   },
-  
+
   // Payment gateway info
   gateway: {
     type: String,
@@ -47,14 +47,14 @@ const paymentSchema = new mongoose.Schema({
   gatewayPaymentId: String,
   gatewayOrderId: String,
   gatewaySignature: String,
-  
+
   // Payment status
   status: {
     type: String,
     enum: ['pending', 'processing', 'completed', 'failed', 'cancelled', 'refunded', 'partially_refunded'],
     default: 'pending'
   },
-  
+
   // Refund info
   refundAmount: {
     type: Number,
@@ -63,7 +63,7 @@ const paymentSchema = new mongoose.Schema({
   refundReason: String,
   refundedAt: Date,
   refundId: String,
-  
+
   // Split payment info (for shared PG/flatmates)
   splitPayments: [{
     userId: {
@@ -77,17 +77,24 @@ const paymentSchema = new mongoose.Schema({
     },
     paidAt: Date
   }],
-  
-  // EMI info
+
   emiDetails: {
     totalAmount: Number,
     emiAmount: Number,
     tenure: Number, // in months
     interestRate: Number,
     bankName: String,
-    loanId: String
+    loanId: String,
+    month: Number,
+    year: Number,
+    emiIndex: Number,
+    originalAmount: Number, // Total before discount
+    baseAmount: Number,     // Base EMI amount
+    penaltyAmount: Number,  // Penalty included
+    discountApplied: Number,
+    coinsRedeemed: Number
   },
-  
+
   // Receipt info
   receiptNumber: String,
   receiptUrl: String,
@@ -102,7 +109,7 @@ const paymentSchema = new mongoose.Schema({
     eci: String
   },
   checksumVerified: { type: Boolean, default: false },
-  
+
   // Timestamps
   createdAt: {
     type: Date,
@@ -116,7 +123,7 @@ const paymentSchema = new mongoose.Schema({
   expiresAt: {
     type: Date,
     // Expires 10 minutes after creation for pending/processing payments
-    default: function() {
+    default: function () {
       // Set to 10 minutes from now if status is pending/processing
       if (this.status === 'pending' || this.status === 'processing') {
         return new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
@@ -124,13 +131,13 @@ const paymentSchema = new mongoose.Schema({
       return null;
     }
   },
-  
+
   // Additional metadata
   metadata: {
     type: Map,
     of: mongoose.Schema.Types.Mixed
   },
-  
+
   // Rental Payment Fields
   rentMonth: {
     type: Number, // 1-12
@@ -184,19 +191,19 @@ paymentSchema.index({ gatewayPaymentId: 1 });
 paymentSchema.index({ expiresAt: 1 }); // Index for finding expired payments
 
 // Pre-save middleware to update updatedAt and set expiresAt for pending/processing payments
-paymentSchema.pre('save', function(next) {
+paymentSchema.pre('save', function (next) {
   this.updatedAt = new Date();
-  
+
   // Set expiresAt to 10 minutes from now for pending/processing payments
   if ((this.status === 'pending' || this.status === 'processing') && !this.expiresAt) {
     this.expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
   }
-  
+
   // Clear expiresAt for completed, failed, or cancelled payments
   if (['completed', 'failed', 'cancelled', 'refunded', 'partially_refunded'].includes(this.status)) {
     this.expiresAt = null;
   }
-  
+
   next();
 });
 
