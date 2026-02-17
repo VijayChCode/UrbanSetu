@@ -14394,7 +14394,7 @@ export const sendRootAdminAttackEmail = async (email, details) => {
             </div>
             
             <div style="text-align: center;">
-               <a href="${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}/admin-dashboard?tab=security" style="color: #4b5563; text-decoration: underline; font-weight: 600; font-size: 14px;">
+               <a href="${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}/admin/security-moderation" style="color: #4b5563; text-decoration: underline; font-weight: 600; font-size: 14px;">
                   Go to Security Dashboard
                </a>
             </div>
