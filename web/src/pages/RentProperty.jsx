@@ -1623,7 +1623,6 @@ export default function RentProperty() {
                   onClick={() => {
                     if (readyForPayment) {
                       setStep(4);
-                      setShowPaymentModal(true);
                     }
                   }}
                   disabled={!readyForPayment || loading}
