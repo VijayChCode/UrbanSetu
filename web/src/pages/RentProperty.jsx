@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { toast } from 'react-toastify';
-import { FaLock, FaCalendarAlt, FaMoneyBillWave, FaCheckCircle, FaCheck, FaChevronRight, FaHome, FaShieldAlt, FaFileContract, FaTimesCircle, FaCreditCard, FaChevronLeft } from "react-icons/fa";
+import { FaLock, FaCalendarAlt, FaMoneyBillWave, FaCheckCircle, FaCheck, FaChevronRight, FaHome, FaShieldAlt, FaFileContract, FaTimesCircle, FaCreditCard, FaChevronLeft, FaMapMarkerAlt } from "react-icons/fa";
 import { usePageTitle } from '../hooks/usePageTitle';
 import PaymentModal from '../components/PaymentModal';
 import ContractPreview from '../components/rental/ContractPreview';
@@ -959,6 +959,49 @@ export default function RentProperty() {
   return (
     <div className="bg-gradient-to-br from-blue-50 to-purple-100 dark:from-gray-900 dark:to-gray-800 min-h-screen py-10 px-4 md:px-8">
       <div className="max-w-4xl mx-auto">
+        {/* Step 0: Property Summary Header */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6 flex flex-col sm:flex-row gap-6 relative overflow-hidden group hover:shadow-2xl transition-all duration-300 border border-gray-100 dark:border-gray-700">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-bl-full pointer-events-none -mr-8 -mt-8"></div>
+
+          <div className="w-full sm:w-32 h-48 sm:h-32 flex-shrink-0 relative rounded-xl overflow-hidden border-2 border-gray-100 dark:border-gray-600 shadow-sm group-hover:scale-[1.02] transition-transform duration-300">
+            <img
+              src={listing.imageUrls?.[0] || 'https://via.placeholder.com/300?text=No+Image'}
+              alt={listing.name}
+              className="w-full h-full object-cover transform hover:scale-110 transition-transform duration-700"
+              onError={(e) => { e.target.src = 'https://via.placeholder.com/300?text=Image+Error'; }}
+            />
+            {listing.availabilityStatus === 'available' && (
+              <span className="absolute top-2 left-2 px-2 py-0.5 bg-green-500 text-white text-[10px] uppercase font-bold tracking-wide rounded shadow-sm">
+                Available
+              </span>
+            )}
+          </div>
+
+          <div className="flex-1 flex flex-col justify-center relative z-10">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-50 leading-tight mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+              {listing.name}
+            </h1>
+
+            <p className="text-gray-600 dark:text-gray-400 flex items-start gap-2 mb-3 text-sm sm:text-base">
+              <FaMapMarkerAlt className="text-red-500 mt-1 flex-shrink-0 text-lg animate-bounce-slow" />
+              <span className="leading-snug">{listing.address || `${listing.city}, ${listing.state}`}</span>
+            </p>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="px-3 py-1 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded-lg text-xs font-bold uppercase tracking-wider border border-blue-100 dark:border-blue-800">
+                For Rent
+              </span>
+
+              <div className="h-6 w-px bg-gray-300 dark:bg-gray-600 hidden sm:block"></div>
+
+              <span className="text-2xl font-bold text-gray-800 dark:text-blue-400 flex items-baseline">
+                ₹{(listing.monthlyRent || listing.discountPrice || listing.regularPrice || 0).toLocaleString('en-IN')}
+                <span className="text-sm font-medium text-gray-500 dark:text-gray-400 ml-1 self-center">/month</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
         {/* Progress Steps */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 md:p-8 mb-6">
           <div className="flex items-center justify-between w-full">
@@ -1043,7 +1086,7 @@ export default function RentProperty() {
                               'Custom Duration'}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-600 mt-1">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                       {plan === '1_year' ? 'Rent locked for 12 months' :
                         plan === '3_year' ? 'Rent locked for 36 months' :
                           plan === '5_year' ? 'Rent locked for 60 months' :
