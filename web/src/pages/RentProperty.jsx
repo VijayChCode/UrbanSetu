@@ -1664,21 +1664,21 @@ export default function RentProperty() {
         {showInitConfirmation && (
           <div className="fixed inset-0 z-[60] overflow-y-auto bg-black bg-opacity-60 backdrop-blur-sm animate-fade-in">
             <div className="flex min-h-full items-center justify-center p-4">
-              <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform scale-100 animate-scale-in border border-gray-100">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6 transform scale-100 animate-scale-in border border-gray-100 dark:border-gray-700">
                 <div className="flex flex-col items-center text-center mb-6">
-                  <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4">
-                    <FaFileContract className="text-3xl text-blue-600" />
+                  <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900/30 rounded-full flex items-center justify-center mb-4">
+                    <FaFileContract className="text-3xl text-blue-600 dark:text-blue-400" />
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-800 mb-2">Confirm Application Details</h3>
-                  <p className="text-gray-600 leading-relaxed text-sm">
-                    Please review your details carefully. Once you proceed to contract generation, the <span className="font-semibold text-gray-800">rent-lock plan</span>, <span className="font-semibold text-gray-800">deposit plan</span>, and <span className="font-semibold text-gray-800">move-in date</span> will be locked and cannot be edited.
+                  <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Confirm Application Details</h3>
+                  <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-sm">
+                    Please review your details carefully. Once you proceed to contract generation, the <span className="font-semibold text-gray-800 dark:text-gray-200">rent-lock plan</span>, <span className="font-semibold text-gray-800 dark:text-gray-200">deposit plan</span>, and <span className="font-semibold text-gray-800 dark:text-gray-200">move-in date</span> will be locked and cannot be edited.
                   </p>
                 </div>
 
-                <div className="bg-gray-50 rounded-lg p-4 mb-6 text-sm border border-gray-100">
+                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 mb-6 text-sm border border-gray-100 dark:border-gray-600">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-gray-500">Plan:</span>
-                    <span className="font-semibold text-gray-700">
+                    <span className="text-gray-500 dark:text-gray-400">Plan:</span>
+                    <span className="font-semibold text-gray-700 dark:text-gray-200">
                       {formData.rentLockPlan === '1_year' ? '1 Year Lock' :
                         formData.rentLockPlan === '3_year' ? '3 Year Lock' :
                           formData.rentLockPlan === '5_year' ? '5 Year Lock' :
@@ -1686,28 +1686,28 @@ export default function RentProperty() {
                     </span>
                   </div>
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-gray-500">Move-in:</span>
-                    <span className="font-semibold text-gray-700">
+                    <span className="text-gray-500 dark:text-gray-400">Move-in:</span>
+                    <span className="font-semibold text-gray-700 dark:text-gray-200">
                       {formData.moveInDate ? new Date(formData.moveInDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Not selected'}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-500">Deposit:</span>
-                    <span className="font-semibold text-gray-700 capitalize">{formData.depositPlan} Plan</span>
+                    <span className="text-gray-500 dark:text-gray-400">Deposit:</span>
+                    <span className="font-semibold text-gray-700 dark:text-gray-200 capitalize">{formData.depositPlan} Plan</span>
                   </div>
                 </div>
 
                 <div className="flex gap-3">
                   <button
                     onClick={() => setShowInitConfirmation(false)}
-                    className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-colors"
+                    className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                   >
                     Edit Details
                   </button>
                   <button
                     onClick={handleStartContractConfirmation}
                     disabled={loading}
-                    className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200 disabled:opacity-50"
+                    className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200 dark:shadow-blue-900/40 disabled:opacity-50"
                   >
                     {loading ? 'Sending Code...' : 'Confirm & Proceed'}
                   </button>
@@ -1721,21 +1721,21 @@ export default function RentProperty() {
         {showOtpModal && (
           <div className="fixed inset-0 z-[70] overflow-y-auto bg-black bg-opacity-60 backdrop-blur-sm animate-fade-in">
             <div className="flex min-h-full items-center justify-center p-4">
-              <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 transform scale-100 animate-scale-in border border-gray-100 relative">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-8 transform scale-100 animate-scale-in border border-gray-100 dark:border-gray-700 relative">
                 <button
                   onClick={() => setShowOtpModal(false)}
-                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors dark:text-gray-600 dark:hover:text-gray-400"
                 >
                   <FaTimesCircle className="text-xl" />
                 </button>
 
                 <div className="flex flex-col items-center text-center mb-6">
-                  <div className="w-16 h-16 bg-purple-50 rounded-full flex items-center justify-center mb-4">
-                    <FaLock className="text-3xl text-purple-600" />
+                  <div className="w-16 h-16 bg-purple-50 dark:bg-purple-900/30 rounded-full flex items-center justify-center mb-4">
+                    <FaLock className="text-3xl text-purple-600 dark:text-purple-400" />
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-800 mb-2">Verify to Confirm Rent-Lock</h3>
-                  <p className="text-gray-600 leading-relaxed text-sm">
-                    We’ve sent a 6-digit verification code to <span className="font-semibold text-gray-800">{currentUser.email}</span>. Please enter it to finalize your Rent-Lock contract.
+                  <h3 className="text-2xl font-bold text-gray-800 mb-2 dark:text-white">Verify to Confirm Rent-Lock</h3>
+                  <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-sm">
+                    We’ve sent a 6-digit verification code to <span className="font-semibold text-gray-800 dark:text-gray-200">{currentUser.email}</span>. Please enter it to finalize your Rent-Lock contract.
                   </p>
                 </div>
 
@@ -1753,14 +1753,14 @@ export default function RentProperty() {
                     placeholder="Enter 6-digit code"
                     className={`w-full text-center text-2xl sm:text-3xl ${otpValue ? 'tracking-[0.5rem] sm:tracking-[0.8rem]' : 'tracking-normal'} placeholder:tracking-tight placeholder:text-base sm:placeholder:text-lg font-bold p-3 sm:p-4 border-2 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-100 transition-all ${otpError ? 'border-red-500' : 'border-gray-200 focus:border-purple-500'}`}
                   />
-                  {otpError && <p className="text-red-500 text-sm mt-2 text-center">{otpError}</p>}
+                  {otpError && <p className="text-red-500 dark:text-red-400 text-sm mt-2 text-center">{otpError}</p>}
                 </div>
 
                 <div className="flex flex-col items-center gap-4">
                   <button
                     onClick={handleVerifyOtp}
                     disabled={otpValue.length !== 6 || otpVerifying}
-                    className="w-full py-4 bg-purple-600 text-white rounded-xl font-bold text-lg hover:bg-purple-700 transition-all transform hover:scale-[1.02] shadow-xl shadow-purple-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="w-full py-4 bg-purple-600 text-white rounded-xl font-bold text-lg hover:bg-purple-700 transition-all transform hover:scale-[1.02] shadow-xl shadow-purple-200 dark:shadow-purple-900/40 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {otpVerifying ? (
                       <>
@@ -1776,12 +1776,12 @@ export default function RentProperty() {
 
                   <div className="text-sm font-medium">
                     {otpTimer > 0 ? (
-                      <p className="text-gray-500">Resend code in <span className="text-purple-600 font-bold">{otpTimer}s</span></p>
+                      <p className="text-gray-500 dark:text-gray-400">Resend code in <span className="text-purple-600 dark:text-purple-400 font-bold">{otpTimer}s</span></p>
                     ) : (
                       <button
                         onClick={handleResendOtp}
                         disabled={otpResending}
-                        className="text-purple-600 hover:text-purple-800 hover:underline transition-colors flex items-center gap-1"
+                        className="text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-600 hover:underline transition-colors flex items-center gap-1"
                       >
                         {otpResending ? 'Sending...' : 'Didn\'t receive code? Resend OTP'}
                       </button>
@@ -1795,7 +1795,7 @@ export default function RentProperty() {
 
         {/* Step 4: Payment */}
         {step === 4 && contract && listing && (
-          <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
             <h2 className="text-2xl font-bold text-blue-700 mb-6 flex items-center gap-2">
               <FaMoneyBillWave /> Payment Required
             </h2>
@@ -1805,35 +1805,35 @@ export default function RentProperty() {
               <h3 className="font-semibold text-lg mb-4">Payment Summary</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-700">Monthly Rent (Locked):</span>
+                  <span className="text-gray-700 dark:text-gray-200">Monthly Rent (Locked):</span>
                   <span className="font-semibold">₹{(contract.lockedRentAmount || listing?.monthlyRent || listing?.discountPrice || listing?.regularPrice || 0).toLocaleString('en-IN')}</span>
                 </div>
                 {(contract.depositPlan !== 'zero') && (
                   <div className="flex justify-between">
-                    <span className="text-gray-700">Security Deposit:</span>
+                    <span className="text-gray-700 dark:text-gray-200">Security Deposit:</span>
                     <span className="font-semibold">₹{(contract.securityDeposit || 0).toLocaleString('en-IN')}</span>
-                    <span className="text-xs text-gray-500">(Refundable)</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">(Refundable)</span>
                   </div>
                 )}
                 {contract.depositPlan === 'low' && contract.extraMonthlyCharge > 0 && (
                   <div className="flex justify-between">
-                    <span className="text-gray-700">Extra Monthly Charge:</span>
+                    <span className="text-gray-700 dark:text-gray-200">Extra Monthly Charge:</span>
                     <span className="font-semibold text-amber-600">₹{contract.extraMonthlyCharge.toLocaleString('en-IN')}/month</span>
                   </div>
                 )}
                 {contract.depositPlan === 'zero' && contract.insuranceFee > 0 && (
                   <div className="flex justify-between">
-                    <span className="text-gray-700">Insurance Fee (monthly):</span>
+                    <span className="text-gray-700 dark:text-gray-200">Insurance Fee (monthly):</span>
                     <span className="font-semibold text-amber-600">₹{contract.insuranceFee.toLocaleString('en-IN')}/month</span>
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span className="text-gray-700">First Month Rent:</span>
+                  <span className="text-gray-700 dark:text-gray-200">First Month Rent:</span>
                   <span className="font-semibold">₹{(contract.lockedRentAmount || listing?.monthlyRent || listing?.discountPrice || listing?.regularPrice || 0).toLocaleString('en-IN')}</span>
                 </div>
                 <div className="flex justify-between border-t pt-2 mt-2">
-                  <span className="font-semibold text-lg">Total Amount:</span>
-                  <span className="font-bold text-lg text-blue-600">
+                  <span className="font-semibold text-lg dark:text-gray-200">Total Amount:</span>
+                  <span className="font-bold text-lg text-blue-600 dark:text-blue-400">
                     ₹{(
                       (contract.securityDeposit || 0) +
                       (contract.lockedRentAmount || listing?.monthlyRent || listing?.discountPrice || listing?.regularPrice || 0) +
@@ -1842,8 +1842,8 @@ export default function RentProperty() {
                   </span>
                 </div>
                 {contract.depositPlan && contract.depositPlan !== 'standard' && (
-                  <div className="mt-2 pt-2 border-t border-blue-200">
-                    <p className="text-xs text-gray-600">
+                  <div className="mt-2 pt-2 border-t border-blue-200 dark:border-blue-600">
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
                       <span className="font-semibold">Deposit Plan:</span> {
                         contract.depositPlan === 'low' ? 'Low Deposit (Extra ₹' + (contract.extraMonthlyCharge || 0) + '/month)' :
                           contract.depositPlan === 'zero' ? 'Zero Deposit (Insurance ₹' + (contract.insuranceFee || 0) + '/month)' :
@@ -1879,13 +1879,13 @@ export default function RentProperty() {
                     setStep(step - 1);
                   }
                 }}
-                className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 flex items-center justify-center gap-2"
+                className="px-6 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 flex items-center justify-center gap-2"
               >
                 <FaChevronRight className="rotate-180" /> Back
               </button>
               <button
                 onClick={() => setShowPaymentModal(true)}
-                className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 flex items-center justify-center gap-2"
+                className="flex-1 bg-blue-600 text-white py-3 dark:bg-blue-500 dark:hover:bg-blue-600 rounded-lg font-semibold hover:bg-blue-700 flex items-center justify-center gap-2"
               >
                 <FaMoneyBillWave /> Proceed to Payment
                 <FaChevronRight />
@@ -1927,16 +1927,16 @@ export default function RentProperty() {
         {/* Step 5: Move-in */}
         {step === 5 && contract && (
           <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-2xl font-bold text-blue-700 mb-6 flex items-center gap-2">
+            <h2 className="text-2xl font-bold text-blue-700 dark:text-blue-200 mb-6 flex items-center gap-2">
               <FaHome /> Move-in Checklist
             </h2>
             <div className="space-y-4 mb-6">
-              <p className="text-gray-600">
+              <p className="text-gray-600 dark:text-gray-200">
                 Complete your move-in checklist to document the property condition. This will help protect you during move-out.
               </p>
-              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <h3 className="font-semibold text-blue-800 mb-2">What to do:</h3>
-                <ul className="list-disc list-inside space-y-1 text-sm text-blue-700">
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 dark:bg-gray-800 dark:border-gray-600">
+                <h3 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">What to do:</h3>
+                <ul className="list-disc list-inside space-y-1 text-sm text-blue-700 dark:text-blue-200">
                   <li>Upload photos/videos of each room</li>
                   <li>Document existing damages or issues</li>
                   <li>Note amenities and their condition</li>
@@ -1951,7 +1951,7 @@ export default function RentProperty() {
                     setStep(step - 1);
                   }
                 }}
-                className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 flex items-center justify-center gap-2"
+                className="px-6 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 flex items-center justify-center gap-2"
               >
                 <FaChevronLeft /> Back
               </button>
@@ -1960,7 +1960,7 @@ export default function RentProperty() {
                   const contractId = contract.contractId || contract._id;
                   navigate(`/user/services?contractId=${contractId}&checklist=move_in`);
                 }}
-                className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 flex items-center justify-center gap-2"
+                className="flex-1 bg-blue-600 text-white py-3 dark:bg-blue-500 dark:hover:bg-blue-600 rounded-lg font-semibold hover:bg-blue-700 flex items-center justify-center gap-2"
               >
                 <FaCheckCircle /> Complete Move-in Checklist
               </button>
@@ -1969,7 +1969,7 @@ export default function RentProperty() {
                   toast.success("Booking complete! You can complete the checklist later from your appointments.");
                   navigate("/user/my-appointments");
                 }}
-                className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center justify-center"
+                className="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 flex items-center justify-center"
               >
                 Skip for Now
               </button>
