@@ -681,18 +681,7 @@ export default function RentalContracts() {
                           <FaMoneyBillWave /> {isTenant ? 'Rent Wallet' : 'Monitor Rent'}
                         </button>
                       )}
-                      {displayStatus === 'active' && isTenant && contract.wallet && contract.wallet.paymentSchedule && contract.wallet.paymentSchedule.filter(p => p.status === 'pending' || p.status === 'overdue').length > 0 && (
-                        <button
-                          onClick={() => {
-                            const nextPending = contract.wallet.paymentSchedule.find((p, idx) => p.status === 'pending' || p.status === 'overdue');
-                            const nextIndex = contract.wallet.paymentSchedule.indexOf(nextPending);
-                            navigate(`/user/pay-monthly-rent?contractId=${contractIdentifier}&scheduleIndex=${nextIndex}`);
-                          }}
-                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center gap-2"
-                        >
-                          <FaMoneyBillWave /> Pay Next Rent
-                        </button>
-                      )}
+
                       {displayStatus === 'active' && isTenant && (
                         <a
                           href={payMonthlyRentUrl}
@@ -904,8 +893,8 @@ export default function RentalContracts() {
                             onClick={() => handleSignatureClick(signingContract)}
                             disabled={!signingContract.tenantSignature?.signed}
                             className={`px-6 py-3 rounded-lg flex items-center gap-2 font-semibold transition-all ${signingContract.tenantSignature?.signed
-                                ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg'
-                                : 'bg-gray-200 text-gray-500 cursor-not-allowed dark:bg-gray-700 dark:text-gray-400'
+                              ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg'
+                              : 'bg-gray-200 text-gray-500 cursor-not-allowed dark:bg-gray-700 dark:text-gray-400'
                               }`}
                           >
                             <FaPen /> Sign Contract

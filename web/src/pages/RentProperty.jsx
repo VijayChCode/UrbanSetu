@@ -753,15 +753,23 @@ export default function RentProperty() {
       if (data.isFullySigned) {
         toast.success("Contract fully signed by both parties!");
         setContract(data.contract);
-        setStep(4); // Move to payment
-        setShowPaymentModal(true);
+        if (data.contract?.securityDepositPaid || data.contract?.status === 'active') {
+          setStep(5);
+        } else {
+          setStep(4); // Move to payment
+          setShowPaymentModal(true);
+        }
       } else {
         toast.success(isTenant ? "Your signature added. Waiting for landlord to sign." : "Your signature added. Waiting for tenant to sign.");
 
         // If landlord signs and tenant already signed, move to payment
         if (!isTenant && contract.tenantSignature?.signed) {
-          setStep(4);
-          setShowPaymentModal(true);
+          if (data.contract?.securityDepositPaid || data.contract?.status === 'active') {
+            setStep(5);
+          } else {
+            setStep(4);
+            setShowPaymentModal(true);
+          }
         }
       }
     } catch (error) {
@@ -1642,7 +1650,11 @@ export default function RentProperty() {
                 <button
                   onClick={() => {
                     if (readyForPayment) {
-                      setStep(4);
+                      if (contract?.securityDepositPaid || contract?.status === 'active') {
+                        setStep(5);
+                      } else {
+                        setStep(4);
+                      }
                     }
                   }}
                   disabled={!readyForPayment || loading}
@@ -1906,7 +1918,14 @@ export default function RentProperty() {
                 <FaChevronRight className="rotate-180" /> Back
               </button>
               <button
-                onClick={() => setShowPaymentModal(true)}
+                onClick={() => {
+                  if (contract?.securityDepositPaid || contract?.status === 'active') {
+                    toast.success("Payment already completed! Proceeding to move-in...");
+                    setStep(5);
+                  } else {
+                    setShowPaymentModal(true);
+                  }
+                }}
                 className="flex-1 bg-blue-600 text-white py-3 dark:bg-blue-500 dark:hover:bg-blue-600 rounded-lg font-semibold hover:bg-blue-700 flex items-center justify-center gap-2"
               >
                 <FaMoneyBillWave /> Proceed to Payment
