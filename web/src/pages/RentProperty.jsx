@@ -2049,9 +2049,18 @@ export default function RentProperty() {
                   toast.success("Registration complete! You can access all details from your dashboard.");
                   navigate("/user/my-appointments");
                 }}
-                className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-xl font-bold hover:from-blue-700 hover:to-purple-700 shadow-lg flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02]"
+                className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-xl font-bold hover:from-blue-700 hover:to-indigo-700 shadow-lg flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02]"
               >
                 Go to My Appointments <FaChevronRight />
+              </button>
+              <button
+                onClick={() => {
+                  toast.success("Registration complete! You can view your contract anytime.");
+                  navigate("/user/rental-contracts");
+                }}
+                className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 rounded-xl font-bold hover:from-purple-700 hover:to-pink-700 shadow-lg flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02]"
+              >
+                Go to Rental Contracts <FaFileContract />
               </button>
             </div>
           </div>
