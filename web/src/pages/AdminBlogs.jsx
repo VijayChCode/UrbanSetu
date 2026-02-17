@@ -45,6 +45,10 @@ const AdminBlogs = ({ type }) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [blogToDelete, setBlogToDelete] = useState(null);
 
+  // Status Confirmation State
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [blogToToggle, setBlogToToggle] = useState(null);
+
   // Form state
   const [formData, setFormData] = useState({
     title: '',
@@ -409,21 +413,29 @@ const AdminBlogs = ({ type }) => {
     window.open(`/admin/${typePath}/${slug}`, '_blank');
   };
 
-  const togglePublish = async (blog) => {
+  const togglePublish = (blog) => {
+    setBlogToToggle(blog);
+    setShowStatusModal(true);
+  };
+
+  const confirmTogglePublish = async () => {
+    if (!blogToToggle) return;
     try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/api/blogs/${blog._id}`, {
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/blogs/${blogToToggle._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          published: !blog.published
+          published: !blogToToggle.published
         })
       });
 
       if (response.ok) {
-        toast.success(`${contentLabel} ${!blog.published ? 'published' : 'unpublished'} successfully`);
+        toast.success(`${contentLabel} ${!blogToToggle.published ? 'published' : 'unpublished'} successfully`);
         fetchBlogs();
+        setShowStatusModal(false);
+        setBlogToToggle(null);
       } else {
         toast.error(`Failed to update ${contentLabel.toLowerCase()} status`);
       }
@@ -1233,6 +1245,19 @@ const AdminBlogs = ({ type }) => {
         message={`Are you sure you want to delete this ${contentLabel.toLowerCase()}? This action cannot be undone.`}
         confirmText="Delete"
         isDestructive={true}
+      />
+
+      <ConfirmationModal
+        isOpen={showStatusModal}
+        onClose={() => {
+          setShowStatusModal(false);
+          setBlogToToggle(null);
+        }}
+        onConfirm={confirmTogglePublish}
+        title={`Change ${contentLabel} Status`}
+        message={`Are you sure you want to ${blogToToggle?.published ? 'unpublish' : 'publish'} this ${contentLabel.toLowerCase()}?`}
+        confirmText={blogToToggle?.published ? 'Unpublish' : 'Publish'}
+        isDestructive={blogToToggle?.published}
       />
 
       {/* Reject Modal */}
