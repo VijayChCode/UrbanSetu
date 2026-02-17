@@ -13340,6 +13340,12 @@ export const sendLoanEMIDueReminderEmail = async (email, details) => {
             <p style="color: #4b5563; margin: 0 0 15px 0; line-height: 1.6;">
               Please ensure your account is funded to avoid any late fees or penalties.
             </p>
+
+            <div style="background-color: #fff7ed; padding: 12px; border-radius: 6px; border-left: 3px solid #f97316; margin-bottom: 15px;">
+              <p style="margin: 0; color: #c2410c; font-size: 13px;">
+                <strong>Important:</strong> A penalty of <strong>5% of the EMI amount</strong> will be automatically applied for each month of delay if payment is not received by the due date.
+              </p>
+            </div>
             
             <div style="text-align:center; margin-top: 20px;">
               <a href="${details.loanUrl}" style="display:inline-block; background-color:#2563eb; color:#ffffff; text-decoration:none; padding:12px 24px; border-radius:6px; font-weight:600;">Pay Now</a>
