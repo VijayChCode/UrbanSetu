@@ -746,6 +746,12 @@ router.post("/verify", verifyToken, async (req, res) => {
             loan.totalPaid = (loan.totalPaid || 0) + amountToCredit;
             // loan.totalRemaining is calculated in pre-save hook based on unpaid EMIs
 
+            // Calculate new remaining balance for email (since pre-save hook hasn't run yet)
+            const newTotalRemaining = loan.emiSchedule.reduce((sum, e) => {
+              if (e.status === 'completed') return sum;
+              return sum + (loan.emiAmount || 0) + (e.penaltyAmount || 0);
+            }, 0);
+
             // Send success email
             try {
               const { sendLoanEMIPaymentSuccessEmail } = await import('../utils/emailService.js');
@@ -756,7 +762,7 @@ router.post("/verify", verifyToken, async (req, res) => {
                 paymentId: payment.paymentId,
                 emiMonth: emiToUpdate.month,
                 emiYear: emiToUpdate.year,
-                remainingBalance: loan.totalRemaining,
+                remainingBalance: newTotalRemaining,
                 loanUrl: `${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}/user/rental-loans?loanId=${loan.loanId}`
               });
               console.log(`✅ [PayPal] Loan EMI success email sent to ${loan.userId.email}`);
@@ -1436,6 +1442,12 @@ router.post('/razorpay/verify', verifyToken, async (req, res) => {
             // Check if fully repaid
             const totalScheduled = loan.emiSchedule.reduce((sum, e) => sum + loan.emiAmount, 0);
 
+            // Calculate new remaining balance for email
+            const newTotalRemaining = loan.emiSchedule.reduce((sum, e) => {
+              if (e.status === 'completed') return sum;
+              return sum + (loan.emiAmount || 0) + (e.penaltyAmount || 0);
+            }, 0);
+
             // Send success email
             try {
               const { sendLoanEMIPaymentSuccessEmail } = await import('../utils/emailService.js');
@@ -1449,7 +1461,7 @@ router.post('/razorpay/verify', verifyToken, async (req, res) => {
                 paymentId: payment.paymentId,
                 emiMonth: emiToUpdate.month,
                 emiYear: emiToUpdate.year,
-                remainingBalance: loan.totalRemaining,
+                remainingBalance: newTotalRemaining,
                 loanUrl: `${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}/user/rental-loans?loanId=${loan.loanId}`,
                 receiptUrl: receiptUrl
               });
