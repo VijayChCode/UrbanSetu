@@ -1599,8 +1599,8 @@ export default function RentProperty() {
             </div>
 
             {contract.tenantSignature?.signed && contract.landlordSignature?.signed && (
-              <div className="bg-green-50 p-4 rounded-lg mb-6 border border-green-200">
-                <p className="text-green-700 font-semibold text-center">
+              <div className="bg-green-50 dark:bg-green-900/30 p-4 rounded-lg mb-6 border border-green-200 dark:border-green-800">
+                <p className="text-green-700 dark:text-green-300 font-semibold text-center">
                   <FaCheckCircle className="inline mr-2" />
                   Contract Fully Signed! Proceed to Payment.
                 </p>
