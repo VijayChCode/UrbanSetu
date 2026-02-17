@@ -14289,10 +14289,10 @@ export const sendAccountLockoutEmail = async (email, details) => {
               </p>
               
               <div style="text-align: center; margin: 35px 0 10px;">
-                 <a href="${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}/contact" style="background-color: #ef4444; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px; margin-right: 15px; display: inline-block;">
+                 <a href="${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}/contact" style="background-color: #ef4444; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px; margin: 10px 5px; display: inline-block;">
                     Contact Support
                  </a>
-                  <a href="${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}/forgot-password" style="background-color: #ffffff; color: #ef4444; border: 2px solid #ef4444; padding: 12px 26px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px; display: inline-block;">
+                  <a href="${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}/forgot-password" style="background-color: #ffffff; color: #ef4444; border: 2px solid #ef4444; padding: 12px 26px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px; margin: 10px 5px; display: inline-block;">
                     Reset Password
                  </a>
               </div>
