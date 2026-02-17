@@ -712,7 +712,8 @@ const PaymentModal = ({ isOpen, onClose, appointment, onPaymentSuccess, existing
             year: monthlyRentContext.year,
             amount: monthlyRentContext.originalAmount, // Always use original INR amount
             gateway: targetGateway,
-            isAutoDebit: false
+            isAutoDebit: false,
+            coinsToRedeem: monthlyRentContext.coinsToRedeem
           })
         });
       } else if (isEMIPayment && emiDetails) {
@@ -747,7 +748,8 @@ const PaymentModal = ({ isOpen, onClose, appointment, onPaymentSuccess, existing
             appointmentId: appointment._id,
             paymentType: appointment.paymentType || (appointment.isRentalPayment ? 'security_deposit' : 'advance'),
             gateway: targetGateway,
-            ...(appointment.contractId && { contractId: appointment.contractId })
+            ...(appointment.contractId && { contractId: appointment.contractId }),
+            ...(appointment.coinsToRedeem > 0 && { coinsToRedeem: appointment.coinsToRedeem })
           })
         });
       }

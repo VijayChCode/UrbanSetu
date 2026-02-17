@@ -2,12 +2,14 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { toast } from 'react-toastify';
-import { FaLock, FaCalendarAlt, FaMoneyBillWave, FaCheckCircle, FaCheck, FaChevronRight, FaHome, FaShieldAlt, FaFileContract, FaTimesCircle, FaCreditCard, FaChevronLeft, FaMapMarkerAlt, FaReceipt, FaDownload } from "react-icons/fa";
+import { FaLock, FaCalendarAlt, FaMoneyBillWave, FaCheckCircle, FaCheck, FaChevronRight, FaHome, FaShieldAlt, FaFileContract, FaTimesCircle, FaCreditCard, FaChevronLeft, FaMapMarkerAlt, FaReceipt, FaDownload, FaCoins, FaSpinner } from "react-icons/fa";
+import { motion, AnimatePresence } from "framer-motion";
 import { usePageTitle } from '../hooks/usePageTitle';
 import PaymentModal from '../components/PaymentModal';
 import ContractPreview from '../components/rental/ContractPreview';
 import DigitalSignature from '../components/rental/DigitalSignature';
 import RentPropertySkeleton from '../components/skeletons/RentPropertySkeleton';
+import SetuCoinParticles from '../components/SetuCoins/SetuCoinParticles';
 import { authenticatedFetch } from '../utils/auth';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -64,6 +66,11 @@ export default function RentProperty() {
   const [otpVerifying, setOtpVerifying] = useState(false);
   const otpInputRef = useRef(null);
 
+  // SetuCoins state
+  const [coinBalance, setCoinBalance] = useState(0);
+  const [coinsToRedeem, setCoinsToRedeem] = useState(0);
+  const [showCoinBurst, setShowCoinBurst] = useState(false);
+
   // OTP Timer logic
   useEffect(() => {
     let interval = null;
@@ -76,6 +83,35 @@ export default function RentProperty() {
     }
     return () => clearInterval(interval);
   }, [otpTimer]);
+
+  useEffect(() => {
+    if (currentUser) {
+      // Fetch coin balance
+      authenticatedFetch(`${API_BASE_URL}/api/coins/balance`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            setCoinBalance(data.setuCoinsBalance || 0);
+          }
+        })
+        .catch(err => console.error("Error fetching coins:", err));
+    }
+  }, [currentUser]);
+
+  const getSubtotal = () => {
+    if (!contract && !listing) return 0;
+    return (
+      (contract?.securityDeposit || 0) +
+      (contract?.lockedRentAmount || listing?.monthlyRent || listing?.discountPrice || listing?.regularPrice || 0) +
+      (contract?.depositPlan === 'zero' ? (contract?.insuranceFee || 0) : 0)
+    );
+  };
+
+  const getTotalAmount = () => {
+    const subtotal = getSubtotal();
+    const discount = Math.floor(coinsToRedeem / 10);
+    return Math.max(0, subtotal - discount);
+  };
 
   const handleDraftClause = async () => {
     if (!newClauseInput.trim()) {
@@ -833,6 +869,7 @@ export default function RentProperty() {
     // Move to step 5 (Move-in)
     setStep(5);
     setShowPaymentModal(false);
+    setShowCoinBurst(true); // Celebration!
 
     // Refresh booking and contract data
     if (booking?._id) {
@@ -1866,15 +1903,26 @@ export default function RentProperty() {
                   <span className="font-semibold text-gray-900 dark:text-gray-100">₹{(contract.lockedRentAmount || listing?.monthlyRent || listing?.discountPrice || listing?.regularPrice || 0).toLocaleString('en-IN')}</span>
                 </div>
                 <div className="flex justify-between border-t border-gray-200 dark:border-gray-600 pt-2 mt-2">
-                  <span className="font-semibold text-lg text-gray-800 dark:text-white">Total Amount:</span>
-                  <span className="font-bold text-lg text-blue-600 dark:text-blue-400">
-                    ₹{(
-                      (contract.securityDeposit || 0) +
-                      (contract.lockedRentAmount || listing?.monthlyRent || listing?.discountPrice || listing?.regularPrice || 0) +
-                      (contract.depositPlan === 'zero' ? (contract.insuranceFee || 0) : 0)
-                    ).toLocaleString('en-IN')}
+                  <span className="font-semibold text-lg text-gray-800 dark:text-white">Subtotal:</span>
+                  <span className="font-bold text-lg text-gray-900 dark:text-gray-100">
+                    ₹{getSubtotal().toLocaleString('en-IN')}
                   </span>
                 </div>
+
+                {coinsToRedeem > 0 && (
+                  <div className="flex justify-between text-green-600 dark:text-green-400 mb-1">
+                    <span className="flex items-center gap-1 font-medium"><FaCoins className="text-xs" /> SetuCoins Discount:</span>
+                    <span className="font-semibold">- ₹{Math.floor(coinsToRedeem / 10).toLocaleString('en-IN')}</span>
+                  </div>
+                )}
+
+                <div className="flex justify-between border-t border-gray-200 dark:border-gray-600 pt-2 mt-2">
+                  <span className="font-bold text-xl text-gray-900 dark:text-white">Total Payable:</span>
+                  <span className="font-black text-2xl text-blue-600 dark:text-blue-400">
+                    ₹{getTotalAmount().toLocaleString('en-IN')}
+                  </span>
+                </div>
+
                 {contract.depositPlan && contract.depositPlan !== 'standard' && (
                   <div className="mt-2 pt-2 border-t border-blue-200 dark:border-gray-600">
                     <p className="text-xs text-gray-600 dark:text-gray-400">
@@ -1888,6 +1936,80 @@ export default function RentProperty() {
                 )}
               </div>
             </div>
+
+            {/* SetuCoins Earning Banner */}
+            {getTotalAmount() >= 1000 && (
+              <div className="bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-6 flex items-center justify-between shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-yellow-100 dark:bg-yellow-800 rounded-full text-yellow-600 dark:text-yellow-400 shadow-inner">
+                    <FaCoins className="text-xl" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-gray-800 dark:text-white flex items-center gap-1">SetuCoins Rewards <span className="text-[10px] bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300 px-1.5 py-0.5 rounded border border-yellow-200 dark:border-yellow-700">LOYALTY</span></h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">You will earn <span className="font-bold text-yellow-600 dark:text-yellow-400 text-lg">{Math.floor(getTotalAmount() / 1000)} SetuCoins</span> with this payment!</p>
+                  </div>
+                </div>
+                <div className="hidden sm:block text-yellow-500 font-bold text-xl animate-pulse">+{Math.floor(getTotalAmount() / 1000)}</div>
+              </div>
+            )}
+
+            {/* SetuCoins Redemption */}
+            {coinBalance > 0 && (
+              <div className="bg-white dark:bg-gray-800 p-5 rounded-xl border border-yellow-200 dark:border-yellow-700/50 mb-6 shadow-md transition-all hover:shadow-lg">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-bold text-gray-800 dark:text-white flex items-center gap-2 text-lg">
+                    <FaCoins className={`text-yellow-500 ${coinsToRedeem > 0 ? 'animate-bounce' : ''}`} />
+                    Pay with SetuCoins
+                  </h4>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300 px-3 py-1 rounded-full border border-yellow-200 dark:border-yellow-800">
+                      Available: {coinBalance}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Redeem Coins for Instant Discount</label>
+                  <div className="flex items-center gap-5">
+                    <input
+                      type="range"
+                      min="0"
+                      max={Math.min(coinBalance, getSubtotal() * 10)}
+                      step="10"
+                      value={coinsToRedeem}
+                      onChange={(e) => setCoinsToRedeem(Number(e.target.value))}
+                      className="w-full h-2.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-yellow-500 hover:accent-yellow-400 transition-all"
+                    />
+                    <div className="min-w-[90px] text-right">
+                      <span className="text-xl font-black text-yellow-600 dark:text-yellow-400">{coinsToRedeem}</span>
+                      <span className="text-xs ml-1 text-gray-500 dark:text-gray-400 uppercase font-bold">Coins</span>
+                    </div>
+                  </div>
+                  <div className="flex justify-between text-[10px] text-gray-500 dark:text-gray-400 mt-2 font-bold uppercase tracking-wider">
+                    <span>0 Coins</span>
+                    <span>Max Redeemable: {Math.min(coinBalance, getSubtotal() * 10)} Coins</span>
+                  </div>
+                </div>
+
+                <AnimatePresence>
+                  {coinsToRedeem > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                      animate={{ opacity: 1, height: 'auto', marginTop: 12 }}
+                      exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="flex justify-between items-center bg-yellow-500/10 dark:bg-yellow-500/5 p-4 rounded-lg border border-yellow-200 dark:border-yellow-900/30">
+                        <span className="text-sm font-bold text-yellow-800 dark:text-yellow-400 flex items-center gap-2">
+                          <FaCheckCircle /> Instant Discount Applied:
+                        </span>
+                        <span className="text-lg font-black text-yellow-700 dark:text-yellow-300">- ₹{(Math.floor(coinsToRedeem / 10)).toLocaleString('en-IN')}</span>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
 
             <p className="text-gray-600 dark:text-gray-300 mb-6">
               Please complete the payment for security deposit and first month's rent to proceed with move-in. Choose your preferred payment method below.
@@ -1948,14 +2070,15 @@ export default function RentProperty() {
               isRentalPayment: true,
               region: 'india', // Default to India for Razorpay
               securityDeposit: contract.securityDeposit || 0,
-              firstMonthRent: contract.lockedRentAmount || listing?.monthlyRent || listing?.discountPrice || listing?.regularPrice || 0,
+              firstMonthRent: (contract.lockedRentAmount || listing?.monthlyRent || listing?.discountPrice || listing?.regularPrice || 0),
               insuranceFee: contract.insuranceFee || 0,
               extraMonthlyCharge: contract.extraMonthlyCharge || 0,
               depositPlan: contract.depositPlan || 'standard',
               propertyName: listing?.name || 'Property',
               propertyDescription: listing?.address || '',
               buyerId: contract.tenantId,
-              sellerId: contract.landlordId
+              sellerId: contract.landlordId,
+              coinsToRedeem: coinsToRedeem
             } : {
               _id: null,
               region: 'india',
@@ -1971,6 +2094,27 @@ export default function RentProperty() {
             <h2 className="text-2xl font-bold text-blue-700 dark:text-blue-400 mb-6 flex items-center gap-2">
               <FaHome /> Step 5: Finalize Move-in
             </h2>
+
+            {/* SetuCoins Earned Success Display */}
+            {(lastPayment?.amount || getTotalAmount()) >= 1000 && (
+              <div className="flex flex-col items-center justify-center p-6 bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/10 dark:to-amber-900/10 rounded-2xl border border-yellow-200 dark:border-yellow-800/50 mb-8 max-w-2xl mx-auto shadow-sm animate-fade-in">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2 bg-yellow-100 dark:bg-yellow-800/50 rounded-full">
+                    <FaCoins className="text-yellow-500 text-3xl animate-bounce" />
+                  </div>
+                  <span className="font-extrabold text-gray-800 dark:text-white text-2xl tracking-tight">SetuCoins Earned!</span>
+                </div>
+                <div className="text-center">
+                  <p className="text-gray-600 dark:text-gray-300 text-lg">
+                    Congratulations! You've earned <span className="font-black text-yellow-600 dark:text-yellow-400 text-3xl mx-1">+{Math.floor((lastPayment?.amount || getTotalAmount()) / 1000)}</span> coins.
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-3 font-medium flex items-center justify-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-pulse"></span>
+                    Maintain your streak to unlock exclusive bonus rewards!
+                  </p>
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
               {/* Payment Summary */}
@@ -1991,7 +2135,7 @@ export default function RentProperty() {
                       <span className="text-gray-600 dark:text-gray-400">Status:</span>
                       <span className="font-semibold text-green-600 dark:text-green-400">SUCCESSFUL</span>
                     </div>
-                    {(lastPayment?.paymentId || contract.walletId) && (
+                    {(lastPayment?.paymentId || (contract.wallet?.paymentSchedule?.[0]?.paymentId?._id || contract.wallet?.paymentSchedule?.[0]?.paymentId)) && (
                       <button
                         onClick={() => {
                           const pId = lastPayment?.paymentId || (contract.wallet?.paymentSchedule?.[0]?.paymentId?._id || contract.wallet?.paymentSchedule?.[0]?.paymentId);
@@ -2084,8 +2228,8 @@ export default function RentProperty() {
             </div>
           </div>
         )}
+        {showCoinBurst && <SetuCoinParticles count={50} onComplete={() => setShowCoinBurst(false)} />}
       </div>
     </div >
   );
 }
-
