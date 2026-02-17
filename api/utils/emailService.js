@@ -14398,7 +14398,7 @@ export const sendRootAdminAttackEmail = async (email, details) => {
                   Go to Security Dashboard
                </a>
             </div>
-          </div>
+          </div>  
           
           <div style="background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
             <p style="color: #9ca3af; margin: 0; font-size: 12px;">© ${new Date().getFullYear()} UrbanSetu Security Intelligence</p>
@@ -15290,9 +15290,6 @@ export const sendFestivalGreetingEmail = async (email, username, theme) => {
               ${theme.greeting}
             </h1>
             <div style="position: absolute; top: 20px; right: 20px; font-size: 24px; opacity: 0.8;">
-              ${theme.secondaryIcon || ''}
-            </div>
-            <div style="position: absolute; bottom: 20px; left: 20px; font-size: 24px; opacity: 0.8;">
               ${theme.secondaryIcon || ''}
             </div>
           </div>
