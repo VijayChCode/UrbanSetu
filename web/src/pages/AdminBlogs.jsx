@@ -1258,6 +1258,8 @@ const AdminBlogs = ({ type }) => {
         message={`Are you sure you want to ${blogToToggle?.published ? 'unpublish' : 'publish'} this ${contentLabel.toLowerCase()}?`}
         confirmText={blogToToggle?.published ? 'Unpublish' : 'Publish'}
         isDestructive={blogToToggle?.published}
+        confirmIcon={blogToToggle?.published ? EyeOff : Eye}
+        headerIcon={blogToToggle?.published ? EyeOff : Eye}
       />
 
       {/* Reject Modal */}

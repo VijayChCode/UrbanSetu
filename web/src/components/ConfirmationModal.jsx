@@ -11,7 +11,9 @@ export default function ConfirmationModal({
   cancelText = "Cancel",
   confirmButtonColor = "bg-blue-600 hover:bg-blue-700",
   isDestructive = false,
-  isLoading = false
+  isLoading = false,
+  headerIcon: HeaderIcon = null,
+  confirmIcon: ConfirmIcon = null
 }) {
   if (!isOpen) return null;
 
@@ -23,6 +25,7 @@ export default function ConfirmationModal({
   };
 
   const getIcon = () => {
+    if (HeaderIcon) return <HeaderIcon className="w-6 h-6 text-blue-500" />;
     if (isDestructive) {
       return <FaExclamationTriangle className="w-6 h-6 text-red-500" />;
     }
@@ -80,7 +83,11 @@ export default function ConfirmationModal({
               </>
             ) : (
               <>
-                {isDestructive && <FaTrash className="w-4 h-4" />}
+                {ConfirmIcon ? (
+                  <ConfirmIcon className="w-4 h-4" />
+                ) : (
+                  isDestructive && <FaTrash className="w-4 h-4" />
+                )}
                 {confirmText}
               </>
             )}
