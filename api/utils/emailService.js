@@ -13514,8 +13514,8 @@ export const sendLoanEMIPaymentSuccessEmail = async (email, details) => {
             </p>
             
             <div style="text-align:center; margin-top: 20px;">
-              <a href="${details.loanUrl}" style="display:inline-block; background-color:#2563eb; color:#ffffff; text-decoration:none; padding:12px 24px; border-radius:6px; font-weight:600; margin-right: 10px;">View Loan Status</a>
-              ${details.receiptUrl ? `<a href="${details.receiptUrl}" style="display:inline-block; background-color: #f0f7ff; color:#2563eb; text-decoration:none; padding:12px 24px; border-radius:6px; font-weight:600; border: 1px solid #2563eb;">Download Receipt</a>` : ''}
+              <a href="${details.loanUrl}" style="display:inline-block; background-color:#2563eb; color:#ffffff; text-decoration:none; padding:12px 24px; border-radius:6px; font-weight:600; margin: 10px 5px;">View Loan Status</a>
+              ${details.receiptUrl ? `<a href="${details.receiptUrl}" style="display:inline-block; background-color: #f0f7ff; color:#2563eb; text-decoration:none; padding:12px 24px; border-radius:6px; font-weight:600; border: 1px solid #2563eb; margin: 10px 5px;">Download Receipt</a>` : ''}
             </div>
           </div>
           
@@ -13536,6 +13536,73 @@ export const sendLoanEMIPaymentSuccessEmail = async (email, details) => {
       createErrorResponse(new Error(result.error), 'loan_emi_success');
   } catch (error) {
     return createErrorResponse(error, 'loan_emi_success');
+  }
+};
+
+// Send Loan Repayment Completion Email
+export const sendLoanRepaymentCompletionEmail = async (email, details) => {
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: `Congratulations! Your Loan is Fully Repaid - ${details.propertyName}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f0fdf4;">
+        <div style="background-color: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); border-top: 6px solid #10b981;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <div style="width: 80px; height: 80px; background-color: #d1fae5; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 15px;">
+              <span style="font-size: 40px;">🎉</span>
+            </div>
+            <h1 style="color: #065f46; margin: 0; font-size: 28px;">Loan Fully Repaid!</h1>
+            <p style="color: #6b7280; margin: 10px 0 0 0;">Congratulations on completing your loan investment</p>
+          </div>
+          
+          <div style="background-color: #f0fdf4; padding: 25px; border-radius: 10px; margin-bottom: 25px; border: 1px solid #bbf7d0;">
+            <p style="color: #166534; margin: 0 0 15px 0; line-height: 1.6; font-size: 16px;">
+              Hello <strong>${details.userName}</strong>,
+            </p>
+            <p style="color: #166534; margin: 0 0 15px 0; line-height: 1.6;">
+              We are thrilled to inform you that your <strong>${details.loanType}</strong> loan for <strong>${details.propertyName}</strong> has been <strong>completely repaid</strong>.
+            </p>
+            
+            <div style="background-color: #ffffff; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px dashed #10b981;">
+              <h3 style="color: #065f46; margin-top: 0; font-size: 18px;">Repayment Summary</h3>
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <p style="margin: 4px 0; color: #374151;"><strong>Loan ID:</strong> <span style="font-family: monospace;">${details.loanId}</span></p>
+                <p style="margin: 4px 0; color: #374151;"><strong>Principal Amount:</strong> ₹${details.principalAmount}</p>
+                <p style="margin: 4px 0; color: #374151;"><strong>Total Interest Paid:</strong> ₹${details.totalInterest}</p>
+                <p style="margin: 4px 0; color: #374151;"><strong>Tenure:</strong> ${details.tenure} Months</p>
+                <div style="border-top: 1px solid #e5e7eb; margin: 10px 0; padding-top: 10px;">
+                  <p style="margin: 4px 0; color: #065f46; font-size: 18px;"><strong>Total Repayment:</strong> ₹${details.totalRepaid}</p>
+                </div>
+              </div>
+            </div>
+            
+            <p style="color: #166534; margin: 15px 0; line-height: 1.6;">
+              Thank you for being a valued member of UrbanSetu. Your disciplined repayment has further strengthened your trust score on our platform.
+            </p>
+          </div>
+          
+          <div style="text-align: center;">
+            <a href="${details.loanUrl}" style="display:inline-block; background-color: #10b981; color: #ffffff; text-decoration: none; padding: 14px 30px; border-radius: 8px; font-weight: 600; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);">View Loan Summary</a>
+          </div>
+          
+          <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+            <p style="color: #9ca3af; margin: 0; font-size: 12px;">
+              © ${new Date().getFullYear()} UrbanSetu. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </div>
+    `
+  };
+
+  try {
+    const result = await sendEmailWithRetry(mailOptions);
+    return result.success ?
+      createSuccessResponse(result.messageId, 'loan_repaid_complete') :
+      createErrorResponse(new Error(result.error), 'loan_repaid_complete');
+  } catch (error) {
+    return createErrorResponse(error, 'loan_repaid_complete');
   }
 };
 

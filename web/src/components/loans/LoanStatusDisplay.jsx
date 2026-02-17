@@ -101,8 +101,9 @@ export default function LoanStatusDisplay({ loan, currentUser, onUpdate, STATUS_
     switch (status) {
       case 'approved':
       case 'disbursed':
-      case 'repaid':
         return <FaCheckCircle className="text-green-600" />;
+      case 'repaid':
+        return <FaCheckCircle className="text-purple-600" />;
       case 'pending':
         return <FaClock className="text-yellow-600" />;
       case 'rejected':

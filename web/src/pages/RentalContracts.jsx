@@ -53,11 +53,13 @@ export default function RentalContracts() {
   const [showSignatureModal, setShowSignatureModal] = useState(false);
   const [signingContract, setSigningContract] = useState(null);
   const [actionLoading, setActionLoading] = useState('');
+  const [loans, setLoans] = useState([]);
 
   useEffect(() => {
     // Only fetch on initial load, not on filter changes
     if (contracts.length === 0) {
       fetchContracts();
+      fetchLoans();
     }
   }, [currentUser]);
 
@@ -102,6 +104,18 @@ export default function RentalContracts() {
       if (showLoading) {
         setLoading(false);
       }
+    }
+  };
+
+  const fetchLoans = async () => {
+    try {
+      const res = await authenticatedFetch(`${API_BASE_URL}/api/rental/loans`);
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setLoans(data.loans || []);
+      }
+    } catch (error) {
+      console.error("Error fetching loans:", error);
     }
   };
 
@@ -684,13 +698,54 @@ export default function RentalContracts() {
                           >
                             <FaStar /> Rate
                           </button>
-                          {contract.status === 'active' && isTenant && (
-                            <button
-                              onClick={() => navigate(`/user/rental-loans?contractId=${contractIdentifier}`)}
-                              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center justify-center gap-2"
-                            >
-                              <FaCreditCard /> Apply for Loan
-                            </button>
+                          {isTenant && (
+                            (() => {
+                              const contractLoan = loans.find(l =>
+                                (l.contractId?._id === contract._id || l.contractId === contract._id) &&
+                                l.status !== 'rejected'
+                              );
+
+                              if (contractLoan) {
+                                const isRepaid = contractLoan.status === 'repaid';
+                                const isDisbursed = contractLoan.status === 'disbursed';
+                                const hasOverdue = contractLoan.emiSchedule?.some(e => e.status === 'overdue');
+
+                                return (
+                                  <div className="flex flex-col gap-2 w-full">
+                                    <div className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2 border-2 ${isRepaid ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800' :
+                                      hasOverdue ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800' :
+                                        isDisbursed ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800' :
+                                          'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800'
+                                      }`}>
+                                      {isRepaid ? (
+                                        <><FaCheckCircle /> Loan Fully Repaid</>
+                                      ) : hasOverdue ? (
+                                        <><FaClock /> Loan EMI Overdue!</>
+                                      ) : isDisbursed ? (
+                                        <><FaCheckCircle /> Active Loan: Disbursed</>
+                                      ) : (
+                                        <><FaClock /> Loan Status: {contractLoan.status.toUpperCase()}</>
+                                      )}
+                                    </div>
+                                    <button
+                                      onClick={() => navigate(`/user/rental-loans?loanId=${contractLoan.loanId}`)}
+                                      className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center justify-center gap-2 font-semibold"
+                                    >
+                                      <FaEye /> {hasOverdue ? 'Pay Overdue EMI' : 'View Loan Details'}
+                                    </button>
+                                  </div>
+                                );
+                              }
+
+                              return (
+                                <button
+                                  onClick={() => navigate(`/user/rental-loans?contractId=${contractIdentifier}`)}
+                                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center justify-center gap-2 font-semibold"
+                                >
+                                  <FaCreditCard /> Apply for Loan
+                                </button>
+                              );
+                            })()
                           )}
                         </>
                       )}

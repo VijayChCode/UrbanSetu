@@ -770,17 +770,22 @@ router.post("/verify", verifyToken, async (req, res) => {
               loan.status = 'repaid';
               loan.repaidAt = new Date();
 
-              // Send Loan Repaid Email
+              // Send Loan Repaid Email (Premium Informative Template)
               try {
-                const { sendLoanRepaidEmail } = await import('../utils/emailService.js');
-                await sendLoanRepaidEmail(loan.userId.email, {
+                const { sendLoanRepaymentCompletionEmail } = await import('../utils/emailService.js');
+                const totalInterest = Math.max(0, loan.totalPaid - loan.loanAmount);
+                await sendLoanRepaymentCompletionEmail(loan.userId.email, {
+                  userName: loan.userId.username || 'Valued Client',
                   propertyName: loan.contractId?.listingId?.name || 'Property',
                   loanType: loan.loanType.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
-                  totalPaid: loan.totalPaid,
-                  repaidAt: new Date().toLocaleDateString(),
+                  loanId: loan.loanId,
+                  principalAmount: loan.loanAmount,
+                  totalInterest: totalInterest.toFixed(2),
+                  totalRepaid: loan.totalPaid.toFixed(2),
+                  tenure: loan.tenure,
                   loanUrl: `${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}/user/rental-loans?loanId=${loan.loanId}`
                 });
-                console.log(`✅ [PayPal] Loan repaid email sent (Final) to ${loan.userId.email}`);
+                console.log(`✅ [PayPal] Premium Loan completion email sent (Final) to ${loan.userId.email}`);
               } catch (emailError) {
                 console.error('Error sending loan repaid email:', emailError);
               }
@@ -1456,17 +1461,22 @@ router.post('/razorpay/verify', verifyToken, async (req, res) => {
               loan.status = 'repaid';
               loan.repaidAt = new Date();
 
-              // Send Loan Repaid Email
+              // Send Loan Repaid Email (Premium Informative Template)
               try {
-                const { sendLoanRepaidEmail } = await import('../utils/emailService.js');
-                await sendLoanRepaidEmail(loan.userId.email, {
-                  propertyName: loan.contractId?.listingId?.name || 'Property',
+                const { sendLoanRepaymentCompletionEmail } = await import('../utils/emailService.js');
+                const totalInterest = Math.max(0, loan.totalPaid - loan.loanAmount);
+                await sendLoanRepaymentCompletionEmail(loan.userId?.email || user.email, {
+                  userName: loan.userId?.username || user.username || 'Valued Client',
+                  propertyName: loan.contractId?.listingId?.name || listing?.name || 'Property',
                   loanType: loan.loanType.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
-                  totalPaid: loan.totalPaid,
-                  repaidAt: new Date().toLocaleDateString(),
+                  loanId: loan.loanId,
+                  principalAmount: loan.loanAmount,
+                  totalInterest: totalInterest.toFixed(2),
+                  totalRepaid: loan.totalPaid.toFixed(2),
+                  tenure: loan.tenure,
                   loanUrl: `${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}/user/rental-loans?loanId=${loan.loanId}`
                 });
-                console.log(`✅ Loan repaid email sent (Final) to ${loan.userId.email}`);
+                console.log(`✅ [Razorpay] Premium Loan completion email sent (Final) to ${loan.userId.email}`);
               } catch (emailError) {
                 console.error('Error sending loan repaid email:', emailError);
               }

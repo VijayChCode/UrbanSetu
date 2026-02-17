@@ -26,7 +26,7 @@ const STATUS_LABELS = {
   approved: 'Approved',
   disbursed: 'Disbursed',
   rejected: 'Rejected',
-  repaid: 'Repaid',
+  repaid: 'Fully Repaid',
   defaulted: 'Defaulted'
 };
 
@@ -174,6 +174,21 @@ export default function RentalLoans() {
   };
 
   const handleApplyForLoan = (contract) => {
+    // Check for existing active loan for this contract
+    const existingLoan = loans.find(l =>
+      (l.contractId?._id === contract._id || l.contractId === contract._id) &&
+      ['pending', 'approved', 'disbursed'].includes(l.status)
+    );
+
+    if (existingLoan) {
+      toast.warning(`You already have an active loan for this contract (${existingLoan.status}).`);
+      // If disbursed, maybe show loan details instead?
+      if (existingLoan.status === 'disbursed' || existingLoan.status === 'approved') {
+        handleViewLoan(existingLoan);
+      }
+      return;
+    }
+
     setSelectedContract(contract);
     setShowLoanForm(true);
   };
