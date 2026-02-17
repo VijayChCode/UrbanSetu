@@ -522,26 +522,33 @@ export default function RentalContracts() {
                                 return a.month - b.month;
                               })
                               .slice(0, 6) // Always show first 6 months
-                              .map((payment, idx) => (
-                                <div
-                                  key={idx}
-                                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${payment.status === 'completed'
-                                    ? 'bg-green-100 text-green-700 border border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800'
-                                    : payment.status === 'overdue'
-                                      ? 'bg-red-100 text-red-700 border border-red-300 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800'
-                                      : payment.status === 'processing'
-                                        ? 'bg-yellow-100 text-yellow-700 border border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-800'
-                                        : 'bg-gray-100 text-gray-600 border border-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600'
-                                    }`}
-                                  title={`${payment.status === 'completed' ? 'Paid' : payment.status === 'overdue' ? 'Overdue' : payment.status === 'processing' ? 'Processing' : 'Pending'} - Month ${idx + 1}`}
-                                >
-                                  {payment.status === 'completed' && <FaCheckCircle className="text-xs" />}
-                                  {payment.status === 'overdue' && <FaTimesCircle className="text-xs" />}
-                                  {payment.status === 'processing' && <FaSpinner className="text-xs animate-spin" />}
-                                  {(!payment.status || payment.status === 'pending') && <FaClock className="text-xs" />}
-                                  <span>Month {idx + 1}</span>
-                                </div>
-                              ))}
+                              .map((payment, idx) => {
+                                const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                                const monthName = payment.month ? monthNames[payment.month - 1] : "Month";
+                                const yearShort = payment.year ? payment.year.toString().slice(-2) : idx + 1;
+                                const label = `${monthName} '${yearShort} (M${idx + 1})`;
+
+                                return (
+                                  <div
+                                    key={idx}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${payment.status === 'completed'
+                                      ? 'bg-green-100 text-green-700 border border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800'
+                                      : payment.status === 'overdue'
+                                        ? 'bg-red-100 text-red-700 border border-red-300 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800'
+                                        : payment.status === 'processing'
+                                          ? 'bg-yellow-100 text-yellow-700 border border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-800'
+                                          : 'bg-gray-100 text-gray-600 border border-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600'
+                                      }`}
+                                    title={`${payment.status === 'completed' ? 'Paid' : payment.status === 'overdue' ? 'Overdue' : payment.status === 'processing' ? 'Processing' : 'Pending'} - ${label}`}
+                                  >
+                                    {payment.status === 'completed' && <FaCheckCircle className="text-xs" />}
+                                    {payment.status === 'overdue' && <FaTimesCircle className="text-xs" />}
+                                    {payment.status === 'processing' && <FaSpinner className="text-xs animate-spin" />}
+                                    {(!payment.status || payment.status === 'pending') && <FaClock className="text-xs" />}
+                                    <span>{label}</span>
+                                  </div>
+                                );
+                              })}
 
                             <AnimatePresence>
                               {expandedStatus[contractIdentifier] && contract.wallet.paymentSchedule.length > 6 && (
@@ -557,26 +564,33 @@ export default function RentalContracts() {
                                       return a.month - b.month;
                                     })
                                     .slice(6) // Show the rest
-                                    .map((payment, idx) => (
-                                      <div
-                                        key={idx + 6}
-                                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${payment.status === 'completed'
-                                          ? 'bg-green-100 text-green-700 border border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800'
-                                          : payment.status === 'overdue'
-                                            ? 'bg-red-100 text-red-700 border border-red-300 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800'
-                                            : payment.status === 'processing'
-                                              ? 'bg-yellow-100 text-yellow-700 border border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-800'
-                                              : 'bg-gray-100 text-gray-600 border border-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600'
-                                          }`}
-                                        title={`${payment.status === 'completed' ? 'Paid' : payment.status === 'overdue' ? 'Overdue' : payment.status === 'processing' ? 'Processing' : 'Pending'} - Month ${idx + 7}`}
-                                      >
-                                        {payment.status === 'completed' && <FaCheckCircle className="text-xs" />}
-                                        {payment.status === 'overdue' && <FaTimesCircle className="text-xs" />}
-                                        {payment.status === 'processing' && <FaSpinner className="text-xs animate-spin" />}
-                                        {(!payment.status || payment.status === 'pending') && <FaClock className="text-xs" />}
-                                        <span>Month {idx + 7}</span>
-                                      </div>
-                                    ))}
+                                    .map((payment, idx) => {
+                                      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                                      const monthName = payment.month ? monthNames[payment.month - 1] : "Month";
+                                      const yearShort = payment.year ? payment.year.toString().slice(-2) : idx + 7;
+                                      const label = `${monthName} '${yearShort} (M${idx + 7})`;
+
+                                      return (
+                                        <div
+                                          key={idx + 6}
+                                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${payment.status === 'completed'
+                                            ? 'bg-green-100 text-green-700 border border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800'
+                                            : payment.status === 'overdue'
+                                              ? 'bg-red-100 text-red-700 border border-red-300 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800'
+                                              : payment.status === 'processing'
+                                                ? 'bg-yellow-100 text-yellow-700 border border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-800'
+                                                : 'bg-gray-100 text-gray-600 border border-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600'
+                                            }`}
+                                          title={`${payment.status === 'completed' ? 'Paid' : payment.status === 'overdue' ? 'Overdue' : payment.status === 'processing' ? 'Processing' : 'Pending'} - ${label}`}
+                                        >
+                                          {payment.status === 'completed' && <FaCheckCircle className="text-xs" />}
+                                          {payment.status === 'overdue' && <FaTimesCircle className="text-xs" />}
+                                          {payment.status === 'processing' && <FaSpinner className="text-xs animate-spin" />}
+                                          {(!payment.status || payment.status === 'pending') && <FaClock className="text-xs" />}
+                                          <span>{label}</span>
+                                        </div>
+                                      );
+                                    })}
                                 </motion.div>
                               )}
                             </AnimatePresence>
