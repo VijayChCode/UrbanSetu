@@ -1521,19 +1521,19 @@ export default function RentProperty() {
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <h3 className="font-semibold text-lg">Tenant Signature</h3>
-                    <p className="text-sm text-gray-600">{currentUser.username || currentUser.email}</p>
+                    <h3 className="font-semibold text-lg text-gray-900 dark:text-white">Tenant Signature</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{currentUser.username || currentUser.email}</p>
                   </div>
                   {contract.tenantSignature?.signed && (
-                    <div className="flex items-center gap-2 text-green-600">
+                    <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
                       <FaCheckCircle className="text-2xl" />
                       <span className="font-semibold">Signed</span>
                     </div>
                   )}
                 </div>
                 {contract.tenantSignature?.signed ? (
-                  <div className="p-4 bg-green-50 border-2 border-green-200 rounded-lg">
-                    <p className="text-sm text-gray-600">
+                  <div className="p-4 bg-green-50 border-2 border-green-200 dark:bg-green-900/20 dark:border-green-800 rounded-lg">
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
                       Signed on {new Date(contract.tenantSignature.signedAt).toLocaleString('en-GB')}
                     </p>
                     {contract.tenantSignature.signatureData && (
@@ -1562,21 +1562,21 @@ export default function RentProperty() {
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <h3 className="font-semibold text-lg">Landlord Signature</h3>
-                    <p className="text-sm text-gray-600">Property Owner</p>
+                    <h3 className="font-semibold text-lg text-gray-900 dark:text-white">Landlord Signature</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Property Owner</p>
                   </div>
                   {contract.landlordSignature?.signed ? (
-                    <div className="flex items-center gap-2 text-green-600">
+                    <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
                       <FaCheckCircle className="text-2xl" />
                       <span className="font-semibold">Signed</span>
                     </div>
                   ) : (
-                    <span className="text-yellow-600 font-semibold">Pending</span>
+                    <span className="text-yellow-600 dark:text-yellow-400 font-semibold">Pending</span>
                   )}
                 </div>
                 {contract.landlordSignature?.signed ? (
-                  <div className="p-4 bg-green-50 border-2 border-green-200 rounded-lg">
-                    <p className="text-sm text-gray-600">
+                  <div className="p-4 bg-green-50 border-2 border-green-200 dark:bg-green-900/20 dark:border-green-800 rounded-lg">
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
                       Signed on {new Date(contract.landlordSignature.signedAt).toLocaleString('en-GB')}
                     </p>
                     {contract.landlordSignature.signatureData && (
@@ -1589,8 +1589,8 @@ export default function RentProperty() {
                     )}
                   </div>
                 ) : (
-                  <div className="p-4 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg text-center">
-                    <p className="text-gray-500">
+                  <div className="p-4 bg-gray-50 border-2 border-dashed border-gray-300 dark:bg-gray-800 dark:border-gray-600 rounded-lg text-center">
+                    <p className="text-gray-500 dark:text-gray-400">
                       Waiting for landlord to sign the contract
                     </p>
                   </div>
