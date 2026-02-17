@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { FaFileContract, FaDownload, FaEye, FaCalendarAlt, FaMoneyBillWave, FaLock, FaCheckCircle, FaTimesCircle, FaSpinner, FaHome, FaUser, FaChevronRight, FaSignInAlt, FaSignOutAlt, FaGavel, FaStar, FaCreditCard, FaPlayCircle, FaCheck, FaTimes, FaPen, FaEraser, FaUndo, FaClock, FaWallet, FaExternalLinkAlt, FaTools } from 'react-icons/fa';
+import { FaFileContract, FaDownload, FaEye, FaCalendarAlt, FaMoneyBillWave, FaLock, FaCheckCircle, FaTimesCircle, FaSpinner, FaHome, FaUser, FaChevronRight, FaSignInAlt, FaSignOutAlt, FaGavel, FaStar, FaCreditCard, FaPlayCircle, FaCheck, FaTimes, FaPen, FaEraser, FaUndo, FaClock, FaWallet, FaExternalLinkAlt, FaTools, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { motion, AnimatePresence } from 'framer-motion';
 import { usePageTitle } from '../hooks/usePageTitle';
 import ContractPreview from '../components/rental/ContractPreview';
 import DigitalSignature from '../components/rental/DigitalSignature';
@@ -58,6 +59,7 @@ export default function RentalContracts() {
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [contractToReject, setContractToReject] = useState(null);
   const [rejectionReason, setRejectionReason] = useState('');
+  const [expandedStatus, setExpandedStatus] = useState({}); // Track expanded payment status per contract
 
   useEffect(() => {
     // Only fetch on initial load, not on filter changes
@@ -128,6 +130,13 @@ export default function RentalContracts() {
     if (filter === 'all') return contracts;
     return contracts.filter(contract => contract.status === filter);
   }, [contracts, filter]);
+
+  const toggleStatusExpansion = (contractId) => {
+    setExpandedStatus(prev => ({
+      ...prev,
+      [contractId]: !prev[contractId]
+    }));
+  };
 
   const handleDownload = async (contract) => {
     try {
@@ -512,11 +521,11 @@ export default function RentalContracts() {
                                 if (a.year !== b.year) return a.year - b.year;
                                 return a.month - b.month;
                               })
-                              .slice(0, 6) // Show first 6 months
+                              .slice(0, 6) // Always show first 6 months
                               .map((payment, idx) => (
                                 <div
                                   key={idx}
-                                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 ${payment.status === 'completed'
+                                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${payment.status === 'completed'
                                     ? 'bg-green-100 text-green-700 border border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800'
                                     : payment.status === 'overdue'
                                       ? 'bg-red-100 text-red-700 border border-red-300 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800'
@@ -524,27 +533,65 @@ export default function RentalContracts() {
                                         ? 'bg-yellow-100 text-yellow-700 border border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-800'
                                         : 'bg-gray-100 text-gray-600 border border-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600'
                                     }`}
-                                  title={`${payment.status === 'completed' ? 'Paid' : payment.status === 'overdue' ? 'Overdue' : payment.status === 'processing' ? 'Processing' : 'Pending'} - Month ${payment.month}/${payment.year}`}
+                                  title={`${payment.status === 'completed' ? 'Paid' : payment.status === 'overdue' ? 'Overdue' : payment.status === 'processing' ? 'Processing' : 'Pending'} - Month ${idx + 1}`}
                                 >
                                   {payment.status === 'completed' && <FaCheckCircle className="text-xs" />}
                                   {payment.status === 'overdue' && <FaTimesCircle className="text-xs" />}
                                   {payment.status === 'processing' && <FaSpinner className="text-xs animate-spin" />}
-                                  {!payment.status || payment.status === 'pending' ? (
-                                    <>
-                                      <FaClock className="text-xs" />
-                                      Month {idx + 1}
-                                    </>
-                                  ) : (
-                                    <>
-                                      {payment.status === 'completed' ? 'Paid' : payment.status === 'overdue' ? 'Overdue' : 'Processing'} - Month {idx + 1}
-                                    </>
-                                  )}
+                                  {(!payment.status || payment.status === 'pending') && <FaClock className="text-xs" />}
+                                  <span>Month {idx + 1}</span>
                                 </div>
                               ))}
+
+                            <AnimatePresence>
+                              {expandedStatus[contractIdentifier] && contract.wallet.paymentSchedule.length > 6 && (
+                                <motion.div
+                                  initial={{ opacity: 0, width: 0 }}
+                                  animate={{ opacity: 1, width: 'auto' }}
+                                  exit={{ opacity: 0, width: 0 }}
+                                  className="flex flex-wrap gap-2 overflow-hidden"
+                                >
+                                  {contract.wallet.paymentSchedule
+                                    .sort((a, b) => {
+                                      if (a.year !== b.year) return a.year - b.year;
+                                      return a.month - b.month;
+                                    })
+                                    .slice(6) // Show the rest
+                                    .map((payment, idx) => (
+                                      <div
+                                        key={idx + 6}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${payment.status === 'completed'
+                                          ? 'bg-green-100 text-green-700 border border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800'
+                                          : payment.status === 'overdue'
+                                            ? 'bg-red-100 text-red-700 border border-red-300 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800'
+                                            : payment.status === 'processing'
+                                              ? 'bg-yellow-100 text-yellow-700 border border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-800'
+                                              : 'bg-gray-100 text-gray-600 border border-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600'
+                                          }`}
+                                        title={`${payment.status === 'completed' ? 'Paid' : payment.status === 'overdue' ? 'Overdue' : payment.status === 'processing' ? 'Processing' : 'Pending'} - Month ${idx + 7}`}
+                                      >
+                                        {payment.status === 'completed' && <FaCheckCircle className="text-xs" />}
+                                        {payment.status === 'overdue' && <FaTimesCircle className="text-xs" />}
+                                        {payment.status === 'processing' && <FaSpinner className="text-xs animate-spin" />}
+                                        {(!payment.status || payment.status === 'pending') && <FaClock className="text-xs" />}
+                                        <span>Month {idx + 7}</span>
+                                      </div>
+                                    ))}
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+
                             {contract.wallet.paymentSchedule.length > 6 && (
-                              <div className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-100 text-blue-700 border border-blue-300 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800">
-                                +{contract.wallet.paymentSchedule.length - 6} more
-                              </div>
+                              <button
+                                onClick={() => toggleStatusExpansion(contractIdentifier)}
+                                className="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-100 text-blue-700 border border-blue-300 hover:bg-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-800 flex items-center gap-1 transition-all"
+                              >
+                                {expandedStatus[contractIdentifier] ? (
+                                  <>Show Less <FaChevronUp /></>
+                                ) : (
+                                  <>+{contract.wallet.paymentSchedule.length - 6} more <FaChevronDown /></>
+                                )}
+                              </button>
                             )}
                           </div>
                           {contract.wallet.totalPaid > 0 && (
