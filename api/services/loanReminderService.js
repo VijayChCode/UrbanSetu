@@ -25,7 +25,7 @@ export const checkAndSendLoanReminders = async () => {
             status: 'disbursed'
         }).populate({
             path: 'contractId',
-            select: 'listingId',
+            select: 'listingId lateFeePercentage',
             populate: {
                 path: 'listingId',
                 select: 'name'
@@ -97,15 +97,14 @@ export const checkAndSendLoanReminders = async () => {
                         const overdueDays = Math.abs(diffDays);
                         const overdueMilestones = [1, 3, 7, 15, 30];
 
+                        // Ensure overdue status and penalties are current
+                        await loan.refreshOverdueStatus();
+
                         // Check if today matches one of the milestones OR every 30 days after first month
                         if (overdueMilestones.includes(overdueDays) || (overdueDays > 30 && overdueDays % 30 === 0)) {
-                            // Update EMI status to overdue if not already
-                            if (emi.status !== 'overdue') {
-                                emi.status = 'overdue';
-                                // We don't save here immediately, we can save loan at the end of loop if needed
-                                // But typically status update happens via separate logic or here. 
-                                // It's safe to mark it here.
-                            }
+                            // Update details with penalty
+                            emailDetails.penalty = formatCurrency(emi.penaltyAmount);
+                            emailDetails.totalAmount = formatCurrency(loan.emiAmount + (emi.penaltyAmount || 0));
 
                             await sendLoanEMIOverdueReminderEmail(loan.userId.email, emailDetails);
                             stats.overdueRemindersSent++;

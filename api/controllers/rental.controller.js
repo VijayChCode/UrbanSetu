@@ -3269,17 +3269,24 @@ export const getRentalLoan = async (req, res, next) => {
       .populate('userId', 'username email avatar')
       .populate({
         path: 'contractId',
-        select: 'contractId listingId',
+        select: 'contractId listingId bookingId',
         populate: {
           path: 'listingId',
           select: 'name address imageUrls'
         }
       })
       .populate('approvedBy', 'username')
-      .populate('rejectedBy', 'username');
+      .populate('rejectedBy', 'username')
+      .populate('emiSchedule.paymentId');
 
     if (!loan) {
       return res.status(404).json({ message: "Loan not found." });
+    }
+
+    // Refresh overdue status and penalties in real-time
+    const updated = await loan.refreshOverdueStatus();
+    if (updated) {
+      await loan.save();
     }
 
     // Verify user has access (applicant or rootadmin or admin)

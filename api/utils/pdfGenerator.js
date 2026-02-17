@@ -67,12 +67,16 @@ export const generateReceiptPdf = (payment) => {
             addRow('Property:', propertyName);
 
             // Purpose (Added)
-            if (payment.rentMonth && payment.rentYear) {
+            if (payment.paymentType === 'emi' || payment.emiDetails) {
+                addRow('Purpose:', 'Loan EMI Installment');
+            } else if (payment.rentMonth && payment.rentYear) {
                 addRow('Purpose:', 'Monthly Rent');
             }
 
-            // Rent Period (Fixed format)
-            if (payment.rentMonth && payment.rentYear) {
+            // Rent/EMI Period
+            if (payment.emiDetails?.month && payment.emiDetails?.year) {
+                addRow('EMI Period:', `${payment.emiDetails.month}/${payment.emiDetails.year}`);
+            } else if (payment.rentMonth && payment.rentYear) {
                 addRow('Rent Period:', `${payment.rentMonth}/${payment.rentYear}`);
             }
 

@@ -2,7 +2,10 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { FaCheckCircle, FaClock, FaTimesCircle, FaCreditCard, FaFile, FaDownload, FaHome, FaUser, FaMoneyBillWave, FaCalendarAlt } from 'react-icons/fa';
+import { toast } from 'react-toastify';
 import { authenticatedFetch } from '../../utils/auth';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function LoanStatusDisplay({ loan, currentUser, onUpdate, STATUS_COLORS, STATUS_LABELS, LOAN_TYPE_LABELS, onPayEMI }) {
   const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'rootadmin';
@@ -19,6 +22,24 @@ export default function LoanStatusDisplay({ loan, currentUser, onUpdate, STATUS_
       month: 'long',
       day: 'numeric'
     });
+  };
+
+  const handleDownloadReceipt = (emi) => {
+    const payment = emi.paymentId;
+    if (!payment) {
+      toast.warning("Receipt not available for this payment.");
+      return;
+    }
+
+    const receiptId = typeof payment === 'object' ? payment.paymentId : null;
+
+    if (!receiptId) {
+      toast.error("Receipt ID missing.");
+      return;
+    }
+
+    const receiptUrl = `${API_BASE_URL}/api/payments/${receiptId}/receipt`;
+    window.open(receiptUrl, '_blank');
   };
 
   const handleDownloadDocument = async (docUrl, docName) => {
@@ -291,9 +312,17 @@ export default function LoanStatusDisplay({ loan, currentUser, onUpdate, STATUS_
                             <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div> Processing
                           </span>
                         ) : emi.status === 'completed' ? (
-                          <span className="text-xs text-green-600 flex items-center justify-center gap-1">
-                            <FaCheckCircle /> Paid
-                          </span>
+                          <div className="flex flex-col gap-1 items-center">
+                            <span className="text-xs text-green-600 flex items-center justify-center gap-1">
+                              <FaCheckCircle /> Paid
+                            </span>
+                            <button
+                              onClick={() => handleDownloadReceipt(emi)}
+                              className="text-[10px] text-blue-600 hover:text-blue-800 flex items-center gap-1 font-medium bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-800 transition-colors"
+                            >
+                              <FaDownload className="text-[8px]" /> Receipt
+                            </button>
+                          </div>
                         ) : (
                           <span className="text-xs text-gray-400">N/A</span>
                         )}

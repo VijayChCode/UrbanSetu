@@ -19,7 +19,7 @@ const rentalLoanSchema = new mongoose.Schema({
     ref: 'RentLockContract',
     required: true
   },
-  
+
   // Loan Details
   loanType: {
     type: String,
@@ -44,7 +44,7 @@ const rentalLoanSchema = new mongoose.Schema({
     min: 1,
     max: 60
   },
-  
+
   // Partner Information
   partnerName: {
     type: String, // NBFC/Bank name
@@ -58,7 +58,7 @@ const rentalLoanSchema = new mongoose.Schema({
     email: String,
     phone: String
   },
-  
+
   // Status
   status: {
     type: String,
@@ -66,7 +66,7 @@ const rentalLoanSchema = new mongoose.Schema({
     default: 'pending',
     index: true
   },
-  
+
   // EMI Details
   emiAmount: {
     type: Number,
@@ -105,7 +105,7 @@ const rentalLoanSchema = new mongoose.Schema({
       min: 0
     }
   }],
-  
+
   // Documents
   documents: [{
     type: {
@@ -121,7 +121,7 @@ const rentalLoanSchema = new mongoose.Schema({
       default: Date.now
     }
   }],
-  
+
   // Eligibility Check
   eligibilityCheck: {
     passed: {
@@ -140,7 +140,7 @@ const rentalLoanSchema = new mongoose.Schema({
     eligibilityScore: Number, // 0-100
     checkedAt: Date
   },
-  
+
   // Approval/Rejection
   approvedAt: Date,
   approvedBy: {
@@ -155,12 +155,12 @@ const rentalLoanSchema = new mongoose.Schema({
     ref: 'User',
     default: null
   },
-  
+
   // Disbursement
   disbursedAt: Date,
   disbursedAmount: Number,
   disbursementReference: String,
-  
+
   // Repayment
   totalPaid: {
     type: Number,
@@ -172,11 +172,11 @@ const rentalLoanSchema = new mongoose.Schema({
     min: 0
   },
   repaidAt: Date,
-  
+
   // Default
   defaultedAt: Date,
   defaultReason: String,
-  
+
   createdAt: {
     type: Date,
     default: Date.now
@@ -196,42 +196,42 @@ rentalLoanSchema.index({ status: 1, createdAt: -1 });
 rentalLoanSchema.index({ 'emiSchedule.dueDate': 1, 'emiSchedule.status': 1 }); // For overdue EMI tracking
 
 // Generate loanId before saving
-rentalLoanSchema.pre('save', async function(next) {
+rentalLoanSchema.pre('save', async function (next) {
   if (!this.loanId) {
     const timestamp = Date.now();
     const random = Math.random().toString(36).substring(2, 9).toUpperCase();
     this.loanId = `LOAN-${timestamp}-${random}`;
   }
-  
+
   // Calculate total remaining
   if (this.loanAmount && this.totalPaid !== undefined) {
     this.totalRemaining = Math.max(0, this.loanAmount - this.totalPaid);
   }
-  
+
   this.updatedAt = Date.now();
   next();
 });
 
 // Generate EMI schedule
-rentalLoanSchema.methods.generateEMISchedule = function() {
+rentalLoanSchema.methods.generateEMISchedule = function () {
   const schedule = [];
   const startDate = new Date();
   const monthlyRate = this.interestRate / 100 / 12;
   const months = this.tenure;
-  
+
   // Calculate EMI using formula: EMI = P × r × (1 + r)^n / ((1 + r)^n - 1)
-  const emi = (this.loanAmount * monthlyRate * Math.pow(1 + monthlyRate, months)) / 
-              (Math.pow(1 + monthlyRate, months) - 1);
-  
+  const emi = (this.loanAmount * monthlyRate * Math.pow(1 + monthlyRate, months)) /
+    (Math.pow(1 + monthlyRate, months) - 1);
+
   this.emiAmount = Math.round(emi);
-  
+
   for (let i = 0; i < months; i++) {
     const dueDate = new Date(startDate);
     dueDate.setMonth(dueDate.getMonth() + i + 1);
-    
+
     const month = dueDate.getMonth() + 1;
     const year = dueDate.getFullYear();
-    
+
     schedule.push({
       month: month,
       year: year,
@@ -240,38 +240,90 @@ rentalLoanSchema.methods.generateEMISchedule = function() {
       penaltyAmount: 0
     });
   }
-  
+
   this.emiSchedule = schedule;
 };
 
 // Virtual for overdue EMIs
-rentalLoanSchema.virtual('overdueEMIs').get(function() {
+rentalLoanSchema.virtual('overdueEMIs').get(function () {
   const now = new Date();
-  return this.emiSchedule.filter(emi => 
+  return this.emiSchedule.filter(emi =>
     (emi.status === 'pending' || emi.status === 'overdue') &&
     new Date(emi.dueDate) < now
   );
 });
 
 // Virtual for next EMI due
-rentalLoanSchema.virtual('nextEMIDue').get(function() {
+rentalLoanSchema.virtual('nextEMIDue').get(function () {
   const now = new Date();
-  const upcoming = this.emiSchedule.filter(emi => 
+  const upcoming = this.emiSchedule.filter(emi =>
     emi.status === 'pending' &&
     new Date(emi.dueDate) >= now
   );
   return upcoming.length > 0 ? upcoming[0] : null;
 });
 
+// Method to refresh overdue status and calculate penalties
+rentalLoanSchema.methods.refreshOverdueStatus = async function () {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  let modified = false;
+
+  // Populate contract if not already populated to get late fee percentage
+  if (!this.populated('contractId') && !this.contractId.lateFeePercentage) {
+    await this.populate('contractId', 'lateFeePercentage');
+  }
+
+  const lateFeeRate = (this.contractId?.lateFeePercentage || 5) / 100;
+
+  for (const emi of this.emiSchedule) {
+    if (emi.status === 'completed') continue;
+
+    const dueDate = new Date(emi.dueDate);
+    dueDate.setHours(0, 0, 0, 0);
+
+    if (dueDate < now) {
+      // EMI is overdue
+      if (emi.status !== 'overdue') {
+        emi.status = 'overdue';
+        modified = true;
+      }
+
+      // Calculate penalty: simple monthly penalty
+      const diffTime = now.getTime() - dueDate.getTime();
+      const overdueDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      const overdueMonths = Math.floor(overdueDays / 30) + 1;
+      const newPenalty = Math.round(this.emiAmount * lateFeeRate * overdueMonths);
+
+      if (emi.penaltyAmount !== newPenalty) {
+        emi.penaltyAmount = newPenalty;
+        modified = true;
+      }
+    }
+  }
+
+  // Update loan status to 'defaulted' if more than 3 EMIs are overdue
+  const overdueCount = this.emiSchedule.filter(emi => emi.status === 'overdue').length;
+  if (overdueCount >= 3 && this.status !== 'defaulted') {
+    this.status = 'defaulted';
+    this.defaultedAt = new Date();
+    this.defaultReason = 'Multiple overdue EMI payments';
+    modified = true;
+  }
+
+  if (modified) {
+    this.updatedAt = new Date();
+  }
+
+  return modified;
+};
+
 // Method to calculate total outstanding
-rentalLoanSchema.methods.getTotalOutstanding = function() {
-  const overdueEMIs = this.overdueEMIs;
-  const pendingEMIs = this.emiSchedule.filter(emi => emi.status === 'pending');
-  
-  const totalOverdue = overdueEMIs.reduce((sum, emi) => sum + this.emiAmount + (emi.penaltyAmount || 0), 0);
-  const totalPending = pendingEMIs.length * this.emiAmount;
-  
-  return totalOverdue + totalPending;
+rentalLoanSchema.methods.getTotalOutstanding = function () {
+  return this.emiSchedule.reduce((sum, emi) => {
+    if (emi.status === 'completed') return sum;
+    return sum + this.emiAmount + (emi.penaltyAmount || 0);
+  }, 0);
 };
 
 const RentalLoan = mongoose.model("RentalLoan", rentalLoanSchema);

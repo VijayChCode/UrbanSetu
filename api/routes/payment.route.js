@@ -2010,6 +2010,7 @@ router.post("/loan-emi", verifyToken, async (req, res) => {
       receiptNumber: "REC-EMI-" + Date.now(),
       userId,
       appointmentId: booking._id,
+      listingId: loan.contractId.listingId,
       contractId: loan.contractId._id,
       amount: finalAmount,
       currency: finalCurrency,
