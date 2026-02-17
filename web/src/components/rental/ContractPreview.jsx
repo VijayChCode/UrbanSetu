@@ -126,9 +126,9 @@ export default function ContractPreview({ contract, listing, tenant, landlord, o
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
             <div>
               <p className="text-gray-600 dark:text-gray-400">Monthly Rent (Locked)</p>
-              <p className="font-semibold text-lg text-gray-800 dark:text-white">₹{contract.lockedRentAmount?.toLocaleString('en-IN') || contract.rentAmount?.toLocaleString('en-IN') || '0'}</p>
+              <p className="font-semibold text-lg text-gray-800 dark:text-white">₹{(contract.lockedRentAmount || contract.rentAmount || listing?.monthlyRent || 0).toLocaleString('en-IN')}</p>
             </div>
-            {contract.securityDeposit && (
+            {contract.securityDeposit !== undefined && (
               <div>
                 <p className="text-gray-600 dark:text-gray-400">Security Deposit</p>
                 <p className="font-semibold text-lg text-gray-800 dark:text-white">₹{contract.securityDeposit.toLocaleString('en-IN')}</p>
@@ -141,10 +141,10 @@ export default function ContractPreview({ contract, listing, tenant, landlord, o
                 </p>
               </div>
             )}
-            {contract.maintenanceCharges && contract.maintenanceCharges > 0 && (
+            {(contract.maintenanceCharges > 0 || listing?.maintenanceCharges > 0) && (
               <div>
                 <p className="text-gray-600 dark:text-gray-400">Maintenance Charges</p>
-                <p className="font-semibold text-gray-800 dark:text-white">₹{contract.maintenanceCharges.toLocaleString('en-IN')}/month</p>
+                <p className="font-semibold text-gray-800 dark:text-white">₹{(contract.maintenanceCharges || listing?.maintenanceCharges || 0).toLocaleString('en-IN')}/month</p>
               </div>
             )}
             {contract.advanceRent && contract.advanceRent > 0 && (
@@ -227,7 +227,7 @@ export default function ContractPreview({ contract, listing, tenant, landlord, o
               <li>Late payment fee: {contract.lateFeePercentage}% of rent amount (one-time penalty)</li>
             )}
             <li>All payments will be processed through UrbanSetu platform via escrow system</li>
-            <li>Rent remains fixed at ₹{contract.lockedRentAmount?.toLocaleString('en-IN') || contract.rentAmount?.toLocaleString('en-IN') || '0'}/month for the entire {contract.lockDuration}-month lock period</li>
+            <li>Rent remains fixed at ₹{(contract.lockedRentAmount || contract.rentAmount || listing?.monthlyRent || 0).toLocaleString('en-IN')}/month for the entire {contract.lockDuration}-month lock period</li>
             {contract.earlyTerminationFee && contract.earlyTerminationFee > 0 && (
               <li>Early termination fee: ₹{contract.earlyTerminationFee.toLocaleString('en-IN')} if contract is terminated before end date</li>
             )}

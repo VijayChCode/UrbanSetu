@@ -856,11 +856,11 @@ export default function RentalContracts() {
                       )}
 
                       {/* Signature Status */}
-                      <div className="mt-4 pt-4 border-t border-gray-200">
+                      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
                         <div className="grid grid-cols-2 gap-4 text-sm">
                           <div>
-                            <span className="text-gray-600">Tenant Signature:</span>
-                            <span className={`ml-2 ${signingContract.tenantSignature?.signed ? 'text-green-600' : 'text-yellow-600'}`}>
+                            <span className="text-gray-600 dark:text-gray-400">Tenant Signature:</span>
+                            <span className={`ml-2 flex items-center gap-1 ${signingContract.tenantSignature?.signed ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'}`}>
                               {signingContract.tenantSignature?.signed ? (
                                 <><FaCheckCircle /> Signed</>
                               ) : (
@@ -869,8 +869,8 @@ export default function RentalContracts() {
                             </span>
                           </div>
                           <div>
-                            <span className="text-gray-600">Your Signature:</span>
-                            <span className={`ml-2 ${landlordSigned ? 'text-green-600' : 'text-yellow-600'}`}>
+                            <span className="text-gray-600 dark:text-gray-400">Your Signature:</span>
+                            <span className={`ml-2 flex items-center gap-1 ${landlordSigned ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'}`}>
                               {landlordSigned ? (
                                 <><FaCheckCircle /> Signed</>
                               ) : (
