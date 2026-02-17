@@ -13390,7 +13390,14 @@ export const sendLoanEMIOverdueReminderEmail = async (email, details) => {
               <p style="margin: 5px 0; color: #374151;"><strong>Amount Due:</strong> ${details.amount}</p>
               <p style="margin: 5px 0; color: #374151;"><strong>Due Date:</strong> ${details.dueDate}</p>
               <p style="margin: 5px 0; color: #dc2626; font-weight: bold;"><strong>Days Overdue:</strong> ${details.daysOverdue}</p>
-              ${details.penalty > 0 ? `<p style="margin: 5px 0; color: #dc2626;"><strong>Penalty Applied:</strong> ${details.penalty}</p>` : ''}
+              ${details.penalty > 0 ? `
+                <div style="margin: 10px 0; padding: 10px; background-color: #fee2e2; border-radius: 4px;">
+                  <p style="margin: 0 0 5px 0; color: #dc2626;"><strong>Penalty Applied:</strong> ${details.penalty}</p>
+                  <p style="margin: 0; font-size: 12px; color: #991b1b;">
+                    <i>* A Late Payment Fee is applied for delays beyond the due date. This helps cover administrative costs and encourages timely repayments.</i>
+                  </p>
+                </div>
+              ` : ''}
               <p style="margin: 5px 0; color: #374151; font-weight: bold;"><strong>Total Payable:</strong> ${details.totalAmount}</p>
             </div>
             

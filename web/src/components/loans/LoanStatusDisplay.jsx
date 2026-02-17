@@ -332,6 +332,9 @@ export default function LoanStatusDisplay({ loan, currentUser, onUpdate, STATUS_
                   ))}
                 </tbody>
               </table>
+              <div className="bg-yellow-50 dark:bg-yellow-900/10 p-3 mt-4 rounded border border-yellow-200 dark:border-yellow-800 text-xs text-yellow-800 dark:text-yellow-200">
+                <strong>Penalty Info:</strong> A 5% late fee is added to the EMI amount for every month the payment is overdue. Please ensure timely payments to avoid these extra charges.
+              </div>
             </div>
           </div>
         </div>

@@ -314,6 +314,14 @@ export default function RentalLoans() {
               <option value="maintenance_charges">Maintenance Charges</option>
             </select>
           </div>
+
+          {/* Penalty Info */}
+          <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-800 rounded-lg flex items-start gap-2">
+            <FaClock className="text-blue-500 mt-1 flex-shrink-0" />
+            <p className="text-sm text-blue-700 dark:text-blue-300">
+              <span className="font-semibold">Note on Penalties:</span> A late fee of 5% of the EMI amount is applied for each month of delay past the due date. This helps encourage timely repayments and covers administrative costs. Penalties accumulate monthly until the EMI is paid.
+            </p>
+          </div>
         </div>
 
         {/* Contracts Available for Loan */}

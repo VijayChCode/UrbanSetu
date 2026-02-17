@@ -303,6 +303,9 @@ export default function LoanApplicationForm({ contract, currentUser, onSuccess, 
               </span>
             </div>
           </div>
+          <div className="mt-3 pt-3 border-t border-green-200 dark:border-green-800 text-xs text-green-700 dark:text-green-400">
+            <span className="font-semibold">Penalty Clause:</span> Late payments will attract a penalty of 5% of the EMI amount per month of delay.
+          </div>
         </div>
       )}
 
@@ -445,7 +448,7 @@ export default function LoanApplicationForm({ contract, currentUser, onSuccess, 
           {loading ? 'Submitting...' : 'Submit Application'}
         </button>
       </div>
-    </form>
+    </form >
   );
 }
 
