@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { toast } from 'react-toastify';
-import { FaMoneyBillWave, FaCheckCircle, FaCheck, FaChevronRight, FaChevronLeft, FaCalendarAlt, FaFileContract, FaCreditCard, FaHome, FaLock, FaSpinner, FaTimesCircle, FaDownload, FaCoins } from "react-icons/fa";
+import { FaMoneyBillWave, FaCheckCircle, FaCheck, FaChevronRight, FaChevronLeft, FaCalendarAlt, FaFileContract, FaCreditCard, FaHome, FaLock, FaSpinner, FaTimesCircle, FaDownload, FaCoins, FaMapMarkerAlt } from "react-icons/fa";
 import { usePageTitle } from '../hooks/usePageTitle';
 import PaymentModal from '../components/PaymentModal';
 import ContractPreview from '../components/rental/ContractPreview';
@@ -340,15 +340,49 @@ export default function PayMonthlyRent() {
   return (
     <div className="bg-gradient-to-br from-blue-50 to-purple-100 dark:from-gray-900 dark:to-gray-800 min-h-screen py-10 px-4 md:px-8">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6">
-          <h1 className="text-3xl font-bold text-gray-800 dark:text-white flex items-center gap-3 mb-2">
-            <FaMoneyBillWave className="text-blue-600 dark:text-blue-400" />
-            Pay Monthly Rent
-          </h1>
-          <p className="text-gray-600 dark:text-gray-300">
-            Contract ID: <span className="font-semibold text-gray-800 dark:text-gray-200">{contract.contractId}</span>
-          </p>
+        {/* Step 0: Property Summary Header */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6 flex flex-col sm:flex-row gap-6 relative overflow-hidden group hover:shadow-2xl transition-all duration-300 border border-gray-100 dark:border-gray-700">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-bl-full pointer-events-none -mr-8 -mt-8"></div>
+
+          <div className="w-full sm:w-32 h-48 sm:h-32 flex-shrink-0 relative rounded-xl overflow-hidden border-2 border-gray-100 dark:border-gray-600 shadow-sm group-hover:scale-[1.02] transition-transform duration-300">
+            <img
+              src={contract.listingId?.imageUrls?.[0] || 'https://via.placeholder.com/300?text=No+Image'}
+              alt={contract.listingId?.name || 'Property Image'}
+              className="w-full h-full object-cover transform hover:scale-110 transition-transform duration-700"
+              onError={(e) => { e.target.src = 'https://via.placeholder.com/300?text=Image+Error'; }}
+            />
+          </div>
+
+          <div className="flex-1 flex flex-col justify-center relative z-10">
+            <div className="flex items-center gap-2 mb-1">
+              <FaMoneyBillWave className="text-blue-600 dark:text-blue-400 text-xl" />
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-50 leading-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                Pay Monthly Rent
+              </h1>
+            </div>
+
+            <h2 className="text-lg text-gray-700 dark:text-gray-300 font-semibold mb-1">
+              {contract.listingId?.name}
+            </h2>
+
+            <p className="text-gray-600 dark:text-gray-400 flex items-start gap-2 mb-3 text-sm sm:text-base">
+              <FaMapMarkerAlt className="text-red-500 mt-1 flex-shrink-0 animate-bounce-slow" />
+              <span className="leading-snug">{contract.listingId?.address || `${contract.listingId?.city}, ${contract.listingId?.state}`}</span>
+            </p>
+
+            <div className="flex flex-wrap items-center gap-3 mt-auto">
+              <span className="px-3 py-1 bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 rounded-lg text-xs font-mono border border-gray-200 dark:border-gray-600">
+                Contract ID: {contract.contractId}
+              </span>
+
+              <div className="h-6 w-px bg-gray-300 dark:bg-gray-600 hidden sm:block"></div>
+
+              <span className="text-xl font-bold text-gray-800 dark:text-blue-400 flex items-baseline">
+                ₹{(contract.lockedRentAmount || 0).toLocaleString('en-IN')}
+                <span className="text-sm font-medium text-gray-500 dark:text-gray-400 ml-1 self-center">/month</span>
+              </span>
+            </div>
+          </div>
         </div>
 
         {/* Progress Steps */}
