@@ -1962,7 +1962,7 @@ export default function RentProperty() {
                   </div>
                   <div>
                     <h3 className="font-bold text-green-800 dark:text-green-300">Payment Confirmed</h3>
-                    <p className="text-xs text-green-700 dark:text-green-400">Security deposit & first month rent received</p>
+                    <p className="text-xs text-green-700 dark:text-green-400">Security deposit & first month rent paid</p>
                   </div>
                 </div>
 
