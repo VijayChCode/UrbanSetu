@@ -183,23 +183,23 @@ export default function LoanApplicationForm({ contract, currentUser, onSuccess, 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Contract Info */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-        <h3 className="font-semibold text-blue-800 mb-1">{contract.listingId?.name || 'Property'}</h3>
-        <p className="text-sm text-blue-700">Contract ID: {contract.contractId}</p>
-        <p className="text-sm text-blue-700">Monthly Rent: ₹{contract.lockedRentAmount?.toLocaleString()}</p>
+      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
+        <h3 className="font-semibold text-blue-800 dark:text-blue-300 mb-1">{contract.listingId?.name || 'Property'}</h3>
+        <p className="text-sm text-blue-700 dark:text-blue-400">Contract ID: {contract.contractId}</p>
+        <p className="text-sm text-blue-700 dark:text-blue-400">Monthly Rent: ₹{contract.lockedRentAmount?.toLocaleString()}</p>
       </div>
 
       {/* Instructions */}
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-        <p className="text-sm text-yellow-800">
-          <strong>Note:</strong> Please provide accurate information and upload required documents.
+      <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-4">
+        <p className="text-sm text-yellow-800 dark:text-yellow-300">
+          <strong className="dark:text-yellow-200">Note:</strong> Please provide accurate information and upload required documents.
           Your loan application will be reviewed by our admin team. Approval typically takes 2-5 business days.
         </p>
       </div>
 
       {/* Loan Type */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           Loan Type <span className="text-red-500">*</span>
         </label>
         <select
@@ -213,7 +213,7 @@ export default function LoanApplicationForm({ contract, currentUser, onSuccess, 
               setFormData(prev => ({ ...prev, loanAmount: suggested }));
             }
           }}
-          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
         >
           {LOAN_TYPES.map(type => (
             <option key={type.value} value={type.value}>{type.label}</option>
@@ -223,7 +223,7 @@ export default function LoanApplicationForm({ contract, currentUser, onSuccess, 
 
       {/* Loan Amount */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           Loan Amount (₹) <span className="text-red-500">*</span>
         </label>
         <input
@@ -234,13 +234,13 @@ export default function LoanApplicationForm({ contract, currentUser, onSuccess, 
           min="0"
           step="1000"
           placeholder={`Suggested: ₹${getSuggestedAmount().toLocaleString()}`}
-          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
           required
         />
         <button
           type="button"
           onClick={() => setFormData(prev => ({ ...prev, loanAmount: getSuggestedAmount() }))}
-          className="mt-2 text-sm text-blue-600 hover:underline"
+          className="mt-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
         >
           Use Suggested Amount (₹{getSuggestedAmount().toLocaleString()})
         </button>
@@ -248,7 +248,7 @@ export default function LoanApplicationForm({ contract, currentUser, onSuccess, 
 
       {/* Interest Rate */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           Interest Rate (% p.a.) <span className="text-red-500">*</span>
         </label>
         <input
@@ -259,14 +259,14 @@ export default function LoanApplicationForm({ contract, currentUser, onSuccess, 
           min="0"
           max="100"
           step="0.1"
-          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
           required
         />
       </div>
 
       {/* Tenure */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           Tenure (Months) <span className="text-red-500">*</span>
         </label>
         <input
@@ -276,29 +276,29 @@ export default function LoanApplicationForm({ contract, currentUser, onSuccess, 
           onChange={handleInputChange}
           min="1"
           max="60"
-          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
           required
         />
       </div>
 
       {/* EMI Preview */}
       {emiPreview > 0 && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <h4 className="font-semibold text-green-800 mb-2">EMI Preview</h4>
+        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+          <h4 className="font-semibold text-green-800 dark:text-green-300 mb-2">EMI Preview</h4>
           <div className="space-y-1 text-sm">
             <div className="flex justify-between">
-              <span className="text-green-700">Monthly EMI:</span>
-              <span className="font-bold text-green-800">₹{emiPreview.toLocaleString()}</span>
+              <span className="text-green-700 dark:text-green-400/80">Monthly EMI:</span>
+              <span className="font-bold text-green-800 dark:text-green-300">₹{emiPreview.toLocaleString()}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-green-700">Total Interest:</span>
-              <span className="font-semibold text-green-800">
+              <span className="text-green-700 dark:text-green-400/80">Total Interest:</span>
+              <span className="font-semibold text-green-800 dark:text-green-300">
                 ₹{((emiPreview * formData.tenure) - formData.loanAmount).toLocaleString()}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-green-700">Total Amount:</span>
-              <span className="font-semibold text-green-800">
+              <span className="text-green-700 dark:text-green-400/80">Total Amount:</span>
+              <span className="font-semibold text-green-800 dark:text-green-300">
                 ₹{(emiPreview * formData.tenure).toLocaleString()}
               </span>
             </div>
@@ -308,14 +308,14 @@ export default function LoanApplicationForm({ contract, currentUser, onSuccess, 
 
       {/* Partner Name */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           Finance Partner
         </label>
         <select
           name="partnerName"
           value={formData.partnerName}
           onChange={handleInputChange}
-          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
         >
           {LOAN_PARTNERS.map(partner => (
             <option key={partner.value} value={partner.value}>{partner.label}</option>
@@ -325,7 +325,7 @@ export default function LoanApplicationForm({ contract, currentUser, onSuccess, 
 
       {/* Applicant Income (Optional) */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           Monthly Income (₹) (Optional)
         </label>
         <input
@@ -336,13 +336,13 @@ export default function LoanApplicationForm({ contract, currentUser, onSuccess, 
           min="0"
           step="1000"
           placeholder="Enter your monthly income"
-          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
         />
       </div>
 
       {/* Credit Score (Optional) */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           Credit Score (Optional)
         </label>
         <input
@@ -353,28 +353,28 @@ export default function LoanApplicationForm({ contract, currentUser, onSuccess, 
           min="0"
           max="900"
           placeholder="Enter your credit score (300-900)"
-          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
         />
       </div>
 
       {/* Documents Upload */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Documents (Optional)
         </label>
         <div className="space-y-3">
           {['identity', 'income', 'bank_statement', 'contract', 'other'].map((docType) => (
-            <div key={docType} className="border rounded-lg p-3">
-              <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">
+            <div key={docType} className="border dark:border-gray-700 rounded-lg p-3">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 capitalize">
                 {docType.replace('_', ' ')} Document
               </label>
-              <label className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 border-2 border-dashed border-blue-300 rounded-lg cursor-pointer hover:bg-blue-100">
+              <label className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border-2 border-dashed border-blue-300 dark:border-blue-800 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors">
                 {uploading[docType] ? (
                   <FaSpinner className="animate-spin text-blue-600" />
                 ) : (
                   <FaUpload className="text-blue-600" />
                 )}
-                <span className="text-sm font-medium text-blue-700">
+                <span className="text-sm font-medium text-blue-700 dark:text-blue-400">
                   {uploading[docType] ? 'Uploading...' : 'Click to upload'}
                 </span>
                 <input
@@ -392,12 +392,12 @@ export default function LoanApplicationForm({ contract, currentUser, onSuccess, 
         {/* Uploaded Documents */}
         {formData.documents.length > 0 && (
           <div className="mt-4 space-y-2">
-            <h4 className="text-sm font-medium text-gray-700">Uploaded Documents:</h4>
+            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Uploaded Documents:</h4>
             {formData.documents.map((doc, index) => (
-              <div key={index} className="flex items-center gap-2 p-2 bg-green-50 border border-green-200 rounded">
-                <FaFile className="text-green-600" />
+              <div key={index} className="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded">
+                <FaFile className="text-green-600 dark:text-green-400" />
                 <span
-                  className="flex-1 text-sm text-blue-700 font-medium capitalize cursor-pointer hover:underline"
+                  className="flex-1 text-sm text-blue-700 dark:text-blue-400 font-medium capitalize cursor-pointer hover:underline"
                   onClick={() => {
                     const getPreviewType = (url) => {
                       try {
@@ -417,7 +417,7 @@ export default function LoanApplicationForm({ contract, currentUser, onSuccess, 
                 <button
                   type="button"
                   onClick={() => removeDocument(index)}
-                  className="text-xs text-red-600 hover:underline"
+                  className="text-xs text-red-600 dark:text-red-400 hover:underline"
                 >
                   Remove
                 </button>
@@ -432,7 +432,7 @@ export default function LoanApplicationForm({ contract, currentUser, onSuccess, 
         <button
           type="button"
           onClick={onCancel}
-          className="px-6 py-2 border rounded-lg hover:bg-gray-50"
+          className="px-6 py-2 border dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-300 transition-colors"
         >
           Cancel
         </button>
