@@ -180,6 +180,13 @@ const rentLockContractSchema = new mongoose.Schema({
   },
   rejectionReason: String,
 
+  // Rent Wallet
+  walletId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'RentWallet',
+    default: null
+  },
+
   // Metadata
   contractDocumentUrl: String, // PDF contract
   termsAndConditions: String, // Stored text version

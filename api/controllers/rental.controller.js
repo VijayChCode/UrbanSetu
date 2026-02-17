@@ -386,9 +386,29 @@ export const getContract = async (req, res, next) => {
       return res.status(403).json({ message: "Unauthorized. Access restricted to tenant, landlord, or admin." });
     }
 
+    // If active, fetch wallet and payment schedule
+    let contractObj = contract.toObject();
+    if (contract.status === 'active' && contract.walletId) {
+      try {
+        const RentWallet = (await import('../models/rentWallet.model.js')).default;
+        const wallet = await RentWallet.findById(contract.walletId)
+          .select('paymentSchedule totalPaid totalDue');
+
+        if (wallet) {
+          contractObj.wallet = {
+            paymentSchedule: wallet.paymentSchedule || [],
+            totalPaid: wallet.totalPaid || 0,
+            totalDue: wallet.totalDue || 0
+          };
+        }
+      } catch (error) {
+        console.error(`Error fetching wallet for contract ${contract._id}:`, error);
+      }
+    }
+
     res.json({
       success: true,
-      contract
+      contract: contractObj
     });
   } catch (error) {
     next(error);

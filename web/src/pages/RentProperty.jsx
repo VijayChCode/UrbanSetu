@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { toast } from 'react-toastify';
-import { FaLock, FaCalendarAlt, FaMoneyBillWave, FaCheckCircle, FaCheck, FaChevronRight, FaHome, FaShieldAlt, FaFileContract, FaTimesCircle, FaCreditCard, FaChevronLeft, FaMapMarkerAlt } from "react-icons/fa";
+import { FaLock, FaCalendarAlt, FaMoneyBillWave, FaCheckCircle, FaCheck, FaChevronRight, FaHome, FaShieldAlt, FaFileContract, FaTimesCircle, FaCreditCard, FaChevronLeft, FaMapMarkerAlt, FaReceipt, FaDownload } from "react-icons/fa";
 import { usePageTitle } from '../hooks/usePageTitle';
 import PaymentModal from '../components/PaymentModal';
 import ContractPreview from '../components/rental/ContractPreview';
@@ -43,6 +43,7 @@ export default function RentProperty() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [booking, setBooking] = useState(null);
   const [showSignatureModal, setShowSignatureModal] = useState(false);
+  const [lastPayment, setLastPayment] = useState(null);
   const [showInitConfirmation, setShowInitConfirmation] = useState(false);
   const [signingAs, setSigningAs] = useState(null); // 'tenant' or 'landlord'
   const readyForPayment = !!(contract?.tenantSignature?.signed && contract?.landlordSignature?.signed);
@@ -297,7 +298,7 @@ export default function RentProperty() {
                 resumeStep = 4;
               }
             } else if (existingContract.status === 'active') {
-              if (existingContract.walletId) {
+              if (existingContract.walletId || existingContract.wallet || existingContract.securityDepositPaid) {
                 resumeStep = 5; // Move-in
               } else {
                 resumeStep = 4; // Payment
@@ -815,6 +816,9 @@ export default function RentProperty() {
       }));
     }
 
+    // Store payment info for receipt viewing
+    setLastPayment(payment);
+
     toast.success("Payment successful! Proceeding to Move-in step...");
     // Move to step 5 (Move-in)
     setStep(5);
@@ -827,7 +831,8 @@ export default function RentProperty() {
         });
         if (bookingRes.ok) {
           const bookingData = await bookingRes.json();
-          setBooking(bookingData.appointment || bookingData.booking || bookingData);
+          const refreshedBooking = bookingData.appointment || bookingData.booking || bookingData;
+          setBooking(refreshedBooking);
         }
       } catch (error) {
         console.error("Error refreshing booking:", error);
@@ -1928,52 +1933,110 @@ export default function RentProperty() {
 
         {/* Step 5: Move-in */}
         {step === 5 && contract && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-            <h2 className="text-2xl font-bold text-blue-700 dark:text-blue-200 mb-6 flex items-center gap-2">
-              <FaHome /> Move-in Checklist
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 animate-fade-in">
+            <h2 className="text-2xl font-bold text-blue-700 dark:text-blue-400 mb-6 flex items-center gap-2">
+              <FaHome /> Step 5: Finalize Move-in
             </h2>
-            <div className="space-y-4 mb-6">
-              <p className="text-gray-600 dark:text-gray-200">
-                Complete your move-in checklist to document the property condition. This will help protect you during move-out.
-              </p>
-              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 dark:bg-gray-700/50 dark:border-gray-600">
-                <h3 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">What to do:</h3>
-                <ul className="list-disc list-inside space-y-1 text-sm text-blue-700 dark:text-blue-200">
-                  <li>Upload photos/videos of each room</li>
-                  <li>Document existing damages or issues</li>
-                  <li>Note amenities and their condition</li>
-                  <li>Add any special notes for the landlord</li>
-                </ul>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              {/* Payment Summary */}
+              <div className="bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 p-5 rounded-xl">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center text-green-600 dark:text-green-400">
+                    <FaCheckCircle className="text-xl" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-green-800 dark:text-green-300">Payment Confirmed</h3>
+                    <p className="text-xs text-green-700 dark:text-green-400">Security deposit & first month rent received</p>
+                  </div>
+                </div>
+
+                {(lastPayment || contract.securityDepositPaid) && (
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600 dark:text-gray-400">Status:</span>
+                      <span className="font-semibold text-green-600 dark:text-green-400">SUCCESSFUL</span>
+                    </div>
+                    {(lastPayment?.paymentId || contract.walletId) && (
+                      <button
+                        onClick={() => {
+                          const pId = lastPayment?.paymentId || (contract.wallet?.paymentSchedule?.[0]?.paymentId?._id || contract.wallet?.paymentSchedule?.[0]?.paymentId);
+                          if (pId || lastPayment?.paymentId) {
+                            window.open(`${API_BASE_URL}/api/payments/${lastPayment?.paymentId || pId}/receipt`, '_blank');
+                          } else {
+                            toast.info("Receipt is being generated. Please check your email or My Appointments in a few minutes.");
+                          }
+                        }}
+                        className="w-full mt-2 py-2 bg-white dark:bg-gray-800 border border-green-200 dark:border-green-700 text-green-700 dark:text-green-400 rounded-lg text-sm font-semibold hover:bg-green-50 dark:hover:bg-green-900/30 flex items-center justify-center gap-2 transition-colors"
+                      >
+                        <FaDownload /> Download Payment Receipt
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Move-in Status */}
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 p-5 rounded-xl">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${contract.moveInChecklistCompleted ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'} dark:bg-opacity-20`}>
+                    {contract.moveInChecklistCompleted ? <FaCheckCircle className="text-xl" /> : <FaCalendarAlt className="text-xl" />}
+                  </div>
+                  <div>
+                    <h3 className={`font-bold ${contract.moveInChecklistCompleted ? 'text-green-800 dark:text-green-300' : 'text-blue-800 dark:text-blue-300'}`}>
+                      Move-in Checklist
+                    </h3>
+                    <p className="text-xs text-blue-700 dark:text-blue-400">
+                      {contract.moveInChecklistCompleted ? 'Completed on move-in day' : 'Pending completion'}
+                    </p>
+                  </div>
+                </div>
+                <p className="text-xs text-blue-600 dark:text-blue-400 mb-3 italic">
+                  Complete this checklist to document property condition and protect your security deposit.
+                </p>
+                {!contract.moveInChecklistCompleted && (
+                  <button
+                    onClick={() => {
+                      const contractId = contract.contractId || contract._id;
+                      navigate(`/user/services?contractId=${contractId}&checklist=move_in`);
+                    }}
+                    className="w-full py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <FaReceipt /> Start Checklist
+                  </button>
+                )}
               </div>
             </div>
-            <div className="flex flex-col-reverse sm:flex-row gap-4">
+
+            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-5 mb-8 border border-gray-100 dark:border-gray-600">
+              <h3 className="font-bold text-gray-800 dark:text-white mb-3 flex items-center gap-2">
+                <FaShieldAlt className="text-blue-500" /> Next Steps
+              </h3>
+              <ul className="space-y-3">
+                <li className="flex gap-2 text-sm text-gray-600 dark:text-gray-300">
+                  <div className="mt-1 text-green-500"><FaCheckCircle size={14} /></div>
+                  <span>Collect keys from the landlord as per the agreed move-in date.</span>
+                </li>
+                <li className="flex gap-2 text-sm text-gray-600 dark:text-gray-300">
+                  <div className="mt-1 text-blue-500 text-xs font-bold border rounded-full w-4 h-4 flex items-center justify-center">2</div>
+                  <span>Document any existing damages using the Move-in checklist.</span>
+                </li>
+                <li className="flex gap-2 text-sm text-gray-600 dark:text-gray-300">
+                  <div className="mt-1 text-blue-500 text-xs font-bold border rounded-full w-4 h-4 flex items-center justify-center">3</div>
+                  <span>Your rent cycle will start automatically on the start date.</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4">
               <button
                 onClick={() => {
-                  if (step > 1) {
-                    setStep(step - 1);
-                  }
-                }}
-                className="px-6 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 flex items-center justify-center gap-2"
-              >
-                <FaChevronLeft /> Back
-              </button>
-              <button
-                onClick={() => {
-                  const contractId = contract.contractId || contract._id;
-                  navigate(`/user/services?contractId=${contractId}&checklist=move_in`);
-                }}
-                className="flex-1 bg-blue-600 text-white py-3 dark:bg-blue-500 dark:hover:bg-blue-600 rounded-lg font-semibold hover:bg-blue-700 flex items-center justify-center gap-2"
-              >
-                <FaCheckCircle /> Complete Move-in Checklist
-              </button>
-              <button
-                onClick={() => {
-                  toast.success("Booking complete! You can complete the checklist later from your appointments.");
+                  toast.success("Registration complete! You can access all details from your dashboard.");
                   navigate("/user/my-appointments");
                 }}
-                className="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 flex items-center justify-center"
+                className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-xl font-bold hover:from-blue-700 hover:to-purple-700 shadow-lg flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02]"
               >
-                Skip for Now
+                Go to My Appointments <FaChevronRight />
               </button>
             </div>
           </div>

@@ -403,7 +403,7 @@ export default function RentalContracts() {
           <div className="space-y-4">
             {filteredContracts.map((contract) => {
               // Determine functional status based on wallet existence
-              const displayStatus = (contract.status === 'active' && (!contract.wallet || !contract.wallet.paymentSchedule || contract.wallet.paymentSchedule.length === 0))
+              const displayStatus = (contract.status === 'active' && !contract.securityDepositPaid && (!contract.wallet || !contract.wallet.paymentSchedule || contract.wallet.paymentSchedule.length === 0))
                 ? 'pending_payment'
                 : contract.status;
 
