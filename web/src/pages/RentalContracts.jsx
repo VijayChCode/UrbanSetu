@@ -906,17 +906,8 @@ export default function RentalContracts() {
         <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50">
           <div className="flex min-h-full items-center justify-center p-4">
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full p-6 relative">
-              <div className="flex items-center justify-between mb-4">
+              <div className="mb-4">
                 <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Sign Contract</h2>
-                <button
-                  onClick={() => {
-                    setShowSignatureModal(false);
-                    setSigningContract(null);
-                  }}
-                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-2xl"
-                >
-                  ×
-                </button>
               </div>
               <DigitalSignature
                 onSign={handleSignatureConfirm}
