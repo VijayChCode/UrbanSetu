@@ -1751,7 +1751,7 @@ export default function RentProperty() {
                       if (val.length === 6) setOtpError("");
                     }}
                     placeholder="Enter 6-digit code"
-                    className={`w-full text-center text-2xl sm:text-3xl ${otpValue ? 'tracking-[0.5rem] sm:tracking-[0.8rem]' : 'tracking-normal'} placeholder:tracking-tight placeholder:text-base sm:placeholder:text-lg font-bold p-3 sm:p-4 border-2 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-100 transition-all ${otpError ? 'border-red-500' : 'border-gray-200 dark:border-gray-600 focus:border-purple-500'}`}
+                    className={`w-full text-center text-2xl sm:text-3xl ${otpValue ? 'tracking-[0.5rem] sm:tracking-[0.8rem]' : 'tracking-normal'} placeholder:tracking-tight placeholder:text-base sm:placeholder:text-lg font-bold p-3 sm:p-4 border-2 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-100 transition-all bg-white dark:bg-gray-800 dark:text-white ${otpError ? 'border-red-500' : 'border-gray-200 dark:border-gray-600 focus:border-purple-500'}`}
                   />
                   {otpError && <p className="text-red-500 dark:text-red-400 text-sm mt-2 text-center">{otpError}</p>}
                 </div>
@@ -1778,13 +1778,16 @@ export default function RentProperty() {
                     {otpTimer > 0 ? (
                       <p className="text-gray-500 dark:text-gray-400">Resend code in <span className="text-purple-600 dark:text-purple-400 font-bold">{otpTimer}s</span></p>
                     ) : (
-                      <button
-                        onClick={handleResendOtp}
-                        disabled={otpResending}
-                        className="text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-600 hover:underline transition-colors flex items-center gap-1"
-                      >
-                        {otpResending ? 'Sending...' : 'Didn\'t receive code? Resend OTP'}
-                      </button>
+                      <p className="text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                        Didn't receive code?
+                        <button
+                          onClick={handleResendOtp}
+                          disabled={otpResending}
+                          className="text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-500 hover:underline font-bold transition-colors disabled:opacity-50"
+                        >
+                          {otpResending ? 'Sending...' : 'Resend OTP'}
+                        </button>
+                      </p>
                     )}
                   </div>
                 </div>
