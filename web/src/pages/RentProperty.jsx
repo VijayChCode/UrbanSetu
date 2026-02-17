@@ -1485,7 +1485,7 @@ export default function RentProperty() {
               onDownload={() => toast.success("Contract PDF downloaded!")}
             />
 
-            <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
               <div className="flex flex-col-reverse sm:flex-row gap-4">
                 <button
                   onClick={() => {
