@@ -266,7 +266,7 @@ const createPaymentLockManager = (appointmentId) => {
   };
 };
 
-const PaymentModal = ({ isOpen, onClose, appointment, onPaymentSuccess, existingPayment, isServicePayment, servicePaymentDetails }) => {
+const PaymentModal = ({ isOpen, onClose, appointment, onPaymentSuccess, existingPayment, isServicePayment, servicePaymentDetails, isEMIPayment, emiDetails }) => {
   const [loading, setLoading] = useState(false);
   const [paymentData, setPaymentData] = useState(null);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
@@ -715,6 +715,18 @@ const PaymentModal = ({ isOpen, onClose, appointment, onPaymentSuccess, existing
             isAutoDebit: false
           })
         });
+      } else if (isEMIPayment && emiDetails) {
+        // Special handling for Loan EMI
+        response = await authenticatedFetch(`${import.meta.env.VITE_API_BASE_URL}/api/payments/loan-emi`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            loanId: emiDetails.loanId,
+            emiIndex: emiDetails.emiIndex,
+            amount: emiDetails.amount,
+            gateway: targetGateway
+          })
+        });
       } else if (isServicePayment && servicePaymentDetails) {
         // Special handling for Service Requests
         response = await authenticatedFetch(`${import.meta.env.VITE_API_BASE_URL}/api/payments/service-request`, {
@@ -1156,7 +1168,7 @@ const PaymentModal = ({ isOpen, onClose, appointment, onPaymentSuccess, existing
                         Payment Type:
                       </span>
                       <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
-                        {appointment.paymentType === 'monthly_rent' ? 'Monthly Rent' : 'Appointment Booking'}
+                        {isEMIPayment ? 'Loan EMI Payment' : (appointment.paymentType === 'monthly_rent' ? 'Monthly Rent' : 'Appointment Booking')}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
@@ -1164,9 +1176,11 @@ const PaymentModal = ({ isOpen, onClose, appointment, onPaymentSuccess, existing
                         {appointment.paymentType === 'monthly_rent' ? 'Rent Period:' : 'Appointment Date:'}
                       </span>
                       <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        {appointment.paymentType === 'monthly_rent' && monthlyRentContext
-                          ? `${new Date(0, monthlyRentContext.month - 1).toLocaleString('default', { month: 'long' })} ${monthlyRentContext.year}`
-                          : new Date(appointment.date).toLocaleDateString('en-GB')
+                        {isEMIPayment && emiDetails
+                          ? `${new Date(0, emiDetails.month - 1).toLocaleString('default', { month: 'long' })} ${emiDetails.year}`
+                          : (appointment.paymentType === 'monthly_rent' && monthlyRentContext
+                            ? `${new Date(0, monthlyRentContext.month - 1).toLocaleString('default', { month: 'long' })} ${monthlyRentContext.year}`
+                            : new Date(appointment.date).toLocaleDateString('en-GB'))
                         }
                       </span>
                     </div>
@@ -1232,7 +1246,7 @@ const PaymentModal = ({ isOpen, onClose, appointment, onPaymentSuccess, existing
 
                       <div className="flex justify-between">
                         <span className="text-gray-600 dark:text-gray-300">
-                          {appointment.paymentType === 'monthly_rent' ? 'Monthly Rent Payment' : 'Advance Payment (Flat)'}
+                          {isEMIPayment ? 'Loan EMI Installment' : (appointment.paymentType === 'monthly_rent' ? 'Monthly Rent Payment' : 'Advance Payment (Flat)')}
                         </span>
                         <span className="font-medium text-gray-800 dark:text-white">
                           {preferredMethod === 'razorpay' ? `₹ ${Number((paymentData?.payment?.amount || (paymentData?.payment?.currency === 'INR' ? 100 : 0))).toFixed(2)}` : `$ ${Number((paymentData?.payment?.amount || (paymentData?.payment?.currency === 'USD' ? 5 : 0))).toFixed(2)}`}

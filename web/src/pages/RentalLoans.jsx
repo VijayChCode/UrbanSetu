@@ -8,6 +8,7 @@ import LoanApplicationForm from '../components/loans/LoanApplicationForm';
 import LoanStatusDisplay from '../components/loans/LoanStatusDisplay';
 import UserRentalLoansSkeleton from '../components/skeletons/UserRentalLoansSkeleton';
 import { authenticatedFetch } from '../utils/auth';
+import PaymentModal from '../components/PaymentModal';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -55,6 +56,12 @@ export default function RentalLoans() {
     search: ''
   });
 
+  // Payment states
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentEMI, setPaymentEMI] = useState(null);
+  const [paymentLoan, setPaymentLoan] = useState(null);
+  const [paymentIndex, setPaymentIndex] = useState(null);
+
   useEffect(() => {
     if (!currentUser) {
       navigate('/sign-in');
@@ -71,8 +78,9 @@ export default function RentalLoans() {
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const contractIdParam = searchParams.get('contractId');
+    const loanIdParam = searchParams.get('loanId');
 
-    if (contractIdParam) {
+    if (contractIdParam && contracts.length > 0) {
       const contract = contracts.find(c =>
         c._id === contractIdParam || c.contractId === contractIdParam
       );
@@ -82,7 +90,18 @@ export default function RentalLoans() {
         navigate('/user/rental-loans', { replace: true });
       }
     }
-  }, [location.search, contracts]);
+
+    if (loanIdParam && loans.length > 0) {
+      const loan = loans.find(l =>
+        l._id === loanIdParam || l.loanId === loanIdParam
+      );
+
+      if (loan) {
+        handleViewLoan(loan);
+        navigate('/user/rental-loans', { replace: true });
+      }
+    }
+  }, [location.search, contracts, loans]);
 
   const fetchLoans = async (showLoading = true) => {
     try {
@@ -185,6 +204,39 @@ export default function RentalLoans() {
     fetchLoans();
     if (selectedLoan) {
       handleViewLoan(selectedLoan);
+    }
+  };
+
+  const handlePayEMI = (emi, index) => {
+    if (!selectedLoan) return;
+
+    setPaymentEMI(emi);
+    setPaymentLoan(selectedLoan);
+    setPaymentIndex(index);
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentSuccess = async (payment) => {
+    toast.success('EMI Payment Successful!');
+    setShowPaymentModal(false);
+
+    // Refresh loans to show updated status
+    await fetchLoans(false);
+
+    // If the modal was open, update the selected loan to reflect changes
+    if (selectedLoan) {
+      // Find the updated loan from the newly fetched loans list
+      // We use a small timeout to ensure fetchLoans has finished updating state if needed, 
+      // or just fetch it directly again to be sure
+      try {
+        const res = await authenticatedFetch(`${API_BASE_URL}/api/rental/loans/${selectedLoan._id}`);
+        const data = await res.json();
+        if (res.ok && data.success) {
+          setSelectedLoan(data.loan);
+        }
+      } catch (e) {
+        console.error("Failed to refresh selected loan after payment", e);
+      }
     }
   };
 
@@ -474,13 +526,38 @@ export default function RentalLoans() {
                   STATUS_COLORS={STATUS_COLORS}
                   STATUS_LABELS={STATUS_LABELS}
                   LOAN_TYPE_LABELS={LOAN_TYPE_LABELS}
+                  onPayEMI={handlePayEMI}
                 />
               </div>
             </div>
           </div>
         )}
+        {/* Payment Modal */}
+        {showPaymentModal && paymentLoan && paymentEMI && (
+          <PaymentModal
+            isOpen={showPaymentModal}
+            onClose={() => setShowPaymentModal(false)}
+            appointment={{
+              _id: paymentLoan.contractId?.bookingId,
+              propertyName: paymentLoan.contractId?.listingId?.name || 'Rental Loan EMI',
+              propertyDescription: `${LOAN_TYPE_LABELS[paymentLoan.loanType] || 'Rental'} Loan - EMI for ${paymentEMI.month}/${paymentEMI.year}`,
+              paymentType: 'emi',
+              isRentalPayment: true,
+              contractId: paymentLoan.contractId?._id
+            }}
+            isEMIPayment={true}
+            emiDetails={{
+              loanId: paymentLoan._id,
+              emiIndex: paymentIndex,
+              amount: paymentLoan.emiAmount,
+              month: paymentEMI.month,
+              year: paymentEMI.year
+            }}
+            onPaymentSuccess={handlePaymentSuccess}
+          />
+        )}
       </div>
-    </div >
+    </div>
   );
 }
 

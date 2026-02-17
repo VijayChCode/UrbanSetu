@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { FaCheckCircle, FaClock, FaTimesCircle, FaCreditCard, FaFile, FaDownload, FaHome, FaUser, FaMoneyBillWave, FaCalendarAlt } from 'react-icons/fa';
 import { authenticatedFetch } from '../../utils/auth';
 
-export default function LoanStatusDisplay({ loan, currentUser, onUpdate, STATUS_COLORS, STATUS_LABELS, LOAN_TYPE_LABELS }) {
+export default function LoanStatusDisplay({ loan, currentUser, onUpdate, STATUS_COLORS, STATUS_LABELS, LOAN_TYPE_LABELS, onPayEMI }) {
   const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'rootadmin';
   const contract = loan.contractId;
 
@@ -101,6 +101,7 @@ export default function LoanStatusDisplay({ loan, currentUser, onUpdate, STATUS_
           {LOAN_TYPE_LABELS[loan.loanType] || loan.loanType}
         </h3>
         <p className="text-sm text-blue-700 dark:text-blue-400 font-mono">Loan ID: {loan.loanId}</p>
+        <p className="text-sm text-blue-700 dark:text-blue-400">Applicant: <span className="font-semibold text-blue-800 dark:text-blue-300">{loan.userId?.username || 'N/A'}</span> ({loan.userId?.email || 'N/A'})</p>
         {contract && (
           <>
             <p className="text-sm text-blue-700 dark:text-blue-400">Property: {contract.listingId?.name || 'Unknown'}</p>
@@ -258,6 +259,7 @@ export default function LoanStatusDisplay({ loan, currentUser, onUpdate, STATUS_
                     <th className="px-4 py-2 text-right">EMI Amount</th>
                     <th className="px-4 py-2 text-right">Penalty</th>
                     <th className="px-4 py-2 text-center">Status</th>
+                    <th className="px-4 py-2 text-center">Action</th>
                   </tr>
                 </thead>
                 <tbody className="text-gray-800 dark:text-white">
@@ -275,6 +277,26 @@ export default function LoanStatusDisplay({ loan, currentUser, onUpdate, STATUS_
                           }`}>
                           {emi.status || 'pending'}
                         </span>
+                      </td>
+                      <td className="px-4 py-2 text-center">
+                        {emi.status !== 'completed' && emi.status !== 'processing' && (loan.status === 'approved' || loan.status === 'disbursed') && !isAdmin ? (
+                          <button
+                            onClick={() => onPayEMI && onPayEMI(emi, index)}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs transition-colors font-medium flex items-center gap-1 mx-auto"
+                          >
+                            <FaCreditCard className="text-[10px]" /> Pay Now
+                          </button>
+                        ) : emi.status === 'processing' ? (
+                          <span className="text-xs text-blue-600 flex items-center justify-center gap-1">
+                            <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div> Processing
+                          </span>
+                        ) : emi.status === 'completed' ? (
+                          <span className="text-xs text-green-600 flex items-center justify-center gap-1">
+                            <FaCheckCircle /> Paid
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-400">N/A</span>
+                        )}
                       </td>
                     </tr>
                   ))}

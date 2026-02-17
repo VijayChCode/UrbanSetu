@@ -450,7 +450,8 @@ export default function AdminRentalLoans() {
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
                         <div>
                           <p className="text-xs text-gray-500 dark:text-gray-400">Applicant</p>
-                          <p className="font-semibold text-gray-800 dark:text-gray-200">{loan.userId?.username || loan.userId?.email || 'N/A'}</p>
+                          <p className="font-semibold text-gray-800 dark:text-gray-200">{loan.userId?.username || 'N/A'}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{loan.userId?.email || ''}</p>
                         </div>
                         <div>
                           <p className="text-xs text-gray-500 dark:text-gray-400">Loan Amount</p>

@@ -723,13 +723,16 @@ router.post("/verify", verifyToken, async (req, res) => {
 
         if (loan) {
           // Update EMI schedule status
-          // Assuming payment.rentMonth & rentYear track which EMI (or find first pending)
           let emiToUpdate;
-          if (payment.rentMonth && payment.rentYear) {
-            emiToUpdate = loan.emiSchedule.find(e => e.month === payment.rentMonth && e.year === payment.rentYear);
+          // Use emiDetails if available, fallback to rentMonth/rentYear
+          const month = payment.emiDetails?.month || payment.rentMonth;
+          const year = payment.emiDetails?.year || payment.rentYear;
+
+          if (month && year) {
+            emiToUpdate = loan.emiSchedule.find(e => e.month === month && e.year === year);
           } else {
-            // Fallback: find first pending/overdue EMI based on payment amount or just earliest
-            emiToUpdate = loan.emiSchedule.find(e => e.status === 'pending' || e.status === 'overdue');
+            // Fallback: find first pending/overdue/processing EMI
+            emiToUpdate = loan.emiSchedule.find(e => e.status === 'pending' || e.status === 'overdue' || e.status === 'processing');
           }
 
           if (emiToUpdate) {
@@ -737,38 +740,60 @@ router.post("/verify", verifyToken, async (req, res) => {
             emiToUpdate.paidAt = new Date();
             emiToUpdate.paymentId = payment._id;
 
-            // Update totals
-            loan.totalPaid = (loan.totalPaid || 0) + payment.amount;
+            // Update totals (use original INR amount if available in emiDetails)
+            const amountToCredit = payment.emiDetails?.originalAmount || payment.amount;
+            loan.totalPaid = (loan.totalPaid || 0) + amountToCredit;
+            loan.totalRemaining = Math.max(0, (loan.totalRemaining || loan.loanAmount) - amountToCredit);
+
+            // Send success email
+            try {
+              const { sendLoanEMIPaymentSuccessEmail } = await import('../utils/emailService.js');
+              await sendLoanEMIPaymentSuccessEmail(loan.userId.email, {
+                propertyName: loan.contractId?.listingId?.name || 'Property',
+                loanType: loan.loanType.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+                amount: amountToCredit,
+                paymentId: payment.paymentId,
+                emiMonth: emiToUpdate.month,
+                emiYear: emiToUpdate.year,
+                remainingBalance: loan.totalRemaining,
+                loanUrl: `${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}/user/rental-loans?loanId=${loan.loanId}`
+              });
+              console.log(`✅ [PayPal] Loan EMI success email sent to ${loan.userId.email}`);
+            } catch (emailError) {
+              console.error('Error sending loan EMI success email:', emailError);
+            }
 
             // Check if fully repaid
             const totalScheduled = loan.emiSchedule.reduce((sum, e) => sum + loan.emiAmount, 0);
-            // Allow small buffer for rounding errors
-            if (loan.totalPaid >= totalScheduled - 10) {
+            if (loan.totalPaid >= totalScheduled - 10 || loan.totalRemaining <= 10) {
               loan.status = 'repaid';
               loan.repaidAt = new Date();
 
               // Send Loan Repaid Email
               try {
+                const { sendLoanRepaidEmail } = await import('../utils/emailService.js');
                 await sendLoanRepaidEmail(loan.userId.email, {
                   propertyName: loan.contractId?.listingId?.name || 'Property',
                   loanType: loan.loanType.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
                   totalPaid: loan.totalPaid,
                   repaidAt: new Date().toLocaleDateString(),
-                  loanUrl: `${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}/user/loans/${loan.loanId}`
+                  loanUrl: `${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}/user/rental-loans?loanId=${loan.loanId}`
                 });
-                console.log(`✅ Loan repaid email sent to ${loan.userId.email}`);
+                console.log(`✅ [PayPal] Loan repaid email sent (Final) to ${loan.userId.email}`);
               } catch (emailError) {
                 console.error('Error sending loan repaid email:', emailError);
               }
             }
 
             await loan.save();
+            console.log(`✅ [PayPal] Loan EMI Updated for loan ${loan.loanId}`);
           }
         }
       } catch (loanError) {
         console.error('Error handling loan EMI payment:', loanError);
       }
     }
+
 
     // --- SetuCoins Consistency: Reward general payments > 1000 INR / $12 ---
     if (payment.paymentType !== 'monthly_rent') {
@@ -1366,6 +1391,90 @@ router.post('/razorpay/verify', verifyToken, async (req, res) => {
       }
     }
 
+    // Handle loan EMI payment
+    if (payment.paymentType === 'emi' && payment.emiDetails && payment.emiDetails.loanId) {
+      try {
+        const RentalLoan = (await import('../models/rentalLoan.model.js')).default;
+        const loan = await RentalLoan.findOne({ loanId: payment.emiDetails.loanId })
+          .populate('userId', 'email username')
+          .populate('contractId', 'listingId')
+          .populate({
+            path: 'contractId',
+            populate: { path: 'listingId', select: 'name address' }
+          });
+
+        if (loan) {
+          // Update EMI schedule status
+          let emiToUpdate;
+          const { month, year } = payment.emiDetails;
+
+          if (month && year) {
+            emiToUpdate = loan.emiSchedule.find(e => e.month === month && e.year === year);
+          } else {
+            // Fallback: find first pending/overdue EMI
+            emiToUpdate = loan.emiSchedule.find(e => e.status === 'pending' || e.status === 'overdue' || e.status === 'processing');
+          }
+
+          if (emiToUpdate) {
+            emiToUpdate.status = 'completed';
+            emiToUpdate.paidAt = new Date();
+            emiToUpdate.paymentId = payment._id;
+
+            // Update totals
+            loan.totalPaid = (loan.totalPaid || 0) + (payment.emiDetails.originalAmount || payment.amount);
+            loan.totalRemaining = Math.max(0, (loan.totalRemaining || loan.loanAmount) - (payment.emiDetails.originalAmount || payment.amount));
+
+            // Check if fully repaid
+            const totalScheduled = loan.emiSchedule.reduce((sum, e) => sum + loan.emiAmount, 0);
+
+            // Send success email
+            try {
+              const { sendLoanEMIPaymentSuccessEmail } = await import('../utils/emailService.js');
+              await sendLoanEMIPaymentSuccessEmail(loan.userId.email, {
+                propertyName: loan.contractId?.listingId?.name || 'Property',
+                loanType: loan.loanType.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+                amount: payment.emiDetails.originalAmount || payment.amount,
+                paymentId: payment.paymentId,
+                emiMonth: emiToUpdate.month,
+                emiYear: emiToUpdate.year,
+                remainingBalance: loan.totalRemaining,
+                loanUrl: `${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}/user/rental-loans?loanId=${loan.loanId}`
+              });
+              console.log(`✅ Loan EMI success email sent to ${loan.userId.email}`);
+            } catch (emailError) {
+              console.error('Error sending loan EMI success email:', emailError);
+            }
+
+            // Check for full repayment
+            if (loan.totalPaid >= totalScheduled - 10 || loan.totalRemaining <= 10) {
+              loan.status = 'repaid';
+              loan.repaidAt = new Date();
+
+              // Send Loan Repaid Email
+              try {
+                const { sendLoanRepaidEmail } = await import('../utils/emailService.js');
+                await sendLoanRepaidEmail(loan.userId.email, {
+                  propertyName: loan.contractId?.listingId?.name || 'Property',
+                  loanType: loan.loanType.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+                  totalPaid: loan.totalPaid,
+                  repaidAt: new Date().toLocaleDateString(),
+                  loanUrl: `${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}/user/rental-loans?loanId=${loan.loanId}`
+                });
+                console.log(`✅ Loan repaid email sent (Final) to ${loan.userId.email}`);
+              } catch (emailError) {
+                console.error('Error sending loan repaid email:', emailError);
+              }
+            }
+
+            await loan.save();
+            console.log(`✅ [Razorpay] Loan EMI Wallet Updated for loan ${loan.loanId}`);
+          }
+        }
+      } catch (loanError) {
+        console.error('Error handling loan EMI payment verification:', loanError);
+      }
+    }
+
     // DELAYED SAVE: Finally save the payment as completed
     await payment.save();
 
@@ -1801,6 +1910,198 @@ router.post("/monthly-rent", verifyToken, async (req, res) => {
     });
   } catch (err) {
     console.error("Error creating monthly rent payment:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+});
+
+// POST: Create loan EMI payment
+router.post("/loan-emi", verifyToken, async (req, res) => {
+  try {
+    const { loanId, emiIndex, amount, gateway, coinsToRedeem } = req.body;
+    const userId = req.user.id;
+
+    // Import required models
+    const RentalLoan = (await import('../models/rentalLoan.model.js')).default;
+    const Booking = (await import('../models/booking.model.js')).default;
+    const CoinService = (await import('../services/coinService.js')).default;
+
+    // Verify loan
+    const loan = await RentalLoan.findById(loanId)
+      .populate('userId', 'email username')
+      .populate('contractId');
+
+    if (!loan) {
+      return res.status(404).json({ message: "Rental loan not found." });
+    }
+
+    // Check if loan belongs to user
+    if (loan.userId._id.toString() !== userId && req.user.role !== 'admin' && req.user.role !== 'rootadmin') {
+      return res.status(403).json({ message: "Unauthorized." });
+    }
+
+    if (!['disbursed', 'approved', 'pending'].includes(loan.status)) {
+      // Note: 'pending' added just in case, but usually it should be approved/disbursed
+      return res.status(400).json({ message: `Loan is not in a payable status. Current status: ${loan.status}` });
+    }
+
+    // Find the EMI schedule entry
+    const emiEntry = loan.emiSchedule[emiIndex];
+
+    if (!emiEntry) {
+      return res.status(404).json({ message: "EMI schedule entry not found." });
+    }
+
+    if (emiEntry.status === 'completed') {
+      return res.status(400).json({ message: "EMI already paid." });
+    }
+
+    // Get booking (associated with the contract)
+    const booking = await Booking.findById(loan.contractId.bookingId);
+    if (!booking) {
+      return res.status(404).json({ message: "Contract booking not found." });
+    }
+
+    // Calculate total amount in INR
+    let baseAmountInr = amount + (emiEntry.penaltyAmount || 0);
+
+    // --- SetuCoins Redemption Logic ---
+    let coinDiscount = 0;
+    let redeemedCoins = 0;
+
+    if (coinsToRedeem && coinsToRedeem > 0) {
+      try {
+        const balanceData = await CoinService.getBalance(userId);
+        if (balanceData.setuCoinsBalance < coinsToRedeem) {
+          return res.status(400).json({ message: "Insufficient SetuCoins balance." });
+        }
+
+        // Calculate discount: 10 Coins = ₹1
+        const discountValue = Math.floor(coinsToRedeem / 10);
+
+        // Cap discount at 50% of base amount or actual discount value
+        coinDiscount = Math.min(discountValue, Math.floor(baseAmountInr * 0.5));
+
+        // Recalculate redeemed coins based on applied discount (if capped)
+        redeemedCoins = coinDiscount * 10;
+
+        if (redeemedCoins > 0) {
+          await CoinService.debit({
+            userId,
+            amount: redeemedCoins,
+            source: 'loan_emi_discount',
+            description: `Discount applied to Loan EMI (${emiEntry.month}/${emiEntry.year})`
+          });
+          console.log(`🪙 Redeemed ${redeemedCoins} SetuCoins for ₹${coinDiscount} discount on EMI`);
+        }
+      } catch (coinError) {
+        console.error("Error applying SetuCoins discount:", coinError);
+      }
+    }
+
+    const finalAmountInr = Math.max(0, baseAmountInr - coinDiscount);
+
+    // Use specific gateway or default to appointment region
+    const finalGateway = gateway || (booking.region === 'india' ? 'razorpay' : 'paypal');
+    const finalCurrency = finalGateway === 'razorpay' ? 'INR' : 'USD';
+    const finalAmount = finalGateway === 'razorpay' ? finalAmountInr : Math.round((finalAmountInr / 83) * 100) / 100;
+
+    const payment = new Payment({
+      paymentId: "EMI-" + Date.now() + "-" + Math.random().toString(36).substring(2, 9).toUpperCase(),
+      receiptNumber: "REC-EMI-" + Date.now(),
+      userId,
+      appointmentId: booking._id,
+      contractId: loan.contractId._id,
+      amount: finalAmount,
+      currency: finalCurrency,
+      status: 'pending',
+      paymentType: 'emi',
+      gateway: finalGateway,
+      emiDetails: {
+        loanId: loan.loanId,
+        month: emiEntry.month,
+        year: emiEntry.year,
+        emiIndex: emiIndex,
+        originalAmount: baseAmountInr,
+        discountApplied: coinDiscount,
+        coinsRedeemed: redeemedCoins
+      },
+      metadata: {
+        loanId: String(loan._id),
+        emiIndex: emiIndex,
+        month: emiEntry.month,
+        year: emiEntry.year,
+        originalAmount: baseAmountInr
+      }
+    });
+
+    await payment.save();
+
+    let razorpayData = null;
+    if (finalGateway === 'razorpay') {
+      try {
+        const keyId = process.env.RAZORPAY_KEY_ID;
+        const keySecret = process.env.RAZORPAY_KEY_SECRET;
+
+        const auth = Buffer.from(`${keyId}:${keySecret}`).toString('base64');
+        const orderRes = await fetch('https://api.razorpay.com/v1/orders', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Basic ${auth}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            amount: Math.round(finalAmount * 100), // Amount in paise
+            currency: 'INR',
+            receipt: payment.receiptNumber,
+            payment_capture: 1,
+            notes: {
+              appointmentId: String(booking._id),
+              paymentId: payment.paymentId,
+              loanId: String(loan._id)
+            }
+          })
+        });
+
+        const orderText = await orderRes.text();
+        let order;
+        try { order = JSON.parse(orderText); } catch (e) {
+          console.error('Razorpay create-order non-JSON:', orderText);
+          throw new Error('Invalid response from Razorpay');
+        }
+
+        if (!orderRes.ok) {
+          console.error('Razorpay create-order error:', order);
+          throw new Error(order.error?.description || 'Error creating Razorpay order');
+        }
+
+        payment.gatewayOrderId = order.id;
+        await payment.save();
+
+        razorpayData = {
+          orderId: order.id,
+          amount: Math.round(finalAmount * 100),
+          currency: 'INR',
+          keyId
+        };
+      } catch (rzpError) {
+        console.error('Error creating Razorpay order for loan EMI:', rzpError);
+      }
+    }
+
+    // Update EMI status to processing
+    emiEntry.status = 'processing';
+    emiEntry.paymentId = payment._id;
+    await loan.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Loan EMI payment initialized",
+      payment: payment,
+      ...(razorpayData && { razorpay: razorpayData }),
+      ...(finalGateway === 'paypal' && { paypal: { amount: finalAmount, currency: finalCurrency } })
+    });
+  } catch (err) {
+    console.error("Error creating loan EMI payment:", err);
     res.status(500).json({ message: "Server error", error: err.message });
   }
 });
