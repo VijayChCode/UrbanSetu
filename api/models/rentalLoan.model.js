@@ -203,9 +203,19 @@ rentalLoanSchema.pre('save', async function (next) {
     this.loanId = `LOAN-${timestamp}-${random}`;
   }
 
-  // Calculate total remaining
-  if (this.loanAmount && this.totalPaid !== undefined) {
-    this.totalRemaining = Math.max(0, this.loanAmount - this.totalPaid);
+  // Calculate total remaining based on unpaid EMIs
+  if (this.emiSchedule && this.emiSchedule.length > 0) {
+    this.totalRemaining = this.emiSchedule.reduce((sum, emi) => {
+      // If completed, don't count towards remaining
+      if (emi.status === 'completed') return sum;
+      // Sum up EMI amount + any penalties
+      return sum + (this.emiAmount || 0) + (emi.penaltyAmount || 0);
+    }, 0);
+  } else if (this.loanAmount && this.totalPaid !== undefined) {
+    // Fallback if schedule not generated yet (e.g. initial creation)
+    // Estimate total payable as EMI * Tenure if available, else Loan Amount
+    const totalPayable = (this.emiAmount && this.tenure) ? (this.emiAmount * this.tenure) : this.loanAmount;
+    this.totalRemaining = Math.max(0, totalPayable - this.totalPaid);
   }
 
   this.updatedAt = Date.now();

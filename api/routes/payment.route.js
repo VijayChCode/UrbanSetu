@@ -744,7 +744,7 @@ router.post("/verify", verifyToken, async (req, res) => {
             // Update totals (use original INR amount if available in emiDetails)
             const amountToCredit = payment.emiDetails?.originalAmount || payment.amount;
             loan.totalPaid = (loan.totalPaid || 0) + amountToCredit;
-            loan.totalRemaining = Math.max(0, (loan.totalRemaining || loan.loanAmount) - amountToCredit);
+            // loan.totalRemaining is calculated in pre-save hook based on unpaid EMIs
 
             // Send success email
             try {
@@ -1426,10 +1426,12 @@ router.post('/razorpay/verify', verifyToken, async (req, res) => {
             emiToUpdate.paymentId = payment._id;
 
             // Update totals: Only count the base EMI towards paying off the loan
-            // Penalties do not reduce the principal/interest balance of the loan itself
+            // Penalties do not reduce the principal/interest balance of the loan itself 
+            // In our model, totalPaid counts MONEY PAID. totalRemaining counts MONEY LEFT TO PAY.
+            // But for simple logic, we just track payments.
             const baseEmiContribution = loan.emiAmount;
             loan.totalPaid = (loan.totalPaid || 0) + baseEmiContribution;
-            loan.totalRemaining = Math.max(0, (loan.totalRemaining || loan.loanAmount) - baseEmiContribution);
+            // loan.totalRemaining is calculated in pre-save hook based on unpaid EMIs
 
             // Check if fully repaid
             const totalScheduled = loan.emiSchedule.reduce((sum, e) => sum + loan.emiAmount, 0);
