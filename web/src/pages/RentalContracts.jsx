@@ -886,12 +886,27 @@ export default function RentalContracts() {
                         </div>
                       ) : (
                         <div>
-                          <p className="text-gray-600 dark:text-gray-300 mb-4">
-                            Please review the contract above. If you agree to the terms, please sign below to proceed.
-                          </p>
+                          {!signingContract.tenantSignature?.signed ? (
+                            <div className="bg-yellow-50 border border-yellow-200 dark:bg-yellow-900/10 dark:border-yellow-800 rounded-lg p-4 mb-4">
+                              <p className="text-yellow-700 dark:text-yellow-300 flex items-center gap-2">
+                                <FaClock /> Waiting for tenant to sign the contract first.
+                              </p>
+                              <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+                                As per procedure, the tenant must review and sign the contract before the landlord can finalize it.
+                              </p>
+                            </div>
+                          ) : (
+                            <p className="text-gray-600 dark:text-gray-300 mb-4">
+                              Please review the contract above. If you agree to the terms, please sign below to proceed.
+                            </p>
+                          )}
                           <button
                             onClick={() => handleSignatureClick(signingContract)}
-                            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 font-semibold"
+                            disabled={!signingContract.tenantSignature?.signed}
+                            className={`px-6 py-3 rounded-lg flex items-center gap-2 font-semibold transition-all ${signingContract.tenantSignature?.signed
+                                ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg'
+                                : 'bg-gray-200 text-gray-500 cursor-not-allowed dark:bg-gray-700 dark:text-gray-400'
+                              }`}
                           >
                             <FaPen /> Sign Contract
                           </button>

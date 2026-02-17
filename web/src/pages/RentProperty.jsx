@@ -47,6 +47,8 @@ export default function RentProperty() {
   const [showInitConfirmation, setShowInitConfirmation] = useState(false);
   const [signingAs, setSigningAs] = useState(null); // 'tenant' or 'landlord'
   const readyForPayment = !!(contract?.tenantSignature?.signed && contract?.landlordSignature?.signed);
+  const isTenant = contract?.tenantId?._id === currentUser?._id || contract?.tenantId === currentUser?._id;
+  const isLandlord = contract?.landlordId?._id === currentUser?._id || contract?.landlordId === currentUser?._id;
 
   // AI Legal Assistant State
   const [customClauses, setCustomClauses] = useState([]);
@@ -1523,11 +1525,13 @@ export default function RentProperty() {
 
             <div className="space-y-6 mb-6">
               {/* Tenant Signature */}
-              <div>
+              <div className="mb-8">
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <h3 className="font-semibold text-lg text-gray-900 dark:text-white">Tenant Signature</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">{currentUser.username || currentUser.email}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {isTenant ? currentUser.username || currentUser.email : contract.tenantId?.username || contract.tenantId?.email || 'Tenant'}
+                    </p>
                   </div>
                   {contract.tenantSignature?.signed && (
                     <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
@@ -1550,7 +1554,7 @@ export default function RentProperty() {
                       />
                     )}
                   </div>
-                ) : (
+                ) : isTenant ? (
                   <DigitalSignature
                     title="Tenant Signature"
                     userName={currentUser.username || currentUser.email}
@@ -1560,6 +1564,12 @@ export default function RentProperty() {
                     }}
                     disabled={loading}
                   />
+                ) : (
+                  <div className="p-4 bg-gray-50 border-2 border-dashed border-gray-300 dark:bg-gray-800 dark:border-gray-600 rounded-lg text-center">
+                    <p className="text-gray-500 dark:text-gray-400 font-medium">
+                      Waiting for tenant to sign the contract
+                    </p>
+                  </div>
                 )}
               </div>
 
@@ -1568,7 +1578,9 @@ export default function RentProperty() {
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <h3 className="font-semibold text-lg text-gray-900 dark:text-white">Landlord Signature</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Property Owner</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {isLandlord ? currentUser.username || currentUser.email : contract.landlordId?.username || contract.landlordId?.email || 'Property Owner'}
+                    </p>
                   </div>
                   {contract.landlordSignature?.signed ? (
                     <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
@@ -1593,10 +1605,22 @@ export default function RentProperty() {
                       />
                     )}
                   </div>
+                ) : (isLandlord && contract.tenantSignature?.signed) ? (
+                  <DigitalSignature
+                    title="Landlord Signature"
+                    userName={currentUser.username || currentUser.email}
+                    onSign={(signatureData) => {
+                      setSigningAs('landlord');
+                      handleSignatureConfirm(signatureData);
+                    }}
+                    disabled={loading}
+                  />
                 ) : (
                   <div className="p-4 bg-gray-50 border-2 border-dashed border-gray-300 dark:bg-gray-800 dark:border-gray-600 rounded-lg text-center">
-                    <p className="text-gray-500 dark:text-gray-400">
-                      Waiting for landlord to sign the contract
+                    <p className="text-gray-500 dark:text-gray-400 font-medium">
+                      {!contract.tenantSignature?.signed
+                        ? "Waiting for tenant to sign the contract first"
+                        : "Waiting for landlord to sign the contract"}
                     </p>
                   </div>
                 )}
