@@ -621,7 +621,7 @@ export default function RentalContracts() {
                       )}
                     </div>
 
-                    <div className="flex flex-col gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 min-w-[280px] md:min-w-[400px] items-start">
                       {(() => {
                         // Buyer/Tenant actions
                         if (isTenant && (contract.status === 'pending_signature' || contract.status === 'draft')) {
@@ -730,7 +730,7 @@ export default function RentalContracts() {
                       })()}
                       <button
                         onClick={() => handleView(contract)}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2"
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2 transition-all hover:shadow-md"
                       >
                         <FaEye /> View Details
                       </button>
@@ -738,7 +738,7 @@ export default function RentalContracts() {
                       {displayStatus === 'active' && (
                         <button
                           onClick={() => navigate(`/user/rent-wallet?contractId=${contractIdentifier}`)}
-                          className={`px-4 py-2 text-white rounded-lg flex items-center justify-center gap-2 ${isTenant ? 'bg-purple-600 hover:bg-purple-700' : 'bg-blue-600 hover:bg-blue-700'}`}
+                          className={`px-4 py-2 text-white rounded-lg flex items-center justify-center gap-2 transition-all hover:shadow-md ${isTenant ? 'bg-purple-600 hover:bg-purple-700' : 'bg-blue-600 hover:bg-blue-700'}`}
                         >
                           <FaMoneyBillWave /> {isTenant ? 'Rent Wallet' : 'Monitor Rent Wallet'}
                         </button>
@@ -749,9 +749,9 @@ export default function RentalContracts() {
                           href={payMonthlyRentUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center justify-center gap-2"
+                          className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center justify-center gap-2 transition-all hover:shadow-md"
                         >
-                          <FaExternalLinkAlt /> Pay Monthly Rent Page
+                          <FaExternalLinkAlt /> Pay Rent Page
                         </a>
                       )}
                       {displayStatus === 'active' && (
@@ -759,24 +759,24 @@ export default function RentalContracts() {
                           {isTenant && showMoveInChecklist && (
                             <button
                               onClick={() => navigate(`/user/services?contractId=${contractIdentifier}&checklist=move_in`)}
-                              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2"
+                              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2 transition-all hover:shadow-md"
                             >
-                              <FaSignInAlt /> Move-In Checklist
+                              <FaSignInAlt /> Move-In
                             </button>
                           )}
                           {isTenant && (
                             <button
                               onClick={() => navigate(`/user/services?contractId=${contractIdentifier}&checklist=move_out`)}
-                              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 flex items-center justify-center gap-2"
+                              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 flex items-center justify-center gap-2 transition-all hover:shadow-md"
                             >
-                              <FaSignOutAlt /> Move-Out Checklist
+                              <FaSignOutAlt /> Move-Out
                             </button>
                           )}
                           <button
                             onClick={() => navigate(`/user/disputes?contractId=${contractIdentifier}`)}
-                            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center justify-center gap-2"
+                            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center justify-center gap-2 transition-all hover:shadow-md"
                           >
-                            <FaGavel /> Raise Dispute
+                            <FaGavel /> Dispute
                           </button>
                           <button
                             onClick={() => {
@@ -788,7 +788,7 @@ export default function RentalContracts() {
                                 navigate(`/user/rental-ratings?contractId=${contractIdentifier}&role=landlord`);
                               }
                             }}
-                            className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 flex items-center justify-center gap-2"
+                            className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 flex items-center justify-center gap-2 transition-all hover:shadow-md"
                           >
                             <FaStar /> Rate
                           </button>
@@ -805,7 +805,7 @@ export default function RentalContracts() {
                                 const hasOverdue = contractLoan.emiSchedule?.some(e => e.status === 'overdue');
 
                                 return (
-                                  <div className="flex flex-col gap-2 w-full">
+                                  <div className="flex flex-col gap-2 col-span-1 sm:col-span-2">
                                     <div className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2 border-2 ${isRepaid ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800' :
                                       hasOverdue ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800' :
                                         isDisbursed ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800' :
@@ -834,9 +834,9 @@ export default function RentalContracts() {
                               return (
                                 <button
                                   onClick={() => navigate(`/user/rental-loans?contractId=${contractIdentifier}`)}
-                                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center justify-center gap-2 font-semibold"
+                                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center justify-center gap-2 font-semibold transition-all hover:shadow-md"
                                 >
-                                  <FaCreditCard /> Apply for Loan
+                                  <FaCreditCard /> Apply Loan
                                 </button>
                               );
                             })()
@@ -853,225 +853,233 @@ export default function RentalContracts() {
       </div>
 
       {/* Contract Preview Modal */}
-      {showPreviewModal && selectedContract && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50">
-          <div className="flex min-h-full items-center justify-center p-4">
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-4xl w-full p-6 relative">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Contract Details</h2>
-                <button
-                  onClick={() => {
-                    setShowPreviewModal(false);
-                    setSelectedContract(null);
+      {
+        showPreviewModal && selectedContract && (
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50">
+            <div className="flex min-h-full items-center justify-center p-4">
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-4xl w-full p-6 relative">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Contract Details</h2>
+                  <button
+                    onClick={() => {
+                      setShowPreviewModal(false);
+                      setSelectedContract(null);
+                    }}
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-2xl"
+                  >
+                    <FaTimes />
+                  </button>
+                </div>
+                <ContractPreview
+                  contract={selectedContract}
+                  listing={selectedContract.listingId}
+                  tenant={selectedContract.tenantId}
+                  landlord={selectedContract.landlordId}
+                  onDownload={() => {
+                    handleDownload(selectedContract);
                   }}
-                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-2xl"
-                >
-                  <FaTimes />
-                </button>
+                />
               </div>
-              <ContractPreview
-                contract={selectedContract}
-                listing={selectedContract.listingId}
-                tenant={selectedContract.tenantId}
-                landlord={selectedContract.landlordId}
-                onDownload={() => {
-                  handleDownload(selectedContract);
-                }}
-              />
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Contract Review Modal (for seller/landlord) */}
-      {showReviewModal && signingContract && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50">
-          <div className="flex min-h-full items-center justify-center p-4">
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-4xl w-full p-6 relative">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Review Contract</h2>
-                <button
-                  onClick={() => {
-                    setShowReviewModal(false);
-                    setSigningContract(null);
+      {
+        showReviewModal && signingContract && (
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50">
+            <div className="flex min-h-full items-center justify-center p-4">
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-4xl w-full p-6 relative">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Review Contract</h2>
+                  <button
+                    onClick={() => {
+                      setShowReviewModal(false);
+                      setSigningContract(null);
+                    }}
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-2xl"
+                  >
+                    <FaTimes />
+                  </button>
+                </div>
+
+                <ContractPreview
+                  contract={signingContract}
+                  listing={signingContract.listingId}
+                  tenant={signingContract.tenantId}
+                  landlord={signingContract.landlordId}
+                  onDownload={() => {
+                    handleDownload(signingContract);
                   }}
-                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-2xl"
-                >
-                  <FaTimes />
-                </button>
-              </div>
+                />
 
-              <ContractPreview
-                contract={signingContract}
-                listing={signingContract.listingId}
-                tenant={signingContract.tenantId}
-                landlord={signingContract.landlordId}
-                onDownload={() => {
-                  handleDownload(signingContract);
-                }}
-              />
+                {/* Signature Section for Landlord */}
+                {(() => {
+                  const userRole = getUserRole(signingContract);
+                  const isLandlord = userRole === 'landlord';
+                  const landlordSigned = signingContract.landlordSignature?.signed;
 
-              {/* Signature Section for Landlord */}
-              {(() => {
-                const userRole = getUserRole(signingContract);
-                const isLandlord = userRole === 'landlord';
-                const landlordSigned = signingContract.landlordSignature?.signed;
+                  if (isLandlord && signingContract.status === 'pending_signature') {
+                    return (
+                      <div className="mt-6 p-6 bg-gray-50 dark:bg-gray-700 rounded-lg border-2 border-gray-200 dark:border-gray-600">
+                        <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+                          <FaPen className="text-blue-600 dark:text-blue-400" /> Your Signature Required
+                        </h3>
 
-                if (isLandlord && signingContract.status === 'pending_signature') {
-                  return (
-                    <div className="mt-6 p-6 bg-gray-50 dark:bg-gray-700 rounded-lg border-2 border-gray-200 dark:border-gray-600">
-                      <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-                        <FaPen className="text-blue-600 dark:text-blue-400" /> Your Signature Required
-                      </h3>
-
-                      {landlordSigned ? (
-                        <div className="bg-green-50 border border-green-200 dark:bg-green-900/10 dark:border-green-800 rounded-lg p-4 mb-4">
-                          <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
-                            <FaCheckCircle /> You have already signed this contract.
-                          </div>
-                          {signingContract.landlordSignature?.signedAt && (
-                            <p className="text-sm text-green-600 dark:text-green-400 mt-2">
-                              Signed on: {new Date(signingContract.landlordSignature.signedAt).toLocaleString('en-GB')}
-                            </p>
-                          )}
-                        </div>
-                      ) : (
-                        <div>
-                          {!signingContract.tenantSignature?.signed ? (
-                            <div className="bg-yellow-50 border border-yellow-200 dark:bg-yellow-900/10 dark:border-yellow-800 rounded-lg p-4 mb-4">
-                              <p className="text-yellow-700 dark:text-yellow-300 flex items-center gap-2">
-                                <FaClock /> Waiting for tenant to sign the contract first.
-                              </p>
-                              <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
-                                As per procedure, the tenant must review and sign the contract before the landlord can finalize it.
-                              </p>
+                        {landlordSigned ? (
+                          <div className="bg-green-50 border border-green-200 dark:bg-green-900/10 dark:border-green-800 rounded-lg p-4 mb-4">
+                            <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
+                              <FaCheckCircle /> You have already signed this contract.
                             </div>
-                          ) : (
-                            <p className="text-gray-600 dark:text-gray-300 mb-4">
-                              Please review the contract above. If you agree to the terms, please sign below to proceed.
-                            </p>
-                          )}
-                          <button
-                            onClick={() => handleSignatureClick(signingContract)}
-                            disabled={!signingContract.tenantSignature?.signed}
-                            className={`px-6 py-3 rounded-lg flex items-center gap-2 font-semibold transition-all ${signingContract.tenantSignature?.signed
-                              ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg'
-                              : 'bg-gray-200 text-gray-500 cursor-not-allowed dark:bg-gray-700 dark:text-gray-400'
-                              }`}
-                          >
-                            <FaPen /> Sign Contract
-                          </button>
-                        </div>
-                      )}
-
-                      {/* Signature Status */}
-                      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <span className="text-gray-600 dark:text-gray-400">Tenant Signature:</span>
-                            <span className={`ml-2 flex items-center gap-1 ${signingContract.tenantSignature?.signed ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'}`}>
-                              {signingContract.tenantSignature?.signed ? (
-                                <><FaCheckCircle /> Signed</>
-                              ) : (
-                                <><FaTimesCircle /> Pending</>
-                              )}
-                            </span>
+                            {signingContract.landlordSignature?.signedAt && (
+                              <p className="text-sm text-green-600 dark:text-green-400 mt-2">
+                                Signed on: {new Date(signingContract.landlordSignature.signedAt).toLocaleString('en-GB')}
+                              </p>
+                            )}
                           </div>
+                        ) : (
                           <div>
-                            <span className="text-gray-600 dark:text-gray-400">Your Signature:</span>
-                            <span className={`ml-2 flex items-center gap-1 ${landlordSigned ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'}`}>
-                              {landlordSigned ? (
-                                <><FaCheckCircle /> Signed</>
-                              ) : (
-                                <><FaTimesCircle /> Pending</>
-                              )}
-                            </span>
+                            {!signingContract.tenantSignature?.signed ? (
+                              <div className="bg-yellow-50 border border-yellow-200 dark:bg-yellow-900/10 dark:border-yellow-800 rounded-lg p-4 mb-4">
+                                <p className="text-yellow-700 dark:text-yellow-300 flex items-center gap-2">
+                                  <FaClock /> Waiting for tenant to sign the contract first.
+                                </p>
+                                <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+                                  As per procedure, the tenant must review and sign the contract before the landlord can finalize it.
+                                </p>
+                              </div>
+                            ) : (
+                              <p className="text-gray-600 dark:text-gray-300 mb-4">
+                                Please review the contract above. If you agree to the terms, please sign below to proceed.
+                              </p>
+                            )}
+                            <button
+                              onClick={() => handleSignatureClick(signingContract)}
+                              disabled={!signingContract.tenantSignature?.signed}
+                              className={`px-6 py-3 rounded-lg flex items-center gap-2 font-semibold transition-all ${signingContract.tenantSignature?.signed
+                                ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg'
+                                : 'bg-gray-200 text-gray-500 cursor-not-allowed dark:bg-gray-700 dark:text-gray-400'
+                                }`}
+                            >
+                              <FaPen /> Sign Contract
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Signature Status */}
+                        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <span className="text-gray-600 dark:text-gray-400">Tenant Signature:</span>
+                              <span className={`ml-2 flex items-center gap-1 ${signingContract.tenantSignature?.signed ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'}`}>
+                                {signingContract.tenantSignature?.signed ? (
+                                  <><FaCheckCircle /> Signed</>
+                                ) : (
+                                  <><FaTimesCircle /> Pending</>
+                                )}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-gray-600 dark:text-gray-400">Your Signature:</span>
+                              <span className={`ml-2 flex items-center gap-1 ${landlordSigned ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'}`}>
+                                {landlordSigned ? (
+                                  <><FaCheckCircle /> Signed</>
+                                ) : (
+                                  <><FaTimesCircle /> Pending</>
+                                )}
+                              </span>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                }
-                return null;
-              })()}
+                    );
+                  }
+                  return null;
+                })()}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Digital Signature Modal */}
-      {showSignatureModal && signingContract && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50">
-          <div className="flex min-h-full items-center justify-center p-4">
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full p-6 relative">
-              <div className="mb-4">
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Sign Contract</h2>
+      {
+        showSignatureModal && signingContract && (
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50">
+            <div className="flex min-h-full items-center justify-center p-4">
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full p-6 relative">
+                <div className="mb-4">
+                  <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Sign Contract</h2>
+                </div>
+                <DigitalSignature
+                  onSign={handleSignatureConfirm}
+                  onCancel={() => {
+                    setShowSignatureModal(false);
+                    setSigningContract(null);
+                  }}
+                  title="Sign as Landlord"
+                  userName={currentUser?.username || 'Landlord'}
+                  disabled={actionLoading === 'signing'}
+                />
               </div>
-              <DigitalSignature
-                onSign={handleSignatureConfirm}
-                onCancel={() => {
-                  setShowSignatureModal(false);
-                  setSigningContract(null);
-                }}
-                title="Sign as Landlord"
-                userName={currentUser?.username || 'Landlord'}
-                disabled={actionLoading === 'signing'}
-              />
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Rejection Modal */}
-      {showRejectModal && contractToReject && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full p-6 animate-scale-in">
-            <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">Reject Appointment</h3>
-            <p className="text-gray-600 dark:text-gray-300 mb-4 text-sm">
-              Are you sure you want to reject this appointment? This action cannot be undone and the contract will be cancelled.
-            </p>
+      {
+        showRejectModal && contractToReject && (
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full p-6 animate-scale-in">
+              <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">Reject Appointment</h3>
+              <p className="text-gray-600 dark:text-gray-300 mb-4 text-sm">
+                Are you sure you want to reject this appointment? This action cannot be undone and the contract will be cancelled.
+              </p>
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Reason for rejection (optional)
-              </label>
-              <textarea
-                value={rejectionReason}
-                onChange={(e) => setRejectionReason(e.target.value)}
-                placeholder="e.g., Property no longer available, Scheduling conflict..."
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent dark:bg-gray-700 dark:text-white resize-none"
-                rows="3"
-              />
-            </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Reason for rejection (optional)
+                </label>
+                <textarea
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                  placeholder="e.g., Property no longer available, Scheduling conflict..."
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent dark:bg-gray-700 dark:text-white resize-none"
+                  rows="3"
+                />
+              </div>
 
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => {
-                  setShowRejectModal(false);
-                  setContractToReject(null);
-                  setRejectionReason('');
-                }}
-                disabled={actionLoading !== ''}
-                className="px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmRejectAppointment}
-                disabled={actionLoading !== ''}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2 disabled:opacity-50"
-              >
-                {actionLoading === `reject-${contractToReject._id}` ? (
-                  <><FaSpinner className="animate-spin" /> Rejecting...</>
-                ) : (
-                  'Reject Appointment'
-                )}
-              </button>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => {
+                    setShowRejectModal(false);
+                    setContractToReject(null);
+                    setRejectionReason('');
+                  }}
+                  disabled={actionLoading !== ''}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmRejectAppointment}
+                  disabled={actionLoading !== ''}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2 disabled:opacity-50"
+                >
+                  {actionLoading === `reject-${contractToReject._id}` ? (
+                    <><FaSpinner className="animate-spin" /> Rejecting...</>
+                  ) : (
+                    'Reject Appointment'
+                  )}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 }
 
