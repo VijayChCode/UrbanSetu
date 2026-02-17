@@ -978,7 +978,12 @@ export default function RentProperty() {
           </div>
 
           <div className="flex-1 flex flex-col justify-center relative z-10">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-50 leading-tight mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+            <h1
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/listing/${listing._id}`);
+              }}
+              className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-50 leading-tight mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors cursor-pointer hover:underline">
               {listing.name}
             </h1>
 

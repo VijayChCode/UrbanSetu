@@ -361,7 +361,12 @@ export default function PayMonthlyRent() {
               </h1>
             </div>
 
-            <h2 className="text-lg text-gray-700 dark:text-gray-300 font-semibold mb-1">
+            <h2
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/listing/${contract.listingId?._id}`);
+              }}
+              className="text-lg text-gray-700 dark:text-gray-300 font-semibold mb-1 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer hover:underline transition-colors w-fit">
               {contract.listingId?.name}
             </h2>
 
