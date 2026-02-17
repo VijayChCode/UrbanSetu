@@ -24,6 +24,7 @@ const getStatusClasses = (status) => {
     case 'active':
       return 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800';
     case 'pending_signature':
+    case 'pending_payment':
       return 'bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-800';
     case 'draft':
       return 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600';
@@ -162,6 +163,7 @@ export default function RentalContracts() {
   };
 
   const getStatusLabel = (status) => {
+    if (status === 'pending_payment') return 'PAYMENT PENDING';
     return status?.replace('_', ' ').toUpperCase() || 'UNKNOWN';
   };
 
@@ -400,6 +402,11 @@ export default function RentalContracts() {
         ) : (
           <div className="space-y-4">
             {filteredContracts.map((contract) => {
+              // Determine functional status based on wallet existence
+              const displayStatus = (contract.status === 'active' && (!contract.wallet || !contract.wallet.paymentSchedule || contract.wallet.paymentSchedule.length === 0))
+                ? 'pending_payment'
+                : contract.status;
+
               const userRole = getUserRole(contract);
               const isTenant = userRole === 'tenant';
               const isLandlord = userRole === 'landlord';
@@ -415,7 +422,7 @@ export default function RentalContracts() {
               return (
                 <div
                   key={contract._id}
-                  className={`bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border-2 ${getStatusColor(contract.status)}`}
+                  className={`bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border-2 ${getStatusColor(displayStatus)}`}
                 >
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div className="flex-1">
@@ -573,6 +580,31 @@ export default function RentalContracts() {
                           );
                         }
 
+                        // Pending Payment Actions
+                        if (displayStatus === 'pending_payment') {
+                          return (
+                            <>
+                              {isTenant ? (
+                                <button
+                                  onClick={() => {
+                                    const listingId = contract.listingId?._id || contract.listingId;
+                                    if (listingId) {
+                                      navigate(`/user/rent-property?listingId=${listingId}&contractId=${contract.contractId || contract._id}`);
+                                    }
+                                  }}
+                                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center gap-2"
+                                >
+                                  <FaMoneyBillWave /> Pay Security Deposit
+                                </button>
+                              ) : (
+                                <span className="px-4 py-2 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 rounded-lg flex items-center justify-center gap-2 border border-yellow-200 dark:border-yellow-800 font-medium">
+                                  <FaClock /> Awaiting Tenant Payment
+                                </span>
+                              )}
+                            </>
+                          );
+                        }
+
                         // Seller/Landlord actions
                         if (isLandlord && contract.status === 'pending_signature') {
                           const booking = contract.bookingId;
@@ -641,7 +673,7 @@ export default function RentalContracts() {
                         <FaEye /> View Details
                       </button>
 
-                      {contract.status === 'active' && (
+                      {displayStatus === 'active' && (
                         <button
                           onClick={() => navigate(`/user/rent-wallet?contractId=${contractIdentifier}`)}
                           className={`px-4 py-2 text-white rounded-lg flex items-center justify-center gap-2 ${isTenant ? 'bg-purple-600 hover:bg-purple-700' : 'bg-blue-600 hover:bg-blue-700'}`}
@@ -649,7 +681,7 @@ export default function RentalContracts() {
                           <FaMoneyBillWave /> {isTenant ? 'Rent Wallet' : 'Monitor Rent'}
                         </button>
                       )}
-                      {contract.status === 'active' && isTenant && contract.wallet && contract.wallet.paymentSchedule && contract.wallet.paymentSchedule.filter(p => p.status === 'pending' || p.status === 'overdue').length > 0 && (
+                      {displayStatus === 'active' && isTenant && contract.wallet && contract.wallet.paymentSchedule && contract.wallet.paymentSchedule.filter(p => p.status === 'pending' || p.status === 'overdue').length > 0 && (
                         <button
                           onClick={() => {
                             const nextPending = contract.wallet.paymentSchedule.find((p, idx) => p.status === 'pending' || p.status === 'overdue');
@@ -661,7 +693,7 @@ export default function RentalContracts() {
                           <FaMoneyBillWave /> Pay Next Rent
                         </button>
                       )}
-                      {contract.status === 'active' && isTenant && (
+                      {displayStatus === 'active' && isTenant && (
                         <a
                           href={payMonthlyRentUrl}
                           target="_blank"
@@ -671,7 +703,7 @@ export default function RentalContracts() {
                           <FaExternalLinkAlt /> Pay Monthly Rent Page
                         </a>
                       )}
-                      {contract.status === 'active' && (
+                      {displayStatus === 'active' && (
                         <>
                           {isTenant && showMoveInChecklist && (
                             <button
