@@ -13507,10 +13507,6 @@ export const sendLoanEMIPaymentSuccessEmail = async (email, details) => {
               
               <p style="margin: 8px 0 5px 0; color: #1e40af; font-size: 16px; border-top: 1px dashed #bfdbfe; padding-top: 5px;"><strong>Total Paid:</strong> ₹${details.amount}</p>
               <p style="margin: 5px 0; color: #4b5563;"><strong>Total Remaining Balance:</strong> ₹${details.remainingBalance}</p>
-              ${details.receiptUrl ? `
-              <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #bfdbfe; text-align: center;">
-                <a href="${details.receiptUrl}" style="color: #2563eb; text-decoration: underline; font-size: 14px;">📄 Download Payment Receipt</a>
-              </div>` : ''}
             </div>
             
             <p style="color: #4b5563; margin: 0 0 15px 0; line-height: 1.6; font-size: 14px;">

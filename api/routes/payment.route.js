@@ -568,9 +568,10 @@ router.post("/verify", verifyToken, async (req, res) => {
         if (notificationContract) {
           const contract = notificationContract; // Alias for below code
           const listing = contract.listingId;
+          const backendUrl = `${req.protocol}://${req.get('host')}`;
           const clientUrl = process.env.CLIENT_URL || 'https://urbansetu.vercel.app';
           const walletUrl = `${clientUrl}/user/rent-wallet?contractId=${contract._id}`;
-          const receiptUrl = payment.receiptUrl || `${clientUrl}/api/payments/${payment.paymentId}/receipt`;
+          const receiptUrl = payment.receiptUrl || `${backendUrl}/api/payments/${payment.paymentId}/receipt`;
 
           // (Notifications continue below...)
 
@@ -994,8 +995,9 @@ router.post('/razorpay/verify', verifyToken, async (req, res) => {
     // DELAYED SAVE
     // await payment.save();
 
-    const clientUrl = process.env.CLIENT_URL || `${req.protocol}://${req.get('host')}`;
-    const receiptUrl = payment.receiptUrl || `${clientUrl}/api/payments/${payment.paymentId}/receipt`;
+    const backendUrl = `${req.protocol}://${req.get('host')}`;
+    const clientUrl = process.env.CLIENT_URL || backendUrl;
+    const receiptUrl = payment.receiptUrl || `${backendUrl}/api/payments/${payment.paymentId}/receipt`;
     payment.receiptUrl = receiptUrl;
 
     await Booking.findByIdAndUpdate(payment.appointmentId, {
