@@ -1605,22 +1605,13 @@ export default function RentProperty() {
                       />
                     )}
                   </div>
-                ) : (isLandlord && contract.tenantSignature?.signed) ? (
-                  <DigitalSignature
-                    title="Landlord Signature"
-                    userName={currentUser.username || currentUser.email}
-                    onSign={(signatureData) => {
-                      setSigningAs('landlord');
-                      handleSignatureConfirm(signatureData);
-                    }}
-                    disabled={loading}
-                  />
                 ) : (
                   <div className="p-4 bg-gray-50 border-2 border-dashed border-gray-300 dark:bg-gray-800 dark:border-gray-600 rounded-lg text-center">
                     <p className="text-gray-500 dark:text-gray-400 font-medium">
-                      {!contract.tenantSignature?.signed
-                        ? "Waiting for tenant to sign the contract first"
-                        : "Waiting for landlord to sign the contract"}
+                      Waiting for landlord to sign the contract
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1 italic">
+                      The property owner will be notified to sign once you complete your signature.
                     </p>
                   </div>
                 )}
