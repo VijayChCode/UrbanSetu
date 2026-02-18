@@ -94,6 +94,7 @@ const handleViewCount = async (blogId, req) => {
 export const publishScheduledBlogs = async () => {
     try {
         const now = new Date();
+        // Find blogs that are due for publication
         const scheduledBlogs = await Blog.find({
             published: false,
             scheduledAt: { $lte: now, $ne: null }
@@ -102,17 +103,30 @@ export const publishScheduledBlogs = async () => {
         if (scheduledBlogs.length > 0) {
             console.log(`Auto-publishing ${scheduledBlogs.length} scheduled blogs...`);
             for (const blog of scheduledBlogs) {
-                blog.published = true;
-                blog.publishedAt = blog.scheduledAt; // Keep the original intended date
-                blog.scheduledAt = null; // Clear scheduling
-                await blog.save();
+                // Atomic check to prevent race conditions (especially when called from multiple requests)
+                const freshBlog = await Blog.findOneAndUpdate(
+                    { _id: blog._id, published: false },
+                    {
+                        $set: {
+                            published: true,
+                            publishedAt: blog.scheduledAt || now,
+                            scheduledAt: null
+                        }
+                    },
+                    { new: true }
+                );
 
-                // Send notifications
-                sendBlogNotifications(blog);
+                if (freshBlog) {
+                    console.log(`- Published: "${freshBlog.title}" (ID: ${freshBlog._id})`);
+                    // Send notifications - AWAIT this to ensure it completes before next loop
+                    // or before the process/request potentially terminates
+                    await sendBlogNotifications(freshBlog);
+                }
             }
+            console.log('Auto-publishing task completed.');
         }
     } catch (error) {
-        console.error('Error publishing scheduled blogs:', error);
+        console.error('Error in publishScheduledBlogs:', error);
     }
 };
 
@@ -127,18 +141,28 @@ const sendBlogNotifications = async (blog) => {
             ...preferenceQuery
         }).select('email');
 
-        console.log(`Starting ${blog.type} notification for "${blog.title}" to ${subscribers.length} subscribers...`);
+        if (subscribers.length === 0) {
+            console.log(`No approved subscribers found for ${blog.type || 'blog'} notifications.`);
+            return;
+        }
 
+        console.log(`Sending ${blog.type || 'blog'} notification for "${blog.title}" to ${subscribers.length} subscribers...`);
+
+        // Use a plain object to avoid any Mongoose proxy issues in the email service
+        const blogData = blog.toObject ? blog.toObject() : blog;
+
+        // Process subscribers in chunks or one by one
+        // One by one is safer for error handling but slower
         for (const sub of subscribers) {
             try {
-                await sendNewBlogNotification(sub.email, 'Subscriber', blog);
+                await sendNewBlogNotification(sub.email, 'Subscriber', blogData);
             } catch (err) {
-                console.error(`Failed to send blog notification to ${sub.email}`, err);
+                console.error(`Failed to send blog notification to ${sub.email}:`, err.message);
             }
         }
-        console.log('Blog notifications completed.');
+        console.log(`Successfully completed notifications for "${blog.title}".`);
     } catch (error) {
-        console.error('Error fetching subscribers for blog notification:', error);
+        console.error('Error in sendBlogNotifications:', error);
     }
 };
 
@@ -445,10 +469,9 @@ export const createBlog = async (req, res, next) => {
             { path: 'author', select: 'username' }
         ]);
 
-        // AUTOMATED EMAIL NOTIFICATION: Send to all verified users if published immediately
+        // Send notifications (awaited to ensure delivery)
         if (blog.published) {
-            // Run asynchronously to not block the response
-            sendBlogNotifications(blog);
+            await sendBlogNotifications(blog);
         }
 
         res.status(201).json({
@@ -541,10 +564,9 @@ export const updateBlog = async (req, res, next) => {
             { path: 'author', select: 'username' }
         ]);
 
-        // AUTOMATED EMAIL NOTIFICATION: Send to all verified users if newly published
+        // Send notifications (awaited to ensure delivery)
         if (!wasPublished && blog.published) {
-            // Run asynchronously to not block the response
-            sendBlogNotifications(blog);
+            await sendBlogNotifications(blog);
         }
 
         res.status(200).json({
