@@ -112,7 +112,7 @@ export const updateUser = async (req, res, next) => {
         if ('avatar' in req.body) updateFields.avatar = req.body.avatar || null;
         if (req.body.mobileNumber) updateFields.mobileNumber = req.body.mobileNumber;
         if (req.body.address) updateFields.address = req.body.address.trim();
-        if (req.body.gender) updateFields.gender = req.body.gender;
+        if (req.body.gender && typeof req.body.gender === 'string') updateFields.gender = req.body.gender.toLowerCase();
         if (req.body.profileVisibility) updateFields.profileVisibility = req.body.profileVisibility;
 
         // Handle nested settings updates

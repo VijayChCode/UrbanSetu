@@ -366,6 +366,9 @@ export const SignIn = async (req, res, next) => {
         });
 
         // Update lastLogin timestamp and reset re-engagement email flag
+        if (validUser.gender && typeof validUser.gender === 'string') {
+            validUser.gender = validUser.gender.toLowerCase();
+        }
         validUser.lastLogin = new Date();
         validUser.lastLoginLocation = location;
         validUser.lastReEngagementEmailSent = null;
@@ -542,6 +545,9 @@ export const Google = async (req, res, next) => {
             });
 
             // Update lastLogin timestamp and reset re-engagement email flag
+            if (validUser.gender && typeof validUser.gender === 'string') {
+                validUser.gender = validUser.gender.toLowerCase();
+            }
             validUser.lastLogin = new Date();
             validUser.lastLoginLocation = location;
             validUser.lastReEngagementEmailSent = null;
