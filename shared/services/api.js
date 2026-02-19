@@ -5,7 +5,7 @@ import { API_BASE_URL, API_ENDPOINTS } from '../constants/api.js';
 const createApiClient = (baseURL = API_BASE_URL) => {
   const client = {
     baseURL,
-    
+
     // Generic request method
     request: async (endpoint, options = {}) => {
       const url = `${baseURL}${endpoint}`;
@@ -16,53 +16,61 @@ const createApiClient = (baseURL = API_BASE_URL) => {
         },
         ...options,
       };
-      
+
       // Add auth token if available (will be implemented per platform)
       const token = await client.getAuthToken();
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
-      
+
       try {
         const response = await fetch(url, config);
         const data = await response.json();
-        
+
         if (!response.ok) {
           throw new Error(data.message || `HTTP ${response.status}`);
         }
-        
+
         return data;
       } catch (error) {
         console.error('API Request Error:', error);
         throw error;
       }
     },
-    
+
     // HTTP methods
-    get: (endpoint, options = {}) => 
+    get: (endpoint, options = {}) =>
       client.request(endpoint, { method: 'GET', ...options }),
-    
-    post: (endpoint, data, options = {}) => 
-      client.request(endpoint, { 
-        method: 'POST', 
+
+    post: (endpoint, data, options = {}) =>
+      client.request(endpoint, {
+        method: 'POST',
         body: JSON.stringify(data),
-        ...options 
+        ...options
       }),
-    
-    put: (endpoint, data, options = {}) => 
-      client.request(endpoint, { 
-        method: 'PUT', 
+
+    put: (endpoint, data, options = {}) =>
+      client.request(endpoint, {
+        method: 'PUT',
         body: JSON.stringify(data),
-        ...options 
+        ...options
       }),
-    
-    delete: (endpoint, options = {}) => 
+
+    delete: (endpoint, options = {}) =>
       client.request(endpoint, { method: 'DELETE', ...options }),
-    
+
+    patch: (endpoint, data, options = {}) =>
+      client.request(endpoint, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+        ...options
+      }),
+
     // Platform-specific token getter (to be overridden)
+    /** @type {function(): Promise<string | null>} */
     getAuthToken: async () => null,
   };
-  
+
   return client;
 };
 

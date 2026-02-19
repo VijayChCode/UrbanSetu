@@ -77,15 +77,36 @@ export const clearCSRFTokenCache = () => {
 /**
  * Create fetch options with CSRF token
  * @param {Object} options - Fetch options
+ * @param {string} url - The URL being fetched
  * @returns {Promise<Object>} Fetch options with CSRF token
  */
-export const createAuthenticatedFetchOptions = async (options = {}) => {
+export const createAuthenticatedFetchOptions = async (options = {}, url = '') => {
   try {
-    const csrfToken = await getCSRFToken();
+    // List of public routes that don't need CSRF protection
+    const publicRoutes = [
+      '/api/auth/signin',
+      '/api/auth/signup',
+      '/api/auth/forgot-password',
+      '/api/auth/reset-password',
+      '/api/auth/send-otp',
+      '/api/auth/verify-otp',
+      '/api/auth/send-forgot-password-otp',
+      '/api/auth/send-login-otp',
+      '/api/auth/verify-login-otp',
+      '/api/auth/refresh',
+      '/api/auth/csrf-token'
+    ];
+
+    const isPublicRoute = url && publicRoutes.some(route => url.includes(route));
+
+    // Skip CSRF if it's a public route or if we already have a Bearer token
+    // (Note: verifyCSRFToken middleware on backend also skips if Bearer is present)
+    const authToken = localStorage.getItem('accessToken');
+    const csrfToken = isPublicRoute ? null : await getCSRFToken();
 
     const headers = {
-      'X-CSRF-Token': csrfToken,
-      ...(localStorage.getItem('accessToken') ? { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` } : {}),
+      ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
+      ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {}),
       ...(localStorage.getItem('sessionId') ? { 'X-Session-Id': localStorage.getItem('sessionId') } : {}),
       ...options.headers,
     };
@@ -101,37 +122,15 @@ export const createAuthenticatedFetchOptions = async (options = {}) => {
     };
   } catch (error) {
     console.error('Error creating authenticated fetch options:', error);
-    // Try once more without caching
-    try {
-      const csrfToken = await fetchCSRFToken();
-      const headers = {
-        'X-CSRF-Token': csrfToken,
-        ...(localStorage.getItem('accessToken') ? { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` } : {}),
-        ...(localStorage.getItem('sessionId') ? { 'X-Session-Id': localStorage.getItem('sessionId') } : {}),
+    // Return options without CSRF token as fallback
+    return {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
         ...options.headers,
-      };
-
-      if (!(options.body instanceof FormData)) {
-        headers['Content-Type'] = 'application/json';
-      }
-
-      return {
-        ...options,
-        headers,
-        credentials: 'include',
-      };
-    } catch (retryError) {
-      console.error('Retry failed for CSRF token:', retryError);
-      // Return options without CSRF token as final fallback
-      return {
-        ...options,
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers,
-        },
-        credentials: 'include',
-      };
-    }
+      },
+      credentials: 'include',
+    };
   }
 };
 
@@ -143,7 +142,7 @@ export const createAuthenticatedFetchOptions = async (options = {}) => {
  */
 export const authenticatedFetch = async (url, options = {}) => {
   try {
-    const authenticatedOptions = await createAuthenticatedFetchOptions(options);
+    const authenticatedOptions = await createAuthenticatedFetchOptions(options, url);
 
     let response = await fetch(url, authenticatedOptions);
 

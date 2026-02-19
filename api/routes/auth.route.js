@@ -29,14 +29,14 @@ router.post("/google", signInRateLimit, bruteForceProtection, conditionalRecaptc
 router.post("/refresh", RefreshToken)
 router.get("/signout", Signout)
 router.get("/verify", verifyAuth)
-router.post("/forgot-password", forgotPasswordRateLimit, verifyCSRFToken, validateRecaptcha({ required: true }), forgotPassword)
-router.post("/reset-password", verifyCSRFToken, resetPassword)
+router.post("/forgot-password", forgotPasswordRateLimit, validateRecaptcha({ required: true }), forgotPassword)
+router.post("/reset-password", resetPassword)
 
 // Email verification routes
-router.post("/send-otp", otpRateLimit, verifyCSRFToken, ...otpRecaptchaMiddleware, sendOTP)
-router.post("/verify-otp", otpVerifyRateLimit, verifyCSRFToken, verifyOTP)
-router.post("/send-forgot-password-otp", otpRateLimit, verifyCSRFToken, ...otpRecaptchaMiddleware, sendForgotPasswordOTP)
-router.post("/send-profile-email-otp", otpRateLimit, verifyCSRFToken, ...otpRecaptchaMiddleware, sendProfileEmailOTP)
+router.post("/send-otp", otpRateLimit, ...otpRecaptchaMiddleware, sendOTP)
+router.post("/verify-otp", otpVerifyRateLimit, verifyOTP)
+router.post("/send-forgot-password-otp", otpRateLimit, ...otpRecaptchaMiddleware, sendForgotPasswordOTP)
+router.post("/send-profile-email-otp", otpRateLimit, ...otpRecaptchaMiddleware, sendProfileEmailOTP)
 // Account deletion OTP (must be authenticated)
 router.post("/send-account-deletion-otp", verifyToken, otpRateLimit, verifyCSRFToken, ...otpRecaptchaMiddleware, sendAccountDeletionOTP)
 // Transfer rights OTP (root admin only)
@@ -45,8 +45,8 @@ router.post("/send-transfer-rights-otp", verifyToken, otpRateLimit, verifyCSRFTo
 router.post("/send-contract-confirmation-otp", verifyToken, otpRateLimit, verifyCSRFToken, ...otpRecaptchaMiddleware, sendContractConfirmationOTP)
 
 // OTP Login routes
-router.post("/send-login-otp", otpRateLimit, verifyCSRFToken, ...otpRecaptchaMiddleware, sendLoginOTP)
-router.post("/verify-login-otp", otpVerifyRateLimit, verifyCSRFToken, verifyLoginOTP)
+router.post("/send-login-otp", otpRateLimit, ...otpRecaptchaMiddleware, sendLoginOTP)
+router.post("/verify-login-otp", otpVerifyRateLimit, verifyLoginOTP)
 
 // Admin unlock endpoints
 router.post('/otp/unlock-email', verifyToken, async (req, res) => {
