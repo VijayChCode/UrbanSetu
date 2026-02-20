@@ -34,17 +34,21 @@ export default function Downloads() {
 
     const handleDownload = async (file) => {
         try {
-            if (file.url) {
-                // Cloudinary or direct URL
+            // Check if the URL is a Cloudinary URL (publicly accessible)
+            const isCloudinary = file.url && (file.url.includes('cloudinary.com') || file.url.includes('res.cloudinary.com'));
+
+            if (isCloudinary) {
+                // Cloudinary files are public, can be downloaded directly
                 window.location.href = file.url;
             } else {
-                // S3 Presigned URL
+                // S3 files are private, MUST use a presigned URL
+                // Even if file.url exists (it's the direct link), we need to call the API to get a signed one
                 const res = await authenticatedFetch(`${API_BASE_URL}/api/deployment/public-download-url?id=${encodeURIComponent(file.id)}`);
                 const data = await res.json();
                 if (data.success && data.url) {
                     window.location.href = data.url;
                 } else {
-                    toast.error('Download link expired or invalid');
+                    toast.error(data.message || 'Download link expired or invalid');
                 }
             }
         } catch (error) {

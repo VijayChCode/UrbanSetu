@@ -31,10 +31,8 @@ const upload = multer({
     bucket: bucketName || 'placeholder-bucket',
     // Note: Do not set ACL when the bucket enforces bucket-owner ownership (ACLs disabled)
     key: function (req, file, cb) {
-      const incomingPlatform = req && req.body ? req.body.platform : undefined;
-      const incomingVersion = req && req.body ? req.body.version : undefined;
-      const safePlatform = (typeof incomingPlatform === 'string' && incomingPlatform.trim()) ? incomingPlatform.trim() : 'android';
-      const safeVersion = (typeof incomingVersion === 'string' && incomingVersion.trim()) ? incomingVersion.trim() : 'v1.0.0';
+      const safePlatform = (req.body && typeof req.body.platform === 'string' && req.body.platform.trim()) ? req.body.platform.trim() : 'android';
+      const safeVersion = (req.body && typeof req.body.version === 'string' && req.body.version.trim()) ? req.body.version.trim() : 'v1.0.0';
       const timestamp = Date.now();
       const baseName = `${safePlatform}-${safeVersion}-${timestamp}`;
       const fileName = `mobile-apps/latest-${baseName}.${file.originalname.split('.').pop()}`;
@@ -106,6 +104,83 @@ const handleMulterError = (error, req, res, next) => {
   }
   next(error);
 };
+
+// Sync/Repair deployments: Check S3 for actual sizes of 0-byte records and ensure all S3 files are in DB
+router.get('/sync', verifyToken, async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'rootadmin') {
+      return res.status(403).json({ success: false, message: 'Access denied.' });
+    }
+
+    console.log('Starting deployment sync/repair...');
+    const deployments = await Deployment.find();
+    let repairedCount = 0;
+
+    for (const d of deployments) {
+      if (d.size === 0 || !d.size) {
+        try {
+          // Get actual size from S3
+          const command = new HeadObjectCommand({ Bucket: bucketName, Key: d.fileKey });
+          const headResult = await s3Client.send(command);
+          if (headResult.ContentLength) {
+            d.size = headResult.ContentLength;
+            await d.save();
+            repairedCount++;
+            console.log(`Repaired size for ${d.fileKey}: ${d.size} bytes`);
+          }
+        } catch (s3Err) {
+          console.error(`Failed to repair size for ${d.fileKey}:`, s3Err.message);
+        }
+      }
+    }
+
+    // Also look for files in S3 that might be missing from DB
+    // (This helps with the "previous 2 apps not shown" if they are in S3)
+    let discoveredCount = 0;
+    try {
+      const listCommand = new ListObjectsV2Command({ Bucket: bucketName, Prefix: 'mobile-apps/' });
+      const listResult = await s3Client.send(listCommand);
+
+      if (listResult.Contents) {
+        for (const s3File of listResult.Contents) {
+          const exists = deployments.find(d => d.fileKey === s3File.Key);
+          if (!exists && s3File.Size > 0) {
+            // Found a file in S3 that's not in our DB!
+            const fileName = s3File.Key.split('/').pop();
+            const format = fileName.split('.').pop().toLowerCase();
+
+            const newD = new Deployment({
+              fileKey: s3File.Key,
+              url: `https://${bucketName}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${s3File.Key}`,
+              platform: getPlatformFromFormat(format),
+              version: extractVersionFromFilename(fileName),
+              description: 'Automatically discovered from S3 storage',
+              size: s3File.Size,
+              format: format,
+              isActive: false,
+              uploadedBy: req.user.id
+            });
+            await newD.save();
+            discoveredCount++;
+            console.log(`Discovered missing deployment from S3: ${s3File.Key}`);
+          }
+        }
+      }
+    } catch (listErr) {
+      console.error('Failed to scan S3 for missing files:', listErr.message);
+    }
+
+    res.json({
+      success: true,
+      message: `Sync complete. Repaired ${repairedCount} records, Discovered ${discoveredCount} missing files.`,
+      repairedCount,
+      discoveredCount
+    });
+  } catch (error) {
+    console.error('Sync error:', error);
+    res.status(500).json({ success: false, message: 'Sync failed: ' + error.message });
+  }
+});
 
 // Test S3 connection
 router.get('/test-s3', async (req, res) => {
@@ -326,9 +401,22 @@ router.post('/upload', verifyToken, upload.single('file'), handleMulterError, as
       description: description || '',
       isActive: isTrueActive,
       uploadedBy: req.user.id,
-      size: file.size,
+      size: file.size || req.file?.size || 0, // Fallback to req.file.size
       format: (file.originalname.split('.').pop() || '').toLowerCase(),
     });
+
+    // If size is still 0, try to get it from S3 immediately
+    if (newDeployment.size === 0) {
+      try {
+        const headCommand = new HeadObjectCommand({ Bucket: bucketName, Key: file.key });
+        const headResult = await s3Client.send(headCommand);
+        if (headResult.ContentLength) {
+          newDeployment.size = headResult.ContentLength;
+        }
+      } catch (headErr) {
+        console.error('Failed to get size from S3 head:', headErr.message);
+      }
+    }
 
     await newDeployment.save();
 

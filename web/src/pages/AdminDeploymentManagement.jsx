@@ -88,11 +88,12 @@ export default function AdminDeploymentManagement() {
 
     try {
       const formData = new FormData();
-      formData.append('file', fileInput.files[0]);
+      // IMPORTANT: Append fields BEFORE the file for multer-s3 to access them in key/metadata functions
       formData.append('platform', uploadData.platform);
       formData.append('version', uploadData.version);
       formData.append('description', uploadData.description);
       formData.append('isActive', uploadData.isActive);
+      formData.append('file', fileInput.files[0]);
 
       // Use XMLHttpRequest for progress tracking
       const xhr = new XMLHttpRequest();
@@ -112,7 +113,7 @@ export default function AdminDeploymentManagement() {
           try {
             const data = JSON.parse(xhr.responseText);
             if (data.success) {
-              toast.success('File uploaded successfully to AWS S3!');
+              toast.success('File uploaded and deployed successfully!');
               setUploadData({
                 platform: 'android',
                 version: '',
@@ -130,32 +131,19 @@ export default function AdminDeploymentManagement() {
             toast.error('Upload failed - invalid response');
           }
         } else {
-          toast.error(`Upload failed with status: ${xhr.status}`);
+          try {
+            const errorData = JSON.parse(xhr.responseText);
+            toast.error(errorData.message || `Upload failed with status: ${xhr.status}`);
+          } catch (_) {
+            toast.error(`Upload failed with status: ${xhr.status}`);
+          }
         }
         setUploading(false);
         setUploadProgress(0);
         setUploadXhr(null);
       });
 
-      // Handle errors
-      xhr.addEventListener('error', () => {
-        console.error('Upload error:', xhr.statusText);
-        toast.error('Upload failed - network error');
-        setUploading(false);
-        setUploadProgress(0);
-        setUploadXhr(null);
-      });
-
-      // Handle abort
-      xhr.addEventListener('abort', () => {
-        console.log('Upload aborted');
-        toast.error('Upload cancelled');
-        setUploading(false);
-        setUploadProgress(0);
-        setUploadXhr(null);
-      });
-
-      // Start upload
+      // ... rest remains same
       xhr.open('POST', `${API_BASE_URL}/api/deployment/upload`);
       xhr.withCredentials = true; // Include credentials for cookies
       xhr.send(formData);
@@ -374,7 +362,26 @@ export default function AdminDeploymentManagement() {
                 Manage mobile app deployments, versions, and over-the-air updates via AWS S3.
               </p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={async () => {
+                  try {
+                    const res = await authenticatedFetch(`${API_BASE_URL}/api/deployment/sync`);
+                    const data = await res.json();
+                    if (data.success) {
+                      toast.success(data.message);
+                      fetchFiles();
+                      fetchActiveFiles();
+                    }
+                  } catch (err) {
+                    toast.error('Sync failed');
+                  }
+                }}
+                className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-800 shadow-sm hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
+                title="Repair 0-byte sizes and discover missing S3 files"
+              >
+                <FaRocket className="mr-2" /> Sync Storage
+              </button>
               <Link to="/download" target="_blank" className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-100 dark:border-green-800 shadow-sm hover:bg-green-100 dark:hover:bg-green-900/40 transition-colors">
                 <FaDownload className="mr-2" /> View Downloads Page
               </Link>
