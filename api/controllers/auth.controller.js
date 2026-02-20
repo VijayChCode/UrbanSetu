@@ -322,7 +322,7 @@ export const SignIn = async (req, res, next) => {
 
         // Get device info and check for suspicious login
         const userAgent = req.get('User-Agent');
-        const device = getDeviceInfo(userAgent);
+        const device = getDeviceInfo(userAgent, req.headers);
         const location = getLocationFromIP(identifier);
 
         // Check for suspicious login patterns
@@ -508,7 +508,7 @@ export const Google = async (req, res, next) => {
 
             // Get session info
             const userAgent = req.get('User-Agent');
-            const device = getDeviceInfo(userAgent);
+            const device = getDeviceInfo(userAgent, req.headers);
             const ip = req.ip || req.connection.remoteAddress;
             const location = getLocationFromIP(ip);
 
@@ -660,7 +660,7 @@ export const Google = async (req, res, next) => {
 
             // Get session info
             const userAgent = req.get('User-Agent');
-            const device = getDeviceInfo(userAgent);
+            const device = getDeviceInfo(userAgent, req.headers);
             const ip = req.ip || req.connection.remoteAddress;
             const location = getLocationFromIP(ip);
 
@@ -850,7 +850,7 @@ export const Signout = async (req, res, next) => {
                     'logout',
                     sessionId,
                     req.ip,
-                    getDeviceInfo(req.get('User-Agent')),
+                    getDeviceInfo(req.get('User-Agent'), req.headers),
                     getLocationFromIP(req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip),
                     'User signed out'
                 );
@@ -1504,7 +1504,7 @@ export const verifyLoginOTP = async (req, res, next) => {
 
         // Get device info and check for suspicious login
         const userAgent = req.get('User-Agent');
-        const device = getDeviceInfo(userAgent);
+        const device = getDeviceInfo(userAgent, req.headers);
         const location = getLocationFromIP(req.ip);
 
         // Check for suspicious login patterns

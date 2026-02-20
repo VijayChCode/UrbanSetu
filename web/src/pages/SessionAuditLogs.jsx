@@ -1456,12 +1456,14 @@ const SessionAuditLogs = () => {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${visitor.deviceType === 'Mobile' ? 'bg-blue-100 text-blue-700 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800' :
-                              visitor.deviceType === 'Tablet' ? 'bg-purple-100 text-purple-700 border border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800' :
-                                'bg-gray-100 text-gray-700 border border-gray-200 dark:bg-gray-700/50 dark:text-gray-300 dark:border-gray-600'
+                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${(visitor.deviceType === 'Mobile App' || visitor.device?.includes('UrbanSetu Mobile App')) ? 'bg-indigo-100 text-indigo-700 border border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800' :
+                                visitor.deviceType === 'Mobile' ? 'bg-blue-100 text-blue-700 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800' :
+                                  visitor.deviceType === 'Tablet' ? 'bg-purple-100 text-purple-700 border border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800' :
+                                    'bg-gray-100 text-gray-700 border border-gray-200 dark:bg-gray-700/50 dark:text-gray-300 dark:border-gray-600'
                               }`}>
-                              {visitor.deviceType === 'Mobile' ? <FaGlobe className="text-xs" /> :
-                                visitor.deviceType === 'Tablet' ? <FaGlobe className="text-xs" /> : <FaDesktop className="text-xs" />}
+                              {(visitor.deviceType === 'Mobile App' || visitor.device?.includes('UrbanSetu Mobile App')) ? <FaShieldAlt className="text-xs" /> :
+                                visitor.deviceType === 'Mobile' ? <FaGlobe className="text-xs" /> :
+                                  visitor.deviceType === 'Tablet' ? <FaGlobe className="text-xs" /> : <FaDesktop className="text-xs" />}
                               {visitor.deviceType || 'Unknown'}
                             </span>
                           </td>

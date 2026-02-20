@@ -254,6 +254,9 @@ export const getOSInfo = (userAgent) => {
         return version ? `iOS ${version}` : 'iOS';
     }
 
+    if (userAgent.includes('Turbo/')) return 'UrbanSetu Mobile';
+    if (userAgent.includes('UrbanSetu/')) return 'UrbanSetu Mobile';
+
     if (userAgent.includes('Linux')) return 'Linux';
     if (userAgent.includes('CrOS')) return 'Chrome OS';
 
@@ -261,10 +264,19 @@ export const getOSInfo = (userAgent) => {
 };
 
 // Get device type from user agent
-export const getDeviceType = (userAgent) => {
+export const getDeviceType = (userAgent, headers = {}) => {
+    // Priority 1: Explicit header from mobile/desktop apps
+    const platform = headers['x-client-platform'] || headers['X-Client-Platform'];
+    if (platform === 'mobile' || platform === 'UrbanSetu-Mobile') return 'Mobile App';
+    if (platform === 'desktop-app') return 'Desktop App';
+
     if (!userAgent) return 'Unknown';
 
-    if (userAgent.includes('Mobile') || userAgent.includes('Android')) {
+    // Priority 2: Custom User-Agent strings
+    if (userAgent.includes('UrbanSetu/')) return 'Mobile App';
+
+    // Priority 3: Standard pattern detection
+    if (userAgent.includes('Mobile') || userAgent.includes('Android') || userAgent.includes('iPhone')) {
         return 'Mobile';
     } else if (userAgent.includes('Tablet') || userAgent.includes('iPad')) {
         return 'Tablet';
@@ -274,12 +286,19 @@ export const getDeviceType = (userAgent) => {
 };
 
 // Get device info from user agent (keeping for backward compatibility)
-export const getDeviceInfo = (userAgent) => {
-    if (!userAgent) return 'Unknown Device';
+export const getDeviceInfo = (userAgent, headers = {}) => {
+    if (!userAgent && !headers['x-client-platform']) return 'Unknown Device';
+
+    const platform = headers['x-client-platform'] || headers['X-Client-Platform'];
+    const isMobileApp = platform === 'mobile' || platform === 'UrbanSetu-Mobile' || (userAgent && userAgent.includes('UrbanSetu/'));
 
     const browser = getBrowserInfo(userAgent);
     const os = getOSInfo(userAgent);
-    const deviceType = getDeviceType(userAgent);
+    const deviceType = getDeviceType(userAgent, headers);
+
+    if (isMobileApp) {
+        return `UrbanSetu Mobile App on ${os === 'Unknown' ? 'Mobile' : os}`;
+    }
 
     // Format: "Chrome 120 on Windows 10/11 (Desktop)"
     let deviceInfo = '';
@@ -354,7 +373,7 @@ export const createEnhancedSession = async (userId, req) => {
 
     const ip = req.ip || req.connection.remoteAddress;
     const userAgent = req.get('User-Agent');
-    const device = getDeviceInfo(userAgent);
+    const device = getDeviceInfo(userAgent, req.headers);
     const location = getLocationFromIP(ip);
 
     const session = {

@@ -84,10 +84,10 @@ export const trackVisitor = async (req, res, next) => {
     const fingerprint = generateFingerprint(ip, userAgent, source);
 
     // Get device and location info
-    const device = getDeviceInfo(userAgent);
+    const device = getDeviceInfo(userAgent, req.headers);
     const browserInfo = getBrowserInfo(userAgent);
     const os = getOSInfo(userAgent);
-    const deviceType = getDeviceType(userAgent);
+    const deviceType = getDeviceType(userAgent, req.headers);
     const location = getLocationFromIP(ip);
 
     // Get today's date (start of day for grouping)

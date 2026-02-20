@@ -66,7 +66,7 @@ router.post('/revoke-session', verifyToken, async (req, res, next) => {
       'logout',
       sessionId,
       req.ip,
-      getDeviceInfo(req.get('User-Agent')),
+      getDeviceInfo(req.get('User-Agent'), req.headers),
       getLocationFromIP(req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip),
       'User revoked session'
     );
@@ -104,7 +104,7 @@ router.post('/revoke-all-sessions', verifyToken, async (req, res, next) => {
       'logout',
       'others',
       req.ip,
-      getDeviceInfo(req.get('User-Agent')),
+      getDeviceInfo(req.get('User-Agent'), req.headers),
       getLocationFromIP(req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip),
       `User revoked ${sessionCount} other session(s)`
     );
@@ -312,7 +312,7 @@ router.post('/admin/force-logout', verifyToken, async (req, res, next) => {
       'forced_logout',
       sessionId,
       req.ip,
-      getDeviceInfo(req.get('User-Agent')),
+      getDeviceInfo(req.get('User-Agent'), req.headers),
       getLocationFromIP(req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip),
       `Forced logout by ${req.user.username}: ${reason}`,
       false,
@@ -365,7 +365,7 @@ router.post('/admin/force-logout-all', verifyToken, async (req, res, next) => {
       'forced_logout',
       'all',
       req.ip,
-      getDeviceInfo(req.get('User-Agent')),
+      getDeviceInfo(req.get('User-Agent'), req.headers),
       getLocationFromIP(req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip),
       `Forced logout all sessions by ${req.user.username}: ${reason}`,
       false,

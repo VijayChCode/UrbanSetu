@@ -267,6 +267,7 @@ const DeviceManagement = () => {
 
   const getDeviceIcon = (device) => {
     const d = (device || '').toLowerCase();
+    if (d.includes('urban setu mobile app') || d.includes('mobilesapp')) return <FaMobileAlt className="text-3xl text-indigo-600" />;
     if (d.includes('android')) return <FaAndroid className="text-3xl text-green-500" />;
     if (d.includes('iphone') || d.includes('ipad')) return <FaApple className="text-3xl text-gray-800" />;
     if (d.includes('mac')) return <FaLaptopCode className="text-3xl text-gray-800" />;

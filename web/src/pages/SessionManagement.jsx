@@ -267,7 +267,8 @@ const SessionManagement = () => {
 
   const getDeviceIcon = (device) => {
     const d = (device || '').toLowerCase();
-    if (d.includes('mobile') || d.includes('android')) return <FaMobileAlt className="text-xl text-blue-500" />;
+    if (d.includes('urban setu mobile app') || d.includes('mobilesapp')) return <FaMobileAlt className="text-xl text-indigo-600" />;
+    if (d.includes('mobile') || d.includes('android') || d.includes('iphone')) return <FaMobileAlt className="text-xl text-blue-500" />;
     if (d.includes('tablet') || d.includes('ipad')) return <FaTabletAlt className="text-xl text-purple-500" />;
     return <FaDesktop className="text-xl text-gray-500" />;
   };
@@ -432,7 +433,8 @@ const SessionManagement = () => {
                 className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-gray-600 text-gray-900 dark:text-white outline-none transition-all"
               >
                 <option value="all">All Devices</option>
-                <option value="mobile">Mobile</option>
+                <option value="mobile">Mobile (Browser)</option>
+                <option value="urban setu mobile app">Mobile App</option>
                 <option value="desktop">Desktop</option>
                 <option value="tablet">Tablet</option>
               </select>
