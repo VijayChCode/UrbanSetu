@@ -476,16 +476,13 @@ export default function AdminDeploymentManagement() {
       {showEditModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-lg w-full p-8 transform transition-all scale-100 border border-indigo-100 dark:border-indigo-900/30">
-            <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-100 dark:border-gray-700">
+            <div className="flex items-center mb-8 pb-4 border-b border-gray-100 dark:border-gray-700">
               <div className="flex items-center gap-4 text-indigo-600 dark:text-indigo-400">
                 <div className="p-3 bg-indigo-100 dark:bg-indigo-900/20 rounded-full">
                   <FaFileCode className="text-2xl" />
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Edit Deployment</h3>
               </div>
-              <button onClick={() => setShowEditModal(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors">
-                <FaTimes className="text-xl" />
-              </button>
             </div>
 
             <form onSubmit={handleUpdateDeployment} className="space-y-6">
@@ -801,35 +798,37 @@ export default function AdminDeploymentManagement() {
                   <h2 className="text-lg font-bold text-gray-800 dark:text-white">Deployment History</h2>
                 </div>
 
-                {/* Platform Filters (Match Downloads.jsx style) */}
-                <div className="flex bg-gray-100 dark:bg-gray-700/50 p-1 rounded-xl">
-                  {['all', 'windows', 'macos', 'mobile'].map(tab => (
-                    <button
-                      key={tab}
-                      onClick={() => setActiveTab(tab)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${activeTab === tab
-                        ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
-                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-                        } capitalize`}
-                    >
-                      {tab}
-                    </button>
-                  ))}
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                  {/* Platform Filters (Match Downloads.jsx style) */}
+                  <div className="flex bg-gray-100 dark:bg-gray-700/50 p-1 rounded-xl">
+                    {['all', 'windows', 'macos', 'mobile'].map(tab => (
+                      <button
+                        key={tab}
+                        onClick={() => setActiveTab(tab)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${activeTab === tab
+                          ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
+                          : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                          } capitalize`}
+                      >
+                        {tab}
+                      </button>
+                    ))}
+                  </div>
+
+                  {(() => {
+                    const filteredHistory = activeTab === 'all'
+                      ? files
+                      : activeTab === 'mobile'
+                        ? files.filter(f => ['android', 'ios'].includes(f.platform))
+                        : files.filter(f => f.platform === activeTab);
+
+                    return (
+                      <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">
+                        {filteredHistory.length} Filtered
+                      </span>
+                    );
+                  })()}
                 </div>
-
-                {(() => {
-                  const filteredHistory = activeTab === 'all'
-                    ? files
-                    : activeTab === 'mobile'
-                      ? files.filter(f => ['android', 'ios'].includes(f.platform))
-                      : files.filter(f => f.platform === activeTab);
-
-                  return (
-                    <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-xs font-bold px-3 py-1 rounded-full">
-                      {filteredHistory.length} Filtered
-                    </span>
-                  );
-                })()}
               </div>
 
               {files.length === 0 ? (
@@ -971,6 +970,6 @@ export default function AdminDeploymentManagement() {
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 }
