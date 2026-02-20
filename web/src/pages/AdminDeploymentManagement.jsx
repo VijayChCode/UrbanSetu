@@ -29,6 +29,23 @@ export default function AdminDeploymentManagement() {
     isActive: false
   });
 
+  // Modals for Actions
+  const [showSyncModal, setShowSyncModal] = useState(false);
+  const [showActiveModal, setShowActiveModal] = useState(false);
+  const [fileToActivate, setFileToActivate] = useState(null);
+  const [activeActionType, setActiveActionType] = useState('activate'); // 'activate' or 'deactivate'
+
+  // Edit Modal State
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editData, setEditData] = useState({
+    id: '',
+    version: '',
+    description: '',
+    isActive: false
+  });
+
+  const [activeTab, setActiveTab] = useState('all'); // all, windows, macos, mobile
+
   useEffect(() => {
     fetchFiles();
     fetchActiveFiles();
@@ -163,26 +180,78 @@ export default function AdminDeploymentManagement() {
     }
   };
 
-  const handleSetActive = async (fileId) => {
+  const handleSyncStorage = async () => {
+    try {
+      setLoading(true);
+      const res = await authenticatedFetch(`${API_BASE_URL}/api/deployment/sync`);
+      const data = await res.json();
+      if (data.success) {
+        toast.success(data.message);
+        fetchFiles();
+        fetchActiveFiles();
+      }
+    } catch (err) {
+      toast.error('Sync failed');
+    } finally {
+      setLoading(false);
+      setShowSyncModal(false);
+    }
+  };
+
+  const handleSetActive = async (fileId, isActive = true) => {
     try {
       const encodedId = encodeURIComponent(fileId);
       const response = await authenticatedFetch(`${API_BASE_URL}/api/deployment/set-active/${encodedId}`, {
-        method: 'PUT'
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive })
       });
 
       const data = await response.json();
       if (data.success) {
-        toast.success('Active deployment updated!');
+        toast.success(isActive ? 'Deployment promoted to active!' : 'Deployment deactivated');
         fetchFiles();
         fetchActiveFiles();
       } else {
-        toast.error(data.message || 'Failed to set active deployment');
+        toast.error(data.message || 'Failed to update activation status');
       }
-      // Invalidate public download cache immediately after changes
       resetAndroidDownloadCache();
     } catch (error) {
-      console.error('Error setting active:', error);
-      toast.error('Failed to set active deployment');
+      console.error('Error updating activation status:', error);
+      toast.error('Failed to update activation status');
+    } finally {
+      setShowActiveModal(false);
+      setFileToActivate(null);
+    }
+  };
+
+  const handleUpdateDeployment = async (e) => {
+    e.preventDefault();
+    try {
+      const encodedId = encodeURIComponent(editData.id);
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/deployment/${encodedId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          version: editData.version,
+          description: editData.description,
+          isActive: editData.isActive
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        toast.success('Deployment updated successfully!');
+        fetchFiles();
+        fetchActiveFiles();
+        setShowEditModal(false);
+      } else {
+        toast.error(data.message || 'Failed to update deployment');
+      }
+      resetAndroidDownloadCache();
+    } catch (error) {
+      console.error('Error updating deployment:', error);
+      toast.error('Failed to update deployment');
     }
   };
 
@@ -308,33 +377,168 @@ export default function AdminDeploymentManagement() {
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-md w-full p-6 transform transition-all scale-100">
-            <div className="flex items-center gap-4 mb-4 text-red-600 dark:text-red-400">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-8 transform transition-all scale-100 border border-red-100 dark:border-red-900/30">
+            <div className="flex items-center gap-4 mb-6 text-red-600 dark:text-red-400">
               <div className="p-3 bg-red-100 dark:bg-red-900/20 rounded-full">
-                <FaTrash className="text-xl" />
+                <FaTrash className="text-2xl" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Confirm Deletion</h3>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Confirm Deletion</h3>
             </div>
-
-            <p className="text-gray-600 dark:text-gray-300 mb-6">
-              Are you sure you want to delete this deployment file? This action cannot be undone.
+            <p className="text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
+              Are you sure you want to delete this deployment? This will permanently remove the file from AWS S3 and the database.
             </p>
-
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowDeleteModal(false)}
-                className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 font-medium transition-colors"
+                className="px-5 py-2.5 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 font-semibold transition-all"
+              >
+                Go Back
+              </button>
+              <button
+                onClick={handleDeleteFile}
+                className="px-5 py-2.5 text-white bg-red-600 rounded-xl hover:bg-red-700 font-bold shadow-lg shadow-red-200 dark:shadow-none transition-all"
+              >
+                Delete Forever
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sync Confirmation Modal */}
+      {showSyncModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-8 transform transition-all scale-100 border border-blue-100 dark:border-blue-900/30">
+            <div className="flex items-center gap-4 mb-6 text-blue-600 dark:text-blue-400">
+              <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-full">
+                <FaRocket className="text-2xl" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Start Storage Sync</h3>
+            </div>
+            <p className="text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
+              This will scan your AWS S3 bucket to repair 0-byte file sizes and discover missing deployments. This might take a few moments. Proceed?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowSyncModal(false)}
+                className="px-5 py-2.5 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 font-semibold transition-all"
               >
                 Cancel
               </button>
               <button
-                onClick={handleDeleteFile}
-                className="px-4 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 font-medium shadow-lg shadow-red-200 transition-colors"
+                onClick={handleSyncStorage}
+                className="px-5 py-2.5 text-white bg-blue-600 rounded-xl hover:bg-blue-700 font-bold shadow-lg shadow-blue-200 dark:shadow-none transition-all"
               >
-                Delete File
+                Start Sync
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Activation/Promotion Confirmation Modal */}
+      {showActiveModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-8 transform transition-all scale-100 border border-green-100 dark:border-green-900/30">
+            <div className={`flex items-center gap-4 mb-6 ${activeActionType === 'activate' ? 'text-green-600 dark:text-green-400' : 'text-orange-600 dark:text-orange-400'}`}>
+              <div className={`p-3 rounded-full ${activeActionType === 'activate' ? 'bg-green-100 dark:bg-green-900/20' : 'bg-orange-100 dark:bg-orange-900/20'}`}>
+                <FaCheck className="text-2xl" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+                {activeActionType === 'activate' ? 'Promote to Production' : 'Deactivate Build'}
+              </h3>
+            </div>
+            <p className="text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
+              {activeActionType === 'activate'
+                ? 'Are you sure you want to set this build as the ACTIVE production version? It will replace the current active build for this platform.'
+                : 'Are you sure you want to deactivate this build? This platform will no longer have an active download version.'}
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowActiveModal(false)}
+                className="px-5 py-2.5 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 font-semibold transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleSetActive(fileToActivate, activeActionType === 'activate')}
+                className={`px-5 py-2.5 text-white rounded-xl font-bold shadow-lg transition-all ${activeActionType === 'activate' ? 'bg-green-600 hover:bg-green-700 shadow-green-200' : 'bg-orange-600 hover:bg-orange-700 shadow-orange-200'}`}
+              >
+                Confirm {activeActionType === 'activate' ? 'Promotion' : 'Deactivation'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Metadata Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-lg w-full p-8 transform transition-all scale-100 border border-indigo-100 dark:border-indigo-900/30">
+            <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-100 dark:border-gray-700">
+              <div className="flex items-center gap-4 text-indigo-600 dark:text-indigo-400">
+                <div className="p-3 bg-indigo-100 dark:bg-indigo-900/20 rounded-full">
+                  <FaFileCode className="text-2xl" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Edit Deployment</h3>
+              </div>
+              <button onClick={() => setShowEditModal(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors">
+                <FaTimes className="text-xl" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateDeployment} className="space-y-6">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">Version Number</label>
+                <input
+                  type="text"
+                  value={editData.version}
+                  onChange={(e) => setEditData({ ...editData, version: e.target.value })}
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all font-semibold dark:text-white"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">Changelog / Description</label>
+                <textarea
+                  value={editData.description}
+                  onChange={(e) => setEditData({ ...editData, description: e.target.value })}
+                  rows={4}
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all dark:text-white resize-none"
+                />
+              </div>
+
+              <div className="flex items-center p-4 bg-indigo-50/50 dark:bg-indigo-900/10 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
+                <input
+                  id="editActiveFlag"
+                  type="checkbox"
+                  checked={editData.isActive}
+                  onChange={(e) => setEditData({ ...editData, isActive: e.target.checked })}
+                  className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500"
+                />
+                <label htmlFor="editActiveFlag" className="ml-4 text-sm font-bold text-gray-700 dark:text-gray-200 cursor-pointer">
+                  Production Build (Active)
+                </label>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="px-6 py-2.5 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-xl hover:bg-gray-200 font-bold transition-all"
+                >
+                  Discard
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 font-bold shadow-lg shadow-indigo-200 dark:shadow-none transition-all"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
@@ -362,31 +566,23 @@ export default function AdminDeploymentManagement() {
                 Manage mobile app deployments, versions, and over-the-air updates via AWS S3.
               </p>
             </div>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
               <button
-                onClick={async () => {
-                  try {
-                    const res = await authenticatedFetch(`${API_BASE_URL}/api/deployment/sync`);
-                    const data = await res.json();
-                    if (data.success) {
-                      toast.success(data.message);
-                      fetchFiles();
-                      fetchActiveFiles();
-                    }
-                  } catch (err) {
-                    toast.error('Sync failed');
-                  }
-                }}
-                className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-800 shadow-sm hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
+                onClick={() => setShowSyncModal(true)}
+                className="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 rounded-full text-sm font-bold bg-blue-600 shadow-md shadow-blue-200 dark:shadow-none text-white hover:bg-blue-700 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
                 title="Repair 0-byte sizes and discover missing S3 files"
               >
                 <FaRocket className="mr-2" /> Sync Storage
               </button>
-              <Link to="/download" target="_blank" className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-100 dark:border-green-800 shadow-sm hover:bg-green-100 dark:hover:bg-green-900/40 transition-colors">
+              <Link
+                to="/download"
+                target="_blank"
+                className="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 rounded-full text-sm font-bold bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-all transform hover:-translate-y-0.5"
+              >
                 <FaDownload className="mr-2" /> View Downloads Page
               </Link>
-              <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-800 shadow-sm">
-                <FaInfoCircle className="mr-2" /> Max File Size: 200MB
+              <span className="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 rounded-full text-xs font-black uppercase tracking-widest bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-800/30">
+                <FaInfoCircle className="mr-2" /> Limit: 200MB
               </span>
             </div>
           </div>
@@ -599,14 +795,41 @@ export default function AdminDeploymentManagement() {
 
             {/* All Deployments List */}
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden transition-colors">
-              <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-700/30 flex items-center justify-between">
+              <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-700/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <FaHistory className="text-blue-500 dark:text-blue-400" />
                   <h2 className="text-lg font-bold text-gray-800 dark:text-white">Deployment History</h2>
                 </div>
-                <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-xs font-bold px-3 py-1 rounded-full">
-                  {files.length} Total
-                </span>
+
+                {/* Platform Filters (Match Downloads.jsx style) */}
+                <div className="flex bg-gray-100 dark:bg-gray-700/50 p-1 rounded-xl">
+                  {['all', 'windows', 'macos', 'mobile'].map(tab => (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveTab(tab)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${activeTab === tab
+                        ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
+                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                        } capitalize`}
+                    >
+                      {tab}
+                    </button>
+                  ))}
+                </div>
+
+                {(() => {
+                  const filteredHistory = activeTab === 'all'
+                    ? files
+                    : activeTab === 'mobile'
+                      ? files.filter(f => ['android', 'ios'].includes(f.platform))
+                      : files.filter(f => f.platform === activeTab);
+
+                  return (
+                    <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-xs font-bold px-3 py-1 rounded-full">
+                      {filteredHistory.length} Filtered
+                    </span>
+                  );
+                })()}
               </div>
 
               {files.length === 0 ? (
@@ -626,75 +849,119 @@ export default function AdminDeploymentManagement() {
                       </tr>
                     </thead>
                     <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                      {files.map((file) => (
-                        <tr key={file.id} className="hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-colors duration-150">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center gap-3">
-                              <div className="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                                {getPlatformIcon(file.platform)}
-                              </div>
-                              <div>
-                                <div className="font-bold text-gray-900 dark:text-white">{getPlatformName(file.platform)}</div>
-                                <div className="text-xs text-gray-500 dark:text-gray-400 font-mono">v{file.version}</div>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="text-sm text-gray-900 dark:text-gray-200 font-medium">{formatFileSize(file.size)}</div>
-                            <div className="mt-1">
-                              {file.description ? (
-                                <div className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 max-w-xs group-hover:line-clamp-none transition-all cursor-help" title={file.description}>
-                                  <span className="font-bold text-blue-600 dark:text-blue-400 mr-1 italic">Changelog:</span>
-                                  {file.description}
-                                </div>
-                              ) : (
-                                <span className="text-xs text-gray-400 dark:text-gray-600 italic">No description</span>
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {file.isActive ? (
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border border-green-200 dark:border-green-800/50 shadow-sm">
-                                <FaCheck className="mr-1.5" /> Active
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
-                                Inactive
-                              </span>
+                      {(() => {
+                        const filteredHistory = activeTab === 'all'
+                          ? files
+                          : activeTab === 'mobile'
+                            ? files.filter(f => ['android', 'ios'].includes(f.platform))
+                            : files.filter(f => f.platform === activeTab);
+
+                        return (
+                          <>
+                            {filteredHistory.map((file) => (
+                              <tr key={file.id} className="hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-colors duration-150">
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                                      {getPlatformIcon(file.platform)}
+                                    </div>
+                                    <div>
+                                      <div className="font-bold text-gray-900 dark:text-white">{getPlatformName(file.platform)}</div>
+                                      <div className="text-xs text-gray-500 dark:text-gray-400 font-mono">v{file.version}</div>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4">
+                                  <div className="text-sm text-gray-900 dark:text-gray-200 font-medium">{formatFileSize(file.size)}</div>
+                                  <div className="mt-1">
+                                    {file.description ? (
+                                      <div className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 max-w-xs group-hover:line-clamp-none transition-all cursor-help" title={file.description}>
+                                        <span className="font-bold text-blue-600 dark:text-blue-400 mr-1 italic">Changelog:</span>
+                                        {file.description}
+                                      </div>
+                                    ) : (
+                                      <span className="text-xs text-gray-400 dark:text-gray-600 italic">No description</span>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  {file.isActive ? (
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border border-green-200 dark:border-green-800/50 shadow-sm">
+                                      <FaCheck className="mr-1.5" /> Active
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
+                                      Inactive
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                  {formatDate(file.createdAt)}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                  <div className="flex items-center justify-end gap-1 sm:gap-2">
+                                    {/* Edit Action */}
+                                    <button
+                                      onClick={() => {
+                                        setEditData({
+                                          id: file.id,
+                                          version: file.version,
+                                          description: file.description || '',
+                                          isActive: file.isActive
+                                        });
+                                        setShowEditModal(true);
+                                      }}
+                                      className="p-2 text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
+                                      title="Edit Details"
+                                    >
+                                      <FaFileCode />
+                                    </button>
+
+                                    <button
+                                      onClick={() => handleDownloadFile(file.id)}
+                                      className="p-2 text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                                      title="Download Binary"
+                                    >
+                                      <FaDownload />
+                                    </button>
+
+                                    {/* Activation Toggle Action */}
+                                    <button
+                                      onClick={() => {
+                                        setFileToActivate(file.id);
+                                        setActiveActionType(file.isActive ? 'deactivate' : 'activate');
+                                        setShowActiveModal(true);
+                                      }}
+                                      className={`p-2 rounded-lg transition-all ${file.isActive
+                                        ? 'text-orange-600 hover:text-orange-900 dark:text-orange-400 dark:hover:text-orange-300 hover:bg-orange-50 dark:hover:bg-orange-900/20'
+                                        : 'text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20'
+                                        }`}
+                                      title={file.isActive ? 'Deactivate Build' : 'Promote to Production'}
+                                    >
+                                      {file.isActive ? <FaTimes /> : <FaCheck />}
+                                    </button>
+
+                                    <button
+                                      onClick={() => confirmDeleteFile(file.id)}
+                                      className="p-2 text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                      title="Purge Deployment"
+                                    >
+                                      <FaTrash />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                            {filteredHistory.length === 0 && (
+                              <tr>
+                                <td colSpan="5" className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                                  No versions found for the selected platform.
+                                </td>
+                              </tr>
                             )}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                            {formatDate(file.createdAt)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <div className="flex items-center justify-end gap-2">
-                              <button
-                                onClick={() => handleDownloadFile(file.id)}
-                                className="p-2 text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                                title="Download"
-                              >
-                                <FaDownload />
-                              </button>
-                              {!file.isActive && (
-                                <button
-                                  onClick={() => handleSetActive(file.id)}
-                                  className="p-2 text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
-                                  title="Promote to Active"
-                                >
-                                  <FaCheck />
-                                </button>
-                              )}
-                              <button
-                                onClick={() => confirmDeleteFile(file.id)}
-                                className="p-2 text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                                title="Delete"
-                              >
-                                <FaTrash />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                          </>
+                        );
+                      })()}
                     </tbody>
                   </table>
                 </div>

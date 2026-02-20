@@ -434,7 +434,7 @@ router.post('/upload', verifyToken, upload.single('file'), handleMulterError, as
   }
 });
 
-// Set active deployment in DB
+// Set active/inactive deployment in DB
 router.put('/set-active/:id', verifyToken, async (req, res) => {
   try {
     if (!req.user || req.user.role !== 'rootadmin') {
@@ -442,13 +442,25 @@ router.put('/set-active/:id', verifyToken, async (req, res) => {
     }
 
     const { id } = req.params;
+    const { isActive } = req.body; // Allow explicit deactivation
+
     const targetDeployment = await Deployment.findById(id);
 
     if (!targetDeployment) {
       return res.status(404).json({ success: false, message: 'Deployment not found' });
     }
 
-    // Deactivate all others for this platform
+    if (isActive === false) {
+      // Deactivate this specific one
+      targetDeployment.isActive = false;
+      await targetDeployment.save();
+      return res.json({
+        success: true,
+        message: `Deployment for ${targetDeployment.platform} deactivated`
+      });
+    }
+
+    // Otherwise, activate this one and deactivate others for this platform
     await Deployment.updateMany({ platform: targetDeployment.platform }, { isActive: false });
 
     // Activate this one
@@ -464,6 +476,48 @@ router.put('/set-active/:id', verifyToken, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to set active deployment'
+    });
+  }
+});
+
+// Update deployment metadata (version, description)
+router.put('/:id', verifyToken, async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'rootadmin') {
+      return res.status(403).json({ success: false, message: 'Access denied. Root admin only.' });
+    }
+
+    const { id } = req.params;
+    const { version, description, isActive } = req.body;
+
+    const deployment = await Deployment.findById(id);
+    if (!deployment) {
+      return res.status(404).json({ success: false, message: 'Deployment not found' });
+    }
+
+    if (version) deployment.version = version;
+    if (description !== undefined) deployment.description = description;
+
+    // If setting as active via edit, handle others
+    if (isActive === true && !deployment.isActive) {
+      await Deployment.updateMany({ platform: deployment.platform }, { isActive: false });
+      deployment.isActive = true;
+    } else if (isActive === false) {
+      deployment.isActive = false;
+    }
+
+    await deployment.save();
+
+    res.json({
+      success: true,
+      message: 'Deployment updated successfully',
+      data: deployment
+    });
+  } catch (error) {
+    console.error('Error updating deployment:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update deployment'
     });
   }
 });

@@ -81,12 +81,15 @@ export default function Downloads() {
         ios: files.find(f => f.isActive && f.platform === 'ios'),
     };
 
+    // Explicitly sort files by creation date descending (latest first)
+    const sortedFiles = [...files].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
     // Filter for Version History Table
     const filteredFiles = activeTab === 'all'
-        ? files
+        ? sortedFiles
         : activeTab === 'mobile'
-            ? files.filter(f => ['android', 'ios'].includes(f.platform))
-            : files.filter(f => f.platform === activeTab);
+            ? sortedFiles.filter(f => ['android', 'ios'].includes(f.platform))
+            : sortedFiles.filter(f => f.platform === activeTab);
 
     if (loading) {
         return <AdminDeploymentManagementSkeleton />;
