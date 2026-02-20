@@ -3,6 +3,7 @@ import multer from 'multer';
 import cloudinary from 'cloudinary';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import { verifyToken } from '../utils/verify.js';
+import Deployment from '../models/deployment.model.js';
 
 const router = express.Router();
 
@@ -98,29 +99,27 @@ const upload = multer({
   },
 });
 
-// Get all deployment files
+// Get all deployment files from DB
 router.get('/', verifyToken, async (req, res) => {
   try {
     // Root admin only
     if (!req.user || req.user.role !== 'rootadmin') {
       return res.status(403).json({ success: false, message: 'Access denied. Root admin only.' });
     }
-    const result = await cloudinary.v2.search
-      .expression('folder:mobile-apps')
-      .sort_by('created_at', 'desc')
-      .max_results(50)
-      .execute();
 
-    const files = result.resources.map(file => ({
-      id: file.public_id,
-      name: file.original_filename || file.public_id.split('/').pop(),
-      url: file.secure_url,
-      size: file.bytes,
-      format: file.format,
-      platform: getPlatformFromFormat(file.format),
-      version: extractVersionFromFilename(file.original_filename || file.public_id),
-      createdAt: file.created_at,
-      isActive: file.public_id.includes('latest'), // Files with 'latest' in name are active
+    const deployments = await Deployment.find().sort({ createdAt: -1 });
+
+    const files = deployments.map(d => ({
+      id: d._id,
+      name: d.fileKey.split('/').pop(),
+      url: d.url,
+      size: d.size,
+      format: d.format,
+      platform: d.platform,
+      version: d.version,
+      description: d.description,
+      createdAt: d.createdAt,
+      isActive: d.isActive,
     }));
 
     res.json({
@@ -136,24 +135,21 @@ router.get('/', verifyToken, async (req, res) => {
   }
 });
 
-// Get active deployment files (latest versions)
+// Get active deployment files (latest versions) from DB
 router.get('/active', async (req, res) => {
   try {
-    const result = await cloudinary.v2.search
-      .expression('folder:mobile-apps AND public_id:latest*')
-      .sort_by('created_at', 'desc')
-      .max_results(10)
-      .execute();
+    const activeDeployments = await Deployment.find({ isActive: true }).sort({ createdAt: -1 });
 
-    const activeFiles = result.resources.map(file => ({
-      id: file.public_id,
-      name: file.original_filename || file.public_id.split('/').pop(),
-      url: file.secure_url,
-      size: file.bytes,
-      format: file.format,
-      platform: getPlatformFromFormat(file.format),
-      version: extractVersionFromFilename(file.original_filename || file.public_id),
-      createdAt: file.created_at,
+    const activeFiles = activeDeployments.map(d => ({
+      id: d._id,
+      name: d.fileKey.split('/').pop(),
+      url: d.url,
+      size: d.size,
+      format: d.format,
+      platform: d.platform,
+      version: d.version,
+      description: d.description,
+      createdAt: d.createdAt,
     }));
 
     res.json({
@@ -169,25 +165,22 @@ router.get('/active', async (req, res) => {
   }
 });
 
-// Get all public deployment files (Version History)
+// Get all public deployment files (Version History) from DB
 router.get('/public', async (req, res) => {
   try {
-    const result = await cloudinary.v2.search
-      .expression('folder:mobile-apps')
-      .sort_by('created_at', 'desc')
-      .max_results(50)
-      .execute();
+    const deployments = await Deployment.find().sort({ createdAt: -1 }).limit(50);
 
-    const files = result.resources.map(file => ({
-      id: file.public_id,
-      name: file.original_filename || file.public_id.split('/').pop(),
-      url: file.secure_url,
-      size: file.bytes,
-      format: file.format,
-      platform: getPlatformFromFormat(file.format),
-      version: extractVersionFromFilename(file.original_filename || file.public_id),
-      createdAt: file.created_at,
-      isActive: file.public_id.includes('latest'),
+    const files = deployments.map(d => ({
+      id: d._id,
+      name: d.fileKey.split('/').pop(),
+      url: d.url,
+      size: d.size,
+      format: d.format,
+      platform: d.platform,
+      version: d.version,
+      description: d.description,
+      createdAt: d.createdAt,
+      isActive: d.isActive,
     }));
 
     res.json({
@@ -276,24 +269,31 @@ router.post('/upload', verifyToken, upload.single('file'), handleMulterError, as
       });
     }
 
-    // Store deployment info in database (you can create a deployment model)
-    const deploymentInfo = {
-      publicId: uploadResult.public_id,
-      url: uploadResult.secure_url,
-      platform: platform || getPlatformFromFormat(file.format),
+    // Store deployment info in database
+    const isTrueActive = isActive === 'true' || isActive === true;
+
+    if (isTrueActive) {
+      await Deployment.updateMany({ platform }, { isActive: false });
+    }
+
+    const newDeployment = new Deployment({
+      platform: platform || getPlatformFromFormat(uploadResult.format),
       version: version || extractVersionFromFilename(file.originalname),
       description: description || '',
-      isActive: isActive === 'true',
-      uploadedBy: req.user.id,
-      uploadedAt: new Date(),
-      fileSize: uploadResult.bytes,
+      url: uploadResult.secure_url,
+      fileKey: uploadResult.public_id,
+      size: uploadResult.bytes,
       format: uploadResult.format,
-    };
+      isActive: isTrueActive,
+      uploadedBy: req.user.id
+    });
+
+    await newDeployment.save();
 
     res.json({
       success: true,
       message: 'File uploaded successfully',
-      data: deploymentInfo
+      data: newDeployment
     });
   } catch (error) {
     console.error('Error uploading deployment file:', error);
@@ -327,7 +327,7 @@ router.post('/upload', verifyToken, upload.single('file'), handleMulterError, as
   }
 });
 
-// Set active deployment
+// Set active deployment in DB
 router.put('/set-active/:id', verifyToken, async (req, res) => {
   try {
     // Root admin only
@@ -336,26 +336,21 @@ router.put('/set-active/:id', verifyToken, async (req, res) => {
     }
     const { id } = req.params;
 
-    // First, remove 'latest' from all files
-    const allFiles = await cloudinary.v2.search
-      .expression('folder:mobile-apps')
-      .execute();
-
-    for (const file of allFiles.resources) {
-      if (file.public_id.includes('latest')) {
-        const newPublicId = file.public_id.replace('latest-', '');
-        await cloudinary.v2.uploader.rename(file.public_id, newPublicId);
-      }
+    const targetDeployment = await Deployment.findById(id);
+    if (!targetDeployment) {
+      return res.status(404).json({ success: false, message: 'Deployment not found' });
     }
 
-    // Add 'latest' to the selected file
-    const targetFile = await cloudinary.v2.api.resource(id);
-    const newPublicId = targetFile.public_id.replace('mobile-apps/', 'mobile-apps/latest-');
-    await cloudinary.v2.uploader.rename(id, newPublicId);
+    // Deactivate others for same platform
+    await Deployment.updateMany({ platform: targetDeployment.platform }, { isActive: false });
+
+    // Activate this one
+    targetDeployment.isActive = true;
+    await targetDeployment.save();
 
     res.json({
       success: true,
-      message: 'Active deployment updated successfully'
+      message: `Active deployment for ${targetDeployment.platform} updated successfully`
     });
   } catch (error) {
     console.error('Error setting active deployment:', error);
@@ -366,7 +361,7 @@ router.put('/set-active/:id', verifyToken, async (req, res) => {
   }
 });
 
-// Delete deployment file
+// Delete deployment file from Cloudinary and DB
 router.delete('/:id', verifyToken, async (req, res) => {
   try {
     // Root admin only
@@ -375,7 +370,16 @@ router.delete('/:id', verifyToken, async (req, res) => {
     }
     const { id } = req.params;
 
-    await cloudinary.v2.uploader.destroy(id, { resource_type: 'raw' });
+    const deployment = await Deployment.findById(id);
+    if (!deployment) {
+      return res.status(404).json({ success: false, message: 'Deployment not found' });
+    }
+
+    // Delete from Cloudinary
+    await cloudinary.v2.uploader.destroy(deployment.fileKey, { resource_type: 'raw' });
+
+    // Delete from DB
+    await Deployment.findByIdAndDelete(id);
 
     res.json({
       success: true,

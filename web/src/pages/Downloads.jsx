@@ -125,9 +125,15 @@ export default function Downloads() {
                                 >
                                     <FaDownload /> Download
                                 </button>
-                                <div className="text-xs text-gray-500 font-mono">
+                                <div className="text-xs text-gray-500 font-mono mb-3">
                                     v{latestDeployments.macos.version} • {formatFileSize(latestDeployments.macos.size)}
                                 </div>
+                                {latestDeployments.macos.description && (
+                                    <div className="text-left bg-white/50 dark:bg-black/20 p-3 rounded-lg border border-gray-100 dark:border-gray-700/50 mb-3">
+                                        <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">Latest Improvements</p>
+                                        <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-3">{latestDeployments.macos.description}</p>
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             <div className="w-full mt-auto py-3 px-4 bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 rounded-xl font-semibold cursor-not-allowed">
@@ -152,9 +158,15 @@ export default function Downloads() {
                                 >
                                     <FaDownload /> Download
                                 </button>
-                                <div className="text-xs text-gray-500 font-mono">
+                                <div className="text-xs text-gray-500 font-mono mb-3">
                                     v{latestDeployments.windows.version} • {formatFileSize(latestDeployments.windows.size)}
                                 </div>
+                                {latestDeployments.windows.description && (
+                                    <div className="text-left bg-white/50 dark:bg-black/20 p-3 rounded-lg border border-gray-100 dark:border-gray-700/50 mb-3">
+                                        <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">Latest Improvements</p>
+                                        <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-3">{latestDeployments.windows.description}</p>
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             <div className="w-full mt-auto py-3 px-4 bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 rounded-xl font-semibold cursor-not-allowed">
@@ -192,9 +204,15 @@ export default function Downloads() {
                                 >
                                     <FaDownload /> APK
                                 </button>
-                                <div className="text-xs text-gray-500 font-mono">
+                                <div className="text-xs text-gray-500 font-mono mb-3">
                                     v{latestDeployments.android.version} (Android)
                                 </div>
+                                {latestDeployments.android.description && (
+                                    <div className="text-left bg-white/50 dark:bg-black/20 p-3 rounded-lg border border-gray-100 dark:border-gray-700/50 mb-3">
+                                        <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">Latest Improvements</p>
+                                        <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-3">{latestDeployments.android.description}</p>
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             <div className="w-full mt-auto py-3 px-4 bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 rounded-xl font-semibold cursor-not-allowed">
@@ -246,8 +264,8 @@ export default function Downloads() {
                             <thead className="bg-gray-50 dark:bg-gray-700/50">
                                 <tr>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Platform</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Version</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Version & Date</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">What's New</th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Size</th>
                                     <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Action</th>
                                 </tr>
@@ -268,10 +286,21 @@ export default function Downloads() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className="font-mono text-sm text-gray-600 dark:text-gray-300">{file.version}</span>
+                                            <div className="flex flex-col">
+                                                <span className="font-mono text-sm text-gray-900 dark:text-white">v{file.version}</span>
+                                                <span className="text-xs text-gray-500 dark:text-gray-400">{formatDate(file.createdAt)}</span>
+                                            </div>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                            {formatDate(file.createdAt)}
+                                        <td className="px-6 py-4">
+                                            <div className="max-w-xs md:max-w-md lg:max-w-lg">
+                                                {file.description ? (
+                                                    <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed italic">
+                                                        "{file.description}"
+                                                    </p>
+                                                ) : (
+                                                    <span className="text-xs text-gray-400 italic">No changelog provided</span>
+                                                )}
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 font-mono">
                                             {formatFileSize(file.size)}

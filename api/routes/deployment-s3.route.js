@@ -1,9 +1,10 @@
 import express from 'express';
 import multer from 'multer';
 import multerS3 from 'multer-s3';
-import { S3Client, ListBucketsCommand, ListObjectsV2Command, CopyObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, ListBucketsCommand, ListObjectsV2Command, CopyObjectCommand, DeleteObjectCommand, GetObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { verifyToken } from '../utils/verify.js';
+import Deployment from '../models/deployment.model.js';
 
 const router = express.Router();
 
@@ -133,49 +134,30 @@ router.get('/test-s3', async (req, res) => {
   }
 });
 
-// Get all deployment files from S3
+// Get all deployment files from DB
 router.get('/', verifyToken, async (req, res) => {
   try {
-    if (!bucketName) {
-      return res.status(500).json({
-        success: false,
-        message: 'AWS S3 not configured. Please set AWS_S3_BUCKET_NAME environment variable.'
-      });
-    }
-
     // Root admin only
     if (!req.user || req.user.role !== 'rootadmin') {
       return res.status(403).json({ success: false, message: 'Access denied. Root admin only.' });
     }
 
-    const command = new ListObjectsV2Command({
-      Bucket: bucketName,
-      Prefix: 'mobile-apps/',
-      MaxKeys: 50
-    });
+    const deployments = await Deployment.find().sort({ createdAt: -1 });
 
-    const result = await s3Client.send(command);
-    const contents = Array.isArray(result.Contents) ? result.Contents : [];
-
-    const files = contents.map(file => {
-      const fileName = file.Key.split('/').pop();
-      const fileExtension = (fileName.split('.').pop() || '').toLowerCase();
-      // Infer platform from key when possible: latest-<platform>-<version>-<ts>.<ext>
-      const nameWithoutPrefix = fileName.startsWith('latest-') ? fileName.slice('latest-'.length) : fileName;
-      const inferredPlatform = nameWithoutPrefix.split('-')[0];
-
-      return {
-        id: file.Key,
-        name: fileName,
-        url: null, // will be presigned on demand
-        size: file.Size,
-        format: fileExtension,
-        platform: getPlatformFromFormat(fileExtension) !== 'unknown' ? getPlatformFromFormat(fileExtension) : (['android', 'ios', 'windows', 'macos'].includes(inferredPlatform) ? inferredPlatform : 'unknown'),
-        version: extractVersionFromFilename(fileName),
-        createdAt: file.LastModified,
-        isActive: file.Key.includes('latest'),
-      };
-    }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    // Map DB objects to match expected frontend structure
+    const files = deployments.map(d => ({
+      id: d._id,
+      key: d.fileKey,
+      name: d.fileKey.split('/').pop(),
+      url: d.url,
+      size: d.size,
+      format: d.format,
+      platform: d.platform,
+      version: d.version,
+      description: d.description,
+      createdAt: d.createdAt,
+      isActive: d.isActive,
+    }));
 
     res.json({
       success: true,
@@ -190,46 +172,28 @@ router.get('/', verifyToken, async (req, res) => {
   }
 });
 
-// Get active deployment files
+// Get active deployment files from DB
 router.get('/active', async (req, res) => {
   try {
-    if (!bucketName) {
-      return res.status(500).json({
-        success: false,
-        message: 'AWS S3 not configured. Please set AWS_S3_BUCKET_NAME environment variable.'
-      });
-    }
+    const activeDeployments = await Deployment.find({ isActive: true }).sort({ createdAt: -1 });
 
-    const command = new ListObjectsV2Command({
-      Bucket: bucketName,
-      Prefix: 'mobile-apps/latest-',
-      MaxKeys: 10
-    });
-
-    const result = await s3Client.send(command);
-    const contents = Array.isArray(result.Contents) ? result.Contents : [];
-
-    const activeFiles = contents.map(file => {
-      const fileName = file.Key.split('/').pop();
-      const fileExtension = (fileName.split('.').pop() || '').toLowerCase();
-      const nameWithoutPrefix = fileName.startsWith('latest-') ? fileName.slice('latest-'.length) : fileName;
-      const inferredPlatform = nameWithoutPrefix.split('-')[0];
-
-      return {
-        id: file.Key,
-        name: fileName,
-        url: null, // will be presigned on demand
-        size: file.Size,
-        format: fileExtension,
-        platform: getPlatformFromFormat(fileExtension) !== 'unknown' ? getPlatformFromFormat(fileExtension) : (['android', 'ios', 'windows', 'macos'].includes(inferredPlatform) ? inferredPlatform : 'unknown'),
-        version: extractVersionFromFilename(fileName),
-        createdAt: file.LastModified,
-      };
-    }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const data = activeDeployments.map(d => ({
+      id: d._id,
+      key: d.fileKey,
+      name: d.fileKey.split('/').pop(),
+      url: d.url,
+      size: d.size,
+      format: d.format,
+      platform: d.platform,
+      version: d.version,
+      description: d.description,
+      createdAt: d.createdAt,
+      isActive: true
+    }));
 
     res.json({
       success: true,
-      data: activeFiles
+      data
     });
   } catch (error) {
     console.error('Error fetching active deployment files:', error);
@@ -240,47 +204,28 @@ router.get('/active', async (req, res) => {
   }
 });
 
-// Get all public deployment files (Version History) - S3
+// Get all public deployment files from DB
 router.get('/public', async (req, res) => {
   try {
-    if (!bucketName) {
-      return res.status(500).json({
-        success: false,
-        message: 'AWS S3 not configured. Please set AWS_S3_BUCKET_NAME environment variable.'
-      });
-    }
+    const deployments = await Deployment.find().sort({ createdAt: -1 }).limit(100);
 
-    const command = new ListObjectsV2Command({
-      Bucket: bucketName,
-      Prefix: 'mobile-apps/',
-      MaxKeys: 100 // Fetch more history for public page
-    });
-
-    const result = await s3Client.send(command);
-    const contents = Array.isArray(result.Contents) ? result.Contents : [];
-
-    const files = contents.map(file => {
-      const fileName = file.Key.split('/').pop();
-      const fileExtension = (fileName.split('.').pop() || '').toLowerCase();
-      const nameWithoutPrefix = fileName.startsWith('latest-') ? fileName.slice('latest-'.length) : fileName;
-      const inferredPlatform = nameWithoutPrefix.split('-')[0];
-
-      return {
-        id: file.Key,
-        name: fileName,
-        url: null,
-        size: file.Size,
-        format: fileExtension,
-        platform: getPlatformFromFormat(fileExtension) !== 'unknown' ? getPlatformFromFormat(fileExtension) : (['android', 'ios', 'windows', 'macos'].includes(inferredPlatform) ? inferredPlatform : 'unknown'),
-        version: extractVersionFromFilename(fileName),
-        createdAt: file.LastModified,
-        isActive: file.Key.includes('latest'),
-      };
-    }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const data = deployments.map(d => ({
+      id: d._id,
+      key: d.fileKey,
+      name: d.fileKey.split('/').pop(),
+      url: d.url,
+      size: d.size,
+      format: d.format,
+      platform: d.platform,
+      version: d.version,
+      description: d.description,
+      createdAt: d.createdAt,
+      isActive: d.isActive
+    }));
 
     res.json({
       success: true,
-      data: files
+      data
     });
   } catch (error) {
     console.error('Error fetching public deployment files:', error);
@@ -291,7 +236,7 @@ router.get('/public', async (req, res) => {
   }
 });
 
-// Public: Get presigned download URL for an object key (no auth)
+// Public: Get presigned download URL for a deployment (no auth)
 router.get('/public-download-url', async (req, res) => {
   try {
     if (!bucketName) {
@@ -299,9 +244,20 @@ router.get('/public-download-url', async (req, res) => {
     }
     const { id } = req.query;
     if (!id) return res.status(400).json({ success: false, message: 'Missing id' });
-    const key = decodeURIComponent(id);
-    const command = new GetObjectCommand({ Bucket: bucketName, Key: key });
-    const url = await getSignedUrl(s3Client, command, { expiresIn: 60 });
+
+    // Find deployment by ID (MongoDB ID) or Key
+    let deployment = await Deployment.findById(id);
+    if (!deployment) {
+      // Fallback search by Key if id is not a valid ObjectId or not found
+      deployment = await Deployment.findOne({ fileKey: decodeURIComponent(id) });
+    }
+
+    if (!deployment) {
+      return res.status(404).json({ success: false, message: 'Deployment not found' });
+    }
+
+    const command = new GetObjectCommand({ Bucket: bucketName, Key: deployment.fileKey });
+    const url = await getSignedUrl(s3Client, command, { expiresIn: 300 }); // 5 minutes
     return res.json({ success: true, url });
   } catch (error) {
     console.error('Error generating public download URL:', error);
@@ -309,7 +265,7 @@ router.get('/public-download-url', async (req, res) => {
   }
 });
 
-// Get presigned download URL for an object key (rootadmin only)
+// Get presigned download URL for a deployment (rootadmin only)
 router.get('/download-url', verifyToken, async (req, res) => {
   try {
     if (!req.user || req.user.role !== 'rootadmin') {
@@ -317,9 +273,18 @@ router.get('/download-url', verifyToken, async (req, res) => {
     }
     const { id } = req.query;
     if (!id) return res.status(400).json({ success: false, message: 'Missing id' });
-    const key = decodeURIComponent(id);
-    const command = new GetObjectCommand({ Bucket: bucketName, Key: key });
-    const url = await getSignedUrl(s3Client, command, { expiresIn: 60 });
+
+    let deployment = await Deployment.findById(id);
+    if (!deployment) {
+      deployment = await Deployment.findOne({ fileKey: decodeURIComponent(id) });
+    }
+
+    if (!deployment) {
+      return res.status(404).json({ success: false, message: 'Deployment not found' });
+    }
+
+    const command = new GetObjectCommand({ Bucket: bucketName, Key: deployment.fileKey });
+    const url = await getSignedUrl(s3Client, command, { expiresIn: 300 });
     return res.json({ success: true, url });
   } catch (error) {
     console.error('Error generating download URL:', error);
@@ -327,53 +292,50 @@ router.get('/download-url', verifyToken, async (req, res) => {
   }
 });
 
-// Upload new deployment file to S3
+// Upload new deployment file to S3 and DB
 router.post('/upload', verifyToken, upload.single('file'), handleMulterError, async (req, res) => {
   try {
-    console.log('Upload request received:', {
-      hasFile: !!req.file,
-      fileSize: req.file?.size,
-      contentType: req.headers['content-type'],
-      contentLength: req.headers['content-length']
-    });
-
     // Root admin only
     if (!req.user || req.user.role !== 'rootadmin') {
       return res.status(403).json({ success: false, message: 'Access denied. Root admin only.' });
     }
 
-    // Check for multer errors (file size, file type, etc.)
     if (!req.file) {
-      console.log('No file received in request');
       return res.status(400).json({
         success: false,
-        message: 'No file uploaded or file upload failed. Please check file size (max 200MB) and file type.'
+        message: 'No file uploaded or file upload failed.'
       });
     }
 
     const { platform, version, description, isActive } = req.body;
     const file = req.file;
 
-    console.log('S3 upload successful:', file.location);
+    const isTrueActive = isActive === 'true';
 
-    // Store deployment info
-    const deploymentInfo = {
-      publicId: file.key,
+    // If setting as active, deactivate others for the same platform
+    if (isTrueActive) {
+      await Deployment.updateMany({ platform }, { isActive: false });
+    }
+
+    // Store deployment info in database
+    const newDeployment = new Deployment({
+      fileKey: file.key,
       url: file.location,
-      platform: platform || getPlatformFromFormat(file.mimetype),
+      platform: platform || getPlatformFromFormat(file.originalname.split('.').pop()),
       version: version || extractVersionFromFilename(file.originalname),
       description: description || '',
-      isActive: isActive === 'true',
+      isActive: isTrueActive,
       uploadedBy: req.user.id,
-      uploadedAt: new Date(),
-      fileSize: file.size,
-      format: file.mimetype,
-    };
+      size: file.size,
+      format: (file.originalname.split('.').pop() || '').toLowerCase(),
+    });
+
+    await newDeployment.save();
 
     res.json({
       success: true,
-      message: 'File uploaded successfully to S3',
-      data: deploymentInfo
+      message: 'File uploaded successfully',
+      data: newDeployment
     });
   } catch (error) {
     console.error('Error uploading deployment file:', error);
@@ -384,56 +346,30 @@ router.post('/upload', verifyToken, upload.single('file'), handleMulterError, as
   }
 });
 
-// Set active deployment
+// Set active deployment in DB
 router.put('/set-active/:id', verifyToken, async (req, res) => {
   try {
-    // Root admin only
     if (!req.user || req.user.role !== 'rootadmin') {
       return res.status(403).json({ success: false, message: 'Access denied. Root admin only.' });
     }
 
     const { id } = req.params;
+    const targetDeployment = await Deployment.findById(id);
 
-    // First, remove 'latest' from all files
-    const listCommand = new ListObjectsV2Command({
-      Bucket: bucketName,
-      Prefix: 'mobile-apps/latest-'
-    });
-
-    const allFiles = await s3Client.send(listCommand);
-
-    for (const file of allFiles.Contents) {
-      if (file.Key.includes('latest')) {
-        const newKey = file.Key.replace('latest-', '');
-        const copyCommand = new CopyObjectCommand({
-          Bucket: bucketName,
-          CopySource: `${bucketName}/${file.Key}`,
-          Key: newKey
-        });
-        await s3Client.send(copyCommand);
-
-        const deleteCommand = new DeleteObjectCommand({
-          Bucket: bucketName,
-          Key: file.Key
-        });
-        await s3Client.send(deleteCommand);
-      }
+    if (!targetDeployment) {
+      return res.status(404).json({ success: false, message: 'Deployment not found' });
     }
 
-    // Set the selected file as active by adding 'latest' prefix
-    const fileKey = decodeURIComponent(id);
-    const newKey = fileKey.replace('mobile-apps/', 'mobile-apps/latest-');
+    // Deactivate all others for this platform
+    await Deployment.updateMany({ platform: targetDeployment.platform }, { isActive: false });
 
-    const copyCommand = new CopyObjectCommand({
-      Bucket: bucketName,
-      CopySource: `${bucketName}/${fileKey}`,
-      Key: newKey
-    });
-    await s3Client.send(copyCommand);
+    // Activate this one
+    targetDeployment.isActive = true;
+    await targetDeployment.save();
 
     res.json({
       success: true,
-      message: 'Active deployment updated successfully'
+      message: `Active deployment for ${targetDeployment.platform} updated successfully`
     });
   } catch (error) {
     console.error('Error setting active deployment:', error);
@@ -444,22 +380,29 @@ router.put('/set-active/:id', verifyToken, async (req, res) => {
   }
 });
 
-// Delete deployment file
+// Delete deployment file from S3 and DB
 router.delete('/:id', verifyToken, async (req, res) => {
   try {
-    // Root admin only
     if (!req.user || req.user.role !== 'rootadmin') {
       return res.status(403).json({ success: false, message: 'Access denied. Root admin only.' });
     }
 
     const { id } = req.params;
-    const fileKey = decodeURIComponent(id);
+    const deployment = await Deployment.findById(id);
 
+    if (!deployment) {
+      return res.status(404).json({ success: false, message: 'Deployment not found' });
+    }
+
+    // Delete from S3
     const deleteCommand = new DeleteObjectCommand({
       Bucket: bucketName,
-      Key: fileKey
+      Key: deployment.fileKey
     });
     await s3Client.send(deleteCommand);
+
+    // Delete from DB
+    await Deployment.findByIdAndDelete(id);
 
     res.json({
       success: true,

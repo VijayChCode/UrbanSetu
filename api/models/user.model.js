@@ -166,6 +166,7 @@ const userSchema = new mongoose.Schema({
     dateFormat: { type: String, default: 'MM/DD/YYYY' },
     theme: { type: String, default: 'light' },
     fontSize: { type: String, default: 'medium' },
+    pushToken: { type: String, default: null },
   },
 
   // Rental Profile

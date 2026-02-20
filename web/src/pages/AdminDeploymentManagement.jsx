@@ -577,7 +577,10 @@ export default function AdminDeploymentManagement() {
                       </div>
 
                       {file.description && (
-                        <div className="bg-white/60 dark:bg-black/20 p-3 rounded-lg text-xs text-gray-600 dark:text-gray-300 italic border border-green-100 dark:border-green-800/30">
+                        <div className="bg-white/60 dark:bg-black/40 p-3 rounded-xl text-sm text-gray-700 dark:text-gray-300 border border-green-100 dark:border-green-800/30">
+                          <div className="flex items-center gap-2 mb-1 font-bold text-xs uppercase text-green-700 dark:text-green-500">
+                            <FaFileCode /> What's New
+                          </div>
                           {file.description}
                         </div>
                       )}
@@ -631,8 +634,15 @@ export default function AdminDeploymentManagement() {
                           </td>
                           <td className="px-6 py-4">
                             <div className="text-sm text-gray-900 dark:text-gray-200 font-medium">{formatFileSize(file.size)}</div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[150px]" title={file.description}>
-                              {file.description || 'No description'}
+                            <div className="mt-1">
+                              {file.description ? (
+                                <div className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 max-w-xs group-hover:line-clamp-none transition-all cursor-help" title={file.description}>
+                                  <span className="font-bold text-blue-600 dark:text-blue-400 mr-1 italic">Changelog:</span>
+                                  {file.description}
+                                </div>
+                              ) : (
+                                <span className="text-xs text-gray-400 dark:text-gray-600 italic">No description</span>
+                              )}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
