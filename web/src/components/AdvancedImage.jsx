@@ -9,6 +9,12 @@ export default function AdvancedImage({ src, alt, className, ...props }) {
     const [isLoaded, setIsLoaded] = useState(false);
     const [error, setError] = useState(false);
 
+    // Reset state when src changes
+    useEffect(() => {
+        setIsLoaded(false);
+        setError(false);
+    }, [src]);
+
     // Generate a low-quality placeholder URL if it's Cloudinary
     const getLqipUrl = (url) => {
         if (url?.includes('cloudinary.com')) {
