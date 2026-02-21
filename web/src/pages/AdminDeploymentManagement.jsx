@@ -46,6 +46,15 @@ export default function AdminDeploymentManagement() {
 
   const [activeTab, setActiveTab] = useState('all'); // all, windows, macos, mobile
 
+  // State for description expansion
+  const [expandedIds, setExpandedIds] = useState([]);
+
+  const toggleDescription = (id) => {
+    setExpandedIds(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
   useEffect(() => {
     fetchFiles();
     fetchActiveFiles();
@@ -823,8 +832,8 @@ export default function AdminDeploymentManagement() {
                         : files.filter(f => f.platform === activeTab);
 
                     return (
-                      <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">
-                        {filteredHistory.length} Filtered
+                      <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-xs font-bold px-3 py-1.5 rounded-full whitespace-nowrap">
+                        {filteredHistory.length} Build{filteredHistory.length !== 1 ? 's' : ''}
                       </span>
                     );
                   })()}
@@ -833,136 +842,255 @@ export default function AdminDeploymentManagement() {
 
               {files.length === 0 ? (
                 <div className="p-12 text-center text-gray-500 dark:text-gray-400">
+                  <FaHistory className="mx-auto text-4xl mb-4 opacity-20" />
                   No deployments history available.
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead className="bg-gray-50 dark:bg-gray-700/50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Platform & Version</th>
-                        <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Details</th>
-                        <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                        <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
-                        <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                      {(() => {
-                        const filteredHistory = activeTab === 'all'
-                          ? files
-                          : activeTab === 'mobile'
-                            ? files.filter(f => ['android', 'ios'].includes(f.platform))
-                            : files.filter(f => f.platform === activeTab);
+                <div className="space-y-4">
+                  {/* Mobile History Cards */}
+                  <div className="grid grid-cols-1 gap-4 md:hidden px-6 pb-6">
+                    {(() => {
+                      const filteredHistory = activeTab === 'all'
+                        ? files
+                        : activeTab === 'mobile'
+                          ? files.filter(f => ['android', 'ios'].includes(f.platform))
+                          : files.filter(f => f.platform === activeTab);
 
-                        return (
-                          <>
-                            {filteredHistory.map((file) => (
-                              <tr key={file.id} className="hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-colors duration-150">
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                                      {getPlatformIcon(file.platform)}
-                                    </div>
-                                    <div>
-                                      <div className="font-bold text-gray-900 dark:text-white">{getPlatformName(file.platform)}</div>
-                                      <div className="text-xs text-gray-500 dark:text-gray-400 font-mono">v{file.version}</div>
-                                    </div>
-                                  </div>
-                                </td>
-                                <td className="px-6 py-4">
-                                  <div className="text-sm text-gray-900 dark:text-gray-200 font-medium">{formatFileSize(file.size)}</div>
-                                  <div className="mt-1">
-                                    {file.description ? (
-                                      <div className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 max-w-xs group-hover:line-clamp-none transition-all cursor-help" title={file.description}>
-                                        <span className="font-bold text-blue-600 dark:text-blue-400 mr-1 italic">Changelog:</span>
-                                        {file.description}
-                                      </div>
-                                    ) : (
-                                      <span className="text-xs text-gray-400 dark:text-gray-600 italic">No description</span>
-                                    )}
-                                  </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  {file.isActive ? (
-                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border border-green-200 dark:border-green-800/50 shadow-sm">
-                                      <FaCheck className="mr-1.5" /> Active
-                                    </span>
-                                  ) : (
-                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
-                                      Inactive
-                                    </span>
+                      return filteredHistory.map((file) => (
+                        <div key={file.id} className="bg-gray-50 dark:bg-gray-900/50 rounded-2xl p-5 border border-gray-100 dark:border-gray-700">
+                          <div className="flex justify-between items-start mb-4">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+                                {getPlatformIcon(file.platform)}
+                              </div>
+                              <div>
+                                <h4 className="font-bold text-gray-900 dark:text-white leading-tight">{getPlatformName(file.platform)}</h4>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 font-mono">v{file.version}</span>
+                                  {file.isActive && (
+                                    <span className="px-1.5 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-[8px] font-black rounded-full uppercase tracking-widest">ACTIVE</span>
                                   )}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                  {formatDate(file.createdAt)}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                  <div className="flex items-center justify-end gap-1 sm:gap-2">
-                                    {/* Edit Action */}
-                                    <button
-                                      onClick={() => {
-                                        setEditData({
-                                          id: file.id,
-                                          version: file.version,
-                                          description: file.description || '',
-                                          isActive: file.isActive
-                                        });
-                                        setShowEditModal(true);
-                                      }}
-                                      className="p-2 text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
-                                      title="Edit Details"
-                                    >
-                                      <FaFileCode />
-                                    </button>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleDownloadFile(file.id)}
+                                className="p-2 text-blue-600 bg-white dark:bg-gray-800 rounded-lg shadow-sm"
+                              >
+                                <FaDownload className="text-sm" />
+                              </button>
+                            </div>
+                          </div>
 
-                                    <button
-                                      onClick={() => handleDownloadFile(file.id)}
-                                      className="p-2 text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                                      title="Download Binary"
-                                    >
-                                      <FaDownload />
-                                    </button>
+                          <div className="space-y-2 mb-4">
+                            <div className="flex justify-between text-[10px]">
+                              <span className="text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider">Size & Date</span>
+                              <span className="text-gray-700 dark:text-gray-300 font-medium">{formatFileSize(file.size)} • {formatDate(file.createdAt)}</span>
+                            </div>
 
-                                    {/* Activation Toggle Action */}
-                                    <button
-                                      onClick={() => {
-                                        setFileToActivate(file.id);
-                                        setActiveActionType(file.isActive ? 'deactivate' : 'activate');
-                                        setShowActiveModal(true);
-                                      }}
-                                      className={`p-2 rounded-lg transition-all ${file.isActive
-                                        ? 'text-orange-600 hover:text-orange-900 dark:text-orange-400 dark:hover:text-orange-300 hover:bg-orange-50 dark:hover:bg-orange-900/20'
-                                        : 'text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20'
-                                        }`}
-                                      title={file.isActive ? 'Deactivate Build' : 'Promote to Production'}
-                                    >
-                                      {file.isActive ? <FaTimes /> : <FaCheck />}
-                                    </button>
-
-                                    <button
-                                      onClick={() => confirmDeleteFile(file.id)}
-                                      className="p-2 text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                                      title="Purge Deployment"
-                                    >
-                                      <FaTrash />
-                                    </button>
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
-                            {filteredHistory.length === 0 && (
-                              <tr>
-                                <td colSpan="5" className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
-                                  No versions found for the selected platform.
-                                </td>
-                              </tr>
+                            {file.description ? (
+                              <div className="bg-white/50 dark:bg-black/20 p-3 rounded-xl">
+                                <p className={`text-xs text-gray-600 dark:text-gray-400 leading-relaxed italic ${!expandedIds.includes(file.id) ? 'line-clamp-3' : ''}`}>
+                                  "{file.description}"
+                                </p>
+                                {file.description.length > 100 && (
+                                  <button
+                                    onClick={() => toggleDescription(file.id)}
+                                    className="mt-2 text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest"
+                                  >
+                                    {expandedIds.includes(file.id) ? 'Show Less' : 'Full Changelog'}
+                                  </button>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="text-[10px] text-gray-400 italic">No changelog provided</div>
                             )}
-                          </>
-                        );
-                      })()}
-                    </tbody>
-                  </table>
+                          </div>
+
+                          <div className="flex gap-2 border-t border-gray-100 dark:border-gray-800 pt-4">
+                            <button
+                              onClick={() => {
+                                setEditData({
+                                  id: file.id,
+                                  version: file.version,
+                                  description: file.description || '',
+                                  isActive: file.isActive
+                                });
+                                setShowEditModal(true);
+                              }}
+                              className="flex-1 py-2 text-[10px] font-black uppercase tracking-widest bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-xl"
+                            >
+                              Edit Info
+                            </button>
+                            <button
+                              onClick={() => {
+                                setFileToActivate(file.id);
+                                setActiveActionType(file.isActive ? 'deactivate' : 'activate');
+                                setShowActiveModal(true);
+                              }}
+                              className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl ${file.isActive
+                                ? 'bg-orange-50 dark:bg-orange-900/10 text-orange-600 dark:text-orange-400 border border-orange-100 dark:border-orange-800/30'
+                                : 'bg-green-50 dark:bg-green-900/10 text-green-600 dark:text-green-400 border border-green-100 dark:border-green-800/30'
+                                }`}
+                            >
+                              {file.isActive ? 'Deactivate' : 'Activate'}
+                            </button>
+                            <button
+                              onClick={() => confirmDeleteFile(file.id)}
+                              className="w-10 flex items-center justify-center py-2 text-red-600 bg-red-50 dark:bg-red-900/10 rounded-xl"
+                            >
+                              <FaTrash className="text-xs" />
+                            </button>
+                          </div>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+
+                  {/* Desktop History Table */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                      <thead className="bg-gray-50 dark:bg-gray-700/50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Platform & Version</th>
+                          <th className="px-6 py-3 text-left text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Details</th>
+                          <th className="px-6 py-3 text-left text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Status</th>
+                          <th className="px-6 py-3 text-left text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Date</th>
+                          <th className="px-6 py-3 text-right text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                        {(() => {
+                          const filteredHistory = activeTab === 'all'
+                            ? files
+                            : activeTab === 'mobile'
+                              ? files.filter(f => ['android', 'ios'].includes(f.platform))
+                              : files.filter(f => f.platform === activeTab);
+
+                          return (
+                            <>
+                              {filteredHistory.map((file) => (
+                                <tr key={file.id} className="hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-colors duration-150 group">
+                                  <td className="px-6 py-5 whitespace-nowrap">
+                                    <div className="flex items-center gap-3">
+                                      <div className="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg group-hover:bg-white dark:group-hover:bg-gray-600 shadow-sm transition-colors">
+                                        {getPlatformIcon(file.platform)}
+                                      </div>
+                                      <div>
+                                        <div className="font-bold text-gray-900 dark:text-white leading-tight">{getPlatformName(file.platform)}</div>
+                                        <div className="text-[10px] text-blue-600 dark:text-blue-400 font-black mt-0.5 tracking-tighter">BUILD V{file.version}</div>
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td className="px-6 py-5">
+                                    <div className="text-xs text-gray-900 dark:text-gray-200 font-black font-mono">{formatFileSize(file.size)}</div>
+                                    <div className="mt-1">
+                                      {file.description ? (
+                                        <div className="max-w-xs xl:max-w-md">
+                                          <p className={`text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed italic ${!expandedIds.includes(file.id) ? 'line-clamp-2' : ''}`}>
+                                            "{file.description}"
+                                          </p>
+                                          {file.description.length > 100 && (
+                                            <button
+                                              onClick={() => toggleDescription(file.id)}
+                                              className="mt-1 text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest hover:underline"
+                                            >
+                                              {expandedIds.includes(file.id) ? 'Show Less' : 'Full Changelog'}
+                                            </button>
+                                          )}
+                                        </div>
+                                      ) : (
+                                        <span className="text-[10px] text-gray-400 dark:text-gray-600 italic">Core system update</span>
+                                      )}
+                                    </div>
+                                  </td>
+                                  <td className="px-6 py-5 whitespace-nowrap">
+                                    {file.isActive ? (
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 uppercase tracking-widest border border-green-200 dark:border-green-800/50">
+                                        <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5 animate-pulse"></span>
+                                        Active
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+                                        Static
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td className="px-6 py-5 whitespace-nowrap">
+                                    <div className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">
+                                      {formatDate(file.createdAt)}
+                                    </div>
+                                  </td>
+                                  <td className="px-6 py-5 whitespace-nowrap text-right">
+                                    <div className="flex items-center justify-end gap-2">
+                                      <button
+                                        onClick={() => handleDownloadFile(file.id)}
+                                        className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all"
+                                        title="Download"
+                                      >
+                                        <FaDownload className="text-sm" />
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          setEditData({
+                                            id: file.id,
+                                            version: file.version,
+                                            description: file.description || '',
+                                            isActive: file.isActive
+                                          });
+                                          setShowEditModal(true);
+                                        }}
+                                        className="p-2 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all"
+                                        title="Edit"
+                                      >
+                                        <FaFileCode className="text-sm" />
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          setFileToActivate(file.id);
+                                          setActiveActionType(file.isActive ? 'deactivate' : 'activate');
+                                          setShowActiveModal(true);
+                                        }}
+                                        className={`p-2 rounded-xl transition-all ${file.isActive
+                                          ? 'text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20'
+                                          : 'text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20'
+                                          }`}
+                                        title={file.isActive ? 'Deactivate' : 'Activate'}
+                                      >
+                                        {file.isActive ? <FaTimes className="text-sm" /> : <FaCheck className="text-sm" />}
+                                      </button>
+                                      <button
+                                        onClick={() => confirmDeleteFile(file.id)}
+                                        className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all"
+                                        title="Delete"
+                                      >
+                                        <FaTrash className="text-sm" />
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </>
+                          );
+                        })()}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {(() => {
+                    const filteredHistory = activeTab === 'all'
+                      ? files
+                      : activeTab === 'mobile'
+                        ? files.filter(f => ['android', 'ios'].includes(f.platform))
+                        : files.filter(f => f.platform === activeTab);
+
+                    return filteredHistory.length === 0 && (
+                      <div className="p-12 text-center text-gray-500 dark:text-gray-400">
+                        No versions found for the selected platform.
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
             </div>

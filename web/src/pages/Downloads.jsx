@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { authenticatedFetch } from '../utils/auth';
 import { FaWindows, FaApple, FaAndroid, FaLinux, FaDownload, FaHistory, FaMobileAlt, FaDesktop, FaInfoCircle } from 'react-icons/fa';
 import { toast } from 'react-toastify';
-import AdminDeploymentManagementSkeleton from '../components/skeletons/AdminDeploymentManagementSkeleton';
+import DownloadsSkeleton from '../components/skeletons/DownloadsSkeleton';
 import { Link } from 'react-router-dom';
 import SEO from '../components/SEO';
 
@@ -101,7 +101,7 @@ export default function Downloads() {
     };
 
     if (loading) {
-        return <AdminDeploymentManagementSkeleton />;
+        return <DownloadsSkeleton />;
     }
 
     const renderPlatformIcon = (platform) => {
