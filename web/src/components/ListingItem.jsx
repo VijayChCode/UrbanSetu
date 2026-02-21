@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { MdLocationOn } from 'react-icons/md';
 import { useWishlist } from '../WishlistContext';
-import { FaHeart, FaTrash, FaCheckCircle, FaLock } from 'react-icons/fa';
+import { FaHeart, FaTrash, FaCheckCircle, FaLock, FaShareAlt } from 'react-icons/fa';
 import { useSelector } from 'react-redux';
 import { maskAddress } from '../utils/addressMasking';
 import PrimaryButton from "./ui/PrimaryButton";
 import { MapPin, Bath, BedDouble, Tag } from "lucide-react";
+import AdvancedImage from "./AdvancedImage";
 
 export default function ListingItem({ listing, onDelete, onWishToggle }) {
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
@@ -97,79 +98,84 @@ export default function ListingItem({ listing, onDelete, onWishToggle }) {
         </div>
       )}
 
-      {/* Top-right action: admin shows Delete (if available), users show Wishlist */}
-      {isAdminContext ? (
-        onDelete ? (
-          <button
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(listing._id); }}
-            className="absolute top-2 sm:top-4 right-2 sm:right-4 p-2 rounded-full transition z-20 bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 hover:bg-red-500 hover:text-white dark:hover:text-white"
-            title="Delete property"
-          >
-            <FaTrash className="text-base sm:text-lg" />
-          </button>
-        ) : null
-      ) : (
-        <div className="absolute top-2 sm:top-4 right-2 sm:right-4 z-20">
-          <div className="relative">
+      {/* Top-right actions: admin shows Delete, users show Wishlist & Share */}
+      <div className="absolute top-2 sm:top-4 right-2 sm:right-4 z-20 flex flex-col gap-2">
+        {isAdminContext ? (
+          onDelete && (
             <button
-              onClick={handleWishList}
-              className={`p-2 rounded-full transition ${isInWishlistState ? 'bg-red-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-red-500 dark:text-red-400'
-                }`}
-              title={isInWishlistState ? 'Remove from wishlist' : 'Add to wishlist'}
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(listing._id); }}
+              className="p-2 rounded-full transition bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 hover:bg-red-500 hover:text-white"
+              title="Delete property"
             >
-              <FaHeart className="text-base sm:text-lg" />
+              <FaTrash className="text-base sm:text-lg" />
             </button>
-            {showWishlistTooltip && (
-              <div className="absolute top-full right-0 mt-2 bg-red-600 text-white px-3 py-2 rounded-lg text-xs whitespace-nowrap shadow-lg">
-                Please login to save properties
-                <div className="absolute -top-1 right-4 w-2 h-2 bg-red-600 transform rotate-45"></div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-
-      <Link to={listingLink}>
-        <div className="relative">
-          {listing.imageUrls && listing.imageUrls.length > 0 ? (
-            <div className="aspect-[16/10] w-full overflow-hidden relative">
-              <img
-                src={listing.imageUrls[0]}
-                alt={listing.name || "Real Estate Property"}
-                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60";
-                }}
-              />
-              {/* AI Match Overlay */}
-              {listing.similarityScore && (
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3 pt-8">
-                  <div className="flex items-center gap-2">
-                    <div className="h-2 flex-grow bg-white/30 rounded-full overflow-hidden backdrop-blur-sm">
-                      <div
-                        className="h-full bg-gradient-to-r from-purple-400 to-pink-500 shadow-[0_0_10px_rgba(236,72,153,0.5)]"
-                        style={{ width: `${listing.similarityScore * 100}%` }}
-                      ></div>
-                    </div>
-                    <span className="text-xs font-bold text-white font-mono text-shadow-sm">
-                      {(listing.similarityScore * 100).toFixed(0)}% Match
-                    </span>
-                  </div>
+          )
+        ) : (
+          <>
+            <div className="relative">
+              <button
+                onClick={handleWishList}
+                className={`p-2 rounded-full transition shadow-lg ${isInWishlistState ? 'bg-red-500 text-white' : 'bg-white/90 dark:bg-gray-700/90 text-red-500'}`}
+                title={isInWishlistState ? 'Remove from wishlist' : 'Add to wishlist'}
+              >
+                <FaHeart className="text-base sm:text-lg" />
+              </button>
+              {showWishlistTooltip && (
+                <div className="absolute top-0 right-full mr-3 bg-red-600 text-white px-3 py-2 rounded-lg text-xs whitespace-nowrap shadow-xl z-50">
+                  Please login to save properties
+                  <div className="absolute top-1/2 -right-1 -translate-y-1/2 w-2 h-2 bg-red-600 transform rotate-45"></div>
                 </div>
               )}
             </div>
-          ) : (
-            <div className="aspect-[16/10] w-full overflow-hidden relative">
-              <img
-                src="https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
-                alt="Property Placeholder"
-                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-              />
+
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (navigator.share) {
+                  navigator.share({
+                    title: listing.name,
+                    text: `Check out this property on UrbanSetu: ${listing.name}`,
+                    url: window.location.origin + listingLink
+                  });
+                } else {
+                  navigator.clipboard.writeText(window.location.origin + listingLink);
+                  alert('Link copied to clipboard!');
+                }
+              }}
+              className="p-2 rounded-full bg-white/90 dark:bg-gray-700/90 text-blue-600 dark:text-blue-400 transition shadow-lg hover:bg-blue-500 hover:text-white"
+              title="Share property"
+            >
+              <FaShareAlt className="text-base sm:text-lg" />
+            </button>
+          </>
+        )}
+      </div>
+
+      <Link to={listingLink} className="block group/link">
+        <div className="relative">
+          <AdvancedImage
+            src={listing.imageUrls?.[0]}
+            alt={listing.name}
+            className="aspect-[16/10] w-full object-cover transition-transform duration-500 group-hover/link:scale-[1.05]"
+          />
+          {/* AI Match Overlay */}
+          {listing.similarityScore && (
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 pt-10">
+              <div className="flex items-center gap-3">
+                <div className="h-1.5 flex-grow bg-white/20 rounded-full overflow-hidden backdrop-blur-md">
+                  <div
+                    className="h-full bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.6)]"
+                    style={{ width: `${listing.similarityScore * 100}%` }}
+                  ></div>
+                </div>
+                <span className="text-[10px] sm:text-xs font-black text-white uppercase tracking-tighter">
+                  Match {(listing.similarityScore * 100).toFixed(0)}%
+                </span>
+              </div>
             </div>
           )}
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/50 to-transparent" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/20 to-transparent" />
         </div>
         <div className="p-3 sm:p-4">
           <div className="flex items-center justify-between">
