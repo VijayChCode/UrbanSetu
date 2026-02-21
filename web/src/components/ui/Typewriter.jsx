@@ -8,7 +8,7 @@ import { motion } from "framer-motion";
  * @param {string} className - Additional CSS classes.
  * @param {number} period - Time in ms to wait after completing a word (default 2000).
  */
-const Typewriter = ({ words, className = "", period = 2000 }) => {
+const Typewriter = ({ words, className = "", period = 2000, splitFirstWord = false, gradientClassName = "" }) => {
     const [index, setIndex] = useState(0);
     const [subIndex, setSubIndex] = useState(0);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -46,9 +46,32 @@ const Typewriter = ({ words, className = "", period = 2000 }) => {
         return () => clearTimeout(timeout);
     }, [subIndex, index, isDeleting, words, period]);
 
+    const fullTyped = words[index].substring(0, subIndex);
+
+    const renderContent = () => {
+        if (!splitFirstWord) return fullTyped;
+
+        const firstSpaceIndex = words[index].indexOf(" ");
+        if (firstSpaceIndex === -1) return fullTyped;
+
+        if (subIndex <= firstSpaceIndex) {
+            return fullTyped;
+        }
+
+        const firstWord = words[index].substring(0, firstSpaceIndex);
+        const rest = fullTyped.substring(firstSpaceIndex);
+
+        return (
+            <>
+                <span>{firstWord}</span>
+                <span className={gradientClassName}>{rest}</span>
+            </>
+        );
+    };
+
     return (
         <span className={className}>
-            {`${words[index].substring(0, subIndex)}`}
+            {renderContent()}
             <motion.span
                 animate={{ opacity: blink ? 1 : 0 }}
                 transition={{ duration: 0.1 }}

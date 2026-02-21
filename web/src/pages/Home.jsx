@@ -324,19 +324,19 @@ export default function Home() {
             </div>
 
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-gray-900 dark:text-white mb-6 animate-fade-in-delay min-h-[1.2em]">
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
-                <Typewriter
-                  words={[
-                    "Find Your Dream Home",
-                    "Discover Perfect Spaces",
-                    "Search Verified Listings",
-                    "Experience Luxury Living",
-                    "Unlock Exclusive Deals",
-                    "Invest In Your Future",
-                    "Explore Smart Properties"
-                  ]}
-                />
-              </span>
+              <Typewriter
+                words={[
+                  "Find Your Dream Home",
+                  "Discover Perfect Spaces",
+                  "Search Verified Listings",
+                  "Experience Luxury Living",
+                  "Unlock Exclusive Deals",
+                  "Invest In Your Future",
+                  "Explore Smart Properties"
+                ]}
+                splitFirstWord={true}
+                gradientClassName="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400"
+              />
             </h1>
 
             <p className="mt-4 max-w-2xl mx-auto text-xl text-gray-600 dark:text-gray-300 mb-10 animate-fade-in-delay" style={{ animationDelay: "0.4s" }}>
