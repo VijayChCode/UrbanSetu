@@ -13,6 +13,8 @@ import {
   sendContractExpiringSoonEmail
 } from './emailService.js';
 
+import { sendPushNotification } from './pushNotification.js';
+
 /**
  * Utility service for sending rental-related notifications
  * Handles both database storage and real-time socket emission
@@ -56,6 +58,13 @@ export const sendRentalNotification = async ({
 
     await notification.save();
 
+    // Send native push notification
+    sendPushNotification(userId.toString(), title, message, {
+      notificationId: notification._id,
+      type,
+      actionUrl
+    });
+
     // Emit real-time notification via socket if available
     if (io) {
       const userIdStr = userId.toString();
@@ -71,7 +80,7 @@ export const sendRentalNotification = async ({
           actionUrl: notification.actionUrl
         }
       });
-      
+
       // Also emit to user_${userId} room for compatibility
       io.to(`user_${userIdStr}`).emit('newNotification', {
         notification: {
@@ -106,7 +115,7 @@ export const sendPaymentReminders = async ({ io = null, daysBefore = 3 }) => {
     const reminderDate = new Date(today);
     reminderDate.setDate(today.getDate() + daysBefore);
     reminderDate.setHours(0, 0, 0, 0);
-    
+
     const nextDay = new Date(reminderDate);
     nextDay.setDate(reminderDate.getDate() + 1);
 
@@ -153,8 +162,8 @@ export const sendPaymentReminders = async ({ io = null, daysBefore = 3 }) => {
         await wallet.save();
       }
 
-      const notificationType = daysBefore === 3 
-        ? 'rent_payment_reminder_3days' 
+      const notificationType = daysBefore === 3
+        ? 'rent_payment_reminder_3days'
         : 'rent_payment_reminder_1day';
 
       const clientUrl = process.env.CLIENT_URL || 'https://urbansetu.vercel.app';
@@ -293,7 +302,7 @@ export const sendContractExpiryReminders = async ({ io = null, daysBefore = 30 }
     const reminderDate = new Date(today);
     reminderDate.setDate(today.getDate() + daysBefore);
     reminderDate.setHours(0, 0, 0, 0);
-    
+
     const nextDay = new Date(reminderDate);
     nextDay.setDate(reminderDate.getDate() + 1);
 
@@ -311,7 +320,7 @@ export const sendContractExpiryReminders = async ({ io = null, daysBefore = 30 }
       const listing = contract.listingId;
       const clientUrl = process.env.CLIENT_URL || 'https://urbansetu.vercel.app';
       const contractUrl = `${clientUrl}/user/rental-contracts?contractId=${contract._id}`;
-      
+
       // Notify tenant
       await sendRentalNotification({
         userId: contract.tenantId._id,

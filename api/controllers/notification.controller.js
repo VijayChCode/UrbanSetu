@@ -4,6 +4,7 @@ import Listing from '../models/listing.model.js';
 import { errorHandler } from '../utils/error.js';
 import Booking from '../models/booking.model.js';
 import ReportAudit from '../models/reportAudit.model.js';
+import { sendPushNotification } from '../utils/pushNotification.js';
 
 // Helper to parse a structured report from notification title+message
 const parseReportFromNotification = (n) => {
@@ -604,6 +605,13 @@ export const createNotification = async (req, res, next) => {
     });
 
     const savedNotification = await notification.save();
+
+    // Send native push notification
+    sendPushNotification(userId, title, message, {
+      notificationId: savedNotification._id,
+      type
+    });
+
     res.status(201).json(savedNotification);
   } catch (error) {
     next(error);
@@ -1068,12 +1076,18 @@ export const adminSendNotification = async (req, res, next) => {
       adminId: req.user.id,
     });
 
-    await notification.save();
+    const savedNotification = await notification.save();
+
+    // Send native push notification
+    sendPushNotification(userId.toString(), title, message, {
+      notificationId: savedNotification._id,
+      type: savedNotification.type
+    });
 
     res.status(201).json({
       success: true,
       message: `Notification sent successfully to ${user.email}`,
-      notification
+      notification: savedNotification
     });
   } catch (error) {
     next(error);
@@ -1137,7 +1151,15 @@ export const adminSendNotificationToAll = async (req, res, next) => {
       adminId: req.user.id,
     }));
 
-    await Notification.insertMany(notifications);
+    const created = await Notification.insertMany(notifications);
+
+    // Send native push notifications to all users who have it enabled
+    created.forEach(n => {
+      sendPushNotification(n.userId.toString(), n.title, n.message, {
+        notificationId: n._id,
+        type: n.type
+      });
+    });
 
     res.status(201).json({
       success: true,

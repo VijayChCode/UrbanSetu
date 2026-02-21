@@ -30,6 +30,7 @@ import {
   lockListingForBooking,
   releaseListingLock
 } from '../utils/listingAvailability.js';
+import { sendPushNotification } from '../utils/pushNotification.js';
 
 const router = express.Router();
 
@@ -727,10 +728,17 @@ router.post('/:id/comment', verifyToken, async (req, res) => {
           } else {
             console.log('📧 Email suppressed (online or cooldown or not first unread). Recipient:', recipientUser.email);
           }
+
+          // ALWAYS try to send Push Notification regardless of email cooldown (Pushes are less intrusive)
+          const pushPreview = message || (imageUrl ? '📷 Image' : (videoUrl ? '🎥 Video' : (documentUrl ? '📄 Document' : (audioUrl ? '🔊 Audio' : 'Message'))));
+          sendPushNotification(recipientUser._id.toString(), `New message from ${senderName}`, pushPreview, {
+            appointmentId: id,
+            type: 'chat_message'
+          });
         }
       } catch (emailError) {
         // Log critical errors in setup (not sending) but don't block
-        console.error('Error processing new message notification email setup:', emailError);
+        console.error('Error processing new message notification setup:', emailError);
       }
 
       // Only mark as delivered if the intended recipient is online
