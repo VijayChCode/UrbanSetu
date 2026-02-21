@@ -11,6 +11,7 @@ import ListingItem from "../components/ListingItem";
 import ContactSupportWrapper from '../components/ContactSupportWrapper';
 import GeminiAIWrapper from '../components/GeminiAIWrapper';
 import SEO from '../components/SEO';
+import Typewriter from "../components/ui/Typewriter";
 import {
   FaHome, FaSearch, FaHeart, FaStar, FaMapMarkerAlt, FaPhone, FaEnvelope,
   FaShieldAlt, FaAward, FaUsers, FaChartLine, FaLightbulb, FaRocket, FaGem,
@@ -313,7 +314,11 @@ export default function PublicHome() {
             </div>
 
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-gray-900 dark:text-white mb-6 animate-fade-in-delay transition-colors">
-              Find Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">Dream Home</span>
+              Find Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
+                <Typewriter
+                  words={["Dream Home", "Perfect Space", "Ideal Property", "Luxury Living", "Smart Choice", "Future Home"]}
+                />
+              </span>
             </h1>
 
             <p className="mt-4 max-w-2xl mx-auto text-xl text-gray-600 dark:text-gray-400 mb-10 animate-fade-in-delay transition-colors" style={{ animationDelay: "0.4s" }}>
