@@ -164,6 +164,11 @@ const ClientErrorMonitoring = () => {
                                 <span className="font-medium">Audit Logs</span>
                             </Link>
 
+                            <Link to="/admin/support" className="flex items-center gap-2 px-4 py-2 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-lg border border-green-100 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors">
+                                <FaHeadset />
+                                <span className="font-medium">Bug Tickets</span>
+                            </Link>
+
                             <div className="flex items-center gap-3 bg-red-50 dark:bg-red-900/20 px-4 py-2 rounded-lg border border-red-100 dark:border-red-900/30">
                                 <FaExclamationTriangle className="text-red-500" />
                                 <div>
