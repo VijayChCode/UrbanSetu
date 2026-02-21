@@ -34,7 +34,7 @@ const createApiClient = (baseURL = API_BASE_URL) => {
 
         return data;
       } catch (error) {
-        console.error('API Request Error:', error);
+        // We throw the error to be handled by the platform-specific client (Web/Mobile)
         throw error;
       }
     },
