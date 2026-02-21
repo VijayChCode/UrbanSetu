@@ -587,7 +587,10 @@ export default function AdminDeploymentManagement() {
               >
                 <FaDownload className="mr-2" /> View Downloads Page
               </Link>
-              <span className="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 rounded-full text-xs font-black uppercase tracking-widest bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-800/30">
+              <span
+                className="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 rounded-full text-xs font-black uppercase tracking-widest bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-800/30 cursor-help"
+                title="This is the maximum file size permitted per build for AWS S3 uploads according to our server configuration. Uploads exceeding this size will be rejected."
+              >
                 <FaInfoCircle className="mr-2" /> Limit: 200MB
               </span>
             </div>
