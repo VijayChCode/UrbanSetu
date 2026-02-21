@@ -8,13 +8,14 @@ const createApiClient = (baseURL = API_BASE_URL) => {
 
     // Generic request method
     request: async (endpoint, options = {}) => {
+      const { headers, ...restOptions } = options;
       const url = `${baseURL}${endpoint}`;
       const config = {
         headers: {
           'Content-Type': 'application/json',
-          ...options.headers,
+          ...headers,
         },
-        ...options,
+        ...restOptions,
       };
 
       // Add auth token if available (will be implemented per platform)

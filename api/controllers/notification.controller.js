@@ -1006,7 +1006,11 @@ export const deleteNotification = async (req, res, next) => {
       return next(errorHandler(404, 'Notification not found'));
     }
 
-    if (notification.userId.toString() !== userId && req.user.role !== 'admin' && req.user.role !== 'rootadmin') {
+    // Check ownership: notification belongs to user OR user is admin
+    const isOwner = notification.userId.toString() === req.user.id;
+    const isAdmin = req.user.role === 'admin' || req.user.role === 'rootadmin';
+
+    if (!isOwner && !isAdmin) {
       return next(errorHandler(403, 'You can only delete your own notifications'));
     }
 
