@@ -8,6 +8,7 @@ import {
   FaSync, FaSignOutAlt, FaExclamationTriangle,
   FaCheckCircle, FaLaptopCode, FaTimes, FaCheck, FaTrash
 } from 'react-icons/fa';
+import { socket } from '../utils/socket';
 
 import { usePageTitle } from '../hooks/usePageTitle';
 import DeviceManagementSkeleton from '../components/skeletons/DeviceManagementSkeleton';
@@ -123,23 +124,25 @@ const DeviceManagement = () => {
   const [sessionToRevoke, setSessionToRevoke] = useState(null);
   const [isRevokingAll, setIsRevokingAll] = useState(false);
   const autoRefreshRef = useRef(null);
+  const controllerRef = useRef(null); // Added controllerRef
 
   useEffect(() => {
     fetchSessions();
+
+    const handler = () => fetchSessions();
+    if (socket) {
+      socket.on('sessionsUpdated', handler);
+    }
+
     return () => {
       if (autoRefreshRef.current) clearInterval(autoRefreshRef.current);
+      if (socket) {
+        socket.off('sessionsUpdated', handler);
+      }
+      if (controllerRef.current) controllerRef.current.abort();
     };
   }, []);
 
-  // Listen for session list updates from server to refresh immediately
-  useEffect(() => {
-    const handler = () => fetchSessions();
-    try {
-      const { socket } = require('../utils/socket');
-      socket.on('sessionsUpdated', handler);
-      return () => socket.off('sessionsUpdated', handler);
-    } catch (_) { }
-  }, []);
 
   const fetchSessions = async () => {
     try {

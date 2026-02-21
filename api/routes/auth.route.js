@@ -4,7 +4,7 @@ import { validateRecaptcha } from '../middleware/recaptcha.js';
 import OtpTracking from '../models/otpTracking.model.js';
 import bcryptjs from 'bcryptjs';
 import User from '../models/user.model.js';
-import { verifyToken } from '../utils/verify.js';
+import { verifyToken, optionalAuth } from '../utils/verify.js';
 import { sendOTP, verifyOTP, sendForgotPasswordOTP, sendProfileEmailOTP, sendAccountDeletionOTP, sendTransferRightsOTP, sendContractConfirmationOTP } from '../controllers/emailVerification.controller.js';
 import { signInRateLimit, signUpRateLimit, forgotPasswordRateLimit, otpRateLimit, otpVerifyRateLimit } from '../middleware/rateLimiter.js';
 import { generateCSRFToken, verifyCSRFToken, getCSRFToken } from '../middleware/csrf.js';
@@ -27,7 +27,7 @@ router.post("/google", signInRateLimit, bruteForceProtection, conditionalRecaptc
   return getFailedAttempts(identifier) >= 3;
 }), Google)
 router.post("/refresh", RefreshToken)
-router.get("/signout", Signout)
+router.get("/signout", optionalAuth, Signout)
 router.get("/verify", verifyAuth)
 router.post("/forgot-password", forgotPasswordRateLimit, validateRecaptcha({ required: true }), forgotPassword)
 router.post("/reset-password", resetPassword)

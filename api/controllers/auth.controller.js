@@ -823,32 +823,60 @@ export const Google = async (req, res, next) => {
 export const Signout = async (req, res, next) => {
     try {
         // Best-effort: identify user and current session to remove from activeSessions
-        const sessionId = req.cookies.session_id;
-        let userId = null;
-        try {
-            if (req.cookies.access_token) {
-                const decoded = jwt.verify(req.cookies.access_token, process.env.JWT_TOKEN);
-                userId = decoded.id;
-            } else if (req.cookies.refresh_token) {
-                const decoded = jwt.verify(req.cookies.refresh_token, process.env.JWT_TOKEN);
-                userId = decoded.id;
-            }
-        } catch (_) { }
+        // 1. Check cookies (Web)
+        // 2. Check X-Session-ID header (Mobile)
+        // 3. Check req.user (if optionalAuth was called)
+        const sessionId = req.headers['x-session-id'] || req.cookies.session_id;
+        let userId = req.user?._id || null;
 
-        if (userId && sessionId) {
+        if (!userId) {
             try {
-                await revokeSessionFromDB(userId, sessionId);
+                let token = req.cookies.access_token;
+                // Fallback: Check Authorization header if cookie is missing (Mobile)
+                if (!token && req.headers.authorization?.startsWith('Bearer ')) {
+                    token = req.headers.authorization.split(' ')[1];
+                }
+
+                if (token) {
+                    const decoded = jwt.verify(token, process.env.JWT_TOKEN);
+                    userId = decoded.id;
+                    // If sessionId wasn't in headers but is in token, use it
+                    if (!sessionId && decoded.sessionId) {
+                        // We can't easily re-assign to sessionId here if it's a const, 
+                        // but we can use it in the revoke call
+                    }
+                }
+            } catch (_) { }
+        }
+
+        // Use sessionId from token if not provided in headers/cookies
+        let finalSessionId = sessionId;
+        if (!finalSessionId) {
+            try {
+                let token = req.headers.authorization?.substring(7) || req.cookies.access_token;
+                if (token) {
+                    const decoded = jwt.verify(token, process.env.JWT_TOKEN);
+                    finalSessionId = decoded.sessionId;
+                }
+            } catch (_) { }
+        }
+
+        if (userId && finalSessionId) {
+            try {
+                await revokeSessionFromDB(userId, finalSessionId);
                 // Broadcast updates so UIs refresh immediately
                 const io = req.app.get('io');
                 if (io) {
+                    // Emit to specific user's room
                     io.to(userId.toString()).emit('sessionsUpdated');
+                    // Emit to admins
                     io.emit('adminSessionsUpdated');
                 }
                 // Log action
                 await logSessionAction(
                     userId,
                     'logout',
-                    sessionId,
+                    finalSessionId,
                     req.ip,
                     getDeviceInfo(req.get('User-Agent'), req.headers),
                     getLocationFromIP(req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip),

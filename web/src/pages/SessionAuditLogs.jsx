@@ -8,6 +8,7 @@ import {
   FaChartLine, FaMapMarkerAlt, FaFileExport, FaTrash, FaFingerprint, FaTimes, FaCalendarAlt,
   FaEye, FaClock, FaArrowRight, FaArrowDown
 } from 'react-icons/fa';
+import { socket } from '../utils/socket';
 
 import { usePageTitle } from '../hooks/usePageTitle';
 import AdminSessionAuditLogsSkeleton from '../components/skeletons/AdminSessionAuditLogsSkeleton';
@@ -250,7 +251,30 @@ const SessionAuditLogs = () => {
 
   useEffect(() => {
     fetchLogs();
-    return () => { if (autoRefreshRef.current) clearInterval(autoRefreshRef.current); };
+
+    // Listen for real-time updates from socket
+    const handleUpdate = () => {
+      fetchLogs();
+      if (activeTab === 'visitors') {
+        fetchVisitorStats();
+        fetchVisitors();
+      }
+    };
+
+    // We assume socket is globally available or we need to import it.
+    // Based on other files in this project, there's often a shared socket instance.
+    if (socket) {
+      socket.on('adminSessionsUpdated', handleUpdate);
+      socket.on('sessionsUpdated', handleUpdate);
+    }
+
+    return () => {
+      if (autoRefreshRef.current) clearInterval(autoRefreshRef.current);
+      if (socket) {
+        socket.off('adminSessionsUpdated', handleUpdate);
+        socket.off('sessionsUpdated', handleUpdate);
+      }
+    };
   }, [currentPage, filters, filterDateRange, filterRole]);
 
   const fetchLogs = async () => {
@@ -1457,9 +1481,9 @@ const SessionAuditLogs = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm">
                             <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${(visitor.deviceType === 'Mobile App' || visitor.device?.includes('UrbanSetu Mobile App')) ? 'bg-indigo-100 text-indigo-700 border border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800' :
-                                visitor.deviceType === 'Mobile' ? 'bg-blue-100 text-blue-700 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800' :
-                                  visitor.deviceType === 'Tablet' ? 'bg-purple-100 text-purple-700 border border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800' :
-                                    'bg-gray-100 text-gray-700 border border-gray-200 dark:bg-gray-700/50 dark:text-gray-300 dark:border-gray-600'
+                              visitor.deviceType === 'Mobile' ? 'bg-blue-100 text-blue-700 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800' :
+                                visitor.deviceType === 'Tablet' ? 'bg-purple-100 text-purple-700 border border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800' :
+                                  'bg-gray-100 text-gray-700 border border-gray-200 dark:bg-gray-700/50 dark:text-gray-300 dark:border-gray-600'
                               }`}>
                               {(visitor.deviceType === 'Mobile App' || visitor.device?.includes('UrbanSetu Mobile App')) ? <FaShieldAlt className="text-xs" /> :
                                 visitor.deviceType === 'Mobile' ? <FaGlobe className="text-xs" /> :
