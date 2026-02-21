@@ -22,12 +22,6 @@ export default function AgentInfoModal({ isOpen, onClose }) {
                             <p className="text-xs text-blue-100 opacity-90">Everything you need to know</p>
                         </div>
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="p-2 hover:bg-white/20 rounded-full transition-colors"
-                    >
-                        <FaTimes />
-                    </button>
                 </div>
 
                 {/* Content */}

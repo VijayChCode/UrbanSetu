@@ -43,18 +43,11 @@ export default function ConfirmationModal({
     <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-[10000] p-4 animate-fadeIn">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full animate-slideUp border border-transparent dark:border-gray-700">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-700">
+        <div className="flex items-center p-6 border-b border-gray-100 dark:border-gray-700">
           <div className="flex items-center gap-3">
             {getIcon()}
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h3>
           </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
-            disabled={isLoading}
-          >
-            <FaTimes className="w-4 h-4" />
-          </button>
         </div>
 
         {/* Content */}
