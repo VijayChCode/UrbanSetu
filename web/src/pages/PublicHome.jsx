@@ -313,10 +313,18 @@ export default function PublicHome() {
               )}
             </div>
 
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-gray-900 dark:text-white mb-6 animate-fade-in-delay transition-colors">
-              Find Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-gray-900 dark:text-white mb-6 animate-fade-in-delay transition-colors min-h-[1.2em]">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
                 <Typewriter
-                  words={["Dream Home", "Perfect Space", "Ideal Property", "Luxury Living", "Smart Choice", "Future Home"]}
+                  words={[
+                    "Find Your Dream Home",
+                    "Discover Perfect Spaces",
+                    "Search Verified Listings",
+                    "Experience Luxury Living",
+                    "Unlock Exclusive Deals",
+                    "Invest In Your Future",
+                    "Explore Smart Properties"
+                  ]}
                 />
               </span>
             </h1>
