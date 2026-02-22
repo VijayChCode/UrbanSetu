@@ -313,7 +313,7 @@ export default function PublicHome() {
               )}
             </div>
 
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-gray-900 dark:text-white mb-6 animate-fade-in-delay transition-colors min-h-[1.2em]">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-gray-900 dark:text-white mb-6 animate-fade-in-delay transition-colors min-h-[3.6em] md:min-h-[1.2em] flex items-center justify-center">
               <Typewriter
                 words={[
                   "Find Your Dream Home",

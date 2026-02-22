@@ -71,7 +71,7 @@ const Typewriter = ({ words, className = "", period = 2000, splitFirstWord = fal
 
     return (
         <span className={className}>
-            {renderContent()}
+            {renderContent() || "\u00A0"}
             <motion.span
                 animate={{ opacity: blink ? 1 : 0 }}
                 transition={{ duration: 0.1 }}
