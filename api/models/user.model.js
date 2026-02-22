@@ -167,6 +167,7 @@ const userSchema = new mongoose.Schema({
     theme: { type: String, default: 'light' },
     fontSize: { type: String, default: 'medium' },
     pushToken: { type: String, default: null },
+    biometricAuth: { type: Boolean, default: false },
   },
 
   // Rental Profile
