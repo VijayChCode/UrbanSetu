@@ -844,7 +844,13 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
       const total = videoRef.current.duration;
 
       if (isFinite(total) && total > 0) {
-        if (duration !== total) setDuration(total);
+        // Only update state duration if it's significantly different (avoid jitter)
+        // or if it's the first time we've got a valid duration
+        if (!duration || Math.abs(duration - total) > 0.5) {
+          setDuration(total);
+        }
+
+        // Progress calculation should always use the latest total from the video element
         setProgress((current / total) * 100);
 
         // Update Buffer
@@ -867,7 +873,9 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
       const current = vid.currentTime;
 
       if (isFinite(total) && total > 0) {
-        if (duration !== total) setDuration(total);
+        if (!duration || Math.abs(duration - total) > 0.5) {
+          setDuration(total);
+        }
         // Update Buffer on download progress
         if (vid.buffered.length > 0) {
           for (let i = 0; i < vid.buffered.length; i++) {
@@ -1524,11 +1532,13 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
   };
 
   const formatTime = (seconds, isRemaining = false) => {
-    if (!isFinite(seconds)) return isRemaining ? "--:--" : "0:00";
+    // If it's a duration (isRemaining is false elsewhere, or specifically total), 
+    // and it's 0 or invalid, show placeholder
+    if (!isFinite(seconds) || (seconds === 0 && !isRemaining)) return isRemaining ? "--:--" : "--:--";
 
     if (isRemaining) {
       const total = duration || videoRef.current?.duration || 0;
-      if (!isFinite(total)) return "--:--";
+      if (!isFinite(total) || total === 0) return "--:--";
       const diff = Math.max(0, total - seconds);
       const mins = Math.floor(diff / 60);
       const secs = Math.floor(diff % 60);
@@ -1771,24 +1781,34 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
           onLoadedData={(e) => {
             setIsLoading(false);
             setIsManualRetrying(false);
-            if (isFinite(e.currentTarget.duration)) setDuration(e.currentTarget.duration);
+            const d = e.currentTarget.duration;
+            if (isFinite(d) && d > 0) setDuration(d);
           }}
           onLoadedMetadata={(e) => {
-            if (isFinite(e.currentTarget.duration)) setDuration(e.currentTarget.duration);
+            const d = e.currentTarget.duration;
+            if (isFinite(d) && d > 0) setDuration(d);
           }}
           onDurationChange={(e) => {
-            if (isFinite(e.currentTarget.duration)) setDuration(e.currentTarget.duration);
+            const d = e.currentTarget.duration;
+            if (isFinite(d) && d > 0) {
+              // Only update if change is significant to prevent creeping duration
+              if (!duration || Math.abs(duration - d) > 0.5) {
+                setDuration(d);
+              }
+            }
           }}
           onCanPlay={(e) => {
             setIsLoading(false);
-            if (isFinite(e.currentTarget.duration)) setDuration(e.currentTarget.duration);
+            const d = e.currentTarget.duration;
+            if (isFinite(d) && d > 0) setDuration(d);
           }}
           onPlay={() => setIsPlaying(true)}
           onPlaying={(e) => {
             setIsLoading(false);
             setIsEnded(false);
             setIsPlaying(true);
-            if (isFinite(e.currentTarget.duration)) setDuration(e.currentTarget.duration);
+            const d = e.currentTarget.duration;
+            if (isFinite(d) && d > 0) setDuration(d);
           }}
           onPause={() => setIsPlaying(false)}
           onError={handleVideoError}
