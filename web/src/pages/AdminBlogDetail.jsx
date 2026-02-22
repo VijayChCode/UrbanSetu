@@ -612,11 +612,11 @@ const AdminBlogDetail = () => {
                     </SwiperSlide>
                   )) : (
                     <SwiperSlide>
-                      <div className="w-full h-full bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-400 dark:text-gray-500 flex-col gap-4">
-                        <div className="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
-                          <Tag className="w-8 h-8 opacity-20" />
+                      <div className="w-full h-full bg-gray-50 dark:bg-gray-900/40 flex items-center justify-center transition-colors duration-300">
+                        <div className="text-center text-gray-400 dark:text-gray-500 flex flex-col items-center">
+                          <div className="text-6xl mb-4 opacity-80">🏠</div>
+                          <p className="text-xs font-bold uppercase tracking-widest opacity-70">No media available</p>
                         </div>
-                        <p className="font-medium">No media uploaded</p>
                       </div>
                     </SwiperSlide>
                   )

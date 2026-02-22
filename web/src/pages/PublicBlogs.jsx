@@ -782,8 +782,10 @@ const PublicBlogs = () => {
                       className="w-full h-full transition-transform duration-700 group-hover:scale-110"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                      <span className="text-gray-400 font-bold text-2xl">UrbanSetu</span>
+                    <div className="w-full h-full bg-gray-50 dark:bg-gray-900/40 flex items-center justify-center transition-colors duration-300">
+                      <div className="text-center text-gray-400 dark:text-gray-500 flex flex-col items-center">
+                        <div className="text-3xl opacity-80">🏠</div>
+                      </div>
                     </div>
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity"></div>

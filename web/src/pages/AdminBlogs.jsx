@@ -757,8 +757,8 @@ const AdminBlogs = ({ type }) => {
                                   {blog.thumbnail ? (
                                     <AdvancedImage src={blog.thumbnail} alt="" className="w-full h-full" />
                                   ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500">
-                                      <FileText className="w-6 h-6" />
+                                    <div className="w-full h-full flex items-center justify-center bg-gray-50 dark:bg-gray-900/40 transition-colors">
+                                      <span className="text-gray-400 dark:text-gray-500 text-lg opacity-80">🏠</span>
                                     </div>
                                   )}
                                 </div>

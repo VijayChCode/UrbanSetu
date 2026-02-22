@@ -468,9 +468,11 @@ const PublicBlogDetail = () => {
                     </SwiperSlide>
                   )) : (
                     <SwiperSlide>
-                      <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 flex-col gap-4">
-                        <Tag className="w-16 h-16 opacity-20" />
-                        <p>No media available</p>
+                      <div className="w-full h-full bg-gray-50 dark:bg-gray-900/40 flex items-center justify-center transition-colors duration-300">
+                        <div className="text-center text-gray-400 dark:text-gray-500 flex flex-col items-center">
+                          <div className="text-6xl mb-4 opacity-80">🏠</div>
+                          <p className="text-xs font-bold uppercase tracking-widest opacity-70">No media available</p>
+                        </div>
                       </div>
                     </SwiperSlide>
                   )

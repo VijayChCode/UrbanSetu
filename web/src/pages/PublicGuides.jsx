@@ -734,11 +734,19 @@ const PublicGuides = () => {
                                 <Link to={`/guide/${guide.slug || guide._id}`} key={guide._id} className="bg-white dark:bg-gray-900 rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl border border-gray-100 dark:border-gray-800 transition-all duration-300 group flex flex-col h-full hover:-translate-y-1">
                                     {/* Card Image */}
                                     <div className="h-56 overflow-hidden relative">
-                                        <AdvancedImage
-                                            src={guide.thumbnail || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1073&q=80'}
-                                            alt={guide.title}
-                                            className="w-full h-full transition-transform duration-500 group-hover:scale-105"
-                                        />
+                                        {guide.thumbnail ? (
+                                            <AdvancedImage
+                                                src={guide.thumbnail}
+                                                alt={guide.title}
+                                                className="w-full h-full transition-transform duration-500 group-hover:scale-105"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full bg-gray-50 dark:bg-gray-900/40 flex items-center justify-center transition-colors duration-300">
+                                                <div className="text-center text-gray-400 dark:text-gray-500 flex flex-col items-center">
+                                                    <div className="text-4xl opacity-80">🏠</div>
+                                                </div>
+                                            </div>
+                                        )}
                                         <div className="absolute top-4 left-4">
                                             <span className="px-3 py-1 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md rounded-lg text-xs font-bold uppercase tracking-wide text-purple-600 dark:text-purple-400 shadow-sm">
                                                 {guide.category}
