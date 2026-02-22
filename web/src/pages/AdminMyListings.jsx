@@ -284,24 +284,21 @@ export default function AdminMyListings() {
                     <div key={listing._id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
                       {/* Image */}
                       <div className="relative h-48 bg-gray-200 dark:bg-gray-700">
-                        {listing.imageUrls && listing.imageUrls.length > 0 ? (
+                        {listing.imageUrls && listing.imageUrls.length > 0 && listing.imageUrls[0] ? (
                           <img
                             src={listing.imageUrls[0]}
                             alt={listing.name}
                             className="w-full h-full object-cover"
                             onError={(e) => {
-                              e.target.src = "https://via.placeholder.com/400x300?text=No+Image";
-                              e.target.className = "w-full h-full object-cover opacity-50";
+                              e.target.style.display = 'none';
+                              e.target.parentNode.querySelector('.no-image-placeholder').style.display = 'flex';
                             }}
                           />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <div className="text-center text-gray-500 dark:text-gray-400">
-                              <div className="text-4xl mb-2">🏠</div>
-                              <p className="text-sm">No Image</p>
-                            </div>
-                          </div>
-                        )}
+                        ) : null}
+                        <div className={`no-image-placeholder absolute inset-0 flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-600 bg-gray-50 dark:bg-gray-800/30 ${listing.imageUrls && listing.imageUrls[0] ? 'hidden' : 'flex'}`}>
+                          <div className="text-4xl">🏠</div>
+                          <p className="text-xs font-bold uppercase tracking-widest text-center">No Image Available</p>
+                        </div>
 
                         {/* Type Badge */}
                         <div className="absolute top-2 left-2">
