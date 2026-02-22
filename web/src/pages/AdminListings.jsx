@@ -609,20 +609,21 @@ export default function AdminListings() {
                     <div key={listing._id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:shadow-md transition-shadow">
                       {/* Image */}
                       <div className="relative h-48 bg-gray-200 dark:bg-gray-700 rounded-t-lg overflow-hidden">
-                        {listing.imageUrls && listing.imageUrls.length > 0 ? (
+                        {listing.imageUrls && listing.imageUrls.length > 0 && listing.imageUrls[0] ? (
                           <img
                             src={listing.imageUrls[0]}
                             alt={listing.name}
                             className="w-full h-full object-cover"
                             onError={(e) => {
-                              e.target.src = "https://via.placeholder.com/400x300?text=No+Image";
+                              e.target.style.display = 'none';
+                              e.target.parentNode.querySelector('.no-image-placeholder').style.display = 'flex';
                             }}
                           />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-400">
-                            <span>No Image</span>
-                          </div>
-                        )}
+                        ) : null}
+                        <div className={`no-image-placeholder absolute inset-0 flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-900/40 ${listing.imageUrls && listing.imageUrls[0] ? 'hidden' : 'flex'}`}>
+                          <div className="text-4xl opacity-80">🏠</div>
+                          <span className="text-xs font-bold uppercase tracking-widest text-center opacity-70">No Image Available</span>
+                        </div>
 
                         {/* Offer Badge */}
                         {listing.offer && getDiscountPercentage(listing) > 0 && (

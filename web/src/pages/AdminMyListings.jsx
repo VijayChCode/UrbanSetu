@@ -295,9 +295,9 @@ export default function AdminMyListings() {
                             }}
                           />
                         ) : null}
-                        <div className={`no-image-placeholder absolute inset-0 flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-600 bg-gray-50 dark:bg-gray-800/30 ${listing.imageUrls && listing.imageUrls[0] ? 'hidden' : 'flex'}`}>
-                          <div className="text-4xl">🏠</div>
-                          <p className="text-xs font-bold uppercase tracking-widest text-center">No Image Available</p>
+                        <div className={`no-image-placeholder absolute inset-0 flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-900/40 ${listing.imageUrls && listing.imageUrls[0] ? 'hidden' : 'flex'}`}>
+                          <div className="text-4xl opacity-80">🏠</div>
+                          <p className="text-xs font-bold uppercase tracking-widest text-center opacity-70">No Image Available</p>
                         </div>
 
                         {/* Type Badge */}

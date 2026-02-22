@@ -287,7 +287,7 @@ export default function MyListings() {
                 {filteredListings.slice(0, visibleCount).map((listing) => (
                   <div key={listing._id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:shadow-md dark:shadow-blue-900/5 transition-all">
                     {/* Image */}
-                    <div className="relative h-48 bg-gray-200 rounded-t-lg overflow-hidden">
+                    <div className="relative h-48 bg-gray-200 dark:bg-gray-700 rounded-t-lg overflow-hidden">
                       {listing.imageUrls && listing.imageUrls.length > 0 && listing.imageUrls[0] ? (
                         <img
                           src={listing.imageUrls[0]}
@@ -299,9 +299,9 @@ export default function MyListings() {
                           }}
                         />
                       ) : null}
-                      <div className={`no-image-placeholder absolute inset-0 flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-600 bg-gray-50 dark:bg-gray-800/30 ${listing.imageUrls && listing.imageUrls[0] ? 'hidden' : 'flex'}`}>
-                        <div className="text-4xl">🏠</div>
-                        <span className="text-xs font-bold uppercase tracking-widest text-center">No Image Available</span>
+                      <div className={`no-image-placeholder absolute inset-0 flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-900/40 ${listing.imageUrls && listing.imageUrls[0] ? 'hidden' : 'flex'}`}>
+                        <div className="text-4xl opacity-80">🏠</div>
+                        <span className="text-xs font-bold uppercase tracking-widest text-center opacity-70">No Image Available</span>
                       </div>
                       {/* Sale Status Overlays */}
                       {listing.availabilityStatus === 'under_contract' && (
