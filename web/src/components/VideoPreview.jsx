@@ -841,16 +841,19 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
   const handleTimeUpdate = () => {
     if (videoRef.current) {
       const current = videoRef.current.currentTime;
-      const total = duration || videoRef.current.duration || 1;
-      setProgress((current / total) * 100);
+      const total = videoRef.current.duration;
 
-      // Update Buffer
-      if (videoRef.current.buffered.length > 0) {
-        // Find the buffered range that covers the current time
-        for (let i = 0; i < videoRef.current.buffered.length; i++) {
-          if (videoRef.current.buffered.start(i) <= current && videoRef.current.buffered.end(i) >= current) {
-            setLoadedProgress((videoRef.current.buffered.end(i) / total) * 100);
-            break;
+      if (isFinite(total) && total > 0) {
+        if (duration !== total) setDuration(total);
+        setProgress((current / total) * 100);
+
+        // Update Buffer
+        if (videoRef.current.buffered.length > 0) {
+          for (let i = 0; i < videoRef.current.buffered.length; i++) {
+            if (videoRef.current.buffered.start(i) <= current && videoRef.current.buffered.end(i) >= current) {
+              setLoadedProgress((videoRef.current.buffered.end(i) / total) * 100);
+              break;
+            }
           }
         }
       }
@@ -858,17 +861,20 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
   };
 
   const handleProgress = () => {
-    if (videoRef.current && videoRef.current.duration) {
+    if (videoRef.current) {
       const vid = videoRef.current;
       const total = vid.duration;
       const current = vid.currentTime;
 
-      // Update Buffer on download progress
-      if (vid.buffered.length > 0) {
-        for (let i = 0; i < vid.buffered.length; i++) {
-          if (vid.buffered.start(i) <= current && vid.buffered.end(i) >= current) {
-            setLoadedProgress((vid.buffered.end(i) / total) * 100);
-            break;
+      if (isFinite(total) && total > 0) {
+        if (duration !== total) setDuration(total);
+        // Update Buffer on download progress
+        if (vid.buffered.length > 0) {
+          for (let i = 0; i < vid.buffered.length; i++) {
+            if (vid.buffered.start(i) <= current && vid.buffered.end(i) >= current) {
+              setLoadedProgress((vid.buffered.end(i) / total) * 100);
+              break;
+            }
           }
         }
       }
@@ -1518,9 +1524,11 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
   };
 
   const formatTime = (seconds, isRemaining = false) => {
-    if (!seconds && !isRemaining) return "0:00";
+    if (!isFinite(seconds)) return isRemaining ? "--:--" : "0:00";
+
     if (isRemaining) {
       const total = duration || videoRef.current?.duration || 0;
+      if (!isFinite(total)) return "--:--";
       const diff = Math.max(0, total - seconds);
       const mins = Math.floor(diff / 60);
       const secs = Math.floor(diff % 60);
@@ -1760,12 +1768,28 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
           onLoadStart={() => setIsLoading(true)}
           onWaiting={() => setIsLoading(true)}
           onStalled={() => setIsLoading(true)}
-          onLoadedData={() => { setIsLoading(false); setIsManualRetrying(false); }}
-          onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
-          onDurationChange={(e) => setDuration(e.currentTarget.duration)}
-          onCanPlay={() => setIsLoading(false)}
+          onLoadedData={(e) => {
+            setIsLoading(false);
+            setIsManualRetrying(false);
+            if (isFinite(e.currentTarget.duration)) setDuration(e.currentTarget.duration);
+          }}
+          onLoadedMetadata={(e) => {
+            if (isFinite(e.currentTarget.duration)) setDuration(e.currentTarget.duration);
+          }}
+          onDurationChange={(e) => {
+            if (isFinite(e.currentTarget.duration)) setDuration(e.currentTarget.duration);
+          }}
+          onCanPlay={(e) => {
+            setIsLoading(false);
+            if (isFinite(e.currentTarget.duration)) setDuration(e.currentTarget.duration);
+          }}
           onPlay={() => setIsPlaying(true)}
-          onPlaying={() => { setIsLoading(false); setIsEnded(false); setIsPlaying(true); }}
+          onPlaying={(e) => {
+            setIsLoading(false);
+            setIsEnded(false);
+            setIsPlaying(true);
+            if (isFinite(e.currentTarget.duration)) setDuration(e.currentTarget.duration);
+          }}
           onPause={() => setIsPlaying(false)}
           onError={handleVideoError}
           onTimeUpdate={handleTimeUpdate}
