@@ -20,6 +20,7 @@ import SocialSharePanel from '../components/SocialSharePanel';
 
 import SEO from '../components/SEO';
 import { authenticatedFetch } from '../utils/auth';
+import AdvancedImage from '../components/AdvancedImage';
 
 const PublicBlogDetail = () => {
 
@@ -426,10 +427,10 @@ const PublicBlogDetail = () => {
                     <SwiperSlide key={index}>
                       <div className="relative w-full h-full flex items-center justify-center bg-gray-900">
                         {item.type === 'image' ? (
-                          <img
+                          <AdvancedImage
                             src={item.url}
                             alt=""
-                            className="w-full h-full object-cover"
+                            className="w-full h-full"
                             onClick={() => handleImageClick(index)}
                           />
                         ) : (
@@ -668,9 +669,9 @@ const PublicBlogDetail = () => {
                   <div key={related._id} className="group cursor-pointer" onClick={() => navigate(`/${related.type === 'guide' ? 'guide' : 'blog'}/${related.slug || related._id}`)}>
                     <div className="aspect-video rounded-xl overflow-hidden mb-3 relative bg-gray-100/50 dark:bg-gray-800/50">
                       {related.thumbnail ? (
-                        <img src={related.thumbnail} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt={related.title} />
+                        <AdvancedImage src={related.thumbnail} className="w-full h-full transition-transform duration-500 group-hover:scale-110" alt={related.title} />
                       ) : (related.imageUrls && related.imageUrls.length > 0) ? (
-                        <img src={related.imageUrls[0]} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt={related.title} />
+                        <AdvancedImage src={related.imageUrls[0]} className="w-full h-full transition-transform duration-500 group-hover:scale-110" alt={related.title} />
                       ) : (related.videoUrls && related.videoUrls.length > 0) ? (
                         <div className="w-full h-full relative">
                           <video

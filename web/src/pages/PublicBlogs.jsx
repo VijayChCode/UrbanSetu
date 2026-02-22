@@ -13,6 +13,7 @@ import SEO from '../components/SEO';
 import { authenticatedFetch } from '../utils/auth';
 import RecaptchaWidget from '../components/RecaptchaWidget';
 import { useRef } from 'react';
+import AdvancedImage from '../components/AdvancedImage';
 
 const PublicBlogs = () => {
   // SEO Dynamic Tags
@@ -715,10 +716,10 @@ const PublicBlogs = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {featuredBlogs.map((blog, idx) => (
                 <Link to={`/blog/${blog.slug || blog._id}`} key={blog._id} className="group relative h-96 rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 cursor-pointer border border-gray-100 dark:border-gray-800">
-                  <img
+                  <AdvancedImage
                     src={blog.thumbnail || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1073&q=80'}
                     alt={blog.title}
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    className="absolute inset-0 w-full h-full transition-transform duration-700 group-hover:scale-110"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
                   <div className="absolute bottom-0 left-0 p-8 w-full">
@@ -775,10 +776,10 @@ const PublicBlogs = () => {
                 {/* Thumbnail */}
                 <div className="relative overflow-hidden h-56 flex-shrink-0">
                   {blog.thumbnail ? (
-                    <img
+                    <AdvancedImage
                       src={blog.thumbnail}
                       alt={blog.title}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      className="w-full h-full transition-transform duration-700 group-hover:scale-110"
                     />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">

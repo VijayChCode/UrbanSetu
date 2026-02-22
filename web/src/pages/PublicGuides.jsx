@@ -14,6 +14,7 @@ import { authenticatedFetch } from '../utils/auth';
 import SEO from '../components/SEO';
 import RecaptchaWidget from '../components/RecaptchaWidget';
 import { useRef } from 'react';
+import AdvancedImage from '../components/AdvancedImage';
 
 const PublicGuides = () => {
     // Set page title
@@ -680,10 +681,10 @@ const PublicGuides = () => {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             {featuredGuides.map((guide, idx) => (
                                 <Link to={`/guide/${guide.slug || guide._id}`} key={guide._id} className="group relative h-96 rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 cursor-pointer">
-                                    <img
+                                    <AdvancedImage
                                         src={guide.thumbnail || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1073&q=80'} // Fallback 
                                         alt={guide.title}
-                                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                        className="absolute inset-0 w-full h-full transition-transform duration-700 group-hover:scale-110"
                                     />
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
                                     <div className="absolute bottom-0 left-0 p-8 w-full">
@@ -733,10 +734,10 @@ const PublicGuides = () => {
                                 <Link to={`/guide/${guide.slug || guide._id}`} key={guide._id} className="bg-white dark:bg-gray-900 rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl border border-gray-100 dark:border-gray-800 transition-all duration-300 group flex flex-col h-full hover:-translate-y-1">
                                     {/* Card Image */}
                                     <div className="h-56 overflow-hidden relative">
-                                        <img
+                                        <AdvancedImage
                                             src={guide.thumbnail || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1073&q=80'}
                                             alt={guide.title}
-                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                            className="w-full h-full transition-transform duration-500 group-hover:scale-105"
                                         />
                                         <div className="absolute top-4 left-4">
                                             <span className="px-3 py-1 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md rounded-lg text-xs font-bold uppercase tracking-wide text-purple-600 dark:text-purple-400 shadow-sm">

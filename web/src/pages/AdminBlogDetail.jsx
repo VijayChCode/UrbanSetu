@@ -19,6 +19,7 @@ import BlogDetailSkeleton from '../components/skeletons/BlogDetailSkeleton';
 import ConfirmationModal from '../components/ConfirmationModal';
 import SocialSharePanel from '../components/SocialSharePanel';
 import { authenticatedFetch } from '../utils/auth';
+import AdvancedImage from '../components/AdvancedImage';
 
 import { usePageTitle } from '../hooks/usePageTitle';
 
@@ -569,10 +570,10 @@ const AdminBlogDetail = () => {
                     <SwiperSlide key={index}>
                       <div className="relative w-full h-full flex items-center justify-center bg-gray-900">
                         {item.type === 'image' ? (
-                          <img
+                          <AdvancedImage
                             src={item.url}
                             alt=""
-                            className="w-full h-full object-contain bg-black/50 backdrop-blur-xl"
+                            className="w-full h-full bg-black/50 backdrop-blur-xl"
                             style={{ backgroundImage: `url(${item.url})`, backgroundSize: 'cover', backgroundBlendMode: 'overlay' }}
                             onClick={() => handleImageClick(index)}
                           />

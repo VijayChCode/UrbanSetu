@@ -13,6 +13,7 @@ import BlogAnalytics from '../components/BlogAnalytics';
 import ConfirmationModal from '../components/ConfirmationModal';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { authenticatedFetch } from '../utils/auth';
+import AdvancedImage from '../components/AdvancedImage';
 
 const AdminBlogs = ({ type }) => {
   // Set page title
@@ -754,7 +755,7 @@ const AdminBlogs = ({ type }) => {
                               <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 rounded-lg bg-gray-200 dark:bg-gray-700 overflow-hidden flex-shrink-0 border border-gray-200 dark:border-gray-600 shadow-sm">
                                   {blog.thumbnail ? (
-                                    <img src={blog.thumbnail} alt="" className="w-full h-full object-cover" />
+                                    <AdvancedImage src={blog.thumbnail} alt="" className="w-full h-full" />
                                   ) : (
                                     <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500">
                                       <FileText className="w-6 h-6" />
