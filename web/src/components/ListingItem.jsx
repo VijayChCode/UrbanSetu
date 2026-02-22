@@ -9,12 +9,15 @@ import PrimaryButton from "./ui/PrimaryButton";
 import { MapPin, Bath, BedDouble, Tag } from "lucide-react";
 import AdvancedImage from "./AdvancedImage";
 
+import SocialSharePanel from './SocialSharePanel';
+
 export default function ListingItem({ listing, onDelete, onWishToggle }) {
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const [isInWishlistState, setIsInWishlistState] = useState(false);
   const [showAppointmentTooltip, setShowAppointmentTooltip] = useState(false);
   const [showRentTooltip, setShowRentTooltip] = useState(false);
   const [showWishlistTooltip, setShowWishlistTooltip] = useState(false);
+  const [isSharePanelOpen, setIsSharePanelOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { currentUser } = useSelector((state) => state.user);
@@ -89,6 +92,15 @@ export default function ListingItem({ listing, onDelete, onWishToggle }) {
 
   return (
     <div className="group relative bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-700 shadow-2xl transition-transform duration-200 hover:-translate-y-0.5">
+      {/* Social Share Panel */}
+      <SocialSharePanel
+        isOpen={isSharePanelOpen}
+        onClose={() => setIsSharePanelOpen(false)}
+        url={window.location.origin + listingLink}
+        title={listing.name}
+        description={`Check out this property on UrbanSetu: ${listing.name}. ${listing.description?.substring(0, 100)}...`}
+      />
+
       {/* Offer Badge */}
       {listing.offer && getDiscountPercentage() > 0 && (
         <div className="absolute top-2 sm:top-3 left-2 sm:left-3 z-20">
@@ -132,16 +144,7 @@ export default function ListingItem({ listing, onDelete, onWishToggle }) {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                if (navigator.share) {
-                  navigator.share({
-                    title: listing.name,
-                    text: `Check out this property on UrbanSetu: ${listing.name}`,
-                    url: window.location.origin + listingLink
-                  });
-                } else {
-                  navigator.clipboard.writeText(window.location.origin + listingLink);
-                  alert('Link copied to clipboard!');
-                }
+                setIsSharePanelOpen(true);
               }}
               className="p-2 rounded-full bg-white/90 dark:bg-gray-700/90 text-blue-600 dark:text-blue-400 transition shadow-lg hover:bg-blue-500 hover:text-white"
               title="Share property"
