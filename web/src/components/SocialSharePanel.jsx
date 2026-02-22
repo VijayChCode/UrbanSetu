@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   FaFacebook, FaLinkedin, FaWhatsapp,
   FaTelegram, FaCopy, FaCheck, FaTimes, FaShareAlt,
@@ -197,27 +198,24 @@ const SocialSharePanel = ({ isOpen, onClose, url, title = "Join UrbanSetu!", des
     }
   ];
 
-
   if (!isOpen && !isVisible) return null;
 
-  return (
+  return createPortal(
     <div
       className={`fixed inset-0 z-[10000] flex items-center justify-center p-4 transition-all duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-      onTouchStart={(e) => e.stopPropagation()}
-      onTouchMove={(e) => e.stopPropagation()}
-      onTouchEnd={(e) => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
     >
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-[2px] transition-opacity duration-300"
         onClick={onClose}
-        onTouchStart={(e) => e.stopPropagation()}
-        onTouchMove={(e) => e.stopPropagation()}
-        onTouchEnd={(e) => e.stopPropagation()}
       />
 
       {/* Panel */}
-      <div className={`relative bg-white dark:bg-[#1f1f1f] rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden transition-all duration-300 transform flex flex-col border border-gray-200 dark:border-gray-800 ${isOpen ? 'scale-100 translate-y-0 opacity-100' : 'scale-95 translate-y-4 opacity-0'}`}>
+      <div
+        className={`relative bg-white dark:bg-[#1f1f1f] rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden transition-all duration-300 transform flex flex-col border border-gray-200 dark:border-gray-800 ${isOpen ? 'scale-100 translate-y-0 opacity-100' : 'scale-95 translate-y-4 opacity-0'}`}
+        onClick={(e) => e.stopPropagation()}
+      >
 
         {/* Compact Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-800">
@@ -230,7 +228,7 @@ const SocialSharePanel = ({ isOpen, onClose, url, title = "Join UrbanSetu!", des
           </button>
         </div>
 
-        <div className="p-4 overflow-hidden relative group/share">
+        <div className="p-4 overflow-hidden relative group/share text-gray-900 dark:text-white">
           {/* Social Icons Row - YouTube Style */}
           <style>{`
             .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -322,7 +320,8 @@ const SocialSharePanel = ({ isOpen, onClose, url, title = "Join UrbanSetu!", des
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
