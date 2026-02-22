@@ -37,6 +37,7 @@ import VerifiedModal from "../components/VerifiedModal";
 import PreBookingChatWrapper from "../components/PreBookingChatWrapper";
 import { authenticatedFetch } from "../utils/auth";
 import { trackInteraction } from "../utils/sentinelLiveEngine";
+import AdvancedImage from "../components/AdvancedImage";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const UNAVAILABLE_STATUSES = ['reserved', 'under_contract', 'rented', 'sold', 'suspended'];
@@ -1774,8 +1775,8 @@ export default function Listing() {
                       <div key={property._id} className="group flex items-center justify-between bg-white dark:bg-gray-700 p-2 rounded-xl shadow-sm border border-indigo-50 dark:border-gray-600 hover:shadow-md transition-all hover:border-indigo-200 dark:hover:border-indigo-500">
                         <div className="flex items-center gap-3 overflow-hidden flex-1">
                           <div className="relative w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
-                            <img
-                              src={property.imageUrls?.[0] || '/placeholder-property.jpg'}
+                            <AdvancedImage
+                              src={property.imageUrls?.[0]}
                               alt={property.name}
                               className="w-full h-full object-cover rounded-lg shadow-sm"
                             />
@@ -1872,14 +1873,10 @@ export default function Listing() {
                   <SwiperSlide key={index}>
                     <div className="relative group">
                       {item.type === 'image' ? (
-                        <img
+                        <AdvancedImage
                           src={item.url}
                           alt={`${listing.name} - Image ${index + 1}`}
                           className="w-full h-40 sm:h-64 md:h-96 object-cover transition-transform duration-200 group-hover:scale-105"
-                          onError={(e) => {
-                            e.target.src = "https://via.placeholder.com/800x600?text=Image+Not+Available";
-                            e.target.className = "w-full h-40 sm:h-64 md:h-96 object-cover opacity-50";
-                          }}
                         />
                       ) : (
                         <div className="relative w-full h-40 sm:h-64 md:h-96 bg-black overflow-hidden flex items-center justify-center">
