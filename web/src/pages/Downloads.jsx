@@ -181,14 +181,20 @@ export default function Downloads() {
                                                 </div>
 
                                                 {latest.description && (
-                                                    <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-800">
+                                                    <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 transition-all duration-500 hover:shadow-lg hover:shadow-blue-500/5 dark:hover:shadow-none group/whatsnew cursor-default relative">
                                                         <div className="flex items-center gap-2 mb-2">
                                                             <div className={`w-1 h-3 bg-${platform.color}-500 rounded-full`}></div>
                                                             <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">What's New</span>
                                                         </div>
-                                                        <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-4 leading-relaxed italic">
+                                                        <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-4 group-hover/whatsnew:line-clamp-none leading-relaxed italic transition-all duration-500">
                                                             "{latest.description}"
                                                         </p>
+
+                                                        {latest.description.length > 100 && (
+                                                            <div className="absolute bottom-2 right-4 group-hover/whatsnew:hidden">
+                                                                <span className="text-[8px] font-black text-blue-500/40 uppercase tracking-widest">Hover to expand</span>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 )}
                                             </div>
