@@ -181,7 +181,7 @@ export default function Downloads() {
                                                 </div>
 
                                                 {latest.description && (
-                                                    <div className="bg-gray-50/50 dark:bg-gray-800/30 p-4 rounded-2xl border border-gray-100/50 dark:border-gray-800 transition-all duration-300 group/whatsnew relative cursor-default overflow-hidden">
+                                                    <div className="bg-gray-50/50 dark:bg-gray-800/30 p-4 rounded-2xl border border-gray-100/50 dark:border-gray-800 transition-all duration-300 group/whatsnew relative cursor-default">
                                                         <div className="flex items-center gap-2 mb-2">
                                                             <div className={`w-1 h-3 bg-${platform.color}-500 rounded-full`}></div>
                                                             <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">What's New</span>
@@ -190,20 +190,29 @@ export default function Downloads() {
                                                             "{latest.description}"
                                                         </p>
 
-                                                        {/* "Black Screen" Hover Overlay */}
-                                                        <div className="absolute inset-0 bg-black p-5 flex flex-col opacity-0 group-hover/whatsnew:opacity-100 transition-all duration-500 z-50 pointer-events-none group-hover/whatsnew:pointer-events-auto">
-                                                            <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-2">
-                                                                <span className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em]">Full Changelog</span>
-                                                                <div className="flex gap-1">
-                                                                    <div className="w-1.5 h-1.5 rounded-full bg-red-500/50"></div>
-                                                                    <div className="w-1.5 h-1.5 rounded-full bg-yellow-500/50"></div>
-                                                                    <div className="w-1.5 h-1.5 rounded-full bg-green-500/50"></div>
+                                                        {/* Full Changelog Overlay (Card Takeover) */}
+                                                        <div className="fixed lg:absolute lg:-inset-8 inset-0 bg-black/95 lg:bg-gray-950/98 backdrop-blur-xl p-8 flex flex-col opacity-0 group-hover/whatsnew:opacity-100 transition-all duration-500 z-[100] pointer-events-none group-hover/whatsnew:pointer-events-auto lg:rounded-[2.5rem] border border-white/5 shadow-2xl">
+                                                            <div className="flex items-center justify-between mb-6 border-b border-white/10 pb-4">
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-lg font-black text-white uppercase tracking-wider">Full Release Notes</span>
+                                                                    <span className="text-[10px] font-mono text-gray-500 uppercase tracking-widest mt-1">Platform: {platform.name} • Version {latest.version}</span>
+                                                                </div>
+                                                                <div className="flex gap-1.5">
+                                                                    <div className="w-2.5 h-2.5 rounded-full bg-red-500/80 shadow-lg shadow-red-500/20"></div>
+                                                                    <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/80 shadow-lg shadow-yellow-500/20"></div>
+                                                                    <div className="w-2.5 h-2.5 rounded-full bg-green-500/80 shadow-lg shadow-green-500/20"></div>
                                                                 </div>
                                                             </div>
-                                                            <div className="overflow-y-auto custom-scrollbar pr-2">
-                                                                <span className="text-[11px] text-gray-300 leading-relaxed font-medium block whitespace-pre-wrap">
-                                                                    {latest.description}
+                                                            <div className="flex-1 overflow-y-auto custom-scrollbar pr-4">
+                                                                <span className="text-sm text-gray-200 leading-relaxed font-medium block whitespace-pre-wrap italic opacity-90">
+                                                                    "{latest.description}"
                                                                 </span>
+                                                            </div>
+                                                            <div className="mt-6 pt-4 border-t border-white/5 flex justify-between items-center">
+                                                                <span className="text-[9px] font-black text-white/30 tracking-[0.3em] uppercase">UrbanSetu Core Update</span>
+                                                                <div className="px-3 py-1 bg-white/5 rounded-full border border-white/10">
+                                                                    <span className="text-[9px] font-bold text-blue-400">Total {latest.description.split('\n').length} changes</span>
+                                                                </div>
                                                             </div>
                                                         </div>
 
