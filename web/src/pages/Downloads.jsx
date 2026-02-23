@@ -181,20 +181,35 @@ export default function Downloads() {
                                                 </div>
 
                                                 {latest.description && (
-                                                    <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 transition-all duration-500 hover:shadow-lg hover:shadow-blue-500/5 dark:hover:shadow-none group/whatsnew cursor-default relative">
+                                                    <div className="bg-gray-50/50 dark:bg-gray-800/30 p-4 rounded-2xl border border-gray-100/50 dark:border-gray-800 transition-all duration-300 group/whatsnew relative cursor-default overflow-hidden">
                                                         <div className="flex items-center gap-2 mb-2">
                                                             <div className={`w-1 h-3 bg-${platform.color}-500 rounded-full`}></div>
                                                             <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">What's New</span>
                                                         </div>
-                                                        <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-4 group-hover/whatsnew:line-clamp-none leading-relaxed italic transition-all duration-500">
+                                                        <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-3 leading-relaxed italic">
                                                             "{latest.description}"
                                                         </p>
 
-                                                        {latest.description.length > 100 && (
-                                                            <div className="absolute bottom-2 right-4 group-hover/whatsnew:hidden">
-                                                                <span className="text-[8px] font-black text-blue-500/40 uppercase tracking-widest">Hover to expand</span>
+                                                        {/* "Black Screen" Hover Overlay */}
+                                                        <div className="absolute inset-0 bg-black p-5 flex flex-col opacity-0 group-hover/whatsnew:opacity-100 transition-all duration-500 z-50 pointer-events-none group-hover/whatsnew:pointer-events-auto">
+                                                            <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-2">
+                                                                <span className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em]">Full Changelog</span>
+                                                                <div className="flex gap-1">
+                                                                    <div className="w-1.5 h-1.5 rounded-full bg-red-500/50"></div>
+                                                                    <div className="w-1.5 h-1.5 rounded-full bg-yellow-500/50"></div>
+                                                                    <div className="w-1.5 h-1.5 rounded-full bg-green-500/50"></div>
+                                                                </div>
                                                             </div>
-                                                        )}
+                                                            <div className="overflow-y-auto custom-scrollbar pr-2">
+                                                                <span className="text-[11px] text-gray-300 leading-relaxed font-medium block whitespace-pre-wrap">
+                                                                    {latest.description}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="absolute bottom-2 right-4 group-hover/whatsnew:hidden animate-pulse">
+                                                            <span className="text-[7px] font-black text-blue-500/50 uppercase tracking-[0.2em]">HOVER TO VIEW</span>
+                                                        </div>
                                                     </div>
                                                 )}
                                             </div>
