@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { authenticatedFetch } from '../utils/auth';
-import { FaWindows, FaApple, FaAndroid, FaLinux, FaDownload, FaHistory, FaMobileAlt, FaDesktop, FaInfoCircle } from 'react-icons/fa';
+import { FaWindows, FaApple, FaAndroid, FaLinux, FaDownload, FaHistory, FaMobileAlt, FaDesktop, FaInfoCircle, FaTimes } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import DownloadsSkeleton from '../components/skeletons/DownloadsSkeleton';
 import { Link } from 'react-router-dom';
@@ -12,6 +12,8 @@ export default function Downloads() {
     const [files, setFiles] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('all'); // all, windows, macos, mobile
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modalData, setModalData] = useState(null);
 
     useEffect(() => {
         fetchDeploymentFiles();
@@ -181,7 +183,13 @@ export default function Downloads() {
                                                 </div>
 
                                                 {latest.description && (
-                                                    <div className="bg-gray-50/50 dark:bg-gray-800/30 p-4 rounded-2xl border border-gray-100/50 dark:border-gray-800 transition-all duration-300 group/whatsnew relative cursor-default">
+                                                    <div
+                                                        onClick={() => {
+                                                            setModalData({ ...latest, platformName: platform.name });
+                                                            setIsModalOpen(true);
+                                                        }}
+                                                        className="bg-gray-50/50 dark:bg-gray-800/30 p-4 rounded-2xl border border-gray-100/50 dark:border-gray-800 transition-all duration-300 group/whatsnew relative cursor-pointer hover:bg-gray-100/50 dark:hover:bg-gray-800/50"
+                                                    >
                                                         <div className="flex items-center gap-2 mb-2">
                                                             <div className={`w-1 h-3 bg-${platform.color}-500 rounded-full`}></div>
                                                             <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">What's New</span>
@@ -190,34 +198,8 @@ export default function Downloads() {
                                                             "{latest.description}"
                                                         </p>
 
-                                                        {/* Full Changelog Overlay (Card Takeover) */}
-                                                        <div className="fixed lg:absolute lg:-inset-8 inset-0 bg-black/95 lg:bg-gray-950/98 backdrop-blur-xl p-8 flex flex-col opacity-0 group-hover/whatsnew:opacity-100 transition-all duration-500 z-[100] pointer-events-none group-hover/whatsnew:pointer-events-auto lg:rounded-[2.5rem] border border-white/5 shadow-2xl">
-                                                            <div className="flex items-center justify-between mb-6 border-b border-white/10 pb-4">
-                                                                <div className="flex flex-col">
-                                                                    <span className="text-lg font-black text-white uppercase tracking-wider">Full Release Notes</span>
-                                                                    <span className="text-[10px] font-mono text-gray-500 uppercase tracking-widest mt-1">Platform: {platform.name} • Version {latest.version}</span>
-                                                                </div>
-                                                                <div className="flex gap-1.5">
-                                                                    <div className="w-2.5 h-2.5 rounded-full bg-red-500/80 shadow-lg shadow-red-500/20"></div>
-                                                                    <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/80 shadow-lg shadow-yellow-500/20"></div>
-                                                                    <div className="w-2.5 h-2.5 rounded-full bg-green-500/80 shadow-lg shadow-green-500/20"></div>
-                                                                </div>
-                                                            </div>
-                                                            <div className="flex-1 overflow-y-auto custom-scrollbar pr-4">
-                                                                <span className="text-sm text-gray-200 leading-relaxed font-medium block whitespace-pre-wrap italic opacity-90">
-                                                                    "{latest.description}"
-                                                                </span>
-                                                            </div>
-                                                            <div className="mt-6 pt-4 border-t border-white/5 flex justify-between items-center">
-                                                                <span className="text-[9px] font-black text-white/30 tracking-[0.3em] uppercase">UrbanSetu Core Update</span>
-                                                                <div className="px-3 py-1 bg-white/5 rounded-full border border-white/10">
-                                                                    <span className="text-[9px] font-bold text-blue-400">Total {latest.description.split('\n').length} changes</span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="absolute bottom-2 right-4 group-hover/whatsnew:hidden animate-pulse">
-                                                            <span className="text-[7px] font-black text-blue-500/50 uppercase tracking-[0.2em]">HOVER TO VIEW</span>
+                                                        <div className="absolute bottom-2 right-4 animate-pulse">
+                                                            <span className="text-[7px] font-black text-blue-500 uppercase tracking-[0.2em]">CLICK TO EXPAND</span>
                                                         </div>
                                                     </div>
                                                 )}
@@ -399,6 +381,75 @@ export default function Downloads() {
                     )}
                 </div>
             </div>
+
+            {/* Premium Release Notes Modal */}
+            {isModalOpen && modalData && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 animate-modal-fade">
+                    {/* Backdrop */}
+                    <div
+                        className="absolute inset-0 bg-black/80 backdrop-blur-md"
+                        onClick={() => setIsModalOpen(false)}
+                    ></div>
+
+                    {/* Modal Content */}
+                    <div className="relative bg-white dark:bg-gray-900 w-full max-w-2xl max-h-[85vh] rounded-[2.5rem] shadow-2xl border border-gray-100 dark:border-gray-800 overflow-hidden flex flex-col animate-modal-slide">
+                        {/* Header */}
+                        <div className="p-8 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/30">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center">
+                                    <FaInfoCircle className="text-blue-600 dark:text-blue-400 text-xl" />
+                                </div>
+                                <div>
+                                    <h3 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Release Notes</h3>
+                                    <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-0.5">
+                                        {modalData.platformName} • Version {modalData.version}
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setIsModalOpen(false)}
+                                className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all group"
+                            >
+                                <FaTimes className="group-hover:rotate-90 transition-transform duration-300" />
+                            </button>
+                        </div>
+
+                        {/* Body */}
+                        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                            <div className="prose dark:prose-invert max-w-none">
+                                <div className="flex items-center gap-2 mb-6 text-blue-600 dark:text-blue-400 font-black text-[10px] uppercase tracking-[0.3em]">
+                                    <div className="w-8 h-[2px] bg-blue-600 dark:bg-blue-400"></div>
+                                    Full Changelog
+                                </div>
+                                <span className="text-lg text-gray-700 dark:text-gray-300 leading-loose italic whitespace-pre-wrap block">
+                                    "{modalData.description}"
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="p-6 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                                <div className="px-3 py-1 bg-green-100 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-full">
+                                    <span className="text-[10px] font-black text-green-700 dark:text-green-400 uppercase tracking-widest leading-none">Verified Build</span>
+                                </div>
+                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                    Build Date: {new Date(modalData.createdAt).toLocaleDateString()}
+                                </span>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    handleDownload(modalData);
+                                    setIsModalOpen(false);
+                                }}
+                                className="w-full sm:w-auto px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-500/30 transition-all flex items-center justify-center gap-2"
+                            >
+                                <FaDownload /> Download {modalData.version}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
