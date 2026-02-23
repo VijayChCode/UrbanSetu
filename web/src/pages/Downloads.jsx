@@ -93,15 +93,6 @@ export default function Downloads() {
             ? sortedFiles.filter(f => ['android', 'ios'].includes(f.platform))
             : sortedFiles.filter(f => f.platform === activeTab);
 
-    // State for description expansion
-    const [expandedIds, setExpandedIds] = useState([]);
-
-    const toggleDescription = (id) => {
-        setExpandedIds(prev =>
-            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-        );
-    };
-
     if (loading) {
         return <DownloadsSkeleton />;
     }
@@ -339,17 +330,18 @@ export default function Downloads() {
                                             <div className="max-w-md xl:max-w-2xl">
                                                 {file.description ? (
                                                     <div>
-                                                        <p className={`text-sm text-gray-600 dark:text-gray-400 leading-relaxed italic ${!expandedIds.includes(file.id) ? 'line-clamp-2' : ''}`}>
+                                                        <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed italic line-clamp-2">
                                                             "{file.description}"
                                                         </p>
-                                                        {file.description.length > 150 && (
-                                                            <button
-                                                                onClick={() => toggleDescription(file.id)}
-                                                                className="mt-2 text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline"
-                                                            >
-                                                                {expandedIds.includes(file.id) ? 'Show Less' : 'Read More'}
-                                                            </button>
-                                                        )}
+                                                        <button
+                                                            onClick={() => {
+                                                                setModalData({ ...file, platformName: file.platform });
+                                                                setIsModalOpen(true);
+                                                            }}
+                                                            className="mt-2 text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                                                        >
+                                                            Read Full Details <FaInfoCircle className="text-[10px]" />
+                                                        </button>
                                                     </div>
                                                 ) : (
                                                     <span className="text-xs text-gray-400 italic">Core system updates and stabilizers.</span>
