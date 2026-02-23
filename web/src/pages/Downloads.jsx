@@ -380,54 +380,54 @@ export default function Downloads() {
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 animate-modal-fade">
                     {/* Backdrop */}
                     <div
-                        className="absolute inset-0 bg-black/80 backdrop-blur-md"
+                        className="absolute inset-0 bg-black/85 backdrop-blur-md"
                         onClick={() => setIsModalOpen(false)}
                     ></div>
 
                     {/* Modal Content */}
-                    <div className="relative bg-white dark:bg-gray-900 w-full max-w-2xl max-h-[85vh] rounded-[2.5rem] shadow-2xl border border-gray-100 dark:border-gray-800 overflow-hidden flex flex-col animate-modal-slide">
+                    <div className="relative bg-white dark:bg-gray-900 w-full max-w-2xl max-h-[85vh] rounded-3xl sm:rounded-[2.5rem] shadow-2xl border border-gray-100 dark:border-gray-800 overflow-hidden flex flex-col animate-modal-slide">
                         {/* Header */}
-                        <div className="p-8 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/30">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center">
-                                    <FaInfoCircle className="text-blue-600 dark:text-blue-400 text-xl" />
+                        <div className="px-6 py-5 sm:p-8 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/30">
+                            <div className="flex items-center gap-3 sm:gap-4">
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl sm:rounded-2xl flex items-center justify-center">
+                                    <FaInfoCircle className="text-blue-600 dark:text-blue-400 text-lg sm:text-xl" />
                                 </div>
                                 <div>
-                                    <h3 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Release Notes</h3>
-                                    <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-0.5">
+                                    <h3 className="text-lg sm:text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Release Notes</h3>
+                                    <p className="text-[10px] sm:text-xs text-gray-500 font-bold uppercase tracking-widest mt-0.5">
                                         {modalData.platformName} • Version {modalData.version}
                                     </p>
                                 </div>
                             </div>
                             <button
                                 onClick={() => setIsModalOpen(false)}
-                                className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all group"
+                                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all group"
                             >
-                                <FaTimes className="group-hover:rotate-90 transition-transform duration-300" />
+                                <FaTimes className="text-sm sm:text-base group-hover:rotate-90 transition-transform duration-300" />
                             </button>
                         </div>
 
                         {/* Body */}
-                        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                        <div className="flex-1 overflow-y-auto px-6 py-6 sm:p-8 custom-scrollbar">
                             <div className="prose dark:prose-invert max-w-none">
-                                <div className="flex items-center gap-2 mb-6 text-blue-600 dark:text-blue-400 font-black text-[10px] uppercase tracking-[0.3em]">
-                                    <div className="w-8 h-[2px] bg-blue-600 dark:bg-blue-400"></div>
+                                <div className="flex items-center gap-2 mb-4 sm:mb-6 text-blue-600 dark:text-blue-400 font-black text-[9px] sm:text-[10px] uppercase tracking-[0.3em]">
+                                    <div className="w-6 sm:w-8 h-[2px] bg-blue-600 dark:bg-blue-400"></div>
                                     Full Changelog
                                 </div>
-                                <span className="text-lg text-gray-700 dark:text-gray-300 leading-loose italic whitespace-pre-wrap block">
+                                <span className="text-[15px] sm:text-lg text-gray-700 dark:text-gray-300 leading-relaxed sm:leading-loose italic whitespace-pre-wrap block">
                                     "{modalData.description}"
                                 </span>
                             </div>
                         </div>
 
                         {/* Footer */}
-                        <div className="p-6 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-                            <div className="flex items-center gap-3">
+                        <div className="p-5 sm:p-6 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
                                 <div className="px-3 py-1 bg-green-100 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-full">
-                                    <span className="text-[10px] font-black text-green-700 dark:text-green-400 uppercase tracking-widest leading-none">Verified Build</span>
+                                    <span className="text-[9px] sm:text-[10px] font-black text-green-700 dark:text-green-400 uppercase tracking-widest leading-none">Verified Build</span>
                                 </div>
-                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                                    Build Date: {new Date(modalData.createdAt).toLocaleDateString()}
+                                <span className="text-[9px] sm:text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                                    Built: {new Date(modalData.createdAt).toLocaleDateString()}
                                 </span>
                             </div>
                             <button
@@ -435,9 +435,9 @@ export default function Downloads() {
                                     handleDownload(modalData);
                                     setIsModalOpen(false);
                                 }}
-                                className="w-full sm:w-auto px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-500/30 transition-all flex items-center justify-center gap-2"
+                                className="w-full sm:w-auto px-6 sm:px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-500/30 transition-all flex items-center justify-center gap-2"
                             >
-                                <FaDownload /> Download v{modalData.version}
+                                <FaDownload className="text-xs sm:text-sm" /> Download v{modalData.version}
                             </button>
                         </div>
                     </div>
