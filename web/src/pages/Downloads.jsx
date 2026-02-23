@@ -267,22 +267,23 @@ export default function Downloads() {
                                 {/* Mobile Changelog Section */}
                                 <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl">
                                     <div className="flex items-center justify-between mb-2">
-                                        <span className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">CHANEGLOG</span>
+                                        <span className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">CHANGELOG</span>
                                         <span className="text-[10px] font-mono text-gray-400">{formatFileSize(file.size)}</span>
                                     </div>
                                     {file.description ? (
                                         <div>
-                                            <p className={`text-sm text-gray-600 dark:text-gray-400 leading-relaxed italic ${!expandedIds.includes(file.id) ? 'line-clamp-3' : ''}`}>
+                                            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed italic line-clamp-2">
                                                 "{file.description}"
                                             </p>
-                                            {file.description.length > 120 && (
-                                                <button
-                                                    onClick={() => toggleDescription(file.id)}
-                                                    className="mt-2 text-xs font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1"
-                                                >
-                                                    {expandedIds.includes(file.id) ? 'Show Less' : 'Read More'}
-                                                </button>
-                                            )}
+                                            <button
+                                                onClick={() => {
+                                                    setModalData({ ...file, platformName: file.platform });
+                                                    setIsModalOpen(true);
+                                                }}
+                                                className="mt-2 text-xs font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1"
+                                            >
+                                                View Details <FaInfoCircle className="text-[10px]" />
+                                            </button>
                                         </div>
                                     ) : (
                                         <p className="text-xs text-gray-400 italic">No changelog data</p>
