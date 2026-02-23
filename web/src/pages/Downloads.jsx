@@ -437,7 +437,7 @@ export default function Downloads() {
                                 }}
                                 className="w-full sm:w-auto px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-500/30 transition-all flex items-center justify-center gap-2"
                             >
-                                <FaDownload /> Download {modalData.version}
+                                <FaDownload /> Download v{modalData.version}
                             </button>
                         </div>
                     </div>
