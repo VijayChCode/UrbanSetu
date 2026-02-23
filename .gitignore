@@ -9,3 +9,21 @@ web/dist/
 mobile/dist/
 *.log
 .DS_Store
+
+# Build artifacts and caches
+.gradle_home/
+.gradle/
+build/
+bin/
+obj/
+mobile/android/.gradle/
+mobile/android/app/build/
+mobile/android/.gradle_home/
+.expo/
+web-build/
+*.apk
+*.ipa
+*.exe
+*.msi
+*.dmg
+*.pkg
