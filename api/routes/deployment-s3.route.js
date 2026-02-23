@@ -160,9 +160,17 @@ router.get('/sync', verifyToken, async (req, res) => {
               isActive: false,
               uploadedBy: req.user.id
             });
-            await newD.save();
-            discoveredCount++;
-            console.log(`Discovered missing deployment from S3: ${s3File.Key}`);
+            try {
+              await newD.save();
+              discoveredCount++;
+              console.log(`Discovered missing deployment from S3: ${s3File.Key}`);
+            } catch (saveErr) {
+              if (saveErr.code === 11000) {
+                console.log(`Skipping duplicate deployment for ${newD.platform} v${newD.version}`);
+              } else {
+                throw saveErr;
+              }
+            }
           }
         }
       }
@@ -385,7 +393,17 @@ router.post('/upload', verifyToken, upload.single('file'), handleMulterError, as
     const { platform, version, description, isActive } = req.body;
     const file = req.file;
 
-    const isTrueActive = isActive === 'true';
+    const isTrueActive = isActive === 'true' || isActive === true;
+
+    // Check if a deployment with this platform and version already exists
+    // If it does, we'll remove it to allow the new one (effectively an overwrite)
+    const existingDeployment = await Deployment.findOne({ platform, version });
+    if (existingDeployment) {
+      console.log(`Replacing existing deployment for ${platform} v${version}`);
+      // We could also delete the file from S3 here, but for safety we'll just remove the DB record
+      // The fileKey might be different due to the timestamp
+      await Deployment.deleteOne({ _id: existingDeployment._id });
+    }
 
     // If setting as active, deactivate others for the same platform
     if (isTrueActive) {
