@@ -1184,7 +1184,7 @@ app.get('/api/health', (req, res) => {
     status: 'OK',
     timestamp: new Date().toISOString(),
     routes: 'image-favorites-enabled',
-    version: '2.0-with-image-favorites'
+    version: '2.1-debug-v1'
   });
 });
 
