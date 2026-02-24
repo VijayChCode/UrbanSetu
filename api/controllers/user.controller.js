@@ -43,11 +43,13 @@ export const test = (req, res) => {
 
 
 export const updateUser = async (req, res, next) => {
-    if (req.user.id !== req.params.id) {
+    const targetId = req.params.id === 'me' ? req.user.id : req.params.id;
+
+    if (req.user.id !== targetId) {
         return next(errorHandler(401, "Unauthorized"))
     }
     try {
-        const user = await User.findById(req.params.id);
+        const user = await User.findById(targetId);
         if (!user) {
             return next(errorHandler(404, "User not found"));
         }
@@ -86,20 +88,20 @@ export const updateUser = async (req, res, next) => {
                         reason: emailValidation.reason,
                         ip,
                         userAgent,
-                        userId: req.params.id
+                        userId: targetId
                     });
                 }
                 return res.status(200).json({ status: "email_invalid", message: emailValidation.message });
             }
 
-            const existingEmail = await User.findOne({ email: req.body.email, _id: { $ne: req.params.id } });
+            const existingEmail = await User.findOne({ email: req.body.email, _id: { $ne: targetId } });
             if (existingEmail) {
                 return res.status(200).json({ status: "email_exists" });
             }
         }
         // Check for duplicate mobile number if changed
         if (req.body.mobileNumber && req.body.mobileNumber !== user.mobileNumber) {
-            const existingMobile = await User.findOne({ mobileNumber: req.body.mobileNumber, _id: { $ne: req.params.id } });
+            const existingMobile = await User.findOne({ mobileNumber: req.body.mobileNumber, _id: { $ne: targetId } });
             if (existingMobile) {
                 return res.status(200).json({ status: "mobile_exists" });
             }
@@ -150,7 +152,7 @@ export const updateUser = async (req, res, next) => {
             coinsEarned = 20;
         }
 
-        const updatedUser = await User.findByIdAndUpdate(req.params.id, {
+        const updatedUser = await User.findByIdAndUpdate(targetId, {
             $set: updateFields
         }, { new: true });
         if (!updatedUser) {

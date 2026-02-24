@@ -107,6 +107,41 @@ const notificationSchema = new mongoose.Schema(
 // Index for efficient queries
 notificationSchema.index({ userId: 1, isRead: 1, createdAt: -1 });
 
+// Middleware to automatically trigger push notifications
+notificationSchema.post('save', async function (doc, next) {
+  try {
+    const { sendPushNotification } = await import('../utils/pushNotification.js');
+    if (sendPushNotification) {
+      // Trigger silently in background
+      sendPushNotification(doc.userId, doc.title, doc.message, {
+        notificationId: doc._id,
+        type: doc.type,
+        listingId: doc.listingId
+      }).catch(err => console.error('Push hook error:', err));
+    }
+  } catch (err) {
+    console.error('Push middleware failure:', err);
+  }
+  if (typeof next === 'function') next();
+});
+
+// For bulk inserts
+notificationSchema.post('insertMany', async function (docs, next) {
+  try {
+    const { sendPushNotification } = await import('../utils/pushNotification.js');
+    if (sendPushNotification && Array.isArray(docs)) {
+      docs.forEach(doc => {
+        sendPushNotification(doc.userId, doc.title, doc.message, {
+          notificationId: doc._id,
+          type: doc.type,
+          listingId: doc.listingId
+        }).catch(() => { });
+      });
+    }
+  } catch (err) { }
+  if (typeof next === 'function') next();
+});
+
 const Notification = mongoose.model('Notification', notificationSchema);
 
-export default Notification; 
+export default Notification;

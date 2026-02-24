@@ -11,6 +11,7 @@ import { errorHandler } from '../utils/error.js'
 const router = express.Router()
 
 router.get("/test", test)
+router.post("/update/me", verifyToken, updateUser)
 router.post("/update/:id", verifyToken, updateUser)
 router.delete("/delete/:id", verifyToken, deleteUser)
 router.get("/listing/:id", verifyToken, getUserListings)
