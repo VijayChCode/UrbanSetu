@@ -262,6 +262,9 @@
         "font_size": "Font Size",
         "font_small": "Small",
         "font_medium": "Medium",
-        "font_large": "Large"
+        "font_large": "Large",
+        "client_error_monitoring": "Client Error Monitoring",
+        "sponsor_intelligence": "Sponsor Intelligence",
+        "security_intelligence": "Security Intelligence"
     }
 }

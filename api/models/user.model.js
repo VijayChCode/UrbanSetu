@@ -169,6 +169,7 @@ const userSchema = new mongoose.Schema({
     pushTokens: [{
       token: { type: String, required: true },
       deviceName: { type: String },
+      installationId: { type: String },
       lastUsed: { type: Date, default: Date.now }
     }],
     biometricAuth: { type: Boolean, default: false },

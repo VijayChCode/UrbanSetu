@@ -141,6 +141,7 @@ export const updateUser = async (req, res, next) => {
                         'settings.pushTokens': {
                             token: newToken,
                             deviceName: req.body.deviceName || req.headers['x-device-name'] || 'Mobile Device',
+                            installationId: req.body.installationId || req.headers['x-installation-id'] || null,
                             lastUsed: new Date()
                         }
                     };
