@@ -1,4 +1,15 @@
-# Latest Updates - November 11, 2025
+# Latest Updates - February 24, 2026
+
+## UrbanSetu v1.1.0 – Release 🚀
+Successfully generated split APKs for Android with 60% size reduction.
+
+### Key Highlights:
+1. **Notifications Center 2.0**: Advanced filtering and global search.
+2. **Personalization**: Persistent Dark/Light mode theme.
+3. **Smart Features**: One-tap location in Route Planner.
+4. **Performance**: ABI Splitting (arm64 size ~36MB).
+
+---
 
 ## Summary
 Successfully implemented two major features:
