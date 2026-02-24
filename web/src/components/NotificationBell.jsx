@@ -458,6 +458,12 @@ export default function NotificationBell({ mobile = false }) {
             <FaExclamationTriangle className={iconBase} />
           </div>
         );
+      case 'platform_update':
+        return (
+          <div className={`${containerBase} bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400`}>
+            <FaRocket className={iconBase} />
+          </div>
+        );
       default:
         return (
           <div className={`${containerBase} bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400`}>
@@ -518,7 +524,7 @@ export default function NotificationBell({ mobile = false }) {
       { id: 'Community', icon: FaUsers, label: 'Community', types: ['community_report'] },
       { id: 'Appointments', icon: FaCalendarAlt, label: 'Appointments', types: ['appointment_booked', 'appointment_updated', 'appointment_accepted_by_seller', 'appointment_cancelled_by_seller', 'appointment_cancelled_by_buyer', 'appointment_cancelled_by_admin', 'appointment_accepted_by_seller'] },
       { id: 'Financial', icon: FaEnvelope, label: 'Payments', types: ['rent_payment_reminder', 'rent_dispute_resolved', 'rent_payment_overdue', 'rent_dispute_raised', 'rent_auto_debit_failed', 'rent_auto_debit_success', 'rent_contract_signed', 'rent_contract_accepted', 'rent_contract_rejected', 'rent_contract_terminated'] },
-      { id: 'System', icon: FaExclamationTriangle, label: 'System', types: ['admin_message', 'client_error_report'] }
+      { id: 'System', icon: FaExclamationTriangle, label: 'System', types: ['admin_message', 'client_error_report', 'platform_update'] }
     ];
 
     if (isAdmin()) {

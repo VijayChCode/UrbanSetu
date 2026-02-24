@@ -70,7 +70,8 @@ const notificationSchema = new mongoose.Schema(
         'property_deassigned',
         'client_error_report',
         'community_report',
-        'video_issue_report'
+        'video_issue_report',
+        'platform_update'
       ],
     },
     title: {

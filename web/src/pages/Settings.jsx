@@ -76,7 +76,7 @@ const SettingSection = ({ title, icon: Icon, children, onInfoClick }) => (
   </div>
 );
 
-const ToggleSwitch = ({ label, checked, onChange, description }) => {
+const ToggleSwitch = ({ label, checked, onChange, description, isLoading }) => {
   const handleChange = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -85,7 +85,12 @@ const ToggleSwitch = ({ label, checked, onChange, description }) => {
   return (
     <div className="flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700 last:border-b-0">
       <div className="flex-1">
-        <p className="font-medium text-gray-800 dark:text-gray-200">{label}</p>
+        <div className="flex items-center gap-2">
+          <p className="font-medium text-gray-800 dark:text-gray-200">{label}</p>
+          {isLoading && (
+            <FaSpinner className="animate-spin text-blue-500 dark:text-blue-400 text-sm" />
+          )}
+        </div>
         {description && <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{description}</p>}
       </div>
       <label className="relative inline-flex items-center cursor-pointer">
@@ -154,10 +159,6 @@ export default function Settings() {
   // Notification Preferences
   const [emailNotifications, setEmailNotifications] = useState(currentUser?.settings?.emailNotifications ?? true);
   const [inAppNotifications, setInAppNotifications] = useState(currentUser?.settings?.inAppNotifications ?? true);
-  const [pushNotifications, setPushNotifications] = useState(() => {
-    const saved = localStorage.getItem('pushNotifications');
-    return saved !== null ? saved === 'true' : (currentUser?.settings?.pushNotifications ?? false);
-  });
   const [notificationSound, setNotificationSound] = useState(currentUser?.settings?.notificationSound ?? 'default');
 
   // Privacy Settings
@@ -170,7 +171,6 @@ export default function Settings() {
     return saved !== null ? saved === 'true' : (currentUser?.settings?.allowLocationAccess ?? false);
   });
   const [isRequestingLocation, setIsRequestingLocation] = useState(false);
-  const [isRequestingPush, setIsRequestingPush] = useState(false);
 
   // Language & Region
   const [language, setLanguage] = useState(currentUser?.settings?.language ?? i18n.language ?? 'en');
@@ -923,30 +923,6 @@ export default function Settings() {
     showToast(t('messages.in_app_pref_saved'));
   };
 
-  const handlePushNotificationsChange = async (value) => {
-    scrollPositionRef.current = window.scrollY;
-    if (value && 'Notification' in window) {
-      if (Notification.permission !== 'granted') {
-        setIsRequestingPush(true);
-        try {
-          const permission = await Notification.requestPermission();
-          setIsRequestingPush(false);
-          if (permission !== 'granted') {
-            showToast(t('messages.push_denied'), 'error');
-            return;
-          }
-        } catch (error) {
-          setIsRequestingPush(false);
-          console.error(error);
-          return;
-        }
-      }
-    }
-    setPushNotifications(value);
-    localStorage.setItem('pushNotifications', value.toString());
-    await updateUserSetting({ pushNotifications: value });
-    showToast(t('messages.push_pref_saved'));
-  };
 
   const handleNotificationSoundChange = async (value) => {
     scrollPositionRef.current = window.scrollY;
@@ -1290,13 +1266,6 @@ export default function Settings() {
               checked={inAppNotifications}
               onChange={handleInAppNotificationsChange}
               description="Show notifications within the app"
-            />
-            <ToggleSwitch
-              label={t('settings.push_notifications')}
-              checked={pushNotifications}
-              onChange={handlePushNotificationsChange}
-              description="Receive browser push notifications"
-              isLoading={isRequestingPush}
             />
             <SelectOption
               label={t('settings.notification_sound')}

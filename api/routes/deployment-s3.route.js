@@ -412,6 +412,48 @@ router.post('/upload', verifyToken, upload.single('file'), handleMulterError, as
 
     await newDeployment.save();
 
+    // Trigger notifications in background
+    (async () => {
+      try {
+        const User = (await import('../models/user.model.js')).default;
+        const Notification = (await import('../models/notification.model.js')).default;
+        const { sendUpdateAnnouncementEmail } = await import('../utils/emailService.js');
+
+        // Find all active, non-suspended users
+        const users = await User.find({ status: 'active', isSubscribed: true }, 'email _id settings');
+
+        const notificationTitle = `New App Update: v${safeVersion} for ${safePlatform.charAt(0).toUpperCase() + safePlatform.slice(1)}`;
+        const notificationMessage = description || `A new version of UrbanSetu is available for ${safePlatform}. Update now to experience new features!`;
+
+        // Create in-app notifications in bulk
+        const notifications = users.map(user => ({
+          userId: user._id,
+          type: 'platform_update',
+          title: notificationTitle,
+          message: notificationMessage,
+          meta: { version: safeVersion, platform: safePlatform, deploymentId: newDeployment._id }
+        }));
+        await Notification.insertMany(notifications);
+
+        // Send emails
+        users.forEach(user => {
+          if (user.email) {
+            sendUpdateAnnouncementEmail(user.email, {
+              title: notificationTitle,
+              version: safeVersion,
+              category: safePlatform,
+              description: notificationMessage,
+              actionUrl: fileUrl
+            }).catch(e => console.error(`Failed to send update email to ${user.email}:`, e));
+          }
+        });
+
+        console.log(`✅ Notifications triggered for ${users.length} users for deployment v${safeVersion}`);
+      } catch (notifErr) {
+        console.error('Failed to trigger deployment notifications:', notifErr);
+      }
+    })();
+
     res.json({
       success: true,
       message: 'File uploaded and deployed successfully',
@@ -458,6 +500,45 @@ router.put('/set-active/:id', verifyToken, async (req, res) => {
     // Activate this one
     targetDeployment.isActive = true;
     await targetDeployment.save();
+
+    // Trigger notifications if promoting to active
+    if (isActive !== false) {
+      (async () => {
+        try {
+          const User = (await import('../models/user.model.js')).default;
+          const Notification = (await import('../models/notification.model.js')).default;
+          const { sendUpdateAnnouncementEmail } = await import('../utils/emailService.js');
+
+          const users = await User.find({ status: 'active', isSubscribed: true }, 'email _id settings');
+
+          const notificationTitle = `New Version Live: ${targetDeployment.platform.charAt(0).toUpperCase() + targetDeployment.platform.slice(1)} v${targetDeployment.version}`;
+          const notificationMessage = targetDeployment.description || `The latest version of UrbanSetu (${targetDeployment.platform}) is now live. Download it now!`;
+
+          const notifications = users.map(user => ({
+            userId: user._id,
+            type: 'platform_update',
+            title: notificationTitle,
+            message: notificationMessage,
+            meta: { version: targetDeployment.version, platform: targetDeployment.platform, deploymentId: targetDeployment._id }
+          }));
+          await Notification.insertMany(notifications);
+
+          users.forEach(user => {
+            if (user.email) {
+              sendUpdateAnnouncementEmail(user.email, {
+                title: notificationTitle,
+                version: targetDeployment.version,
+                category: targetDeployment.platform,
+                description: notificationMessage,
+                actionUrl: targetDeployment.url
+              }).catch(e => console.error(`Failed to send update email to ${user.email}:`, e));
+            }
+          });
+        } catch (notifErr) {
+          console.error('Failed to trigger activation notifications:', notifErr);
+        }
+      })();
+    }
 
     res.json({
       success: true,

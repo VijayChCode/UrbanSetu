@@ -52,19 +52,38 @@ const broadcastUpdate = (update) => {
     (async () => {
         try {
             console.log(`Starting update broadcast for: ${update.title}`);
+            const Notification = (await import('../models/notification.model.js')).default;
+
             // Fetch all users with valid emails
-            const users = await User.find({ email: { $exists: true, $ne: '' } }, 'email');
+            const users = await User.find({ status: 'active' }, 'email _id');
 
             console.log(`Found ${users.length} users to notify.`);
 
-            for (const user of users) {
-                try {
-                    await sendUpdateAnnouncementEmail(user.email, update);
-                } catch (err) {
-                    console.error(`Failed to send announcement to ${user.email}`, err);
+            // Create in-app notifications in bulk
+            const inAppNotifications = users.map(user => ({
+                userId: user._id,
+                type: 'platform_update',
+                title: update.title,
+                message: update.description.substring(0, 150) + (update.description.length > 150 ? '...' : ''),
+                meta: {
+                    updateId: update._id,
+                    version: update.version,
+                    category: update.category
                 }
-                // Optional: slight delay to prevent rate limits if list is huge
-                // await new Promise(resolve => setTimeout(resolve, 50)); 
+            }));
+
+            if (inAppNotifications.length > 0) {
+                await Notification.insertMany(inAppNotifications);
+            }
+
+            for (const user of users) {
+                if (user.email) {
+                    try {
+                        await sendUpdateAnnouncementEmail(user.email, update);
+                    } catch (err) {
+                        console.error(`Failed to send announcement to ${user.email}`, err);
+                    }
+                }
             }
             console.log(`Update broadcast completed for ${users.length} users.`);
         } catch (err) {
