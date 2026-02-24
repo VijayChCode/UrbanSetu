@@ -44,6 +44,9 @@ export default function AdminDeploymentManagement() {
     isActive: false
   });
 
+  // Platform Filter State
+  const [activeTab, setActiveTab] = useState('all'); // all, windows, macos, mobile
+
   // State for description expansion
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
   const [descriptionModalData, setDescriptionModalData] = useState(null);
