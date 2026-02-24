@@ -166,7 +166,11 @@ const userSchema = new mongoose.Schema({
     dateFormat: { type: String, default: 'MM/DD/YYYY' },
     theme: { type: String, default: 'light' },
     fontSize: { type: String, default: 'medium' },
-    pushToken: { type: String, default: null },
+    pushTokens: [{
+      token: { type: String, required: true },
+      deviceName: { type: String },
+      lastUsed: { type: Date, default: Date.now }
+    }],
     biometricAuth: { type: Boolean, default: false },
     biometricLockPeriod: { type: Number, default: 0 },
     batteryOptimization: { type: Boolean, default: false },

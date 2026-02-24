@@ -119,8 +119,36 @@ export const updateUser = async (req, res, next) => {
 
         // Handle nested settings updates
         if (req.body.settings && typeof req.body.settings === 'object') {
-            Object.keys(req.body.settings).forEach(key => {
-                updateFields[`settings.${key}`] = req.body.settings[key];
+            const settingsToUpdate = { ...req.body.settings };
+
+            // Special handling for multi-device push tokens
+            if (settingsToUpdate.pushToken) {
+                const newToken = settingsToUpdate.pushToken;
+                delete settingsToUpdate.pushToken; // Don't save to the old single field
+
+                // Update $push for unique tokens or update existing lastUsed
+                const existingTokenIndex = user.settings?.pushTokens?.findIndex(t => t.token === newToken);
+
+                if (existingTokenIndex !== undefined && existingTokenIndex !== -1) {
+                    // Update timestamp of existing token
+                    updateFields[`settings.pushTokens.${existingTokenIndex}.lastUsed`] = new Date();
+                } else {
+                    // Add as NEW device token
+                    // Since we can't easily $addToSet with objects via this loop, 
+                    // we'll handle outside or use direct mongo syntax if possible.
+                    // For now, let's use the atomic push operator specifically for this field.
+                    updateFields['$addToSet'] = {
+                        'settings.pushTokens': {
+                            token: newToken,
+                            deviceName: req.body.deviceName || req.headers['x-device-name'] || 'Mobile Device',
+                            lastUsed: new Date()
+                        }
+                    };
+                }
+            }
+
+            Object.keys(settingsToUpdate).forEach(key => {
+                updateFields[`settings.${key}`] = settingsToUpdate[key];
             });
         }
         // If mobile number is being updated and is different, set isGeneratedMobile to false
@@ -152,9 +180,13 @@ export const updateUser = async (req, res, next) => {
             coinsEarned = 20;
         }
 
-        const updatedUser = await User.findByIdAndUpdate(targetId, {
-            $set: updateFields
-        }, { new: true });
+        const updateQuery = { $set: updateFields };
+        if (updateFields['$addToSet']) {
+            updateQuery['$addToSet'] = updateFields['$addToSet'];
+            delete updateFields['$addToSet'];
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(targetId, updateQuery, { new: true });
         if (!updatedUser) {
             return next(errorHandler(404, "User not found"));
         }

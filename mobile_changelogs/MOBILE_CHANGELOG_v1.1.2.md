@@ -11,7 +11,8 @@
 - **Auto-lock Display**: Fixed a bug where selected auto-lock periods were not displaying correctly due to data type mismatch.
 - **Settings Persistence**: Resolved backend issue where `biometricLockPeriod` was not being saved to the user profile.
 - **Push Notification Fix**: Resolved "Physical device required" error on real devices and implemented system-wide push triggers for all notifications via database middleware.
-- **Token Auto-Sync**: Added silent push token refresh on app startup for improved delivery reliability.
+- **Premium Multi-Device Push**: Completely overhauled notification engine to support multiple devices (phone + tablet) simultaneously. Notifications now feature premium branding (✨), interactive lock-screen actions ("View Details"), and high-priority delivery.
+- **Auto-Cleanup**: Added logic to automatically remove expired device tokens, keeping user profiles clean and efficient.
 - **Agent Navigation**: Updated the footer button on property details to navigate to "Find Agents" within the app instead of opening a web browser.
 
 ### 🛠️ System Improvements
