@@ -44,15 +44,23 @@ export default function AdminDeploymentManagement() {
     isActive: false
   });
 
-  const [activeTab, setActiveTab] = useState('all'); // all, windows, macos, mobile
-
   // State for description expansion
+  const [showDescriptionModal, setShowDescriptionModal] = useState(false);
+  const [descriptionModalData, setDescriptionModalData] = useState(null);
   const [expandedIds, setExpandedIds] = useState([]);
 
   const toggleDescription = (id) => {
     setExpandedIds(prev =>
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
     );
+  };
+
+  const handleShowChangelog = (file) => {
+    setDescriptionModalData({
+      ...file,
+      platformName: getPlatformName(file.platform)
+    });
+    setShowDescriptionModal(true);
   };
 
   useEffect(() => {
@@ -789,11 +797,19 @@ export default function AdminDeploymentManagement() {
                       </div>
 
                       {file.description && (
-                        <div className="bg-white/60 dark:bg-black/40 p-3 rounded-xl text-sm text-gray-700 dark:text-gray-300 border border-green-100 dark:border-green-800/30">
+                        <div
+                          onClick={() => handleShowChangelog(file)}
+                          className="bg-white/60 dark:bg-black/40 p-3 rounded-xl text-sm text-gray-700 dark:text-gray-300 border border-green-100 dark:border-green-800/30 cursor-pointer hover:bg-white/80 dark:hover:bg-black/60 transition-all group/changelog relative"
+                        >
                           <div className="flex items-center gap-2 mb-1 font-bold text-xs uppercase text-green-700 dark:text-green-500">
                             <FaFileCode /> What's New
                           </div>
-                          {file.description}
+                          <p className="line-clamp-2 italic text-xs leading-relaxed">
+                            "{file.description}"
+                          </p>
+                          <div className="absolute bottom-2 right-3 opacity-0 group-hover/changelog:opacity-100 transition-opacity">
+                            <span className="text-[8px] font-black text-blue-500 uppercase tracking-widest">Read More</span>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -893,18 +909,26 @@ export default function AdminDeploymentManagement() {
                             </div>
 
                             {file.description ? (
-                              <div className="bg-white/50 dark:bg-black/20 p-3 rounded-xl">
+                              <div className="bg-white/50 dark:bg-black/20 p-3 rounded-xl relative group/card">
                                 <p className={`text-xs text-gray-600 dark:text-gray-400 leading-relaxed italic ${!expandedIds.includes(file.id) ? 'line-clamp-3' : ''}`}>
                                   "{file.description}"
                                 </p>
-                                {file.description.length > 100 && (
+                                <div className="mt-2 flex items-center justify-between">
+                                  {file.description.length > 100 && (
+                                    <button
+                                      onClick={() => toggleDescription(file.id)}
+                                      className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest"
+                                    >
+                                      {expandedIds.includes(file.id) ? 'Show Less' : 'In-line Expand'}
+                                    </button>
+                                  )}
                                   <button
-                                    onClick={() => toggleDescription(file.id)}
-                                    className="mt-2 text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest"
+                                    onClick={() => handleShowChangelog(file)}
+                                    className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest flex items-center gap-1 ml-auto"
                                   >
-                                    {expandedIds.includes(file.id) ? 'Show Less' : 'Full Changelog'}
+                                    Modal View <FaInfoCircle />
                                   </button>
-                                )}
+                                </div>
                               </div>
                             ) : (
                               <div className="text-[10px] text-gray-400 italic">No changelog provided</div>
@@ -999,9 +1023,15 @@ export default function AdminDeploymentManagement() {
                                               onClick={() => toggleDescription(file.id)}
                                               className="mt-1 text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest hover:underline"
                                             >
-                                              {expandedIds.includes(file.id) ? 'Show Less' : 'Full Changelog'}
+                                              {expandedIds.includes(file.id) ? 'Show Less' : 'In-line Expand'}
                                             </button>
                                           )}
+                                          <button
+                                            onClick={() => handleShowChangelog(file)}
+                                            className="mt-1 ml-3 text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest hover:underline flex items-center gap-1"
+                                          >
+                                            Premium View <FaInfoCircle />
+                                          </button>
                                         </div>
                                       ) : (
                                         <span className="text-[10px] text-gray-400 dark:text-gray-600 italic">Core system update</span>
@@ -1101,6 +1131,76 @@ export default function AdminDeploymentManagement() {
           </div>
         </div>
       </div>
+      {/* Premium Release Notes Modal (Matches Downloads.jsx) */}
+      {showDescriptionModal && descriptionModalData && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 animate-fade-in">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/85 backdrop-blur-md"
+            onClick={() => setShowDescriptionModal(false)}
+          ></div>
+
+          {/* Modal Content */}
+          <div className="relative bg-white dark:bg-gray-900 w-full max-w-2xl max-h-[85vh] rounded-3xl sm:rounded-[2.5rem] shadow-2xl border border-gray-100 dark:border-gray-800 overflow-hidden flex flex-col scale-100 transition-transform">
+            {/* Header */}
+            <div className="px-6 py-5 sm:p-8 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/30">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl sm:rounded-2xl flex items-center justify-center">
+                  <FaInfoCircle className="text-blue-600 dark:text-blue-400 text-lg sm:text-xl" />
+                </div>
+                <div>
+                  <h3 className="text-lg sm:text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Release Notes</h3>
+                  <p className="text-[10px] sm:text-xs text-gray-500 font-bold uppercase tracking-widest mt-0.5">
+                    {descriptionModalData.platformName} • Version {descriptionModalData.version}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowDescriptionModal(false)}
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all group"
+              >
+                <FaTimes className="text-sm sm:text-base group-hover:rotate-90 transition-transform duration-300" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto px-6 py-6 sm:p-8 custom-scrollbar">
+              <div className="prose dark:prose-invert max-w-none">
+                <div className="flex items-center gap-2 mb-4 sm:mb-6 text-blue-600 dark:text-blue-400 font-black text-[9px] sm:text-[10px] uppercase tracking-[0.3em]">
+                  <div className="w-6 sm:w-8 h-[2px] bg-blue-600 dark:bg-blue-400"></div>
+                  Full Changelog
+                </div>
+                <span className="text-[15px] sm:text-lg text-gray-700 dark:text-gray-300 leading-relaxed sm:leading-loose italic whitespace-pre-wrap block">
+                  "{descriptionModalData.description}"
+                </span>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-5 sm:p-6 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
+                <div className="px-3 py-1 bg-green-100 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-full">
+                  <span className="text-[9px] sm:text-[10px] font-black text-green-700 dark:text-green-400 uppercase tracking-widest leading-none">Verified Build</span>
+                </div>
+                <span className="text-[9px] sm:text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                  Built: {new Date(descriptionModalData.createdAt).toLocaleDateString()}
+                </span>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    handleDownloadFile(descriptionModalData.id);
+                    setShowDescriptionModal(false);
+                  }}
+                  className="w-full sm:w-auto px-6 sm:px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-500/30 transition-all flex items-center justify-center gap-2"
+                >
+                  <FaDownload className="text-xs sm:text-sm" /> Download v{descriptionModalData.version}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div >
   );
 }
