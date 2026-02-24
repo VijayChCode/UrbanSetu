@@ -265,6 +265,6 @@
         "font_large": "Large",
         "client_error_monitoring": "Client Error Monitoring",
         "sponsor_intelligence": "Sponsor Intelligence",
-        "security_intelligence": "Security Intelligence"
+        "android_security_intelligence": "Android App Security Intelligence"
     }
 }

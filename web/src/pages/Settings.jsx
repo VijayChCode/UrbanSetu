@@ -1554,7 +1554,7 @@ export default function Settings() {
                 className={`w-full bg-blue-700 text-white px-6 py-3 rounded-lg hover:bg-blue-800 transition-all duration-300 transform hover:scale-105 hover:shadow-lg flex items-center justify-center font-semibold group ${animationClasses.slideInUp}`}
               >
                 <FaShieldAlt className={`w-4 h-4 mr-2 transition-transform duration-300 group-hover:animate-pulse`} />
-                {t('settings.security_intelligence')}
+                {t('settings.android_security_intelligence')}
               </button>
 
 
