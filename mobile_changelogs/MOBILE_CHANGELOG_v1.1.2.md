@@ -16,6 +16,8 @@
 - **Push Notification Fix**: Resolved "Physical device required" error on real devices and implemented system-wide push triggers for all notifications via database middleware.
 - **Premium Loading Experience**: Overhauled startup sequence with staggered ripple system and pulsing animations.
 - **TypeScript & Storage Stability**: Hardened installation ID generation logic with strict type-safety and robust persistent storage handling for the mobile app layout.
+- **Smart FAQ Accordions**: Integrated `LayoutAnimation` into FAQ sections across About and FAQ screens for smooth, performance-optimized expanding and collapsing.
+- **Intelligent Biometric Logic**: Refined biometric behavior to match premium fintech apps; "Immediately" now intelligently distinguishes between cold starts (secure entry) and background resumes (seamless multitasking).
 
 ### 🛠️ System Improvements
 - **Agent Privacy Shield**: Upgraded `AgentCard` and professional profiles with an authentication-aware layer that masks sensitive agency and service area details for guest users, encouraging platform engagement.
