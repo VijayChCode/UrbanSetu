@@ -473,3 +473,49 @@ GET    /api/rental/locality-score/:listingId     Get locality score (public)
 ---
 
 **The UrbanSetu Rental Platform is production-ready and fully functional!**
+
+
+
+Rentlock system and Algorithms used  
+
+The RentLock system uses a Rule-Based Locking Algorithm integrated with Database Validation and Contract Logic to ensure fixed rent throughout the selected rental period.
+
+Working:
+The seller defines RentLock period options (example: 6 months, 1 year, 2 years) and monthly rent while posting the property.
+
+The buyer selects a preferred RentLock duration during booking.
+
+The system locks the rent value in the database for that user and property.
+
+The same rent amount remains constant throughout the selected RentLock period.
+
+The system prevents any rent modification until the RentLock contract expires.
+
+This ensures secure and predictable rental pricing.
+ The system uses an Ensemble Learning approach combining Machine Learning and Deep Learning algorithms for intelligent property recommendations.
+
+Algorithms used:
+
+Random Forest – predicts suitable properties based on user preferences like budget, location, and property type using decision tree models.
+
+Neural Network (TensorFlow) – analyzes user interaction and learns complex patterns to generate personalized and accurate property recommendations.
+
+These models work together to improve recommendation performance.
+
+Team: 
+Ch.Vijay
+chalendravijay09@gmail.com 
+
+L.Sathya Vardhan
+sathyavardhanlolla@gmail.com
+
+A.Pragnya
+Akojupragnya@gmail.com
+
+Sathvika
+kuthadisathvika2004@gmail.com
+
+Mentor:
+Dr.Syed Abdul Moeed
+Assistant Professor
+ 

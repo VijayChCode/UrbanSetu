@@ -85,7 +85,13 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
   const [zoomMessage, setZoomMessage] = useState(null);
   const zoomTimeoutRef = useRef(null);
   const [seekFeedback, setSeekFeedback] = useState(null); // 'forward' | 'rewind' | null
+  const [seekLabel, setSeekLabel] = useState('');          // e.g. '+5s', '+10s'
   const lastTapRef = useRef(0);
+
+  // YouTube-style cumulative seek refs
+  const seekAccumRef = useRef(0);           // accumulated seconds pending
+  const seekSideRef = useRef(null);         // 'left' | 'right' | null
+  const seekDebounceTimerRef = useRef(null);
 
   // Mini Mode States
   const [miniPosition, setMiniPosition] = useState({ x: 20, y: 20 }); // Position from bottom-right (initially) is handled via CSS, but for dragging we might need absolute coords. Let's stick to fixed positioning.
@@ -585,18 +591,48 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
     };
   }, []);
 
-  // Double Tap Seek Logic
-  const handleSeek = (seconds) => {
-    if (videoRef.current) {
-      const newTime = videoRef.current.currentTime + seconds;
-      if (isFinite(newTime)) {
-        videoRef.current.currentTime = newTime;
-        setSeekFeedback(seconds > 0 ? 'forward' : 'rewind');
-        // Clear previous timeout if any
-        if (gestureTimeoutRef.current) clearTimeout(gestureTimeoutRef.current);
-        gestureTimeoutRef.current = setTimeout(() => setSeekFeedback(null), 800);
-      }
+  // YouTube-style cumulative double-tap seek
+  // Each quick tap accumulates ±5s: shows +5s, +10s, +15s...
+  // After 400ms of silence the actual seek fires.
+  const doubleTapSeek = (side) => {
+    const STEP = 5; // 5 seconds per tap
+    const isForward = side === 'right';
+
+    // Reset accumulator if side switches
+    if (seekSideRef.current !== side) {
+      seekAccumRef.current = 0;
+      seekSideRef.current = side;
     }
+
+    // Accumulate
+    seekAccumRef.current += isForward ? STEP : -STEP;
+    const secs = Math.abs(seekAccumRef.current);
+    const label = `${isForward ? '+' : '-'}${secs}s`;
+    setSeekLabel(label);
+    setSeekFeedback(isForward ? 'forward' : 'rewind');
+
+    // Restart debounce
+    if (seekDebounceTimerRef.current) clearTimeout(seekDebounceTimerRef.current);
+    seekDebounceTimerRef.current = setTimeout(() => {
+      const pending = seekAccumRef.current;
+      seekAccumRef.current = 0;
+      seekSideRef.current = null;
+
+      // Execute the actual seek
+      if (videoRef.current) {
+        const newTime = videoRef.current.currentTime + pending;
+        if (isFinite(newTime)) {
+          videoRef.current.currentTime = Math.max(0, Math.min(newTime, videoRef.current.duration || 0));
+        }
+      }
+
+      // Fade out overlay
+      if (gestureTimeoutRef.current) clearTimeout(gestureTimeoutRef.current);
+      gestureTimeoutRef.current = setTimeout(() => {
+        setSeekFeedback(null);
+        setSeekLabel('');
+      }, 600);
+    }, 400);
   };
 
   const handleVideoAreaClick = (e) => {
@@ -623,11 +659,11 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
       const width = rect.width;
 
       if (x > width * 0.65) {
-        // Right side (last 35%) -> Forward 5s
-        handleSeek(5);
+        // Right side → Forward cumulative
+        doubleTapSeek('right');
       } else if (x < width * 0.35) {
-        // Left side (first 35%) -> Rewind 5s
-        handleSeek(-5);
+        // Left side → Rewind cumulative
+        doubleTapSeek('left');
       }
     } else {
       // Potential Single Tap - Toggle Controls
@@ -1834,11 +1870,11 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
           draggable={false}
         />
 
-        {/* Feedback Overlays */}
+        {/* YouTube-style cumulative seek feedback */}
         {seekFeedback && (
-          <div className={`absolute ${seekFeedback === 'rewind' ? 'left-10' : 'right-10'} top-1/2 -translate-y-1/2 z-40 flex flex-col items-center justify-center text-white bg-black/50 p-6 rounded-full animate-ping-once backdrop-blur-sm`}>
+          <div className={`absolute ${seekFeedback === 'rewind' ? 'left-10' : 'right-10'} top-1/2 -translate-y-1/2 z-40 flex flex-col items-center justify-center text-white bg-black/50 p-6 rounded-full backdrop-blur-sm`}>
             <FaUndo className={`text-3xl mb-1 ${seekFeedback === 'forward' ? 'transform scale-x-[-1]' : ''}`} />
-            <span className="font-bold text-sm">{seekFeedback === 'rewind' ? '-5s' : '+5s'}</span>
+            <span className="font-bold text-sm tracking-wide">{seekLabel || (seekFeedback === 'rewind' ? '-5s' : '+5s')}</span>
           </div>
         )}
 
