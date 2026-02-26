@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import DownloadsSkeleton from '../components/skeletons/DownloadsSkeleton';
 import { Link } from 'react-router-dom';
 import SEO from '../components/SEO';
+import Typewriter from '../components/ui/Typewriter';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -124,8 +125,17 @@ export default function Downloads() {
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-bold mb-6 border border-blue-200 dark:border-blue-800">
                         <FaMobileAlt className="animate-bounce" /> MULTI-PLATFORM ECOSYSTEM
                     </div>
-                    <h1 className="text-4xl md:text-6xl font-black text-gray-900 dark:text-white tracking-tight mb-6">
-                        Get <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">UrbanSetu</span> Everywhere
+                    <h1 className="text-4xl md:text-6xl font-black text-gray-900 dark:text-white tracking-tight mb-6 min-h-[3.6em] md:min-h-[1.2em] flex items-center justify-center">
+                        <Typewriter
+                            words={[
+                                "Get UrbanSetu Everywhere",
+                                "Download App Anywhere",
+                                "Experience Seamless Access",
+                                "Explore Smart Real Estate in Smart Devices"
+                            ]}
+                            splitFirstWord={true}
+                            gradientClassName="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400"
+                        />
                     </h1>
                     <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 leading-relaxed">
                         Secure, fast, and feature-rich. Download our native applications for the best experience on any device.
