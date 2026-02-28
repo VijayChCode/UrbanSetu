@@ -492,6 +492,11 @@ export default function Profile() {
       if (currentUser.email) {
         setEmailValidation({ loading: false, message: "", available: true });
       }
+
+      // Set initial mobile validation state to show green tick for current mobile
+      if (currentUser.mobileNumber) {
+        setMobileValidation({ loading: false, message: "", available: true });
+      }
     }
   }, [currentUser]);
 
