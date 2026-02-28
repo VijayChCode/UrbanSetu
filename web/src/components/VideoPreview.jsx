@@ -2301,14 +2301,58 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
                 </span>
               </div>
 
-              <div className="flex items-center gap-2 sm:gap-4">
-                <button onClick={toggleMiniMode} title="Picture in Picture" className="hover:text-blue-400"><FaClone size={18} /></button>
-                <button onClick={handleRotate} title="Rotate" className="hover:text-blue-400"><FaUndo size={18} /></button>
-                <button onClick={toggleSpeed} title="Playback Speed" className="hover:text-blue-400 flex items-center gap-1 text-sm font-medium min-w-[3em]"><FaTachometerAlt size={14} /> {playbackRate}x</button>
-                <button onClick={toggleShare} title="Share" className="hover:text-blue-400"><FaShareAlt size={18} /></button>
-                <button onClick={handleDownload} title="Download" className="hover:text-blue-400"><FaDownload size={18} /></button>
-                <button onClick={toggleFullscreen} title="Fullscreen" className="hover:text-blue-400">{isFullscreen ? <FaCompress size={20} /> : <FaExpand size={20} />}</button>
-              </div>
+              {/* Only Fullscreen stays in the main row */}
+              <button onClick={toggleFullscreen} title="Fullscreen" className="hover:text-blue-400">
+                {isFullscreen ? <FaCompress size={20} /> : <FaExpand size={20} />}
+              </button>
+            </div>
+
+            {/* ── Action Row — mirrors mobile VideoViewer layout ── */}
+            <div className="flex items-center justify-center border-t border-white/10 pt-2 mt-0.5">
+              <button
+                onClick={toggleMiniMode}
+                title="Picture in Picture"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-all active:scale-95 text-xs font-semibold"
+              >
+                <FaClone size={13} />
+                <span className="hidden sm:inline">Mini</span>
+              </button>
+              <div className="w-px h-4 bg-white/15 mx-0.5" />
+              <button
+                onClick={handleRotate}
+                title="Rotate"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-all active:scale-95 text-xs font-semibold"
+              >
+                <FaUndo size={13} />
+                <span className="hidden sm:inline">Rotate</span>
+              </button>
+              <div className="w-px h-4 bg-white/15 mx-0.5" />
+              <button
+                onClick={toggleSpeed}
+                title="Playback Speed"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-all active:scale-95 text-xs font-semibold min-w-[52px]"
+              >
+                <FaTachometerAlt size={13} />
+                <span>{playbackRate}x</span>
+              </button>
+              <div className="w-px h-4 bg-white/15 mx-0.5" />
+              <button
+                onClick={toggleShare}
+                title="Share"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-all active:scale-95 text-xs font-semibold"
+              >
+                <FaShareAlt size={13} />
+                <span className="hidden sm:inline">Share</span>
+              </button>
+              <div className="w-px h-4 bg-white/15 mx-0.5" />
+              <button
+                onClick={handleDownload}
+                title="Download"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-all active:scale-95 text-xs font-semibold"
+              >
+                <FaDownload size={13} />
+                <span className="hidden sm:inline">Save</span>
+              </button>
             </div>
           </div>
         </div>
