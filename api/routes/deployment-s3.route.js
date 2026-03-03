@@ -443,7 +443,8 @@ router.post('/upload', verifyToken, upload.single('file'), handleMulterError, as
               version: safeVersion,
               category: safePlatform,
               description: notificationMessage,
-              actionUrl: fileUrl
+              actionUrl: fileUrl,
+              isAppLaunch: true
             }).catch(e => console.error(`Failed to send update email to ${user.email}:`, e));
           }
         });
@@ -530,7 +531,8 @@ router.put('/set-active/:id', verifyToken, async (req, res) => {
                 version: targetDeployment.version,
                 category: targetDeployment.platform,
                 description: notificationMessage,
-                actionUrl: targetDeployment.url
+                actionUrl: targetDeployment.url,
+                isAppLaunch: true
               }).catch(e => console.error(`Failed to send update email to ${user.email}:`, e));
             }
           });

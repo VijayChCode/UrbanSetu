@@ -728,11 +728,12 @@ export const sendContractConfirmationOTPEmail = async (email, otp) => {
 export const sendUpdateAnnouncementEmail = async (email, update) => {
   const clientBaseUrl = process.env.CLIENT_URL || 'https://urbansetu.vercel.app';
   const unsubscribeUrl = getUnsubscribeUrl(email);
+  const isAppLaunch = update.isAppLaunch || update.category === 'android' || update.category === 'ios';
 
   const mailOptions = {
     from: process.env.EMAIL_USER,
     to: email,
-    subject: `New Update: ${update.title} - UrbanSetu`,
+    subject: isAppLaunch ? `New App Launch: ${update.title} - UrbanSetu` : `New Update: ${update.title} - UrbanSetu`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;">
         <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
@@ -752,7 +753,7 @@ export const sendUpdateAnnouncementEmail = async (email, update) => {
           </div>
           
           <div style="background-color: #f0f9ff; padding: 25px; border-radius: 8px; margin-bottom: 25px; border-left: 4px solid #2563eb;">
-            <h2 style="color: #1f2937; margin: 0 0 15px 0; font-size: 18px;">What's New?</h2>
+            <h2 style="color: #1f2937; margin: 0 0 15px 0; font-size: 18px;">${isAppLaunch ? "What's in this version?" : "What's New?"}</h2>
             <div style="color: #4b5563; line-height: 1.6; white-space: pre-wrap;">${update.description}</div>
             
             ${update.tags && update.tags.length > 0 ? `
@@ -765,17 +766,17 @@ export const sendUpdateAnnouncementEmail = async (email, update) => {
           </div>
           
           <div style="text-align: center; margin-bottom: 20px;">
-            <p style="color: #374151; margin-bottom: 15px;">Experience the new features firsthand.</p>
+            <p style="color: #374151; margin-bottom: 15px;">${isAppLaunch ? 'Download the latest version now.' : 'Experience the new features firsthand.'}</p>
             
-            <a href="${clientBaseUrl}/updates" style="display: inline-block; background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 12px 25px; border-radius: 6px; font-weight: bold; font-size: 15px; margin: 5px;">
-              View Full Changelog
+            <a href="${clientBaseUrl}${isAppLaunch ? '/download' : '/updates'}" style="display: inline-block; background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 12px 25px; border-radius: 6px; font-weight: bold; font-size: 15px; margin: 5px;">
+              ${isAppLaunch ? 'Go to Downloads' : 'View Full Changelog'}
             </a>
             
-            ${update.actionUrl ? `
+            ${!isAppLaunch && update.actionUrl ? `
               <a href="${update.actionUrl}" style="display: inline-block; background-color: #10b981; color: #ffffff; text-decoration: none; padding: 12px 25px; border-radius: 6px; font-weight: bold; font-size: 15px; margin: 5px;">
                 Explore Feature
               </a>
-            ` : `
+            ` : isAppLaunch ? '' : `
               <a href="${clientBaseUrl}/sign-in" style="display: inline-block; background-color: #ffffff; color: #2563eb; text-decoration: none; padding: 10px 25px; border-radius: 6px; font-weight: bold; font-size: 15px; border: 2px solid #2563eb; margin: 5px;">
                 Sign In to Explore
               </a>
