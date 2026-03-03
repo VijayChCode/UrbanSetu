@@ -1017,35 +1017,45 @@ export default function RoutePlanner() {
         // Update the stop with current location
         updateStop(index, address, coordinates);
 
-        toast.dismiss(loadingToast);
-        toast.success('Current location added successfully!');
+        toast.update(loadingToast, {
+          render: 'Current location added successfully!',
+          type: 'success',
+          isLoading: false,
+          autoClose: 3000
+        });
 
       } catch (geocodingError) {
         console.warn('Reverse geocoding failed:', geocodingError);
         // Still update with coordinates even if reverse geocoding fails
         updateStop(index, 'Current Location', coordinates);
 
-        toast.dismiss(loadingToast);
-        toast.success('Current location added!');
+        toast.update(loadingToast, {
+          render: 'Current location added!',
+          type: 'success',
+          isLoading: false,
+          autoClose: 3000
+        });
       }
 
     } catch (error) {
-      toast.dismiss(loadingToast);
-
+      let errorMsg = 'An error occurred while getting your location. Please try again.';
       switch (error.code) {
         case error.PERMISSION_DENIED:
-          toast.error('Location access denied. Please enable location permissions in your browser settings.');
+          errorMsg = 'Location access denied. Please enable location permissions in your browser settings.';
           break;
         case error.POSITION_UNAVAILABLE:
-          toast.error('Location information is unavailable. Please check your GPS settings.');
+          errorMsg = 'Location information is unavailable. Please check your GPS settings.';
           break;
         case error.TIMEOUT:
-          toast.error('Location request timed out. Please try again.');
-          break;
-        default:
-          toast.error('An error occurred while getting your location. Please try again.');
+          errorMsg = 'Location request timed out. Please try again.';
           break;
       }
+      toast.update(loadingToast, {
+        render: errorMsg,
+        type: 'error',
+        isLoading: false,
+        autoClose: 5000
+      });
     } finally {
       // Clear loading state
       setLoadingLocation(null);
