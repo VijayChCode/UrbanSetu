@@ -117,7 +117,8 @@ notificationSchema.post('save', async function (doc, next) {
       sendPushNotification(doc.userId, doc.title, doc.message, {
         notificationId: doc._id,
         type: doc.type,
-        listingId: doc.listingId
+        listingId: doc.listingId,
+        ...(doc.meta || {}) // Pass all meta fields (actions, imageUrl, category, etc.)
       }).catch(err => console.error('Push hook error:', err));
     }
   } catch (err) {
@@ -135,7 +136,8 @@ notificationSchema.post('insertMany', async function (docs, next) {
         sendPushNotification(doc.userId, doc.title, doc.message, {
           notificationId: doc._id,
           type: doc.type,
-          listingId: doc.listingId
+          listingId: doc.listingId,
+          ...(doc.meta || {})
         }).catch(() => { });
       });
     }

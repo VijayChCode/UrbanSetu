@@ -139,8 +139,17 @@ router.post("/", verifyToken, async (req, res) => {
         title: 'New Appointment Booked',
         message: `A new appointment for "${listing.name}" has been booked by ${buyer.username}.`,
         listingId: listing._id,
-        adminId: null
+        adminId: null,
+        meta: {
+          imageUrl: listing.imageUrls ? listing.imageUrls[0] : null,
+          category: 'appointment_booked',
+          actions: [
+            { title: '✅ Accept', identifier: 'accept_booking' },
+            { title: '❌ Reject', identifier: 'reject_booking' }
+          ]
+        }
       });
+
       if (io) io.to(seller._id.toString()).emit('notificationCreated', notification);
     } catch (notificationError) {
       console.error('Failed to create notification for seller:', notificationError);
@@ -444,16 +453,21 @@ router.patch('/:id/status', verifyToken, async (req, res) => {
           : `Your appointment for "${updated.listingId.name}" was rejected by the seller.`;
 
         if (updated.buyerId && (updated.buyerId._id || updated.buyerId)) {
+          const bId = updated.buyerId._id || updated.buyerId;
           const notification = await Notification.create({
-            userId: updated.buyerId._id || updated.buyerId,
+            userId: bId,
             type: notificationType,
             title: notificationTitle,
             message: notificationMessage,
             listingId: updated.listingId._id || updated.listingId,
-            adminId: null
+            adminId: null,
+            meta: {
+              imageUrl: updated.listingId.imageUrls ? updated.listingId.imageUrls[0] : null,
+              category: notificationType
+            }
           });
 
-          if (io) io.to((updated.buyerId._id || updated.buyerId).toString()).emit('notificationCreated', notification);
+          if (io) io.to(bId.toString()).emit('notificationCreated', notification);
         }
 
         // Send email notification to buyer
@@ -733,7 +747,11 @@ router.post('/:id/comment', verifyToken, async (req, res) => {
           const pushPreview = message || (imageUrl ? '📷 Image' : (videoUrl ? '🎥 Video' : (documentUrl ? '📄 Document' : (audioUrl ? '🔊 Audio' : 'Message'))));
           sendPushNotification(recipientUser._id.toString(), `New message from ${senderName}`, pushPreview, {
             appointmentId: id,
-            type: 'chat_message'
+            type: 'chat_message',
+            category: 'chat_message',
+            actions: [
+              { title: '💬 View Chat', identifier: 'view_chat' }
+            ]
           });
         }
       } catch (emailError) {

@@ -80,8 +80,16 @@ export const createListing = async (req, res, next) => {
           title: 'Property Added by Admin - Verification Required',
           message: `A new property "${listing.name}" has been created on your behalf by admin. Please complete verification to publish it.`,
           listingId: listing._id,
-          adminId: req.user.id
+          adminId: req.user.id,
+          meta: {
+            imageUrl: listing.imageUrls ? listing.imageUrls[0] : null,
+            category: 'admin_created_listing',
+            actions: [
+              { title: '👁️ View Property', identifier: 'view_listing' }
+            ]
+          }
         });
+
         const io = req.app.get('io');
         if (io) io.to(userRef.toString()).emit('notificationCreated', notification);
       } catch (notificationError) {
@@ -238,20 +246,25 @@ export const deleteListing = async (req, res, next) => {
 
         if (propertyOwner) {
           // Create notification for the property owner
-          const notification = new Notification({
+          const notification = await Notification.create({
             userId: listing.userRef,
             type: 'property_deleted',
             title: 'Property Deleted by Admin',
             message: `Your property "${listing.name}" has been deleted by an administrator. Reason: ${req.body.reason}`,
             listingId: listing._id,
             adminId: req.user.id,
-            adminNote: req.body.reason
+            meta: {
+              adminNote: req.body.reason,
+              category: 'property_deleted'
+              // No "View" action since deleted, but could add "Browse Others" later
+            }
           });
-
-          await notification.save();
 
           // Update success message to include user email
           notificationMessage = `Property deleted successfully and notified to ${propertyOwner.email}`;
+
+          const io = req.app.get('io');
+          if (io) io.to(listing.userRef.toString()).emit('notificationCreated', notification);
         }
       } catch (notificationError) {
         // Log notification error but don't fail the listing deletion
@@ -688,16 +701,24 @@ export const updateListing = async (req, res, next) => {
 
         if (propertyOwner) {
           // Create notification for the property owner
-          const notification = new Notification({
+          const notification = await Notification.create({
             userId: listing.userRef,
             type: 'property_edited',
             title: 'Property Updated by Admin',
             message: `Your property "${listing.name}" has been updated by an administrator. Please review the changes.`,
             listingId: listing._id,
             adminId: req.user.id,
+            meta: {
+              imageUrl: updatedListing.imageUrls ? updatedListing.imageUrls[0] : null,
+              category: 'property_edited',
+              actions: [
+                { title: '🔍 View Changes', identifier: 'view_listing' }
+              ]
+            }
           });
 
-          await notification.save();
+          const io = req.app.get('io');
+          if (io) io.to(listing.userRef.toString()).emit('notificationCreated', notification);
 
           // Update success message to include user email
           notificationMessage = `Property updated successfully and notified to ${propertyOwner.email}`;
@@ -1117,6 +1138,16 @@ export const reassignPropertyOwner = async (req, res, next) => {
       });
 
       await notification.save();
+
+      const { sendPushNotification } = await import('../utils/pushNotification.js');
+      sendPushNotification(newOwnerId.toString(), '🔑 Property Assigned', `You have been assigned as the owner of property "${listing.name}"`, {
+        imageUrl: listing.imageUrls ? listing.imageUrls[0] : null,
+        category: 'property_assigned',
+        data: { listingId: listing._id },
+        actions: [
+          { title: '🏠 View Property', identifier: 'view_listing' }
+        ]
+      });
     } catch (notificationError) {
       // Log notification error but don't fail the ownership update
       console.error('Failed to create notification:', notificationError);
@@ -1196,6 +1227,12 @@ export const deassignPropertyOwner = async (req, res, next) => {
           }
         });
         await notification.save();
+
+        const { sendPushNotification } = await import('../utils/pushNotification.js');
+        sendPushNotification(previousOwner._id.toString(), '⚠️ Ownership Removed', `You have been removed as the owner of "${listing.name}".`, {
+          category: 'property_deassigned',
+          data: { listingId: listing._id }
+        });
       } catch (notificationError) {
         console.error('Failed to create deassign notification:', notificationError);
       }
@@ -1342,6 +1379,16 @@ export const rootAdminBypassVerification = async (req, res, next) => {
         state: listing.state
       };
       await sendPropertyPublishedAfterVerificationEmail(owner.email, listingDetails);
+
+      const { sendPushNotification } = await import('../utils/pushNotification.js');
+      sendPushNotification(owner._id.toString(), '✅ Property Verified', `Congratulations! Your property "${listing.name}" is now verified and live.`, {
+        imageUrl: listing.imageUrls ? listing.imageUrls[0] : null,
+        category: 'verification_approved',
+        data: { listingId: listing._id },
+        actions: [
+          { title: '🌐 View Live Property', identifier: 'view_listing_public' }
+        ]
+      });
     }
 
     res.status(200).json({
@@ -1436,6 +1483,12 @@ export const rootUnpublishListing = async (req, res, next) => {
       });
       const io = req.app.get('io');
       if (io) io.to(listing.userRef.toString()).emit('notificationCreated', notification);
+
+      const { sendPushNotification } = await import('../utils/pushNotification.js');
+      sendPushNotification(listing.userRef.toString(), '🚫 Listing Unpublished', `Your listing "${listing.name}" has been unpublished by an admin.`, {
+        category: 'verification_rejected',
+        data: { listingId: listing._id }
+      });
     } catch (notifErr) {
       console.error("Failed to create in-app notification:", notifErr);
     }

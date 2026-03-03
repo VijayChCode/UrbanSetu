@@ -104,7 +104,13 @@ router.post('/create', verifyToken, async (req, res, next) => {
           title: 'New Review Received',
           message: `Your property "${listing.name}" received a new review from ${user.username}`,
           listingId: listingId,
-          adminId: req.user.id
+          adminId: req.user.id,
+          meta: {
+            category: 'new_review',
+            actions: [
+              { title: '⭐ View Review', identifier: 'view_listing_reviews' }
+            ]
+          }
         });
       }
     } catch (notificationError) {
@@ -122,7 +128,15 @@ router.post('/create', verifyToken, async (req, res, next) => {
           message: `A new review by ${user.username} on ${listing.name}`,
           link: '/admin/reviews',
           listingId: listingId,
-          meta: { reviewId: newReview._id, reviewerId: user._id }
+          meta: {
+            reviewId: newReview._id,
+            reviewerId: user._id,
+            category: 'admin_report',
+            actions: [
+              { title: '✅ Approve', identifier: 'approve_review' },
+              { title: '❌ Reject', identifier: 'reject_review' }
+            ]
+          }
         });
       }));
       // Emit socket event for real-time admin notification
@@ -505,7 +519,13 @@ router.put('/admin/status/:reviewId', verifyToken, async (req, res, next) => {
           title: 'New Review Received',
           message: `Your property "${listing.name}" received a new review from ${review.userName}`,
           listingId: review.listingId,
-          adminId: req.user.id
+          adminId: req.user.id,
+          meta: {
+            category: 'new_review',
+            actions: [
+              { title: '⭐ View Review', identifier: 'view_listing_reviews' }
+            ]
+          }
         });
       } else if (status === 'rejected') {
         await Notification.create({

@@ -39,6 +39,8 @@ export const sendRentalNotification = async ({
   message,
   meta = {},
   actionUrl = null,
+  actions = [],
+  imageUrl = null,
   io = null
 }) => {
   try {
@@ -50,20 +52,18 @@ export const sendRentalNotification = async ({
       message,
       meta: {
         ...meta,
-        rental: true // Flag to identify rental notifications
+        rental: true, // Flag to identify rental notifications
+        actions,      // Store actions in meta for the hook
+        imageUrl,     // Store imageUrl in meta for the hook
+        actionUrl     // Store actionUrl in meta
       },
       listingId: meta.listingId || null,
-      actionUrl
     });
 
     await notification.save();
 
-    // Send native push notification
-    sendPushNotification(userId.toString(), title, message, {
-      notificationId: notification._id,
-      type,
-      actionUrl
-    });
+    // The Notification.save hook will handle sendPushNotification automatically
+    // as it now spreads meta into options.
 
     // Emit real-time notification via socket if available
     if (io) {
@@ -185,6 +185,9 @@ export const sendPaymentReminders = async ({ io = null, daysBefore = 3 }) => {
           rentYear: paymentEntry.year
         },
         actionUrl: walletUrl,
+        actions: [
+          { title: '💳 Pay Now', identifier: 'view_wallet' }
+        ],
         io
       });
 
@@ -268,6 +271,9 @@ export const sendOverduePaymentNotifications = async ({ io = null }) => {
           totalOverdue
         },
         actionUrl: walletUrl,
+        actions: [
+          { title: '🚨 Pay Now', identifier: 'view_wallet' }
+        ],
         io
       });
 
@@ -333,6 +339,9 @@ export const sendContractExpiryReminders = async ({ io = null, daysBefore = 30 }
           endDate: contract.endDate
         },
         actionUrl: contractUrl,
+        actions: [
+          { title: '📄 View Contract', identifier: 'view_contract' }
+        ],
         io
       });
 
@@ -364,6 +373,9 @@ export const sendContractExpiryReminders = async ({ io = null, daysBefore = 30 }
           tenantId: contract.tenantId._id
         },
         actionUrl: contractUrl,
+        actions: [
+          { title: '📄 View Contract', identifier: 'view_contract' }
+        ],
         io
       });
 
@@ -447,6 +459,9 @@ export const sendRatingReminders = async ({ contractId, io = null }) => {
         landlordId: contract.landlordId._id
       },
       actionUrl: `/user/rental-ratings?contractId=${contract._id}`,
+      actions: [
+        { title: '⭐ Rate Now', identifier: 'view_ratings' }
+      ],
       io
     });
 
@@ -462,6 +477,9 @@ export const sendRatingReminders = async ({ contractId, io = null }) => {
         tenantId: contract.tenantId._id
       },
       actionUrl: `/user/rental-ratings?contractId=${contract._id}`,
+      actions: [
+        { title: '⭐ Rate Now', identifier: 'view_ratings' }
+      ],
       io
     });
 

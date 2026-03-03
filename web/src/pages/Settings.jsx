@@ -159,6 +159,12 @@ export default function Settings() {
   // Notification Preferences
   const [emailNotifications, setEmailNotifications] = useState(currentUser?.settings?.emailNotifications ?? true);
   const [inAppNotifications, setInAppNotifications] = useState(currentUser?.settings?.inAppNotifications ?? true);
+  const [marketingNotifications, setMarketingNotifications] = useState(currentUser?.settings?.marketingNotifications ?? true);
+  const [propertyAlerts, setPropertyAlerts] = useState(currentUser?.settings?.propertyAlerts ?? true);
+  const [bookingUpdates, setBookingUpdates] = useState(currentUser?.settings?.bookingUpdates ?? true);
+  const [communitySocial, setCommunitySocial] = useState(currentUser?.settings?.communitySocial ?? true);
+  const [securityAlerts, setSecurityAlerts] = useState(currentUser?.settings?.securityAlerts ?? true);
+  const [chatMessages, setChatMessages] = useState(currentUser?.settings?.chatMessages ?? true);
   const [notificationSound, setNotificationSound] = useState(currentUser?.settings?.notificationSound ?? 'default');
 
   // Privacy Settings
@@ -932,6 +938,48 @@ export default function Settings() {
     showToast(t('messages.sound_pref_saved'));
   };
 
+  const handleMarketingNotificationsChange = async (value) => {
+    scrollPositionRef.current = window.scrollY;
+    setMarketingNotifications(value);
+    await updateUserSetting({ marketingNotifications: value });
+    showToast('Marketing preferences updated');
+  };
+
+  const handlePropertyAlertsChange = async (value) => {
+    scrollPositionRef.current = window.scrollY;
+    setPropertyAlerts(value);
+    await updateUserSetting({ propertyAlerts: value });
+    showToast('Property alert preferences updated');
+  };
+
+  const handleBookingUpdatesChange = async (value) => {
+    scrollPositionRef.current = window.scrollY;
+    setBookingUpdates(value);
+    await updateUserSetting({ bookingUpdates: value });
+    showToast('Booking update preferences updated');
+  };
+
+  const handleCommunitySocialChange = async (value) => {
+    scrollPositionRef.current = window.scrollY;
+    setCommunitySocial(value);
+    await updateUserSetting({ communitySocial: value });
+    showToast('Community & Social preferences updated');
+  };
+
+  const handleSecurityAlertsChange = async (value) => {
+    scrollPositionRef.current = window.scrollY;
+    setSecurityAlerts(value);
+    await updateUserSetting({ securityAlerts: value });
+    showToast('Security alert preferences updated');
+  };
+
+  const handleChatMessagesChange = async (value) => {
+    scrollPositionRef.current = window.scrollY;
+    setChatMessages(value);
+    await updateUserSetting({ chatMessages: value });
+    showToast('Chat message preferences updated');
+  };
+
   const handleProfileVisibilityChange = async (value) => {
     scrollPositionRef.current = window.scrollY;
     try {
@@ -1267,6 +1315,50 @@ export default function Settings() {
               onChange={handleInAppNotificationsChange}
               description="Show notifications within the app"
             />
+
+            <div className="mt-6 mb-2">
+              <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Notification Categories
+              </h3>
+            </div>
+
+            <ToggleSwitch
+              label="Property Alerts"
+              checked={propertyAlerts}
+              onChange={handlePropertyAlertsChange}
+              description="New listings, price drops, and watchlist updates"
+            />
+            <ToggleSwitch
+              label="Booking Updates"
+              checked={bookingUpdates}
+              onChange={handleBookingUpdatesChange}
+              description="Important updates about your appointments"
+            />
+            <ToggleSwitch
+              label="Chat Messages"
+              checked={chatMessages}
+              onChange={handleChatMessagesChange}
+              description="Instant alerts for new messages"
+            />
+            <ToggleSwitch
+              label="Marketing & Promotions"
+              checked={marketingNotifications}
+              onChange={handleMarketingNotificationsChange}
+              description="Offers, newsletters, and new feature updates"
+            />
+            <ToggleSwitch
+              label="Community & Social"
+              checked={communitySocial}
+              onChange={handleCommunitySocialChange}
+              description="Forum activity and community events"
+            />
+            <ToggleSwitch
+              label="Security Alerts"
+              checked={securityAlerts}
+              onChange={handleSecurityAlertsChange}
+              description="Account security and sign-in notifications"
+            />
+
             <SelectOption
               label={t('settings.notification_sound')}
               value={notificationSound}

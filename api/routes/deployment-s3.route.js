@@ -509,6 +509,7 @@ router.put('/set-active/:id', verifyToken, async (req, res) => {
           const User = (await import('../models/user.model.js')).default;
           const Notification = (await import('../models/notification.model.js')).default;
           const { sendUpdateAnnouncementEmail } = await import('../utils/emailService.js');
+          const { sendPushNotification } = await import('../utils/pushNotification.js');
 
           const users = await User.find({ status: 'active', isSubscribed: true }, 'email _id settings');
 
@@ -535,6 +536,12 @@ router.put('/set-active/:id', verifyToken, async (req, res) => {
                 isAppLaunch: true
               }).catch(e => console.error(`Failed to send update email to ${user.email}:`, e));
             }
+
+            // Send native push notification
+            sendPushNotification(user._id, notificationTitle, notificationMessage, {
+              category: 'platform_update',
+              data: { version: targetDeployment.version, platform: targetDeployment.platform }
+            }).catch(e => console.error(`Failed to send push to ${user._id}:`, e));
           });
         } catch (notifErr) {
           console.error('Failed to trigger activation notifications:', notifErr);

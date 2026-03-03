@@ -606,12 +606,6 @@ export const createNotification = async (req, res, next) => {
 
     const savedNotification = await notification.save();
 
-    // Send native push notification
-    sendPushNotification(userId, title, message, {
-      notificationId: savedNotification._id,
-      type
-    });
-
     res.status(201).json(savedNotification);
   } catch (error) {
     next(error);
@@ -695,6 +689,13 @@ export const reportChatMessage = async (req, res, next) => {
       title,
       message,
       adminId: null,
+      meta: {
+        category: 'admin_report',
+        appointmentId,
+        actions: [
+          { title: '👁️ View Chat', identifier: 'view_chat' }
+        ]
+      }
     }));
 
     const created = await Notification.insertMany(notifications);
@@ -790,6 +791,13 @@ export const reportChatConversation = async (req, res, next) => {
       title,
       message,
       adminId: null,
+      meta: {
+        category: 'admin_report',
+        appointmentId,
+        actions: [
+          { title: '👁️ View Chat', identifier: 'view_chat' }
+        ]
+      }
     }));
 
     const created = await Notification.insertMany(notifications);
@@ -1048,7 +1056,7 @@ export const deleteAllNotifications = async (req, res, next) => {
 // Admin sends notification to user
 export const adminSendNotification = async (req, res, next) => {
   try {
-    const { userId, title, message, type = 'admin_message' } = req.body;
+    const { userId, title, message, type = 'admin_message', imageUrl, actions } = req.body;
 
     // Validate required fields
     if (!userId || !title || !message) {
@@ -1074,15 +1082,14 @@ export const adminSendNotification = async (req, res, next) => {
       title: title,
       message: message,
       adminId: req.user.id,
+      meta: {
+        imageUrl,
+        category: type,
+        actions: actions || []
+      }
     });
 
     const savedNotification = await notification.save();
-
-    // Send native push notification
-    sendPushNotification(userId.toString(), title, message, {
-      notificationId: savedNotification._id,
-      type: savedNotification.type
-    });
 
     res.status(201).json({
       success: true,
@@ -1115,7 +1122,7 @@ export const getAllUsersForNotifications = async (req, res, next) => {
 // Admin sends notification to all users
 export const adminSendNotificationToAll = async (req, res, next) => {
   try {
-    const { title, message, type = 'admin_message' } = req.body;
+    const { title, message, type = 'platform_update', imageUrl, actions } = req.body;
 
     // Validate required fields
     if (!title || !message) {
@@ -1129,8 +1136,7 @@ export const adminSendNotificationToAll = async (req, res, next) => {
     const users = await User.find(
       {
         status: { $ne: 'suspended' },
-        role: { $ne: 'admin' },
-        role: { $ne: 'rootadmin' }
+        role: { $not: { $in: ['admin', 'rootadmin'] } }
       },
       '_id'
     );
@@ -1149,17 +1155,14 @@ export const adminSendNotificationToAll = async (req, res, next) => {
       title: title,
       message: message,
       adminId: req.user.id,
+      meta: {
+        imageUrl,
+        category: type,
+        actions: actions || []
+      }
     }));
 
     const created = await Notification.insertMany(notifications);
-
-    // Send native push notifications to all users who have it enabled
-    created.forEach(n => {
-      sendPushNotification(n.userId.toString(), n.title, n.message, {
-        notificationId: n._id,
-        type: n.type
-      });
-    });
 
     res.status(201).json({
       success: true,
@@ -1198,6 +1201,12 @@ export const notifyAdminsGeneric = async (req, res, next) => {
       title,
       message,
       adminId: null,
+      meta: {
+        category: 'admin_generic_request',
+        actions: [
+          { title: '👁️ View Details', identifier: 'view_details' }
+        ]
+      }
     }));
 
     const created = await Notification.insertMany(notifications);
@@ -1314,7 +1323,11 @@ export const notifyAdminsOfCommunityReport = async (app, reporter, targetPost, r
         postId: targetPost._id,
         reportType,
         reason,
-        reporterId: reporter._id
+        reporterId: reporter._id,
+        category: 'community_report',
+        actions: [
+          { title: '🔍 Review Post', identifier: 'view_post' }
+        ]
       }
     }));
 
@@ -1365,6 +1378,10 @@ export const reportVideoIssue = async (req, res, next) => {
         description,
         currentIndex,
         reporterId: reporter?._id || null,
+        category: 'video_issue_report',
+        actions: [
+          { title: '📺 Watch Video', identifier: 'watch_video' }
+        ]
       }
     }));
 

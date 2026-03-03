@@ -7,12 +7,124 @@ import admin from '../config/firebaseAdmin.js';
  * @param {string} userId - ID of the user to send notification to
  * @param {string} title - Notification title
  * @param {string} body - Notification body
- * @param {object} data - Optional data payload
+ * @param {object} options - Optional parameters: data, imageUrl, category
  */
-export const sendPushNotification = async (userId, title, body, data = {}) => {
+export const sendPushNotification = async (userId, title, body, options = {}) => {
+    const { data = {}, imageUrl = null, category = 'UrbanSetu_Notification' } = options;
+
     try {
         const user = await User.findById(userId).select('settings');
         if (!user || !user.settings?.pushNotifications || !user.settings?.pushTokens?.length) {
+            return;
+        }
+
+        // Production-scale: Check granular preferences based on category/type
+        // Mapping of internal categories to user setting fields
+        const categoryToSettingMap = {
+            // Property related
+            'property_alert': 'propertyAlerts',
+            'listing_update': 'propertyAlerts',
+            'watchlist_update': 'propertyAlerts',
+            'admin_created_listing': 'propertyAlerts',
+            'property_edited': 'propertyAlerts',
+            'property_deleted': 'propertyAlerts',
+            'property_reported': 'propertyAlerts',
+            'property_assigned': 'propertyAlerts',
+            'property_deassigned': 'propertyAlerts',
+            'property_verified': 'propertyAlerts',
+            'listing_unpublished': 'propertyAlerts',
+            'watchlist_price_drop': 'propertyAlerts',
+            'watchlist_price_update': 'propertyAlerts',
+            'watchlist_property_sold': 'propertyAlerts',
+            'watchlist_property_removed': 'propertyAlerts',
+            'rent_new_property_available': 'propertyAlerts',
+
+            // Booking / Appointment related
+            'appointment_update': 'bookingUpdates',
+            'appointment_updated': 'bookingUpdates',
+            'booking_status': 'bookingUpdates',
+            'appointment_booked': 'bookingUpdates',
+            'admin_booked_appointment': 'bookingUpdates',
+            'appointment_cancelled_by_buyer': 'bookingUpdates',
+            'appointment_cancelled_by_seller': 'bookingUpdates',
+            'appointment_cancelled_by_admin': 'bookingUpdates',
+            'appointment_reinitiated_by_admin': 'bookingUpdates',
+            'appointment_accepted_by_seller': 'bookingUpdates',
+            'appointment_rejected_by_seller': 'bookingUpdates',
+            'appointment_reinitiated_by_user': 'bookingUpdates',
+            'refund_appeal_submitted': 'bookingUpdates',
+            'appointment_request': 'bookingUpdates',
+
+            // Rental / Financial (Under Booking Updates for now)
+            'rent_payment_due': 'bookingUpdates',
+            'rent_payment_reminder_3days': 'bookingUpdates',
+            'rent_payment_reminder_1day': 'bookingUpdates',
+            'rent_payment_overdue': 'bookingUpdates',
+            'rent_payment_received': 'bookingUpdates',
+            'rent_payment_failed': 'bookingUpdates',
+            'rent_contract_signed': 'bookingUpdates',
+            'rent_contract_expiring_soon': 'bookingUpdates',
+            'rent_contract_expired': 'bookingUpdates',
+            'rent_contract_terminated': 'bookingUpdates',
+            'rent_move_in_reminder': 'bookingUpdates',
+            'rent_move_out_reminder': 'bookingUpdates',
+            'rent_escrow_released': 'bookingUpdates',
+            'rent_auto_debit_enabled': 'bookingUpdates',
+            'rent_auto_debit_failed': 'bookingUpdates',
+            'rent_dispute_raised': 'bookingUpdates',
+            'rent_dispute_updated': 'bookingUpdates',
+            'rent_dispute_resolved': 'bookingUpdates',
+            'rent_verification_requested': 'bookingUpdates',
+            'rent_verification_approved': 'bookingUpdates',
+            'rent_verification_rejected': 'bookingUpdates',
+            'rent_rating_reminder': 'bookingUpdates',
+            'rent_rating_received': 'bookingUpdates',
+            'rent_loan_applied': 'bookingUpdates',
+            'rent_loan_approved': 'bookingUpdates',
+            'rent_loan_rejected': 'bookingUpdates',
+            'rent_loan_disbursed': 'bookingUpdates',
+            'rent_loan_emi_due': 'bookingUpdates',
+            'rent_loan_defaulted': 'bookingUpdates',
+
+            // Marketing
+            'marketing': 'marketingNotifications',
+            'promotion': 'marketingNotifications',
+            'newsletter': 'marketingNotifications',
+            'platform_update': 'marketingNotifications',
+
+            // Community
+            'community': 'communitySocial',
+            'forum': 'communitySocial',
+            'new_review': 'communitySocial',
+            'review_reported': 'communitySocial',
+            'review_rejected': 'communitySocial',
+            'review_blocked': 'communitySocial',
+            'community_report': 'communitySocial',
+            'rent_rating_received': 'communitySocial',
+
+            // Security
+            'security': 'securityAlerts',
+            'security_alert': 'securityAlerts',
+            'auth': 'securityAlerts',
+            'client_error_report': 'securityAlerts',
+            'video_issue_report': 'securityAlerts',
+            'admin_report': 'securityAlerts',
+
+            // Chat
+            'chat': 'chatMessages',
+            'message': 'chatMessages',
+            'chat_message': 'chatMessages',
+            'admin_message': 'chatMessages'
+        };
+
+        const userSettingField =
+            categoryToSettingMap[category?.toLowerCase()] ||
+            categoryToSettingMap[data?.type?.toLowerCase()] ||
+            categoryToSettingMap[options.category?.toLowerCase()] ||
+            categoryToSettingMap[options.type?.toLowerCase()];
+
+        if (userSettingField && user.settings[userSettingField] === false) {
+            console.log(`🚫 Notification for user ${userId} skipped due to setting: ${userSettingField}`);
             return;
         }
 
@@ -20,11 +132,24 @@ export const sendPushNotification = async (userId, title, body, data = {}) => {
         const expoMessages = [];
         const fcmTokens = [];
 
+        const { actions = [] } = options; // Actions: [{ title: 'Accept', identifier: 'accept' }]
+
+        // Map category to Android System Channels
+        const getChannelId = (cat) => {
+            const setting = categoryToSettingMap[cat?.toLowerCase()];
+            if (setting === 'chatMessages') return 'messages';
+            if (setting === 'bookingUpdates') return 'bookings';
+            if (setting === 'propertyAlerts') return 'property';
+            if (setting === 'securityAlerts') return 'security';
+            if (setting === 'marketingNotifications') return 'marketing';
+            return 'default';
+        };
+
+        const channelId = getChannelId(category) || getChannelId(data?.type) || getChannelId(options.type) || 'default';
+
         for (const tokenObj of validTokens) {
             const pushToken = tokenObj.token;
 
-            // Notice: Native FCM device tokens don't follow the Expo format.
-            // We just ensure the token isn't blank.
             if (!pushToken || typeof pushToken !== 'string') {
                 continue;
             }
@@ -40,22 +165,31 @@ export const sendPushNotification = async (userId, title, body, data = {}) => {
                     data: {
                         ...data,
                         userId,
-                        click_action: 'UrbanSetu_Notification', // Custom action link
+                        click_action: category,
+                        imageUrl, // Include image in data for frontend handling if needed
+                        actions,
                     },
+                    // Category ID links to frontend-defined notification categories for actions
+                    ...(category && { categoryId: category }),
+                    // Rich media for Expo
+                    ...(imageUrl && {
+                        mutableContent: true,
+                        attachments: [{ url: imageUrl }]
+                    }),
                     priority: 'high',
-                    channelId: 'default', // Matches Android channel
-                    subtitle: 'UrbanSetu Alert', // Premium detail
+                    channelId: channelId,
+                    subtitle: 'UrbanSetu',
                     badge: 1,
-                    _displayInForeground: true, // Quality UX
+                    _displayInForeground: true,
                 });
             } else {
-                fcmTokens.push(pushToken); // It's a standard Android FCM ID token!
+                fcmTokens.push(pushToken); // Standard Android FCM token
             }
         }
 
         let totalSuccesses = 0;
 
-        // 1. Send via Expo (for Cloud hosted expo apps)
+        // 1. Send via Expo
         if (expoMessages.length > 0) {
             try {
                 const response = await axios.post('https://exp.host/--/api/v2/push/send', expoMessages, {
@@ -85,7 +219,7 @@ export const sendPushNotification = async (userId, title, body, data = {}) => {
             }
         }
 
-        // 2. Send via Native FCM (for our locally compiled APK build)
+        // 2. Send via Native FCM
         if (fcmTokens.length > 0 && admin.apps?.length > 0) {
             try {
                 const fcmMessage = {
@@ -93,25 +227,38 @@ export const sendPushNotification = async (userId, title, body, data = {}) => {
                     notification: {
                         title: `✨ ${title}`,
                         body: body,
+                        ...(imageUrl && { imageUrl: imageUrl }) // Rich image for native Android
                     },
                     data: {
-                        // FCM requires string values ONLY for the `data` payload
-                        click_action: 'UrbanSetu_Notification',
+                        click_action: category,
                         userId: String(userId),
+                        ...(imageUrl && { notification_image: imageUrl }),
                         ...Object.fromEntries(Object.entries(data).map(([k, v]) => [k, String(v)]))
                     },
                     android: {
                         priority: 'high',
                         notification: {
                             sound: user.settings.notificationSound === 'none' ? undefined : 'default',
-                            channelId: 'default', // Matches react-native-notifications setup channel
-                            clickAction: 'UrbanSetu_Notification',
+                            channelId: channelId,
+                            clickAction: category,
+                            imageUrl: imageUrl || undefined,
+                        }
+                    },
+                    apns: {
+                        payload: {
+                            aps: {
+                                'mutable-content': 1,
+                                category: category,
+                                sound: 'default'
+                            }
+                        },
+                        fcm_options: {
+                            image: imageUrl || undefined
                         }
                     }
                 };
 
                 const fcmResponse = await admin.messaging().sendEachForMulticast(fcmMessage);
-
                 totalSuccesses += fcmResponse.successCount;
 
                 if (fcmResponse.failureCount > 0) {

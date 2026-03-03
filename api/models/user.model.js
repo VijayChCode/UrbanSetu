@@ -155,7 +155,15 @@ const userSchema = new mongoose.Schema({
   settings: {
     emailNotifications: { type: Boolean, default: true },
     inAppNotifications: { type: Boolean, default: true },
-    pushNotifications: { type: Boolean, default: false },
+    pushNotifications: { type: Boolean, default: true },
+    // Granular categories
+    marketingNotifications: { type: Boolean, default: true },
+    propertyAlerts: { type: Boolean, default: true },
+    bookingUpdates: { type: Boolean, default: true },
+    communitySocial: { type: Boolean, default: true },
+    securityAlerts: { type: Boolean, default: true },
+    chatMessages: { type: Boolean, default: true },
+
     notificationSound: { type: String, default: 'default' },
     showEmail: { type: Boolean, default: false },
     showPhone: { type: Boolean, default: false },

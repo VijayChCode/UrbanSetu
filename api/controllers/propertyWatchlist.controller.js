@@ -154,6 +154,13 @@ export const notifyWatchersOnChange = async (app, { listing, changeType, oldPric
           : (changeType === 'removed'
             ? `Heads up! "${listing.name}" has been sold or removed.`
             : `"${listing.name}" has new updates. Check it out!`),
+        meta: {
+          imageUrl: listing.imageUrls ? listing.imageUrls[0] : null,
+          category: 'property_alert',
+          actions: [
+            { title: '🔍 View Property', identifier: 'view_listing' }
+          ]
+        }
       };
       const n = await Notification.create(data);
       notifications.push(n);
