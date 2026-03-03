@@ -34,6 +34,7 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
     confirmPassword: "",
     role: "",   // 🔥 added role field here
     mobileNumber: "",
+    address: "",
   });
 
   const [passwordStrength, setPasswordStrength] = useState({
@@ -795,12 +796,67 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                       {fieldErrors.mobileNumber && (
                         <p className="text-red-500 text-sm mt-1">{fieldErrors.mobileNumber}</p>
                       )}
-                      {fieldErrors.mobileNumber && (
-                        <p className="text-red-500 text-sm mt-1">{fieldErrors.mobileNumber}</p>
-                      )}
                     </div>
 
-
+                    <div>
+                      <label htmlFor="address" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 ml-1">
+                        Address
+                      </label>
+                      <div className="relative">
+                        <FormField
+                          label={undefined}
+                          id="address"
+                          type="text"
+                          placeholder="Enter or fetch your address"
+                          onChange={handleChange}
+                          value={formData.address || ''}
+                          disabled={authInProgress === 'google'}
+                          inputClassName={`transition-all duration-200 focus:ring-2 focus:ring-green-500/20 ${authInProgress === 'google' ? 'bg-gray-100 cursor-not-allowed' : ''} hover:border-green-500 pr-12`}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!navigator.geolocation) {
+                              toast.error("Geolocation is not supported by your browser");
+                              return;
+                            }
+                            const toastId = toast.loading("Fetching location...");
+                            navigator.geolocation.getCurrentPosition(
+                              async (position) => {
+                                try {
+                                  const { latitude, longitude } = position.coords;
+                                  let addressStr = `Lat: ${latitude.toFixed(4)}, Lng: ${longitude.toFixed(4)}`;
+                                  try {
+                                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+                                    if (res.ok) {
+                                      const data = await res.json();
+                                      if (data.display_name) {
+                                        addressStr = data.display_name;
+                                      }
+                                    }
+                                  } catch (e) { }
+                                  handleChange({ target: { id: 'address', value: addressStr } });
+                                  toast.success("Location fetched successfully", { id: toastId });
+                                } catch (error) {
+                                  toast.error("Failed to process location", { id: toastId });
+                                }
+                              },
+                              (error) => {
+                                toast.error("Permission denied or location unavailable.", { id: toastId });
+                              },
+                              { enableHighAccuracy: true }
+                            );
+                          }}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-full transition-colors z-20"
+                          title="Get current location"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <circle cx="12" cy="12" r="3"></circle>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
 
                     <SelectField
                       label={<span className="ml-1">I want to <span className="text-red-500">*</span></span>}

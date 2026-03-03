@@ -2085,14 +2085,63 @@ export default function Profile() {
                     <input
                       type="text"
                       id="address"
-                      placeholder="Enter your address"
+                      placeholder="Enter or fetch your address"
                       value={formData.address || ''}
                       onChange={handleChangeWithValidation}
-                      className="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all pr-12"
+                      className="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all pr-24"
                     />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!navigator.geolocation) {
+                          toast.error("Geolocation is not supported by your browser");
+                          return;
+                        }
+
+                        const toastId = toast.loading("Fetching location...");
+
+                        navigator.geolocation.getCurrentPosition(
+                          async (position) => {
+                            try {
+                              const { latitude, longitude } = position.coords;
+                              let addressStr = `Lat: ${latitude.toFixed(4)}, Lng: ${longitude.toFixed(4)}`;
+
+                              try {
+                                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+                                if (res.ok) {
+                                  const data = await res.json();
+                                  if (data.display_name) {
+                                    addressStr = data.display_name;
+                                  }
+                                }
+                              } catch (e) {
+                                console.error("Reverse geocoding error:", e);
+                              }
+
+                              setFormData(prev => ({ ...prev, address: addressStr }));
+                              toast.success("Location fetched successfully", { id: toastId });
+                            } catch (error) {
+                              toast.error("Failed to process location", { id: toastId });
+                            }
+                          },
+                          (error) => {
+                            console.error("Location error:", error);
+                            toast.error("Permission denied or location unavailable.", { id: toastId });
+                          },
+                          { enableHighAccuracy: true }
+                        );
+                      }}
+                      className="absolute right-10 top-1/2 -translate-y-1/2 p-2 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-full transition-colors z-20"
+                      title="Get current location"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <circle cx="12" cy="12" r="3"></circle>
+                      </svg>
+                    </button>
                     {/* Show green tick for address (always accepted) */}
                     {formData.address && formData.address.trim() && (
-                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-600 z-20">
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-600 z-20 pointer-events-none">
                         <FaCheck className="text-xl" />
                       </div>
                     )}
