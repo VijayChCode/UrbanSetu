@@ -12,6 +12,7 @@ import {
 } from 'recharts';
 import { authenticatedFetch } from '../utils/auth';
 import { usePageTitle } from '../hooks/usePageTitle';
+import SecurityIntelligenceSkeleton from '../components/skeletons/SecurityIntelligenceSkeleton';
 
 const SecurityIntelligence = () => {
     usePageTitle("Security Intelligence - UrbanSetu Admin");
@@ -68,12 +69,7 @@ const SecurityIntelligence = () => {
     const COLORS = ['#10B981', '#EF4444'];
 
     if (loading && stats.length === 0) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-                <p className="text-gray-600 dark:text-gray-400 animate-pulse">Analyzing security data...</p>
-            </div>
-        );
+        return <SecurityIntelligenceSkeleton />;
     }
 
     return (

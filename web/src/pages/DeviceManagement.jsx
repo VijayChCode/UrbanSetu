@@ -390,7 +390,7 @@ const DeviceManagement = () => {
               <h3 className="font-semibold text-blue-900 dark:text-blue-200 mb-1">Session Limits</h3>
               <p className="text-blue-700 dark:text-blue-300 text-sm leading-relaxed">
                 Your account allows up to <strong className="text-blue-800 dark:text-blue-200">{getSessionLimit()} active session{getSessionLimit() !== 1 ? 's' : ''}</strong>.
-                New logins beyond this limit will automatically sign out the oldest inactive session to maintain security.
+                New logins beyond this limit will automatically sign out the oldest inactive session (excluding mobile app sessions) to maintain security.
               </p>
             </div>
           </div>

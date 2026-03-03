@@ -285,7 +285,6 @@ export const getDeviceType = (userAgent, headers = {}) => {
     }
 };
 
-// Get device info from user agent (keeping for backward compatibility)
 export const getDeviceInfo = (userAgent, headers = {}) => {
     if (!userAgent && !headers['x-client-platform']) return 'Unknown Device';
 
@@ -297,7 +296,11 @@ export const getDeviceInfo = (userAgent, headers = {}) => {
     const deviceType = getDeviceType(userAgent, headers);
 
     if (isMobileApp) {
-        return `UrbanSetu Mobile App on ${os === 'Unknown' ? 'Mobile' : os}`;
+        const dNameHeader = headers['x-device-name'] || headers['X-Device-Name'];
+        if (dNameHeader) {
+            return `UrbanSetu App on ${dNameHeader}`;
+        }
+        return `UrbanSetu App on ${os === 'Unknown' ? 'Mobile' : os}`;
     }
 
     // Format: "Chrome 120 on Windows 10/11 (Desktop)"
@@ -445,13 +448,19 @@ export const enforceSessionLimits = async (userId, userRole, io) => {
 
     // Only enforce when exceeding the limit (not when equal)
     if (user.activeSessions.length > limit) {
-        // Sort by lastActive ascending and remove the oldest sessions beyond the limit
-        const sortedSessions = user.activeSessions.sort((a, b) =>
-            new Date(a.lastActive) - new Date(b.lastActive)
-        );
+        // Prioritize logging out Web/Desktop sessions and protect Mobile App sessions
+        const appSessions = user.activeSessions.filter(s => s.device && (s.device.includes('UrbanSetu App') || s.device.includes('UrbanSetu Mobile App')));
+        const webSessions = user.activeSessions.filter(s => !(s.device && (s.device.includes('UrbanSetu App') || s.device.includes('UrbanSetu Mobile App'))));
 
+        const sortedWebSessions = webSessions.sort((a, b) => new Date(a.lastActive) - new Date(b.lastActive));
+        // Only ever remove web sessions. Never automatically force logout a Mobile App session. 
         const countToRemove = user.activeSessions.length - limit;
-        const sessionsToRemove = sortedSessions.slice(0, countToRemove);
+        const sessionsToRemove = sortedWebSessions.slice(0, countToRemove);
+
+        if (sessionsToRemove.length === 0) {
+            // Only mobile app sessions exist, or we can't remove any web ones. Abort enforcement to protect mobile.
+            return 0;
+        }
 
         // Remove from database
         const sessionIdsToRemove = sessionsToRemove.map(s => s.sessionId);
