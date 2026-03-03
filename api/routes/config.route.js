@@ -17,11 +17,11 @@ router.get('/', (req, res) => {
         wishlist: process.env.FEATURE_WISHLIST === 'true',
         adminPanel: process.env.FEATURE_ADMIN_PANEL === 'true'
       },
-      maintenance: {
+      /* maintenance: {
         enabled: process.env.MAINTENANCE_MODE === 'true',
         endTime: process.env.MAINTENANCE_END_TIME || null,
         message: process.env.MAINTENANCE_MESSAGE || "We're currently renovating our digital infrastructure to serve you better. Just like a prime property, quality takes time. We'll be back online shortly to help you find your dream space."
-      },
+      }, */
       contact: {
         email: process.env.CONTACT_EMAIL || 'support@urbansetu.com',
         phone: process.env.CONTACT_PHONE || '+91 9876543210',
@@ -140,3 +140,24 @@ router.get('/version', (req, res) => {
 });
 
 export default router;
+
+/*
+How to Activate Maintenance Mode in the App
+To turn on the maintenance screen for all mobile users, follow these steps:
+
+Uncomment the code block: Go to 
+
+api/routes/config.route.js
+ and remove the /*(and its counter part) and surrounding the maintenance object.
+Toggle the Environment Variable: In your backend environment (Render/Vercel Dashboard or local 
+
+.env
+), change the value:
+MAINTENANCE_MODE=true
+Configure the Timer (Optional): Define when the maintenance ends to display the countdown and "Check Recovery" button:
+MAINTENANCE_END_TIME=2026-03-03T23:59:00Z (Use ISO format)
+Instant Effect: Once updated, the app's root checker in 
+
+_layout.tsx
+ will detect the state on the next launch and immediately redirect users to the maintenance page.
+*/
