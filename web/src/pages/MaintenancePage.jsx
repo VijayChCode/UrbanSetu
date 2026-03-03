@@ -31,10 +31,9 @@ const MaintenancePage = () => {
                         Building a Better Experience...
                     </h2>
                     <p className="text-gray-600 dark:text-gray-300 text-lg leading-relaxed">
-                        We're currently renovating our digital infrastructure to serve you better.
-                        Just like a prime property, quality takes time. We'll be back online shortly
-                        to help you find your dream space.
+                        We're currently renovating our digital infrastructure to serve you better. Just like a prime property, quality takes time. We'll be back online shortly to help you find your dream space.
                     </p>
+
                     <p className="text-gray-500 dark:text-gray-400 font-medium">
                         Thank you for your patience!
                     </p>

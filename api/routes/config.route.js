@@ -17,6 +17,11 @@ router.get('/', (req, res) => {
         wishlist: process.env.FEATURE_WISHLIST === 'true',
         adminPanel: process.env.FEATURE_ADMIN_PANEL === 'true'
       },
+      maintenance: {
+        enabled: process.env.MAINTENANCE_MODE === 'true',
+        endTime: process.env.MAINTENANCE_END_TIME || null,
+        message: process.env.MAINTENANCE_MESSAGE || "We're currently renovating our digital infrastructure to serve you better. Just like a prime property, quality takes time. We'll be back online shortly to help you find your dream space."
+      },
       contact: {
         email: process.env.CONTACT_EMAIL || 'support@urbansetu.com',
         phone: process.env.CONTACT_PHONE || '+91 9876543210',
