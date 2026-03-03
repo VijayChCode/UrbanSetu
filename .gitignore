@@ -10,6 +10,9 @@ mobile/dist/
 *.log
 .DS_Store
 
+# Security Credentials
+firebase-service-account.json
+
 # Build artifacts and caches
 .gradle_home/
 .gradle/
