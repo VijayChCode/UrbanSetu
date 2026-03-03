@@ -117,7 +117,7 @@ const SetuCoinCard = ({ balance = 0, streak = 0, expiryDate = null, loading = fa
             </div>
 
             {/* Info Modal Overlay */}
-            <SetuCoinInfoModal isOpen={showInfo} onClose={() => setShowInfo(false)} />
+            <SetuCoinInfoModal isOpen={showInfo} onClose={() => setShowInfo(false)} headerClass={getGradient()} />
         </div >
     );
 };

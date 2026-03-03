@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { FaCoins, FaCheckCircle, FaStar, FaTrophy } from 'react-icons/fa';
 
-const SetuCoinInfoModal = ({ isOpen, onClose }) => {
+const SetuCoinInfoModal = ({ isOpen, onClose, headerClass = "from-orange-300 via-orange-400 to-orange-500" }) => {
     // Handle Esc key to close
     useEffect(() => {
         const handleEsc = (e) => {
@@ -34,7 +34,7 @@ const SetuCoinInfoModal = ({ isOpen, onClose }) => {
 
 
                 {/* Modal Header */}
-                <div className="bg-gradient-to-br from-yellow-400 via-amber-500 to-orange-500 p-6 md:p-8 text-white relative shrink-0">
+                <div className={`bg-gradient-to-br ${headerClass} p-6 md:p-8 text-white relative shrink-0`}>
                     <FaCoins className="absolute bottom-[-10px] right-[-10px] text-8xl text-white/20 rotate-12" />
                     <h2 className="text-2xl md:text-3xl font-black mb-1 flex items-center gap-2 md:gap-3">
                         <FaTrophy className="text-yellow-200 animate-bounce" /> SetuCoins
