@@ -2126,9 +2126,15 @@ export default function Profile() {
                           },
                           (error) => {
                             console.error("Location error:", error);
-                            toast.error("Permission denied or location unavailable.", { id: toastId });
+                            let errorMsg = "Permission denied or location unavailable.";
+                            if (error.code === error.TIMEOUT) {
+                              errorMsg = "Location request timed out. Please try again or enter manually.";
+                            } else if (error.code === error.PERMISSION_DENIED) {
+                              errorMsg = "Location permission denied. Please enable it in your browser settings.";
+                            }
+                            toast.error(errorMsg, { id: toastId });
                           },
-                          { enableHighAccuracy: true }
+                          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
                         );
                       }}
                       className="absolute right-10 top-1/2 -translate-y-1/2 p-2 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-full transition-colors z-20"
