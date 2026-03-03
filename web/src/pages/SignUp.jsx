@@ -838,9 +838,19 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                                     console.error("Reverse geocoding error:", e);
                                   }
                                   handleChange({ target: { id: 'address', value: addressStr } });
-                                  toast.success("Location fetched successfully", { id: toastId });
+                                  toast.update(toastId, {
+                                    render: "Location fetched successfully",
+                                    type: "success",
+                                    isLoading: false,
+                                    autoClose: 3000
+                                  });
                                 } catch (error) {
-                                  toast.error("Failed to process location", { id: toastId });
+                                  toast.update(toastId, {
+                                    render: "Failed to process location",
+                                    type: "error",
+                                    isLoading: false,
+                                    autoClose: 5000
+                                  });
                                 }
                               },
                               (error) => {
@@ -851,7 +861,12 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                                 } else if (error.code === error.PERMISSION_DENIED) {
                                   errorMsg = "Location permission denied. Please enable it in your browser settings.";
                                 }
-                                toast.error(errorMsg, { id: toastId });
+                                toast.update(toastId, {
+                                  render: errorMsg,
+                                  type: "error",
+                                  isLoading: false,
+                                  autoClose: 5000
+                                });
                               },
                               { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
                             );
