@@ -4,6 +4,7 @@ import cloudinary from 'cloudinary';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import { verifyToken } from '../utils/verify.js';
 import Deployment from '../models/deployment.model.js';
+import { sendBroadcastPushNotification } from '../utils/pushNotification.js';
 
 const router = express.Router();
 
@@ -290,6 +291,31 @@ router.post('/upload', verifyToken, upload.single('file'), handleMulterError, as
 
     await newDeployment.save();
 
+    // ── Real-time push to all users when new active build is released ──────
+    if (isTrueActive) {
+      const isForce = (description || '').toLowerCase().includes('[force]');
+      const cleanDesc = (description || '').replace(/\[force\]/gi, '').trim();
+      const pushBody = cleanDesc
+        ? `${cleanDesc.substring(0, 100)}${cleanDesc.length > 100 ? '…' : ''}`
+        : 'Open the app to see what\'s new.';
+
+      // Fire-and-forget — don\'t await, never block the admin response
+      sendBroadcastPushNotification(
+        `🚀 UrbanSetu ${version} is Available`,
+        pushBody,
+        {
+          category: 'platform_update',
+          data: {
+            type: 'app_update',
+            version: version || '1.0.0',
+            isForce: String(isForce),
+            downloadUrl: `${process.env.WEB_URL || 'https://urbansetu.vercel.app'}/download`,
+          },
+        }
+      ).catch(e => console.error('Broadcast push failed silently:', e.message));
+    }
+    // ─────────────────────────────────────────────────────────────────────
+
     res.json({
       success: true,
       message: 'File uploaded successfully',
@@ -347,6 +373,28 @@ router.put('/set-active/:id', verifyToken, async (req, res) => {
     // Activate this one
     targetDeployment.isActive = true;
     await targetDeployment.save();
+
+    // ── Real-time push to all users when an existing build is activated ────
+    const isForce = (targetDeployment.description || '').toLowerCase().includes('[force]');
+    const cleanDesc = (targetDeployment.description || '').replace(/\[force\]/gi, '').trim();
+    const pushBody = cleanDesc
+      ? `${cleanDesc.substring(0, 100)}${cleanDesc.length > 100 ? '…' : ''}`
+      : 'Open the app to see what\'s new.';
+
+    sendBroadcastPushNotification(
+      `🚀 UrbanSetu ${targetDeployment.version} is Available`,
+      pushBody,
+      {
+        category: 'platform_update',
+        data: {
+          type: 'app_update',
+          version: targetDeployment.version || '1.0.0',
+          isForce: String(isForce),
+          downloadUrl: `${process.env.WEB_URL || 'https://urbansetu.vercel.app'}/download`,
+        },
+      }
+    ).catch(e => console.error('Broadcast push (set-active) failed silently:', e.message));
+    // ─────────────────────────────────────────────────────────────────────
 
     res.json({
       success: true,

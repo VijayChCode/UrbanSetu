@@ -288,3 +288,110 @@ export const sendPushNotification = async (userId, title, body, options = {}) =>
         console.error('Error sending push notification:', error.message);
     }
 };
+
+/**
+ * Broadcast a push notification to ALL users who have push tokens.
+ * Used for system-wide events like app update releases.
+ * @param {string} title
+ * @param {string} body
+ * @param {object} options - data, imageUrl, category, type
+ */
+export const sendBroadcastPushNotification = async (title, body, options = {}) => {
+    const { data = {}, imageUrl = null, category = 'platform_update' } = options;
+
+    try {
+        // Fetch all users that have at least one push token and have push notifications enabled
+        const users = await User.find(
+            {
+                'settings.pushNotifications': true,
+                'settings.pushTokens.0': { $exists: true },
+            },
+            'settings.pushTokens settings.notificationSound settings.marketingNotifications'
+        ).lean();
+
+        if (!users || users.length === 0) {
+            console.log('📢 Broadcast: No users with push tokens found');
+            return { success: true, sent: 0 };
+        }
+
+        // Collect ALL tokens across all users (respect marketingNotifications opt-out)
+        const expoTokens = [];
+        const fcmTokens = [];
+
+        for (const user of users) {
+            // Respect user's marketing/platform_update preference
+            if (user.settings?.marketingNotifications === false) continue;
+
+            for (const tokenObj of (user.settings?.pushTokens || [])) {
+                const t = tokenObj.token;
+                if (!t || typeof t !== 'string') continue;
+                if (t.includes('ExponentPushToken') || t.includes('ExpoPushToken')) {
+                    expoTokens.push({ token: t, sound: user.settings?.notificationSound });
+                } else {
+                    fcmTokens.push(t);
+                }
+            }
+        }
+
+        let totalSuccesses = 0;
+        const CHUNK = 100; // Expo limit per request
+
+        // ── Send to Expo tokens in chunks ──────────────────────────────────────
+        for (let i = 0; i < expoTokens.length; i += CHUNK) {
+            const chunk = expoTokens.slice(i, i + CHUNK);
+            const messages = chunk.map(({ token, sound }) => ({
+                to: token,
+                sound: sound === 'none' ? null : 'default',
+                title: `✨ ${title}`,
+                body,
+                data: { ...data, click_action: category },
+                ...(category && { categoryId: category }),
+                priority: 'high',
+                channelId: 'default',
+                badge: 1,
+                _displayInForeground: true,
+            }));
+            try {
+                const res = await axios.post('https://exp.host/--/api/v2/push/send', messages, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'Accept-encoding': 'gzip, deflate',
+                        'Content-Type': 'application/json',
+                    },
+                });
+                const results = res.data?.data;
+                if (Array.isArray(results)) {
+                    totalSuccesses += results.filter(r => r.status !== 'error').length;
+                }
+            } catch (expoErr) {
+                console.error('Broadcast Expo chunk error:', expoErr.message);
+            }
+        }
+
+        // ── Send to native FCM tokens ──────────────────────────────────────────
+        if (fcmTokens.length > 0 && admin.apps?.length > 0) {
+            for (let i = 0; i < fcmTokens.length; i += 500) {
+                const chunk = fcmTokens.slice(i, i + 500);
+                try {
+                    const fcmRes = await admin.messaging().sendEachForMulticast({
+                        tokens: chunk,
+                        notification: { title: `✨ ${title}`, body },
+                        data: { click_action: category, ...Object.fromEntries(Object.entries(data).map(([k, v]) => [k, String(v)])) },
+                        android: { priority: 'high', notification: { channelId: 'default', sound: 'default' } },
+                        apns: { payload: { aps: { sound: 'default' } } },
+                    });
+                    totalSuccesses += fcmRes.successCount;
+                } catch (fcmErr) {
+                    console.error('Broadcast FCM chunk error:', fcmErr.message);
+                }
+            }
+        }
+
+        console.log(`📢 Broadcast sent: ${totalSuccesses} / ${expoTokens.length + fcmTokens.length} devices`);
+        return { success: true, sent: totalSuccesses, total: expoTokens.length + fcmTokens.length };
+    } catch (error) {
+        console.error('Error in sendBroadcastPushNotification:', error.message);
+        return { success: false, error: error.message };
+    }
+};
+
