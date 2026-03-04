@@ -4,26 +4,26 @@ import { errorHandler } from '../utils/error.js';
 export const getSecurityIntelligenceStats = async (req, res, next) => {
     try {
         const currentUser = await User.findById(req.user.id);
-        if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'rootadmin')) {
+        if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'rootadmin' && !currentUser.isDefaultAdmin)) {
             return next(errorHandler(403, 'Access denied'));
         }
 
         // Aggregate installation IDs and their association with users
-        const stats = await User.aggregate([
-            { $unwind: "$settings.pushTokens" },
-            { $match: { "settings.pushTokens.installationId": { $ne: null } } },
+        // We use $facet to get both installation-based stats and general device usage
+        const statsAggregation = await User.aggregate([
+            { $unwind: { path: "$settings.pushTokens", preserveNullAndEmptyArrays: false } },
             {
                 $group: {
-                    _id: "$settings.pushTokens.installationId",
+                    _id: { $ifNull: ["$settings.pushTokens.installationId", "$settings.pushTokens.deviceName"] },
+                    installationId: { $first: { $ifNull: ["$settings.pushTokens.installationId", "unknown_device"] } },
                     users: { $addToSet: { _id: "$_id", username: "$username", email: "$email" } },
                     devices: { $addToSet: "$settings.pushTokens.deviceName" },
-                    lastUsed: { $max: "$settings.pushTokens.lastUsed" },
-                    count: { $sum: 1 }
+                    lastUsed: { $max: "$settings.pushTokens.lastUsed" }
                 }
             },
             {
                 $project: {
-                    installationId: "$_id",
+                    installationId: 1,
                     users: 1,
                     devices: 1,
                     lastUsed: 1,
@@ -33,6 +33,8 @@ export const getSecurityIntelligenceStats = async (req, res, next) => {
             },
             { $sort: { lastUsed: -1 } }
         ]);
+
+        const stats = statsAggregation;
 
         // Suspicious installations (Multiple users on same installation ID)
         const suspiciousInstallations = stats.filter(s => s.userCount > 1);

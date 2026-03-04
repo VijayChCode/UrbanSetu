@@ -11,6 +11,7 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid
 } from 'recharts';
 import { authenticatedFetch } from '../utils/auth';
+import { API_BASE_URL } from '../config/api';
 import { usePageTitle } from '../hooks/usePageTitle';
 import SecurityIntelligenceSkeleton from '../components/skeletons/SecurityIntelligenceSkeleton';
 
@@ -29,7 +30,7 @@ const SecurityIntelligence = () => {
     const fetchStats = async () => {
         setLoading(true);
         try {
-            const res = await authenticatedFetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/security-intelligence/stats`);
+            const res = await authenticatedFetch(`${API_BASE_URL}/api/security-intelligence/stats`);
             const data = await res.json();
             if (data.success) {
                 setStats(data.stats);
@@ -61,9 +62,11 @@ const SecurityIntelligence = () => {
         return matchesSearch;
     });
 
-    const chartData = [
+    const chartData = summary.totalInstallations > 0 ? [
         { name: 'Single User', value: summary.totalInstallations - summary.multiUserInstallations, color: '#10B981' },
         { name: 'Multi-User', value: summary.multiUserInstallations, color: '#EF4444' }
+    ] : [
+        { name: 'No Data', value: 1, color: '#E5E7EB' }
     ];
 
     const COLORS = ['#10B981', '#EF4444'];
