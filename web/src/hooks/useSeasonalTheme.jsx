@@ -434,7 +434,7 @@ export const useSeasonalTheme = () => {
             // 2026
             { id: 'cny', year: 2026, month: 1, day: 17, window: 3, name: 'Chinese New Year', icon: '🐉', sec: '🧧', greet: 'Gong Xi Fa Cai!', effect: 'confetti', grad: 'bg-gradient-to-r from-red-600 via-yellow-500 to-red-600', deco: 'dragon' },
             { id: 'shivaratri', year: 2026, month: 1, day: 15, window: 1, name: 'Maha Shivaratri', icon: '🕉️', sec: '🔱', greet: 'Har Har Mahadev!', effect: 'none', grad: 'bg-gradient-to-r from-blue-700 via-purple-600 to-gray-800', deco: 'trident' },
-            { id: 'holi', year: 2026, month: 2, day: 4, window: 1, name: 'Holi', icon: '🎨', sec: '💦', greet: 'Happy Holi!', effect: 'confetti', grad: 'bg-gradient-to-r from-pink-500 via-purple-500 to-yellow-500', deco: 'colors' },
+            { id: 'holi', year: 2026, month: 2, day: 4, window: 1, name: 'Holi', icon: '🎨', sec: '🌈', greet: 'Happy Holi!', effect: 'confetti', grad: 'bg-gradient-to-r from-pink-500 via-purple-500 to-yellow-500', deco: 'colors' },
             { id: 'ugadi', year: 2026, month: 2, day: 19, window: 1, name: 'Ugadi', icon: '🥭', sec: '🌿', greet: 'Happy Ugadi!', effect: 'mango', grad: 'bg-gradient-to-r from-green-500 via-yellow-400 to-green-600', deco: 'mango' },
             { id: 'eidfitr', year: 2026, month: 2, day: 20, window: 2, name: 'Eid al-Fitr', icon: '🌙', sec: '🤲', greet: 'Eid Mubarak!', effect: 'moon', grad: 'bg-gradient-to-r from-green-600 via-emerald-400 to-teal-600', deco: 'moon' },
             { id: 'ramnavami', year: 2026, month: 2, day: 27, window: 1, name: 'Sri Rama Navami', icon: '🏹', sec: '🚩', greet: 'Jai Shri Ram!', effect: 'none', grad: 'bg-gradient-to-r from-orange-500 via-yellow-500 to-red-500', deco: 'bow' },

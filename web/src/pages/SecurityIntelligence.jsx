@@ -356,12 +356,6 @@ const SecurityIntelligence = () => {
                                     <p className="text-xs text-gray-500 font-mono">{selectedInstallation?.installationId || 'Loading...'}</p>
                                 </div>
                             </div>
-                            <button
-                                onClick={() => setIsModalOpen(false)}
-                                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-all text-gray-400"
-                            >
-                                <FaTimes />
-                            </button>
                         </div>
 
                         <div className="p-6 max-h-[70vh] overflow-y-auto">
