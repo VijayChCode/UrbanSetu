@@ -34,7 +34,19 @@ hermesEnabled=true
 org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m -XX:+HeapDumpOnOutOfMemoryError
 ```
 
-### **Step 2: Relocate to Short Path (PowerShell)**
+### **Step 2: NDK & Version Check**
+Before building, ensure `mobile/android/build.gradle` has the explicit NDK version defined (fixes `CXX1101` errors):
+```gradle
+buildscript {
+    ext {
+        ndkVersion = "27.0.12077973" // DO NOT REMOVE - bypasses corrupt env NDK
+    }
+}
+```
+
+**IMPORTANT:** Increment the `versionCode` in **both** `app.json` and `mobile/android/app/build.gradle` (last used: `4`).
+
+### **Step 3: Relocate to Short Path (PowerShell)**
 Run these commands to prep the "Short Path" build environment on the D: drive:
 ```powershell
 # 1. Clean up old build mirrors
@@ -50,7 +62,7 @@ Copy-Item -Path "d:\Videos\Project\UrbanSetu\mobile\*" -Destination "D:\U" -Recu
 Copy-Item -Path "d:\Videos\Project\UrbanSetu\shared" -Destination "D:\shared" -Recurse -Force
 ```
 
-### **Step 3: Execution Command**
+### **Step 4: Execution Command**
 Navigate to the mirrored directory and trigger the build using the Short-Path Gradle home:
 ```powershell
 cd D:\U\android
@@ -62,12 +74,13 @@ cd D:\U\android
 
 ## 📦 3. Post-Build: APK Locations
 
-The build generates architecture-specific APKs (ABI Splitting) to keep the file size small (~35MB).
+The build generates architecture-specific APKs (ABI Splitting) to keep the file size small (~40-50MB).
 
 | Target Phone | File Path | Usage |
 | :--- | :--- | :--- |
-| **Modern Phones** | `D:\U\android\app\build\outputs\apk\release\app-arm64-v8a-release.apk` | **Main Release (v8a)** |
-| **Old Phones** | `D:\U\android\app\build\outputs\apk\release\app-armeabi-v7a-release.apk` | Legacy Support (v7a) |
+| **Modern Phones** | `D:\U\android\app\build\outputs\apk\release\app-arm64-v8a-release.apk` | **Main Release (Modern)** |
+| **Old Phones** | `D:\U\android\app\build\outputs\apk\release\app-armeabi-v7a-release.apk` | Legacy Support |
+| **Compatibility** | `D:\U\android\app\build\outputs\apk\release\app-universal-release.apk` | Multi-arch "Fat" APK |
 
 ---
 
