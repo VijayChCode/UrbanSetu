@@ -312,7 +312,7 @@ export const getSeasonalTheme = (dateInput = new Date()) => {
         // 2025
         { id: 'cny', year: 2025, month: 0, day: 29, window: 3, name: 'Chinese New Year', icon: '🐉', sec: '🧧', greet: 'Gong Xi Fa Cai!', desc: 'Wishing you wealth and prosperity in the Year of the Snake! 🐍', deco: 'dragon' },
         { id: 'shivaratri', year: 2025, month: 1, day: 26, window: 1, name: 'Maha Shivaratri', icon: '🕉️', sec: '🔱', greet: 'Har Har Mahadev!', desc: 'May Lord Shiva bless you with strength and wisdom.', deco: 'trident' },
-        { id: 'holi', year: 2025, month: 2, day: 14, window: 1, name: 'Holi', icon: '🎨', sec: '💦', greet: 'Happy Holi!', desc: 'Splash of colors, joy, and happiness! Have a vibrant Holi.', deco: 'colors' },
+        { id: 'holi', year: 2025, month: 2, day: 14, window: 1, name: 'Holi', icon: '🎨', sec: '🌈', greet: 'Happy Holi!', desc: 'Splash of colors, joy, and happiness! Have a vibrant Holi.', deco: 'colors' },
         { id: 'ugadi', year: 2025, month: 2, day: 30, window: 1, name: 'Ugadi', icon: '🥭', sec: '🌿', greet: 'Happy Ugadi!', desc: 'New beginnings and new hopes. Happy New Year!', deco: 'mango' },
         { id: 'eidfitr', year: 2025, month: 2, day: 31, window: 2, name: 'Eid al-Fitr', icon: '🌙', sec: '🤲', greet: 'Eid Mubarak!', desc: 'May this Eid bring joy and peace to your heart and home.', deco: 'moon' },
         { id: 'ramnavami', year: 2025, month: 3, day: 6, window: 1, name: 'Sri Rama Navami', icon: '🏹', sec: '🚩', greet: 'Jai Shri Ram!', desc: 'Celebrating the birth of Lord Rama. May righteousness prevail.', deco: 'bow' },
