@@ -4,7 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import {
     FaShieldAlt, FaMobileAlt, FaUsers, FaExclamationTriangle, FaSearch,
-    FaSync, FaInfoCircle, FaCheckCircle, FaChevronRight, FaFilter, FaDesktop
+    FaSync, FaInfoCircle, FaCheckCircle, FaChevronRight, FaFilter, FaDesktop,
+    FaTimes, FaUserAlt, FaHistory, FaBan, FaCalendarAlt
 } from 'react-icons/fa';
 import {
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
@@ -26,6 +27,9 @@ const SecurityIntelligence = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filter, setFilter] = useState('all'); // all, suspicious
     const [lastUpdated, setLastUpdated] = useState(null);
+    const [selectedInstallation, setSelectedInstallation] = useState(null);
+    const [detailLoading, setDetailLoading] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     const fetchStats = async () => {
         setLoading(true);
@@ -44,6 +48,27 @@ const SecurityIntelligence = () => {
             toast.error('Failed to fetch security stats');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchInstallationDetail = async (id) => {
+        setDetailLoading(true);
+        setIsModalOpen(true);
+        try {
+            const res = await authenticatedFetch(`${API_BASE_URL}/api/security-intelligence/installation/${id}`);
+            const data = await res.json();
+            if (data.success) {
+                setSelectedInstallation(data);
+            } else {
+                toast.error(data.message || 'Failed to fetch device details');
+                setIsModalOpen(false);
+            }
+        } catch (error) {
+            console.error('Error fetching device details:', error);
+            toast.error('Failed to connect to security server');
+            setIsModalOpen(false);
+        } finally {
+            setDetailLoading(false);
         }
     };
 
@@ -282,10 +307,11 @@ const SecurityIntelligence = () => {
                                         </td>
                                         <td className="px-8 py-6 text-right">
                                             <button
+                                                onClick={() => fetchInstallationDetail(item.deviceKey)}
                                                 className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 p-2 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-full transition-all"
                                                 title="View Detail"
                                             >
-                                                <FaChevronRight />
+                                                <FaChevronRight className={detailLoading && selectedInstallation?.installationId === item.installationId ? 'animate-pulse' : ''} />
                                             </button>
                                         </td>
                                     </tr>
@@ -315,6 +341,103 @@ const SecurityIntelligence = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Detail Modal */}
+            {isModalOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white dark:bg-gray-800 w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
+                                    <FaMobileAlt />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-gray-800 dark:text-white">Device History Detail</h3>
+                                    <p className="text-xs text-gray-500 font-mono">{selectedInstallation?.installationId || 'Loading...'}</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setIsModalOpen(false)}
+                                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-all text-gray-400"
+                            >
+                                <FaTimes />
+                            </button>
+                        </div>
+
+                        <div className="p-6 max-h-[70vh] overflow-y-auto">
+                            {detailLoading ? (
+                                <div className="py-20 flex flex-col items-center justify-center gap-4">
+                                    <FaSync className="text-4xl text-blue-500 animate-spin" />
+                                    <p className="text-gray-500 dark:text-gray-400 animate-pulse">Analyzing device footprints...</p>
+                                </div>
+                            ) : selectedInstallation ? (
+                                <div className="space-y-6">
+                                    <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-2xl flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <FaExclamationTriangle className={`${selectedInstallation.users.length > 1 ? 'text-red-500' : 'text-green-500'}`} />
+                                            <span className="text-sm font-semibold dark:text-gray-200">
+                                                {selectedInstallation.users.length > 1
+                                                    ? `${selectedInstallation.users.length} unique accounts detected`
+                                                    : 'Single account association'}
+                                            </span>
+                                        </div>
+                                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${selectedInstallation.users.length > 1 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                                            {selectedInstallation.users.length > 1 ? 'At Risk' : 'Secure'}
+                                        </span>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest">Identified User Profiles</h4>
+                                        {selectedInstallation.users.map((user, uIdx) => (
+                                            <div key={uIdx} className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 p-4 rounded-2xl flex items-center justify-between hover:border-blue-300 transition-all shadow-sm">
+                                                <div className="flex items-center gap-4">
+                                                    <img
+                                                        src={user.avatar}
+                                                        alt={user.username}
+                                                        className="w-12 h-12 rounded-xl object-cover ring-2 ring-gray-50 dark:ring-gray-900"
+                                                    />
+                                                    <div>
+                                                        <p className="font-bold text-gray-800 dark:text-white capitalize">{user.username}</p>
+                                                        <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <div className="flex items-center gap-1 text-gray-400 mb-1 justify-end">
+                                                        <FaHistory className="text-[10px]" />
+                                                        <span className="text-[10px] uppercase font-bold">Sessions: {user.tokens.length}</span>
+                                                    </div>
+                                                    <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${user.status === 'suspended' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>
+                                                        {user.status}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-100 dark:border-yellow-800/30 p-4 rounded-2xl flex gap-3">
+                                        <FaBan className="text-yellow-600 mt-1" />
+                                        <div className="text-xs text-yellow-800 dark:text-yellow-400 leading-relaxed">
+                                            <p className="font-bold mb-1">Observation Notice:</p>
+                                            Mapping multiple users to a single hardware identifier often suggests unauthorized account sharing or automated scraping activities.
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="text-center py-10 text-gray-500">No data found for this device.</div>
+                            )}
+                        </div>
+
+                        <div className="p-6 bg-gray-50 dark:bg-gray-900/30 border-t border-gray-100 dark:border-gray-700 flex justify-end">
+                            <button
+                                onClick={() => setIsModalOpen(false)}
+                                className="px-6 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 transition-all"
+                            >
+                                Close Dashboard
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <style>{`
                 .shadow-premium {

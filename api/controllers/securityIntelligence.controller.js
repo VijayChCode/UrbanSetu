@@ -23,6 +23,7 @@ export const getSecurityIntelligenceStats = async (req, res, next) => {
             },
             {
                 $project: {
+                    deviceKey: "$_id",
                     installationId: 1,
                     users: 1,
                     devices: 1,
@@ -65,7 +66,10 @@ export const getInstallationDetails = async (req, res, next) => {
         }
 
         const users = await User.find({
-            "settings.pushTokens.installationId": installationId
+            $or: [
+                { "settings.pushTokens.installationId": installationId },
+                { "settings.pushTokens.deviceName": installationId }
+            ]
         }, {
             username: 1,
             email: 1,
@@ -85,7 +89,7 @@ export const getInstallationDetails = async (req, res, next) => {
                 role: u.role,
                 avatar: u.avatar,
                 status: u.status,
-                tokens: u.settings.pushTokens.filter(t => t.installationId === installationId)
+                tokens: u.settings.pushTokens.filter(t => t.installationId === installationId || t.deviceName === installationId)
             }))
         });
     } catch (error) {
