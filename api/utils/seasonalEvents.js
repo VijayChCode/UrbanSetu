@@ -5,7 +5,7 @@
  * Used to determine if today is a festival or special event for sending greetings.
  */
 
-export const getSeasonalTheme = (dateInput = new Date()) => {
+export function* getActiveThemes(dateInput = new Date()) {
     const today = new Date(dateInput);
     const year = today.getFullYear();
     const month = today.getMonth(); // 0-11
@@ -33,7 +33,7 @@ export const getSeasonalTheme = (dateInput = new Date()) => {
     // Email only on Jan 1st
     if (isDateBetween(11, 30, 0, 5)) {
         const displayYear = month === 11 ? year + 1 : year;
-        return {
+        yield {
             id: 'newyear',
             name: 'New Year',
             icon: '🎉',
@@ -47,7 +47,7 @@ export const getSeasonalTheme = (dateInput = new Date()) => {
 
     // National Youth Day (Jan 12)
     if (month === 0 && day === 12) {
-        return {
+        yield {
             id: 'youthday',
             name: 'National Youth Day',
             icon: '💪',
@@ -62,7 +62,7 @@ export const getSeasonalTheme = (dateInput = new Date()) => {
     // Republic Day India (Jan 24-26)
     // Email only on Jan 26th
     if (month === 0 && day >= 24 && day <= 26) {
-        return {
+        yield {
             id: 'republic',
             name: 'Republic Day',
             icon: '🇮🇳',
@@ -76,7 +76,7 @@ export const getSeasonalTheme = (dateInput = new Date()) => {
 
     // National Science Day (Feb 28)
     if (month === 1 && day === 28) {
-        return {
+        yield {
             id: 'scienceday',
             name: 'National Science Day',
             icon: '🔬',
@@ -91,7 +91,7 @@ export const getSeasonalTheme = (dateInput = new Date()) => {
     // Valentine's Week (Feb 10 - 14)
     // Email only on Valentine's Day (Feb 14)
     if (month === 1 && day >= 10 && day <= 14) {
-        return {
+        yield {
             id: 'valentine',
             name: 'Valentine\'s Day',
             icon: '❤️',
@@ -105,7 +105,7 @@ export const getSeasonalTheme = (dateInput = new Date()) => {
 
     // St. Patrick's Day (Mar 17)
     if (month === 2 && day === 17) {
-        return {
+        yield {
             id: 'stpatrick',
             name: 'St. Patrick\'s Day',
             icon: '☘️',
@@ -119,7 +119,7 @@ export const getSeasonalTheme = (dateInput = new Date()) => {
 
     // World Health Day (Apr 7)
     if (month === 3 && day === 7) {
-        return {
+        yield {
             id: 'healthday',
             name: 'World Health Day',
             icon: '⚕️',
@@ -133,7 +133,7 @@ export const getSeasonalTheme = (dateInput = new Date()) => {
 
     // Earth Day (Apr 22)
     if (month === 3 && day === 22) {
-        return {
+        yield {
             id: 'earthday',
             name: 'Earth Day',
             icon: '🌍',
@@ -147,7 +147,7 @@ export const getSeasonalTheme = (dateInput = new Date()) => {
 
     // International Workers' Day (May 1)
     if (month === 4 && day === 1) {
-        return {
+        yield {
             id: 'mayday',
             name: 'Workers\' Day',
             icon: '🛠️',
@@ -161,7 +161,7 @@ export const getSeasonalTheme = (dateInput = new Date()) => {
 
     // World Environment Day (Jun 5)
     if (month === 5 && day === 5) {
-        return {
+        yield {
             id: 'environmentday',
             name: 'World Environment Day',
             icon: '🌿',
@@ -175,7 +175,7 @@ export const getSeasonalTheme = (dateInput = new Date()) => {
 
     // Independence Day India (Aug 15)
     if (month === 7 && day === 15) {
-        return {
+        yield {
             id: 'independence',
             name: 'Independence Day',
             icon: '🇮🇳',
@@ -189,7 +189,7 @@ export const getSeasonalTheme = (dateInput = new Date()) => {
 
     // Engineer's Day India (Sep 15)
     if (month === 8 && day === 15) {
-        return {
+        yield {
             id: 'engineersday',
             name: 'Engineer\'s Day',
             icon: '⚙️',
@@ -205,7 +205,7 @@ export const getSeasonalTheme = (dateInput = new Date()) => {
     if (month === 9 && day >= 1 && day <= 7) {
         const isMonday = new Date(year, 9, day).getDay() === 1;
         if (isMonday || day === 4) {
-            return {
+            yield {
                 id: 'architecture',
                 name: 'Architecture Week',
                 icon: '🏛️',
@@ -220,7 +220,7 @@ export const getSeasonalTheme = (dateInput = new Date()) => {
 
     // Gandhi Jayanti (Oct 2)
     if (month === 9 && day === 2) {
-        return {
+        yield {
             id: 'gandhijayanti',
             name: 'Gandhi Jayanti',
             icon: '👓',
@@ -235,7 +235,7 @@ export const getSeasonalTheme = (dateInput = new Date()) => {
     // World Space Week (Oct 4-10)
     // Email on first day Oct 4
     if (month === 9 && day >= 4 && day <= 10) {
-        return {
+        yield {
             id: 'spaceweek',
             name: 'World Space Week',
             icon: '🚀',
@@ -249,7 +249,7 @@ export const getSeasonalTheme = (dateInput = new Date()) => {
 
     // Halloween (Oct 31)
     if (month === 9 && day === 31) {
-        return {
+        yield {
             id: 'halloween',
             name: 'Halloween',
             icon: '🎃',
@@ -263,7 +263,7 @@ export const getSeasonalTheme = (dateInput = new Date()) => {
 
     // Thanksgiving USA (Approximate)
     if ((year === 2025 && month === 10 && day === 27) || (year === 2026 && month === 10 && day === 26)) {
-        return {
+        yield {
             id: 'thanksgiving',
             name: 'Thanksgiving',
             icon: '🦃',
@@ -278,7 +278,7 @@ export const getSeasonalTheme = (dateInput = new Date()) => {
     // Christmas (Dec 20-29)
     // Email on Dec 25
     if (month === 11 && day >= 20 && day <= 29) {
-        return {
+        yield {
             id: 'christmas',
             name: 'Christmas',
             icon: '🎅',
@@ -293,7 +293,7 @@ export const getSeasonalTheme = (dateInput = new Date()) => {
     // Pongal / Sankranti (Jan 13-17)
     // Email on Jan 14 (typical main day)
     if (month === 0 && day >= 13 && day <= 17) {
-        return {
+        yield {
             id: 'sankranti',
             name: 'Sankranti',
             icon: '🪁',
@@ -337,7 +337,7 @@ export const getSeasonalTheme = (dateInput = new Date()) => {
     for (const f of festivals) {
         if (f.year === year) {
             if (month === f.month && day >= f.day && day <= f.day + f.window) {
-                return {
+                yield {
                     id: f.id,
                     name: f.name,
                     icon: f.icon,
@@ -351,5 +351,18 @@ export const getSeasonalTheme = (dateInput = new Date()) => {
         }
     }
 
-    return null;
+
+};
+
+export const getSeasonalTheme = (dateInput = new Date()) => {
+    // Array.from(getActiveThemes) evaluates the generator to get all matches
+    const themes = Array.from(getActiveThemes(dateInput)).filter(Boolean);
+    if (themes.length === 0) return null;
+    
+    // Priority 1: Exact day match where email sending is designated
+    const exact = themes.find(t => t.shouldSendEmail);
+    if (exact) return exact;
+    
+    // Fallback: Just return the first active theme found
+    return themes[0];
 };
