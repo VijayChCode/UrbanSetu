@@ -45,6 +45,7 @@ export default function ContactSupport({ forceModalOpen = false, onModalClose = 
   const [dateSort, setDateSort] = useState("desc"); // desc, asc
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const today = new Date().toISOString().split("T")[0];
 
   // Handle force modal opening
   useEffect(() => {
@@ -806,6 +807,7 @@ export default function ContactSupport({ forceModalOpen = false, onModalClose = 
                         <input
                           type="date"
                           value={startDate}
+                          max={today}
                           onChange={(e) => setStartDate(e.target.value)}
                           className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5 text-xs outline-none focus:ring-1 focus:ring-blue-500 text-gray-800 dark:text-gray-200"
                           title="Start Date"
@@ -814,6 +816,7 @@ export default function ContactSupport({ forceModalOpen = false, onModalClose = 
                         <input
                           type="date"
                           value={endDate}
+                          max={today}
                           onChange={(e) => setEndDate(e.target.value)}
                           className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5 text-xs outline-none focus:ring-1 focus:ring-blue-500 text-gray-800 dark:text-gray-200"
                           title="End Date"

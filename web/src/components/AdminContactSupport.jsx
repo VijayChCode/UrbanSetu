@@ -43,6 +43,7 @@ export default function AdminContactSupport({ forceModalOpen = false, onModalClo
   const [dateSort, setDateSort] = useState("desc"); // desc, asc
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const today = new Date().toISOString().split("T")[0];
 
   // Handle force modal opening
   useEffect(() => {
@@ -564,6 +565,7 @@ export default function AdminContactSupport({ forceModalOpen = false, onModalClo
                 <input
                   type="date"
                   value={startDate}
+                  max={today}
                   onChange={(e) => setStartDate(e.target.value)}
                   className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-gray-100"
                 />
@@ -573,6 +575,7 @@ export default function AdminContactSupport({ forceModalOpen = false, onModalClo
                 <input
                   type="date"
                   value={endDate}
+                  max={today}
                   onChange={(e) => setEndDate(e.target.value)}
                   className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-gray-100"
                 />
