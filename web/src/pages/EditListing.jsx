@@ -99,6 +99,8 @@ export default function EditListing() {
   const [isLocked, setIsLocked] = useState(false);
   const [syncImagesTo360, setSyncImagesTo360] = useState(false);
   const [noListingFound, setNoListingFound] = useState(false);
+  const [dataLoaded, setDataLoaded] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Image Preview State
   const [previewImages, setPreviewImages] = useState([]);
@@ -181,6 +183,7 @@ export default function EditListing() {
           }
         }
       }
+      setDataLoaded(true);
     };
     fetchListing();
     // eslint-disable-next-line
@@ -193,6 +196,48 @@ export default function EditListing() {
       city: locationState.city || "",
     }));
   }, [locationState]);
+
+  // Track Unsaved Changes
+  useEffect(() => {
+    if (dataLoaded) {
+      setHasUnsavedChanges(true);
+    }
+  }, [formData]);
+
+  // Prevent Navigation / Leave with Unsaved Changes
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = "You have unsaved changes. Progress will be lost.";
+        return e.returnValue;
+      }
+    };
+
+    const handlePopState = () => {
+      if (hasUnsavedChanges) {
+        if (!window.confirm("You have unsaved changes. Any progress will be lost. Are you sure you want to leave?")) {
+          // Re-push current state to counteract the pop state
+          window.history.pushState(null, "", window.location.pathname);
+        } else {
+          setHasUnsavedChanges(false);
+        }
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener("popstate", handlePopState);
+
+    // Initial push to handle first back button click
+    if (hasUnsavedChanges) {
+      window.history.pushState(null, "", window.location.pathname);
+    }
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [hasUnsavedChanges, navigate]);
 
   const validateImageUrl = (url) => {
     if (!url) return true;
@@ -657,6 +702,7 @@ export default function EditListing() {
       const data = await res.json();
 
       if (res.ok) {
+        setHasUnsavedChanges(false);
         toast.success(data.message || "Property Details Updated Successfully!!");
         navigate(getPreviousPath());
       } else {
@@ -1599,7 +1645,16 @@ export default function EditListing() {
           <div className="flex gap-4">
             <button
               type="button"
-              onClick={() => navigate(getPreviousPath())}
+              onClick={() => {
+                if (hasUnsavedChanges) {
+                  if (window.confirm("Any unsaved changes will be lost. Are you sure you want to cancel?")) {
+                    setHasUnsavedChanges(false);
+                    navigate(getPreviousPath());
+                  }
+                } else {
+                  navigate(getPreviousPath());
+                }
+              }}
               disabled={loading}
               className="flex-1 bg-gray-500 text-white p-3 rounded-lg hover:bg-gray-600 transition-all transform hover:scale-105 shadow-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
             >
