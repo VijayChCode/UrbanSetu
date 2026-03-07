@@ -12,6 +12,7 @@ import { authenticatedFetch } from '../utils/auth';
 import { useImageAuditor } from '../hooks/useImageAuditor';
 import { FaBrain, FaExclamationTriangle, FaCheckCircle, FaLightbulb } from 'react-icons/fa';
 import ImagePreview from '../components/ImagePreview';
+import ConfirmationModal from '../components/ConfirmationModal';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function AdminEditListing() {
@@ -98,6 +99,9 @@ export default function AdminEditListing() {
   const [previewVideo, setPreviewVideo] = useState(null);
   const [syncImagesTo360, setSyncImagesTo360] = useState(false);
   const [noListingFound, setNoListingFound] = useState(false);
+  const [dataLoaded, setDataLoaded] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showExitModal, setShowExitModal] = useState(false);
 
   // Image Preview State
   const [previewImages, setPreviewImages] = useState([]);
@@ -164,10 +168,50 @@ export default function AdminEditListing() {
           }
         }
       }
+      setDataLoaded(true);
     };
     fetchListing();
     // eslint-disable-next-line
   }, [params.listingId]);
+
+  // Track Unsaved Changes
+  useEffect(() => {
+    if (dataLoaded) {
+      setHasUnsavedChanges(true);
+    }
+  }, [formData]);
+
+  // Prevent Navigation / Leave with Unsaved Changes
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = "You have unsaved changes. Progress will be lost.";
+        return e.returnValue;
+      }
+    };
+
+    const handlePopState = () => {
+      if (hasUnsavedChanges) {
+        // Re-push current state to counteract the pop state
+        window.history.pushState(null, "", window.location.pathname);
+        setShowExitModal(true);
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener("popstate", handlePopState);
+
+    // Initial dummy push to enable popstate interception
+    if (hasUnsavedChanges) {
+      window.history.pushState(null, "", window.location.pathname);
+    }
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [hasUnsavedChanges, navigate]);
 
   useEffect(() => {
     setFormData((prev) => ({
@@ -622,6 +666,7 @@ export default function AdminEditListing() {
       const data = await res.json();
 
       if (res.ok) {
+        setHasUnsavedChanges(false);
         toast.success(data.message || "Property Details Updated Successfully!!");
         navigate(getPreviousPath());
       } else {
@@ -1516,7 +1561,13 @@ export default function AdminEditListing() {
           <div className="flex gap-4">
             <button
               type="button"
-              onClick={() => navigate(getPreviousPath())}
+              onClick={() => {
+                if (hasUnsavedChanges) {
+                  setShowExitModal(true);
+                } else {
+                  navigate(getPreviousPath());
+                }
+              }}
               disabled={loading}
               className="flex-1 bg-gray-500 text-white p-3 rounded-lg hover:bg-gray-600 transition-all transform hover:scale-105 shadow-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -1542,8 +1593,22 @@ export default function AdminEditListing() {
             images={previewImages}
             initialIndex={previewIndex}
           />
+          <ConfirmationModal
+            isOpen={showExitModal}
+            onClose={() => setShowExitModal(false)}
+            onConfirm={() => {
+              setHasUnsavedChanges(false);
+              setShowExitModal(false);
+              navigate(getPreviousPath());
+            }}
+            title="Discard Changes?"
+            message="You have unsaved changes in your listing. Are you sure you want to leave? All progress will be lost."
+            confirmText="Discard & Leave"
+            cancelText="Stay Here"
+            isDestructive={true}
+          />
         </form>
       </div>
     </div>
   );
-} 
+}
