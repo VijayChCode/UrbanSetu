@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
-import { useNavigate, useLocation, useBlocker } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import LocationSelector from "../components/LocationSelector";
 import ESGManagement from "../components/ESGManagement";
 import { toast } from 'react-toastify';
@@ -100,43 +100,6 @@ export default function CreateListing() {
   const [locationState, setLocationState] = useState({ state: "", district: "", city: "", cities: [] });
   const [previewVideo, setPreviewVideo] = useState(null);
   const [syncImagesTo360, setSyncImagesTo360] = useState(false);
-  const [initialDataStr, setInitialDataStr] = useState('');
-
-  useEffect(() => {
-    // Only set once when component mounts
-    setInitialDataStr(JSON.stringify(formData));
-    // eslint-disable-next-line
-  }, []);
-
-  const hasUnsavedChanges = initialDataStr !== '' && JSON.stringify(formData) !== initialDataStr;
-
-  // Window beforeunload
-  useEffect(() => {
-    const handleBeforeUnload = (e) => {
-      if (hasUnsavedChanges) {
-        e.preventDefault();
-        e.returnValue = '';
-      }
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [hasUnsavedChanges]);
-
-  // Block internal navigation
-  const blocker = useBlocker(({ currentLocation, nextLocation }) =>
-    hasUnsavedChanges && currentLocation.pathname !== nextLocation.pathname
-  );
-
-  useEffect(() => {
-    if (blocker.state === "blocked") {
-      const confirmLeave = window.confirm("You have unsaved changes. Are you sure you want to leave?");
-      if (confirmLeave) {
-        blocker.proceed();
-      } else {
-        blocker.reset();
-      }
-    }
-  }, [blocker]);
 
   // Image Preview State
   const [previewImages, setPreviewImages] = useState([]);

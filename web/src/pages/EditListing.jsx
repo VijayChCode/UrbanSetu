@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
-import { useNavigate, useParams, useLocation, useBlocker } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import LocationSelector from "../components/LocationSelector";
 import ESGManagement from "../components/ESGManagement";
 import { toast } from 'react-toastify';
@@ -99,35 +99,6 @@ export default function EditListing() {
   const [isLocked, setIsLocked] = useState(false);
   const [syncImagesTo360, setSyncImagesTo360] = useState(false);
   const [noListingFound, setNoListingFound] = useState(false);
-  const [initialDataStr, setInitialDataStr] = useState('');
-
-  const hasUnsavedChanges = initialDataStr !== '' && JSON.stringify(formData) !== initialDataStr;
-
-  useEffect(() => {
-    const handleBeforeUnload = (e) => {
-      if (hasUnsavedChanges) {
-        e.preventDefault();
-        e.returnValue = '';
-      }
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [hasUnsavedChanges]);
-
-  const blocker = useBlocker(({ currentLocation, nextLocation }) =>
-    hasUnsavedChanges && currentLocation.pathname !== nextLocation.pathname
-  );
-
-  useEffect(() => {
-    if (blocker.state === "blocked") {
-      const confirmLeave = window.confirm("You have unsaved changes. Are you sure you want to leave?");
-      if (confirmLeave) {
-        blocker.proceed();
-      } else {
-        blocker.reset();
-      }
-    }
-  }, [blocker]);
 
   // Image Preview State
   const [previewImages, setPreviewImages] = useState([]);
@@ -187,10 +158,6 @@ export default function EditListing() {
         ...formData,
         ...data,
       });
-
-      // Capture initial state
-      setInitialDataStr(JSON.stringify({ ...formData, ...data }));
-
       if (data.isRentLocked && currentUser.role !== 'admin' && currentUser.role !== 'rootadmin') setIsLocked(true);
       setLocationState({
         state: data.state || "",
@@ -1663,4 +1630,3 @@ export default function EditListing() {
     </div>
   );
 }
-
