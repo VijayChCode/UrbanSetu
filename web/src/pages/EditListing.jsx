@@ -11,6 +11,7 @@ import { authenticatedFetch } from '../utils/auth';
 import { useImageAuditor } from '../hooks/useImageAuditor';
 import { FaBrain, FaExclamationTriangle, FaCheckCircle, FaLightbulb } from 'react-icons/fa';
 import ImagePreview from '../components/ImagePreview';
+import ConfirmationModal from '../components/ConfirmationModal';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function EditListing() {
@@ -101,6 +102,7 @@ export default function EditListing() {
   const [noListingFound, setNoListingFound] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showExitModal, setShowExitModal] = useState(false);
 
   // Image Preview State
   const [previewImages, setPreviewImages] = useState([]);
@@ -216,12 +218,9 @@ export default function EditListing() {
 
     const handlePopState = () => {
       if (hasUnsavedChanges) {
-        if (!window.confirm("You have unsaved changes. Any progress will be lost. Are you sure you want to leave?")) {
-          // Re-push current state to counteract the pop state
-          window.history.pushState(null, "", window.location.pathname);
-        } else {
-          setHasUnsavedChanges(false);
-        }
+        // Re-push current state to counteract the pop state
+        window.history.pushState(null, "", window.location.pathname);
+        setShowExitModal(true);
       }
     };
 
@@ -1647,10 +1646,7 @@ export default function EditListing() {
               type="button"
               onClick={() => {
                 if (hasUnsavedChanges) {
-                  if (window.confirm("Any unsaved changes will be lost. Are you sure you want to cancel?")) {
-                    setHasUnsavedChanges(false);
-                    navigate(getPreviousPath());
-                  }
+                  setShowExitModal(true);
                 } else {
                   navigate(getPreviousPath());
                 }
@@ -1681,6 +1677,20 @@ export default function EditListing() {
         onClose={() => setIsPreviewOpen(false)}
         images={previewImages}
         initialIndex={previewIndex}
+      />
+      <ConfirmationModal
+        isOpen={showExitModal}
+        onClose={() => setShowExitModal(false)}
+        onConfirm={() => {
+          setHasUnsavedChanges(false);
+          setShowExitModal(false);
+          navigate(getPreviousPath());
+        }}
+        title="Discard Changes?"
+        message="You have unsaved changes in your listing. Are you sure you want to leave? All progress will be lost."
+        confirmText="Discard & Leave"
+        cancelText="Stay Here"
+        isDestructive={true}
       />
     </div>
   );
