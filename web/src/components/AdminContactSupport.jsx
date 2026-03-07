@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { FaHeadset, FaTimes, FaCheck, FaReply, FaEnvelope, FaClock, FaUser, FaEye, FaTrash, FaPaperPlane } from 'react-icons/fa';
+import { FaHeadset, FaTimes, FaCheck, FaReply, FaEnvelope, FaClock, FaUser, FaEye, FaTrash, FaPaperPlane, FaSearch, FaFilter, FaSortAmountDown, FaSortAmountUp } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import ConfirmationModal from './ConfirmationModal';
 import ImagePreview from './ImagePreview';
@@ -36,6 +36,13 @@ export default function AdminContactSupport({ forceModalOpen = false, onModalClo
   const [isDeletingAll, setIsDeletingAll] = useState(false);
   const [previewImages, setPreviewImages] = useState(null);
   const [previewIndex, setPreviewIndex] = useState(0);
+
+  // Filter and Search State
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all"); // all, unread, read, replied
+  const [dateSort, setDateSort] = useState("desc"); // desc, asc
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   // Handle force modal opening
   useEffect(() => {
@@ -366,6 +373,40 @@ export default function AdminContactSupport({ forceModalOpen = false, onModalClo
     }
   };
 
+  // Filter messages logic
+  const filteredMessages = messages.filter(msg => {
+    // Status filter
+    if (statusFilter !== 'all' && msg.status !== statusFilter) return false;
+
+    // Date range filter
+    const msgDate = new Date(msg.createdAt);
+    if (startDate && msgDate < new Date(startDate)) return false;
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      if (msgDate > end) return false;
+    }
+
+    // Search filter
+    if (searchTerm.trim()) {
+      const lowerSearch = searchTerm.toLowerCase();
+      const searchableFields = [
+        msg.name || '',
+        msg.email || '',
+        msg.subject || '',
+        msg.message || '',
+        msg.ticketId || ''
+      ];
+      return searchableFields.some(field => field.toLowerCase().includes(lowerSearch));
+    }
+
+    return true;
+  }).sort((a, b) => {
+    const dateA = new Date(a.createdAt);
+    const dateB = new Date(b.createdAt);
+    return dateSort === 'desc' ? dateB - dateA : dateA - dateB;
+  });
+
   // Don't render if not admin
   if (!isAdmin) {
     return null;
@@ -432,7 +473,12 @@ export default function AdminContactSupport({ forceModalOpen = false, onModalClo
                 <div>
                   <h3 className="text-xl font-bold text-gray-900 dark:text-white">Support Messages</h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {unreadCount} unread message{unreadCount !== 1 ? 's' : ''} • {messages.length} total
+                    {unreadCount} unread message{unreadCount !== 1 ? 's' : ''} • {filteredMessages.length} total
+                    {filteredMessages.length !== messages.length && (
+                      <span className="text-blue-500 font-medium ml-1">
+                        ({filteredMessages.length} found)
+                      </span>
+                    )}
                   </p>
                 </div>
               </div>
@@ -455,6 +501,100 @@ export default function AdminContactSupport({ forceModalOpen = false, onModalClo
               </div>
             </div>
 
+            {/* Filters Section */}
+            <div className="p-4 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700 flex flex-wrap gap-4 items-center">
+              {/* Search Bar */}
+              <div className="relative flex-1 min-w-[200px]">
+                <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+                <input
+                  type="text"
+                  placeholder="Search by name, email, subject, ticket ID..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-sm text-gray-900 dark:text-gray-100"
+                />
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                  >
+                    <FaTimes className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+
+              {/* Status Filter */}
+              <div className="flex items-center gap-2">
+                <FaFilter className="text-gray-400 text-sm" />
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-gray-100"
+                >
+                  <option value="all">All Status</option>
+                  <option value="unread">Unread</option>
+                  <option value="read">Read</option>
+                  <option value="replied">Replied</option>
+                </select>
+              </div>
+
+              {/* Sort Order */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setDateSort(dateSort === 'desc' ? 'asc' : 'desc')}
+                  className="flex items-center gap-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors text-gray-900 dark:text-gray-100"
+                >
+                  {dateSort === 'desc' ? (
+                    <>
+                      <FaSortAmountDown className="text-blue-500" />
+                      <span>Newest First</span>
+                    </>
+                  ) : (
+                    <>
+                      <FaSortAmountUp className="text-blue-500" />
+                      <span>Oldest First</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Date Filters */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">From:</span>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-gray-100"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">To:</span>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-gray-100"
+                />
+              </div>
+
+              {/* Reset Filters */}
+              {(searchTerm || statusFilter !== 'all' || dateSort !== 'desc' || startDate || endDate) && (
+                <button
+                  onClick={() => {
+                    setSearchTerm("");
+                    setStatusFilter("all");
+                    setDateSort("desc");
+                    setStartDate("");
+                    setEndDate("");
+                  }}
+                  className="text-xs font-semibold text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                >
+                  Reset Filters
+                </button>
+              )}
+            </div>
+
             {/* Content */}
             <div ref={messagesContainerRef} className="overflow-y-auto max-h-[calc(90vh-120px)] relative">
               {error && (
@@ -475,9 +615,28 @@ export default function AdminContactSupport({ forceModalOpen = false, onModalClo
                   <h4 className="text-lg font-medium mb-2 text-gray-900 dark:text-gray-200">No messages yet</h4>
                   <p className="text-sm">Support messages from users will appear here</p>
                 </div>
+              ) : filteredMessages.length === 0 ? (
+                <div className="p-12 text-center text-gray-500 dark:text-gray-400">
+                  <div className="w-20 h-20 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
+                    <FaSearch className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <h4 className="text-lg font-medium mb-2">No messages match your filters</h4>
+                  <p className="text-sm">Try adjusting your search or filter criteria</p>
+                  <button
+                    onClick={() => {
+                      setSearchTerm("");
+                      setStatusFilter("all");
+                      setStartDate("");
+                      setEndDate("");
+                    }}
+                    className="mt-4 text-blue-500 font-semibold hover:underline"
+                  >
+                    Clear all filters
+                  </button>
+                </div>
               ) : (
                 <div className="divide-y divide-gray-100">
-                  {messages.map((message) => (
+                  {filteredMessages.map((message) => (
                     <div
                       key={message._id}
                       className={`p-6 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all duration-200 cursor-pointer ${message.status === 'unread' ? 'bg-blue-50 dark:bg-blue-900/10 border-l-4 border-blue-500' : 'dark:border-l-4 dark:border-transparent'
@@ -708,7 +867,7 @@ export default function AdminContactSupport({ forceModalOpen = false, onModalClo
             </div>
 
             {/* Floating Scroll to bottom button - WhatsApp style */}
-            {!isAtBottom && messages.length > 0 && (
+            {!isAtBottom && filteredMessages.length > 0 && (
               <div className="absolute bottom-6 right-6 z-20">
                 <button
                   onClick={scrollToBottom}
