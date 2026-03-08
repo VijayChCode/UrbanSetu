@@ -109,7 +109,7 @@ const THEME_DECORATIONS = {
   'khanda': { icon: '☬', animate: 'animate-pulse', size: 'text-xl', pos: '-top-3 -right-2' },
   'gudi': { icon: '🪁', animate: 'animate-sway', size: 'text-2xl', pos: '-top-4 -right-3' },
   'sun': { icon: '☀️', animate: 'animate-spin-slow', size: 'text-xl', pos: '-top-3 -right-2' },
-  'venus': { icon: '♀️', animate: 'animate-pulse', size: 'text-xl', pos: '-top-3 -right-2' },
+  'venus': { icon: '👩', animate: 'animate-pulse', size: 'text-xl', pos: '-top-3 -right-2' },
 };
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
