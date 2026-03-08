@@ -1015,7 +1015,7 @@ export default function AdminDashboard() {
               Welcome back, {currentUser.username}! 👋
               {theme && (
                 <span
-                  className="text-2xl cursor-pointer hover:scale-110 transition-transform filter drop-shadow-md animate-bounce"
+                  className="text-2xl cursor-pointer hover:scale-110 transition-transform filter drop-shadow-md"
                   title={theme.name}
                   onClick={() => setShowThemeInfo(true)}
                 >

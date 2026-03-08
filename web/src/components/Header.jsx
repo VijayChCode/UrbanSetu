@@ -466,7 +466,7 @@ export default function Header() {
                     <span className="absolute -top-3 -right-2 text-xl filter drop-shadow-md animate-spin-slow">☀️</span>
                   )}
                   {theme?.logoDecoration === 'venus' && (
-                    <span className="absolute -top-3 -right-2 text-xl filter drop-shadow-md">♀️</span>
+                    <span className="absolute -top-3 -right-2 text-xl filter drop-shadow-md">👩</span>
                   )}
                 </div>
                 <div>

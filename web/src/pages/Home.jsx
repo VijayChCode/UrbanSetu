@@ -302,7 +302,7 @@ export default function Home() {
                           <EncryptedText text={`${name}!`} />
                         </span>
                         <span
-                          className={`animate-bounce inline-block ml-1 text-2xl filter drop-shadow-md ${theme ? 'cursor-pointer hover:scale-110 transition-transform' : ''}`}
+                          className={`inline-block ml-1 text-2xl filter drop-shadow-md ${theme ? 'cursor-pointer hover:scale-110 transition-transform' : ''}`}
                           onClick={() => theme && setShowThemeInfo(true)}
                           title={theme ? theme.name : "Greetings"}
                         >
