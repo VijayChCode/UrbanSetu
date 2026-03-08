@@ -36,7 +36,7 @@ export default function ThemeDetailModal({ theme, isOpen, onClose }) {
                         >
                             <FaTimes className="text-sm" />
                         </button>
-                        <div className="text-6xl filter drop-shadow-lg animate-bounce">
+                        <div className="text-6xl filter drop-shadow-lg">
                             {theme.icon}
                         </div>
                         {theme.secondaryIcon && (
