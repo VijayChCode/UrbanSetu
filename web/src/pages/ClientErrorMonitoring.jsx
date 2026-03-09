@@ -6,7 +6,7 @@ import {
     FaExclamationTriangle, FaSearch, FaFilter, FaBug, FaDesktop,
     FaMapMarkerAlt, FaGlobe, FaClock, FaTrash, FaCheckCircle,
     FaUserShield, FaCode, FaSpinner, FaChevronLeft, FaChevronRight, FaMobileAlt,
-    FaHistory, FaCloud, FaFileAlt
+    FaHistory, FaCloud, FaFileAlt, FaHeadset
 } from 'react-icons/fa';
 import ClientErrorSkeleton from '../components/skeletons/ClientErrorSkeleton';
 import VisitorDetailsModal from '../components/VisitorDetailsModal';
