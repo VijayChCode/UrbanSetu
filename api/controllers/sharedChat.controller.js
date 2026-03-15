@@ -271,7 +271,8 @@ export const getSharedChat = async (req, res) => {
                 title: sharedChat.title,
                 messages: sharedChat.messages,
                 date: sharedChat.createdAt,
-                ownerId: sharedChat.userId // Maybe minimal info
+                expiresAt: sharedChat.expiresAt,
+                ownerId: sharedChat.userId
             }
         });
 

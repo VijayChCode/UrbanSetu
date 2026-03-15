@@ -219,8 +219,16 @@ export default function SharedChatView() {
                             </h1>
                             <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2">
                                 <span className="flex items-center gap-1">Created on <FaCalendar size={10} /> {chatData.date ? new Date(chatData.date).toLocaleDateString() : new Date().toLocaleDateString()}</span>
+                                {chatData.expiresAt && (
+                                    <>
+                                        <span className="w-1 h-1 bg-gray-300 dark:bg-gray-700 rounded-full"></span>
+                                        <span className="flex items-center gap-1 text-orange-600 dark:text-orange-400 font-medium">
+                                            <FaClock size={10} /> Expires on {new Date(chatData.expiresAt).toLocaleDateString()}
+                                        </span>
+                                    </>
+                                )}
                                 <span className="w-1 h-1 bg-gray-300 dark:bg-gray-700 rounded-full"></span>
-                                <span className="text-blue-600 dark:text-blue-400 font-medium">Shared via SetuAI</span>
+                                <span className="text-blue-600 dark:text-blue-400 font-medium whitespace-nowrap">Shared via SetuAI</span>
                             </div>
                         </div>
                     </div>
