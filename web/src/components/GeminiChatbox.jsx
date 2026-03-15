@@ -100,6 +100,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [inputMessage, setInputMessage] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [sessionId, setSessionId] = useState(null);
+    const [currentChatName, setCurrentChatName] = useState('');
+    const [isGeneratingTitle, setIsGeneratingTitle] = useState(false);
+    const [displayedTitle, setDisplayedTitle] = useState('SetuAI');
     const [isHistoryLoaded, setIsHistoryLoaded] = useState(false);
     const messagesEndRef = useRef(null);
     const inputRef = useRef(null);
@@ -121,6 +124,33 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const suggestionsRef = useRef(null);
     const headerMenuRef = useRef(null);
     const [showFeatures, setShowFeatures] = useState(false);
+
+    // Typewriter effect for header title
+    useEffect(() => {
+        if (!currentChatName) {
+            setDisplayedTitle('SetuAI');
+            return;
+        }
+
+        // If it's a new title and we want animation
+        let timer;
+        let i = 0;
+        const fullText = currentChatName;
+        
+        // Reset displayed title before starting animation
+        setDisplayedTitle('');
+        
+        const typeWriter = () => {
+            if (i < fullText.length) {
+                setDisplayedTitle(fullText.substring(0, i + 1));
+                i++;
+                timer = setTimeout(typeWriter, 30);
+            }
+        };
+
+        typeWriter();
+        return () => clearTimeout(timer);
+    }, [currentChatName]);
 
     // Property suggestion states
     const [showPropertySuggestions, setShowPropertySuggestions] = useState(false);
@@ -2639,6 +2669,15 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             }
         } finally {
             setIsLoading(false);
+
+            // Auto-sync session title if it's a new conversation
+            if (currentUser && messages.length <= 4 && (!currentChatName || /^Chat \d/i.test(currentChatName))) {
+                setIsGeneratingTitle(true);
+                // Give the backend a moment to generate and save the title
+                setTimeout(async () => {
+                    await loadChatSessions();
+                }, 1500);
+            }
         }
     };
 
@@ -3478,6 +3517,23 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 const data = await response.json();
                 const sessions = data.sessions || [];
                 setChatSessions(sessions);
+
+                // Sync currentChatName with the active session
+                const activeSessionId = getOrCreateSessionId();
+                const activeSession = sessions.find(s => s.sessionId === activeSessionId);
+                if (activeSession) {
+                    const isGeneric = !activeSession.name || /^Chat \d/i.test(activeSession.name) || activeSession.name.toLowerCase() === 'new chat';
+                    if (!isGeneric) {
+                        if (activeSession.name !== currentChatName) {
+                            setCurrentChatName(activeSession.name);
+                        }
+                        setIsGeneratingTitle(false);
+                    } else if (isGeneratingTitle && (!activeSession.name || messages.length > 4)) {
+                        // Stop skeleton if messages pass threshold or fetch returned nothing
+                        setIsGeneratingTitle(false);
+                    }
+                }
+
                 return sessions;
             } else {
                 console.error('Failed to load chat sessions:', response.status);
@@ -3511,6 +3567,14 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     setMessages(sessionMessages);
                     setSessionId(sessionId);
                     localStorage.setItem('gemini_session_id', sessionId);
+
+                    // Set current chat name from the sessions list if available
+                    const session = chatSessions.find(s => s.sessionId === sessionId);
+                    if (session && session.name && !/^Chat \d/i.test(session.name)) {
+                        setCurrentChatName(session.name);
+                    } else {
+                        setCurrentChatName('');
+                    }
 
                     // Load ratings for this session
                     await loadMessageRatings(sessionId);
@@ -3626,6 +3690,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         timestamp: new Date().toISOString()
                     };
                     setMessages([defaultMessage]);
+                    setCurrentChatName('');
+                    setDisplayedTitle('SetuAI');
+                    setIsGeneratingTitle(false);
 
                     // Clear ratings for new session
                     setMessageRatings({});
@@ -5077,14 +5144,23 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     {/* Online status indicator */}
                                     <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-400 border-2 border-white rounded-full"></div>
                                 </div>
-                                <div className="leading-tight block max-w-full">
-                                    <div className="text-xs md:text-sm font-semibold truncate flex items-center gap-2">
-                                        SetuAI
-                                        <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">PRO</span>
+                                <div class="leading-tight block max-w-full overflow-hidden">
+                                    <div className="text-sm md:text-base font-bold truncate flex items-center gap-2">
+                                        {isGeneratingTitle && !displayedTitle ? (
+                                            <div className="flex items-center gap-2">
+                                                <div className="h-4 w-24 bg-white/20 rounded animate-pulse"></div>
+                                                <div className="h-4 w-12 bg-white/20 rounded animate-pulse"></div>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <span className="truncate">{displayedTitle || 'SetuAI'}</span>
+                                                <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full flex-shrink-0">PRO</span>
+                                            </>
+                                        )}
                                     </div>
                                     <div className="text-[10px] md:text-xs text-white/80 truncate flex items-center gap-1">
                                         <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                                        Online • Real Estate Expert Powered by Sentinel v2.0
+                                        {displayedTitle !== 'SetuAI' ? 'Active Chat • AI Powered' : 'Online • Real Estate Expert'}
                                     </div>
                                 </div>
                             </div>
@@ -6728,6 +6804,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                 />
                                                                 <button
                                                                     onClick={() => {
+                                                                        const sName = session.name && !/^Chat \d/i.test(session.name) ? session.name : '';
+                                                                        setCurrentChatName(sName);
                                                                         loadSessionHistory(session.sessionId);
                                                                         setShowHistory(false);
                                                                     }}
