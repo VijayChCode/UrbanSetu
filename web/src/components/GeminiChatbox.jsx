@@ -24,8 +24,40 @@ import 'prismjs/components/prism-sql';
 import 'prismjs/components/prism-bash';
 import 'prismjs/components/prism-markdown';
 
+const THINKING_TAGS = [
+    "Thinking...",
+    "Analyzing query...",
+    "Processing context...",
+    "Retrieving information...",
+    "Synthesizing response...",
+    "Finalizing answer..."
+];
 
+const ScrollingThinkingTags = ({ isHeader = false, isDarkMode = false }) => {
+    const [index, setIndex] = useState(0);
+    
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setIndex((prev) => (prev + 1) % THINKING_TAGS.length);
+        }, 3000);
+        return () => clearInterval(interval);
+    }, []);
 
+    return (
+        <div className={`overflow-hidden h-[1.2em] relative inline-block ${isHeader ? 'min-w-[120px]' : 'min-w-[150px]'}`}>
+            <div 
+                className="transition-transform duration-500 ease-in-out absolute w-full"
+                style={{ transform: `translateY(-${index * 1.2}em)` }}
+            >
+                {THINKING_TAGS.map((tag, i) => (
+                    <div key={i} className={`h-[1.2em] flex items-center ${isHeader ? 'text-white/80' : isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                        {tag}
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
 
 const TypewriterText = ({ text, delay = 35, className = "" }) => {
     const [displayedText, setDisplayedText] = useState('');
@@ -139,6 +171,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const abortControllerRef = useRef(null);
     const audioUploadAbortControllerRef = useRef(null);
     const rateLimitBroadcastRef = useRef(null); // For cross-tab rate limit sync
+    const [hasChatError, setHasChatError] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
     const [isExpanded, setIsExpanded] = useState(false);
     const lastUserMessageRef = useRef('');
@@ -2358,6 +2391,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
         // Set loading state to show cancel button
         setIsLoading(true);
+        setHasChatError(false);
 
         // Play sound when message is sent
         playSound('message-sent.mp3');
@@ -2658,6 +2692,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
                     return updatedMessages;
                 });
+                setHasChatError(true);
                 autoReportRestrictedContent(lastUserMessageRef.current, "AI Moderated");
                 // Note: For policy violations, we keep the prompt count decremented
             } else {
@@ -2690,6 +2725,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 if (!isOpen) {
                     setUnreadCount(count => count + 1);
                 }
+                setHasChatError(true);
             }
         } finally {
             setIsLoading(false);
@@ -5167,8 +5203,14 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     </div>
                                     {/* Online status indicator with ping effect */}
                                     <div className="absolute -bottom-1 -right-1 w-3 h-3 flex items-center justify-center">
-                                        <div className={`absolute inset-0 rounded-full border-2 border-white ${isLoading || showTypingIndicator ? 'bg-blue-400' : 'bg-green-400'}`}></div>
-                                        <div className={`w-full h-full rounded-full animate-ping opacity-75 ${isLoading || showTypingIndicator ? 'bg-blue-400' : 'bg-green-400'}`}></div>
+                                        <div className={`absolute inset-0 rounded-full border-2 border-white ${
+                                            hasChatError ? 'bg-red-500' :
+                                            isLoading || showTypingIndicator ? 'bg-blue-400' : 'bg-green-400'
+                                        }`}></div>
+                                        <div className={`w-full h-full rounded-full animate-ping opacity-75 ${
+                                            hasChatError ? 'bg-red-500' :
+                                            isLoading || showTypingIndicator ? 'bg-blue-400' : 'bg-green-400'
+                                        }`}></div>
                                     </div>
                                 </div>
                                 <div class="leading-tight block max-w-full overflow-hidden">
@@ -5186,8 +5228,15 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         )}
                                     </div>
                                     <div className="text-[10px] md:text-xs text-white/80 truncate flex items-center gap-1">
-                                        <div className={`w-2 h-2 rounded-full animate-pulse ${isLoading || showTypingIndicator ? 'bg-blue-400' : 'bg-green-400'}`}></div>
-                                        {isLoading ? 'Thinking...' : (showTypingIndicator ? 'Answering...' : (displayedTitle !== 'SetuAI' ? 'Active Chat • Powered by SetuAI' : 'Online • Real Estate Expert Powered by Sentinel v2.0'))}
+                                        {hasChatError ? (
+                                            <span>Chat Error Detected</span>
+                                        ) : isLoading ? (
+                                            <ScrollingThinkingTags isHeader={true} />
+                                        ) : showTypingIndicator ? (
+                                            <span>Answering...</span>
+                                        ) : (
+                                            <span>{displayedTitle !== 'SetuAI' ? 'Active Chat • Powered by SetuAI' : 'Online • Real Estate Expert Powered by Sentinel v2.0'}</span>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -6194,7 +6243,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                 <div className={`w-2 h-2 ${isDarkMode ? 'bg-gray-300' : 'bg-gray-400'} rounded-full animate-bounce`} style={{ animationDelay: '0.1s' }}></div>
                                                 <div className={`w-2 h-2 ${isDarkMode ? 'bg-gray-300' : 'bg-gray-400'} rounded-full animate-bounce`} style={{ animationDelay: '0.2s' }}></div>
                                             </div>
-                                            <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} font-medium`}>SetuAI is thinking...</span>
+                                            <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} font-medium flex items-center gap-2`}>
+                                                SetuAI is <ScrollingThinkingTags isDarkMode={isDarkMode} />
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
