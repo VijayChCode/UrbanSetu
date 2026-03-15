@@ -206,7 +206,7 @@ export default function ShareChatModal({ isOpen, onClose, sessionId, currentChat
                                                 key={type}
                                                 onClick={() => setExpiryType(type)}
                                                 className={`py-2 text-sm rounded-lg border transition-all ${expiryType === type
-                                                    ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium dark:bg-blue-900/30 dark:border-blue-500 dark:text-blue-300'
+                                                    ? `${themeColors?.secondary || 'bg-blue-50'} ${themeColors ? themeColors.accent.replace('text-', 'border-') : 'border-blue-500'} ${themeColors ? themeColors.accent.replace(/500|600/g, '700') : 'text-blue-700'} font-medium ${themeColors ? `dark:${themeColors.accent.replace('text-', 'bg-').replace(/500|600/g, '900')}/30 dark:${themeColors.accent.replace('text-', 'border-')} dark:${themeColors.accent.replace(/500|600/g, '300')}` : 'dark:bg-blue-900/30 dark:border-blue-500 dark:text-blue-300'}`
                                                     : 'border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700'
                                                     }`}
                                             >
