@@ -5464,7 +5464,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                             aria-describedby={screenReaderSupport ? `message-${index}-content` : undefined}
                                         >
                                             <div
-                                                className={`${editingMessageIndex === index ? 'w-full max-w-[90%]' : 'max-w-[85%]'} ${getMessageDensityClass()} rounded-2xl break-words relative group ${message.isRestricted
+                                                className={`${editingMessageIndex === index ? 'w-full max-w-[95%] sm:w-auto sm:max-w-[85%]' : 'max-w-[85%]'} ${getMessageDensityClass()} rounded-2xl break-words relative group ${message.isRestricted
                                                     ? `${isDarkMode ? 'bg-red-900/20 text-red-300 border border-red-700' : 'bg-red-50 text-red-900 border border-red-300 shadow-sm'}`
                                                     : message.role === 'user'
                                                         ? `bg-gradient-to-r ${themeColors.primary} text-white`
@@ -5825,7 +5825,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                     e.target.style.height = e.target.scrollHeight + 'px';
                                                                 }}
                                                                 onKeyDown={(e) => handleEditKeyDown(e, index)}
-                                                                className={`w-full min-w-[300px] p-3 text-sm text-gray-900 bg-white border border-gray-300 rounded-xl resize-none focus:outline-none focus:ring-2 ${themeColors.accent.replace('text-', 'focus:ring-').replace('-600', '-500')} placeholder-gray-500 shadow-inner ${editingMessageContent.length > 1800 ? 'pr-20' : ''}`}
+                                                                className={`w-full max-w-full box-border md:min-w-[300px] p-3 text-sm text-gray-900 bg-white border border-gray-300 rounded-xl resize-none focus:outline-none focus:ring-2 ${themeColors.accent.replace('text-', 'focus:ring-').replace('-600', '-500')} placeholder-gray-500 shadow-inner ${editingMessageContent.length > 1800 ? 'pr-20' : ''}`}
                                                                 style={{ minHeight: '100px', maxHeight: '300px', overflowY: 'auto' }} // Ensure visibility and scrolling
                                                                 placeholder="Edit your message..."
                                                             // Removed autoFocus - don't auto-focus input
