@@ -5165,8 +5165,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     <div className="p-1.5 md:p-2 bg-white/10 rounded-lg border border-white/20">
                                         <FaRobot size={16} className="opacity-90" />
                                     </div>
-                                    {/* Online status indicator */}
-                                    <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-400 border-2 border-white rounded-full"></div>
+                                    {/* Online status indicator with ping effect */}
+                                    <div className="absolute -bottom-1 -right-1 w-3 h-3 flex items-center justify-center">
+                                        <div className={`absolute inset-0 rounded-full border-2 border-white ${isLoading || showTypingIndicator ? 'bg-blue-400' : 'bg-green-400'}`}></div>
+                                        <div className={`w-full h-full rounded-full animate-ping opacity-75 ${isLoading || showTypingIndicator ? 'bg-blue-400' : 'bg-green-400'}`}></div>
+                                    </div>
                                 </div>
                                 <div class="leading-tight block max-w-full overflow-hidden">
                                     <div className="text-sm md:text-base font-bold truncate flex items-center gap-2">
@@ -5183,8 +5186,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         )}
                                     </div>
                                     <div className="text-[10px] md:text-xs text-white/80 truncate flex items-center gap-1">
-                                        <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                                        {displayedTitle !== 'SetuAI' ? 'Active Chat • Powered by SetuAI' : 'Online • Real Estate Expert Powered by Sentinel v2.0'}
+                                        <div className={`w-2 h-2 rounded-full animate-pulse ${isLoading || showTypingIndicator ? 'bg-blue-400' : 'bg-green-400'}`}></div>
+                                        {isLoading ? 'Thinking...' : (showTypingIndicator ? 'Answering...' : (displayedTitle !== 'SetuAI' ? 'Active Chat • Powered by SetuAI' : 'Online • Real Estate Expert Powered by Sentinel v2.0'))}
                                     </div>
                                 </div>
                             </div>
