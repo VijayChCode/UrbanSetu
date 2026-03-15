@@ -298,6 +298,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [selectedRatingToDelete, setSelectedRatingToDelete] = useState(null);
     const [renameTargetSessionId, setRenameTargetSessionId] = useState(null);
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+    const [isChatShared, setIsChatShared] = useState(false);
     const [shareTargetSessionId, setShareTargetSessionId] = useState(null);
     const [showSocialShare, setShowSocialShare] = useState(false);
     const [socialShareConfig, setSocialShareConfig] = useState({ url: '', title: '', description: '' });
@@ -347,6 +348,38 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             observer.disconnect();
         };
     }, []);
+
+    // Check if current chat is shared
+    useEffect(() => {
+        const checkShareStatus = async () => {
+            const currentSessionId = sessionId || localStorage.getItem('gemini_session_id');
+            if (!currentSessionId || !currentUser) {
+                setIsChatShared(false);
+                return;
+            }
+
+            try {
+                const res = await authenticatedFetch(`${API_BASE_URL}/api/shared-chat/manage/${currentSessionId}`, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setIsChatShared(data.success && !!data.sharedChat);
+                } else {
+                    setIsChatShared(false);
+                }
+            } catch (error) {
+                console.error('Error checking share status:', error);
+                setIsChatShared(false);
+            }
+        };
+
+        if (isOpen) {
+            checkShareStatus();
+        }
+    }, [sessionId, isOpen, currentUser]);
+
     // Mobile Menu Detection
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     useEffect(() => {
@@ -5546,7 +5579,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                         <div className={`p-1.5 rounded-lg ${isDarkMode ? 'bg-cyan-500/20' : 'bg-cyan-100'} group-hover:scale-110 transition-transform duration-200`}>
                                                             <FaShareAlt size={14} className="text-cyan-500" />
                                                         </div>
-                                                        <span className="font-medium">Share Chat</span>
+                                                        <span className="font-medium">{isChatShared ? 'Update Chat' : 'Share Chat'}</span>
                                                     </button>
                                                 </li>
                                             )}

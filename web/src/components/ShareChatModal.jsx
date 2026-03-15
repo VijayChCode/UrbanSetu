@@ -172,7 +172,7 @@ export default function ShareChatModal({ isOpen, onClose, sessionId, currentChat
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in">
                 <div className={`bg-gradient-to-r ${themeColors?.primary || 'from-blue-600 to-purple-600'} p-6 text-white flex justify-between items-center`}>
                     <h3 className="text-xl font-bold flex items-center gap-2">
-                        <FaShareAlt /> Share Chat
+                        <FaShareAlt /> {shareData ? 'Update Chat' : 'Share Chat'}
                     </h3>
                     <div className="flex items-center gap-2">
                         <button onClick={fetchShareInfo} className="hover:bg-white/20 p-2 rounded-full transition-colors" title="Refresh Views">

@@ -4,7 +4,13 @@ import { FaServer, FaExclamationTriangle, FaSync, FaArrowRight } from 'react-ico
 class GlobalErrorBoundary extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { hasError: false, error: null, redirectCountdown: 10 };
+        this.state = { 
+            hasError: false, 
+            error: null, 
+            redirectCountdown: 10,
+            switchCount: parseInt(sessionStorage.getItem('err_switch_count') || '0'),
+            isPersistentError: false
+        };
         this.timer = null;
     }
 
@@ -63,7 +69,11 @@ class GlobalErrorBoundary extends React.Component {
 
     componentDidUpdate(prevProps, prevState) {
         if (this.state.hasError && !prevState.hasError) {
-            this.startRedirectCountdown();
+            if (this.state.switchCount >= 3) {
+                this.setState({ isPersistentError: true });
+            } else {
+                this.startRedirectCountdown();
+            }
         }
     }
 
@@ -111,8 +121,15 @@ class GlobalErrorBoundary extends React.Component {
     };
 
     handleRedirect = () => {
+        const { switchCount } = this.state;
+        if (switchCount >= 3) {
+            this.setState({ isPersistentError: true });
+            return;
+        }
+
         const altUrl = this.getAlternativeUrl();
         if (altUrl) {
+            sessionStorage.setItem('err_switch_count', (switchCount + 1).toString());
             window.location.href = altUrl;
         } else {
             window.location.reload();
@@ -126,55 +143,94 @@ class GlobalErrorBoundary extends React.Component {
 
             return (
                 <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
-                    <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden text-center p-8">
+                    <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden text-center p-8 relative">
+                        {/* Status bar for switch count */}
+                        {this.state.switchCount > 0 && !this.state.isPersistentError && (
+                            <div className="absolute top-0 left-0 right-0 h-1 bg-gray-100 dark:bg-gray-700">
+                                <div 
+                                    className="h-full bg-blue-500 transition-all duration-500" 
+                                    style={{ width: `${(this.state.switchCount / 3) * 100}%` }}
+                                />
+                            </div>
+                        )}
+
                         <div className="mx-auto w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mb-6">
                             <FaExclamationTriangle className="text-3xl text-red-600 dark:text-red-400" />
                         </div>
 
                         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
-                            Something went wrong
+                            {this.state.isPersistentError ? 'Server Issue Persists' : 'Something went wrong'}
                         </h1>
 
                         <p className="text-gray-500 dark:text-gray-400 mb-8">
-                            We encountered an unexpected error while loading the application.
-                            {altUrl && " Attempting to switch to our backup server for better stability."}
+                            {this.state.isPersistentError 
+                                ? "We're sorry for the inconvenience. Our team has been notified and is working on a permanent fix. We've got you covered!"
+                                : "We encountered an unexpected error while loading the application. Attempting to switch to our backup server for better stability."
+                            }
                         </p>
 
-                        {altUrl ? (
-                            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 mb-6 border border-blue-100 dark:border-blue-800">
-                                <div className="flex items-center justify-center gap-2 text-blue-700 dark:text-blue-300 font-semibold mb-2">
-                                    <FaServer />
-                                    <span>Switching Server</span>
+                        {this.state.isPersistentError ? (
+                            <div className="space-y-4">
+                                <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4 border border-amber-100 dark:border-amber-800">
+                                    <p className="text-sm text-amber-700 dark:text-amber-400 font-medium animate-pulse">
+                                        ⚡ Persistent error detected. Stabilizing environment...
+                                    </p>
                                 </div>
-                                <p className="text-sm text-blue-600 dark:text-blue-400">
-                                    Redirecting in <span className="font-bold">{this.state.redirectCountdown}</span> seconds...
-                                </p>
+                                <button
+                                    onClick={() => window.location.href = 'mailto:support@urbansetu.com'}
+                                    className="w-full py-3 px-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl font-bold transition-all shadow-lg flex items-center justify-center gap-2 hover:scale-[1.02]"
+                                >
+                                    <FaServer /> Contact Support
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        sessionStorage.removeItem('err_switch_count');
+                                        window.location.reload();
+                                    }}
+                                    className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                                >
+                                    Reset and try again
+                                </button>
                             </div>
                         ) : (
-                            <div className="bg-gray-100 dark:bg-gray-700 rounded-xl p-4 mb-6">
-                                <p className="text-sm text-gray-600 dark:text-gray-300">
-                                    Please check your internet connection or try reloading.
-                                </p>
-                            </div>
+                            <>
+                                {altUrl ? (
+                                    <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 mb-6 border border-blue-100 dark:border-blue-800">
+                                        <div className="flex items-center justify-center gap-2 text-blue-700 dark:text-blue-300 font-semibold mb-2">
+                                            <FaServer />
+                                            <span>Switching Server ({this.state.switchCount + 1}/3)</span>
+                                        </div>
+                                        <p className="text-sm text-blue-600 dark:text-blue-400">
+                                            Redirecting in <span className="font-bold">{this.state.redirectCountdown}</span> seconds...
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="bg-gray-100 dark:bg-gray-700 rounded-xl p-4 mb-6">
+                                        <p className="text-sm text-gray-600 dark:text-gray-300">
+                                            Please check your internet connection or try reloading.
+                                        </p>
+                                    </div>
+                                )}
+
+                                <div className="flex flex-col gap-3">
+                                    {altUrl && (
+                                        <button
+                                            onClick={this.handleRedirect}
+                                            className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-bold transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                                        >
+                                            Switch Server Now <FaArrowRight />
+                                        </button>
+                                    )}
+
+                                    <button
+                                        onClick={() => window.location.reload()}
+                                        className="w-full py-3 px-4 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
+                                    >
+                                        <FaSync className="group-hover:animate-spin" /> Reload Page
+                                    </button>
+                                </div>
+                            </>
                         )}
-
-                        <div className="flex flex-col gap-3">
-                            {altUrl && (
-                                <button
-                                    onClick={this.handleRedirect}
-                                    className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-bold transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
-                                >
-                                    Switch Server Now <FaArrowRight />
-                                </button>
-                            )}
-
-                            <button
-                                onClick={() => window.location.reload()}
-                                className="w-full py-3 px-4 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
-                            >
-                                <FaSync className="group-hover:animate-spin" /> Reload Page
-                            </button>
-                        </div>
                     </div>
                 </div>
             );
