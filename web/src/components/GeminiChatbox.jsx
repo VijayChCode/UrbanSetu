@@ -5184,7 +5184,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     </div>
                                     <div className="text-[10px] md:text-xs text-white/80 truncate flex items-center gap-1">
                                         <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                                        {displayedTitle !== 'SetuAI' ? 'Active Chat • AI Powered' : 'Online • Real Estate Expert Powered by Sentinel v2.0'}
+                                        {displayedTitle !== 'SetuAI' ? 'Active Chat • Powered by SetuAI' : 'Online • Real Estate Expert Powered by Sentinel v2.0'}
                                     </div>
                                 </div>
                             </div>
