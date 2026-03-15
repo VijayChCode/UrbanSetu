@@ -193,7 +193,7 @@ export default function ShareChatModal({ isOpen, onClose, sessionId, currentChat
                                         type="text"
                                         value={customTitle}
                                         onChange={(e) => setCustomTitle(e.target.value)}
-                                        className={`w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 focus:outline-none focus:ring-2 ${themeColors ? themeColors.accent.replace('text-', 'focus:ring-') : 'focus:ring-blue-500'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400`}
+                                        className={`w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 focus:outline-none focus:ring-2 ${themeColors ? themeColors.accent.replace('text-', 'focus:ring-').replace(/500|600/g, '500') : 'focus:ring-blue-500'} focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 transition-colors`}
                                         placeholder="Enter a title for the shared chat"
                                     />
                                 </div>
