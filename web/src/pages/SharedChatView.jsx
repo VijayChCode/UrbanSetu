@@ -208,7 +208,7 @@ export default function SharedChatView() {
         <div className="min-h-screen bg-transparent dark:bg-gray-950 flex flex-col transition-colors duration-300">
             {/* Header */}
             <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 sticky top-0 z-10 shadow-sm">
-                <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+                <div className="max-w-4xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center text-white shadow-lg">
                             <FaRobot size={20} />
@@ -217,22 +217,22 @@ export default function SharedChatView() {
                             <h1 className="font-bold text-gray-900 dark:text-white text-lg leading-tight">
                                 <TypewriterText text={chatData.title || "Shared Chat"} />
                             </h1>
-                            <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2">
-                                <span className="flex items-center gap-1">Created on <FaCalendar size={10} /> {chatData.date ? new Date(chatData.date).toLocaleDateString() : new Date().toLocaleDateString()}</span>
+                            <div className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 flex flex-wrap items-center gap-y-1.5 gap-x-2 mt-1 sm:mt-0">
+                                <span className="flex items-center gap-1 shrink-0">Created on <FaCalendar size={10} /> {chatData.date ? new Date(chatData.date).toLocaleDateString() : new Date().toLocaleDateString()}</span>
                                 {chatData.expiresAt && (
                                     <>
-                                        <span className="w-1 h-1 bg-gray-300 dark:bg-gray-700 rounded-full"></span>
-                                        <span className="flex items-center gap-1 text-orange-600 dark:text-orange-400 font-medium">
+                                        <span className="hidden sm:block w-1 h-1 bg-gray-300 dark:bg-gray-700 rounded-full"></span>
+                                        <span className="flex items-center gap-1 text-orange-600 dark:text-orange-400 font-medium shrink-0">
                                             <FaClock size={10} /> Expires on {new Date(chatData.expiresAt).toLocaleDateString()}
                                         </span>
                                     </>
                                 )}
-                                <span className="w-1 h-1 bg-gray-300 dark:bg-gray-700 rounded-full"></span>
-                                <span className="text-blue-600 dark:text-blue-400 font-medium whitespace-nowrap">Shared via SetuAI</span>
+                                <span className="hidden sm:block w-1 h-1 bg-gray-300 dark:bg-gray-700 rounded-full"></span>
+                                <span className="text-blue-600 dark:text-blue-400 font-medium whitespace-nowrap shrink-0">Shared via SetuAI</span>
                             </div>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 w-full md:w-auto justify-start md:justify-end">
                         {importedSessionId ? (
                             <button
                                 onClick={() => {
@@ -242,22 +242,27 @@ export default function SharedChatView() {
                                         navigate(`/user/ai?session=${importedSessionId}`);
                                     }
                                 }}
-                                className="hidden sm:flex items-center gap-2 text-sm font-medium text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 px-4 py-2 rounded-lg transition-colors"
+                                className="flex items-center gap-2 text-xs sm:text-sm font-medium text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 px-3 sm:px-4 py-2 rounded-lg transition-colors shadow-sm"
                             >
                                 <FaArrowRight size={14} />
-                                Open SetuAI
+                                Open Chat
                             </button>
                         ) : (
                             <button
                                 onClick={handleImportChat}
                                 disabled={importing}
-                                className="hidden sm:flex items-center gap-2 text-sm font-medium text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-100 dark:hover:bg-purple-900/50 px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+                                className="flex items-center gap-2 text-xs sm:text-sm font-medium text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-100 dark:hover:bg-purple-900/50 px-3 sm:px-4 py-2 rounded-lg transition-colors disabled:opacity-50 shadow-sm"
                             >
                                 <FaDownload size={14} />
-                                {importing ? "Importing..." : "Import Chat to SetuAI"}
+                                {importing ? "Importing..." : (
+                                    <>
+                                        <span className="sm:hidden">Import</span>
+                                        <span className="hidden sm:inline">Import Chat to SetuAI</span>
+                                    </>
+                                )}
                             </button>
                         )}
-                        <a href="/ai" className="hidden sm:block text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 px-4 py-2 rounded-lg transition-colors">
+                        <a href="/ai" className="text-xs sm:text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 px-3 sm:px-4 py-2 rounded-lg transition-colors shadow-sm text-center">
                             Try SetuAI
                         </a>
                     </div>
