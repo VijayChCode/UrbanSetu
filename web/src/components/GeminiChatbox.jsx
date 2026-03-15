@@ -26,6 +26,30 @@ import 'prismjs/components/prism-markdown';
 
 
 
+
+const TypewriterText = ({ text, delay = 35, className = "" }) => {
+    const [displayedText, setDisplayedText] = useState('');
+    const [currentIndex, setCurrentIndex] = useState(0);
+
+    useEffect(() => {
+        setDisplayedText('');
+        setCurrentIndex(0);
+    }, [text]);
+
+    useEffect(() => {
+        if (!text || currentIndex >= text.length) return;
+
+        const timeout = setTimeout(() => {
+            setDisplayedText(prev => prev + text[currentIndex]);
+            setCurrentIndex(prev => prev + 1);
+        }, delay);
+
+        return () => clearTimeout(timeout);
+    }, [currentIndex, text, delay]);
+
+    return <span className={className}>{displayedText}</span>;
+};
+
 const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const { currentUser } = useSelector((state) => state.user);
 
@@ -6811,7 +6835,18 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                     className="flex-1 text-left"
                                                                 >
                                                                     <div className={`text-sm font-medium flex items-center gap-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
-                                                                        {session.name?.trim() ? session.name : `New chat ${idx + 1}`}
+                                                                        {isActiveSession && isGeneratingTitle ? (
+                                                                            <div className="flex items-center gap-2 animate-pulse">
+                                                                                <div className="h-3.5 w-24 bg-gray-300 dark:bg-gray-600 rounded-lg"></div>
+                                                                                <span className="text-[10px] text-blue-500 font-bold uppercase tracking-tighter">Naming...</span>
+                                                                            </div>
+                                                                        ) : (
+                                                                            isActiveSession ? (
+                                                                                <TypewriterText text={session.name?.trim() ? session.name : `New chat ${idx + 1}`} />
+                                                                            ) : (
+                                                                                session.name?.trim() ? session.name : `New chat ${idx + 1}`
+                                                                            )
+                                                                        )}
                                                                         {isActiveSession && (
                                                                             <span className={`px-2 py-0.5 text-xs rounded-full ${isDarkMode ? `${themeColors.accent.replace('text-', 'bg-')} text-white` : `bg-gradient-to-r ${themeColors.primary} text-white`} font-medium`}>
                                                                                 Active

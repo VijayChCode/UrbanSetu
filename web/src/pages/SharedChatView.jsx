@@ -193,7 +193,7 @@ export default function SharedChatView() {
                         <div>
                             <h1 className="font-bold text-gray-900 dark:text-white text-lg leading-tight">{chatData.title}</h1>
                             <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2">
-                                <span className="flex items-center gap-1"><FaCalendar size={10} /> {chatData.date ? new Date(chatData.date).toLocaleDateString() : new Date().toLocaleDateString()}</span>
+                                <span className="flex items-center gap-1">Created on <FaCalendar size={10} /> {chatData.date ? new Date(chatData.date).toLocaleDateString() : new Date().toLocaleDateString()}</span>
                                 <span className="w-1 h-1 bg-gray-300 dark:bg-gray-700 rounded-full"></span>
                                 <span className="text-blue-600 dark:text-blue-400 font-medium">Shared via SetuAI</span>
                             </div>
