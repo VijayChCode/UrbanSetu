@@ -256,7 +256,7 @@ export default function ShareChatModal({ isOpen, onClose, sessionId, currentChat
                                     <p className="text-xs text-green-700 dark:text-green-400 mt-1">This chat is publicly accessible via the link below.</p>
                                     <ul className="text-xs text-green-700 dark:text-green-400 mt-2 list-disc list-inside space-y-1">
                                         <li>Shared content is read-only.</li>
-                                        <li>If you continue chatting, click <b>Update Link</b> to sync new messages.</li>
+                                        <li>If you continue chatting, click <b>Update Link</b> to sync updates.</li>
                                     </ul>
                                 </div>
                             </div>
