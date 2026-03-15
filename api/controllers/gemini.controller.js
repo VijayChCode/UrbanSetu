@@ -908,7 +908,7 @@ export const createNewSession = async (req, res) => {
         // Create new chat history with default welcome message
         const defaultMessage = {
             role: 'assistant',
-            content: 'Hello! I\'m your AI assistant Powered by Groq. How can I help you with your real estate needs today?',
+            content: 'Hello! I\'m SetuAI your AI assistant powered by Groq and co-powered by Sentinel v2.0 Neural Engine (TensorFlow). How can I help you with your real estate needs today?',
             timestamp: new Date().toISOString()
         };
 
