@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { FaRobot, FaUser, FaClock, FaCalendar, FaExclamationTriangle, FaArrowRight, FaDownload } from 'react-icons/fa';
@@ -8,6 +8,29 @@ import GeminiAIWrapper from "../components/GeminiAIWrapper";
 import SharedChatViewSkeleton from '../components/skeletons/SharedChatViewSkeleton';
 import ContactSupportWrapper from '../components/ContactSupportWrapper';
 import { authenticatedFetch } from '../utils/auth';
+
+const TypewriterText = ({ text, delay = 35, className = "" }) => {
+    const [displayedText, setDisplayedText] = useState('');
+    const [currentIndex, setCurrentIndex] = useState(0);
+
+    useEffect(() => {
+        setDisplayedText('');
+        setCurrentIndex(0);
+    }, [text]);
+
+    useEffect(() => {
+        if (!text || currentIndex >= text.length) return;
+
+        const timeout = setTimeout(() => {
+            setDisplayedText(prev => prev + text[currentIndex]);
+            setCurrentIndex(prev => prev + 1);
+        }, delay);
+
+        return () => clearTimeout(timeout);
+    }, [currentIndex, text, delay]);
+
+    return <span className={className}>{displayedText}</span>;
+};
 
 export default function SharedChatView() {
     const { shareToken } = useParams();
@@ -191,7 +214,9 @@ export default function SharedChatView() {
                             <FaRobot size={20} />
                         </div>
                         <div>
-                            <h1 className="font-bold text-gray-900 dark:text-white text-lg leading-tight">{chatData.title}</h1>
+                            <h1 className="font-bold text-gray-900 dark:text-white text-lg leading-tight">
+                                <TypewriterText text={chatData.title || "Shared Chat"} />
+                            </h1>
                             <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2">
                                 <span className="flex items-center gap-1">Created on <FaCalendar size={10} /> {chatData.date ? new Date(chatData.date).toLocaleDateString() : new Date().toLocaleDateString()}</span>
                                 <span className="w-1 h-1 bg-gray-300 dark:bg-gray-700 rounded-full"></span>
