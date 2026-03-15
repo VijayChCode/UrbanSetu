@@ -9601,7 +9601,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 isOpen={isShareModalOpen}
                 onClose={() => { setIsShareModalOpen(false); setShareTargetSessionId(null); }}
                 sessionId={shareTargetSessionId || getOrCreateSessionId()}
-                currentChatName={chatSessions.find(s => s.sessionId === (shareTargetSessionId || getOrCreateSessionId()))?.name || "Shared Chat"}
+                currentChatName={
+                    (shareTargetSessionId && shareTargetSessionId !== getOrCreateSessionId())
+                        ? (chatSessions.find(s => s.sessionId === shareTargetSessionId)?.name || "")
+                        : currentChatName
+                }
                 themeColors={themeColors}
             />
 

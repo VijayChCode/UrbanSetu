@@ -14,20 +14,22 @@ export default function ShareChatModal({ isOpen, onClose, sessionId, currentChat
 
     useEffect(() => {
         if (isOpen) {
-            // Priority: existing share data (handled in fetch) > current dynamic AI title > fallback
-            setCustomTitle(currentChatName && currentChatName !== "New Chat" ? currentChatName : 'Shared Chat');
+            // Initial title setting
+            const isDefault = !currentChatName || /^Chat \d/i.test(currentChatName) || currentChatName.toLowerCase() === 'new chat';
+            const initialTitle = isDefault ? 'Shared Chat' : currentChatName;
+            setCustomTitle(initialTitle);
+
             if (sessionId) {
-                fetchShareInfo();
+                fetchShareInfo(initialTitle);
             }
         } else {
-            // Clean up when closed to avoid stale data flashing on next open
             setShareData(null);
             setShowRevokeConfirm(false);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen, sessionId, currentChatName]);
 
-    const fetchShareInfo = async () => {
+    const fetchShareInfo = async (incomingTitle) => {
         setLoading(true);
         try {
             const res = await authenticatedFetch(`${API_BASE_URL}/api/shared-chat/manage/${sessionId}`, {
@@ -37,8 +39,15 @@ export default function ShareChatModal({ isOpen, onClose, sessionId, currentChat
             const data = await res.json();
             if (data.success && data.sharedChat) {
                 setShareData(data.sharedChat);
-                setCustomTitle(data.sharedChat.title);
-                // Deduce expiry type logic if needed, but simple is fine
+                // If existing title is generic but we have a better one, keep using the better one
+                const currentIsGeneric = !data.sharedChat.title || data.sharedChat.title === 'Shared Chat' || data.sharedChat.title === 'Shared Conversation';
+                const betterTitleAvailable = incomingTitle && incomingTitle !== 'Shared Chat';
+
+                if (!currentIsGeneric) {
+                    setCustomTitle(data.sharedChat.title);
+                } else if (betterTitleAvailable) {
+                    setCustomTitle(incomingTitle);
+                }
             } else {
                 setShareData(null);
             }
@@ -328,7 +337,7 @@ export default function ShareChatModal({ isOpen, onClose, sessionId, currentChat
                             <p className="text-gray-600 dark:text-gray-300 text-sm px-4">
                                 Are you sure you want to delete this shared link? {getRemainingDays() !== null && (
                                     <span className="font-semibold text-red-600 dark:text-red-400">
-                                        (Expires in {getRemainingDays()} days).
+                                        (Auto-Expires in {getRemainingDays()} days).
                                     </span>
                                 )} Anyone with the link will no longer be able to access this conversation.
                             </p>

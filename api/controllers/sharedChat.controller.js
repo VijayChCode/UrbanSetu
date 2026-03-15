@@ -336,8 +336,8 @@ export const updateSharedChat = async (req, res) => {
             sharedChat.isActive = isActive;
         }
 
-        if (title) {
-            sharedChat.title = title;
+        if (title !== undefined) {
+            sharedChat.title = title.trim() || 'Shared Conversation';
         }
 
         // Check messages diff
