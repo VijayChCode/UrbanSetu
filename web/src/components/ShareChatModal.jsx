@@ -1,10 +1,10 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaShareAlt, FaCopy, FaTrash, FaClock, FaCheck, FaTimes, FaGlobe, FaSync } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { authenticatedFetch } from '../utils/auth';
 import SocialSharePanel from './SocialSharePanel';
 
-export default function ShareChatModal({ isOpen, onClose, sessionId, currentChatName }) {
+export default function ShareChatModal({ isOpen, onClose, sessionId, currentChatName, themeColors }) {
     const [loading, setLoading] = useState(false);
     const [shareData, setShareData] = useState(null);
     const [expiryType, setExpiryType] = useState('30days');
@@ -143,7 +143,7 @@ export default function ShareChatModal({ isOpen, onClose, sessionId, currentChat
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-4">
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in">
-                <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6 text-white flex justify-between items-center">
+                <div className={`bg-gradient-to-r ${themeColors?.primary || 'from-blue-600 to-purple-600'} p-6 text-white flex justify-between items-center`}>
                     <h3 className="text-xl font-bold flex items-center gap-2">
                         <FaShareAlt /> Share Chat
                     </h3>
@@ -160,7 +160,7 @@ export default function ShareChatModal({ isOpen, onClose, sessionId, currentChat
                 <div className="p-6 space-y-6">
                     {loading && !shareData && (
                         <div className="flex flex-col items-center justify-center py-8 gap-3">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                            <div className={`animate-spin rounded-full h-8 w-8 border-b-2 ${themeColors ? themeColors.accent.replace('text-', 'border-') : 'border-blue-600'}`}></div>
                             <span className="text-gray-500 text-sm font-medium">Verifying Link Status...</span>
                         </div>
                     )}
@@ -168,8 +168,8 @@ export default function ShareChatModal({ isOpen, onClose, sessionId, currentChat
                     {!loading && !shareData && (
                         <>
                             <div className="text-center space-y-2">
-                                <div className="bg-blue-50 dark:bg-blue-900/30 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <FaGlobe className="text-blue-500 dark:text-blue-400 text-3xl" />
+                                <div className={`${themeColors?.secondary || 'bg-blue-50'} dark:bg-gray-800 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-200 dark:border-gray-700`}>
+                                    <FaGlobe className={`${themeColors?.accent || 'text-blue-500'} dark:text-gray-300 text-3xl`} />
                                 </div>
                                 <h4 className="text-lg font-semibold text-gray-800 dark:text-white">Share this conversation</h4>
                                 <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -184,7 +184,7 @@ export default function ShareChatModal({ isOpen, onClose, sessionId, currentChat
                                         type="text"
                                         value={customTitle}
                                         onChange={(e) => setCustomTitle(e.target.value)}
-                                        className="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400"
+                                        className={`w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 focus:outline-none focus:ring-2 ${themeColors ? themeColors.accent.replace('text-', 'focus:ring-') : 'focus:ring-blue-500'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400`}
                                         placeholder="Enter a title for the shared chat"
                                     />
                                 </div>
@@ -197,7 +197,7 @@ export default function ShareChatModal({ isOpen, onClose, sessionId, currentChat
                                                 key={type}
                                                 onClick={() => setExpiryType(type)}
                                                 className={`py-2 text-sm rounded-lg border transition-all ${expiryType === type
-                                                    ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium dark:bg-blue-900/30 dark:border-blue-500 dark:text-blue-300'
+                                                    ? `${themeColors?.secondary || 'bg-blue-50'} ${themeColors ? themeColors.accent.replace('text-', 'border-') : 'border-blue-500'} ${themeColors ? themeColors.accent.replace('text-', 'text-').replace('600', '700') : 'text-blue-700'} font-medium dark:bg-opacity-20`
                                                     : 'border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700'
                                                     }`}
                                             >
@@ -212,7 +212,7 @@ export default function ShareChatModal({ isOpen, onClose, sessionId, currentChat
                                 <button
                                     onClick={handleCreateLink}
                                     disabled={loading}
-                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg shadow-md transition-transform transform hover:scale-[1.02] flex items-center justify-center gap-2"
+                                    className={`w-full bg-gradient-to-r ${themeColors?.primary || 'from-blue-600 to-purple-600'} text-white font-semibold py-3 rounded-lg shadow-md transition-transform transform hover:scale-[1.02] flex items-center justify-center gap-2`}
                                 >
                                     {loading ? 'Generating...' : 'Create Public Link'}
                                 </button>
@@ -250,7 +250,7 @@ export default function ShareChatModal({ isOpen, onClose, sessionId, currentChat
                                     </button>
                                     <button
                                         onClick={handleSocialShare}
-                                        className="px-3 rounded-lg font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                                        className={`px-3 rounded-lg font-medium bg-gradient-to-r ${themeColors?.primary || 'from-blue-600 to-purple-600'} text-white transition-opacity hover:opacity-90`}
                                         title="Share on Social Media"
                                     >
                                         <FaShareAlt />

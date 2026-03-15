@@ -9531,6 +9531,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 onClose={() => { setIsShareModalOpen(false); setShareTargetSessionId(null); }}
                 sessionId={shareTargetSessionId || getOrCreateSessionId()}
                 currentChatName={chatSessions.find(s => s.sessionId === (shareTargetSessionId || getOrCreateSessionId()))?.name || "Shared Chat"}
+                themeColors={themeColors}
             />
 
             {/* Auth Required Modal */}
