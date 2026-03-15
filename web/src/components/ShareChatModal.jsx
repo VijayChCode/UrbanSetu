@@ -13,10 +13,19 @@ export default function ShareChatModal({ isOpen, onClose, sessionId, currentChat
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://urbansetu-pvt4.onrender.com';
 
     useEffect(() => {
-        if (isOpen && sessionId) {
-            fetchShareInfo();
+        if (isOpen) {
+            // Priority: existing share data (handled in fetch) > current dynamic AI title > fallback
+            setCustomTitle(currentChatName && currentChatName !== "New Chat" ? currentChatName : 'Shared Chat');
+            if (sessionId) {
+                fetchShareInfo();
+            }
+        } else {
+            // Clean up when closed to avoid stale data flashing on next open
+            setShareData(null);
+            setShowRevokeConfirm(false);
         }
-    }, [isOpen, sessionId]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen, sessionId, currentChatName]);
 
     const fetchShareInfo = async () => {
         setLoading(true);
