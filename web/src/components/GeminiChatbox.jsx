@@ -1263,16 +1263,16 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 const data = await response.json();
                 if (data.success && data.data.messages && Array.isArray(data.data.messages) && data.data.messages.length > 0) {
                     setMessages(data.data.messages);
-                    console.log('Chat history loaded:', data.data.messages.length, 'messages');
+                    console.log('Session history loaded:', data.data.messages.length, 'messages');
                 }
             } else if (response.status === 404) {
                 // No history found, keep default welcome message
-                console.log('No chat history found for session');
+                console.log('No session history found');
             } else {
-                console.error('Failed to load chat history:', response.status);
+                console.error('Failed to load session history:', response.status);
             }
         } catch (error) {
-            console.error('Error loading chat history:', error);
+            console.error('Error loading session history:', error);
         } finally {
             setIsHistoryLoaded(true);
         }
@@ -1297,7 +1297,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             }
             return null;
         } catch (error) {
-            console.error('Error fetching session name:', error);
+            console.error('Error fetching chat name:', error);
             return null;
         }
     };
@@ -1383,7 +1383,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     toast.info('No messages found to refresh.');
                 }
             } else if (response.status === 404) {
-                toast.info('No saved messages found for this session.');
+                toast.info('No saved messages found for this chat.');
             } else {
                 toast.error('Failed to refresh messages');
             }
@@ -3582,12 +3582,12 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     // Load bookmarks for this session
                     await loadBookmarkedMessages(sessionId);
 
-                    toast.success('Session loaded');
+                    toast.success('Chat loaded successfully');
                 }
             }
         } catch (error) {
-            console.error('Error loading session:', error);
-            toast.error('Failed to load session');
+            console.error('Error loading chat:', error);
+            toast.error('Failed to load chat');
         }
     };
 
@@ -3642,7 +3642,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
     const createNewSession = async () => {
         if (!currentUser) {
-            toast.info('Please log in to create new sessions');
+            toast.info('Please log in to create new chat');
             return;
         }
 
@@ -3664,7 +3664,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 });
 
                 if (!saveResponse.ok) {
-                    console.error('Failed to save current session');
+                    console.error('Failed to save current chat');
                 }
             }
 
@@ -3704,19 +3704,19 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     // Refresh chat sessions
                     await loadChatSessions();
 
-                    toast.success('New chat session created');
+                    toast.success('New chat created');
                 }
             } else {
-                toast.error('Failed to create new session');
+                toast.error('Failed to create new chat');
             }
         } catch (error) {
-            console.error('Error creating new session:', error);
-            toast.error('Failed to create new session');
+            console.error('Error creating new chat:', error);
+            toast.error('Failed to create new chat');
         }
     };
     const deleteSession = async (sessionId) => {
         if (!currentUser) {
-            toast.error('Please log in to delete sessions');
+            toast.error('Please log in to delete chats');
             return;
         }
 
@@ -3730,14 +3730,14 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 if (data.success) {
                     // Refresh chat sessions
                     await loadChatSessions();
-                    toast.success('Session deleted successfully');
+                    toast.success('Chat deleted successfully');
                 }
             } else {
-                toast.error('Failed to delete session');
+                toast.error('Failed to delete chat');
             }
         } catch (error) {
-            console.error('Error deleting session:', error);
-            toast.error('Failed to delete session');
+            console.error('Error deleting chat:', error);
+            toast.error('Failed to delete chat');
         }
     };
 
@@ -4406,14 +4406,14 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 const sessionDate = new Date(session.createdAt || session.timestamp);
                                 return sessionDate < cutoffDate;
                             } catch (error) {
-                                console.warn('Invalid session date:', session, error);
+                                console.warn('Invalid chat date:', session, error);
                                 return false;
                             }
                         });
 
-                        console.log(`Found ${sessionsToDelete.length} old sessions to delete`);
+                        console.log(`Found ${sessionsToDelete.length} old chats to delete`);
 
-                        // Delete sessions with a small delay between each to avoid overwhelming the server
+                        // Delete chats with a small delay between each to avoid overwhelming the server
                         for (let i = 0; i < sessionsToDelete.length; i++) {
                             const session = sessionsToDelete[i];
                             try {
@@ -4425,16 +4425,16 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     await new Promise(resolve => setTimeout(resolve, 100));
                                 }
                             } catch (error) {
-                                console.error('Error deleting session:', session, error);
+                                console.error('Error deleting chat:', session, error);
                             }
                         }
                     }
                 }).catch(error => {
-                    console.error('Error loading chat sessions for cleanup:', error);
+                    console.error('Error loading chats for cleanup:', error);
                 });
             }
 
-            // Clean up old messages from current session
+            // Clean up old messages from current chat
             setMessages(prev => {
                 if (Array.isArray(prev) && prev.length > 0) {
                     const filteredMessages = prev.filter(message => {
@@ -4448,7 +4448,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     });
 
                     if (filteredMessages.length !== prev.length) {
-                        console.log(`Cleaned up ${prev.length - filteredMessages.length} old messages from current session`);
+                        console.log(`Cleaned up ${prev.length - filteredMessages.length} old messages from current chat`);
                     }
 
                     return filteredMessages;
@@ -4955,7 +4955,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 return;
             }
 
-            console.log('Auto-saving session:', currentSessionId, 'Messages:', messages.length);
+            console.log('Auto-saving chat:', currentSessionId, 'Messages:', messages.length);
 
             const saveResponse = await authenticatedFetch(`${API_BASE_URL}/api/chat-history/session/${currentSessionId}`, {
                 method: 'PUT',
@@ -4971,12 +4971,12 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             });
 
             if (saveResponse.ok) {
-                console.log('Session auto-saved successfully');
+                console.log('Chat auto-saved successfully');
             } else {
-                console.error('Failed to auto-save current session:', saveResponse.status, saveResponse.statusText);
+                console.error('Failed to auto-save current chat:', saveResponse.status, saveResponse.statusText);
             }
         } catch (error) {
-            console.error('Error auto-saving session:', error);
+            console.error('Error auto-saving chat:', error);
             // Only report error if it's not a network issue for anonymous users
             if (currentUser) {
                 reportError(error, { action: 'auto_save_session' });
@@ -6688,7 +6688,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         </button>
                                     </div>
                                     {bookmarkedMessages.length === 0 ? (
-                                        <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-center py-8`}>No bookmarked messages in this session</p>
+                                        <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-center py-8`}>No bookmarked messages in this chat</p>
                                     ) : (
                                         <div className="space-y-3">
                                             {bookmarkedMessages.map((bookmark, idx) => (
