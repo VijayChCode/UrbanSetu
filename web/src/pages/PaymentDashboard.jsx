@@ -296,7 +296,8 @@ const PaymentDashboard = () => {
   const downloadReceipt = async (url) => {
     if (!url) return;
     try {
-      const receiptUrl = url.includes('?') ? `${url}&admin=true` : `${url}?admin=true`;
+      const formattedUrl = url.replace(/^https?:\/\/[^\/]+/, import.meta.env.VITE_API_BASE_URL);
+      const receiptUrl = formattedUrl.includes('?') ? `${formattedUrl}&admin=true` : `${formattedUrl}?admin=true`;
       const res = await authenticatedFetch(receiptUrl);
       if (!res.ok) return;
       const blob = await res.blob();

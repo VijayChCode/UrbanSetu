@@ -471,7 +471,8 @@ const MyPayments = () => {
   const downloadReceipt = async (url) => {
     if (!url) return;
     try {
-      const res = await authenticatedFetch(url);
+      const formattedUrl = url.replace(/^https?:\/\/[^\/]+/, import.meta.env.VITE_API_BASE_URL);
+      const res = await authenticatedFetch(formattedUrl);
       if (!res.ok) return;
       const blob = await res.blob();
       const objUrl = window.URL.createObjectURL(blob);

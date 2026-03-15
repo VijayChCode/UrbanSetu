@@ -13152,7 +13152,7 @@ function PaymentStatusCell({ appointment, isBuyer }) {
                   </div>
                 )}
                 <a
-                  href={paymentStatus.receiptUrl}
+                  href={paymentStatus.receiptUrl.replace(/^https?:\/\/[^\/]+/, import.meta.env.VITE_API_BASE_URL)}
                   target="_blank"
                   rel="noreferrer"
                   className="mt-1 inline-flex items-center gap-1 text-white bg-green-600 hover:bg-green-700 text-xs font-semibold px-3 py-1 rounded"

@@ -88,7 +88,8 @@ const PaymentHistory = ({ userId }) => {
     }
     (async () => {
       try {
-        const res = await authenticatedFetch(receiptUrl);
+        const urlToFetch = receiptUrl.replace(/^https?:\/\/[^\/]+/, import.meta.env.VITE_API_BASE_URL);
+        const res = await authenticatedFetch(urlToFetch);
         if (!res.ok) {
           toast.error('Failed to download receipt');
           return;

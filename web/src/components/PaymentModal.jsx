@@ -1063,7 +1063,7 @@ const PaymentModal = ({ isOpen, onClose, appointment, onPaymentSuccess, existing
 
   const downloadReceipt = () => {
     if (receiptUrl) {
-      window.open(receiptUrl, '_blank');
+      window.open(receiptUrl.replace(/^https?:\/\/[^\/]+/, import.meta.env.VITE_API_BASE_URL), '_blank');
     }
   };
 
