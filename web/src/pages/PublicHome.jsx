@@ -13,7 +13,7 @@ import GeminiAIWrapper from '../components/GeminiAIWrapper';
 import SEO from '../components/SEO';
 import Typewriter from "../components/ui/Typewriter";
 import {
-   FaSearch, FaHeart, FaStar, FaMapMarkerAlt, FaPhone, FaEnvelope,
+  FaHome, FaSearch, FaHeart, FaStar, FaMapMarkerAlt, FaPhone, FaEnvelope,
   FaShieldAlt, FaAward, FaUsers, FaChartLine, FaLightbulb, FaRocket, FaGem,
   FaQuoteLeft, FaQuoteRight, FaCheckCircle, FaClock, FaHandshake, FaGlobe,
   FaMobile, FaDesktop, FaTablet, FaInfoCircle, FaArrowRight
