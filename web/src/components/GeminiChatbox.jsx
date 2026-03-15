@@ -176,18 +176,12 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [isOpen]);
 
-    // Auto-resize textarea and manage expanded state
+    // Auto-resize textarea
     useLayoutEffect(() => {
         if (inputRef.current) {
             inputRef.current.style.height = 'auto';
             const newHeight = Math.min(inputRef.current.scrollHeight, 250);
             inputRef.current.style.height = `${newHeight}px`;
-
-            if (newHeight > 50) {
-                if (!isExpanded) setIsExpanded(true);
-            } else {
-                if (isExpanded) setIsExpanded(false);
-            }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [inputMessage]);
