@@ -5178,7 +5178,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         ) : (
                                             <>
                                                 <span className="truncate">{displayedTitle || 'SetuAI'}</span>
-                                                <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full flex-shrink-0">PRO</span>
+                                                {currentUser && <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full flex-shrink-0">PRO</span>}
                                             </>
                                         )}
                                     </div>
