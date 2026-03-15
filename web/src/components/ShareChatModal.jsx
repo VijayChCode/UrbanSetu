@@ -147,6 +147,15 @@ export default function ShareChatModal({ isOpen, onClose, sessionId, currentChat
         setShowSocialPanel(true);
     };
 
+    const getRemainingDays = () => {
+        if (!shareData?.expiresAt) return null;
+        const today = new Date();
+        const expiresAt = new Date(shareData.expiresAt);
+        const diffTime = expiresAt - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays > 0 ? diffDays : 0;
+    };
+
     if (!isOpen) return null;
 
     return (
@@ -244,6 +253,17 @@ export default function ShareChatModal({ isOpen, onClose, sessionId, currentChat
                             </div>
 
                             <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Chat Title (Public)</label>
+                                <input
+                                    type="text"
+                                    value={customTitle}
+                                    onChange={(e) => setCustomTitle(e.target.value)}
+                                    className={`w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 focus:outline-none focus:ring-2 ${themeColors ? themeColors.accent.replace('text-', 'focus:ring-').replace(/500|600/g, '500') : 'focus:ring-blue-500'} focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 transition-colors`}
+                                    placeholder="Enter a title for the shared chat"
+                                />
+                            </div>
+
+                            <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Shared Link</label>
                                 <div className="flex gap-2">
                                     <div className="bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg p-3 text-gray-600 dark:text-gray-300 text-sm flex-1 truncate select-all">
@@ -305,8 +325,12 @@ export default function ShareChatModal({ isOpen, onClose, sessionId, currentChat
                                 <FaTrash className="text-red-500 text-3xl" />
                             </div>
                             <h4 className="text-lg font-bold text-gray-900 dark:text-white">Revoke Shared Link?</h4>
-                            <p className="text-gray-600 dark:text-gray-300 text-sm">
-                                Are you sure you want to delete this shared link? Anyone with the link will no longer be able to access this conversation.
+                            <p className="text-gray-600 dark:text-gray-300 text-sm px-4">
+                                Are you sure you want to delete this shared link? {getRemainingDays() !== null && (
+                                    <span className="font-semibold text-red-600 dark:text-red-400">
+                                        (Expires in {getRemainingDays()} days).
+                                    </span>
+                                )} Anyone with the link will no longer be able to access this conversation.
                             </p>
                             <div className="flex gap-3 pt-2">
                                 <button

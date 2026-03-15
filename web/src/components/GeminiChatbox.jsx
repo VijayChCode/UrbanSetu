@@ -136,10 +136,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         let timer;
         let i = 0;
         const fullText = currentChatName;
-        
+
         // Reset displayed title before starting animation
         setDisplayedTitle('');
-        
+
         const typeWriter = () => {
             if (i < fullText.length) {
                 setDisplayedTitle(fullText.substring(0, i + 1));
@@ -5160,7 +5160,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     </div>
                                     <div className="text-[10px] md:text-xs text-white/80 truncate flex items-center gap-1">
                                         <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                                        {displayedTitle !== 'SetuAI' ? 'Active Chat • AI Powered' : 'Online • Real Estate Expert'}
+                                        {displayedTitle !== 'SetuAI' ? 'Active Chat • AI Powered' : 'Online • Real Estate Expert Powered by Sentinel v2.0'}
                                     </div>
                                 </div>
                             </div>
@@ -6783,16 +6783,15 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                         <div
                                                             key={session.sessionId || idx}
                                                             className={`p-3 border rounded-lg transition-all duration-300 ${isActiveSession
-                                                                ? `${isDarkMode ? 'bg-blue-900/30 border-blue-500' : 'bg-blue-50 border-blue-400'}`
+                                                                ? `${isDarkMode ? `${themeColors.accent.replace('text-', 'bg-')}/20 ${themeColors.accent.replace('text-', 'border-')}` : `${themeColors.secondary} ${themeColors.accent.replace('text-', 'border-')}`}`
                                                                 : `${isDarkMode ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-200 hover:bg-gray-50'}`
                                                                 }`}
                                                         >
                                                             <div className="flex items-center justify-between gap-2">
                                                                 <input
                                                                     type="checkbox"
-                                                                    className="mt-1 w-3.5 h-3.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:ring-1 dark:border-gray-600 dark:ring-offset-gray-800"
+                                                                    className={`mt-1 w-3.5 h-3.5 ${themeColors.accent.replace('text-', 'accent-')} border-gray-300 rounded focus:ring-1 dark:border-gray-600 dark:ring-offset-gray-800`}
                                                                     style={{
-                                                                        accentColor: '#2563eb', // Blue color for the checkmark
                                                                         backgroundColor: 'transparent' // Remove background highlighting
                                                                     }}
                                                                     checked={selectedHistoryIds.includes(session.sessionId)}
@@ -6814,7 +6813,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                     <div className={`text-sm font-medium flex items-center gap-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
                                                                         {session.name?.trim() ? session.name : `New chat ${idx + 1}`}
                                                                         {isActiveSession && (
-                                                                            <span className={`px-2 py-0.5 text-xs rounded-full ${isDarkMode ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white'} font-medium`}>
+                                                                            <span className={`px-2 py-0.5 text-xs rounded-full ${isDarkMode ? `${themeColors.accent.replace('text-', 'bg-')} text-white` : `bg-gradient-to-r ${themeColors.primary} text-white`} font-medium`}>
                                                                                 Active
                                                                             </span>
                                                                         )}
