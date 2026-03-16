@@ -719,7 +719,7 @@ export default function Listing() {
 
   // Function to check if current owner is active
   const checkOwnerStatus = async () => {
-    const ownerId = (listing?.userRef && typeof listing.userRef === 'object') ? listing.userRef._id : listing?.userRef;
+    const ownerId = (listing?.userRef && typeof listing.userRef === 'object') ? listing.userRef?._id : listing?.userRef;
     if (listing && ownerId) {
       try {
         const res = await authenticatedFetch(`${API_BASE_URL}/api/user/id/${ownerId}`, { autoRedirect: false });
@@ -1459,7 +1459,7 @@ export default function Listing() {
   // Fetch owner details after listing is loaded
   useEffect(() => {
     const fetchOwnerDetails = async () => {
-      const ownerId = (listing?.userRef && typeof listing.userRef === 'object') ? listing.userRef._id : listing?.userRef;
+      const ownerId = (listing?.userRef && typeof listing.userRef === 'object') ? listing.userRef?._id : listing?.userRef;
       if (listing && ownerId) {
         setOwnerLoading(true);
         setOwnerError("");
@@ -3332,7 +3332,7 @@ export default function Listing() {
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Created By</p>
                     <p className="font-semibold text-gray-800 dark:text-gray-200">
-                      {(listing.userRef && typeof listing.userRef === 'object') ? (listing.userRef.username || listing.userRef._id) : (listing.userRef || 'Unknown')}
+                      {(listing?.userRef && typeof listing.userRef === 'object') ? (listing.userRef?.username || listing.userRef?._id || 'Unknown') : (listing?.userRef || 'Unknown')}
                     </p>
                   </div>
                   <div>
@@ -3357,19 +3357,19 @@ export default function Listing() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                       <div>
                         <p className="text-sm text-gray-600 dark:text-gray-400">Owner Name</p>
-                        <p className="font-semibold text-gray-800 dark:text-gray-200">{ownerDetails.username}</p>
+                        <p className="font-semibold text-gray-800 dark:text-gray-200">{ownerDetails?.username || 'N/A'}</p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-600 dark:text-gray-400">Owner Email</p>
-                        <p className="font-semibold text-gray-800 dark:text-gray-200">{ownerDetails.email}</p>
+                        <p className="font-semibold text-gray-800 dark:text-gray-200">{ownerDetails?.email || 'N/A'}</p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-600 dark:text-gray-400">Mobile Number</p>
-                        <p className="font-semibold text-gray-800 dark:text-gray-200">{ownerDetails.mobileNumber}</p>
+                        <p className="font-semibold text-gray-800 dark:text-gray-200">{ownerDetails?.mobileNumber || 'N/A'}</p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-600 dark:text-gray-400">Owner ID</p>
-                        <p className="font-semibold text-gray-800 dark:text-gray-200">{ownerDetails._id}</p>
+                        <p className="font-semibold text-gray-800 dark:text-gray-200">{ownerDetails?._id || 'N/A'}</p>
                       </div>
                     </div>
                     {isAdmin && (
@@ -3758,7 +3758,7 @@ export default function Listing() {
                     // Refresh the listing data to update rating
                     window.location.reload();
                   }}
-                  listingOwnerId={(listing.userRef && typeof listing.userRef === 'object') ? listing.userRef._id : listing.userRef}
+                  listingOwnerId={(listing?.userRef && typeof listing.userRef === 'object') ? listing.userRef?._id : listing?.userRef}
                 />
               </div>
             </div>
@@ -4303,7 +4303,7 @@ export default function Listing() {
       {listing && (
         <PreBookingChatWrapper
           listingId={listing._id}
-          ownerId={(listing.userRef && typeof listing.userRef === 'object') ? listing.userRef._id : listing.userRef}
+          ownerId={(listing?.userRef && typeof listing.userRef === 'object') ? listing.userRef?._id : listing?.userRef}
           listingTitle={listing.name}
         />
       )}
