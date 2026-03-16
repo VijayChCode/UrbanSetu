@@ -3,6 +3,7 @@ import { FaServer, FaExclamationTriangle, FaSync, FaArrowRight, FaRobot, FaRocke
 import ListingItem from './ListingItem';
 import { getLiveRecommendations } from '../utils/sentinelLiveEngine';
 import { authenticatedFetch } from '../utils/auth';
+import SEO from './SEO';
 
 class GlobalErrorBoundary extends React.Component {
     constructor(props) {
@@ -210,6 +211,11 @@ class GlobalErrorBoundary extends React.Component {
 
             return (
                 <div className={`min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center p-4 gap-12 py-12`}>
+                    <SEO 
+                        title={this.state.isPersistentError ? "System Disruption - UrbanSetu" : "Something Went Wrong - UrbanSetu"} 
+                        description="UrbanSetu is experiencing a temporary service disruption. We are working to restore normal operations as soon as possible."
+                        noindex={true}
+                    />
                     <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden text-center p-8 relative animate-fade-in-up">
                         {/* Status bar for switch count */}
                         {this.state.switchCount > 0 && !this.state.isPersistentError && (
@@ -220,6 +226,18 @@ class GlobalErrorBoundary extends React.Component {
                                 />
                             </div>
                         )}
+
+                        <div className="flex flex-col items-center mb-10">
+                            <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-xl transform transition-transform hover:scale-105 active:scale-95 duration-300">
+                                    <span className="text-white font-black text-2xl italic">U</span>
+                                </div>
+                                <div className="flex flex-col items-start leading-none">
+                                    <span className="text-2xl font-black text-gray-900 dark:text-white tracking-tighter">UrbanSetu</span>
+                                    <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest mt-1">Real Estate Excellence</span>
+                                </div>
+                            </div>
+                        </div>
 
                         <div className="mx-auto w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mb-6">
                             <FaExclamationTriangle className="text-3xl text-red-600 dark:text-red-400" />
