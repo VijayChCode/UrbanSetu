@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { FaRobot, FaUser, FaClock, FaCalendar, FaExclamationTriangle, FaArrowRight, FaDownload, FaExternalLinkAlt, FaChevronLeft, FaChevronRight, FaPaperPlane, FaUserCircle, FaCopy } from 'react-icons/fa';
+import { FaRobot, FaUser, FaClock, FaCalendar, FaExclamationTriangle, FaArrowRight, FaDownload, FaExternalLinkAlt, FaChevronLeft, FaChevronRight, FaPaperPlane, FaUserCircle, FaCopy, FaCheck } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 
 import { usePageTitle } from '../hooks/usePageTitle';
@@ -39,7 +39,7 @@ export default function SharedChatView() {
     const navigate = useNavigate();
     const { currentUser } = useSelector((state) => state.user);
     const [chatData, setChatData] = useState(null);
-    usePageTitle(chatData ? chatData.title : "Shared Chat", "SetuAI");
+    usePageTitle(chatData ? chatData.title : "Shared Chat", "SetuAI Shared Chat");
     const [loading, setLoading] = useState(true);
     const [importing, setImporting] = useState(false);
     const [importedSessionId, setImportedSessionId] = useState(null);
