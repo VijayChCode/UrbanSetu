@@ -46,10 +46,11 @@ export const saveChatMessage = async (req, res) => {
     }
 };
 
-// Get chat history for a session
+// Get chat history for a session (Paginated)
 export const getChatHistory = async (req, res) => {
     try {
         const { sessionId } = req.params;
+        const { page = 1, limit = 20 } = req.query;
         const userId = req.user.id;
 
         if (!sessionId) {
@@ -66,24 +67,39 @@ export const getChatHistory = async (req, res) => {
         }).populate('userId', 'username email role');
 
         if (!chatHistory) {
-            // Return empty session instead of 404 to avoid console errors
             return res.status(200).json({
                 success: true,
                 data: {
                     sessionId: sessionId,
                     messages: [],
-                    totalMessages: 0
+                    totalMessages: 0,
+                    hasMore: false
                 }
             });
         }
+
+        const totalMessages = chatHistory.messages.length;
+        const pageNum = parseInt(page);
+        const limitNum = parseInt(limit);
+        
+        // Calculate slice range to get messages from end (recent) to start (old)
+        // Example: Total 100, page 1, limit 20 -> indices 80-99
+        // page 2, limit 20 -> indices 60-79
+        const end = totalMessages - (pageNum - 1) * limitNum;
+        const start = Math.max(0, end - limitNum);
+        
+        const paginatedMessages = chatHistory.messages.slice(start, end);
+        const hasMore = start > 0;
 
         res.status(200).json({
             success: true,
             data: {
                 sessionId: chatHistory.sessionId,
                 name: chatHistory.name,
-                messages: chatHistory.messages,
-                totalMessages: chatHistory.totalMessages,
+                messages: paginatedMessages,
+                totalMessages: totalMessages,
+                hasMore: hasMore,
+                currentPage: pageNum,
                 lastActivity: chatHistory.lastActivity,
                 createdAt: chatHistory.createdAt
             }

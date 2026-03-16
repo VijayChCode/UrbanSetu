@@ -36,7 +36,7 @@ const THINKING_TAGS = [
 
 const ScrollingThinkingTags = ({ isHeader = false, isDarkMode = false }) => {
     const [index, setIndex] = useState(0);
-    
+
     useEffect(() => {
         const interval = setInterval(() => {
             setIndex((prev) => (prev + 1) % THINKING_TAGS.length);
@@ -46,7 +46,7 @@ const ScrollingThinkingTags = ({ isHeader = false, isDarkMode = false }) => {
 
     return (
         <div className={`overflow-hidden h-[1.2em] relative inline-block ${isHeader ? 'min-w-[120px]' : 'min-w-[150px]'}`}>
-            <div 
+            <div
                 className="transition-transform duration-500 ease-in-out absolute w-full"
                 style={{ transform: `translateY(-${index * 1.2}em)` }}
             >
@@ -154,6 +154,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             timestamp: new Date().toISOString()
         }
     ]);
+    const [messageHistoryPage, setMessageHistoryPage] = useState(1);
+    const [hasMoreHistory, setHasMoreHistory] = useState(false);
+    const [isLoadingPreviousMessages, setIsLoadingPreviousMessages] = useState(false);
     const [inputMessage, setInputMessage] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [sessionId, setSessionId] = useState(null);
@@ -1345,12 +1348,17 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         }
     };
 
-    // Load chat history for authenticated users
-    const loadChatHistory = async (currentSessionId) => {
+    // Load chat history for authenticated users (Paginated)
+    const loadChatHistory = async (currentSessionId, page = 1) => {
         if (!currentUser || !currentSessionId) return;
 
+        if (page > 1) {
+            setIsLoadingPreviousMessages(true);
+        }
+
         try {
-            const response = await authenticatedFetch(`${API_BASE_URL}/api/chat-history/session/${currentSessionId}`, {
+            const limit = 20;
+            const response = await authenticatedFetch(`${API_BASE_URL}/api/chat-history/session/${currentSessionId}?page=${page}&limit=${limit}`, {
                 headers: {
                     'Content-Type': 'application/json',
                 }
@@ -1358,19 +1366,46 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
             if (response.ok) {
                 const data = await response.json();
-                if (data.success && data.data.messages && Array.isArray(data.data.messages) && data.data.messages.length > 0) {
-                    setMessages(data.data.messages);
-                    console.log('Session history loaded:', data.data.messages.length, 'messages');
+                if (data.success && data.data.messages && Array.isArray(data.data.messages)) {
+                    const newMessages = data.data.messages;
+
+                    if (page === 1) {
+                        // Initial load
+                        setMessages(newMessages.length > 0 ? newMessages : [
+                            {
+                                role: 'assistant',
+                                content: "Hello! I'm SetuAI your AI assistant powered by Groq and co-powered by Sentinel v2.0 Neural Engine (TensorFlow). How can I help you with your real estate needs today?",
+                                timestamp: new Date().toISOString()
+                            }
+                        ]);
+                        setMessageHistoryPage(1);
+                    } else {
+                        // Prepend older history
+                        const container = messagesContainerRef.current;
+                        const oldScrollHeight = container.scrollHeight;
+
+                        setMessages(prev => [...newMessages, ...prev]);
+                        setMessageHistoryPage(page);
+
+                        // Small timeout to allow render before adjusting scroll to prevent jump
+                        setTimeout(() => {
+                            if (container) {
+                                container.scrollTop = container.scrollHeight - oldScrollHeight;
+                            }
+                        }, 50);
+                    }
+
+                    setHasMoreHistory(data.data.hasMore);
+                    console.log(`Session history loaded (Page ${page}):`, newMessages.length, 'messages');
                 }
-            } else if (response.status === 404) {
-                // No history found, keep default welcome message
+            } else if (response.status === 404 && page === 1) {
                 console.log('No session history found');
-            } else {
-                console.error('Failed to load session history:', response.status);
+                setHasMoreHistory(false);
             }
         } catch (error) {
             console.error('Error loading session history:', error);
         } finally {
+            setIsLoadingPreviousMessages(false);
             setIsHistoryLoaded(true);
         }
     };
@@ -2365,6 +2400,15 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             // Show floating date when scrolling starts
             setIsScrolling(true);
 
+            // Check for scroll to top to load previous messages
+            if (el.scrollTop === 0 && hasMoreHistory && !isLoadingPreviousMessages) {
+                console.log('Loading previous messages...');
+                const currentSessionId = sessionId || localStorage.getItem('gemini_session_id');
+                if (currentSessionId) {
+                    loadChatHistory(currentSessionId, messageHistoryPage + 1);
+                }
+            }
+
             // Clear existing timeout
             if (scrollTimeoutRef.current) {
                 clearTimeout(scrollTimeoutRef.current);
@@ -2380,7 +2424,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             el.removeEventListener('scroll', onScroll);
             if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
         };
-    }, [isOpen, messages]);
+    }, [isOpen, messages, hasMoreHistory, messageHistoryPage, isLoadingPreviousMessages, sessionId]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -2661,9 +2705,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     console.log('Setting message with response length:', trimmedResponse.length);
                     setMessages(prev => {
                         const currentMessages = Array.isArray(prev) ? prev : [];
-                        return [...currentMessages, { 
-                            role: 'assistant', 
-                            content: trimmedResponse, 
+                        return [...currentMessages, {
+                            role: 'assistant',
+                            content: trimmedResponse,
                             timestamp: new Date().toISOString(),
                             recommendations: data.recommendations
                         }];
@@ -3181,7 +3225,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             if (response.ok) {
                 localStorage.setItem('lastReportMessageTime', now.toString()); // Record successful report time
                 setReportStep(4);
-                
+
                 // Auto-close after 3 seconds
                 setTimeout(() => {
                     setShowReportModal(false);
@@ -4607,7 +4651,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
     const handleLoadMoreSuggestions = async () => {
         if (isLoadingMoreSuggestions) return;
-        
+
         setIsLoadingMoreSuggestions(true);
         try {
             const currentSessionId = sessionId || localStorage.getItem('gemini_session_id');
@@ -5312,14 +5356,12 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     </div>
                                     {/* Online status indicator with ping effect */}
                                     <div className="absolute -bottom-1 -right-1 w-3 h-3 flex items-center justify-center">
-                                        <div className={`absolute inset-0 rounded-full border-2 border-white ${
-                                            hasChatError ? 'bg-red-500' :
+                                        <div className={`absolute inset-0 rounded-full border-2 border-white ${hasChatError ? 'bg-red-500' :
                                             isLoading || showTypingIndicator ? 'bg-blue-400' : 'bg-green-400'
-                                        }`}></div>
-                                        <div className={`w-full h-full rounded-full animate-ping opacity-75 ${
-                                            hasChatError ? 'bg-red-500' :
+                                            }`}></div>
+                                        <div className={`w-full h-full rounded-full animate-ping opacity-75 ${hasChatError ? 'bg-red-500' :
                                             isLoading || showTypingIndicator ? 'bg-blue-400' : 'bg-green-400'
-                                        }`}></div>
+                                            }`}></div>
                                     </div>
                                 </div>
                                 <div class="leading-tight block max-w-full overflow-hidden">
@@ -5698,6 +5740,17 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     </div>
                                 </div>
                             )}
+
+                            {/* Loading Previous Messages Spinner */}
+                            {isLoadingPreviousMessages && (
+                                <div className="flex justify-center py-4 animate-fadeIn">
+                                    <div className={`flex items-center gap-2 px-4 py-2 rounded-full border shadow-lg ${isDarkMode ? 'bg-gray-800/90 border-gray-700 text-blue-400' : 'bg-white/90 border-blue-100 text-blue-600'} backdrop-blur-md transform transition-all hover:scale-105`}>
+                                        <FaSync className="animate-spin" size={12} />
+                                        <span className="text-[10px] font-bold uppercase tracking-widest">Loading History</span>
+                                    </div>
+                                </div>
+                            )}
+
                             {messages.map((message, index) => {
                                 const showDivider = index === 0 || !isSameDay(messages[index - 1]?.timestamp, message.timestamp);
                                 const dividerLabel = showDivider ? getDateLabel(message.timestamp) : '';
@@ -6149,7 +6202,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                             id={screenReaderSupport ? `message-${index}-content` : undefined}
                                                         >
                                                             {renderTextWithMarkdownAndLinks(message.content, message.role === 'user')}
-                                                            
+
                                                             {/* Recommended Properties Slider */}
                                                             {message.role === 'assistant' && message.recommendations && message.recommendations.length > 0 && (
                                                                 <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700/50 animate-fade-in">
@@ -6166,7 +6219,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                             {message.recommendations.length} {message.recommendations.length === 1 ? 'property' : 'properties'}
                                                                         </span>
                                                                     </div>
-                                                                    
+
                                                                     <div className="flex overflow-x-auto pb-4 gap-4 no-scrollbar scroll-smooth snap-x">
                                                                         {message.recommendations.map((property, pIdx) => (
                                                                             <div key={property._id || pIdx} className="flex-shrink-0 w-[240px] snap-start transform transition-transform duration-300 hover:scale-[1.02]">
@@ -6174,7 +6227,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                             </div>
                                                                         ))}
                                                                     </div>
-                                                                    
+
                                                                     <div className="flex items-center justify-center gap-1.5 mt-1 opacity-40">
                                                                         <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div>
                                                                         <div className="w-1 h-1 rounded-full bg-gray-400"></div>
@@ -6526,16 +6579,15 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             {/* Enhanced Smart Suggestions - Contextual and Dismissible */}
                             {showSmartSuggestions && (
                                 <div className={`mb-3 px-2 animate-fadeIn`}>
-                                    <div className={`p-3 rounded-2xl border ${isDarkMode 
-                                        ? 'bg-gray-800/40 border-gray-700/50 shadow-lg' 
+                                    <div className={`p-3 rounded-2xl border ${isDarkMode
+                                        ? 'bg-gray-800/40 border-gray-700/50 shadow-lg'
                                         : `${themeColors.secondary}/80 ${themeColors.border}/40 shadow-sm`} relative group backdrop-blur-sm`}>
                                         <div className="flex items-center justify-between mb-2">
                                             <div className="flex items-center gap-2">
-                                                <div className={`p-1.5 rounded-lg shadow-sm ${
-                                                    isDarkMode 
-                                                        ? `bg-opacity-20 bg-white border border-white/10` 
-                                                        : `bg-gradient-to-r ${themeColors.primary} text-white`
-                                                }`}>
+                                                <div className={`p-1.5 rounded-lg shadow-sm ${isDarkMode
+                                                    ? `bg-opacity-20 bg-white border border-white/10`
+                                                    : `bg-gradient-to-r ${themeColors.primary} text-white`
+                                                    }`}>
                                                     <FaLightbulb size={12} className={isDarkMode ? themeColors.accent : "text-white animate-pulse"} />
                                                 </div>
                                                 <span className={`text-[10px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
@@ -6543,20 +6595,20 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                 </span>
                                             </div>
                                             <div className="flex items-center gap-1">
-                                                <button 
+                                                <button
                                                     onClick={handleLoadMoreSuggestions}
                                                     disabled={isLoadingMoreSuggestions}
-                                                    className={`p-1 rounded-full transition-all duration-200 ${isDarkMode 
-                                                        ? 'hover:bg-gray-700 text-gray-500' 
+                                                    className={`p-1 rounded-full transition-all duration-200 ${isDarkMode
+                                                        ? 'hover:bg-gray-700 text-gray-500'
                                                         : `hover:bg-white text-gray-400 shadow-sm border border-transparent hover:border-blue-100`} hover:text-blue-500`}
                                                     title="Load More Suggestions"
                                                 >
                                                     <FaSync size={10} className={isLoadingMoreSuggestions ? 'animate-spin' : ''} />
                                                 </button>
-                                                <button 
+                                                <button
                                                     onClick={() => setShowSmartSuggestions(false)}
-                                                    className={`p-1 rounded-full transition-all duration-200 ${isDarkMode 
-                                                        ? 'hover:bg-gray-700 text-gray-500' 
+                                                    className={`p-1 rounded-full transition-all duration-200 ${isDarkMode
+                                                        ? 'hover:bg-gray-700 text-gray-500'
                                                         : `hover:bg-white text-gray-400 shadow-sm border border-transparent hover:border-red-100`} hover:text-red-500`}
                                                     title="Dismiss"
                                                 >
@@ -6564,7 +6616,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                 </button>
                                             </div>
                                         </div>
-                                        
+
                                         <div className="flex flex-nowrap gap-2 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1">
                                             {smartSuggestions.map((suggestion, index) => (
                                                 <button
@@ -6574,7 +6626,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                         ? `bg-gray-900/60 border-gray-600 text-gray-300 hover:bg-gray-800 hover:border-white/20 hover:text-white`
                                                         : `bg-white ${themeColors.border} ${themeColors.accent} hover:bg-gray-50 shadow-sm`
                                                         }`}
-                                                    style={{ 
+                                                    style={{
                                                         animationDelay: `${index * 50}ms`,
                                                         borderColor: isDarkMode ? undefined : themeColors.border.replace('border-', '')
                                                     }}
@@ -7971,12 +8023,12 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                             </button>
                                                         </div>
                                                     </div>
-                                                                                 {/* Advanced Settings Placeholder */}
-                                            {currentUser && (
-                                                <div className="text-xs p-3 rounded-lg bg-blue-50/30 dark:bg-blue-900/10 border border-blue-100/30 dark:border-blue-800/20 text-blue-600/70 dark:text-blue-400/70 text-center italic">
-                                                    AI behavioral optimizations are managed automatically.
-                                                </div>
-                                            )}               </div>
+                                                    {/* Advanced Settings Placeholder */}
+                                                    {currentUser && (
+                                                        <div className="text-xs p-3 rounded-lg bg-blue-50/30 dark:bg-blue-900/10 border border-blue-100/30 dark:border-blue-800/20 text-blue-600/70 dark:text-blue-400/70 text-center italic">
+                                                            AI behavioral optimizations are managed automatically.
+                                                        </div>
+                                                    )}               </div>
                                             )}
 
                                             {/* Login Required Message for Public Users */}
