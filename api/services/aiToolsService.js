@@ -111,7 +111,7 @@ export const searchProperties = async ({
                 landmark: l.landmark,
                 pincode: l.pincode,
                 isVerified: l.isVerified,
-                userRef: l.userRef,
+                userRef: l.userRef?.toString(),
                 description: l.description
             }))
         });
@@ -164,7 +164,7 @@ export const getUserListings = async ({ userId }) => {
         }
 
         const listings = await Listing.find({ userRef: userId })
-            .select('name city type regularPrice discountPrice offer imageUrls bedrooms bathrooms area address propertyNumber landmark state pincode isVerified availabilityStatus description')
+            .select('name city type regularPrice discountPrice offer imageUrls bedrooms bathrooms area address propertyNumber landmark state pincode isVerified availabilityStatus userRef description')
             .lean();
 
         if (listings.length === 0) {
@@ -201,6 +201,7 @@ export const getUserListings = async ({ userId }) => {
                 pincode: l.pincode,
                 isVerified: l.isVerified,
                 availabilityStatus: l.availabilityStatus,
+                userRef: l.userRef?.toString(),
                 description: l.description
             }))
         });

@@ -282,8 +282,8 @@ export default function ListingItem({ listing, onDelete, onWishToggle }) {
       </Link>
 
       <div className="mt-2 sm:mt-4">
-        {currentUser && currentUser._id === listing.userRef ? (
-          <div className="w-full text-red-500 dark:text-red-400 font-semibold text-center py-2 sm:py-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+        {currentUser && currentUser._id.toString() === listing.userRef?.toString() ? (
+          <div className="w-full text-white font-bold text-center py-2 sm:py-3 rounded-lg bg-red-500/90 shadow-lg border border-red-600 animate-pulse">
             You cannot book/rent your own property.
           </div>
         ) : (
