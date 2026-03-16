@@ -6205,11 +6205,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                             className={`${getFontSizeClass()} whitespace-pre-wrap leading-relaxed ${message.role === 'user' ? 'text-white' : 'text-gray-800 dark:text-gray-100'}`}
                                                             id={screenReaderSupport ? `message-${index}-content` : undefined}
                                                         >
-                                                            {renderTextWithMarkdownAndLinks(message.content, message.role === 'user')}
+                                                            <div className="message-content-text">
+                                                                {renderTextWithMarkdownAndLinks(message.content, message.role === 'user')}
+                                                            </div>
 
                                                             {/* Recommended Properties Slider */}
                                                             {message.role === 'assistant' && message.recommendations && message.recommendations.length > 0 && (
-                                                                <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700/50 animate-fade-in">
+                                                                <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700/50 animate-fade-in not-prose">
                                                                     <div className="flex items-center justify-between mb-3 px-1">
                                                                         <div className="flex items-center gap-2">
                                                                             <div className="p-1 px-2 bg-blue-600/10 text-blue-600 dark:text-blue-400 rounded-full text-[10px] font-black uppercase tracking-wider">
@@ -8628,17 +8630,17 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     border: 0 !important;
                 }
                 
-                /* Ensure proper text color inheritance in message bubbles */
-                .bg-gray-100.text-gray-800 * {
+                /* Ensure proper text color inheritance in message bubbles - only for text content to avoid breaking component colors like ListingItem */
+                .bg-gray-100.text-gray-800 .message-content-text * {
                     color: inherit !important;
                 }
-                .bg-gray-100.text-gray-800 span {
+                .bg-gray-100.text-gray-800 .message-content-text span {
                     color: #1f2937 !important; /* text-gray-800 */
                 }
-                .bg-gray-100.text-gray-800 p {
+                .bg-gray-100.text-gray-800 .message-content-text p {
                     color: #1f2937 !important; /* text-gray-800 */
                 }
-                .bg-gray-100.text-gray-800 div {
+                .bg-gray-100.text-gray-800 .message-content-text div {
                     color: #1f2937 !important; /* text-gray-800 */
                 }
                 
@@ -8650,17 +8652,17 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     color: #1d4ed8 !important; /* text-blue-800 */
                 }
                 
-                /* Dark mode text color inheritance */
-                .bg-gray-800.text-gray-100 * {
+                /* Dark mode text color inheritance - scoped to text content */
+                .bg-gray-800.text-gray-100 .message-content-text * {
                     color: inherit !important;
                 }
-                .bg-gray-800.text-gray-100 span {
+                .bg-gray-800.text-gray-100 .message-content-text span {
                     color: #f3f4f6 !important; /* text-gray-100 */
                 }
-                .bg-gray-800.text-gray-100 p {
+                .bg-gray-800.text-gray-100 .message-content-text p {
                     color: #f3f4f6 !important; /* text-gray-100 */
                 }
-                .bg-gray-800.text-gray-100 div {
+                .bg-gray-800.text-gray-100 .message-content-text div {
                     color: #f3f4f6 !important; /* text-gray-100 */
                 }
                 
