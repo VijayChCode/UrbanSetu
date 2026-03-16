@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { FaRobot, FaUser, FaClock, FaCalendar, FaExclamationTriangle, FaArrowRight, FaDownload, FaExternalLinkAlt, FaChevronLeft, FaChevronRight, FaUserCircle, FaCopy, FaCheck } from 'react-icons/fa';
+import { FaRobot, FaUser, FaClock, FaCalendar, FaExclamationTriangle, FaArrowRight, FaDownload, FaExternalLinkAlt, FaChevronLeft, FaChevronRight, FaPaperPlane, FaUserCircle, FaCopy } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 
 import { usePageTitle } from '../hooks/usePageTitle';
@@ -291,17 +291,17 @@ export default function SharedChatView() {
 
                             <div className={`relative inline-block text-left w-full sm:w-auto max-w-full rounded-[2rem] p-6 sm:p-8 shadow-2xl transition-all ${msg.role === 'user' ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-white dark:bg-gray-800 border-2 border-gray-50 dark:border-gray-800 text-gray-800 dark:text-blue-50 rounded-tl-none'}`}>
 
-                                        {msg.variants && msg.variants.length > 1 && (
-                                            <div className="flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black bg-black/5 dark:bg-white/5 text-current mb-5 w-fit border border-current/10 select-none">
-                                                <button onClick={() => switchMessageVersion(index, (msg.activeVersionIndex || 0) - 1)} disabled={(msg.activeVersionIndex || 0) === 0} className="hover:scale-150 disabled:opacity-10 transition-all"><FaChevronLeft size={6} /></button>
-                                                <span className="min-w-[40px] text-center tracking-tighter">{(msg.activeVersionIndex || 0) + 1} of {msg.variants.length}</span>
-                                                <button onClick={() => switchMessageVersion(index, (msg.activeVersionIndex || 0) + 1)} disabled={(msg.activeVersionIndex || 0) === msg.variants.length - 1} className="hover:scale-150 disabled:opacity-10 transition-all"><FaChevronRight size={6} /></button>
-                                            </div>
-                                        )}
+                                {msg.variants && msg.variants.length > 1 && (
+                                    <div className="flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black bg-black/5 dark:bg-white/5 text-current mb-5 w-fit border border-current/10 select-none">
+                                        <button onClick={() => switchMessageVersion(index, (msg.activeVersionIndex || 0) - 1)} disabled={(msg.activeVersionIndex || 0) === 0} className="hover:scale-150 disabled:opacity-10 transition-all"><FaChevronLeft size={6} /></button>
+                                        <span className="min-w-[40px] text-center tracking-tighter">{(msg.activeVersionIndex || 0) + 1} of {msg.variants.length}</span>
+                                        <button onClick={() => switchMessageVersion(index, (msg.activeVersionIndex || 0) + 1)} disabled={(msg.activeVersionIndex || 0) === msg.variants.length - 1} className="hover:scale-150 disabled:opacity-10 transition-all"><FaChevronRight size={6} /></button>
+                                    </div>
+                                )}
 
-                                        <div className={`text-base sm:text-lg whitespace-pre-wrap ${msg.role === 'user' ? 'font-medium' : ''}`}>
-                                            {formatText(msg.content, msg.role === 'user')}
-                                        </div>
+                                <div className={`text-base sm:text-lg whitespace-pre-wrap ${msg.role === 'user' ? 'font-medium' : ''}`}>
+                                    {formatText(msg.content, msg.role === 'user')}
+                                </div>
 
                                 {msg.recommendations && msg.recommendations.length > 0 && (
                                     <div className="mt-10 pt-10 border-t-2 border-gray-50 dark:border-gray-700/50">
