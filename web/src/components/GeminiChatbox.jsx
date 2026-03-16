@@ -3115,6 +3115,16 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             return;
         }
 
+        // Apply Client-Side Rate Limiting for Reports (60 seconds)
+        const lastReportTimeStr = localStorage.getItem('lastReportMessageTime');
+        const now = new Date().getTime();
+        const REPORT_COOLDOWN_MS = 60000; // 60 seconds
+
+        if (lastReportTimeStr && now - parseInt(lastReportTimeStr, 10) < REPORT_COOLDOWN_MS) {
+            const timeLeft = Math.ceil((REPORT_COOLDOWN_MS - (now - parseInt(lastReportTimeStr, 10))) / 1000);
+            toast.error(`Please wait ${timeLeft} seconds before submitting another report.`);
+            return;
+        }
 
         // Get the prompt content
         const promptContent = reportingMessage.originalUserMessage ||
@@ -3138,6 +3148,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             });
 
             if (response.ok) {
+                localStorage.setItem('lastReportMessageTime', now.toString()); // Record successful report time
                 toast.success('Report submitted successfully');
                 setShowReportModal(false);
                 setReportStep(1);
