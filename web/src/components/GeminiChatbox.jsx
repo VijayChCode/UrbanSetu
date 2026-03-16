@@ -218,13 +218,26 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     }, [currentChatName]);
 
     // Dynamic browser tab title handling based on chat title
+    const originalTitleRef = useRef(document.title);
     useEffect(() => {
-        if (currentChatName && currentChatName !== 'New Chat' && !/^Chat \d/i.test(currentChatName)) {
-            document.title = `${currentChatName} - SetuAI`;
+        if (isOpen) {
+            // Store original title if we haven't already (or update it if it's not a chat title)
+            if (!document.title.includes(' - SetuAI')) {
+                originalTitleRef.current = document.title;
+            }
+
+            if (currentChatName && currentChatName !== 'New Chat' && !/^Chat \d/i.test(currentChatName)) {
+                document.title = `${currentChatName} - SetuAI`;
+            } else {
+                document.title = "AI Assistant - Smart Property Search";
+            }
         } else {
-            document.title = "AI Assistant - Smart Property Search";
+            // Restore original title when closed
+            if (originalTitleRef.current) {
+                document.title = originalTitleRef.current;
+            }
         }
-    }, [currentChatName]);
+    }, [currentChatName, isOpen]);
 
     // Property suggestion states
     const [showPropertySuggestions, setShowPropertySuggestions] = useState(false);
@@ -5772,6 +5785,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                 return;
                                                             }
                                                             setShareTargetSessionId(getOrCreateSessionId());
+                                                            // Force a quick save of current messages before opening share modal
+                                                            // to ensure backend has the total chat even if not all loaded
+                                                            if (currentUser && messages.length > 0) {
+                                                                saveCurrentSession();
+                                                            }
                                                             setIsShareModalOpen(true);
                                                         }}
                                                         className={`w-full text-left px-4 py-3 ${isDarkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-100/80'} flex items-center gap-3 transition-all duration-200 hover:scale-[1.02] group`}

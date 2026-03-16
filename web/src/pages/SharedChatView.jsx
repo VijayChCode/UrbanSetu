@@ -299,7 +299,7 @@ export default function SharedChatView() {
 
                         <div className={`flex-1 min-w-0 ${msg.role === 'user' ? 'text-right' : ''}`}>
                             <h4 className={`text-[10px] font-black uppercase tracking-[0.2em] mb-2 ${msg.role === 'user' ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400 dark:text-gray-500'}`}>
-                                {msg.role === 'user' ? 'Contributor' : 'SetuAI Engine'}
+                                {msg.role === 'user' ? 'Contributor' : 'SetuAI'}
                             </h4>
 
                             <div className={`relative inline-block text-left w-full sm:w-auto max-w-full rounded-[2rem] p-6 sm:p-8 shadow-2xl transition-all ${msg.role === 'user' ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-white dark:bg-gray-800 border-2 border-gray-50 dark:border-gray-800 text-gray-800 dark:text-blue-50 rounded-tl-none'}`}>

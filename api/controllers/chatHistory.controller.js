@@ -278,8 +278,31 @@ export const updateChatSession = async (req, res) => {
 
         // Update the session with new messages and optional name
         if (hasMessages) {
-            chatHistory.messages = messages;
-            chatHistory.totalMessages = totalMessages || messages.length;
+            // Check if this is a partial update (e.g., from a frontend with only recent messages loaded)
+            // If the first message in incoming 'messages' matches one in the DB, we replace from that point onwards.
+            // This prevents clobbering older history that wasn't loaded on the frontend.
+            let mergedMessages = messages;
+            
+            if (chatHistory.messages && chatHistory.messages.length > messages.length) {
+                const firstIncoming = messages[0];
+                // Use a simple heuristic to find if the first incoming message exists in current history
+                const indexInDb = chatHistory.messages.findIndex(m => 
+                    m.role === firstIncoming.role && 
+                    m.content === firstIncoming.content && 
+                    (!firstIncoming.timestamp || new Date(m.timestamp).toISOString() === new Date(firstIncoming.timestamp).toISOString())
+                );
+
+                if (indexInDb !== -1) {
+                    console.log(`Partial update detected. Index in DB: ${indexInDb}. Merging messages.`);
+                    mergedMessages = [
+                        ...chatHistory.messages.slice(0, indexInDb),
+                        ...messages
+                    ];
+                }
+            }
+
+            chatHistory.messages = mergedMessages;
+            chatHistory.totalMessages = mergedMessages.length;
         }
         if (hasName) {
             const newName = name.trim().slice(0, 80) || null;
