@@ -719,9 +719,10 @@ export default function Listing() {
 
   // Function to check if current owner is active
   const checkOwnerStatus = async () => {
-    if (listing && listing.userRef) {
+    const ownerId = (listing?.userRef && typeof listing.userRef === 'object') ? listing.userRef._id : listing?.userRef;
+    if (listing && ownerId) {
       try {
-        const res = await authenticatedFetch(`${API_BASE_URL}/api/user/id/${listing.userRef}`, { autoRedirect: false });
+        const res = await authenticatedFetch(`${API_BASE_URL}/api/user/id/${ownerId}`, { autoRedirect: false });
         if (res.ok) {
           const ownerData = await res.json();
           if (ownerData && ownerData.status !== 'suspended') {
@@ -3757,7 +3758,7 @@ export default function Listing() {
                     // Refresh the listing data to update rating
                     window.location.reload();
                   }}
-                  listingOwnerId={listing.userRef}
+                  listingOwnerId={(listing.userRef && typeof listing.userRef === 'object') ? listing.userRef._id : listing.userRef}
                 />
               </div>
             </div>
@@ -4302,7 +4303,7 @@ export default function Listing() {
       {listing && (
         <PreBookingChatWrapper
           listingId={listing._id}
-          ownerId={listing.userRef}
+          ownerId={(listing.userRef && typeof listing.userRef === 'object') ? listing.userRef._id : listing.userRef}
           listingTitle={listing.name}
         />
       )}
