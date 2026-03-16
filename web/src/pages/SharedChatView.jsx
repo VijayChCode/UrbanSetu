@@ -155,6 +155,70 @@ export default function SharedChatView() {
             ];
         });
     };
+    
+    const RecommendationSlider = ({ recommendations }) => {
+        const scrollRef = React.useRef(null);
+        const [showLeftArrow, setShowLeftArrow] = React.useState(false);
+        const [showRightArrow, setShowRightArrow] = React.useState(true);
+    
+        const checkScroll = () => {
+            if (!scrollRef.current) return;
+            const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+            setShowLeftArrow(scrollLeft > 10);
+            setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
+        };
+    
+        React.useEffect(() => {
+            checkScroll();
+            window.addEventListener('resize', checkScroll);
+            return () => window.removeEventListener('resize', checkScroll);
+        }, []);
+    
+        const scroll = (direction) => {
+            if (!scrollRef.current) return;
+            const scrollAmount = 300;
+            scrollRef.current.scrollBy({
+                left: direction === 'left' ? -scrollAmount : scrollAmount,
+                behavior: 'smooth'
+            });
+        };
+    
+        return (
+            <div className="relative group/slider">
+                {showLeftArrow && (
+                    <button 
+                        onClick={() => scroll('left')}
+                        className="absolute left-[-15px] sm:left-[-20px] top-1/2 -translate-y-1/2 z-10 w-9 h-9 flex items-center justify-center bg-white dark:bg-gray-800 rounded-full shadow-2xl border border-gray-100 dark:border-gray-700 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600 hover:text-white transition-all transform hover:scale-110 active:scale-90"
+                        aria-label="Previous properties"
+                    >
+                        <FaChevronLeft size={14} />
+                    </button>
+                )}
+                
+                <div 
+                    ref={scrollRef}
+                    onScroll={checkScroll}
+                    className="flex overflow-x-auto pb-4 gap-6 no-scrollbar scroll-smooth snap-x"
+                >
+                    {recommendations.map((property, pIdx) => (
+                        <div key={property._id || pIdx} className="flex-shrink-0 w-[240px] sm:w-[280px] snap-start transform transition-all duration-500 hover:scale-[1.05] hover:-translate-y-2">
+                            <ListingItem listing={property} />
+                        </div>
+                    ))}
+                </div>
+    
+                {showRightArrow && (
+                    <button 
+                        onClick={() => scroll('right')}
+                        className="absolute right-[-15px] sm:right-[-20px] top-1/2 -translate-y-1/2 z-10 w-9 h-9 flex items-center justify-center bg-white dark:bg-gray-800 rounded-full shadow-2xl border border-gray-100 dark:border-gray-700 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600 hover:text-white transition-all transform hover:scale-110 active:scale-90"
+                        aria-label="Next properties"
+                    >
+                        <FaChevronRight size={14} />
+                    </button>
+                )}
+            </div>
+        );
+    };
 
 
 
@@ -359,13 +423,7 @@ export default function SharedChatView() {
                                                 {msg.recommendations.length} Properties
                                             </div>
                                         </div>
-                                        <div className="flex overflow-x-auto pb-4 gap-6 no-scrollbar scroll-smooth snap-x">
-                                            {msg.recommendations.map((property, pIdx) => (
-                                                <div key={property._id || pIdx} className="flex-shrink-0 w-[240px] sm:w-[280px] snap-start transform transition-all duration-500 hover:scale-[1.05] hover:-translate-y-2">
-                                                    <ListingItem listing={property} />
-                                                </div>
-                                            ))}
-                                        </div>
+                                        <RecommendationSlider recommendations={msg.recommendations} />
                                     </div>
                                 )}
                             </div>

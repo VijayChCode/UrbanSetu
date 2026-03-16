@@ -87,6 +87,70 @@ const TypewriterText = ({ text, delay = 35, className = "" }) => {
     return <span className={className}>{displayedText}</span>;
 };
 
+const RecommendationSlider = ({ recommendations }) => {
+    const scrollRef = React.useRef(null);
+    const [showLeftArrow, setShowLeftArrow] = React.useState(false);
+    const [showRightArrow, setShowRightArrow] = React.useState(true);
+
+    const checkScroll = () => {
+        if (!scrollRef.current) return;
+        const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+        setShowLeftArrow(scrollLeft > 10);
+        setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
+    };
+
+    React.useEffect(() => {
+        checkScroll();
+        window.addEventListener('resize', checkScroll);
+        return () => window.removeEventListener('resize', checkScroll);
+    }, []);
+
+    const scroll = (direction) => {
+        if (!scrollRef.current) return;
+        const scrollAmount = 300;
+        scrollRef.current.scrollBy({
+            left: direction === 'left' ? -scrollAmount : scrollAmount,
+            behavior: 'smooth'
+        });
+    };
+
+    return (
+        <div className="relative group/slider">
+            {showLeftArrow && (
+                <button 
+                    onClick={() => scroll('left')}
+                    className="absolute left-[-15px] sm:left-[-20px] top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center bg-white dark:bg-gray-800 rounded-full shadow-lg border border-gray-100 dark:border-gray-700 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white transition-all transform hover:scale-110 active:scale-90"
+                    aria-label="Previous properties"
+                >
+                    <FaChevronLeft size={12} />
+                </button>
+            )}
+            
+            <div 
+                ref={scrollRef}
+                onScroll={checkScroll}
+                className="flex overflow-x-auto pb-4 gap-4 no-scrollbar scroll-smooth snap-x"
+            >
+                {recommendations.map((property, pIdx) => (
+                    <div key={property._id || pIdx} className="flex-shrink-0 w-[240px] snap-start transform transition-transform duration-300 hover:scale-[1.02]">
+                        <ListingItem listing={property} />
+                    </div>
+                ))}
+            </div>
+
+            {showRightArrow && (
+                <button 
+                    onClick={() => scroll('right')}
+                    className="absolute right-[-15px] sm:right-[-20px] top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center bg-white dark:bg-gray-800 rounded-full shadow-lg border border-gray-100 dark:border-gray-700 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white transition-all transform hover:scale-110 active:scale-90"
+                    aria-label="Next properties"
+                >
+                    <FaChevronRight size={12} />
+                </button>
+            )}
+        </div>
+    );
+};
+
 const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const { currentUser } = useSelector((state) => state.user);
 
@@ -6381,13 +6445,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                         </span>
                                                                     </div>
 
-                                                                    <div className="flex overflow-x-auto pb-4 gap-4 no-scrollbar scroll-smooth snap-x">
-                                                                        {message.recommendations.map((property, pIdx) => (
-                                                                            <div key={property._id || pIdx} className="flex-shrink-0 w-[240px] snap-start transform transition-transform duration-300 hover:scale-[1.02]">
-                                                                                <ListingItem listing={property} />
-                                                                            </div>
-                                                                        ))}
-                                                                    </div>
+                                                                    <RecommendationSlider recommendations={message.recommendations} />
 
                                                                     <div className="flex items-center justify-center gap-1.5 mt-1 opacity-40">
                                                                         <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div>
