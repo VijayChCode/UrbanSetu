@@ -2407,7 +2407,7 @@ export default function Listing() {
             </div>
 
             {/* Verification Warning Banner - For Property Owners Only */}
-            {currentUser && listing.userRef && currentUser._id === listing.userRef && !listing.isVerified && (
+            {isOwnerMatch && !listing.isVerified && (
               <div className="mb-6 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg shadow-md">
                 <div className="flex items-start gap-3">
                   <div className="flex-shrink-0 mt-1">
@@ -3028,7 +3028,7 @@ export default function Listing() {
                     </h5>
                     <div className="space-y-2">
                       {/* Total Views - Only show for admins, rootadmins, and property owners */}
-                      {currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin' || (listing.userRef && currentUser._id === listing.userRef)) && (
+                      {currentUser && (isAdmin || isOwnerMatch) && (
                         <div className="flex justify-between">
                           <span className="text-sm text-gray-600 dark:text-gray-300">Total Views</span>
                           <span className="font-semibold text-blue-600 dark:text-blue-300">
@@ -3043,7 +3043,7 @@ export default function Listing() {
                         </span>
                       </div>
                       {/* Interest Level - Only show for admins, rootadmins, and property owners */}
-                      {currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin' || (listing.userRef && currentUser._id === listing.userRef)) && (
+                      {currentUser && (isAdmin || isOwnerMatch) && (
                         <div className="flex justify-between">
                           <span className="text-sm text-gray-600 dark:text-gray-300">Interest Level</span>
                           <span className="font-semibold text-green-600 dark:text-green-400">
@@ -3497,9 +3497,8 @@ export default function Listing() {
             </div>
           )}
 
-          {/* Rent Property / Book Appointment Buttons */}
           <div className="flex justify-center gap-4 flex-wrap">
-            {currentUser && listing && (listing.sellerId === currentUser._id || listing.userRef === currentUser._id) ? (
+            {isOwnerMatch ? (
               <div className="text-red-500 font-semibold text-lg py-3">You cannot book an appointment or rent your own property.</div>
             ) : isListingUnavailable ? (
               <div className="text-amber-800 font-semibold text-center py-3 max-w-2xl">
