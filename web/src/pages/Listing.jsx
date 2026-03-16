@@ -32,10 +32,11 @@ import LocalityScoreDisplay from '../components/rental/LocalityScoreDisplay';
 import VirtualTourViewer from "../components/VirtualTourViewer"; // Import the viewer component
 import VirtualStagingTool from "../components/VirtualStagingTool"; // Import Virtual Staging Tool
 import ListingSkeleton from "../components/skeletons/ListingSkeleton"; // Import ListingSkeleton
+import ListingItem from "../components/ListingItem";
 import VerifiedModal from "../components/VerifiedModal";
 import PreBookingChatWrapper from "../components/PreBookingChatWrapper";
 import { authenticatedFetch } from "../utils/auth";
-import { trackInteraction } from "../utils/sentinelLiveEngine";
+import { trackInteraction, getLiveRecommendations } from "../utils/sentinelLiveEngine";
 import AdvancedImage from "../components/AdvancedImage";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
