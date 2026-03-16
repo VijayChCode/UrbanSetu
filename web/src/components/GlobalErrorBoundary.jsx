@@ -1,5 +1,8 @@
 import React from 'react';
-import { FaServer, FaExclamationTriangle, FaSync, FaArrowRight } from 'react-icons/fa';
+import { FaServer, FaExclamationTriangle, FaSync, FaArrowRight, FaRobot, FaRocket } from 'react-icons/fa';
+import ListingItem from './ListingItem';
+import { getLiveRecommendations } from '../utils/sentinelLiveEngine';
+import { authenticatedFetch } from '../utils/auth';
 
 class GlobalErrorBoundary extends React.Component {
     constructor(props) {
@@ -9,7 +12,9 @@ class GlobalErrorBoundary extends React.Component {
             error: null, 
             redirectCountdown: 10,
             switchCount: parseInt(sessionStorage.getItem('err_switch_count') || '0'),
-            isPersistentError: false
+            isPersistentError: false,
+            recommendations: [],
+            loadingRecs: true
         };
         this.timer = null;
     }
@@ -70,12 +75,74 @@ class GlobalErrorBoundary extends React.Component {
     componentDidUpdate(prevProps, prevState) {
         if (this.state.hasError && !prevState.hasError) {
             if (this.state.switchCount >= 3) {
-                this.setState({ isPersistentError: true });
+                this.setState({ isPersistentError: true }, this.fetchRecommendations);
             } else {
                 this.startRedirectCountdown();
             }
         }
     }
+
+    getCurrentUser = () => {
+        try {
+            const userInfoStr = localStorage.getItem('persist:root');
+            if (userInfoStr) {
+                const parsed = JSON.parse(userInfoStr);
+                const userData = JSON.parse(parsed.user);
+                return userData?.currentUser;
+            }
+        } catch (e) { }
+        return null;
+    };
+
+    fetchRecommendations = async () => {
+        const currentUser = this.getCurrentUser();
+        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+
+        // Hide recommendations for admins
+        if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) {
+            this.setState({ loadingRecs: false, recommendations: [] });
+            return;
+        }
+
+        try {
+            // Fetch public listings
+            const res = await authenticatedFetch(`${API_BASE_URL}/api/listing/get?limit=100&visibility=public`);
+            if (!res.ok) throw new Error("Failed to fetch");
+            const data = await res.json();
+            const listings = Array.isArray(data) ? data : (data?.listings || []);
+
+            if (currentUser) {
+                // Fetch user preferences for enhanced recommendations
+                let userPreferences = [];
+                try {
+                    const [wishRes, watchRes] = await Promise.all([
+                        authenticatedFetch(`${API_BASE_URL}/api/wishlist/user/${currentUser._id}`),
+                        authenticatedFetch(`${API_BASE_URL}/api/watchlist/user/${currentUser._id}`)
+                    ]);
+                    const wishData = wishRes.ok ? await wishRes.json() : [];
+                    const watchData = watchRes.ok ? await watchRes.json() : [];
+                    const wishItems = Array.isArray(wishData) ? wishData.filter(x => x.listingId).map(x => x.listingId) : [];
+                    const watchItems = Array.isArray(watchData) ? watchData.filter(x => x.listingId).map(x => x.listingId) : [];
+                    userPreferences = [...wishItems, ...watchItems];
+                } catch (e) { }
+
+                const validListings = listings.filter(l => l.userRef !== currentUser._id && l.sellerId !== currentUser._id);
+                const recs = await getLiveRecommendations(validListings, 4, userPreferences);
+                
+                if (recs.length > 0) {
+                    this.setState({ recommendations: recs });
+                } else {
+                    this.setState({ recommendations: listings.sort(() => 0.5 - Math.random()).slice(0, 4) });
+                }
+            } else {
+                this.setState({ recommendations: listings.sort(() => 0.5 - Math.random()).slice(0, 4) });
+            }
+        } catch (error) {
+            console.error("ErrorBoundary: Failed to fetch recommendations", error);
+        } finally {
+            this.setState({ loadingRecs: false });
+        }
+    };
 
     componentWillUnmount() {
         if (this.timer) clearInterval(this.timer);
@@ -142,8 +209,8 @@ class GlobalErrorBoundary extends React.Component {
             const isLocal = !altUrl;
 
             return (
-                <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
-                    <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden text-center p-8 relative">
+                <div className={`min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center p-4 gap-12 py-12`}>
+                    <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden text-center p-8 relative animate-fade-in-up">
                         {/* Status bar for switch count */}
                         {this.state.switchCount > 0 && !this.state.isPersistentError && (
                             <div className="absolute top-0 left-0 right-0 h-1 bg-gray-100 dark:bg-gray-700">
@@ -232,6 +299,55 @@ class GlobalErrorBoundary extends React.Component {
                             </>
                         )}
                     </div>
+
+                    {/* Persistent Error Recommendations Section */}
+                    {this.state.isPersistentError && !this.state.loadingRecs && this.state.recommendations.length > 0 && (
+                        <div className="w-full max-w-6xl animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+                            <div className="relative overflow-hidden p-1 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-blue-600/10 rounded-[2.5rem]">
+                                <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-8 rounded-[2.4rem] border border-white/50 dark:border-gray-700/50 shadow-xl">
+                                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                                        <div className="flex flex-col md:flex-row md:items-center gap-4">
+                                            <h2 className="text-2xl font-black text-gray-900 dark:text-white flex items-center gap-3">
+                                                <span className="p-2 bg-blue-600 text-white rounded-xl shadow-lg ring-4 ring-blue-50 dark:ring-blue-900/10">
+                                                    {this.getCurrentUser() ? <FaRobot className="animate-pulse" /> : <FaRocket className="animate-bounce" />}
+                                                </span>
+                                                {this.getCurrentUser() ? "Sentinel Live" : "Explore Properties"}
+                                            </h2>
+                                            <div className="flex flex-col">
+                                                <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 rounded-full w-fit">
+                                                    <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">
+                                                        {this.getCurrentUser() ? "RECOMMENDING BASED ON YOUR CURRENT SESSION" : "HANDPICKED RECOMMENDATIONS"}
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-1 font-medium italic">
+                                                    {this.getCurrentUser() ? "Tensor-mode active · Browse while we fix the connection" : "Real-time updates · Discover your next home"}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                        {this.state.recommendations.map((listing) => (
+                                            <div key={`err-rec-${listing._id}`} className="relative group">
+                                                {listing.isLiveMatch && (
+                                                    <div className="absolute -top-2 -right-2 z-20 bg-blue-600 text-white text-[10px] font-black px-2 py-1 rounded-lg shadow-lg transform rotate-12 group-hover:rotate-0 transition-transform">
+                                                        {Math.round(listing.sentinelScore * 100)}% MATCH
+                                                    </div>
+                                                )}
+                                                <ListingItem listing={listing} />
+                                            </div>
+                                        ))}
+                                    </div>
+                                    
+                                    <div className="mt-8 text-center border-t border-gray-100 dark:border-gray-700 pt-6">
+                                        <p className="text-sm text-gray-500 dark:text-gray-400 font-medium italic">
+                                            Don't worry, we've got you covered. You can explore these properties while we work on restoring full service.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             );
         }
