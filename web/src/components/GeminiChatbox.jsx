@@ -424,6 +424,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         "Help me understand home loan process",
         "Compare 2BHK vs 3BHK apartments"
     ]);
+    const [isLoadingMoreSuggestions, setIsLoadingMoreSuggestions] = useState(false);
     const [isMinimized, setIsMinimized] = useState(false);
     const [showSearchInChat, setShowSearchInChat] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -4603,6 +4604,36 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         // Don't permanently disable smart suggestions - they should be controlled by message count
         inputRef.current?.focus();
     };
+
+    const handleLoadMoreSuggestions = async () => {
+        if (isLoadingMoreSuggestions) return;
+        
+        setIsLoadingMoreSuggestions(true);
+        try {
+            const currentSessionId = sessionId || localStorage.getItem('gemini_session_id');
+            const res = await authenticatedFetch(`${API_BASE_URL}/api/gemini/suggestions`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sessionId: currentSessionId,
+                    currentSuggestions: smartSuggestions
+                })
+            });
+
+            const data = await res.json();
+            if (data.success && data.suggestions && data.suggestions.length > 0) {
+                setSmartSuggestions(data.suggestions);
+                toast.success('Suggestions updated!', { icon: '✨' });
+            } else {
+                toast.error('Failed to get new suggestions');
+            }
+        } catch (error) {
+            console.error('Error fetching suggestions:', error);
+            toast.error('Could not load more suggestions');
+        } finally {
+            setIsLoadingMoreSuggestions(false);
+        }
+    };
     const searchInMessages = (query) => {
         if (!query.trim()) {
             setFilteredMessages([]);
@@ -6511,15 +6542,27 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                     Smart Suggestions
                                                 </span>
                                             </div>
-                                            <button 
-                                                onClick={() => setShowSmartSuggestions(false)}
-                                                className={`p-1 rounded-full transition-all duration-200 ${isDarkMode 
-                                                    ? 'hover:bg-gray-700 text-gray-500' 
-                                                    : `hover:bg-white text-gray-400 shadow-sm border border-transparent hover:border-red-100`} hover:text-red-500`}
-                                                title="Dismiss"
-                                            >
-                                                <FaTimes size={10} />
-                                            </button>
+                                            <div className="flex items-center gap-1">
+                                                <button 
+                                                    onClick={handleLoadMoreSuggestions}
+                                                    disabled={isLoadingMoreSuggestions}
+                                                    className={`p-1 rounded-full transition-all duration-200 ${isDarkMode 
+                                                        ? 'hover:bg-gray-700 text-gray-500' 
+                                                        : `hover:bg-white text-gray-400 shadow-sm border border-transparent hover:border-blue-100`} hover:text-blue-500`}
+                                                    title="Load More Suggestions"
+                                                >
+                                                    <FaSync size={10} className={isLoadingMoreSuggestions ? 'animate-spin' : ''} />
+                                                </button>
+                                                <button 
+                                                    onClick={() => setShowSmartSuggestions(false)}
+                                                    className={`p-1 rounded-full transition-all duration-200 ${isDarkMode 
+                                                        ? 'hover:bg-gray-700 text-gray-500' 
+                                                        : `hover:bg-white text-gray-400 shadow-sm border border-transparent hover:border-red-100`} hover:text-red-500`}
+                                                    title="Dismiss"
+                                                >
+                                                    <FaTimes size={10} />
+                                                </button>
+                                            </div>
                                         </div>
                                         
                                         <div className="flex flex-nowrap gap-2 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1">

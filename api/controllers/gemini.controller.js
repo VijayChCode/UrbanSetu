@@ -1252,3 +1252,81 @@ export const deleteRating = async (req, res) => {
         res.status(500).json({ success: false, message: 'Failed to delete rating' });
     }
 };
+// -------------------------------------------------------------
+// SMART SUGGESTIONS GENERATOR
+// -------------------------------------------------------------
+export const getSmartSuggestions = async (req, res) => {
+    try {
+        const { sessionId, currentSuggestions = [] } = req.body;
+        const userId = req.user?.id;
+        
+        let context = "";
+        if (userId && sessionId) {
+            const chatHistory = await ChatHistory.findOne({ userId, sessionId, isActive: true });
+            if (chatHistory && chatHistory.messages.length > 0) {
+                // Get last 5 messages for context
+                const lastMessages = chatHistory.messages.slice(-5);
+                context = lastMessages.map(m => `${m.role.toUpperCase()}: ${m.content}`).join("\n");
+            }
+        }
+
+        const prompt = `
+        You are a real estate expert assistant for UrbanSetu. 
+        Based on the following chat history context (if any), generate 5 unique, helpful, and creative one-line suggestions for the user to ask next.
+        
+        CONTEXT:
+        ${context || "No context provided. Customer is browsing real estate offerings."}
+
+        CURRENTLY SHOWN SUGGESTIONS (Avoid these to provide variety):
+        ${currentSuggestions.join(", ") || "None"}
+
+        RULES:
+        1. Suggestions must be concise (max 10 words).
+        2. Focus on: property search, investment, legal aid, home loans, ESG ratings, or Rent-Lock feature.
+        3. Do NOT include numbering or any extra text.
+        4. Return ONLY a valid JSON array of strings.
+        
+        Example Output: ["Find premium villas in Pune", "What is an ESG rating?", "Explain the Rent-Lock process"]
+        `;
+
+        const completion = await groq.chat.completions.create({
+            messages: [{ role: "system", content: prompt }],
+            model: GROQ_MODEL,
+            response_format: { type: "json_object" }
+        });
+
+        const content = completion.choices[0].message.content;
+        let suggestions = [];
+        try {
+            const parsed = JSON.parse(content);
+            // Some models return { "suggestions": [...] }, handle both cases
+            suggestions = Array.isArray(parsed) ? parsed : (parsed.suggestions || Object.values(parsed)[0]);
+        } catch (e) {
+            console.error("Failed to parse suggestions JSON:", e);
+            suggestions = [
+                "Find properties near me",
+                "Best investment areas in 2026",
+                "Understand the home loan process",
+                "Compare rent vs buy scenarios"
+            ];
+        }
+
+        // Clean and limit suggestions
+        suggestions = Array.isArray(suggestions) 
+            ? suggestions.slice(0, 6).map(s => s.replace(/^\d+\.\s*/, '').replace(/^"|"$/g, '').trim())
+            : [];
+
+        res.status(200).json({
+            success: true,
+            suggestions: suggestions.length > 0 ? suggestions : ["Find premium properties", "Check ESG scores", "How to use Rent-Lock"]
+        });
+
+    } catch (error) {
+        console.error('Error generating smart suggestions:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to generate suggestions',
+            suggestions: ["Find properties under ₹50L", "Investment guide for 2026", "What is Rent-Lock?"]
+        });
+    }
+};
