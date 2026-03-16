@@ -49,7 +49,8 @@ export const importSharedChat = async (req, res) => {
             messages: validMessages.map(m => ({
                 role: m.role,
                 content: m.content,
-                isRestricted: false, // Ensure we don't import restricted flags as we filtered them
+                isRestricted: false,
+                recommendations: m.recommendations,
                 timestamp: m.timestamp || new Date()
             })),
             totalMessages: validMessages.length
@@ -162,6 +163,7 @@ export const createSharedChat = async (req, res) => {
                     role: m.role,
                     content: m.content,
                     timestamp: m.timestamp,
+                    recommendations: m.recommendations,
                     isRestricted: false // Should be false since we filtered them, but keeping schema consistent
                 }));
             sharedChat.title = title || originalChat.name || 'Shared Conversation';
@@ -190,6 +192,7 @@ export const createSharedChat = async (req, res) => {
                     role: m.role,
                     content: m.content,
                     timestamp: m.timestamp,
+                    recommendations: m.recommendations,
                     isRestricted: false
                 })),
                 expiresAt: expiresAt
@@ -349,6 +352,7 @@ export const updateSharedChat = async (req, res) => {
                 role: m.role,
                 content: m.content,
                 timestamp: m.timestamp,
+                recommendations: m.recommendations,
                 isRestricted: false // key point
             }));
 
@@ -367,10 +371,10 @@ export const updateSharedChat = async (req, res) => {
             // Or just stringify the mapped arrays.
 
             const currentSharedJSON = JSON.stringify(sharedChat.messages.map(m => ({
-                role: m.role, content: m.content, timestamp: m.timestamp
+                role: m.role, content: m.content, timestamp: m.timestamp, recommendations: m.recommendations
             })));
             const newSharedJSON = JSON.stringify(validOriginalMessages.map(m => ({
-                role: m.role, content: m.content, timestamp: m.timestamp
+                role: m.role, content: m.content, timestamp: m.timestamp, recommendations: m.recommendations
             })));
 
             if (currentSharedJSON !== newSharedJSON) {

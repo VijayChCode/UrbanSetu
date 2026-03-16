@@ -42,6 +42,10 @@ const sharedChatSchema = new mongoose.Schema({
         isRestricted: {
             type: Boolean,
             default: false
+        },
+        recommendations: {
+            type: Array,
+            default: undefined
         }
     }],
     isActive: {

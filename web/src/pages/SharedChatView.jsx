@@ -8,6 +8,7 @@ import GeminiAIWrapper from "../components/GeminiAIWrapper";
 import SharedChatViewSkeleton from '../components/skeletons/SharedChatViewSkeleton';
 import ContactSupportWrapper from '../components/ContactSupportWrapper';
 import { authenticatedFetch } from '../utils/auth';
+import ListingItem from '../components/ListingItem';
 
 const TypewriterText = ({ text, delay = 35, className = "" }) => {
     const [displayedText, setDisplayedText] = useState('');
@@ -289,8 +290,41 @@ export default function SharedChatView() {
                                     <span className="italic text-sm">Content hidden due to safety policy violation.</span>
                                 </div>
                             ) : (
-                                <div className={`prose prose-sm max-w-none text-sm leading-relaxed ${msg.role === 'user' ? 'text-white/90' : 'text-gray-800 dark:text-gray-300'}`}>
+                                <div className={`prose prose-sm dark:prose-invert max-w-none text-sm leading-relaxed ${msg.role === 'user' ? 'text-white/90' : 'text-gray-800 dark:text-gray-300'}`}>
                                     {formatText(msg.content)}
+
+                                    {/* Recommended Properties Slider */}
+                                    {msg.role === 'assistant' && msg.recommendations && msg.recommendations.length > 0 && (
+                                        <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-700/50">
+                                            <div className="flex items-center justify-between mb-4 px-1">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="p-1 px-2 bg-blue-600/10 text-blue-600 dark:text-blue-400 rounded-full text-[10px] font-black uppercase tracking-wider">
+                                                        Handpicked for you
+                                                    </div>
+                                                    <h4 className="text-xs font-bold text-gray-700 dark:text-gray-300">
+                                                        AI Recommendations
+                                                    </h4>
+                                                </div>
+                                                <span className="text-[10px] text-gray-500 font-medium italic">
+                                                    {msg.recommendations.length} {msg.recommendations.length === 1 ? 'property' : 'properties'}
+                                                </span>
+                                            </div>
+
+                                            <div className="flex overflow-x-auto pb-4 gap-4 no-scrollbar scroll-smooth snap-x">
+                                                {msg.recommendations.map((property, pIdx) => (
+                                                    <div key={property._id || pIdx} className="flex-shrink-0 w-[240px] sm:w-[260px] snap-start transform transition-transform duration-300 hover:scale-[1.02]">
+                                                        <ListingItem listing={property} />
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            <div className="flex items-center justify-center gap-1.5 mt-2 opacity-30">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div>
+                                                <div className="w-1 h-1 rounded-full bg-gray-400"></div>
+                                                <div className="w-1 h-1 rounded-full bg-gray-400"></div>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                             <div className={`mt-2 text-xs flex justify-end items-center ${msg.role === 'user' ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'}`}>
