@@ -159,6 +159,17 @@ export const updateUser = async (req, res, next) => {
             updateFields.isGeneratedMobile = false;
         }
 
+        // Track email history if email is being updated
+        if (req.body.email && req.body.email !== user.email) {
+            if (!updateFields['$push']) updateFields['$push'] = {};
+            updateFields['$push'].emailHistory = {
+                email: user.email,
+                changedAt: new Date(),
+                ip: req.ip || req.connection.remoteAddress,
+                device: getDeviceInfo(req.get('User-Agent'), req.headers)
+            };
+        }
+
         let coinsEarned = 0;
 
         // Award setuCoins if all profile details are filled for the FIRST time
@@ -187,6 +198,10 @@ export const updateUser = async (req, res, next) => {
         if (updateFields['$addToSet']) {
             updateQuery['$addToSet'] = updateFields['$addToSet'];
             delete updateFields['$addToSet'];
+        }
+        if (updateFields['$push']) {
+            updateQuery['$push'] = updateFields['$push'];
+            delete updateFields['$push'];
         }
 
         const updatedUser = await User.findByIdAndUpdate(targetId, updateQuery, { new: true });

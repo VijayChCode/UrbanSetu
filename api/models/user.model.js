@@ -87,6 +87,14 @@ const userSchema = new mongoose.Schema({
       device: { type: String }
     }
   ],
+  emailHistory: [
+    {
+      email: { type: String, required: true },
+      changedAt: { type: Date, default: Date.now },
+      ip: { type: String },
+      device: { type: String }
+    }
+  ],
   status: {
     type: String,
     enum: ["active", "suspended"],

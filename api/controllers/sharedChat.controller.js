@@ -406,14 +406,22 @@ export const updateSharedChat = async (req, res) => {
             // Let's just compare lengths or last message content to decide? 
             // Or just stringify the mapped arrays.
 
-            const currentSharedJSON = JSON.stringify(sharedChat.messages.map(m => ({
-                role: m.role, content: m.content, timestamp: m.timestamp, recommendations: m.recommendations
-            })));
-            const newSharedJSON = JSON.stringify(validOriginalMessages.map(m => ({
-                role: m.role, content: m.content, timestamp: m.timestamp, recommendations: m.recommendations
-            })));
+            // Compare with current shared messages
+            // Use a more comprehensive comparison including variants and activeVersionIndex
+            const simplifyMessage = m => ({
+                role: m.role,
+                content: m.content,
+                timestamp: m.timestamp instanceof Date ? m.timestamp.toISOString() : m.timestamp,
+                activeVersionIndex: m.activeVersionIndex || 0,
+                variantCount: m.variants ? m.variants.length : 0,
+                // Also check the content of the active variant if possible, 
+                // but usually activeVersionIndex and content of the main msg are enough.
+            });
 
-            if (currentSharedJSON !== newSharedJSON) {
+            const currentSharedSummary = JSON.stringify(sharedChat.messages.map(simplifyMessage));
+            const newSharedSummary = JSON.stringify(validOriginalMessages.map(simplifyMessage));
+
+            if (currentSharedSummary !== newSharedSummary) {
                 sharedChat.messages = validOriginalMessages;
                 messagesChanged = true;
             }
