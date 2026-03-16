@@ -3304,12 +3304,16 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     };
 
     const syncChatTreeToBackend = async (currentMessages) => {
-        if (!currentUser || !sessionId) return;
+        if (!currentUser || !getOrCreateSessionId()) return;
         try {
-            await authenticatedFetch(`${API_BASE_URL}/api/gemini/sessions/${sessionId}`, {
+            console.log('Syncing chat tree to backend...', currentMessages.length, 'messages');
+            await authenticatedFetch(`${API_BASE_URL}/api/chat-history/session/${getOrCreateSessionId()}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ messages: currentMessages })
+                body: JSON.stringify({ 
+                    messages: currentMessages,
+                    lastActivity: new Date().toISOString()
+                })
             });
         } catch (error) {
             console.error('Failed to sync chat tree to backend:', error);
@@ -3317,36 +3321,50 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     };
 
     const switchMessageVersion = async (index, newVersionIndex) => {
-        let updatedMessagesList = [];
+        if (newVersionIndex < 0) return;
+        
+        // Use a functional update to get the latest messages
+        let finalUpdatedList = null;
         
         setMessages(prev => {
             const next = [...prev];
             const message = { ...next[index] };
 
-            if (!message.variants || newVersionIndex < 0 || newVersionIndex >= message.variants.length) return prev;
+            if (!message.variants || newVersionIndex >= message.variants.length) return prev;
 
-            // Save current state of this version before switching (CRITICAL to avoid losing current tail)
+            // 1. Save current state of this version before switching (CRITICAL to avoid losing current tail/content)
             const currentActiveIndex = message.activeVersionIndex || 0;
             const updatedVariants = [...message.variants];
+            
+            // Ensure we capture the current visible content and everything after it
             updatedVariants[currentActiveIndex] = {
                 ...updatedVariants[currentActiveIndex],
                 content: message.content,
                 tail: next.slice(index + 1)
             };
 
-            // Switch to target version
+            // 2. Switch to target version
             const targetVersion = updatedVariants[newVersionIndex];
-            message.content = targetVersion.content;
-            message.activeVersionIndex = newVersionIndex;
-            message.variants = updatedVariants;
+            
+            // Reconstruct the message object for the new version
+            const updatedMessage = {
+                ...message,
+                content: targetVersion.content || '',
+                activeVersionIndex: newVersionIndex,
+                variants: updatedVariants,
+                timestamp: targetVersion.timestamp || message.timestamp
+            };
 
-            // Reconstruct messages array
-            updatedMessagesList = [...next.slice(0, index), message, ...targetVersion.tail];
-            return updatedMessagesList;
+            // 3. Reconstruct full messages array
+            finalUpdatedList = [...next.slice(0, index), updatedMessage, ...(targetVersion.tail || [])];
+            return finalUpdatedList;
         });
 
-        // Sync with backend after state update
-        await syncChatTreeToBackend(updatedMessagesList);
+        // Sync with backend after we have the final list
+        // Note: Since setMessages is async, we use the locally computed finalUpdatedList
+        if (finalUpdatedList) {
+            await syncChatTreeToBackend(finalUpdatedList);
+        }
     };
 
     const cancelEditingMessage = () => {
@@ -3361,39 +3379,55 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         }
 
         try {
-            // Support versioning by creating a new variant
             const updatedMessages = [...messages];
-            const originalMessage = updatedMessages[messageIndex];
+            const originalMessage = { ...updatedMessages[messageIndex] };
 
             // 1. Capture the "tail" of current conversation at this point
             const currentTail = updatedMessages.slice(messageIndex + 1);
 
             // 2. Initialize or update variants (ChatGPT style)
-            let variants = originalMessage.variants || [
-                { content: originalMessage.content, tail: currentTail, timestamp: originalMessage.timestamp }
-            ];
+            // Save the state of the branch we're leaving before we branch off
+            let variants = [];
+            let activeIdx = originalMessage.activeVersionIndex || 0;
+            
+            if (originalMessage.variants && originalMessage.variants.length > 0) {
+                // Keep existing variants and update the current active one before adding the new one
+                variants = [...originalMessage.variants];
+                variants[activeIdx] = { 
+                    ...variants[activeIdx], 
+                    content: originalMessage.content, // Save current before swapping
+                    tail: currentTail 
+                };
+            } else {
+                // Initialize first variant if none exist
+                variants = [
+                    { 
+                        content: originalMessage.content, 
+                        tail: currentTail, 
+                        timestamp: originalMessage.timestamp,
+                        role: originalMessage.role
+                    }
+                ];
+            }
 
-            // 3. Save the tail into the current active variant before branching
-            const activeIdx = originalMessage.activeVersionIndex || 0;
-            const activeVariants = [...variants];
-            activeVariants[activeIdx] = { ...activeVariants[activeIdx], tail: currentTail };
-
-            // 4. Create the new version
+            // 3. Create the new version
+            const newVersionIndex = variants.length;
             const newVersion = {
                 content: editingMessageContent.trim(),
                 tail: [], // New branch starts empty
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                role: 'user'
             };
 
             const newMessage = {
                 ...originalMessage,
                 content: editingMessageContent.trim(),
                 timestamp: newVersion.timestamp,
-                variants: [...activeVariants, newVersion],
-                activeVersionIndex: activeVariants.length
+                variants: [...variants, newVersion],
+                activeVersionIndex: newVersionIndex
             };
 
-            // 5. Update UI state immediately with truncated history
+            // 4. Update UI state immediately with truncated history
             const nextMessages = [...updatedMessages.slice(0, messageIndex), newMessage];
             setMessages(nextMessages);
 
@@ -3401,13 +3435,16 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             setEditingMessageIndex(null);
             setEditingMessageContent('');
 
-            // 6. Sync initial branch state to backend before sending new prompt
+            // 5. Sync initial branch state to backend before sending new prompt
             await syncChatTreeToBackend(nextMessages);
 
-            // 7. Send to API - passing the history only UP TO the edit point
+            // 6. Send to API - passing the history only UP TO the edit point
             await sendEditedMessageToAPI(editingMessageContent.trim(), nextMessages.slice(0, messageIndex));
 
             toast.info('New conversation branch created');
+            
+            // Log for debugging
+            console.log('Successfully branched message at index', messageIndex, 'New version count:', variants.length + 1);
         } catch (error) {
             console.error('Error submitting edited message:', error);
             toast.error('Failed to send edited message');
@@ -6200,7 +6237,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                 )}
 
                                                 {/* Version Selection UI (Arrows) */}
-                                                {!editingMessageIndex && message.variants && message.variants.length > 1 && (
+                                                {editingMessageIndex === null && message.variants && message.variants.length > 1 && (
                                                     <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-black tracking-tighter ${message.role === 'user' ? 'bg-white/10 text-white/90' : 'bg-gray-200 text-gray-600'} mb-2 w-fit border ${message.role === 'user' ? 'border-white/20' : 'border-gray-300'} select-none`}>
                                                         <button
                                                             onClick={(e) => { e.stopPropagation(); switchMessageVersion(index, (message.activeVersionIndex || 0) - 1); }}
