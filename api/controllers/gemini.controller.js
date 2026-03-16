@@ -185,6 +185,11 @@ export const chatWithGemini = async (req, res) => {
                 try {
                     const chatHistory = await ChatHistory.findOrCreateSession(userId, currentSessionId);
                     await chatHistory.addMessage('user', sanitizedMessage, true); // true = isRestricted
+                    
+                    // Also save the violation response so it persists in red on UI reload
+                    const violationMessage = "⚠️ **Safety Policy Violation Detected**\n\nI cannot fulfill this request because it falls under a restricted category (e.g., Harassment, Hate Speech, Violence, or Illegal Activities).\n\nThis incident has been flagged for review.";
+                    await chatHistory.addMessage('assistant', violationMessage, true, undefined, true); 
+                    await chatHistory.save();
                 } catch (saveError) {
                     console.error('Error saving restricted message to history:', saveError);
                 }
@@ -782,10 +787,24 @@ export const chatWithGemini = async (req, res) => {
 
     } catch (error) {
         console.error('Groq API Error:', error);
+        const errorMessage = 'Sorry, I\'m having trouble processing your request. Please try again later.';
+        
+        // Save the error message to chat history so it persists in red
+        if (userId) {
+            try {
+                const chatHistory = await ChatHistory.findOrCreateSession(userId, currentSessionId);
+                await chatHistory.addMessage('user', message);
+                await chatHistory.addMessage('assistant', errorMessage, false, undefined, true);
+                await chatHistory.save();
+            } catch (historyError) {
+                console.error('Failed to save error message to history:', historyError);
+            }
+        }
+
         if (!res.headersSent) {
             res.status(500).json({
                 success: false,
-                message: 'Sorry, I\'m having trouble processing your request. Please try again later.'
+                message: errorMessage
             });
         }
     }

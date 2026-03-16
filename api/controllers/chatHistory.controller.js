@@ -25,8 +25,8 @@ export const saveChatMessage = async (req, res) => {
         const chatHistory = await ChatHistory.findOrCreateSession(userId, sessionId);
 
         // Add message to the session
-        const { recommendations = undefined } = req.body;
-        await chatHistory.addMessage(role, content, false, recommendations);
+        const { recommendations = undefined, isError = false, isRestricted = false } = req.body;
+        await chatHistory.addMessage(role, content, isRestricted, recommendations, isError);
 
         res.status(200).json({
             success: true,
