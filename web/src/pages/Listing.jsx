@@ -6,7 +6,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/navigation";
 import { Navigation } from "swiper/modules";
-import { FaBath, FaBed, FaChair, FaMapMarkerAlt, FaParking, FaShare, FaEdit, FaTrash, FaArrowLeft, FaArrowRight, FaStar, FaLock, FaHeart, FaExpand, FaCheckCircle, FaFlag, FaRuler, FaBuilding, FaTree, FaWifi, FaSwimmingPool, FaCar, FaShieldAlt, FaClock, FaPhone, FaEnvelope, FaCalendarAlt, FaEye, FaThumbsUp, FaThumbsDown, FaRegThumbsUp, FaRegThumbsDown, FaComments, FaCalculator, FaChartLine, FaHome, FaUtensils, FaHospital, FaSchool, FaShoppingCart, FaPlane, FaUser, FaTimes, FaSearch, FaTable, FaRocket, FaQuestionCircle, FaChevronDown, FaChevronUp, FaBookOpen, FaTag, FaCompass, FaInfoCircle, FaCalendar, FaRobot, FaBan, FaExclamationTriangle, FaUserTie, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { FaBath, FaBed, FaChair, FaMapMarkerAlt, FaParking, FaShare, FaEdit, FaTrash, FaUndo, FaArrowLeft, FaArrowRight, FaStar, FaLock, FaHeart, FaExpand, FaCheckCircle, FaFlag, FaRuler, FaBuilding, FaTree, FaWifi, FaSwimmingPool, FaCar, FaShieldAlt, FaClock, FaPhone, FaEnvelope, FaCalendarAlt, FaEye, FaThumbsUp, FaThumbsDown, FaRegThumbsUp, FaRegThumbsDown, FaComments, FaCalculator, FaChartLine, FaHome, FaUtensils, FaHospital, FaSchool, FaShoppingCart, FaPlane, FaUser, FaTimes, FaSearch, FaTable, FaRocket, FaQuestionCircle, FaChevronDown, FaChevronUp, FaBookOpen, FaTag, FaCompass, FaInfoCircle, FaCalendar, FaRobot, FaBan, FaExclamationTriangle, FaUserTie, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import ContactSupportWrapper from "../components/ContactSupportWrapper";
 import ReviewForm from "../components/ReviewForm.jsx";
@@ -1702,6 +1702,32 @@ export default function Listing() {
                         <span className="block mt-1 font-semibold">Reason: {listing.deletionReason}</span>
                       )}
                     </p>
+                    {isAdmin && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ 
+                          opacity: 1, 
+                          y: 0,
+                          scale: [1, 1.02, 1]
+                        }}
+                        transition={{
+                          scale: {
+                            repeat: Infinity,
+                            duration: 3,
+                            ease: "easeInOut"
+                          }
+                        }}
+                        className="mt-3 flex items-center"
+                      >
+                        <Link
+                          to="/admin/deleted-listings"
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 text-red-600 dark:text-red-400 rounded-xl text-xs font-black transition-all group border border-red-200 dark:border-red-900/50 shadow-sm hover:shadow-md hover:scale-[1.05] active:scale-95"
+                        >
+                          <FaUndo className="group-hover:-rotate-180 transition-transform duration-500 text-[10px]" />
+                          <span>MISTAKENLY DELETED? RESTORE VIA ARCHIVE</span>
+                        </Link>
+                      </motion.div>
+                    )}
                   </div>
                 </div>
               </div>
