@@ -50,7 +50,7 @@ export const searchProperties = async ({
 
         // Execute Query
         const listings = await Listing.find(query)
-            .select('name city type regularPrice bedrooms bathrooms area address')
+            .select('name city type regularPrice discountPrice offer imageUrls bedrooms bathrooms area address propertyNumber landmark state pincode isVerified userRef description')
             .limit(limit)
             .lean();
 
@@ -65,11 +65,25 @@ export const searchProperties = async ({
             found: true,
             count: listings.length,
             listings: listings.map(l => ({
-                id: l._id,
+                _id: l._id,
                 name: l.name,
-                price: l.regularPrice,
-                location: `${l.address}, ${l.city}`,
-                details: `${l.bedrooms}BHK, ${l.bathrooms} Bath, ${l.area} sqft`
+                type: l.type,
+                regularPrice: l.regularPrice,
+                discountPrice: l.discountPrice,
+                offer: l.offer,
+                imageUrls: l.imageUrls,
+                bedrooms: l.bedrooms,
+                bathrooms: l.bathrooms,
+                area: l.area,
+                address: l.address,
+                city: l.city,
+                propertyNumber: l.propertyNumber,
+                landmark: l.landmark,
+                state: l.state,
+                pincode: l.pincode,
+                isVerified: l.isVerified,
+                userRef: l.userRef,
+                description: l.description
             }))
         });
 

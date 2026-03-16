@@ -320,6 +320,7 @@ export const chatWithGemini = async (req, res) => {
                   - Windows: Native EXE/MSI installers (Windows 10/11).
                   - macOS: DMG/PKG for Intel and Apple Silicon Macs (macOS 10.15+).
                   - Linux: Support for Debian and RPM-based distributions.
+               - DOWNLOAD PAGE: [UrbanSetu Downloads](https://urbansetu.vercel.app/download)
                - Goal: Provide a seamless, secure, and high-performance real estate experience across all devices.
 
             7. WEB UPDATES & CHANGELOG:
@@ -425,9 +426,10 @@ export const chatWithGemini = async (req, res) => {
             1. **CASUAL MODE (Default)**: If the user says "Hi", "Hello", "How are you", or asks general questions, be friendly, concise, and casual. Do NOT dump technical info. Do NOT list links, routes, or menus unless explicitly asked.
             2. **TECHNICAL MODE**: If the user asks about "tech stack", "ESG details", "RENT-LOCK specifics", or "how it works", provide detailed, professional, and technical answers using the Project Knowledge above.
             3. **SMART ROUTING**: ONLY if a user explicitly asks "Where can I see my meetings?" or "Go to appointments" or "Show me X page", explicitly suggest the link using Markdown: "[My Appointments](https://urbansetu.vercel.app/user/my-appointments)".
-            4. **PROPERTY LINKING**: When discussing properties, ALWAYS use absolute Markdown links: "[Property Name](https://urbansetu.vercel.app/listing/PROPERTY_ID)".
-            5. **STATUS AWARENESS**: Always mention if a property is "[SALE-LOCKED]" or "[RENT-LOCKED]" based on the status provided in the context. Explain that these statuses mean the property is secured and no further negotiations are being accepted for now.
-            6. **AUTHENTICATION AWARENESS**: For any link containing "/user/" (e.g., My Listings, Appointments, Rent Wallet), explicitly mention that the user must be logged in to access it.
+            4. **PROPERTY LINKING**: When discussing properties, ALWAYS use absolute Markdown links: "[Property Name](https://urbansetu.vercel.app/listing/PROPERTY_ID)". 
+            5. **SMART RECOMMENDATIONS**: If a user asks for property suggestions, search for them using the "search_properties" tool. If you find properties via the tool, inform the user about them and tell them you've pulled the latest details for them to view below.
+            6. **STATUS AWARENESS**: Always mention if a property is "[SALE-LOCKED]" or "[RENT-LOCKED]" based on the status provided in the context. Explain that these statuses mean the property is secured and no further negotiations are being accepted for now.
+            7. **AUTHENTICATION AWARENESS**: For any link containing "/user/" (e.g., My Listings, Appointments, Rent Wallet), explicitly mention that the user must be logged in to access it.
              
             GENERAL INSTRUCTIONS:
             - Always provide accurate, helpful, and professional responses.
@@ -565,6 +567,8 @@ export const chatWithGemini = async (req, res) => {
         // For simplicity in this tool-use upgrade, we prioritize accuracy over streaming for tool calls.
         // If tools are used, we disable streaming for the first hop.
 
+        const recommendedProperties = [];
+
         console.log('🤖 Sending request to Groq...');
         let completion = await groq.chat.completions.create(requestPayload);
         let responseMessage = completion.choices[0].message;
@@ -586,6 +590,18 @@ export const chatWithGemini = async (req, res) => {
                 let toolResult;
                 if (toolRegistry[functionName]) {
                     toolResult = await toolRegistry[functionName](functionArgs);
+                    
+                    // Collect listings if this was a property search
+                    if (functionName === 'search_properties') {
+                        try {
+                            const parsed = JSON.parse(toolResult);
+                            if (parsed.found && parsed.listings) {
+                                recommendedProperties.push(...parsed.listings);
+                            }
+                        } catch (e) {
+                            console.error("Error parsing tool result for metadata:", e);
+                        }
+                    }
                 } else {
                     toolResult = JSON.stringify({ error: "Tool not found" });
                 }
@@ -607,7 +623,7 @@ export const chatWithGemini = async (req, res) => {
             };
 
             if (requestPayload.stream) {
-                // --- STREAMING LOGIC FOR FINAL ANSWER ---
+                // ... logic for streaming ...
                 console.log('Streaming final response after tools...');
                 const origin = req.headers.origin || 'https://urbansetu.vercel.app';
                 res.writeHead(200, {
@@ -631,7 +647,13 @@ export const chatWithGemini = async (req, res) => {
                     }
                 }
 
-                res.write(`data: ${JSON.stringify({ type: 'done', content: fullResponse, done: true })}\n\n`);
+                // Send the collected recommendations at the end of the stream
+                res.write(`data: ${JSON.stringify({ 
+                    type: 'done', 
+                    content: fullResponse, 
+                    done: true,
+                    recommendations: recommendedProperties.length > 0 ? recommendedProperties : undefined
+                })}\n\n`);
 
                 // Save History
                 if (userId) {
@@ -735,13 +757,19 @@ export const chatWithGemini = async (req, res) => {
                 // Simulate streaming for standard response
                 // We send the entire content in one chunk effectively, adapting to the SSE protocol expected by frontend
                 res.write(`data: ${JSON.stringify({ type: 'chunk', content: responseText, done: false })}\n\n`);
-                res.write(`data: ${JSON.stringify({ type: 'done', content: responseText, done: true })}\n\n`);
+                res.write(`data: ${JSON.stringify({ 
+                    type: 'done', 
+                    content: responseText, 
+                    done: true,
+                    recommendations: recommendedProperties.length > 0 ? recommendedProperties : undefined
+                })}\n\n`);
                 res.end();
             } else {
                 res.status(200).json({
                     success: true,
                     response: responseText,
-                    sessionId: currentSessionId
+                    sessionId: currentSessionId,
+                    recommendations: recommendedProperties.length > 0 ? recommendedProperties : undefined
                 });
             }
         }

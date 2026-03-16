@@ -9,6 +9,7 @@ import { toast } from 'react-toastify';
 import { authenticatedFetch } from "../utils/auth";
 import { API_BASE_URL } from '../config/api';
 // import { FormattedTextWithLinks } from '../utils/linkFormatter.jsx';
+import ListingItem from './ListingItem';
 import { isMobileDevice } from '../utils/mobileUtils';
 import { useSelector } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -2554,6 +2555,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     } else if (streamData.type === 'done') {
                                         isStreamingComplete = true;
                                         streamingResponse = streamData.content;
+                                        const recommendations = streamData.recommendations;
 
                                         // Finalize the streaming message
                                         setMessages(prev => {
@@ -2562,6 +2564,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                             const lastMessage = updatedMessages[updatedMessages.length - 1];
                                             if (lastMessage && lastMessage.isStreaming) {
                                                 lastMessage.content = streamingResponse;
+                                                lastMessage.recommendations = recommendations;
                                                 delete lastMessage.isStreaming;
                                             }
                                             return updatedMessages;
@@ -2586,6 +2589,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             if (streamData.type === 'done') {
                                 isStreamingComplete = true;
                                 streamingResponse = streamData.content;
+                                const recommendations = streamData.recommendations;
                                 // Finalize message...
                                 setMessages(prev => {
                                     const currentMessages = Array.isArray(prev) ? prev : [];
@@ -2593,6 +2597,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     const lastMessage = updatedMessages[updatedMessages.length - 1];
                                     if (lastMessage && lastMessage.isStreaming) {
                                         lastMessage.content = streamingResponse;
+                                        lastMessage.recommendations = recommendations;
                                         delete lastMessage.isStreaming;
                                     }
                                     return updatedMessages;
@@ -2655,7 +2660,12 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     console.log('Setting message with response length:', trimmedResponse.length);
                     setMessages(prev => {
                         const currentMessages = Array.isArray(prev) ? prev : [];
-                        return [...currentMessages, { role: 'assistant', content: trimmedResponse, timestamp: new Date().toISOString() }];
+                        return [...currentMessages, { 
+                            role: 'assistant', 
+                            content: trimmedResponse, 
+                            timestamp: new Date().toISOString(),
+                            recommendations: data.recommendations
+                        }];
                     });
                     if (!isOpen) {
                         setUnreadCount(count => count + 1);
@@ -6108,6 +6118,39 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                             id={screenReaderSupport ? `message-${index}-content` : undefined}
                                                         >
                                                             {renderTextWithMarkdownAndLinks(message.content, message.role === 'user')}
+                                                            
+                                                            {/* Recommended Properties Slider */}
+                                                            {message.role === 'assistant' && message.recommendations && message.recommendations.length > 0 && (
+                                                                <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700/50 animate-fade-in">
+                                                                    <div className="flex items-center justify-between mb-3 px-1">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <div className="p-1 px-2 bg-blue-600/10 text-blue-600 dark:text-blue-400 rounded-full text-[10px] font-black uppercase tracking-wider">
+                                                                                Handpicked for you
+                                                                            </div>
+                                                                            <h4 className="text-xs font-bold text-gray-700 dark:text-gray-300">
+                                                                                AI Recommendations
+                                                                            </h4>
+                                                                        </div>
+                                                                        <span className="text-[10px] text-gray-500 font-medium italic">
+                                                                            {message.recommendations.length} {message.recommendations.length === 1 ? 'property' : 'properties'}
+                                                                        </span>
+                                                                    </div>
+                                                                    
+                                                                    <div className="flex overflow-x-auto pb-4 gap-4 no-scrollbar scroll-smooth snap-x">
+                                                                        {message.recommendations.map((property, pIdx) => (
+                                                                            <div key={property._id || pIdx} className="flex-shrink-0 w-[240px] snap-start transform transition-transform duration-300 hover:scale-[1.02]">
+                                                                                <ListingItem listing={property} />
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                    
+                                                                    <div className="flex items-center justify-center gap-1.5 mt-1 opacity-40">
+                                                                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div>
+                                                                        <div className="w-1 h-1 rounded-full bg-gray-400"></div>
+                                                                        <div className="w-1 h-1 rounded-full bg-gray-400"></div>
+                                                                    </div>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     )
                                                 )}
@@ -6638,7 +6681,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
                                                     handleKeyDown(e);
                                                 }}
-                                                placeholder={(rateLimitInfo.remaining <= 0 && rateLimitInfo.role !== 'rootadmin') ? "Sign in to continue chatting..." : "Ask me anything about real estate..."}
+                                                placeholder={(rateLimitInfo.remaining <= 0 && rateLimitInfo.role !== 'rootadmin') ? "Sign in to continue chatting..." : "Ask me anything about real estate or @mention a property..."}
                                                 aria-label="Type your message"
                                                 aria-describedby="input-help"
                                                 role="textbox"
@@ -8308,6 +8351,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 }
                 .animate-fadeIn { animation: fadeIn 0.25s ease-out; }
                 .animate-slideUp { animation: slideUp 0.28s ease-out; }
+                .no-scrollbar::-webkit-scrollbar {
+                  display: none;
+                }
+                .no-scrollbar {
+                  -ms-overflow-style: none;
+                  scrollbar-width: none;
+                }
                 @keyframes scaleIn {
                   from { opacity: 0; transform: scale(0.9); }
                   to { opacity: 1; transform: scale(1); }
