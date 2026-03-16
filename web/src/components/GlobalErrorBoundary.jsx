@@ -229,9 +229,11 @@ class GlobalErrorBoundary extends React.Component {
 
                         <div className="flex flex-col items-center mb-10">
                             <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-xl transform transition-transform hover:scale-105 active:scale-95 duration-300">
-                                    <span className="text-white font-black text-2xl italic">U</span>
-                                </div>
+                                <img 
+                                    src="/favicon.png" 
+                                    alt="UrbanSetu Logo" 
+                                    className="w-12 h-12 rounded-xl shadow-lg transform transition-transform hover:scale-105 active:scale-95 duration-300 object-contain"
+                                />
                                 <div className="flex flex-col items-start leading-none">
                                     <span className="text-2xl font-black text-gray-900 dark:text-white tracking-tighter">UrbanSetu</span>
                                     <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest mt-1">Real Estate Excellence</span>
