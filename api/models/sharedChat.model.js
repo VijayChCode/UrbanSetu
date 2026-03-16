@@ -46,6 +46,19 @@ const sharedChatSchema = new mongoose.Schema({
         recommendations: {
             type: Array,
             default: undefined
+        },
+        variants: [{
+            content: String,
+            role: String,
+            recommendations: Array,
+            isError: Boolean,
+            isRestricted: Boolean,
+            timestamp: { type: Date, default: Date.now },
+            tail: { type: Array, default: [] }
+        }],
+        activeVersionIndex: {
+            type: Number,
+            default: 0
         }
     }],
     isActive: {

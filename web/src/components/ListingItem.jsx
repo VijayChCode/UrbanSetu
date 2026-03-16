@@ -158,7 +158,11 @@ export default function ListingItem({ listing, onDelete, onWishToggle }) {
       <Link to={listingLink} className="block group/link">
         <div className="relative">
           <AdvancedImage
-            src={Array.isArray(listing.imageUrls) ? listing.imageUrls[0] : (listing.imageUrls || listing.image)}
+            src={
+              (Array.isArray(listing.imageUrls) && listing.imageUrls.length > 0)
+                ? listing.imageUrls[0]
+                : (listing.imageUrls || listing.image || listing.photo || null)
+            }
             alt={listing.name}
             className="aspect-[16/10] w-full object-cover transition-transform duration-500 group-hover/link:scale-[1.05]"
           />

@@ -5,6 +5,11 @@ const AdvancedImage = ({ src, alt, className, ...props }) => {
     const [isLoading, setIsLoading] = useState(!!src);
     const [hasError, setHasError] = useState(!src);
 
+    React.useEffect(() => {
+        setIsLoading(!!src);
+        setHasError(!src);
+    }, [src]);
+
     const handleLoad = () => {
         setIsLoading(false);
     };

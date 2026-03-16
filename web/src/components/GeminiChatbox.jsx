@@ -3303,14 +3303,29 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         setEditingMessageContent(messageContent);
     };
 
-    const switchMessageVersion = (index, newVersionIndex) => {
+    const syncChatTreeToBackend = async (currentMessages) => {
+        if (!currentUser || !sessionId) return;
+        try {
+            await authenticatedFetch(`${API_BASE_URL}/api/gemini/sessions/${sessionId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ messages: currentMessages })
+            });
+        } catch (error) {
+            console.error('Failed to sync chat tree to backend:', error);
+        }
+    };
+
+    const switchMessageVersion = async (index, newVersionIndex) => {
+        let updatedMessagesList = [];
+        
         setMessages(prev => {
             const next = [...prev];
             const message = { ...next[index] };
 
             if (!message.variants || newVersionIndex < 0 || newVersionIndex >= message.variants.length) return prev;
 
-            // Save current state of this version
+            // Save current state of this version before switching (CRITICAL to avoid losing current tail)
             const currentActiveIndex = message.activeVersionIndex || 0;
             const updatedVariants = [...message.variants];
             updatedVariants[currentActiveIndex] = {
@@ -3325,14 +3340,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             message.activeVersionIndex = newVersionIndex;
             message.variants = updatedVariants;
 
-            // Reconstruct messages array from [head] + [versioned message] + [this version's tail]
-            return [...next.slice(0, index), message, ...targetVersion.tail];
+            // Reconstruct messages array
+            updatedMessagesList = [...next.slice(0, index), message, ...targetVersion.tail];
+            return updatedMessagesList;
         });
 
-        // Small delay to scroll to top of new version if needed
-        setTimeout(() => {
-            // Optional: scroll adjustments
-        }, 100);
+        // Sync with backend after state update
+        await syncChatTreeToBackend(updatedMessagesList);
     };
 
     const cancelEditingMessage = () => {
@@ -3387,10 +3401,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             setEditingMessageIndex(null);
             setEditingMessageContent('');
 
-            // 6. Send to API - passing the history only UP TO the edit point
+            // 6. Sync initial branch state to backend before sending new prompt
+            await syncChatTreeToBackend(nextMessages);
+
+            // 7. Send to API - passing the history only UP TO the edit point
             await sendEditedMessageToAPI(editingMessageContent.trim(), nextMessages.slice(0, messageIndex));
 
-            toast.success('New branch created');
+            toast.info('New conversation branch created');
         } catch (error) {
             console.error('Error submitting edited message:', error);
             toast.error('Failed to send edited message');

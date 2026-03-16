@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { FaRobot, FaUser, FaClock, FaCalendar, FaExclamationTriangle, FaArrowRight, FaDownload, FaExternalLinkAlt } from 'react-icons/fa';
+import { FaRobot, FaUser, FaClock, FaCalendar, FaExclamationTriangle, FaArrowRight, FaDownload, FaExternalLinkAlt, FaChevronLeft, FaChevronRight, FaEdit, FaPaperPlane, FaUserCircle } from 'react-icons/fa';
+import { toast } from 'react-toastify';
 
 import { usePageTitle } from '../hooks/usePageTitle';
 import GeminiAIWrapper from "../components/GeminiAIWrapper";
@@ -45,6 +46,10 @@ export default function SharedChatView() {
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [error, setError] = useState(null);
     const [inputToken, setInputToken] = useState('');
+    const [messages, setMessages] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [editingIndex, setEditingIndex] = useState(null);
+    const [editingContent, setEditingContent] = useState('');
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://urbansetu-pvt4.onrender.com';
 
     useEffect(() => {
@@ -58,6 +63,9 @@ export default function SharedChatView() {
 
                 if (data.success) {
                     setChatData(data.sharedChat);
+                    if (data.sharedChat.messages) {
+                        setMessages(data.sharedChat.messages);
+                    }
                     if (!alreadyViewed) {
                         sessionStorage.setItem(viewedKey, 'true');
                     }
@@ -71,7 +79,7 @@ export default function SharedChatView() {
             }
         };
         fetchChat();
-    }, [shareToken]);
+    }, [shareToken, API_BASE_URL]);
 
     const handleImportChat = async () => {
         if (!currentUser) {
@@ -83,30 +91,124 @@ export default function SharedChatView() {
         try {
             const res = await authenticatedFetch(`${API_BASE_URL}/api/shared-chat/import/${shareToken}`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
+                headers: { 'Content-Type': 'application/json' }
             });
             const data = await res.json();
 
             if (data.success) {
                 setImportedSessionId(data.sessionId);
+                toast.success('Chat imported successfully!');
             } else {
-                alert(data.message || "Failed to import chat");
+                toast.error(data.message || "Failed to import chat");
             }
         } catch (err) {
             console.error(err);
-            alert("An error occurred while importing");
+            toast.error("An error occurred while importing");
         } finally {
             setImporting(false);
         }
     };
 
-    // Enhanced text formatter to handle markdown syntax
+    const switchMessageVersion = (index, newVersionIndex) => {
+        setMessages(prev => {
+            const next = [...prev];
+            const message = { ...next[index] };
+
+            if (!message.variants || newVersionIndex < 0 || newVersionIndex >= message.variants.length) return prev;
+
+            const currentActiveIndex = message.activeVersionIndex || 0;
+            const updatedVariants = [...message.variants];
+            updatedVariants[currentActiveIndex] = {
+                ...updatedVariants[currentActiveIndex],
+                content: message.content,
+                tail: next.slice(index + 1)
+            };
+
+            const targetVersion = updatedVariants[newVersionIndex];
+            message.content = targetVersion.content;
+            message.activeVersionIndex = newVersionIndex;
+            message.variants = updatedVariants;
+
+            return [...next.slice(0, index), message, ...targetVersion.tail];
+        });
+    };
+
+    const submitEditedMessage = async (index) => {
+        if (!editingContent.trim()) return;
+
+        try {
+            const updatedMessages = [...messages];
+            const originalMessage = updatedMessages[index];
+
+            const currentTail = updatedMessages.slice(index + 1);
+            let variants = originalMessage.variants || [
+                { content: originalMessage.content, tail: currentTail, timestamp: originalMessage.timestamp }
+            ];
+
+            const activeIdx = originalMessage.activeVersionIndex || 0;
+            const activeVariants = [...variants];
+            activeVariants[activeIdx] = { ...activeVariants[activeIdx], tail: currentTail };
+
+            const newVersion = {
+                content: editingContent.trim(),
+                tail: [],
+                timestamp: new Date().toISOString()
+            };
+
+            const newMessage = {
+                ...originalMessage,
+                content: editingContent.trim(),
+                variants: [...activeVariants, newVersion],
+                activeVersionIndex: activeVariants.length
+            };
+
+            const nextMessages = [...updatedMessages.slice(0, index), newMessage];
+            setMessages(nextMessages);
+            setEditingIndex(null);
+            
+            await getAIResponse(editingContent.trim(), nextMessages.slice(0, index));
+        } catch (err) {
+            console.error('Edit failed:', err);
+            toast.error('Failed to update message');
+        }
+    };
+
+    const getAIResponse = async (userPrompt, history = []) => {
+        setIsLoading(true);
+        try {
+            const response = await authenticatedFetch(`${API_BASE_URL}/api/gemini/chat`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    message: userPrompt,
+                    history: history,
+                    sessionId: chatData?.originalSessionId || 'shared_interaction'
+                })
+            });
+
+            if (!response.ok) throw new Error('AI request failed');
+            
+            const data = await response.json();
+            if (data.success) {
+                const aiMsg = {
+                    role: 'assistant',
+                    content: data.response,
+                    recommendations: data.recommendations,
+                    timestamp: new Date().toISOString()
+                };
+                setMessages(prev => [...prev, aiMsg]);
+            }
+        } catch (err) {
+            console.error('AI error:', err);
+            toast.error('AI is currently unavailable');
+            setMessages(prev => [...prev, { role: 'assistant', content: "I'm sorry, I'm having trouble connecting right now.", isError: true }]);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const formatText = (text, isUser = false) => {
         if (!text) return null;
 
-        // Process markdown headings first
         let processedText = text;
         processedText = processedText
             .replace(/^### (.*$)/gim, '<h3 class="text-base sm:text-lg font-bold mt-4 mb-2 text-gray-900 dark:text-white">$1</h3>')
@@ -117,58 +219,40 @@ export default function SharedChatView() {
             .replace(/^\* (.*$)/gim, '<li class="ml-4 list-disc">$1</li>')
             .replace(/^\d+\. (.*$)/gim, '<li class="ml-4 list-decimal">$1</li>');
 
-        // Split by code blocks
         const parts = processedText.split(/(```[\s\S]*?```)/g);
 
         return parts.map((part, index) => {
             if (part.startsWith('```') && part.endsWith('```')) {
-                // Render code block
-                const content = part.slice(3, -3).replace(/^\w+\n/, ''); // Remove language identifier if present
+                const content = part.slice(3, -3).replace(/^\w+\n/, '');
                 return (
-                    <div key={index} className="bg-gray-900 text-gray-100 p-4 rounded-xl my-4 font-mono text-xs sm:text-sm overflow-x-auto border border-gray-700 shadow-lg">
-                        <pre className="leading-relaxed">{content}</pre>
+                    <div key={index} className="bg-gray-900 text-gray-100 p-4 rounded-xl my-4 font-mono text-xs sm:text-sm border border-gray-700 shadow-xl">
+                        <pre className="overflow-x-auto no-scrollbar">{content}</pre>
                     </div>
                 );
             }
 
-            // Render text with links
             const subParts = part.split(/(\[.*?\]\(.*?\)|https?:\/\/[^\s]+)/g);
             return (
                 <div key={index} className={`${isUser ? 'text-white' : 'text-gray-800 dark:text-gray-200'} leading-relaxed`}>
                     {subParts.map((subPart, subIndex) => {
-                        // Check for Markdown Link [text](url)
                         const mdLinkMatch = subPart.match(/^\[(.*?)\]\((.*?)\)$/);
                         if (mdLinkMatch) {
                             return (
-                                <a
-                                    key={subIndex}
-                                    href={mdLinkMatch[2]}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className={`${isUser ? 'text-white underline font-bold active:opacity-70' : 'text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300'} transition-colors cursor-pointer pointer-events-auto break-all`}
-                                >
+                                <a key={subIndex} href={mdLinkMatch[2]} target="_blank" rel="noopener noreferrer" className={`${isUser ? 'text-white underline font-bold' : 'text-blue-600 dark:text-blue-400 underline font-semibold'} hover:opacity-80 transition-opacity`}>
                                     {mdLinkMatch[1]}
                                 </a>
                             );
                         }
 
-                        // Check for raw URL
                         const urlMatch = subPart.match(/^https?:\/\/[^\s]+$/);
                         if (urlMatch) {
                             return (
-                                <a
-                                    key={subIndex}
-                                    href={subPart}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className={`${isUser ? 'text-white underline font-bold active:opacity-70' : 'text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300'} transition-colors cursor-pointer pointer-events-auto break-all`}
-                                >
+                                <a key={subIndex} href={subPart} target="_blank" rel="noopener noreferrer" className={`${isUser ? 'text-white underline font-bold' : 'text-blue-600 dark:text-blue-400 underline font-semibold'} hover:opacity-80 transition-opacity`}>
                                     {subPart}
                                 </a>
                             );
                         }
 
-                        // Use dangerouslySetInnerHTML for the markdown processed parts
                         return <span key={subIndex} dangerouslySetInnerHTML={{ __html: subPart }} />;
                     })}
                 </div>
@@ -178,69 +262,39 @@ export default function SharedChatView() {
 
     const handleManualSubmit = () => {
         if (!inputToken.trim()) return;
-
-        // Construct new path by replacing the last segment (token)
         const currentPath = window.location.pathname;
         const parts = currentPath.split('/');
-        // Handle potential trailing slash
         if (parts[parts.length - 1] === '') parts.pop();
-
-        // Update the last part with new token
         parts[parts.length - 1] = inputToken.trim();
-        const newPath = parts.join('/');
-
-        navigate(newPath);
-        // Reset error state to trigger loading state if needed, though navigation usually handles remount/update
+        navigate(parts.join('/'));
         setError(null);
         setLoading(true);
     };
 
-    if (loading) {
-        return <SharedChatViewSkeleton />;
-    }
+    if (loading) return <SharedChatViewSkeleton />;
 
     if (error) {
         return (
-            <div className="min-h-screen bg-transparent dark:bg-gray-950 flex items-center justify-center p-4 transition-colors duration-300">
-                <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl max-w-md w-full text-center border dark:border-gray-700">
-                    <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <FaExclamationTriangle className="text-red-500 dark:text-red-400 text-3xl" />
+            <div className="min-h-screen bg-transparent dark:bg-gray-950 flex items-center justify-center p-4">
+                <div className="bg-white dark:bg-gray-800 p-10 rounded-3xl shadow-2xl max-w-md w-full text-center border dark:border-gray-700 animate-fadeIn">
+                    <div className="w-20 h-20 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <FaExclamationTriangle className="text-red-500 dark:text-red-400 text-4xl" />
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Unavailable</h2>
-                    <p className="text-gray-600 dark:text-gray-400 mb-6 font-medium">{error}</p>
-
-                    {/* Manual Token Input */}
-                    <div className="mb-6 text-left">
-                        <div className="relative">
-                            <input
-                                type="text"
-                                value={inputToken}
-                                onChange={(e) => setInputToken(e.target.value)}
-                                placeholder="Paste token here..."
-                                className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                        handleManualSubmit();
-                                    }
-                                }}
-                            />
-                            <button
-                                onClick={handleManualSubmit}
-                                className="absolute right-2 top-2 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg transition-colors p-1.5"
-                            >
-                                <FaArrowRight size={20} />
-                            </button>
-                        </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">If you have a valid token, paste it above to view.</p>
+                    <h2 className="text-2xl font-black mb-3 dark:text-white font-outfit uppercase tracking-tight">Access Denied</h2>
+                    <p className="text-gray-600 dark:text-gray-400 mb-8 font-medium">{error}</p>
+                    <div className="relative mb-8">
+                        <input
+                            type="text"
+                            value={inputToken}
+                            onChange={(e) => setInputToken(e.target.value)}
+                            placeholder="Enter chat token..."
+                            className="w-full px-5 py-4 pr-14 rounded-2xl border-2 border-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:border-blue-500 transition-all outline-none text-lg font-bold"
+                        />
+                        <button onClick={handleManualSubmit} className="absolute right-3 top-3 p-2 bg-blue-600 text-white rounded-xl shadow-lg hover:bg-blue-700 transition-colors"><FaArrowRight size={18} /></button>
                     </div>
-
-                    <div className="flex gap-4 justify-center">
-                        <a href="/" className="inline-block bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-6 py-2 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
-                            Go Home
-                        </a>
-                        <a href="/ai" className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors">
-                            Go to SetuAI
-                        </a>
+                    <div className="flex flex-col gap-3">
+                        <a href="/ai" className="w-full py-4 rounded-2xl bg-blue-600 text-white font-black uppercase tracking-widest text-sm shadow-xl shadow-blue-500/30 hover:scale-[1.02] active:scale-95 transition-all">Start Your Own AI Journey</a>
+                        <a href="/" className="w-full py-3 rounded-2xl bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-300 font-bold text-sm">Return Home</a>
                     </div>
                 </div>
             </div>
@@ -248,174 +302,168 @@ export default function SharedChatView() {
     }
 
     return (
-        <div className="min-h-screen bg-transparent dark:bg-gray-950 flex flex-col transition-colors duration-300">
-            {/* Header */}
-            <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 sticky top-0 z-50 shadow-sm">
-                <div className="max-w-4xl mx-auto px-4 py-3 flex flex-row justify-between items-center">
-                    <div className="flex items-center gap-3 overflow-hidden">
-                        <div className="flex-shrink-0 w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center text-white shadow-lg">
-                            <FaRobot size={18} />
+        <div className="min-h-screen bg-white dark:bg-gray-950 flex flex-col transition-colors duration-300 font-inter">
+            <header className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800 sticky top-0 z-50 py-3 shadow-sm">
+                <div className="max-w-5xl mx-auto px-4 flex flex-row justify-between items-center gap-4">
+                    <div className="flex items-center gap-4 min-w-0">
+                        <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-tr from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center text-white shadow-xl rotate-3">
+                            <FaRobot size={22} />
                         </div>
                         <div className="min-w-0">
-                            <h1 className="font-bold text-gray-900 dark:text-white text-base sm:text-lg leading-tight truncate">
-                                <TypewriterText text={chatData.title || "Shared Chat"} />
+                            <h1 className="font-black text-gray-900 dark:text-white text-lg sm:text-xl truncate tracking-tight leading-none">
+                                <TypewriterText text={chatData.title || "SetuAI Intelligence Shared"} />
                             </h1>
-                            <div className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1.5 mt-0.5">
-                                <span className="flex items-center gap-1 shrink-0"><FaCalendar size={9} /> {chatData.date ? new Date(chatData.date).toLocaleDateString() : new Date().toLocaleDateString()}</span>
-                                <span className="w-1 h-1 bg-gray-300 dark:bg-gray-700 rounded-full"></span>
-                                <span className="text-blue-600 dark:text-blue-400 font-medium truncate">Shared via SetuAI</span>
+                            <div className="text-[10px] sm:text-xs text-gray-400 dark:text-gray-500 font-bold flex items-center gap-2 mt-1 uppercase tracking-widest">
+                                <span className="flex items-center gap-1.5"><FaCalendar size={10} className="text-blue-500" /> {new Date(chatData.createdAt).toLocaleDateString()}</span>
+                                <span className="w-1 h-1 bg-gray-200 dark:bg-gray-700 rounded-full"></span>
+                                <span className="text-indigo-500">Authentic Shared Insight</span>
                             </div>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2 ml-2">
+                    <div className="flex items-center gap-2 shrink-0">
                         {importedSessionId ? (
-                            <button
-                                onClick={() => {
-                                    if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) {
-                                        navigate(`/admin/ai?session=${importedSessionId}`);
-                                    } else {
-                                        navigate(`/user/ai?session=${importedSessionId}`);
-                                    }
-                                }}
-                                className="flex items-center gap-2 text-xs font-bold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-3 py-1.5 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/50 transition-all shadow-sm active:scale-95"
-                            >
-                                <FaArrowRight size={12} />
-                                <span className="hidden sm:inline">Open Chat</span>
-                                <span className="sm:hidden">Open</span>
+                            <button onClick={() => navigate(currentUser?.role?.includes('admin') ? `/admin/ai?session=${importedSessionId}` : `/user/ai?session=${importedSessionId}`)} className="h-10 flex items-center gap-2 px-4 rounded-xl bg-green-500 text-white font-black text-[10px] uppercase shadow-lg shadow-green-500/30 active:scale-95 transition-all">
+                                <FaExternalLinkAlt size={10} /> Open
                             </button>
                         ) : (
-                            <button
-                                onClick={handleImportChat}
-                                disabled={importing}
-                                className="flex items-center gap-2 text-xs font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/30 px-3 py-1.5 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-all disabled:opacity-50 shadow-sm active:scale-95"
-                            >
-                                <FaDownload size={12} />
-                                {importing ? "..." : (
-                                    <>
-                                        <span className="hidden sm:inline">Import Chat</span>
-                                        <span className="sm:hidden">Import</span>
-                                    </>
-                                )}
+                            <button onClick={handleImportChat} disabled={importing} className="h-10 flex items-center gap-2 px-4 rounded-xl bg-indigo-600 text-white font-black text-[10px] uppercase shadow-lg shadow-indigo-600/30 active:scale-95 transition-all disabled:opacity-50">
+                                <FaDownload size={10} /> {importing ? "..." : "Import"}
                             </button>
                         )}
-                        <a 
-                            href="/ai" 
-                            className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-transform hover:scale-105 active:scale-95 shadow-md"
-                            title="Go to SetuAI"
-                        >
-                            <FaExternalLinkAlt size={14} />
+                        <a href="/ai" className="w-10 h-10 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-xl text-gray-600 dark:text-gray-300 hover:bg-blue-600 hover:text-white transition-all shadow-sm active:rotate-12" title="New Chat">
+                            <FaPaperPlane size={14} />
                         </a>
                     </div>
                 </div>
             </header>
 
-            {/* Chat Content */}
-            <main className="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 space-y-6">
-                {chatData.messages.map((msg, idx) => (
-                    <div key={idx} className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${msg.role === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-                            }`}>
-                            {msg.role === 'user' ? <FaUser size={14} /> : <FaRobot size={16} />}
+            <main className="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-8 space-y-12">
+                {messages.map((msg, index) => (
+                    <div key={index} className={`flex gap-5 sm:gap-8 ${msg.role === 'user' ? 'flex-row-reverse' : ''} group relative`}>
+                        <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-2xl transform transition-transform group-hover:scale-110 ${msg.role === 'user' ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-gray-800 border-2 border-gray-50 dark:border-gray-700 text-indigo-500'}`}>
+                            {msg.role === 'user' ? (currentUser?.avatar ? <img src={currentUser.avatar} className="w-full h-full rounded-2xl object-cover" alt="" /> : <FaUserCircle size={24} />) : <FaRobot size={22} />}
                         </div>
 
-                        <div className={`flex-1 max-w-[85%] rounded-2xl p-4 shadow-sm ${msg.role === 'user'
-                            ? 'bg-blue-600 text-white rounded-tr-none'
-                            : 'bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 text-gray-800 dark:text-gray-200 rounded-tl-none'
-                            }`}>
-                            {/* Check for restricted content */}
-                            {msg.isRestricted ? (
-                                <div className={`flex items-center gap-2 p-3 rounded-lg border ${msg.role === 'user' ? 'bg-red-900/30 border-red-500/50 text-red-200' : 'bg-red-50 dark:bg-red-900/30 border-red-100 dark:border-red-900/50 text-red-600 dark:text-red-400'}`}>
-                                    <FaExclamationTriangle className="flex-shrink-0" />
-                                    <span className="italic text-sm">Content hidden due to safety policy violation.</span>
-                                </div>
-                            ) : (
-                                <div className={`prose prose-sm dark:prose-invert max-w-none text-sm leading-relaxed ${msg.role === 'user' ? 'text-white/90' : 'text-gray-800 dark:text-gray-300'}`}>
-                                    {formatText(msg.content, msg.role === 'user')}
+                        <div className={`flex-1 min-w-0 ${msg.role === 'user' ? 'text-right' : ''}`}>
+                            <h4 className={`text-[10px] font-black uppercase tracking-[0.2em] mb-2 ${msg.role === 'user' ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400 dark:text-gray-500'}`}>
+                                {msg.role === 'user' ? 'Contributor' : 'SetuAI Engine v2'}
+                            </h4>
 
-                                    {/* Recommended Properties Slider */}
-                                    {msg.role === 'assistant' && msg.recommendations && msg.recommendations.length > 0 && (
-                                        <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-700/50 not-prose">
-                                            <div className="flex items-center justify-between mb-4 px-1">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="p-1 px-2 bg-blue-600/10 text-blue-600 dark:text-blue-400 rounded-full text-[10px] font-black uppercase tracking-wider">
-                                                        Handpicked for you
-                                                    </div>
-                                                    <h4 className="text-xs font-bold text-gray-700 dark:text-gray-300">
-                                                        AI Recommendations
-                                                    </h4>
-                                                </div>
-                                                <span className="text-[10px] text-gray-500 font-medium italic">
-                                                    {msg.recommendations.length} {msg.recommendations.length === 1 ? 'property' : 'properties'}
-                                                </span>
+                            <div className={`relative inline-block text-left w-full sm:w-auto max-w-full rounded-[2rem] p-6 sm:p-8 shadow-2xl transition-all ${msg.role === 'user' ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-white dark:bg-gray-800 border-2 border-gray-50 dark:border-gray-800 text-gray-800 dark:text-blue-50 rounded-tl-none'}`}>
+                                
+                                {editingIndex === index ? (
+                                    <div className="space-y-4">
+                                        <textarea
+                                            className="w-full bg-black/10 dark:bg-gray-900/80 rounded-3xl p-5 text-white dark:text-blue-100 border-2 border-white/20 focus:border-white outline-none resize-none min-h-[160px] text-lg leading-relaxed no-scrollbar"
+                                            value={editingContent}
+                                            onChange={(e) => setEditingContent(e.target.value)}
+                                            autoFocus
+                                        />
+                                        <div className="flex justify-end gap-3">
+                                            <button onClick={() => setEditingIndex(null)} className="px-5 py-2 text-xs font-black uppercase text-white/60 hover:text-white transition-colors tracking-widest">Cancel</button>
+                                            <button onClick={() => submitEditedMessage(index)} className="px-8 py-3 bg-white text-indigo-700 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-2xl active:scale-95 transition-all flex items-center gap-2">
+                                                <FaPaperPlane size={10} /> Execute
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <>
+                                        {msg.variants && msg.variants.length > 1 && (
+                                            <div className="flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black bg-black/5 dark:bg-white/5 text-current mb-5 w-fit border border-current/10 select-none">
+                                                <button onClick={() => switchMessageVersion(index, (msg.activeVersionIndex || 0) - 1)} disabled={(msg.activeVersionIndex || 0) === 0} className="hover:scale-150 disabled:opacity-10 transition-all"><FaChevronLeft size={6} /></button>
+                                                <span className="min-w-[40px] text-center tracking-tighter">{(msg.activeVersionIndex || 0) + 1} of {msg.variants.length}</span>
+                                                <button onClick={() => switchMessageVersion(index, (msg.activeVersionIndex || 0) + 1)} disabled={(msg.activeVersionIndex || 0) === msg.variants.length - 1} className="hover:scale-150 disabled:opacity-10 transition-all"><FaChevronRight size={6} /></button>
                                             </div>
+                                        )}
+                                        
+                                        <div className={`text-base sm:text-lg whitespace-pre-wrap ${msg.role === 'user' ? 'font-medium' : ''}`}>
+                                            {formatText(msg.content, msg.role === 'user')}
+                                        </div>
 
-                                            <div className="flex overflow-x-auto pb-4 gap-4 no-scrollbar scroll-smooth snap-x">
-                                                {msg.recommendations.map((property, pIdx) => (
-                                                    <div key={property._id || pIdx} className="flex-shrink-0 w-[240px] sm:w-[260px] snap-start transform transition-transform duration-300 hover:scale-[1.02]">
-                                                        <ListingItem listing={property} />
-                                                    </div>
-                                                ))}
+                                        {msg.role === 'user' && !editingIndex && (
+                                            <button onClick={() => { setEditingIndex(index); setEditingContent(msg.content); }} className="absolute -left-12 top-4 opacity-0 group-hover:opacity-100 bg-white dark:bg-gray-800 w-10 h-10 flex items-center justify-center rounded-xl shadow-2xl border border-gray-100 dark:border-gray-700 text-gray-400 hover:text-indigo-600 transition-all duration-300">
+                                                <FaEdit size={14} />
+                                            </button>
+                                        )}
+                                    </>
+                                )}
+
+                                {msg.recommendations && msg.recommendations.length > 0 && (
+                                    <div className="mt-10 pt-10 border-t-2 border-gray-50 dark:border-gray-700/50">
+                                        <div className="flex items-center justify-between mb-8 overflow-hidden">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-[2px] bg-indigo-500 rounded-full"></div>
+                                                <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-500 whitespace-nowrap">Elite Recommendations</h4>
                                             </div>
-
-                                            <div className="flex items-center justify-center gap-1.5 mt-2 opacity-30">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div>
-                                                <div className="w-1 h-1 rounded-full bg-gray-400"></div>
-                                                <div className="w-1 h-1 rounded-full bg-gray-400"></div>
+                                            <div className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest bg-gray-50 dark:bg-gray-800 px-3 py-1 rounded-full whitespace-nowrap">
+                                                {msg.recommendations.length} Properties
                                             </div>
                                         </div>
-                                    )}
-                                </div>
-                            )}
-                            <div className={`mt-2 text-xs flex justify-end items-center ${msg.role === 'user' ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'}`}>
-                                <FaClock className="mr-1" size={10} />
-                                {msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                                        <div className="flex overflow-x-auto pb-4 gap-6 no-scrollbar scroll-smooth snap-x">
+                                            {msg.recommendations.map((property, pIdx) => (
+                                                <div key={property._id || pIdx} className="flex-shrink-0 w-[240px] sm:w-[280px] snap-start transform transition-all duration-500 hover:scale-[1.05] hover:-translate-y-2">
+                                                    <ListingItem listing={property} />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                            
+                            <div className={`mt-3 text-[10px] flex items-center gap-2 font-black uppercase tracking-widest ${msg.role === 'user' ? 'justify-end text-indigo-300' : 'text-gray-400'}`}>
+                                <FaClock size={10} className="animate-pulse" /> {msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : 'Live'}
                             </div>
                         </div>
                     </div>
                 ))}
+                
+                {isLoading && (
+                    <div className="flex gap-8 animate-pulse">
+                        <div className="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-gray-800/50"></div>
+                        <div className="flex-1 space-y-4">
+                            <div className="h-4 bg-gray-100 dark:bg-gray-800/50 rounded-full w-1/4"></div>
+                            <div className="h-32 bg-gray-100 dark:bg-gray-900/30 rounded-3xl"></div>
+                        </div>
+                    </div>
+                )}
             </main>
 
-            {/* Footer CTA */}
-            <footer className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 py-8 mt-8 transition-colors duration-300">
-                <div className="max-w-4xl mx-auto px-4 text-center">
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Start your own conversation with SetuAI</h3>
-                    <p className="text-gray-600 dark:text-gray-400 mb-6 font-medium">Get instant answers about real estate, market trends, and more.</p>
-                    <a href="/ai" className="inline-block bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all">
-                        Launch SetuAI
-                    </a>
+            <footer className="bg-gray-50/50 dark:bg-gray-900/50 py-24 border-t border-gray-100 dark:border-gray-800 mt-24 text-center backdrop-blur-2xl">
+                <div className="max-w-2xl mx-auto px-4">
+                    <div className="w-12 h-12 bg-white dark:bg-gray-800 rounded-2xl shadow-xl flex items-center justify-center mx-auto mb-8 transform -rotate-12 border dark:border-gray-700">
+                        <FaRobot size={18} className="text-blue-600" />
+                    </div>
+                    <h3 className="text-3xl font-black dark:text-white mb-4 tracking-tight leading-none uppercase">Fuel Your Curiosity</h3>
+                    <p className="text-gray-500 dark:text-gray-400 mb-10 text-lg font-medium leading-relaxed">This conversation belongs to the future. Start your own personalized AI session now and get instant market clarity.</p>
+                    <a href="/ai" className="inline-flex items-center gap-3 bg-indigo-600 text-white px-10 py-5 rounded-[2.5rem] font-black uppercase tracking-widest text-xs shadow-2xl shadow-indigo-600/40 hover:scale-[1.05] active:scale-95 transition-all">Launch Full Assistant <FaArrowRight size={12}/></a>
                 </div>
             </footer>
 
-            {/* Authentication Modal */}
             {showAuthModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fadeIn">
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowAuthModal(false)} />
-                    <div className="relative w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 transform transition-all animate-scaleIn border dark:border-gray-700">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fadeIn">
+                    <div className="absolute inset-0 bg-black/70 backdrop-blur-lg" onClick={() => setShowAuthModal(false)} />
+                    <div className="relative w-full max-w-sm bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-[0_35px_60px_-15px_rgba(0,0,0,0.5)] p-10 transform transition-all animate-scaleIn border border-gray-100 dark:border-gray-800">
                         <div className="text-center">
-                            <div className="w-14 h-14 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <FaUser size={24} className="text-blue-600 dark:text-blue-400" />
+                            <div className="w-20 h-20 bg-indigo-50 dark:bg-indigo-900/20 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-inner">
+                                <FaUserCircle size={40} className="text-indigo-600 dark:text-indigo-400" />
                             </div>
-                            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                                Sign In Required
-                            </h3>
-                            <p className="text-gray-600 dark:text-gray-400 mb-6">
-                                Please sign in to import this chat to your history.
-                            </p>
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={() => setShowAuthModal(false)}
-                                    className="flex-1 px-4 py-2 rounded-xl text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 font-medium transition-colors"
-                                >
-                                    Cancel
-                                </button>
+                            <h3 className="text-3xl font-black text-gray-900 dark:text-white mb-3 uppercase tracking-tight">Identity Required</h3>
+                            <p className="text-gray-500 dark:text-gray-400 mb-10 font-medium leading-relaxed">Please sign in to securely import this conversation into your personal intelligence library.</p>
+                            <div className="flex flex-col gap-3">
                                 <button
                                     onClick={() => {
                                         const returnUrl = encodeURIComponent(window.location.pathname);
                                         navigate(`/sign-in?redirect=${returnUrl}`);
                                     }}
-                                    className="flex-1 px-4 py-2 rounded-xl text-white bg-blue-600 hover:bg-blue-700 font-medium transition-colors shadow-lg shadow-blue-500/30"
+                                    className="w-full py-5 rounded-2xl bg-indigo-600 text-white font-black uppercase tracking-widest text-xs shadow-xl shadow-indigo-600/30 hover:scale-[1.02] active:scale-95 transition-all"
                                 >
-                                    Sign In
+                                    Sign In Context
+                                </button>
+                                <button
+                                    onClick={() => setShowAuthModal(false)}
+                                    className="w-full py-4 rounded-xxl text-gray-400 dark:text-gray-500 font-bold uppercase tracking-widest text-[10px]"
+                                >
+                                    Dismiss
                                 </button>
                             </div>
                         </div>
@@ -423,23 +471,19 @@ export default function SharedChatView() {
                 </div>
             )}
 
-            <style>
-                {`
-                    @keyframes fadeIn {
-                        from { opacity: 0; }
-                        to { opacity: 1; }
-                    }
-                    @keyframes scaleIn {
-                        from { opacity: 0; transform: scale(0.95); }
-                        to { opacity: 1; transform: scale(1); }
-                    }
-                    .animate-fadeIn { animation: fadeIn 0.2s ease-out; }
-                    .animate-scaleIn { animation: scaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
-                `}
-            </style>
-
             <GeminiAIWrapper />
             <ContactSupportWrapper />
+
+            <style>{`
+                @font-face { font-family: 'Outfit'; src: url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap'); }
+                .font-outfit { font-family: 'Outfit', sans-serif; }
+                .no-scrollbar::-webkit-scrollbar { display: none; }
+                .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+                @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+                @keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+                .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
+                .animate-scaleIn { animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+            `}</style>
         </div>
     );
 }

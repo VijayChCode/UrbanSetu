@@ -1349,3 +1349,57 @@ export const getSmartSuggestions = async (req, res) => {
         });
     }
 };
+
+/**
+ * Update a chat session's full message history, including variants and versioning.
+ * This is used for persisting branching conversations.
+ */
+export const updateSessionHistory = async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        const { messages = [] } = req.body;
+        const userId = req.user.id;
+
+        if (!sessionId) {
+            return res.status(400).json({ success: false, message: 'Session ID is required' });
+        }
+
+        const chatHistory = await ChatHistory.findOne({ userId, sessionId });
+        if (!chatHistory) {
+            return res.status(404).json({ success: false, message: 'Chat history not found' });
+        }
+
+        // Map frontend messages (which might have camelCase variants) to backend schema
+        chatHistory.messages = messages.map(msg => ({
+            role: msg.role,
+            content: msg.content,
+            timestamp: msg.timestamp || new Date(),
+            isRestricted: msg.isRestricted || false,
+            isError: msg.isError || false,
+            recommendations: msg.recommendations,
+            activeVersionIndex: msg.activeVersionIndex || 0,
+            variants: (msg.variants || []).map(v => ({
+                role: v.role || msg.role,
+                content: v.content,
+                recommendations: v.recommendations,
+                isError: v.isError || false,
+                isRestricted: v.isRestricted || false,
+                timestamp: v.timestamp || new Date(),
+                tail: v.tail || []
+            }))
+        }));
+
+        await chatHistory.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Chat history updated successfully'
+        });
+    } catch (error) {
+        console.error('Error updating chat history:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};

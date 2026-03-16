@@ -42,6 +42,19 @@ const chatHistorySchema = new mongoose.Schema({
     timestamp: {
       type: Date,
       default: Date.now
+    },
+    variants: [{
+      content: String,
+      role: String,
+      recommendations: Array,
+      isError: Boolean,
+      isRestricted: Boolean,
+      timestamp: { type: Date, default: Date.now },
+      tail: { type: Array, default: [] }
+    }],
+    activeVersionIndex: {
+      type: Number,
+      default: 0
     }
   }],
   totalMessages: {

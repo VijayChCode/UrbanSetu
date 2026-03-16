@@ -1,5 +1,5 @@
 import express from 'express';
-import { chatWithGemini, getUserChatSessions, rateMessage, getMessageRatings, createNewSession, deleteSession, deleteAllSessions, bookmarkMessage, removeBookmark, getBookmarkedMessages, getAllMessageRatings, deleteRating, getSmartSuggestions } from '../controllers/gemini.controller.js';
+import { chatWithGemini, getUserChatSessions, rateMessage, getMessageRatings, createNewSession, deleteSession, deleteAllSessions, bookmarkMessage, removeBookmark, getBookmarkedMessages, getAllMessageRatings, deleteRating, getSmartSuggestions, updateSessionHistory } from '../controllers/gemini.controller.js';
 import { optionalAuth, verifyToken } from '../utils/verify.js';
 import { aiChatRateLimit, getRateLimitStatus } from '../middleware/aiRateLimiter.js';
 import { cleanupOldChatData, getDataRetentionStats, cleanupUserData } from '../services/dataRetentionService.js';
@@ -20,6 +20,9 @@ router.delete('/sessions/:sessionId', verifyToken, deleteSession);
 
 // Delete all chat sessions (requires authentication)
 router.delete('/sessions', verifyToken, deleteAllSessions);
+
+// Update a chat session's history (for branching/versioning)
+router.put('/sessions/:sessionId', verifyToken, updateSessionHistory);
 
 // Rate a message (optional authentication for public users)
 router.post('/rate', optionalAuth, rateMessage);
