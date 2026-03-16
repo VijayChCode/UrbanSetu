@@ -210,6 +210,10 @@ export default function Listing() {
   const [showLocalityScore, setShowLocalityScore] = useState(false);
   const [localityLoading, setLocalityLoading] = useState(false);
   const [showVerifiedModal, setShowVerifiedModal] = useState(false);
+  const [propertyIdInput, setPropertyIdInput] = useState("");
+  const [recommendations, setRecommendations] = useState([]);
+  const [recsLoading, setRecsLoading] = useState(true);
+  const [visibleRecsCount, setVisibleRecsCount] = useState(4);
 
   const listingAvailabilityStatus = listing?.availabilityStatus;
   const isListingUnavailable = listing && UNAVAILABLE_STATUSES.includes(listingAvailabilityStatus);
@@ -1469,24 +1473,191 @@ export default function Listing() {
     fetchOwnerDetails();
   }, [listing]);
 
+  // Fetch recommendations for Not Found state
+  useEffect(() => {
+    const fetchRecommendations = async () => {
+      if (listing || !loading) {
+        // Only run if listing is null and NOT loading (meaning fetch finished but no property found)
+        if (listing) return;
+      } else {
+        return;
+      }
+
+      try {
+        setRecsLoading(true);
+        // Fetch public listings
+        const res = await authenticatedFetch(`${API_BASE_URL}/api/listing/get?limit=20&visibility=public`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const listings = Array.isArray(data) ? data : (data?.listings || []);
+
+        if (currentUser) {
+          // Sentinel Live recommendations
+          let userPreferences = [];
+          try {
+            const [wishRes, watchRes] = await Promise.all([
+              authenticatedFetch(`${API_BASE_URL}/api/wishlist/user/${currentUser._id}`),
+              authenticatedFetch(`${API_BASE_URL}/api/watchlist/user/${currentUser._id}`)
+            ]);
+            const wishData = wishRes.ok ? await wishRes.json() : [];
+            const watchData = watchRes.ok ? await watchRes.json() : [];
+            const wishItems = Array.isArray(wishData) ? wishData.filter(x => x.listingId).map(x => x.listingId) : [];
+            const watchItems = Array.isArray(watchData) ? watchData.filter(x => x.listingId).map(x => x.listingId) : [];
+            userPreferences = [...wishItems, ...watchItems];
+          } catch (e) {
+            console.error("Error fetching user preferences:", e);
+          }
+
+          const validListings = listings.filter(l =>
+            l.userRef !== currentUser._id &&
+            l.sellerId !== currentUser._id
+          );
+
+          const recs = await getLiveRecommendations(validListings, 12, userPreferences);
+          setRecommendations(recs.length > 0 ? recs : listings.sort(() => 0.5 - Math.random()).slice(0, 8));
+        } else {
+          setRecommendations(listings.sort(() => 0.5 - Math.random()).slice(0, 8));
+        }
+      } catch (error) {
+        console.error("Failed to fetch recommendations", error);
+      } finally {
+        setRecsLoading(false);
+      }
+    };
+
+    if (!listing && !loading) {
+      fetchRecommendations();
+    }
+  }, [listing, loading, currentUser]);
+
+  const handleIdSearch = (e) => {
+    e.preventDefault();
+    if (propertyIdInput.trim()) {
+      navigate(`/listing/${propertyIdInput.trim()}`);
+      setPropertyIdInput("");
+    }
+  };
+
   if (loading) {
     return <ListingSkeleton />;
   }
 
   if (!listing) {
+    const explorePath = currentUser ? (isAdmin ? "/admin/explore" : "/user/search") : "/search";
+
     return (
-      <div className="bg-gradient-to-br from-blue-50 to-purple-100 dark:from-gray-950 dark:to-gray-900 min-h-screen py-10 px-2 md:px-8 transition-colors duration-300">
-        <div className="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 relative dark:border dark:border-gray-700 transition-colors duration-300">
-          <div className="text-center">
-            <h3 className="text-2xl font-bold text-red-600 dark:text-red-400 mb-4">Property Not Found</h3>
-            <p className="text-gray-600 dark:text-gray-300 mb-6">The property you're looking for doesn't exist or has been removed.</p>
-            <Link
-              to={backButtonInfo.path}
-              className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg font-semibold"
-            >
-              {backButtonInfo.text}
-            </Link>
+      <div className="bg-gradient-to-br from-blue-50 to-purple-100 dark:from-gray-950 dark:to-gray-900 min-h-screen py-10 px-4 md:px-8 transition-colors duration-300 relative overflow-hidden">
+        {/* Dynamic Background Blobs */}
+        <div className="fixed top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
+          <div className="absolute top-[10%] left-[20%] w-72 h-72 bg-blue-400/20 dark:bg-blue-600/10 rounded-full blur-[100px] animate-blob"></div>
+          <div className="absolute bottom-[20%] right-[20%] w-96 h-96 bg-purple-400/20 dark:bg-purple-600/10 rounded-full blur-[100px] animate-blob animation-delay-2000"></div>
+        </div>
+
+        <div className="max-w-7xl mx-auto relative z-10 flex flex-col gap-12">
+          {/* Main Not Found Card */}
+          <div className="max-w-2xl mx-auto w-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border border-white/50 dark:border-gray-700/50 rounded-3xl shadow-2xl p-8 md:p-12 text-center animate-fade-in-up">
+            <div className="w-20 h-20 bg-red-100 dark:bg-red-900/40 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+              <FaExclamationTriangle className="text-red-600 dark:text-red-400 text-4xl" />
+            </div>
+            <h3 className="text-3xl font-black text-gray-900 dark:text-white mb-4 tracking-tight">Property Not Found</h3>
+            <p className="text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
+              The property you're looking for doesn't exist, has been removed, or the ID is incorrect.
+            </p>
+
+            {/* ID Search Field */}
+            <div className="mb-10 group">
+              <p className="text-sm font-bold text-gray-500 dark:text-gray-400 mb-3 text-left ml-1 flex items-center gap-2">
+                <FaCompass className="text-blue-500" /> Have a direct Property ID?
+              </p>
+              <form onSubmit={handleIdSearch} className="relative">
+                <input
+                  type="text"
+                  placeholder="Enter 24-char Property ID (e.g. 685e0850...)"
+                  value={propertyIdInput}
+                  onChange={(e) => setPropertyIdInput(e.target.value)}
+                  className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-900/50 border-2 border-transparent focus:border-blue-500 dark:focus:border-blue-400 rounded-2xl outline-none transition-all text-gray-900 dark:text-white font-mono text-sm shadow-inner group-hover:shadow-md"
+                />
+                <button
+                  type="submit"
+                  className="absolute right-2 top-2 bottom-2 px-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-bold hover:shadow-lg hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2"
+                >
+                  <FaSearch className="text-xs" /> Go
+                </button>
+              </form>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Link
+                to={backButtonInfo.path}
+                className="w-full sm:w-auto px-8 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 font-bold hover:bg-gray-50 dark:hover:bg-gray-700 transition-all flex items-center justify-center gap-2"
+              >
+                <FaArrowLeft className="text-sm" /> {backButtonInfo.text}
+              </Link>
+              <Link
+                to={explorePath}
+                className="w-full sm:w-auto px-8 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
+              >
+                <FaSearch className="text-sm" /> Explore Properties
+              </Link>
+            </div>
           </div>
+
+          {/* Sentinel Live Recommendations */}
+          {!recsLoading && recommendations.length > 0 && (
+            <div className="w-full animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+              <div className="relative overflow-hidden p-1 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-blue-600/10 rounded-[2.5rem]">
+                <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-8 rounded-[2.4rem] border border-white/50 dark:border-gray-700/50 shadow-xl">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                    <div className="flex flex-col md:flex-row md:items-center gap-4">
+                      <h2 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white flex items-center gap-3">
+                        <span className="p-2 bg-blue-600 text-white rounded-xl shadow-lg ring-4 ring-blue-50 dark:ring-blue-900/10">
+                          {currentUser ? <FaRobot className="animate-pulse" /> : <FaRocket className="animate-bounce" />}
+                        </span>
+                        {currentUser ? "Sentinel Live" : "Alternative Matches"}
+                      </h2>
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 rounded-full w-fit">
+                          <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest flex items-center gap-2">
+                            {currentUser ? "SMART ALTERNATIVES BASED ON YOUR INTERESTS" : "HANDPICKED PROPERTIES FOR YOU"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <Link
+                      to={explorePath}
+                      className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-black hover:text-blue-700 dark:hover:text-blue-300 transition-all group"
+                    >
+                      View All <FaArrowRight className="group-hover:translate-x-1 transition-transform" />
+                    </Link>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {recommendations.slice(0, visibleRecsCount).map((recListing) => (
+                      <div key={`rec-${recListing._id}`} className="relative group overflow-visible">
+                        {recListing.isLiveMatch && (
+                          <div className="absolute -top-2 -right-2 z-20 bg-blue-600 text-white text-[10px] font-black px-2 py-1 rounded-lg shadow-lg transform rotate-12 group-hover:rotate-0 transition-transform">
+                            {Math.round(recListing.sentinelScore * 100)}% MATCH
+                          </div>
+                        )}
+                        <ListingItem listing={recListing} />
+                      </div>
+                    ))}
+                  </div>
+
+                  {recommendations.length > visibleRecsCount && (
+                    <div className="mt-8 text-center">
+                      <button
+                        onClick={() => setVisibleRecsCount(prev => prev + 4)}
+                        className="px-6 py-3 bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 font-bold rounded-xl shadow-lg border border-blue-100 dark:border-blue-900 hover:bg-blue-50 dark:hover:bg-gray-700 transition-all transform hover:scale-105 flex items-center gap-2 mx-auto"
+                      >
+                        View More Recommendations <FaArrowRight />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
