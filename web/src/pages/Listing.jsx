@@ -227,6 +227,14 @@ export default function Listing() {
     LOCK_REASON_MESSAGES.default
     : '';
   const availabilityLockedAt = listing?.availabilityMeta?.lockedAt;
+
+  const isOwnerMatch = currentUser && (
+    listing?.userRef === currentUser._id ||
+    listing?.userRef?._id === currentUser._id ||
+    listing?.sellerId === currentUser._id ||
+    listing?.sellerId?._id === currentUser._id
+  );
+
   const refreshWatchlistCount = async () => {
     try {
       const res = await authenticatedFetch(`${API_BASE_URL}/api/watchlist/count/${params.listingId}`, { autoRedirect: false });
@@ -1449,11 +1457,12 @@ export default function Listing() {
   // Fetch owner details after listing is loaded
   useEffect(() => {
     const fetchOwnerDetails = async () => {
-      if (listing && listing.userRef) {
+      const ownerId = typeof listing?.userRef === 'object' ? listing.userRef._id : listing?.userRef;
+      if (listing && ownerId) {
         setOwnerLoading(true);
         setOwnerError("");
         try {
-          const res = await authenticatedFetch(`${API_BASE_URL}/api/user/id/${listing.userRef}`);
+          const res = await authenticatedFetch(`${API_BASE_URL}/api/user/id/${ownerId}`);
           if (!res.ok) throw new Error("Failed to fetch owner details");
           const data = await res.json();
           setOwnerDetails(data);
@@ -1688,7 +1697,7 @@ export default function Listing() {
                   <div className="mt-1 text-sm text-red-700">
                     <p>
                       This property has been deleted and is no longer active on the platform.
-                      {listing.deletionReason && (
+                      {listing.deletionReason && (isAdmin || isOwnerMatch) && (
                         <span className="block mt-1 font-semibold">Reason: {listing.deletionReason}</span>
                       )}
                     </p>
@@ -1725,7 +1734,7 @@ export default function Listing() {
                   )}
                 </div>
               </div>
-              {currentUser && !isAdminContext && (listing.sellerId === currentUser._id || listing.userRef === currentUser._id) && (
+              {currentUser && !isAdminContext && isOwnerMatch && (
                 <div className="flex items-center gap-2">
                   {listing.isRentLocked || listing.availabilityStatus === 'sold' || listing.availabilityStatus === 'under_contract' ? (
                     <button
@@ -1811,7 +1820,7 @@ export default function Listing() {
                     </div>
                   )}
                 </div>
-                {currentUser && (listing.sellerId === currentUser._id || listing.userRef === currentUser._id) && !listing.isDeleted ? (
+                {isOwnerMatch && !listing.isDeleted ? (
                   (listing.isRentLocked || listing.availabilityStatus === 'sold' || listing.availabilityStatus === 'under_contract') ? (
                     <button
                       disabled
@@ -1841,7 +1850,7 @@ export default function Listing() {
                 ) : (
                   <div className="hidden lg:block" />
                 )}
-                {currentUser && (listing.sellerId === currentUser._id || listing.userRef === currentUser._id) && !listing.isDeleted ? (
+                {isOwnerMatch && !listing.isDeleted ? (
                   <button
                     onClick={(!listing.isRentLocked && listing.availabilityStatus !== 'sold' && listing.availabilityStatus !== 'under_contract') ? handleOwnerDeleteClick : undefined}
                     disabled={listing.isRentLocked || listing.availabilityStatus === 'sold' || listing.availabilityStatus === 'under_contract'}
@@ -2202,7 +2211,7 @@ export default function Listing() {
           {/* Share and Report Buttons */}
           <div className="flex justify-end items-center space-x-4 mb-4 pr-2">
             {/* Report Button - Only for logged-in users who are not the owner */}
-            {currentUser && !isAdmin && currentUser._id !== listing.userRef && (
+            {currentUser && !isAdmin && !isOwnerMatch && (
               <button
                 onClick={() => setShowReportModal(true)}
                 className="flex items-center gap-2 text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30 dark:text-red-400 dark:hover:text-red-300 px-3 py-2 rounded-lg transition-colors"
@@ -3294,7 +3303,9 @@ export default function Listing() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Created By</p>
-                    <p className="font-semibold text-gray-800 dark:text-gray-200">{listing.userRef || 'Unknown'}</p>
+                    <p className="font-semibold text-gray-800 dark:text-gray-200">
+                      {typeof listing.userRef === 'object' ? (listing.userRef.username || listing.userRef._id) : (listing.userRef || 'Unknown')}
+                    </p>
                   </div>
                   <div>
                     <div className="flex items-center justify-between">
@@ -3375,7 +3386,7 @@ export default function Listing() {
           )}
 
           {/* Additional Details - Only show for owner of this property (non-admin context) */}
-          {currentUser && (listing.sellerId === currentUser._id || listing.userRef === currentUser._id) && !(isAdmin && isAdminContext) && (
+          {isOwnerMatch && !(isAdmin && isAdminContext) && (
             <div className="p-6 bg-gray-50 dark:bg-gray-800 shadow-md rounded-lg mb-6">
               <h4 className="text-xl font-bold text-gray-800 dark:text-white mb-4">Additional Details</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
