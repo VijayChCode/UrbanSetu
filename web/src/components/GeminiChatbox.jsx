@@ -416,11 +416,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [showVoiceInput, setShowVoiceInput] = useState(false);
     const [showFileUpload, setShowFileUpload] = useState(false);
     const [uploadedFiles, setUploadedFiles] = useState([]);
-    const [showSmartSuggestions, setShowSmartSuggestions] = useState(() => {
-        // Disable smart suggestions by default for public users
-        if (!currentUser) return false;
-        return getUserSetting('gemini_smart_suggestions', 'true') === 'true';
-    });
+    const [showSmartSuggestions, setShowSmartSuggestions] = useState(false); // Default to false, handled conditionally
     const [smartSuggestions, setSmartSuggestions] = useState([
         "Find properties under ₹50L in Bangalore",
         "What are the best areas for investment?",
@@ -2120,6 +2116,21 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             // Tone is already set to 'neutral' by default, so no need to change it
         }
     }, [currentUser, autoSave, highContrast, showSmartSuggestions, aiResponseLength, aiCreativity, enableStreaming]);
+
+    // Contextual Smart Suggestions trigger
+    useEffect(() => {
+        // Logic: Show suggestions if there's an error, OR if it's a new session with no messages yet (excluding welcome)
+        const isNewSession = messages.length <= 1;
+        const shouldShow = hasChatError || (isNewSession && isOpen);
+
+        if (shouldShow && !showSmartSuggestions) {
+            // Delay slightly for better visual entrance
+            const timer = setTimeout(() => {
+                setShowSmartSuggestions(true);
+            }, 800);
+            return () => clearTimeout(timer);
+        }
+    }, [hasChatError, messages.length, isOpen]);
 
     // Auto-save effect
     useEffect(() => {
@@ -6438,27 +6449,43 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 </div>
                             )}
 
-                            {/* Smart Suggestions - Above Footer */}
+                            {/* Enhanced Smart Suggestions - Contextual and Dismissible */}
                             {showSmartSuggestions && (
-                                <div className="mb-3 px-2">
-                                    <div className="text-xs text-gray-500 mb-2 flex items-center gap-2">
-                                        <FaLightbulb size={10} />
-                                        Try asking:
-                                    </div>
-                                    <div className="flex flex-wrap gap-2 py-1">
-                                        {smartSuggestions.map((suggestion, index) => (
-                                            <button
-                                                key={index}
-                                                onClick={() => handleSmartSuggestion(suggestion)}
-                                                className={`text-xs px-3.5 py-2 rounded-xl border transition-all duration-300 hover:scale-105 hover:shadow-md active:scale-95 animate-fadeIn ${isDarkMode
-                                                    ? 'bg-gray-800/80 border-gray-700 text-gray-300 hover:bg-gray-700 hover:border-blue-500/50 hover:text-blue-400'
-                                                    : `${themeColors.secondary} ${themeColors.border} ${themeColors.accent} hover:bg-white hover:border-blue-300 shadow-sm`
-                                                    }`}
-                                                style={{ animationDelay: `${index * 50}ms` }}
+                                <div className={`mb-4 px-2 animate-fadeIn`}>
+                                    <div className={`p-4 rounded-2xl border ${isDarkMode ? 'bg-gray-800/40 border-gray-700/50 shadow-lg' : 'bg-blue-50/50 border-blue-100/50 shadow-sm'} relative group backdrop-blur-sm`}>
+                                        <div className="flex items-center justify-between mb-3">
+                                            <div className="flex items-center gap-2">
+                                                <div className={`p-1.5 rounded-lg ${isDarkMode ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'}`}>
+                                                    <FaLightbulb size={12} className="animate-pulse" />
+                                                </div>
+                                                <span className={`text-[11px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                                    Smart Suggestions
+                                                </span>
+                                            </div>
+                                            <button 
+                                                onClick={() => setShowSmartSuggestions(false)}
+                                                className={`p-1 rounded-full transition-all duration-200 ${isDarkMode ? 'hover:bg-gray-700 text-gray-500' : 'hover:bg-blue-100 text-gray-400'} hover:text-red-500`}
+                                                title="Dismiss"
                                             >
-                                                {suggestion}
+                                                <FaTimes size={12} />
                                             </button>
-                                        ))}
+                                        </div>
+                                        
+                                        <div className="flex flex-wrap gap-2 overflow-x-auto custom-scrollbar pb-1">
+                                            {smartSuggestions.map((suggestion, index) => (
+                                                <button
+                                                    key={index}
+                                                    onClick={() => handleSmartSuggestion(suggestion)}
+                                                    className={`text-xs px-4 py-2 rounded-xl border transition-all duration-300 hover:scale-[1.03] active:scale-95 whitespace-nowrap flex-shrink-0 ${isDarkMode
+                                                        ? 'bg-gray-900/60 border-gray-600 text-gray-300 hover:bg-gray-800 hover:border-blue-500/50 hover:text-blue-400'
+                                                        : 'bg-white border-blue-200 text-blue-700 hover:border-blue-400 hover:bg-blue-50/50 shadow-sm'
+                                                        }`}
+                                                    style={{ animationDelay: `${index * 50}ms` }}
+                                                >
+                                                    {suggestion}
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
                             )}
@@ -7847,27 +7874,12 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                             </button>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            )}
-
-                                            {/* Smart Suggestions Toggle - Only for logged-in users */}
+                                                                                 {/* Advanced Settings Placeholder */}
                                             {currentUser && (
-                                                <div className="flex items-center justify-between">
-                                                    <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                                                        Smart Suggestions
-                                                    </span>
-                                                    <button
-                                                        onClick={() => {
-                                                            const newValue = !showSmartSuggestions;
-                                                            setShowSmartSuggestions(newValue);
-                                                            localStorage.setItem('gemini_smart_suggestions', newValue.toString());
-                                                        }}
-                                                        className={getToggleSwitchClasses(showSmartSuggestions)}
-                                                    >
-                                                        <div className={`w-5 h-5 bg-white rounded-full transition-transform ${showSmartSuggestions ? 'translate-x-6' : 'translate-x-0.5'
-                                                            }`} />
-                                                    </button>
+                                                <div className="text-xs p-3 rounded-lg bg-blue-50/30 dark:bg-blue-900/10 border border-blue-100/30 dark:border-blue-800/20 text-blue-600/70 dark:text-blue-400/70 text-center italic">
+                                                    AI behavioral optimizations are managed automatically.
                                                 </div>
+                                            )}               </div>
                                             )}
 
                                             {/* Login Required Message for Public Users */}
