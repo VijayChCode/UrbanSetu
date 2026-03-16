@@ -202,7 +202,8 @@ export const chatWithGemini = async (req, res) => {
         }
         // -------------------------------------------------------------
 
-        const getSystemPrompt = async (tone, userMessage) => {
+        const getSystemPrompt = async (tone, userMessage, user = null) => {
+            const userContext = user ? `CURRENT USER: ${user.username || user.email || 'Verified User'} (ID: ${user.id})` : 'CURRENT USER: Guest / Not Signed In';
             // Fetch dynamic About Us data
             let aboutContext = '';
             try {
@@ -424,6 +425,8 @@ export const chatWithGemini = async (req, res) => {
             CONTEXT:
             ${PROJECT_KNOWLEDGE}
 
+            ${userContext}
+
             ROUTING KNOWLEDGE:
             ${ROUTE_MAP}
 
@@ -441,6 +444,11 @@ export const chatWithGemini = async (req, res) => {
                - PRO TIP: You can suggest pre-filled search links like "[Properties in Hyderabad](https://urbansetu.vercel.app/search?city=Hyderabad&type=sale)".
             6. **STATUS AWARENESS**: Always mention if a property is "[SALE-LOCKED]" or "[RENT-LOCKED]" based on the status provided in the context. Explain that these statuses mean the property is secured and no further negotiations are being accepted for now.
             7. **AUTHENTICATION AWARENESS**: For any link containing "/user/" (e.g., My Listings, Appointments, Rent Wallet), explicitly mention that the user must be logged in to access it.
+            8. **OWNED PROPERTIES (LANDLORD/OWNED MODE)**: 
+               - If the user asks about "my properties", "my listings", or "how are my houses performing", use the "get_user_listings" tool.
+               - If they are NOT logged in, politely encourage them to [Sign In](https://urbansetu.vercel.app/sign-in) to see their personalized property dashboard.
+               - Once you have their listings, you can offer advice on improvements, price adjustments, or verification status to help them sell/rent faster.
+               - Link their properties using the ID: "[Property Name](https://urbansetu.vercel.app/user/listing/ACTUAL_PROPERTY_ID)".
              
             GENERAL INSTRUCTIONS:
             - Always provide accurate, helpful, and professional responses.
@@ -495,7 +503,7 @@ export const chatWithGemini = async (req, res) => {
             content: msg.content?.substring(0, 1000) // Limit history message length
         }));
 
-        const systemPrompt = await getSystemPrompt(tone, sanitizedMessage);
+        const systemPrompt = await getSystemPrompt(tone, sanitizedMessage, req.user);
 
         console.log('Calling Groq API, tone:', tone, 'responseLength:', responseLength, 'creativity:', creativity);
 
@@ -600,10 +608,11 @@ export const chatWithGemini = async (req, res) => {
 
                 let toolResult;
                 if (toolRegistry[functionName]) {
-                    toolResult = await toolRegistry[functionName](functionArgs);
-                    
-                    // Collect listings if this was a property search
-                    if (functionName === 'search_properties') {
+                    // Pass userId specifically for tools that need owner context (like get_user_listings)
+                    toolResult = await toolRegistry[functionName]({ ...functionArgs, userId });
+
+                    // Collect listings if this was a property search or user listings fetch
+                    if (functionName === 'search_properties' || functionName === 'get_user_listings') {
                         try {
                             const parsed = JSON.parse(toolResult);
                             if (parsed.found && parsed.listings) {

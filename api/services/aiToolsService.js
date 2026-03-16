@@ -151,11 +151,73 @@ export const getPropertyDetails = async ({ propertyId }) => {
 };
 
 /**
+ * AI Tool: Get User Listings (Owned Properties)
+ * Purpose: Allows the AI to fetch properties owned by the current logged-in user.
+ */
+export const getUserListings = async ({ userId }) => {
+    try {
+        if (!userId) {
+            return JSON.stringify({
+                found: false,
+                message: "User is not logged in. Personalized recommendations of their own properties are unavailable."
+            });
+        }
+
+        const listings = await Listing.find({ userRef: userId })
+            .select('name city type regularPrice discountPrice offer imageUrls bedrooms bathrooms area address propertyNumber landmark state pincode isVerified availabilityStatus description')
+            .lean();
+
+        if (listings.length === 0) {
+            return JSON.stringify({
+                found: false,
+                message: "This user has not created any property listings yet."
+            });
+        }
+
+        const propertySummary = listings.map(l => `- "${l.name}" (ID: ${l._id.toString()}) [Status: ${l.availabilityStatus || 'Available'}]`).join('\n');
+
+        return JSON.stringify({
+            found: true,
+            count: listings.length,
+            summary: propertySummary,
+            listings: listings.map(l => ({
+                _id: l._id.toString(),
+                id: l._id.toString(),
+                name: l.name,
+                type: l.type,
+                price: l.discountPrice || l.regularPrice,
+                regularPrice: l.regularPrice,
+                discountPrice: l.discountPrice,
+                offer: l.offer,
+                imageUrls: l.imageUrls,
+                bedrooms: l.bedrooms,
+                bathrooms: l.bathrooms,
+                area: l.area,
+                address: l.address,
+                city: l.city,
+                state: l.state,
+                propertyNumber: l.propertyNumber,
+                landmark: l.landmark,
+                pincode: l.pincode,
+                isVerified: l.isVerified,
+                availabilityStatus: l.availabilityStatus,
+                description: l.description
+            }))
+        });
+
+    } catch (error) {
+        console.error("Tool Error (getUserListings):", error);
+        return JSON.stringify({ error: "Failed to fetch your properties." });
+    }
+};
+
+/**
  * Registry of all available tools
  */
 export const toolRegistry = {
     search_properties: searchProperties,
-    get_property_details: getPropertyDetails
+    get_property_details: getPropertyDetails,
+    get_user_listings: getUserListings
 };
 
 /**
@@ -214,6 +276,18 @@ export const toolDefinitions = [
                     }
                 },
                 required: ["propertyId"]
+            }
+        }
+    },
+    {
+        type: "function",
+        function: {
+            name: "get_user_listings",
+            description: "Fetch all properties owned/listed by the current user. Use this when the user asks about 'my properties', 'my listings', or their own real estate assets.",
+            parameters: {
+                type: "object",
+                properties: {},
+                required: []
             }
         }
     }

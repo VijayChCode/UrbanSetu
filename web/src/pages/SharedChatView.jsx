@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { FaRobot, FaUser, FaClock, FaCalendar, FaExclamationTriangle, FaArrowRight, FaDownload, FaExternalLinkAlt, FaChevronLeft, FaChevronRight, FaEdit, FaPaperPlane, FaUserCircle } from 'react-icons/fa';
+import { FaRobot, FaUser, FaClock, FaCalendar, FaExclamationTriangle, FaArrowRight, FaDownload, FaExternalLinkAlt, FaChevronLeft, FaChevronRight, FaEdit, FaPaperPlane, FaUserCircle, FaCopy } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 
 import { usePageTitle } from '../hooks/usePageTitle';
@@ -109,6 +109,11 @@ export default function SharedChatView() {
         }
     };
 
+    const handleCopy = (text) => {
+        navigator.clipboard.writeText(text);
+        toast.success('Copied to clipboard!');
+    };
+
     const switchMessageVersion = (index, newVersionIndex) => {
         setMessages(prev => {
             const next = [...prev];
@@ -165,7 +170,7 @@ export default function SharedChatView() {
             const nextMessages = [...updatedMessages.slice(0, index), newMessage];
             setMessages(nextMessages);
             setEditingIndex(null);
-            
+
             await getAIResponse(editingContent.trim(), nextMessages.slice(0, index));
         } catch (err) {
             console.error('Edit failed:', err);
@@ -186,7 +191,7 @@ export default function SharedChatView() {
             });
 
             if (!response.ok) throw new Error('AI request failed');
-            
+
             const data = await response.json();
             if (data.success) {
                 const aiMsg = {
@@ -313,10 +318,16 @@ export default function SharedChatView() {
                             <h1 className="font-black text-gray-900 dark:text-white text-lg sm:text-xl truncate tracking-tight leading-none">
                                 <TypewriterText text={chatData.title || "SetuAI Intelligence Shared"} />
                             </h1>
-                            <div className="text-[10px] sm:text-xs text-gray-400 dark:text-gray-500 font-bold flex items-center gap-2 mt-1 uppercase tracking-widest">
-                                <span className="flex items-center gap-1.5"><FaCalendar size={10} className="text-blue-500" /> {new Date(chatData.createdAt).toLocaleDateString()}</span>
-                                <span className="w-1 h-1 bg-gray-200 dark:bg-gray-700 rounded-full"></span>
-                                <span className="text-indigo-500">Authentic Shared Insight</span>
+                            <div className="text-[10px] sm:text-xs text-gray-400 dark:text-gray-500 font-bold flex flex-wrap items-center gap-2 mt-1 uppercase tracking-widest whitespace-nowrap">
+                                <span className="flex items-center gap-1.5"><FaCalendar size={10} className="text-blue-500" /> {(chatData.date || chatData.createdAt) ? new Date(chatData.date || chatData.createdAt).toLocaleDateString() : 'Recent'}</span>
+                                <span className="w-1 h-1 bg-gray-200 dark:bg-gray-700 rounded-full hidden sm:block"></span>
+                                {chatData.expiresAt ? (
+                                    <span className="flex items-center gap-1.5 text-orange-500">
+                                        <FaClock size={10} /> Expires: {new Date(chatData.expiresAt).toLocaleDateString()}
+                                    </span>
+                                ) : (
+                                    <span className="text-indigo-500">Shared via SetuAI</span>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -346,11 +357,11 @@ export default function SharedChatView() {
 
                         <div className={`flex-1 min-w-0 ${msg.role === 'user' ? 'text-right' : ''}`}>
                             <h4 className={`text-[10px] font-black uppercase tracking-[0.2em] mb-2 ${msg.role === 'user' ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400 dark:text-gray-500'}`}>
-                                {msg.role === 'user' ? 'Contributor' : 'SetuAI Engine v2'}
+                                {msg.role === 'user' ? 'Contributor' : 'SetuAI Engine'}
                             </h4>
 
                             <div className={`relative inline-block text-left w-full sm:w-auto max-w-full rounded-[2rem] p-6 sm:p-8 shadow-2xl transition-all ${msg.role === 'user' ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-white dark:bg-gray-800 border-2 border-gray-50 dark:border-gray-800 text-gray-800 dark:text-blue-50 rounded-tl-none'}`}>
-                                
+
                                 {editingIndex === index ? (
                                     <div className="space-y-4">
                                         <textarea
@@ -375,16 +386,12 @@ export default function SharedChatView() {
                                                 <button onClick={() => switchMessageVersion(index, (msg.activeVersionIndex || 0) + 1)} disabled={(msg.activeVersionIndex || 0) === msg.variants.length - 1} className="hover:scale-150 disabled:opacity-10 transition-all"><FaChevronRight size={6} /></button>
                                             </div>
                                         )}
-                                        
+
                                         <div className={`text-base sm:text-lg whitespace-pre-wrap ${msg.role === 'user' ? 'font-medium' : ''}`}>
                                             {formatText(msg.content, msg.role === 'user')}
                                         </div>
 
-                                        {msg.role === 'user' && !editingIndex && (
-                                            <button onClick={() => { setEditingIndex(index); setEditingContent(msg.content); }} className="absolute -left-12 top-4 opacity-0 group-hover:opacity-100 bg-white dark:bg-gray-800 w-10 h-10 flex items-center justify-center rounded-xl shadow-2xl border border-gray-100 dark:border-gray-700 text-gray-400 hover:text-indigo-600 transition-all duration-300">
-                                                <FaEdit size={14} />
-                                            </button>
-                                        )}
+
                                     </>
                                 )}
 
@@ -409,14 +416,35 @@ export default function SharedChatView() {
                                     </div>
                                 )}
                             </div>
-                            
-                            <div className={`mt-3 text-[10px] flex items-center gap-2 font-black uppercase tracking-widest ${msg.role === 'user' ? 'justify-end text-indigo-300' : 'text-gray-400'}`}>
-                                <FaClock size={10} className="animate-pulse" /> {msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : 'Live'}
+
+                            <div className={`mt-3 text-[10px] flex items-center gap-4 font-black uppercase tracking-widest ${msg.role === 'user' ? 'justify-end text-indigo-300' : 'text-gray-400'}`}>
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        onClick={() => handleCopy(msg.content)}
+                                        className="hover:text-blue-500 transition-colors flex items-center gap-1"
+                                        title="Copy Message"
+                                    >
+                                        <FaCopy size={10} /> Copy
+                                    </button>
+
+                                    {msg.role === 'user' && !editingIndex && (
+                                        <button
+                                            onClick={() => { setEditingIndex(index); setEditingContent(msg.content); }}
+                                            className="hover:text-indigo-500 transition-colors flex items-center gap-1"
+                                            title="Edit Message"
+                                        >
+                                            <FaEdit size={10} /> Edit
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-1.5 opacity-60">
+                                    <FaClock size={10} className="animate-pulse" /> {msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : 'Live'}
+                                </div>
                             </div>
                         </div>
                     </div>
                 ))}
-                
+
                 {isLoading && (
                     <div className="flex gap-8 animate-pulse">
                         <div className="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-gray-800/50"></div>
@@ -435,7 +463,7 @@ export default function SharedChatView() {
                     </div>
                     <h3 className="text-3xl font-black dark:text-white mb-4 tracking-tight leading-none uppercase">Fuel Your Curiosity</h3>
                     <p className="text-gray-500 dark:text-gray-400 mb-10 text-lg font-medium leading-relaxed">This conversation belongs to the future. Start your own personalized AI session now and get instant market clarity.</p>
-                    <a href="/ai" className="inline-flex items-center gap-3 bg-indigo-600 text-white px-10 py-5 rounded-[2.5rem] font-black uppercase tracking-widest text-xs shadow-2xl shadow-indigo-600/40 hover:scale-[1.05] active:scale-95 transition-all">Launch Full Assistant <FaArrowRight size={12}/></a>
+                    <a href="/ai" className="inline-flex items-center gap-3 bg-indigo-600 text-white px-10 py-5 rounded-[2.5rem] font-black uppercase tracking-widest text-xs shadow-2xl shadow-indigo-600/40 hover:scale-[1.05] active:scale-95 transition-all">Launch Full Assistant <FaArrowRight size={12} /></a>
                 </div>
             </footer>
 
