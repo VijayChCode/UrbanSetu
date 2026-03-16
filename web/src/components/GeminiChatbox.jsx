@@ -45,13 +45,17 @@ const ScrollingThinkingTags = ({ isHeader = false, isDarkMode = false }) => {
     }, []);
 
     return (
-        <div className={`overflow-hidden h-[1.2em] relative inline-block ${isHeader ? 'min-w-[120px]' : 'min-w-[150px]'}`}>
+        <div className={`overflow-hidden h-6 relative inline-block ${isHeader ? 'min-w-[140px]' : 'min-w-[160px]'} align-middle`}>
             <div
-                className="transition-transform duration-500 ease-in-out absolute w-full"
-                style={{ transform: `translateY(-${index * 1.2}em)` }}
+                className="transition-transform duration-700 ease-in-out absolute inset-0 w-full flex flex-col"
+                style={{ transform: `translateY(-${index * 24}px)` }}
             >
                 {THINKING_TAGS.map((tag, i) => (
-                    <div key={i} className={`h-[1.2em] flex items-center ${isHeader ? 'text-white/80' : isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                    <div 
+                        key={i} 
+                        className={`h-6 flex items-center flex-shrink-0 animate-fadeIn ${isHeader ? 'text-white/90' : isDarkMode ? 'text-gray-300' : 'text-gray-600'} text-xs sm:text-sm font-medium whitespace-nowrap`}
+                    // style={{ opacity: index === i ? 1 : 0.3, transition: 'opacity 0.5s' }} REMOVED THIS AS IT MIGHT BE DISTRACTING
+                    >
                         {tag}
                     </div>
                 ))}
