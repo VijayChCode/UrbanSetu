@@ -32,6 +32,8 @@ import Route from "../models/Route.js";
 import CalculationHistory from "../models/calculationHistory.model.js";
 import Subscription from "../models/subscription.model.js";
 import VisitorLog from "../models/visitorLog.model.js";
+import { getDeviceInfo } from "../utils/sessionManager.js";
+
 
 // EXPORT_CACHE_EXPIRY remains relevant for setting the expiration Date object, 
 // though Mongo TTL handles the actual deletion.
@@ -634,6 +636,37 @@ export const changePassword = async (req, res, next) => {
         if (!isMatch) {
             return next(errorHandler(401, "Previous password is incorrect"));
         }
+
+        // Check if new password is the same as current
+        const isSameAsCurrent = await bcryptjs.compare(newPassword, user.password);
+        if (isSameAsCurrent) {
+            return next(errorHandler(400, "New password must be different from your current password"));
+        }
+
+        // Check password history
+        let isSameAsHistory = false;
+        if (user.passwordHistory && user.passwordHistory.length > 0) {
+            for (const history of user.passwordHistory) {
+                if (await bcryptjs.compare(newPassword, history.hashedPassword)) {
+                    isSameAsHistory = true;
+                    break;
+                }
+            }
+        }
+
+        if (isSameAsHistory) {
+            return next(errorHandler(400, "You have used this password previously. Please choose a different one."));
+        }
+
+        // Update history - add current password to history before overriding it
+        if (!user.passwordHistory) user.passwordHistory = [];
+        user.passwordHistory.push({ 
+            hashedPassword: user.password,
+            changedAt: new Date(),
+            ip: req.ip || req.connection.remoteAddress,
+            device: getDeviceInfo(req.get('User-Agent'), req.headers)
+        });
+
         user.password = bcryptjs.hashSync(newPassword, 10);
         await user.save();
 

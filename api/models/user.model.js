@@ -79,6 +79,14 @@ const userSchema = new mongoose.Schema({
   resetTokenExpiry: {
     type: Date
   },
+  passwordHistory: [
+    {
+      hashedPassword: { type: String, required: true },
+      changedAt: { type: Date, default: Date.now },
+      ip: { type: String },
+      device: { type: String }
+    }
+  ],
   status: {
     type: String,
     enum: ["active", "suspended"],

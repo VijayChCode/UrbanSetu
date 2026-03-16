@@ -1132,8 +1132,20 @@ export const resetPassword = async (req, res, next) => {
         }
 
         // Check if new password is different from current password
-        const isSamePassword = await bcryptjs.compare(newPassword, user.password);
-        if (isSamePassword) {
+        const isSameAsCurrent = await bcryptjs.compare(newPassword, user.password);
+        
+        // Check password history
+        let isSameAsHistory = false;
+        if (user.passwordHistory && user.passwordHistory.length > 0) {
+            for (const history of user.passwordHistory) {
+                if (await bcryptjs.compare(newPassword, history.hashedPassword)) {
+                    isSameAsHistory = true;
+                    break;
+                }
+            }
+        }
+
+        if (isSameAsCurrent || isSameAsHistory) {
             // Track failed attempt - no lockout, just tracking for reCAPTCHA
             await PasswordLockout.findOneAndUpdate(
                 {
@@ -1152,8 +1164,20 @@ export const resetPassword = async (req, res, next) => {
                 { upsert: true, new: true, setDefaultsOnInsert: true }
             );
 
-            return next(errorHandler(400, "Your new password cannot be the same as your previous password."));
+            const errorMessage = isSameAsCurrent 
+                ? "Your new password cannot be the same as your current password." 
+                : "This password has been used by you previously. Please choose a different one.";
+            return next(errorHandler(400, errorMessage));
         }
+
+        // Update history - add current password to history before overriding it
+        if (!user.passwordHistory) user.passwordHistory = [];
+        user.passwordHistory.push({ 
+            hashedPassword: user.password,
+            changedAt: new Date(),
+            ip: ipAddress,
+            device: getDeviceInfo(req.get('User-Agent'), req.headers)
+        });
 
         // Update password
         user.password = bcryptjs.hashSync(newPassword, 10);
