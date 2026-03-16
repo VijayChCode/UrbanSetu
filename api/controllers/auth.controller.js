@@ -1079,6 +1079,16 @@ export const resetPassword = async (req, res, next) => {
             return next(errorHandler(404, "User not found"));
         }
 
+        // Daily Password Change Limit: 3 changes per 24 hours
+        if (user.passwordHistory && user.passwordHistory.length > 0) {
+            const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+            const changesLast24h = user.passwordHistory.filter(h => new Date(h.changedAt) >= twentyFourHoursAgo).length;
+            
+            if (changesLast24h >= 3) {
+                return next(errorHandler(429, "You have reached the daily limit for password changes. Please try again after 24 hours."));
+            }
+        }
+
         // No lockout check - removed as requested
 
         // Count recent failed RESET PASSWORD attempts for this user (not login attempts)

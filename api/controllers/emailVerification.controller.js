@@ -240,6 +240,19 @@ export const sendForgotPasswordOTP = async (req, res, next) => {
       });
     }
 
+    // Daily Password Change Limit: 3 changes per 24 hours
+    if (user.passwordHistory && user.passwordHistory.length > 0) {
+      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const changesLast24h = user.passwordHistory.filter(h => new Date(h.changedAt) >= twentyFourHoursAgo).length;
+      
+      if (changesLast24h >= 3) {
+        return res.status(429).json({
+          success: false,
+          message: "You have reached the daily limit for password changes. Please try again after 24 hours."
+        });
+      }
+    }
+
     // Increment OTP request count
     if (otpTracking) {
       await otpTracking.incrementOtpRequest();
