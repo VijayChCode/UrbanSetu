@@ -115,26 +115,44 @@ export default function SharedChatView() {
     };
 
     const switchMessageVersion = (index, newVersionIndex) => {
+        if (newVersionIndex < 0) return;
+        
         setMessages(prev => {
             const next = [...prev];
             const message = { ...next[index] };
 
-            if (!message.variants || newVersionIndex < 0 || newVersionIndex >= message.variants.length) return prev;
+            if (!message.variants || newVersionIndex >= message.variants.length) return prev;
 
+            // 1. Save current state of this version before switching
             const currentActiveIndex = message.activeVersionIndex || 0;
             const updatedVariants = [...message.variants];
+            
             updatedVariants[currentActiveIndex] = {
                 ...updatedVariants[currentActiveIndex],
                 content: message.content,
-                tail: next.slice(index + 1)
+                tail: next.slice(index + 1),
+                recommendations: message.recommendations,
+                timestamp: message.timestamp
             };
 
+            // 2. Switch to target version
             const targetVersion = updatedVariants[newVersionIndex];
-            message.content = targetVersion.content;
-            message.activeVersionIndex = newVersionIndex;
-            message.variants = updatedVariants;
+            
+            const updatedMessage = {
+                ...message,
+                content: targetVersion.content,
+                activeVersionIndex: newVersionIndex,
+                variants: updatedVariants,
+                recommendations: targetVersion.recommendations,
+                timestamp: targetVersion.timestamp || message.timestamp
+            };
 
-            return [...next.slice(0, index), message, ...targetVersion.tail];
+            // 3. Reconstruct full list with the new message and its stored tail
+            return [
+                ...next.slice(0, index),
+                updatedMessage,
+                ...(targetVersion.tail || [])
+            ];
         });
     };
 
@@ -305,10 +323,28 @@ export default function SharedChatView() {
                             <div className={`relative inline-block text-left w-full sm:w-auto max-w-full rounded-[2rem] p-6 sm:p-8 shadow-2xl transition-all ${msg.role === 'user' ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-white dark:bg-gray-800 border-2 border-gray-50 dark:border-gray-800 text-gray-800 dark:text-blue-50 rounded-tl-none'}`}>
 
                                 {msg.variants && msg.variants.length > 1 && (
-                                    <div className="flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black bg-black/5 dark:bg-white/5 text-current mb-5 w-fit border border-current/10 select-none">
-                                        <button onClick={() => switchMessageVersion(index, (msg.activeVersionIndex || 0) - 1)} disabled={(msg.activeVersionIndex || 0) === 0} className="hover:scale-150 disabled:opacity-10 transition-all"><FaChevronLeft size={6} /></button>
-                                        <span className="min-w-[40px] text-center tracking-tighter">{(msg.activeVersionIndex || 0) + 1} of {msg.variants.length}</span>
-                                        <button onClick={() => switchMessageVersion(index, (msg.activeVersionIndex || 0) + 1)} disabled={(msg.activeVersionIndex || 0) === msg.variants.length - 1} className="hover:scale-150 disabled:opacity-10 transition-all"><FaChevronRight size={6} /></button>
+                                    <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-black tracking-tighter ${msg.role === 'user' ? 'bg-white/10 text-white/90' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'} mb-4 w-fit border ${msg.role === 'user' ? 'border-white/20' : 'border-gray-200 dark:border-gray-600'} select-none`}>
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); switchMessageVersion(index, (msg.activeVersionIndex || 0) - 1); }} 
+                                            disabled={(msg.activeVersionIndex || 0) === 0} 
+                                            className="hover:scale-125 disabled:opacity-30 transition-all p-0.5"
+                                            title="Previous version"
+                                        >
+                                            <FaChevronLeft size={7} />
+                                        </button>
+                                        <div className="flex items-center gap-0.5 min-w-[24px] justify-center">
+                                            <span className="opacity-90">{(msg.activeVersionIndex || 0) + 1}</span>
+                                            <span className="opacity-50">/</span>
+                                            <span className="opacity-90">{msg.variants.length}</span>
+                                        </div>
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); switchMessageVersion(index, (msg.activeVersionIndex || 0) + 1); }} 
+                                            disabled={(msg.activeVersionIndex || 0) === msg.variants.length - 1} 
+                                            className="hover:scale-125 disabled:opacity-30 transition-all p-0.5"
+                                            title="Next version"
+                                        >
+                                            <FaChevronRight size={7} />
+                                        </button>
                                     </div>
                                 )}
 

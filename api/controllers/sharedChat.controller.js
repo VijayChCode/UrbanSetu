@@ -51,7 +51,16 @@ export const importSharedChat = async (req, res) => {
                 content: m.content,
                 isRestricted: false,
                 recommendations: m.recommendations,
-                timestamp: m.timestamp || new Date()
+                timestamp: m.timestamp || new Date(),
+                variants: m.variants ? m.variants.map(v => ({
+                    role: v.role,
+                    content: v.content,
+                    recommendations: v.recommendations,
+                    timestamp: v.timestamp,
+                    tail: v.tail,
+                    isRestricted: false
+                })) : undefined,
+                activeVersionIndex: m.activeVersionIndex || 0
             })),
             totalMessages: validMessages.length
         });
@@ -164,7 +173,16 @@ export const createSharedChat = async (req, res) => {
                     content: m.content,
                     timestamp: m.timestamp,
                     recommendations: m.recommendations,
-                    isRestricted: false // Should be false since we filtered them, but keeping schema consistent
+                    isRestricted: false,
+                    variants: m.variants ? m.variants.filter(v => !v.isRestricted).map(v => ({
+                        role: v.role,
+                        content: v.content,
+                        recommendations: v.recommendations,
+                        timestamp: v.timestamp,
+                        tail: v.tail, // Note: tail might contain restricted messages, but usually branching is clean.
+                        isRestricted: false
+                    })) : undefined,
+                    activeVersionIndex: m.activeVersionIndex || 0
                 }));
             sharedChat.title = title || originalChat.name || 'Shared Conversation';
             sharedChat.isActive = true;
@@ -193,7 +211,16 @@ export const createSharedChat = async (req, res) => {
                     content: m.content,
                     timestamp: m.timestamp,
                     recommendations: m.recommendations,
-                    isRestricted: false
+                    isRestricted: false,
+                    variants: m.variants ? m.variants.filter(v => !v.isRestricted).map(v => ({
+                        role: v.role,
+                        content: v.content,
+                        recommendations: v.recommendations,
+                        timestamp: v.timestamp,
+                        tail: v.tail,
+                        isRestricted: false
+                    })) : undefined,
+                    activeVersionIndex: m.activeVersionIndex || 0
                 })),
                 expiresAt: expiresAt
             });
@@ -353,7 +380,16 @@ export const updateSharedChat = async (req, res) => {
                 content: m.content,
                 timestamp: m.timestamp,
                 recommendations: m.recommendations,
-                isRestricted: false // key point
+                isRestricted: false,
+                variants: m.variants ? m.variants.filter(v => !v.isRestricted).map(v => ({
+                    role: v.role,
+                    content: v.content,
+                    recommendations: v.recommendations,
+                    timestamp: v.timestamp,
+                    tail: v.tail,
+                    isRestricted: false
+                })) : undefined,
+                activeVersionIndex: m.activeVersionIndex || 0
             }));
 
             // Compare with current shared messages (simplistic comparison)
