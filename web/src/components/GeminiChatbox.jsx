@@ -209,6 +209,15 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         return () => clearTimeout(timer);
     }, [currentChatName]);
 
+    // Dynamic browser tab title handling based on chat title
+    useEffect(() => {
+        if (currentChatName && currentChatName !== 'New Chat' && !/^Chat \d/i.test(currentChatName)) {
+            document.title = `${currentChatName} - SetuAI`;
+        } else {
+            document.title = "AI Assistant - Smart Property Search";
+        }
+    }, [currentChatName]);
+
     // Property suggestion states
     const [showPropertySuggestions, setShowPropertySuggestions] = useState(false);
     const [propertySuggestions, setPropertySuggestions] = useState([]);
