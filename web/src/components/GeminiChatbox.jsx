@@ -6494,18 +6494,20 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
                             {/* Enhanced Smart Suggestions - Contextual and Dismissible */}
                             {showSmartSuggestions && (
-                                <div className={`mb-4 px-2 animate-fadeIn`}>
-                                    <div className={`p-4 rounded-2xl border ${isDarkMode 
+                                <div className={`mb-3 px-2 animate-fadeIn`}>
+                                    <div className={`p-3 rounded-2xl border ${isDarkMode 
                                         ? 'bg-gray-800/40 border-gray-700/50 shadow-lg' 
-                                        : `${themeColors.secondary}/80 ${themeColors.border}/50 shadow-sm`} relative group backdrop-blur-sm`}>
-                                        <div className="flex items-center justify-between mb-3">
+                                        : `${themeColors.secondary}/80 ${themeColors.border}/40 shadow-sm`} relative group backdrop-blur-sm`}>
+                                        <div className="flex items-center justify-between mb-2">
                                             <div className="flex items-center gap-2">
-                                                <div className={`p-1.5 rounded-lg ${isDarkMode 
-                                                    ? 'bg-blue-500/20 text-blue-400' 
-                                                    : `bg-white ${themeColors.accent} shadow-sm border ${themeColors.border}/30`}`}>
-                                                    <FaLightbulb size={12} className="animate-pulse" />
+                                                <div className={`p-1.5 rounded-lg shadow-sm ${
+                                                    isDarkMode 
+                                                        ? `bg-opacity-20 bg-white border border-white/10` 
+                                                        : `bg-gradient-to-r ${themeColors.primary} text-white`
+                                                }`}>
+                                                    <FaLightbulb size={12} className={isDarkMode ? themeColors.accent : "text-white animate-pulse"} />
                                                 </div>
-                                                <span className={`text-[11px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                                <span className={`text-[10px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                                                     Smart Suggestions
                                                 </span>
                                             </div>
@@ -6516,20 +6518,23 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                     : `hover:bg-white text-gray-400 shadow-sm border border-transparent hover:border-red-100`} hover:text-red-500`}
                                                 title="Dismiss"
                                             >
-                                                <FaTimes size={12} />
+                                                <FaTimes size={10} />
                                             </button>
                                         </div>
                                         
-                                        <div className="flex flex-wrap gap-2 overflow-x-auto custom-scrollbar pb-1">
+                                        <div className="flex flex-nowrap gap-2 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1">
                                             {smartSuggestions.map((suggestion, index) => (
                                                 <button
                                                     key={index}
                                                     onClick={() => handleSmartSuggestion(suggestion)}
-                                                    className={`text-xs px-4 py-2 rounded-xl border transition-all duration-300 hover:scale-[1.03] active:scale-95 whitespace-nowrap flex-shrink-0 ${isDarkMode
-                                                        ? 'bg-gray-900/60 border-gray-600 text-gray-300 hover:bg-gray-800 hover:border-blue-500/50 hover:text-blue-400'
-                                                        : `bg-white ${themeColors.border} ${themeColors.accent} hover:border-blue-400 hover:bg-blue-50/50 shadow-sm`
+                                                    className={`text-[11px] px-3 py-1.5 rounded-xl border transition-all duration-300 hover:scale-[1.03] active:scale-95 whitespace-nowrap flex-shrink-0 ${isDarkMode
+                                                        ? `bg-gray-900/60 border-gray-600 text-gray-300 hover:bg-gray-800 hover:border-white/20 hover:text-white`
+                                                        : `bg-white ${themeColors.border} ${themeColors.accent} hover:bg-gray-50 shadow-sm`
                                                         }`}
-                                                    style={{ animationDelay: `${index * 50}ms` }}
+                                                    style={{ 
+                                                        animationDelay: `${index * 50}ms`,
+                                                        borderColor: isDarkMode ? undefined : themeColors.border.replace('border-', '')
+                                                    }}
                                                 >
                                                     {suggestion}
                                                 </button>
