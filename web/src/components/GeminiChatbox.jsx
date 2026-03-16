@@ -5306,16 +5306,16 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 {isHeaderMenuOpen && (
                                     <div ref={headerMenuRef} className={`absolute right-0 top-full mt-3 ${isDarkMode ? 'bg-gray-800/95 text-gray-200 border-gray-600' : 'bg-white/95 text-gray-800 border-gray-200'} rounded-xl shadow-2xl border backdrop-blur-sm w-64 z-50 animate-fade-in origin-top-right max-h-[60vh] overflow-y-auto`}>
                                         <ul className="py-2 text-sm">
-                                            {/* About SetuAI */}
+                                            {/* New Chat */}
                                             <li>
                                                 <button
-                                                    onClick={() => { setShowInfoModal(true); setIsHeaderMenuOpen(false); }}
+                                                    onClick={() => { createNewSession(); setIsHeaderMenuOpen(false); }}
                                                     className={`w-full text-left px-4 py-3 ${isDarkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-100/80'} flex items-center gap-3 transition-all duration-200 hover:scale-[1.02] group`}
                                                 >
-                                                    <div className={`p-1.5 rounded-lg ${isDarkMode ? 'bg-indigo-500/20' : 'bg-indigo-100'} group-hover:scale-110 transition-transform duration-200`}>
-                                                        <FaRobot size={14} className="text-indigo-500" />
+                                                    <div className={`p-1.5 rounded-lg ${isDarkMode ? 'bg-blue-500/20' : 'bg-blue-100'} group-hover:scale-110 transition-transform duration-200`}>
+                                                        <FaComments size={14} className="text-blue-500" />
                                                     </div>
-                                                    <span className="font-medium">About SetuAI</span>
+                                                    <span className="font-medium">New Chat</span>
                                                 </button>
                                             </li>
 
@@ -5368,34 +5368,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                     </button>
                                                 </li>
                                             )}
-                                            {/* Terms & Conditions Option - Visible to Everyone */}
-                                            <li>
-                                                <button
-                                                    onClick={() => { setShowTermsModal(true); setIsHeaderMenuOpen(false); }}
-                                                    className={`w-full text-left px-4 py-3 ${isDarkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-100/80'} flex items-center gap-3 transition-all duration-200 hover:scale-[1.02] group`}
-                                                >
-                                                    <div className={`p-1.5 rounded-lg ${isDarkMode ? 'bg-blue-500/20' : 'bg-blue-100'} group-hover:scale-110 transition-transform duration-200`}>
-                                                        <FaFileAlt size={14} className="text-blue-500" />
-                                                    </div>
-                                                    <span className="font-medium">Terms & Conditions</span>
-                                                </button>
-                                            </li>
 
-                                            <li className={`border-t ${isDarkMode ? 'border-gray-600/50' : 'border-gray-200/50'} my-2`}></li>
-                                            {/* New Chat */}
-                                            <li>
-                                                <button
-                                                    onClick={() => { createNewSession(); setIsHeaderMenuOpen(false); }}
-                                                    className={`w-full text-left px-4 py-3 ${isDarkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-100/80'} flex items-center gap-3 transition-all duration-200 hover:scale-[1.02] group`}
-                                                >
-                                                    <div className={`p-1.5 rounded-lg ${isDarkMode ? 'bg-blue-500/20' : 'bg-blue-100'} group-hover:scale-110 transition-transform duration-200`}>
-                                                        <FaComments size={14} className="text-blue-500" />
-                                                    </div>
-                                                    <span className="font-medium">New Chat</span>
-                                                </button>
-                                            </li>
-
-                                            <li className={`border-t ${isDarkMode ? 'border-gray-600/50' : 'border-gray-200/50'} my-2`}></li>
+                                            {(currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) && (
+                                                <li className={`border-t ${isDarkMode ? 'border-gray-600/50' : 'border-gray-200/50'} my-2`}></li>
+                                            )}
 
                                             {/* Theme & Settings */}
                                             <li>
@@ -5592,6 +5568,34 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                     </button>
                                                 </li>
                                             )}
+
+                                            <li className={`border-t ${isDarkMode ? 'border-gray-600/50' : 'border-gray-200/50'} my-2`}></li>
+
+                                            {/* About SetuAI */}
+                                            <li>
+                                                <button
+                                                    onClick={() => { setShowInfoModal(true); setIsHeaderMenuOpen(false); }}
+                                                    className={`w-full text-left px-4 py-3 ${isDarkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-100/80'} flex items-center gap-3 transition-all duration-200 hover:scale-[1.02] group`}
+                                                >
+                                                    <div className={`p-1.5 rounded-lg ${isDarkMode ? 'bg-indigo-500/20' : 'bg-indigo-100'} group-hover:scale-110 transition-transform duration-200`}>
+                                                        <FaRobot size={14} className="text-indigo-500" />
+                                                    </div>
+                                                    <span className="font-medium">About SetuAI</span>
+                                                </button>
+                                            </li>
+
+                                            {/* Terms & Conditions Option - Visible to Everyone */}
+                                            <li>
+                                                <button
+                                                    onClick={() => { setShowTermsModal(true); setIsHeaderMenuOpen(false); }}
+                                                    className={`w-full text-left px-4 py-3 ${isDarkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-100/80'} flex items-center gap-3 transition-all duration-200 hover:scale-[1.02] group`}
+                                                >
+                                                    <div className={`p-1.5 rounded-lg ${isDarkMode ? 'bg-blue-500/20' : 'bg-blue-100'} group-hover:scale-110 transition-transform duration-200`}>
+                                                        <FaFileAlt size={14} className="text-blue-500" />
+                                                    </div>
+                                                    <span className="font-medium">Terms & Conditions</span>
+                                                </button>
+                                            </li>
                                         </ul>
                                     </div>
                                 )}
