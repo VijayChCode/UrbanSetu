@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import ContactSupportWrapper from './ContactSupportWrapper';
 import PaymentModal from './PaymentModal';
+import { FaMapMarkerAlt } from "react-icons/fa";
 import { toast } from 'react-toastify';
 import { authenticatedFetch } from '../utils/auth';
 import { usePageTitle } from '../hooks/usePageTitle';
@@ -254,14 +255,9 @@ export default function Appointment() {
         <div className="max-w-2xl w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 border border-orange-100 dark:border-orange-900/20 text-center">
           <div className="text-orange-600 dark:text-orange-400 text-5xl mb-6">🔒</div>
           <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Property Unavailable</h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
+          <p className="text-gray-600 dark:text-gray-400 mb-8">
             The property <span className="font-bold text-blue-600 dark:text-blue-400">{listing?.name || "this property"}</span> is no longer available for booking. It has been sold, rented, or is currently under an active contract with another user. If the booking expires or is cancelled, it will become available again.
           </p>
-          {listing?.userRef?.username && (
-            <p className="text-gray-500 dark:text-gray-500 mb-8 italic">
-              Listing Owner: <span className="font-semibold">{listing.userRef.username}</span>
-            </p>
-          )}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={() => navigate(`/listing/${listingId}`)}
@@ -295,7 +291,58 @@ export default function Appointment() {
 
   return (
     <div className="bg-gradient-to-br from-blue-50 to-purple-100 dark:from-gray-900 dark:to-slate-900 min-h-screen py-10 px-2 md:px-8">
-      <div className="max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 relative">
+      <div className="max-w-4xl mx-auto">
+        {/* Property Summary Header */}
+        {listing && (
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6 flex flex-col sm:flex-row gap-6 relative overflow-hidden group hover:shadow-2xl transition-all duration-300 border border-gray-100 dark:border-gray-700">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-bl-full pointer-events-none -mr-8 -mt-8"></div>
+
+            <div className="w-full sm:w-32 h-48 sm:h-32 flex-shrink-0 relative rounded-xl overflow-hidden border-2 border-gray-100 dark:border-gray-600 shadow-sm group-hover:scale-[1.02] transition-transform duration-300">
+              <img
+                src={listing.imageUrls?.[0] || 'https://via.placeholder.com/300?text=No+Image'}
+                alt={listing.name}
+                className="w-full h-full object-cover transform hover:scale-110 transition-transform duration-700"
+                onError={(e) => { e.target.src = 'https://via.placeholder.com/300?text=Image+Error'; }}
+              />
+              {listing.availabilityStatus === 'available' && (
+                <span className="absolute top-2 left-2 px-2 py-0.5 bg-green-500 text-white text-[10px] uppercase font-bold tracking-wide rounded shadow-sm">
+                  Available
+                </span>
+              )}
+            </div>
+
+            <div className="flex-1 flex flex-col justify-center relative z-10">
+              <h1
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/listing/${listing._id}`);
+                }}
+                className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-50 leading-tight mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors cursor-pointer hover:underline">
+                {listing.name}
+              </h1>
+
+              <p className="text-gray-600 dark:text-gray-400 flex items-start gap-2 mb-3 text-sm sm:text-base">
+                <FaMapMarkerAlt className="text-red-500 mt-1 flex-shrink-0 text-lg animate-bounce-slow" />
+                <span className="leading-snug">{listing.address || `${listing.city}, ${listing.state}`}</span>
+              </p>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="px-3 py-1 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded-lg text-xs font-bold uppercase tracking-wider border border-blue-100 dark:border-blue-800">
+                  {listing.type === 'rent' ? 'For Rent' : 'For Sale'}
+                </span>
+
+                <div className="h-6 w-px bg-gray-300 dark:bg-gray-600 hidden sm:block"></div>
+
+                <span className="text-2xl font-bold text-gray-800 dark:text-blue-400 flex items-baseline">
+                  ₹{(listing.type === 'rent' ? (listing.monthlyRent || listing.discountPrice || listing.regularPrice || 0) : (listing.discountPrice || listing.regularPrice || 0)).toLocaleString('en-IN')}
+                  {listing.type === 'rent' && <span className="text-sm font-medium text-gray-500 dark:text-gray-400 ml-1 self-center">/month</span>}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 relative">
         <h3 className="text-3xl font-extrabold text-blue-700 dark:text-blue-400 mb-6 text-center drop-shadow">
           Book Appointment
         </h3>
@@ -474,6 +521,7 @@ export default function Appointment() {
       )}
 
       <ContactSupportWrapper />
+      </div>
     </div>
   );
 }

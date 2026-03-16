@@ -941,14 +941,9 @@ export default function RentProperty() {
             <FaLock className="text-orange-600 dark:text-orange-400 text-4xl" />
           </div>
           <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Property Unavailable</h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
+          <p className="text-gray-600 dark:text-gray-400 mb-8">
             The property <span className="font-bold text-blue-600 dark:text-blue-400">{listing?.name || "this property"}</span> is no longer available for booking. It has been sold, rented, or is currently under an active contract with another user. If the booking expires or is cancelled, it will become available again.
           </p>
-          {listing?.userRef?.username && (
-            <p className="text-gray-500 dark:text-gray-500 mb-8 italic">
-              Listing Owner: <span className="font-semibold">{listing.userRef.username}</span>
-            </p>
-          )}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <button
               onClick={() => navigate(`/listing/${listingId}`)}
