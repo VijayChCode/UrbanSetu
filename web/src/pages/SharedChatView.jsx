@@ -295,7 +295,7 @@ export default function SharedChatView() {
 
                                     {/* Recommended Properties Slider */}
                                     {msg.role === 'assistant' && msg.recommendations && msg.recommendations.length > 0 && (
-                                        <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-700/50">
+                                        <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-700/50 not-prose">
                                             <div className="flex items-center justify-between mb-4 px-1">
                                                 <div className="flex items-center gap-2">
                                                     <div className="p-1 px-2 bg-blue-600/10 text-blue-600 dark:text-blue-400 rounded-full text-[10px] font-black uppercase tracking-wider">
