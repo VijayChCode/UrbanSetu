@@ -103,7 +103,7 @@ export default function SharedChatView() {
     };
 
     // Simple text formatter to handle basic markdown-like syntax
-    const formatText = (text) => {
+    const formatText = (text, isUser = false) => {
         if (!text) return null;
 
         // Split by code blocks first
@@ -120,13 +120,45 @@ export default function SharedChatView() {
                 );
             }
 
-            // Render text with bolding
+            // Render text with bolding and links
             return (
                 <div key={index} className="whitespace-pre-wrap">
-                    {part.split(/(\*\*.*?\*\*)/g).map((subPart, subIndex) => {
+                    {part.split(/(\*\*.*?\*\*|\[.*?\]\(.*?\)|https?:\/\/[^\s]+)/g).map((subPart, subIndex) => {
                         if (subPart.startsWith('**') && subPart.endsWith('**')) {
                             return <strong key={subIndex}>{subPart.slice(2, -2)}</strong>;
                         }
+
+                        // Check for Markdown Link [text](url)
+                        const mdLinkMatch = subPart.match(/^\[(.*?)\]\((.*?)\)$/);
+                        if (mdLinkMatch) {
+                            return (
+                                <a
+                                    key={subIndex}
+                                    href={mdLinkMatch[2]}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={`${isUser ? 'text-white underline font-bold active:opacity-70' : 'text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300'} transition-colors cursor-pointer pointer-events-auto`}
+                                >
+                                    {mdLinkMatch[1]}
+                                </a>
+                            );
+                        }
+
+                        // Check for raw URL
+                        if (subPart.startsWith('http://') || subPart.startsWith('https://')) {
+                            return (
+                                <a
+                                    key={subIndex}
+                                    href={subPart}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={`${isUser ? 'text-white underline font-bold active:opacity-70' : 'text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300'} transition-colors cursor-pointer pointer-events-auto`}
+                                >
+                                    {subPart}
+                                </a>
+                            );
+                        }
+
                         return subPart;
                     })}
                 </div>
@@ -291,7 +323,7 @@ export default function SharedChatView() {
                                 </div>
                             ) : (
                                 <div className={`prose prose-sm dark:prose-invert max-w-none text-sm leading-relaxed ${msg.role === 'user' ? 'text-white/90' : 'text-gray-800 dark:text-gray-300'}`}>
-                                    {formatText(msg.content)}
+                                    {formatText(msg.content, msg.role === 'user')}
 
                                     {/* Recommended Properties Slider */}
                                     {msg.role === 'assistant' && msg.recommendations && msg.recommendations.length > 0 && (
