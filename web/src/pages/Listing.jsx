@@ -1703,7 +1703,7 @@ export default function Listing() {
                         <span className="block mt-1 font-semibold">Reason: {listing.deletionReason}</span>
                       )}
                     </p>
-                    {isAdmin && (
+                    {(isAdmin || isOwnerMatch) && (
                       <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{
@@ -1721,7 +1721,7 @@ export default function Listing() {
                         className="mt-3 flex items-center"
                       >
                         <Link
-                          to="/admin/deleted-listings"
+                          to={isAdmin ? "/admin/deleted-listings" : "/user/deleted-listings"}
                           className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 text-red-600 dark:text-red-400 rounded-xl text-xs font-black transition-all group border border-red-200 dark:border-red-900/50 shadow-sm hover:shadow-md hover:scale-[1.05] active:scale-95"
                         >
                           <FaUndo className="group-hover:-rotate-180 transition-transform duration-500 text-[10px]" />
