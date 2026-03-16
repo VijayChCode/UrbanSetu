@@ -692,7 +692,7 @@ export const chatWithGemini = async (req, res) => {
                         }
                     }
                     await chatHistory.addMessage('user', message);
-                    await chatHistory.addMessage('assistant', fullResponse);
+                    await chatHistory.addMessage('assistant', fullResponse, false, recommendedProperties.length > 0 ? recommendedProperties : undefined);
                     await chatHistory.save();
                 }
 
@@ -743,7 +743,7 @@ export const chatWithGemini = async (req, res) => {
 
 
                     await chatHistory.addMessage('user', message);
-                    await chatHistory.addMessage('assistant', responseText);
+                    await chatHistory.addMessage('assistant', responseText, false, recommendedProperties.length > 0 ? recommendedProperties : undefined);
                     await chatHistory.save();
                 } catch (e) { console.error(e); }
             }

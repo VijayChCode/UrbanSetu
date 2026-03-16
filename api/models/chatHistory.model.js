@@ -31,6 +31,10 @@ const chatHistorySchema = new mongoose.Schema({
       type: Boolean,
       default: false
     },
+    recommendations: {
+      type: Array, // Array of property objects
+      default: undefined
+    },
     timestamp: {
       type: Date,
       default: Date.now
@@ -82,11 +86,12 @@ chatHistorySchema.statics.findOrCreateSession = async function (userId, sessionI
 };
 
 // Instance method to add a message
-chatHistorySchema.methods.addMessage = function (role, content, isRestricted = false) {
+chatHistorySchema.methods.addMessage = function (role, content, isRestricted = false, recommendations = undefined) {
   this.messages.push({
     role,
     content,
     isRestricted,
+    recommendations,
     timestamp: new Date()
   });
   return this.save();
