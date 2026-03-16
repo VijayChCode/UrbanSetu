@@ -25,16 +25,28 @@ export const searchProperties = async ({
         if (type && type !== 'all') query.type = type;
         if (city) query.city = { $regex: city, $options: 'i' };
 
-        // Price Range
+        // Price Range - check both regular and discount prices
         if (minPrice || maxPrice) {
-            query.regularPrice = {};
+            const priceQuery = [];
+            
             if (minPrice) {
                 const min = Number(minPrice);
-                if (!isNaN(min)) query.regularPrice.$gte = min;
+                if (!isNaN(min)) {
+                    priceQuery.push({ regularPrice: { $gte: min } });
+                    priceQuery.push({ discountPrice: { $gte: min } });
+                }
             }
+            
             if (maxPrice) {
                 const max = Number(maxPrice);
-                if (!isNaN(max)) query.regularPrice.$lte = max;
+                if (!isNaN(max)) {
+                    priceQuery.push({ regularPrice: { $lte: max } });
+                    priceQuery.push({ discountPrice: { $lte: max } });
+                }
+            }
+
+            if (priceQuery.length > 0) {
+                query.$or = priceQuery;
             }
         }
 
@@ -46,28 +58,45 @@ export const searchProperties = async ({
 
         // Visibility Enforcement (Public only)
         query.visibility = 'public';
-        query.isVerified = true;
-
-        // Execute Query
-        const listings = await Listing.find(query)
+        
+        // Execute Query - Try verified first
+        let listings = await Listing.find({ ...query, isVerified: true })
             .select('name city type regularPrice discountPrice offer imageUrls bedrooms bathrooms area address propertyNumber landmark state pincode isVerified userRef description')
             .limit(limit)
             .lean();
 
+        // If no verified results, try unverified but warn the AI
+        let unverifiedNote = "";
+        if (listings.length === 0) {
+            listings = await Listing.find(query)
+                .select('name city type regularPrice discountPrice offer imageUrls bedrooms bathrooms area address propertyNumber landmark state pincode isVerified userRef description')
+                .limit(limit)
+                .lean();
+            if (listings.length > 0) {
+                unverifiedNote = "Note: These properties are pending verification.";
+            }
+        }
+
         if (listings.length === 0) {
             return JSON.stringify({
                 found: false,
-                message: "No properties found matching the criteria."
+                message: `No properties found in ${city || 'the requested criteria'}.`
             });
         }
 
+        const propertySummary = listings.map(l => `- "${l.name}" (ID: ${l._id.toString()}) in ${l.city}`).join('\n');
+
         return JSON.stringify({
             found: true,
+            unverifiedNote,
             count: listings.length,
+            summary: propertySummary,
             listings: listings.map(l => ({
-                _id: l._id,
+                _id: l._id.toString(),
+                id: l._id.toString(), // Alias
                 name: l.name,
                 type: l.type,
+                price: l.discountPrice || l.regularPrice,
                 regularPrice: l.regularPrice,
                 discountPrice: l.discountPrice,
                 offer: l.offer,
@@ -77,9 +106,9 @@ export const searchProperties = async ({
                 area: l.area,
                 address: l.address,
                 city: l.city,
+                state: l.state,
                 propertyNumber: l.propertyNumber,
                 landmark: l.landmark,
-                state: l.state,
                 pincode: l.pincode,
                 isVerified: l.isVerified,
                 userRef: l.userRef,
@@ -94,10 +123,39 @@ export const searchProperties = async ({
 };
 
 /**
+ * AI Tool: Get Property Details
+ * Purpose: Allows the AI to fetch full details for a specific property by its ID.
+ */
+export const getPropertyDetails = async ({ propertyId }) => {
+    try {
+        if (!propertyId) return JSON.stringify({ error: "Property ID is required." });
+
+        const listing = await Listing.findById(propertyId).lean();
+
+        if (!listing) {
+            return JSON.stringify({
+                found: false,
+                message: "Property not found."
+            });
+        }
+
+        return JSON.stringify({
+            found: true,
+            property: listing
+        });
+
+    } catch (error) {
+        console.error("Tool Error (getPropertyDetails):", error);
+        return JSON.stringify({ error: "Failed to fetch property details." });
+    }
+};
+
+/**
  * Registry of all available tools
  */
 export const toolRegistry = {
-    search_properties: searchProperties
+    search_properties: searchProperties,
+    get_property_details: getPropertyDetails
 };
 
 /**
@@ -139,6 +197,23 @@ export const toolDefinitions = [
                     }
                 },
                 required: []
+            }
+        }
+    },
+    {
+        type: "function",
+        function: {
+            name: "get_property_details",
+            description: "Get comprehensive details about a specific property using its ID.",
+            parameters: {
+                type: "object",
+                properties: {
+                    propertyId: {
+                        type: "string",
+                        description: "The unique ID of the property (e.g., '65f123...')"
+                    }
+                },
+                required: ["propertyId"]
             }
         }
     }
