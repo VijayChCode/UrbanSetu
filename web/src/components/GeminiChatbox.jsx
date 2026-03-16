@@ -3149,13 +3149,17 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
             if (response.ok) {
                 localStorage.setItem('lastReportMessageTime', now.toString()); // Record successful report time
-                toast.success('Report submitted successfully');
-                setShowReportModal(false);
-                setReportStep(1);
-                setSelectedCategory('');
-                setSelectedSubCategory('');
-                setReportDescription('');
-                setReportingMessage(null);
+                setReportStep(4);
+                
+                // Auto-close after 3 seconds
+                setTimeout(() => {
+                    setShowReportModal(false);
+                    setReportStep(1);
+                    setSelectedCategory('');
+                    setSelectedSubCategory('');
+                    setReportDescription('');
+                    setReportingMessage(null);
+                }, 3000);
             } else {
                 const data = await response.json();
                 toast.error(data.message || 'Failed to submit report');
@@ -9309,6 +9313,18 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                 )}
                                             </button>
                                         </div>
+                                    </div>
+                                )}
+
+                                {reportStep === 4 && (
+                                    <div className="flex flex-col items-center justify-center space-y-4 py-8 animate-fadeIn">
+                                        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-2">
+                                            <FaCheckCircle className="text-green-600 text-3xl" />
+                                        </div>
+                                        <h3 className="font-bold text-2xl text-center">Thank You!</h3>
+                                        <p className={`text-center text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                            Your report has been successfully submitted. Our team will review this shortly to ensure a safe environment.
+                                        </p>
                                     </div>
                                 )}
                             </div>
