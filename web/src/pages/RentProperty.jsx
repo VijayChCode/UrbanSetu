@@ -16,7 +16,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function RentProperty() {
   // Set page title
-  usePageTitle("Rent Property - Rent-Lock Agreement");
+  usePageTitle(`${listing?.name || "Rent Property"} - Rent-Lock Agreement`);
 
   const { currentUser } = useSelector((state) => state.user);
   const location = useLocation();
@@ -28,6 +28,7 @@ export default function RentProperty() {
   const contractIdParam = searchParams.get('contractId'); // For resuming contracts
 
   const [loading, setLoading] = useState(true);
+  const [isOwner, setIsOwner] = useState(false);
   const [listing, setListing] = useState(null);
   const [step, setStep] = useState(1); // 1: Plan Selection, 2: Contract Review, 3: Signing, 4: Payment, 5: Move-in
   const [formData, setFormData] = useState({
@@ -185,6 +186,13 @@ export default function RentProperty() {
         }
 
         setListing(listingData);
+        
+        // Check if current user is the owner
+        if (currentUser && listingData.userRef && String(listingData.userRef) === String(currentUser._id)) {
+          setIsOwner(true);
+          setLoading(false);
+          return;
+        }
 
         // Set default plan if available
         if (listingData.rentLockPlans?.defaultPlan) {
@@ -882,13 +890,44 @@ export default function RentProperty() {
           setBooking(refreshedBooking);
         }
       } catch (error) {
-        console.error("Error refreshing booking:", error);
+      console.error("Error refreshing booking:", error);
       }
     }
   };
 
   if (loading && !listing) {
     return <RentPropertySkeleton />;
+  }
+
+  if (isOwner) {
+    return (
+      <div className="bg-gradient-to-br from-blue-50 to-purple-100 dark:from-gray-950 dark:to-gray-900 min-h-screen py-10 px-2 md:px-8 flex items-center justify-center">
+        <div className="max-w-2xl w-full bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-8 border border-red-100 dark:border-red-900/30 text-center">
+          <div className="w-20 h-20 bg-red-100 dark:bg-red-900/40 rounded-full flex items-center justify-center mx-auto mb-6">
+            <FaTimesCircle className="text-red-600 dark:text-red-400 text-4xl" />
+          </div>
+          <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-4">Ownership Restriction</h2>
+          <p className="text-gray-600 dark:text-gray-400 text-lg mb-8">
+            You are the owner of <span className="font-bold text-blue-600 dark:text-blue-400">{listing?.name}</span>. 
+            The rent-lock agreement and property booking are reserved for potential tenants.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <button
+              onClick={() => navigate(`/user/my-listings`)}
+              className="w-full sm:w-auto px-8 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg transition transform hover:scale-105"
+            >
+              Manage My Listings
+            </button>
+            <button
+              onClick={() => navigate(`/user`)}
+              className="w-full sm:w-auto px-8 py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 font-bold rounded-xl transition"
+            >
+              Go to Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (!listing) {

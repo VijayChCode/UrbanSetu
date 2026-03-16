@@ -9,7 +9,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function AdminAppointmentListing() {
   // Set page title
-  usePageTitle("Appointment Listings - Admin Panel");
+  usePageTitle(`${listingName || "Appointment"} - Admin Panel`);
 
   const { currentUser } = useSelector((state) => state.user);
   const location = useLocation();

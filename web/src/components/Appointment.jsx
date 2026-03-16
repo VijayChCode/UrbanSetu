@@ -5,6 +5,7 @@ import ContactSupportWrapper from './ContactSupportWrapper';
 import PaymentModal from './PaymentModal';
 import { toast } from 'react-toastify';
 import { authenticatedFetch } from '../utils/auth';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -19,6 +20,9 @@ export default function Appointment() {
   const listingName = searchParams.get('propertyName');
   const listingDescription = searchParams.get('propertyDescription');
   const listingType = searchParams.get('listingType');
+
+  // Set page title
+  usePageTitle(`${listingName || "Property"} - Book Appointment`);
 
   useEffect(() => {
     if (listingType === 'rent' && listingId) {
@@ -45,6 +49,8 @@ export default function Appointment() {
   const [appointmentData, setAppointmentData] = useState(null);
   const [paymentStatus, setPaymentStatus] = useState(null); // 'success' or 'failed'
   const [showPaymentMessage, setShowPaymentMessage] = useState(false);
+  const [listing, setListing] = useState(null);
+  const [isOwner, setIsOwner] = useState(false);
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -55,41 +61,56 @@ export default function Appointment() {
 
   useEffect(() => {
     async function checkActiveAppointment() {
-      if (!currentUser || !listingId) {
-        setHasActiveAppointment(false);
+      if (!listingId) {
         setCheckingActive(false);
         return;
       }
+
       setCheckingActive(true);
       try {
-        const res = await authenticatedFetch(`${API_BASE_URL}/api/bookings/my`);
-        if (res.ok) {
-          const data = await res.json();
-          // Find active appointment for this property
-          const activeStatuses = ["pending", "accepted"];
-          const found = data.find(appt => {
-            // Only check appointments where the current user is the buyer (not seller)
-            if (!appt.buyerId || (appt.buyerId._id !== currentUser._id && appt.buyerId !== currentUser._id)) return false;
+        // 1. Fetch listing details to check ownership
+        const listingRes = await authenticatedFetch(`${API_BASE_URL}/api/listing/get/${listingId}`);
+        if (listingRes.ok) {
+          const data = await listingRes.json();
+          const listingData = data.listing || (data._id ? data : null);
+          setListing(listingData);
+          
+          if (listingData && currentUser && String(listingData.userRef) === String(currentUser._id)) {
+            setIsOwner(true);
+            setCheckingActive(false);
+            return;
+          }
+        }
 
-            if (!appt.listingId || (appt.listingId._id !== listingId && appt.listingId !== listingId)) return false;
+        // 2. Check for active appointments
+        if (currentUser) {
+          const res = await authenticatedFetch(`${API_BASE_URL}/api/bookings/my`);
+          if (res.ok) {
+            const data = await res.json();
+            // Find active appointment for this property
+            const activeStatuses = ["pending", "accepted"];
+            const found = data.find(appt => {
+              // Only check appointments where the current user is the buyer (not seller)
+              if (!appt.buyerId || (appt.buyerId._id !== currentUser._id && appt.buyerId !== currentUser._id)) return false;
 
-            // Check if appointment is outdated (past date/time)
-            const isOutdated = new Date(appt.date) < new Date() || (new Date(appt.date).toDateString() === new Date().toDateString() && appt.time && appt.time < new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+              if (!appt.listingId || (appt.listingId._id !== listingId && appt.listingId !== listingId)) return false;
 
-            // Don't block if appointment is outdated
-            if (isOutdated) return false;
+              // Check if appointment is outdated (past date/time)
+              const isOutdated = new Date(appt.date) < new Date() || (new Date(appt.date).toDateString() === new Date().toDateString() && appt.time && appt.time < new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
 
-            if (activeStatuses.includes(appt.status)) return true;
-            // Only block if reinitiation is still possible for the current user (as buyer)
-            if (appt.status === "cancelledByBuyer" && (appt.buyerReinitiationCount || 0) < 2) return true;
-            return false;
-          });
-          setHasActiveAppointment(!!found);
-        } else {
-          setHasActiveAppointment(false);
+              // Don't block if appointment is outdated
+              if (isOutdated) return false;
+
+              if (activeStatuses.includes(appt.status)) return true;
+              // Only block if reinitiation is still possible for the current user (as buyer)
+              if (appt.status === "cancelledByBuyer" && (appt.buyerReinitiationCount || 0) < 2) return true;
+              return false;
+            });
+            setHasActiveAppointment(!!found);
+          }
         }
       } catch (err) {
-        setHasActiveAppointment(false);
+        console.error("Validation error:", err);
       } finally {
         setCheckingActive(false);
       }
@@ -188,6 +209,35 @@ export default function Appointment() {
       }
     }, 2000);
   };
+
+  if (isOwner) {
+    return (
+      <div className="bg-gradient-to-br from-blue-50 to-purple-100 dark:from-gray-950 dark:to-gray-900 min-h-screen py-10 px-2 md:px-8 flex items-center justify-center">
+        <div className="max-w-2xl w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 border border-red-100 dark:border-red-900/20 text-center">
+          <div className="text-red-600 dark:text-red-400 text-5xl mb-6">🚫</div>
+          <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Ownership Restriction</h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-8">
+            You are the owner of <span className="font-bold text-blue-600 dark:text-blue-400">{listing?.name || "this property"}</span>. 
+            Booking appointments is reserved for potential buyers.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <button
+              onClick={() => navigate('/user/my-listings')}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg transition shadow-lg transform hover:scale-105"
+            >
+              Manage My Listings
+            </button>
+            <button
+              onClick={() => navigate('/user')}
+              className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-bold py-3 px-8 rounded-lg transition"
+            >
+              Back to Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!currentUser) {
     return (
