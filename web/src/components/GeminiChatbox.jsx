@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
-import { FaComments, FaTimes, FaPaperPlane, FaRobot, FaCopy, FaSync, FaUser, FaCheck, FaDownload, FaUpload, FaPaperclip, FaCog, FaLightbulb, FaHistory, FaBookmark, FaShare, FaThumbsUp, FaThumbsDown, FaRegBookmark, FaBookmark as FaBookmarkSolid, FaMicrophone, FaStop, FaImage, FaFileAlt, FaMagic, FaStar, FaMoon, FaSun, FaPalette, FaVolumeUp, FaVolumeMute, FaExpand, FaCompress, FaSearch, FaFilter, FaSort, FaEye, FaEyeSlash, FaEdit, FaCheck as FaCheckCircle, FaTimes as FaTimesCircle, FaFlag, FaClipboardList, FaCommentAlt, FaArrowDown, FaTrash, FaEllipsisH, FaEllipsisV, FaShareAlt, FaBan } from 'react-icons/fa';
+import { FaComments, FaTimes, FaPaperPlane, FaRobot, FaCopy, FaSync, FaUser, FaCheck, FaDownload, FaUpload, FaPaperclip, FaCog, FaLightbulb, FaHistory, FaBookmark, FaShare, FaThumbsUp, FaThumbsDown, FaRegBookmark, FaBookmark as FaBookmarkSolid, FaMicrophone, FaStop, FaImage, FaFileAlt, FaMagic, FaStar, FaMoon, FaSun, FaPalette, FaVolumeUp, FaVolumeMute, FaExpand, FaCompress, FaSearch, FaFilter, FaSort, FaEye, FaEyeSlash, FaEdit, FaCheck as FaCheckCircle, FaTimes as FaTimesCircle, FaFlag, FaClipboardList, FaCommentAlt, FaArrowDown, FaTrash, FaEllipsisH, FaEllipsisV, FaShareAlt, FaBan, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import EqualizerButton from './EqualizerButton';
 import ShareChatModal from './ShareChatModal';
 import SocialSharePanel from './SocialSharePanel';
@@ -3303,6 +3303,38 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         setEditingMessageContent(messageContent);
     };
 
+    const switchMessageVersion = (index, newVersionIndex) => {
+        setMessages(prev => {
+            const next = [...prev];
+            const message = { ...next[index] };
+
+            if (!message.variants || newVersionIndex < 0 || newVersionIndex >= message.variants.length) return prev;
+
+            // Save current state of this version
+            const currentActiveIndex = message.activeVersionIndex || 0;
+            const updatedVariants = [...message.variants];
+            updatedVariants[currentActiveIndex] = {
+                ...updatedVariants[currentActiveIndex],
+                content: message.content,
+                tail: next.slice(index + 1)
+            };
+
+            // Switch to target version
+            const targetVersion = updatedVariants[newVersionIndex];
+            message.content = targetVersion.content;
+            message.activeVersionIndex = newVersionIndex;
+            message.variants = updatedVariants;
+
+            // Reconstruct messages array from [head] + [versioned message] + [this version's tail]
+            return [...next.slice(0, index), message, ...targetVersion.tail];
+        });
+
+        // Small delay to scroll to top of new version if needed
+        setTimeout(() => {
+            // Optional: scroll adjustments
+        }, 100);
+    };
+
     const cancelEditingMessage = () => {
         setEditingMessageIndex(null);
         setEditingMessageContent('');
@@ -3315,34 +3347,58 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         }
 
         try {
-            // Update the user message in the messages array
+            // Support versioning by creating a new variant
             const updatedMessages = [...messages];
-            updatedMessages[messageIndex] = {
-                ...updatedMessages[messageIndex],
-                content: editingMessageContent.trim()
+            const originalMessage = updatedMessages[messageIndex];
+
+            // 1. Capture the "tail" of current conversation at this point
+            const currentTail = updatedMessages.slice(messageIndex + 1);
+
+            // 2. Initialize or update variants (ChatGPT style)
+            let variants = originalMessage.variants || [
+                { content: originalMessage.content, tail: currentTail, timestamp: originalMessage.timestamp }
+            ];
+
+            // 3. Save the tail into the current active variant before branching
+            const activeIdx = originalMessage.activeVersionIndex || 0;
+            const activeVariants = [...variants];
+            activeVariants[activeIdx] = { ...activeVariants[activeIdx], tail: currentTail };
+
+            // 4. Create the new version
+            const newVersion = {
+                content: editingMessageContent.trim(),
+                tail: [], // New branch starts empty
+                timestamp: new Date().toISOString()
             };
-            setMessages(updatedMessages);
 
-            // Remove the assistant's response that came after this user message
-            const messagesToKeep = updatedMessages.slice(0, messageIndex + 1);
-            setMessages(messagesToKeep);
+            const newMessage = {
+                ...originalMessage,
+                content: editingMessageContent.trim(),
+                timestamp: newVersion.timestamp,
+                variants: [...activeVariants, newVersion],
+                activeVersionIndex: activeVariants.length
+            };
 
-            // Clear editing state first
+            // 5. Update UI state immediately with truncated history
+            const nextMessages = [...updatedMessages.slice(0, messageIndex), newMessage];
+            setMessages(nextMessages);
+
+            // Clear editing state
             setEditingMessageIndex(null);
             setEditingMessageContent('');
 
-            // Send the edited message directly to API without using input field
-            await sendEditedMessageToAPI(editingMessageContent.trim());
+            // 6. Send to API - passing the history only UP TO the edit point
+            await sendEditedMessageToAPI(editingMessageContent.trim(), nextMessages.slice(0, messageIndex));
 
-            toast.success('Message updated and sent');
+            toast.success('New branch created');
         } catch (error) {
             console.error('Error submitting edited message:', error);
             toast.error('Failed to send edited message');
         }
     };
 
-    // Send edited message directly to API (using same format as handleSubmit)
-    const sendEditedMessageToAPI = async (messageContent) => {
+    // Send edited message directly to API
+    const sendEditedMessageToAPI = async (messageContent, historyOverride = null) => {
         if (!messageContent.trim() || isLoading) return;
 
         // Check rate limit
@@ -3368,7 +3424,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 },
                 body: JSON.stringify({
                     message: messageContent,
-                    history: messages.slice(-10), // Send last 10 messages for context
+                    history: (historyOverride || messages).slice(-10), // Use history override if provided
                     sessionId: currentSessionId,
                     tone: currentUser ? tone : 'neutral', // Send current tone setting or default for public users
                     responseLength: aiResponseLength, // Send response length setting
@@ -6122,6 +6178,33 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                             <span className="text-sm">
                                                                 {message.documentName || 'Download Document'}
                                                             </span>
+                                                        </button>
+                                                    </div>
+                                                )}
+
+                                                {/* Version Selection UI (Arrows) */}
+                                                {!editingMessageIndex && message.variants && message.variants.length > 1 && (
+                                                    <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-black tracking-tighter ${message.role === 'user' ? 'bg-white/10 text-white/90' : 'bg-gray-200 text-gray-600'} mb-2 w-fit border ${message.role === 'user' ? 'border-white/20' : 'border-gray-300'} select-none`}>
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); switchMessageVersion(index, (message.activeVersionIndex || 0) - 1); }}
+                                                            disabled={(message.activeVersionIndex || 0) === 0}
+                                                            className="hover:scale-125 disabled:opacity-30 transition-all p-0.5"
+                                                            title="Previous version"
+                                                        >
+                                                            <FaChevronLeft size={7} />
+                                                        </button>
+                                                        <div className="flex items-center gap-0.5 min-w-[24px] justify-center">
+                                                            <span className="opacity-90">{(message.activeVersionIndex || 0) + 1}</span>
+                                                            <span className="opacity-50">/</span>
+                                                            <span className="opacity-90">{message.variants.length}</span>
+                                                        </div>
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); switchMessageVersion(index, (message.activeVersionIndex || 0) + 1); }}
+                                                            disabled={(message.activeVersionIndex || 0) === message.variants.length - 1}
+                                                            className="hover:scale-125 disabled:opacity-30 transition-all p-0.5"
+                                                            title="Next version"
+                                                        >
+                                                            <FaChevronRight size={7} />
                                                         </button>
                                                     </div>
                                                 )}
