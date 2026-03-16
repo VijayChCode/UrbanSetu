@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { FaRobot, FaUser, FaClock, FaCalendar, FaExclamationTriangle, FaArrowRight, FaDownload, FaExternalLinkAlt, FaChevronLeft, FaChevronRight, FaEdit, FaPaperPlane, FaUserCircle, FaCopy } from 'react-icons/fa';
+import { FaRobot, FaUser, FaClock, FaCalendar, FaExclamationTriangle, FaArrowRight, FaDownload, FaExternalLinkAlt, FaChevronLeft, FaChevronRight, FaUserCircle, FaCopy, FaCheck } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 
 import { usePageTitle } from '../hooks/usePageTitle';
@@ -48,8 +48,7 @@ export default function SharedChatView() {
     const [inputToken, setInputToken] = useState('');
     const [messages, setMessages] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
-    const [editingIndex, setEditingIndex] = useState(null);
-    const [editingContent, setEditingContent] = useState('');
+    const [copiedMessageIndex, setCopiedMessageIndex] = useState(null);
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://urbansetu-pvt4.onrender.com';
 
     useEffect(() => {
@@ -109,9 +108,10 @@ export default function SharedChatView() {
         }
     };
 
-    const handleCopy = (text) => {
+    const handleCopy = (text, index) => {
         navigator.clipboard.writeText(text);
-        toast.success('Copied to clipboard!');
+        setCopiedMessageIndex(index);
+        setTimeout(() => setCopiedMessageIndex(null), 2000);
     };
 
     const switchMessageVersion = (index, newVersionIndex) => {
@@ -138,78 +138,7 @@ export default function SharedChatView() {
         });
     };
 
-    const submitEditedMessage = async (index) => {
-        if (!editingContent.trim()) return;
 
-        try {
-            const updatedMessages = [...messages];
-            const originalMessage = updatedMessages[index];
-
-            const currentTail = updatedMessages.slice(index + 1);
-            let variants = originalMessage.variants || [
-                { content: originalMessage.content, tail: currentTail, timestamp: originalMessage.timestamp }
-            ];
-
-            const activeIdx = originalMessage.activeVersionIndex || 0;
-            const activeVariants = [...variants];
-            activeVariants[activeIdx] = { ...activeVariants[activeIdx], tail: currentTail };
-
-            const newVersion = {
-                content: editingContent.trim(),
-                tail: [],
-                timestamp: new Date().toISOString()
-            };
-
-            const newMessage = {
-                ...originalMessage,
-                content: editingContent.trim(),
-                variants: [...activeVariants, newVersion],
-                activeVersionIndex: activeVariants.length
-            };
-
-            const nextMessages = [...updatedMessages.slice(0, index), newMessage];
-            setMessages(nextMessages);
-            setEditingIndex(null);
-
-            await getAIResponse(editingContent.trim(), nextMessages.slice(0, index));
-        } catch (err) {
-            console.error('Edit failed:', err);
-            toast.error('Failed to update message');
-        }
-    };
-
-    const getAIResponse = async (userPrompt, history = []) => {
-        setIsLoading(true);
-        try {
-            const response = await authenticatedFetch(`${API_BASE_URL}/api/gemini/chat`, {
-                method: 'POST',
-                body: JSON.stringify({
-                    message: userPrompt,
-                    history: history,
-                    sessionId: chatData?.originalSessionId || 'shared_interaction'
-                })
-            });
-
-            if (!response.ok) throw new Error('AI request failed');
-
-            const data = await response.json();
-            if (data.success) {
-                const aiMsg = {
-                    role: 'assistant',
-                    content: data.response,
-                    recommendations: data.recommendations,
-                    timestamp: new Date().toISOString()
-                };
-                setMessages(prev => [...prev, aiMsg]);
-            }
-        } catch (err) {
-            console.error('AI error:', err);
-            toast.error('AI is currently unavailable');
-            setMessages(prev => [...prev, { role: 'assistant', content: "I'm sorry, I'm having trouble connecting right now.", isError: true }]);
-        } finally {
-            setIsLoading(false);
-        }
-    };
 
     const formatText = (text, isUser = false) => {
         if (!text) return null;
@@ -362,23 +291,6 @@ export default function SharedChatView() {
 
                             <div className={`relative inline-block text-left w-full sm:w-auto max-w-full rounded-[2rem] p-6 sm:p-8 shadow-2xl transition-all ${msg.role === 'user' ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-white dark:bg-gray-800 border-2 border-gray-50 dark:border-gray-800 text-gray-800 dark:text-blue-50 rounded-tl-none'}`}>
 
-                                {editingIndex === index ? (
-                                    <div className="space-y-4">
-                                        <textarea
-                                            className="w-full bg-black/10 dark:bg-gray-900/80 rounded-3xl p-5 text-white dark:text-blue-100 border-2 border-white/20 focus:border-white outline-none resize-none min-h-[160px] text-lg leading-relaxed no-scrollbar"
-                                            value={editingContent}
-                                            onChange={(e) => setEditingContent(e.target.value)}
-                                            autoFocus
-                                        />
-                                        <div className="flex justify-end gap-3">
-                                            <button onClick={() => setEditingIndex(null)} className="px-5 py-2 text-xs font-black uppercase text-white/60 hover:text-white transition-colors tracking-widest">Cancel</button>
-                                            <button onClick={() => submitEditedMessage(index)} className="px-8 py-3 bg-white text-indigo-700 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-2xl active:scale-95 transition-all flex items-center gap-2">
-                                                <FaPaperPlane size={10} /> Execute
-                                            </button>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <>
                                         {msg.variants && msg.variants.length > 1 && (
                                             <div className="flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black bg-black/5 dark:bg-white/5 text-current mb-5 w-fit border border-current/10 select-none">
                                                 <button onClick={() => switchMessageVersion(index, (msg.activeVersionIndex || 0) - 1)} disabled={(msg.activeVersionIndex || 0) === 0} className="hover:scale-150 disabled:opacity-10 transition-all"><FaChevronLeft size={6} /></button>
@@ -390,10 +302,6 @@ export default function SharedChatView() {
                                         <div className={`text-base sm:text-lg whitespace-pre-wrap ${msg.role === 'user' ? 'font-medium' : ''}`}>
                                             {formatText(msg.content, msg.role === 'user')}
                                         </div>
-
-
-                                    </>
-                                )}
 
                                 {msg.recommendations && msg.recommendations.length > 0 && (
                                     <div className="mt-10 pt-10 border-t-2 border-gray-50 dark:border-gray-700/50">
@@ -420,22 +328,20 @@ export default function SharedChatView() {
                             <div className={`mt-3 text-[10px] flex items-center gap-4 font-black uppercase tracking-widest ${msg.role === 'user' ? 'justify-end text-indigo-300' : 'text-gray-400'}`}>
                                 <div className="flex items-center gap-3">
                                     <button
-                                        onClick={() => handleCopy(msg.content)}
-                                        className="hover:text-blue-500 transition-colors flex items-center gap-1"
+                                        onClick={() => handleCopy(msg.content, index)}
+                                        className={`${copiedMessageIndex === index ? 'text-green-500' : 'hover:text-blue-500'} transition-colors flex items-center gap-1 min-w-[60px]`}
                                         title="Copy Message"
                                     >
-                                        <FaCopy size={10} /> Copy
+                                        {copiedMessageIndex === index ? (
+                                            <>
+                                                <FaCheck size={10} /> Copied
+                                            </>
+                                        ) : (
+                                            <>
+                                                <FaCopy size={10} /> Copy
+                                            </>
+                                        )}
                                     </button>
-
-                                    {msg.role === 'user' && !editingIndex && (
-                                        <button
-                                            onClick={() => { setEditingIndex(index); setEditingContent(msg.content); }}
-                                            className="hover:text-indigo-500 transition-colors flex items-center gap-1"
-                                            title="Edit Message"
-                                        >
-                                            <FaEdit size={10} /> Edit
-                                        </button>
-                                    )}
                                 </div>
                                 <div className="flex items-center gap-1.5 opacity-60">
                                     <FaClock size={10} className="animate-pulse" /> {msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : 'Live'}
