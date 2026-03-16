@@ -164,7 +164,7 @@ class GlobalErrorBoundary extends React.Component {
 
                         <p className="text-gray-500 dark:text-gray-400 mb-8">
                             {this.state.isPersistentError 
-                                ? "We're sorry for the inconvenience. Our team has been notified and is working on a permanent fix. We've got you covered!"
+                                ? "We apologize for the continued disruption. Our automated systems have flagged this persistent issue, and our engineering team is actively investigating to restore normal service."
                                 : "We encountered an unexpected error while loading the application. Attempting to switch to our backup server for better stability."
                             }
                         </p>
