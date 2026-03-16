@@ -15,9 +15,6 @@ import { authenticatedFetch } from '../utils/auth';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function RentProperty() {
-  // Set page title
-  usePageTitle(`${listing?.name || "Rent Property"} - Rent-Lock Agreement`);
-
   const { currentUser } = useSelector((state) => state.user);
   const location = useLocation();
   const navigate = useNavigate();
@@ -30,6 +27,9 @@ export default function RentProperty() {
   const [loading, setLoading] = useState(true);
   const [isOwner, setIsOwner] = useState(false);
   const [listing, setListing] = useState(null);
+
+  // Set page title
+  usePageTitle(`${listing?.name || "Rent Property"} - Rent-Lock Agreement`);
   const [step, setStep] = useState(1); // 1: Plan Selection, 2: Contract Review, 3: Signing, 4: Payment, 5: Move-in
   const [formData, setFormData] = useState({
     rentLockPlan: '',
