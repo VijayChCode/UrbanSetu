@@ -26,6 +26,7 @@ export default function RentProperty() {
 
   const [loading, setLoading] = useState(true);
   const [isOwner, setIsOwner] = useState(false);
+  const [isBookedByOther, setIsBookedByOther] = useState(false);
   const [listing, setListing] = useState(null);
 
   // Set page title
@@ -187,11 +188,17 @@ export default function RentProperty() {
 
         setListing(listingData);
         
-        // Check if current user is the owner
-        if (currentUser && listingData.userRef && String(listingData.userRef) === String(currentUser._id)) {
+        const ownerId = listingData?.userRef?._id || listingData?.userRef;
+        if (listingData && currentUser && String(ownerId) === String(currentUser._id)) {
           setIsOwner(true);
           setLoading(false);
           return;
+        }
+
+        // Check if property is already booked by someone else (moved up for priority)
+        if (listingData && (listingData.availabilityStatus === 'booked' || listingData.availabilityStatus === 'rented')) {
+          // But first we must see if the current user has an existing contract for it
+          // So we don't return just yet, we'll check for existing contract below
         }
 
         // Set default plan if available
@@ -207,9 +214,7 @@ export default function RentProperty() {
         // 1. Try to fetch contract if ID is provided
         if (contractIdParam) {
           try {
-            const contractRes = await authenticatedFetch(`${API_BASE_URL}/api/rental/contracts/${contractIdParam}`, {
-            });
-
+            const contractRes = await authenticatedFetch(`${API_BASE_URL}/api/rental/contracts/${contractIdParam}`);
             if (contractRes.ok) {
               const contractData = await contractRes.json();
               existingContract = contractData.contract || contractData;
@@ -221,9 +226,7 @@ export default function RentProperty() {
         // 2. If no ID provided, try to find an active contract for this listing user
         else {
           try {
-            const contractsRes = await authenticatedFetch(`${API_BASE_URL}/api/rental/contracts?role=tenant`, {
-            });
-
+            const contractsRes = await authenticatedFetch(`${API_BASE_URL}/api/rental/contracts?role=tenant`);
             if (contractsRes.ok) {
               const contractsData = await contractsRes.json();
               if (contractsData.success && contractsData.contracts) {
@@ -241,10 +244,10 @@ export default function RentProperty() {
           }
         }
 
-        // 3. Check if property is already booked by someone else
+        // 3. NOW check if property is already booked by someone else
         if ((listingData.availabilityStatus === 'booked' || listingData.availabilityStatus === 'rented') && !existingContract) {
-          toast.error("This property is already booked by another user.");
-          navigate(`/listing/${listingId}`);
+          setIsBookedByOther(true);
+          setLoading(false);
           return;
         }
 
@@ -917,6 +920,41 @@ export default function RentProperty() {
               className="w-full sm:w-auto px-8 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg transition transform hover:scale-105"
             >
               Manage My Listings
+            </button>
+            <button
+              onClick={() => navigate(`/user`)}
+              className="w-full sm:w-auto px-8 py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 font-bold rounded-xl transition"
+            >
+              Go to Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isBookedByOther) {
+    return (
+      <div className="bg-gradient-to-br from-blue-50 to-purple-100 dark:from-gray-950 dark:to-gray-900 min-h-screen py-10 px-2 md:px-8 flex items-center justify-center">
+        <div className="max-w-2xl w-full bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-8 border border-orange-100 dark:border-orange-900/30 text-center">
+          <div className="w-20 h-20 bg-orange-100 dark:bg-orange-900/40 rounded-full flex items-center justify-center mx-auto mb-6">
+            <FaLock className="text-orange-600 dark:text-orange-400 text-4xl" />
+          </div>
+          <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Property Unavailable</h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            The property <span className="font-bold text-blue-600 dark:text-blue-400">{listing?.name || "this property"}</span> is no longer available for booking. It has been sold, rented, or is currently under an active contract with another user. If the booking expires or is cancelled, it will become available again.
+          </p>
+          {listing?.userRef?.username && (
+            <p className="text-gray-500 dark:text-gray-500 mb-8 italic">
+              Listing Owner: <span className="font-semibold">{listing.userRef.username}</span>
+            </p>
+          )}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <button
+              onClick={() => navigate(`/listing/${listingId}`)}
+              className="w-full sm:w-auto px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition transform hover:scale-105"
+            >
+              View Property Details
             </button>
             <button
               onClick={() => navigate(`/user`)}

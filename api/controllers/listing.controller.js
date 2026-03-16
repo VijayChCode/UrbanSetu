@@ -822,13 +822,13 @@ export const updateListing = async (req, res, next) => {
 
 export const getListing = async (req, res, next) => {
   try {
-    let listing = await Listing.findById(req.params.id);
+    let listing = await Listing.findById(req.params.id).populate('userRef', 'username email avatar');
     let listingObj = null;
     let isDeleted = false;
 
     if (!listing) {
       // Check if it exists in deleted listings
-      const deletedRecord = await DeletedListing.findOne({ originalListingId: req.params.id });
+      const deletedRecord = await DeletedListing.findOne({ originalListingId: req.params.id }).populate('userRef', 'username email avatar');
 
       if (deletedRecord) {
         console.log(`ℹ️ Found deleted listing for ID: ${req.params.id}`);
@@ -836,6 +836,7 @@ export const getListing = async (req, res, next) => {
         listingObj = { ...deletedRecord.listingData };
         // Ensure critical fields are present
         listingObj._id = deletedRecord.originalListingId;
+        listingObj.userRef = deletedRecord.userRef; // Use the populated owner info
         isDeleted = true;
 
         // Add deletion info

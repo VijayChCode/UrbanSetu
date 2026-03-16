@@ -51,6 +51,7 @@ export default function Appointment() {
   const [showPaymentMessage, setShowPaymentMessage] = useState(false);
   const [listing, setListing] = useState(null);
   const [isOwner, setIsOwner] = useState(false);
+  const [isUnavailable, setIsUnavailable] = useState(false);
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -75,8 +76,16 @@ export default function Appointment() {
           const listingData = data.listing || (data._id ? data : null);
           setListing(listingData);
           
-          if (listingData && currentUser && String(listingData.userRef) === String(currentUser._id)) {
+          const ownerId = listingData?.userRef?._id || listingData?.userRef;
+          if (listingData && currentUser && String(ownerId) === String(currentUser._id)) {
             setIsOwner(true);
+            setCheckingActive(false);
+            return;
+          }
+
+          // Check if property is unavailable
+          if (listingData && ['booked', 'sold', 'rented'].includes(listingData.availabilityStatus)) {
+            setIsUnavailable(true);
             setCheckingActive(false);
             return;
           }
@@ -226,6 +235,39 @@ export default function Appointment() {
               className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg transition shadow-lg transform hover:scale-105"
             >
               Manage My Listings
+            </button>
+            <button
+              onClick={() => navigate('/user')}
+              className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-bold py-3 px-8 rounded-lg transition"
+            >
+              Back to Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isUnavailable) {
+    return (
+      <div className="bg-gradient-to-br from-blue-50 to-purple-100 dark:from-gray-950 dark:to-gray-900 min-h-screen py-10 px-2 md:px-8 flex items-center justify-center">
+        <div className="max-w-2xl w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 border border-orange-100 dark:border-orange-900/20 text-center">
+          <div className="text-orange-600 dark:text-orange-400 text-5xl mb-6">🔒</div>
+          <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Property Unavailable</h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            The property <span className="font-bold text-blue-600 dark:text-blue-400">{listing?.name || "this property"}</span> is no longer available for booking. It has been sold, rented, or is currently under an active contract with another user. If the booking expires or is cancelled, it will become available again.
+          </p>
+          {listing?.userRef?.username && (
+            <p className="text-gray-500 dark:text-gray-500 mb-8 italic">
+              Listing Owner: <span className="font-semibold">{listing.userRef.username}</span>
+            </p>
+          )}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <button
+              onClick={() => navigate(`/listing/${listingId}`)}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg transition shadow-lg transform hover:scale-105"
+            >
+              View Property Details
             </button>
             <button
               onClick={() => navigate('/user')}
