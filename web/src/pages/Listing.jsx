@@ -1458,7 +1458,7 @@ export default function Listing() {
   // Fetch owner details after listing is loaded
   useEffect(() => {
     const fetchOwnerDetails = async () => {
-      const ownerId = typeof listing?.userRef === 'object' ? listing.userRef._id : listing?.userRef;
+      const ownerId = (listing?.userRef && typeof listing.userRef === 'object') ? listing.userRef._id : listing?.userRef;
       if (listing && ownerId) {
         setOwnerLoading(true);
         setOwnerError("");
@@ -3331,7 +3331,7 @@ export default function Listing() {
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Created By</p>
                     <p className="font-semibold text-gray-800 dark:text-gray-200">
-                      {typeof listing.userRef === 'object' ? (listing.userRef.username || listing.userRef._id) : (listing.userRef || 'Unknown')}
+                      {(listing.userRef && typeof listing.userRef === 'object') ? (listing.userRef.username || listing.userRef._id) : (listing.userRef || 'Unknown')}
                     </p>
                   </div>
                   <div>
