@@ -3507,8 +3507,8 @@ export default function Listing() {
               </div>
             ) : (
               <>
-                {/* Rent Property Button (only for rental properties) */}
-                {listing?.type === "rent" && (
+                {/* Rent Property Button (only for rental properties, disabled for admins) */}
+                {listing?.type === "rent" && !isAdmin && (
                   <div className="relative">
                     <button
                       onClick={async () => {
