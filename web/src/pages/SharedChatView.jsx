@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { FaRobot, FaUser, FaClock, FaCalendar, FaExclamationTriangle, FaArrowRight, FaDownload } from 'react-icons/fa';
+import { FaRobot, FaUser, FaClock, FaCalendar, FaExclamationTriangle, FaArrowRight, FaDownload, FaExternalLinkAlt } from 'react-icons/fa';
 
 import { usePageTitle } from '../hooks/usePageTitle';
 import GeminiAIWrapper from "../components/GeminiAIWrapper";
@@ -102,32 +102,40 @@ export default function SharedChatView() {
         }
     };
 
-    // Simple text formatter to handle basic markdown-like syntax
+    // Enhanced text formatter to handle markdown syntax
     const formatText = (text, isUser = false) => {
         if (!text) return null;
 
-        // Split by code blocks first
-        const parts = text.split(/(```[\s\S]*?```)/g);
+        // Process markdown headings first
+        let processedText = text;
+        processedText = processedText
+            .replace(/^### (.*$)/gim, '<h3 class="text-base sm:text-lg font-bold mt-4 mb-2 text-gray-900 dark:text-white">$1</h3>')
+            .replace(/^## (.*$)/gim, '<h2 class="text-lg sm:text-xl font-bold mt-5 mb-3 text-gray-900 dark:text-white">$1</h2>')
+            .replace(/^# (.*$)/gim, '<h1 class="text-xl sm:text-2xl font-extrabold mt-6 mb-4 text-gray-900 dark:text-white">$1</h1>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold">$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em class="italic">$1</em>')
+            .replace(/^\* (.*$)/gim, '<li class="ml-4 list-disc">$1</li>')
+            .replace(/^\d+\. (.*$)/gim, '<li class="ml-4 list-decimal">$1</li>');
+
+        // Split by code blocks
+        const parts = processedText.split(/(```[\s\S]*?```)/g);
 
         return parts.map((part, index) => {
             if (part.startsWith('```') && part.endsWith('```')) {
                 // Render code block
                 const content = part.slice(3, -3).replace(/^\w+\n/, ''); // Remove language identifier if present
                 return (
-                    <div key={index} className="bg-gray-800 text-gray-200 p-3 rounded-lg my-2 font-mono text-sm overflow-x-auto">
-                        <pre>{content}</pre>
+                    <div key={index} className="bg-gray-900 text-gray-100 p-4 rounded-xl my-4 font-mono text-xs sm:text-sm overflow-x-auto border border-gray-700 shadow-lg">
+                        <pre className="leading-relaxed">{content}</pre>
                     </div>
                 );
             }
 
-            // Render text with bolding and links
+            // Render text with links
+            const subParts = part.split(/(\[.*?\]\(.*?\)|https?:\/\/[^\s]+)/g);
             return (
-                <div key={index} className="whitespace-pre-wrap">
-                    {part.split(/(\*\*.*?\*\*|\[.*?\]\(.*?\)|https?:\/\/[^\s]+)/g).map((subPart, subIndex) => {
-                        if (subPart.startsWith('**') && subPart.endsWith('**')) {
-                            return <strong key={subIndex}>{subPart.slice(2, -2)}</strong>;
-                        }
-
+                <div key={index} className={`${isUser ? 'text-white' : 'text-gray-800 dark:text-gray-200'} leading-relaxed`}>
+                    {subParts.map((subPart, subIndex) => {
                         // Check for Markdown Link [text](url)
                         const mdLinkMatch = subPart.match(/^\[(.*?)\]\((.*?)\)$/);
                         if (mdLinkMatch) {
@@ -137,7 +145,7 @@ export default function SharedChatView() {
                                     href={mdLinkMatch[2]}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className={`${isUser ? 'text-white underline font-bold active:opacity-70' : 'text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300'} transition-colors cursor-pointer pointer-events-auto`}
+                                    className={`${isUser ? 'text-white underline font-bold active:opacity-70' : 'text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300'} transition-colors cursor-pointer pointer-events-auto break-all`}
                                 >
                                     {mdLinkMatch[1]}
                                 </a>
@@ -145,21 +153,23 @@ export default function SharedChatView() {
                         }
 
                         // Check for raw URL
-                        if (subPart.startsWith('http://') || subPart.startsWith('https://')) {
+                        const urlMatch = subPart.match(/^https?:\/\/[^\s]+$/);
+                        if (urlMatch) {
                             return (
                                 <a
                                     key={subIndex}
                                     href={subPart}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className={`${isUser ? 'text-white underline font-bold active:opacity-70' : 'text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300'} transition-colors cursor-pointer pointer-events-auto`}
+                                    className={`${isUser ? 'text-white underline font-bold active:opacity-70' : 'text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300'} transition-colors cursor-pointer pointer-events-auto break-all`}
                                 >
                                     {subPart}
                                 </a>
                             );
                         }
 
-                        return subPart;
+                        // Use dangerouslySetInnerHTML for the markdown processed parts
+                        return <span key={subIndex} dangerouslySetInnerHTML={{ __html: subPart }} />;
                     })}
                 </div>
             );
@@ -240,32 +250,24 @@ export default function SharedChatView() {
     return (
         <div className="min-h-screen bg-transparent dark:bg-gray-950 flex flex-col transition-colors duration-300">
             {/* Header */}
-            <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 sticky top-0 z-10 shadow-sm">
-                <div className="max-w-4xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center text-white shadow-lg">
-                            <FaRobot size={20} />
+            <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 sticky top-0 z-50 shadow-sm">
+                <div className="max-w-4xl mx-auto px-4 py-3 flex flex-row justify-between items-center">
+                    <div className="flex items-center gap-3 overflow-hidden">
+                        <div className="flex-shrink-0 w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center text-white shadow-lg">
+                            <FaRobot size={18} />
                         </div>
-                        <div>
-                            <h1 className="font-bold text-gray-900 dark:text-white text-lg leading-tight">
+                        <div className="min-w-0">
+                            <h1 className="font-bold text-gray-900 dark:text-white text-base sm:text-lg leading-tight truncate">
                                 <TypewriterText text={chatData.title || "Shared Chat"} />
                             </h1>
-                            <div className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 flex flex-wrap items-center gap-y-1.5 gap-x-2 mt-1 sm:mt-0">
-                                <span className="flex items-center gap-1 shrink-0">Created on <FaCalendar size={10} /> {chatData.date ? new Date(chatData.date).toLocaleDateString() : new Date().toLocaleDateString()}</span>
-                                {chatData.expiresAt && (
-                                    <>
-                                        <span className="hidden sm:block w-1 h-1 bg-gray-300 dark:bg-gray-700 rounded-full"></span>
-                                        <span className="flex items-center gap-1 text-orange-600 dark:text-orange-400 font-medium shrink-0">
-                                            <FaClock size={10} /> Expires on {new Date(chatData.expiresAt).toLocaleDateString()}
-                                        </span>
-                                    </>
-                                )}
-                                <span className="hidden sm:block w-1 h-1 bg-gray-300 dark:bg-gray-700 rounded-full"></span>
-                                <span className="text-blue-600 dark:text-blue-400 font-medium whitespace-nowrap shrink-0">Shared via SetuAI</span>
+                            <div className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1.5 mt-0.5">
+                                <span className="flex items-center gap-1 shrink-0"><FaCalendar size={9} /> {chatData.date ? new Date(chatData.date).toLocaleDateString() : new Date().toLocaleDateString()}</span>
+                                <span className="w-1 h-1 bg-gray-300 dark:bg-gray-700 rounded-full"></span>
+                                <span className="text-blue-600 dark:text-blue-400 font-medium truncate">Shared via SetuAI</span>
                             </div>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2 w-full md:w-auto justify-start md:justify-end">
+                    <div className="flex items-center gap-2 ml-2">
                         {importedSessionId ? (
                             <button
                                 onClick={() => {
@@ -275,28 +277,33 @@ export default function SharedChatView() {
                                         navigate(`/user/ai?session=${importedSessionId}`);
                                     }
                                 }}
-                                className="flex items-center gap-2 text-xs sm:text-sm font-medium text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 px-3 sm:px-4 py-2 rounded-lg transition-colors shadow-sm"
+                                className="flex items-center gap-2 text-xs font-bold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-3 py-1.5 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/50 transition-all shadow-sm active:scale-95"
                             >
-                                <FaArrowRight size={14} />
-                                Open Chat
+                                <FaArrowRight size={12} />
+                                <span className="hidden sm:inline">Open Chat</span>
+                                <span className="sm:hidden">Open</span>
                             </button>
                         ) : (
                             <button
                                 onClick={handleImportChat}
                                 disabled={importing}
-                                className="flex items-center gap-2 text-xs sm:text-sm font-medium text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-100 dark:hover:bg-purple-900/50 px-3 sm:px-4 py-2 rounded-lg transition-colors disabled:opacity-50 shadow-sm"
+                                className="flex items-center gap-2 text-xs font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/30 px-3 py-1.5 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-all disabled:opacity-50 shadow-sm active:scale-95"
                             >
-                                <FaDownload size={14} />
-                                {importing ? "Importing..." : (
+                                <FaDownload size={12} />
+                                {importing ? "..." : (
                                     <>
+                                        <span className="hidden sm:inline">Import Chat</span>
                                         <span className="sm:hidden">Import</span>
-                                        <span className="hidden sm:inline">Import Chat to SetuAI</span>
                                     </>
                                 )}
                             </button>
                         )}
-                        <a href="/ai" className="text-xs sm:text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 px-3 sm:px-4 py-2 rounded-lg transition-colors shadow-sm text-center">
-                            Try SetuAI
+                        <a 
+                            href="/ai" 
+                            className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-transform hover:scale-105 active:scale-95 shadow-md"
+                            title="Go to SetuAI"
+                        >
+                            <FaExternalLinkAlt size={14} />
                         </a>
                     </div>
                 </div>

@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { ImageOff, Loader2 } from 'lucide-react';
 
 const AdvancedImage = ({ src, alt, className, ...props }) => {
-    const [isLoading, setIsLoading] = useState(true);
-    const [hasError, setHasError] = useState(false);
+    const [isLoading, setIsLoading] = useState(!!src);
+    const [hasError, setHasError] = useState(!src);
 
     const handleLoad = () => {
         setIsLoading(false);
