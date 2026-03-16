@@ -5287,15 +5287,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     title="More options"
                                     aria-label="More options"
                                 >
-                                    <div className={`flex flex-col items-center justify-center space-y-0.5 transition-all duration-200 ${isHeaderMenuOpen ? 'rotate-90' : 'group-hover:scale-110'
-                                        }`}>
-                                        <div className={`w-1 h-1 rounded-full bg-current transition-all duration-200 ${isHeaderMenuOpen ? 'w-1.5 h-1.5' : ''
-                                            }`}></div>
-                                        <div className={`w-1 h-1 rounded-full bg-current transition-all duration-200 ${isHeaderMenuOpen ? 'w-1.5 h-1.5' : ''
-                                            }`}></div>
-                                        <div className={`w-1 h-1 rounded-full bg-current transition-all duration-200 ${isHeaderMenuOpen ? 'w-1.5 h-1.5' : ''
-                                            }`}></div>
-                                    </div>
+                                    <FaEllipsisV className={`text-lg transition-transform duration-300 ${isHeaderMenuOpen ? 'rotate-90' : ''}`} />
 
                                     {/* Subtle glow effect when open */}
                                     {isHeaderMenuOpen && (
@@ -5312,7 +5304,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
                                 {/* Dropdown menu */}
                                 {isHeaderMenuOpen && (
-                                    <div ref={headerMenuRef} className={`absolute right-0 top-full mt-3 ${isDarkMode ? 'bg-gray-800/95 text-gray-200 border-gray-600' : 'bg-white/95 text-gray-800 border-gray-200'} rounded-xl shadow-2xl border backdrop-blur-sm w-64 z-50 animate-slideDown max-h-[60vh] overflow-y-auto`}>
+                                    <div ref={headerMenuRef} className={`absolute right-0 top-full mt-3 ${isDarkMode ? 'bg-gray-800/95 text-gray-200 border-gray-600' : 'bg-white/95 text-gray-800 border-gray-200'} rounded-xl shadow-2xl border backdrop-blur-sm w-64 z-50 animate-fade-in origin-top-right max-h-[60vh] overflow-y-auto`}>
                                         <ul className="py-2 text-sm">
                                             {/* About SetuAI */}
                                             <li>
@@ -9729,6 +9721,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         : currentChatName
                 }
                 themeColors={themeColors}
+                onShareStatusChange={(status) => {
+                    if ((shareTargetSessionId || getOrCreateSessionId()) === getOrCreateSessionId()) {
+                        setIsChatShared(status);
+                    }
+                }}
             />
 
             {/* Auth Required Modal */}

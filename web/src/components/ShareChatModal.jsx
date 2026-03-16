@@ -4,8 +4,8 @@ import { toast } from 'react-toastify';
 import { authenticatedFetch } from '../utils/auth';
 import SocialSharePanel from './SocialSharePanel';
 
-export default function ShareChatModal({ isOpen, onClose, sessionId, currentChatName, themeColors }) {
-    const [loading, setLoading] = useState(false);
+export default function ShareChatModal({ isOpen, onClose, sessionId, currentChatName, themeColors, onShareStatusChange }) {
+    const [loadingType, setLoadingType] = useState(null); // 'fetch', 'create', 'update', 'revoke', null
     const [shareData, setShareData] = useState(null);
     const [expiryType, setExpiryType] = useState('30days');
     const [customTitle, setCustomTitle] = useState(currentChatName || '');
@@ -30,7 +30,7 @@ export default function ShareChatModal({ isOpen, onClose, sessionId, currentChat
     }, [isOpen, sessionId, currentChatName]);
 
     const fetchShareInfo = async (incomingTitle) => {
-        setLoading(true);
+        setLoadingType('fetch');
         try {
             const res = await authenticatedFetch(`${API_BASE_URL}/api/shared-chat/manage/${sessionId}`, {
                 method: 'GET',
@@ -39,9 +39,10 @@ export default function ShareChatModal({ isOpen, onClose, sessionId, currentChat
             const data = await res.json();
             if (data.success && data.sharedChat) {
                 setShareData(data.sharedChat);
+                if (onShareStatusChange) onShareStatusChange(true);
                 // If existing title is generic but we have a better one, keep using the better one
                 const currentIsGeneric = !data.sharedChat.title || data.sharedChat.title === 'Shared Chat' || data.sharedChat.title === 'Shared Conversation';
-                const betterTitleAvailable = incomingTitle && incomingTitle !== 'Shared Chat';
+                const betterTitleAvailable = incomingTitle && typeof incomingTitle === 'string' && incomingTitle !== 'Shared Chat';
 
                 if (!currentIsGeneric) {
                     setCustomTitle(data.sharedChat.title);
@@ -50,16 +51,19 @@ export default function ShareChatModal({ isOpen, onClose, sessionId, currentChat
                 }
             } else {
                 setShareData(null);
+                if (onShareStatusChange) onShareStatusChange(false);
             }
         } catch (error) {
             console.error('Error fetching share info:', error);
+            setShareData(null);
+            if (onShareStatusChange) onShareStatusChange(false);
         } finally {
-            setLoading(false);
+            setLoadingType(null);
         }
     };
 
     const handleCreateLink = async () => {
-        setLoading(true);
+        setLoadingType('create');
         try {
             const res = await authenticatedFetch(`${API_BASE_URL}/api/shared-chat/create`, {
                 method: 'POST',
@@ -74,20 +78,21 @@ export default function ShareChatModal({ isOpen, onClose, sessionId, currentChat
             if (data.success) {
                 setShareData(data.sharedChat);
                 toast.success("Link generated successfully!");
+                if (onShareStatusChange) onShareStatusChange(true);
             } else {
                 toast.error(data.message || "Failed to generate link");
             }
         } catch (error) {
             toast.error("An error occurred");
         } finally {
-            setLoading(false);
+            setLoadingType(null);
         }
     };
 
     const [showRevokeConfirm, setShowRevokeConfirm] = useState(false);
 
     const handleRevokeLink = async () => {
-        setLoading(true);
+        setLoadingType('revoke');
         try {
             const res = await authenticatedFetch(`${API_BASE_URL}/api/shared-chat/${shareData.shareToken}`, {
                 method: 'DELETE'
@@ -97,6 +102,7 @@ export default function ShareChatModal({ isOpen, onClose, sessionId, currentChat
                 setShareData(null);
                 setShowRevokeConfirm(false);
                 toast.success("Link revoked successfully");
+                if (onShareStatusChange) onShareStatusChange(false);
                 onClose();
             } else {
                 toast.error(data.message || "Failed to revoke");
@@ -104,12 +110,12 @@ export default function ShareChatModal({ isOpen, onClose, sessionId, currentChat
         } catch (error) {
             toast.error("An error occurred");
         } finally {
-            setLoading(false);
+            setLoadingType(null);
         }
     };
 
     const handleUpdate = async () => {
-        setLoading(true);
+        setLoadingType('update');
         try {
             const res = await authenticatedFetch(`${API_BASE_URL}/api/shared-chat/${shareData.shareToken}`, {
                 method: 'PUT',
@@ -134,7 +140,7 @@ export default function ShareChatModal({ isOpen, onClose, sessionId, currentChat
         } catch (error) {
             toast.error("Failed to update");
         } finally {
-            setLoading(false);
+            setLoadingType(null);
         }
     };
 
@@ -175,8 +181,8 @@ export default function ShareChatModal({ isOpen, onClose, sessionId, currentChat
                         <FaShareAlt /> {shareData ? 'Update Chat' : 'Share Chat'}
                     </h3>
                     <div className="flex items-center gap-2">
-                        <button onClick={fetchShareInfo} className="hover:bg-white/20 p-2 rounded-full transition-colors" title="Refresh Views">
-                            <FaSync />
+                        <button onClick={fetchShareInfo} disabled={loadingType === 'fetch'} className="hover:bg-white/20 p-2 rounded-full transition-colors flex items-center justify-center" title="Refresh Views">
+                            <FaSync className={loadingType === 'fetch' ? 'animate-spin' : ''} />
                         </button>
                         <button onClick={onClose} className="hover:bg-white/20 p-2 rounded-full transition-colors">
                             <FaTimes />
@@ -185,14 +191,14 @@ export default function ShareChatModal({ isOpen, onClose, sessionId, currentChat
                 </div>
 
                 <div className="p-6 space-y-6">
-                    {loading && !shareData && (
+                    {loadingType === 'fetch' && !shareData && (
                         <div className="flex flex-col items-center justify-center py-8 gap-3">
                             <div className={`animate-spin rounded-full h-8 w-8 border-b-2 ${themeColors ? themeColors.accent.replace('text-', 'border-') : 'border-blue-600'}`}></div>
                             <span className="text-gray-500 text-sm font-medium">Verifying Link Status...</span>
                         </div>
                     )}
 
-                    {!loading && !shareData && (
+                    {loadingType !== 'fetch' && !shareData && (
                         <>
                             <div className="text-center space-y-2">
                                 <div className={`${themeColors?.secondary || 'bg-blue-50'} dark:bg-gray-800 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-200 dark:border-gray-700`}>
@@ -238,10 +244,14 @@ export default function ShareChatModal({ isOpen, onClose, sessionId, currentChat
 
                                 <button
                                     onClick={handleCreateLink}
-                                    disabled={loading}
+                                    disabled={loadingType === 'create'}
                                     className={`w-full bg-gradient-to-r ${themeColors?.primary || 'from-blue-600 to-purple-600'} text-white font-semibold py-3 rounded-lg shadow-md transition-transform transform hover:scale-[1.02] flex items-center justify-center gap-2`}
                                 >
-                                    {loading ? 'Generating...' : 'Create Public Link'}
+                                    {loadingType === 'create' ? (
+                                        <>
+                                            <FaSync className="animate-spin" /> Creating Link...
+                                        </>
+                                    ) : 'Create Public Link'}
                                 </button>
                             </div>
                         </>
@@ -314,12 +324,18 @@ export default function ShareChatModal({ isOpen, onClose, sessionId, currentChat
                             <div className="border-t border-gray-100 dark:border-gray-700 pt-4 flex gap-3">
                                 <button
                                     onClick={handleUpdate}
-                                    className="flex-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-600 font-medium py-2 rounded-lg transition-colors"
+                                    disabled={loadingType === 'update'}
+                                    className="flex-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-600 font-medium py-2 rounded-lg transition-colors flex justify-center items-center gap-2"
                                 >
-                                    Update Link
+                                    {loadingType === 'update' ? (
+                                        <>
+                                            <FaSync className="animate-spin text-sm" /> Updating...
+                                        </>
+                                    ) : 'Update Link'}
                                 </button>
                                 <button
                                     onClick={() => setShowRevokeConfirm(true)}
+                                    disabled={loadingType === 'revoke' || loadingType === 'update'}
                                     className="flex-1 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 font-medium py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
                                 >
                                     <FaTrash className="text-sm" /> Revoke Link
@@ -350,10 +366,14 @@ export default function ShareChatModal({ isOpen, onClose, sessionId, currentChat
                                 </button>
                                 <button
                                     onClick={handleRevokeLink}
-                                    disabled={loading}
-                                    className="flex-1 bg-red-600 text-white font-medium py-3 rounded-lg hover:bg-red-700 transition-colors shadow-lg"
+                                    disabled={loadingType === 'revoke'}
+                                    className="flex-1 bg-red-600 text-white font-medium py-3 rounded-lg hover:bg-red-700 transition-colors shadow-lg flex justify-center items-center gap-2"
                                 >
-                                    {loading ? 'Revoking...' : 'Yes, Revoke Link'}
+                                    {loadingType === 'revoke' ? (
+                                        <>
+                                            <FaSync className="animate-spin text-sm" /> Revoking...
+                                        </>
+                                    ) : 'Yes, Revoke Link'}
                                 </button>
                             </div>
                         </div>
