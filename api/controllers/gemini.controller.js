@@ -2,6 +2,7 @@ import { Groq } from 'groq-sdk';
 import ChatHistory from '../models/chatHistory.model.js';
 import MessageRating from '../models/messageRating.model.js';
 import About from '../models/about.model.js';
+import Deployment from '../models/deployment.model.js';
 import { getRelevantCachedData, needsReindexing, indexAllWebsiteData } from '../services/dataSyncService.js';
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
@@ -231,6 +232,20 @@ export const chatWithGemini = async (req, res) => {
                 console.error('Error fetching About data for AI context:', err);
             }
 
+            // Fetch dynamic Deployment data (Latest Versions)
+            let deploymentContext = '';
+            try {
+                const activeDeployments = await Deployment.find({ isActive: true });
+                if (activeDeployments && activeDeployments.length > 0) {
+                    deploymentContext = activeDeployments.map(d => `- ${d.platform.toUpperCase()}: v${d.version} (${(d.size / (1024 * 1024)).toFixed(2)} MB)`).join('\n               ');
+                } else {
+                    deploymentContext = "Currently available via web; native builds in production.";
+                }
+            } catch (err) {
+                console.error('Error fetching Deployment data for AI context:', err);
+                deploymentContext = "Native versions available for Android, iOS, Windows, and macOS.";
+            }
+
             const PROJECT_KNOWLEDGE = `
             PLATFORM: UrbanSetu
             TYPE: Advanced AI-First Real Estate Management Platform (MERN Stack)
@@ -295,7 +310,37 @@ export const chatWithGemini = async (req, res) => {
                - Governance: Transparency, ethical standards, compliance.
                - Scoring: Properties are rated AAA to D. Higher scores represent more sustainable and ethical housing.
 
-            6. TRUST & SECURITY:
+            6. MULTI-PLATFORM AVAILABILITY:
+               - UrbanSetu is accessible everywhere via our native ecosystem.
+               - LATEST ACTIVE VERSIONS:
+               ${deploymentContext}
+               - Platforms & Formats:
+                  - Android: APK available for direct download.
+                  - iOS: IPA available for iPhone/iPad users.
+                  - Windows: Native EXE/MSI installers (Windows 10/11).
+                  - macOS: DMG/PKG for Intel and Apple Silicon Macs (macOS 10.15+).
+                  - Linux: Support for Debian and RPM-based distributions.
+               - Goal: Provide a seamless, secure, and high-performance real estate experience across all devices.
+
+            7. WEB UPDATES & CHANGELOG:
+               - We maintain a dedicated "What's New" page for the platform (https://urbansetu.vercel.app/updates).
+               - Categories of Updates:
+                  - New Features (🚀): Major platform additions.
+                  - Improvements (⚡): Speed and usability enhancements.
+                  - Bug Fixes (🐞): Stability and performance repairs.
+                  - Announcements (📢): Important platform news.
+               - Content Verification: The updates page includes release dates, version numbers (matching native builds), and video/image previews of new features.
+
+            8. IMAGE ANALYSIS & AUDITING (Sentinel Vision):
+               - Framework: **Sentinel Image Auditor** (powered by TensorFlow.js).
+               - Capabilities:
+                  - Automated room type detection (Living Room, Kitchen, Bedroom, etc.).
+                  - Image quality assessment (Brightness, Contrast, Sharpness).
+                  - Fraud detection (Detecting stock photos or watermarked images).
+               - Purpose: Ensures high-quality, authentic listings for all users.
+               - Technical Detail: Runs locally on the user's browser for privacy and speed during property uploads.
+
+            9. TRUST & SECURITY:
                - Identity Verification: Validated mobile numbers (OTP) for all accounts.
                - Fraud Detection: AI monitoring for suspicious listings and price anomalies.
                - Payment Security: PCI-DSS compliant gateways, escrow services for deposits/bookings.
@@ -334,6 +379,8 @@ export const chatWithGemini = async (req, res) => {
             - Help Center: https://urbansetu.vercel.app/help-center
             - Help Center Article: https://urbansetu.vercel.app/help-center/article/ARTICLE_ID (Replace ARTICLE_ID with actual ID)
             - Community: https://urbansetu.vercel.app/community
+            - Download App: https://urbansetu.vercel.app/download
+            - Web Updates: https://urbansetu.vercel.app/updates
             - Blog Detail: https://urbansetu.vercel.app/blog/BLOG_TITLE (Replace BLOG_TITLE with actual slug/title)
             - Forgot Password: https://urbansetu.vercel.app/forgot-password?email= (Append email if known)
             - Community Guidelines: https://urbansetu.vercel.app/community-guidelines
