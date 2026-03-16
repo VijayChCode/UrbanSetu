@@ -9142,10 +9142,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 </div>
 
                                 {/* Footer Action (If viewing from consent modal, this effectively returns to it) */}
-                                <div className={`p-4 border-t flex justify-end ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+                                <div className={`p-4 border-t flex justify-between items-center ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+                                    <p className={`text-xs sm:text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                        For comprehensive platform policies, please read our full <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600 hover:underline font-medium transition-colors">Terms & Conditions</a>.
+                                    </p>
                                     <button
                                         onClick={() => setShowTermsModal(false)}
-                                        className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                                        className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex-shrink-0 ml-4"
                                     >
                                         Close
                                     </button>
