@@ -4,6 +4,7 @@ import EqualizerButton from './EqualizerButton';
 import ShareChatModal from './ShareChatModal';
 import SocialSharePanel from './SocialSharePanel';
 import VideoPreview from './VideoPreview';
+import ImagePreview from './ImagePreview';
 import { FaPlay } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { authenticatedFetch } from "../utils/auth";
@@ -633,6 +634,12 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [editingMessageIndex, setEditingMessageIndex] = useState(null);
     const [editingMessageContent, setEditingMessageContent] = useState('');
     const [copiedMessageIndex, setCopiedMessageIndex] = useState(null);
+
+    // Image Upload & Preview State
+    const [pendingImages, setPendingImages] = useState([]); // Array of {id, url, name, type, uploading}
+    const [isImagePreviewOpen, setIsImagePreviewOpen] = useState(false);
+    const [previewImages, setPreviewImages] = useState([]);
+    const [previewImageIndex, setPreviewImageIndex] = useState(0);
 
     // Reporting State
     const [showReportModal, setShowReportModal] = useState(false);
@@ -2612,6 +2619,28 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         };
     }, [isOpen, messages, hasMoreHistory, messageHistoryPage, isLoadingPreviousMessages, sessionId]);
 
+    const handlePaste = async (e) => {
+        const items = (e.clipboardData || e.originalEvent?.clipboardData)?.items;
+        if (!items) return;
+
+        const imageFiles = [];
+        for (const item of items) {
+            if (item.type.indexOf("image") !== -1) {
+                const blob = item.getAsFile();
+                if (blob) imageFiles.push(blob);
+            }
+        }
+
+        if (imageFiles.length > 0) {
+            e.preventDefault();
+            if (!currentUser) {
+                toast.info('Please login to upload images');
+                return;
+            }
+            await uploadFilesAndSend(imageFiles);
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!inputMessage.trim() || isLoading) return;
@@ -2652,7 +2681,24 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             userMessage = `[Tone: ${currentTone}] ${userMessage}`;
         }
 
+        // Attach pending images to the message
+        let finalUserMessage = userMessage;
+        let messageImages = [];
+        
+        if (pendingImages.length > 0) {
+            // Check if all are uploaded
+            const stillUploading = pendingImages.some(img => img.uploading);
+            if (stillUploading) {
+                toast.warning('Please wait for all images to finish uploading');
+                return;
+            }
 
+            messageImages = pendingImages.map(img => img.url);
+            const imageTexts = pendingImages.map(img => `I've uploaded a image file: ${img.name}. Please analyze it and help me with it. File URL: ${img.url}`).join('\n');
+            finalUserMessage = finalUserMessage ? `${finalUserMessage}\n\n${imageTexts}` : imageTexts;
+            
+            setPendingImages([]); // Clear pending images after they are attached
+        }
 
         setInputMessage('');
         setIsExpanded(false);
@@ -2667,10 +2713,15 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         setSelectedProperties([]); // Clear selected properties after sending
         setMessages(prev => {
             const currentMessages = Array.isArray(prev) ? prev : [];
-            return [...currentMessages, { role: 'user', content: userMessage, timestamp: new Date().toISOString() }];
+            return [...currentMessages, { 
+                role: 'user', 
+                content: finalUserMessage, 
+                timestamp: new Date().toISOString(),
+                images: messageImages 
+            }];
         });
         // Add to history stack for Ctrl+Z retrieval
-        messageHistoryRef.current.push(userMessage);
+        messageHistoryRef.current.push(finalUserMessage);
         historyIndexRef.current = -1;
         lastUserMessageRef.current = userMessage;
 
@@ -4459,18 +4510,64 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             setUploadingFile(true);
             setUploadProgress(0);
 
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                setUploadProgress(Math.round(((i + 1) / files.length) * 100));
+            // Separate images from other files
+            const imageFiles = files.filter(f => f.type.startsWith('image/'));
+            const otherFiles = files.filter(f => !f.type.startsWith('image/'));
 
+            // Handle image uploads with preview state
+            if (imageFiles.length > 0) {
+                // Check 5 images limit
+                const currentImagesCount = pendingImages.length;
+                if (currentImagesCount + imageFiles.length > 5) {
+                    toast.error(`You can only upload up to 5 images. ${5 - currentImagesCount} slots remaining.`);
+                    // Take only what fits
+                    imageFiles.splice(5 - currentImagesCount);
+                }
+
+                for (let i = 0; i < imageFiles.length; i++) {
+                    const file = imageFiles[i];
+                    const tempId = Date.now() + Math.random();
+                    
+                    // Add to pending with uploading state
+                    setPendingImages(prev => [...prev, {
+                        id: tempId,
+                        name: file.name,
+                        type: 'image',
+                        uploading: true,
+                        progress: 0
+                    }]);
+
+                    try {
+                        let formData = new FormData();
+                        formData.append('image', file);
+                        
+                        const response = await authenticatedFetch(`${import.meta.env.VITE_API_BASE_URL}/api/upload/image`, {
+                            method: 'POST',
+                            body: formData,
+                        });
+
+                        if (!response.ok) throw new Error(`Failed to upload ${file.name}`);
+                        const uploadData = await response.json();
+                        const fileUrl = uploadData.imageUrl;
+
+                        // Update pending image with the real URL
+                        setPendingImages(prev => prev.map(img => 
+                            img.id === tempId ? { ...img, url: fileUrl, uploading: false } : img
+                        ));
+                    } catch (err) {
+                        toast.error(`Failed to upload ${file.name}`);
+                        setPendingImages(prev => prev.filter(img => img.id !== tempId));
+                    }
+                }
+            }
+
+            // Handle other files immediately as before
+            for (let i = 0; i < otherFiles.length; i++) {
+                const file = otherFiles[i];
                 let uploadEndpoint = '';
                 let formData = new FormData();
 
-                // Determine upload endpoint based on file type
-                if (file.type.startsWith('image/')) {
-                    uploadEndpoint = '/api/upload/image';
-                    formData.append('image', file);
-                } else if (file.type.startsWith('audio/')) {
+                if (file.type.startsWith('audio/')) {
                     uploadEndpoint = '/api/upload/audio';
                     formData.append('audio', file);
                 } else if (file.type.startsWith('video/')) {
@@ -4481,38 +4578,26 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     formData.append('document', file);
                 }
 
-                // Upload to Cloudinary
                 const response = await authenticatedFetch(`${import.meta.env.VITE_API_BASE_URL}${uploadEndpoint}`, {
                     method: 'POST',
                     body: formData,
                 });
 
-                if (!response.ok) {
-                    throw new Error(`Failed to upload ${file.name}`);
-                }
-
+                if (!response.ok) throw new Error(`Failed to upload ${file.name}`);
                 const uploadData = await response.json();
-
-                // Send to Gemini chat with file context
-                const fileType = file.type.startsWith('image/') ? 'image' :
-                    file.type.startsWith('audio/') ? 'audio' :
-                        file.type.startsWith('video/') ? 'video' : 'document';
-
+                
+                const fileType = file.type.startsWith('audio/') ? 'audio' :
+                               file.type.startsWith('video/') ? 'video' : 'document';
                 const fileUrl = uploadData.imageUrl || uploadData.audioUrl || uploadData.videoUrl || uploadData.documentUrl;
-
-                // Create a message with file context
                 const messageWithFile = `I've uploaded a ${fileType} file: ${file.name}. Please analyze it and help me with it. File URL: ${fileUrl}`;
 
-                // Add to input and auto-send
                 setInputMessage(messageWithFile);
-
-                // Auto-submit after a short delay
-                setTimeout(() => {
-                    handleSubmit(new Event('submit'));
-                }, 100);
+                setTimeout(() => handleSubmit(new Event('submit')), 100);
             }
 
-            toast.success(`${files.length} file(s) uploaded and sent successfully`);
+            if (files.length > 0) {
+                toast.success(`${files.length} file(s) processed`);
+            }
         } catch (error) {
             console.error('File upload error:', error);
             toast.error('Failed to upload files');
@@ -6330,80 +6415,55 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                     } transition-all duration-300`}
                                             >
                                                 {/* Media Display */}
-                                                {message.imageUrl && (
-                                                    <div className="mb-2">
-                                                        <div className="relative">
-                                                            <img
-                                                                src={message.imageUrl}
-                                                                alt="Shared image"
-                                                                className="max-w-full max-h-64 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    // Open image in new tab
-                                                                    window.open(message.imageUrl, '_blank');
-                                                                }}
-                                                                onError={(e) => {
-                                                                    e.target.src = "https://via.placeholder.com/300x200?text=Image+Not+Found";
-                                                                    e.target.className = "max-w-full max-h-64 rounded-lg opacity-50";
-                                                                }}
-                                                            />
-                                                            <button
-                                                                className="absolute top-2 right-2 bg-white/90 hover:bg-white text-gray-700 p-1 rounded-full shadow-md transition-colors"
-                                                                onClick={async (e) => {
-                                                                    e.stopPropagation();
-                                                                    try {
-                                                                        const response = await authenticatedFetch(message.imageUrl, { mode: 'cors' });
-                                                                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-                                                                        const contentType = response.headers.get('content-type') || 'image/jpeg';
-                                                                        const blob = await response.blob();
-                                                                        const blobUrl = window.URL.createObjectURL(blob);
-
-                                                                        const getFileExtension = (contentType) => {
-                                                                            const mimeToExt = {
-                                                                                'image/jpeg': 'jpg',
-                                                                                'image/jpg': 'jpg',
-                                                                                'image/png': 'png',
-                                                                                'image/gif': 'gif',
-                                                                                'image/webp': 'webp',
-                                                                                'image/svg+xml': 'svg',
-                                                                                'image/bmp': 'bmp',
-                                                                                'image/tiff': 'tiff'
-                                                                            };
-                                                                            return mimeToExt[contentType] || 'jpg';
-                                                                        };
-
-                                                                        const extension = getFileExtension(contentType);
-                                                                        const fileName = `image-${Date.now()}.${extension}`;
-
-                                                                        const a = document.createElement('a');
-                                                                        a.href = blobUrl;
-                                                                        a.download = fileName;
-                                                                        document.body.appendChild(a);
-                                                                        a.click();
-                                                                        document.body.removeChild(a);
-                                                                        window.URL.revokeObjectURL(blobUrl);
-
-                                                                        console.log('Downloaded image:', fileName, 'Type:', contentType);
-                                                                    } catch (error) {
-                                                                        console.error('Image download failed:', error);
-                                                                        // Fallback to direct link
-                                                                        const a = document.createElement('a');
-                                                                        a.href = message.imageUrl;
-                                                                        a.download = `image-${Date.now()}.jpg`;
-                                                                        a.target = '_blank';
-                                                                        document.body.appendChild(a);
-                                                                        a.click();
-                                                                        document.body.removeChild(a);
-                                                                    }
-                                                                }}
-                                                                title="Download Image"
-                                                            >
-                                                                <FaDownload className="text-xs" />
-                                                            </button>
-                                                        </div>
+                                                {(message.imageUrl || (message.images && message.images.length > 0)) && (
+                                                    <div className="mb-2 flex flex-wrap gap-2">
+                                                        {(message.images && message.images.length > 0 ? message.images : [message.imageUrl]).filter(Boolean).map((img, imgIdx) => (
+                                                            <div key={imgIdx} className="relative group w-32 h-32 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm transition-all hover:scale-[1.02]">
+                                                                <img
+                                                                    src={img}
+                                                                    alt={`Shared image ${imgIdx + 1}`}
+                                                                    className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setPreviewImages(message.images && message.images.length > 0 ? message.images : [message.imageUrl]);
+                                                                        setPreviewImageIndex(imgIdx);
+                                                                        setIsImagePreviewOpen(true);
+                                                                    }}
+                                                                    onError={(e) => {
+                                                                        e.target.src = "https://via.placeholder.com/300x200?text=Image+Not+Found";
+                                                                        e.target.className = "w-full h-full object-cover opacity-50";
+                                                                    }}
+                                                                />
+                                                                <button
+                                                                    className="absolute top-1 right-1 bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 p-1 rounded-full shadow-md transition-all opacity-0 group-hover:opacity-100 hover:scale-110"
+                                                                    onClick={async (e) => {
+                                                                        e.stopPropagation();
+                                                                        try {
+                                                                            const response = await authenticatedFetch(img, { mode: 'cors' });
+                                                                            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                                                                            const blob = await response.blob();
+                                                                            const blobUrl = window.URL.createObjectURL(blob);
+                                                                            const a = document.createElement('a');
+                                                                            a.href = blobUrl;
+                                                                            a.download = `image-${Date.now()}.${blob.type.split('/')[1] || 'jpg'}`;
+                                                                            document.body.appendChild(a);
+                                                                            a.click();
+                                                                            document.body.removeChild(a);
+                                                                            window.URL.revokeObjectURL(blobUrl);
+                                                                        } catch (err) {
+                                                                            console.error('Download error:', err);
+                                                                            toast.error('Failed to download image');
+                                                                        }
+                                                                    }}
+                                                                    title="Download image"
+                                                                >
+                                                                    <FaDownload size={14} />
+                                                                </button>
+                                                            </div>
+                                                        ))}
                                                     </div>
                                                 )}
+
 
                                                 {message.audioUrl && (
                                                     <div className="mb-2">
@@ -7287,78 +7347,117 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                     </div>
                                                 )}
                                             </div>
-                                            <textarea
-                                                ref={inputRef}
-                                                value={inputMessage}
-                                                onChange={(e) => {
-                                                    handleInputChange(e);
-                                                }}
-                                                onKeyDown={(e) => {
-                                                    // Handle Enter to send, Ctrl+Enter or Shift+Enter for new line
-                                                    if (e.key === 'Enter') {
-                                                        if (e.shiftKey) {
-                                                            // Shift+Enter handles itself natively (new line)
-                                                            return;
-                                                        } else if (e.ctrlKey) {
-                                                            // Ctrl+Enter needs manual handling to act as new line
-                                                            e.preventDefault();
-                                                            const start = e.target.selectionStart;
-                                                            const end = e.target.selectionEnd;
-                                                            const value = inputMessage;
-                                                            const newValue = value.substring(0, start) + '\n' + value.substring(end);
-
-                                                            setInputMessage(newValue);
-
-                                                            // Restore cursor position
-                                                            setTimeout(() => {
-                                                                if (inputRef.current) {
-                                                                    inputRef.current.selectionStart = inputRef.current.selectionEnd = start + 1;
-                                                                }
-                                                            }, 0);
-                                                        } else {
-                                                            // Enter alone sends message
-                                                            e.preventDefault();
-                                                            handleSubmit(e);
-                                                        }
-                                                    }
-
-                                                    // Ctrl+Z to restore previously sent messages (History navigation)
-                                                    if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
-                                                        const history = messageHistoryRef.current;
-                                                        if (history.length > 0) {
-                                                            // If input is empty, start from the latest
-                                                            if (!inputMessage) {
+                                            <div className="relative w-full">
+                                                {/* Pending Images Preview Area */}
+                                                {pendingImages.length > 0 && (
+                                                    <div className="flex flex-wrap gap-2 px-4 py-2 mb-1 animate-fadeIn bg-transparent">
+                                                        {pendingImages.map((img, index) => (
+                                                            <div key={img.id || index} className="relative group w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm backdrop-blur-md bg-white/40 dark:bg-gray-800/40 transform transition-all hover:scale-105">
+                                                                {img.uploading ? (
+                                                                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-500/10">
+                                                                        <div className={`w-6 h-6 border-2 ${themeColors.accent.replace('text-', 'border-').replace('-600', '-500')} border-t-transparent rounded-full animate-spin`} />
+                                                                        <span className="text-[8px] mt-1 font-bold text-gray-500 uppercase tracking-tighter">Uploading</span>
+                                                                    </div>
+                                                                ) : (
+                                                                    <>
+                                                                        <img 
+                                                                            src={img.url} 
+                                                                            alt={img.name} 
+                                                                            className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity" 
+                                                                            onClick={() => {
+                                                                                setPreviewImages([img.url]);
+                                                                                setPreviewImageIndex(0);
+                                                                                setIsImagePreviewOpen(true);
+                                                                            }}
+                                                                        />
+                                                                        <button 
+                                                                            onClick={() => setPendingImages(prev => prev.filter((_, i) => i !== index))}
+                                                                            className="absolute top-1 right-1 p-1 bg-black/60 hover:bg-black/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 border border-white/20"
+                                                                            title="Remove image"
+                                                                        >
+                                                                            <FaTimes size={10} />
+                                                                        </button>
+                                                                    </>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                                
+                                                <textarea
+                                                    ref={inputRef}
+                                                    value={inputMessage}
+                                                    onChange={(e) => {
+                                                        handleInputChange(e);
+                                                    }}
+                                                    onPaste={handlePaste}
+                                                    onKeyDown={(e) => {
+                                                        // Handle Enter to send, Ctrl+Enter or Shift+Enter for new line
+                                                        if (e.key === 'Enter') {
+                                                            if (e.shiftKey) {
+                                                                // Shift+Enter handles itself natively (new line)
+                                                                return;
+                                                            } else if (e.ctrlKey) {
+                                                                // Ctrl+Enter needs manual handling to act as new line
                                                                 e.preventDefault();
-                                                                historyIndexRef.current = history.length - 1;
-                                                                setInputMessage(history[historyIndexRef.current]);
-                                                            }
-                                                            // If currently viewing a history message, go back one more
-                                                            else if (historyIndexRef.current !== -1 && inputMessage === history[historyIndexRef.current]) {
+                                                                const start = e.target.selectionStart;
+                                                                const end = e.target.selectionEnd;
+                                                                const value = inputMessage;
+                                                                const newValue = value.substring(0, start) + '\n' + value.substring(end);
+
+                                                                setInputMessage(newValue);
+
+                                                                // Restore cursor position
+                                                                setTimeout(() => {
+                                                                    if (inputRef.current) {
+                                                                        inputRef.current.selectionStart = inputRef.current.selectionEnd = start + 1;
+                                                                    }
+                                                                }, 0);
+                                                            } else {
+                                                                // Enter alone sends message
                                                                 e.preventDefault();
-                                                                const nextIndex = historyIndexRef.current - 1;
-                                                                if (nextIndex >= 0) {
-                                                                    historyIndexRef.current = nextIndex;
-                                                                    setInputMessage(history[nextIndex]);
-                                                                }
+                                                                handleSubmit(e);
                                                             }
-
                                                         }
-                                                    }
 
-                                                    handleKeyDown(e);
-                                                }}
-                                                placeholder={(rateLimitInfo.remaining <= 0 && rateLimitInfo.role !== 'rootadmin') ? "Sign in to continue chatting..." : "Ask me anything about real estate or @ to mention any property..."}
-                                                aria-label="Type your message"
-                                                aria-describedby="input-help"
-                                                role="textbox"
-                                                rows={1}
-                                                className={`w-full pl-12 ${inputMessage.length > 1800 ? 'pr-24' : 'pr-12'} py-3 border rounded-2xl resize-none focus:outline-none focus:ring-2 ${themeColors.accent.replace('text-', 'focus:ring-').replace('-600', '-500')} focus:border-transparent text-sm transition-all duration-200 ${isDarkMode
-                                                    ? 'bg-gray-800/50 border-gray-700 text-white placeholder-gray-400 backdrop-blur-sm'
-                                                    : 'bg-white border-gray-200 text-gray-900 shadow-sm hover:border-gray-300'
-                                                    }`}
-                                                style={{ minHeight: '48px', maxHeight: '250px' }}
-                                                disabled={(rateLimitInfo.remaining <= 0 && rateLimitInfo.role !== 'rootadmin')}
-                                            />
+                                                        // Ctrl+Z to restore previously sent messages (History navigation)
+                                                        if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+                                                            const history = messageHistoryRef.current;
+                                                            if (history.length > 0) {
+                                                                // If input is empty, start from the latest
+                                                                if (!inputMessage) {
+                                                                    e.preventDefault();
+                                                                    historyIndexRef.current = history.length - 1;
+                                                                    setInputMessage(history[historyIndexRef.current]);
+                                                                }
+                                                                // If currently viewing a history message, go back one more
+                                                                else if (historyIndexRef.current !== -1 && inputMessage === history[historyIndexRef.current]) {
+                                                                    e.preventDefault();
+                                                                    const nextIndex = historyIndexRef.current - 1;
+                                                                    if (nextIndex >= 0) {
+                                                                        historyIndexRef.current = nextIndex;
+                                                                        setInputMessage(history[nextIndex]);
+                                                                    }
+                                                                }
+
+                                                            }
+                                                        }
+
+                                                        handleKeyDown(e);
+                                                    }}
+                                                    placeholder={(rateLimitInfo.remaining <= 0 && rateLimitInfo.role !== 'rootadmin') ? "Sign in to continue chatting..." : "Ask me anything about real estate or @ to mention any property..."}
+                                                    aria-label="Type your message"
+                                                    aria-describedby="input-help"
+                                                    role="textbox"
+                                                    rows={1}
+                                                    className={`w-full pl-12 ${inputMessage.length > 1800 ? 'pr-24' : 'pr-12'} py-3 border rounded-2xl resize-none focus:outline-none focus:ring-2 ${themeColors.accent.replace('text-', 'focus:ring-').replace('-600', '-500')} focus:border-transparent text-sm transition-all duration-200 ${isDarkMode
+                                                        ? 'bg-gray-800/50 border-gray-700 text-white placeholder-gray-400 backdrop-blur-sm'
+                                                        : 'bg-white border-gray-200 text-gray-900 shadow-sm hover:border-gray-300'
+                                                        }`}
+                                                    style={{ minHeight: '48px', maxHeight: '250px' }}
+                                                    disabled={(rateLimitInfo.remaining <= 0 && rateLimitInfo.role !== 'rootadmin')}
+                                                />
+                                            </div>
                                             {inputMessage.length > 1800 && (
                                                 <div className={`absolute right-3 bottom-3 text-xs font-medium ${inputMessage.length > 2000 ? 'text-red-500 font-bold' : 'text-orange-500'}`}>
                                                     {inputMessage.length}/2000
@@ -10622,6 +10721,14 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 confirmText="Discard Changes"
                 cancelText="Keep Editing"
                 isDestructive={true}
+            />
+            {/* Image Preview Modal */}
+            <ImagePreview 
+                isOpen={isImagePreviewOpen}
+                onClose={() => setIsImagePreviewOpen(false)}
+                images={previewImages}
+                currentIndex={previewImageIndex}
+                setCurrentIndex={setPreviewImageIndex}
             />
         </div>
     );
