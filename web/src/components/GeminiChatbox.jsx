@@ -2161,6 +2161,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         fetchRateLimitStatus();
     }, [currentUser, isHistoryLoaded, location.search]);
 
+    // Sync settings when the settings modal is opened
+    useEffect(() => {
+        if (showSettings && currentUser) {
+            syncSessionSettings();
+        }
+    }, [showSettings]);
+
     // Initialize Prism.js highlighting
     useEffect(() => {
         if (enableCodeHighlighting) {
@@ -4554,6 +4561,30 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         } catch (error) {
             console.error('Error saving chat setting:', settingKey, error);
         }
+    };
+
+    const syncSessionSettings = async () => {
+        if (!currentUser) return;
+        const currentSessionId = getOrCreateSessionId();
+        if (!currentSessionId) return;
+
+        try {
+            const response = await authenticatedFetch(`${API_BASE_URL}/api/chat-history/session/${currentSessionId}?limit=1`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.data.settings) {
+                    applySessionSettings(data.data.settings);
+                }
+            }
+        } catch (error) {
+            console.error('Error syncing session settings:', error);
+        }
+    };
+
+    const updateTone = (value) => {
+        setTone(value);
+        setUserSetting('gemini_tone', value);
+        saveChatSettingsToBackend('tone', value);
     };
 
     const updateAiResponseLength = (length) => {
@@ -8043,7 +8074,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                             </span>
                                                             <select
                                                                 value={tone}
-                                                                onChange={(e) => { setTone(e.target.value); localStorage.setItem('gemini_tone', e.target.value); saveChatSettingsToBackend('tone', e.target.value); }}
+                                                                onChange={(e) => updateTone(e.target.value)}
                                                                 className={`px-3 py-1 rounded border text-sm ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                                                             >
                                                                 <option value="neutral">Neutral</option>
