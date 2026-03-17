@@ -6268,14 +6268,14 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     <div className="p-1.5 md:p-2 bg-white/10 rounded-lg border border-white/20 relative overflow-visible">
                                         {/* Dynamic Header WiFi Aura/Icon */}
                                         {(isLoading || showTypingIndicator || hasChatError) && (
-                                            <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 z-20 pointer-events-none transition-all duration-300">
+                                            <div className="absolute -top-3 left-[65%] -translate-x-1/2 z-20 pointer-events-none transition-all duration-300">
                                                 {hasChatError ? (
-                                                    <div className="relative flex items-center justify-center">
-                                                        <FaWifi className="text-[14px] text-red-300/40" />
+                                                    <div className="relative flex items-center justify-center rotate-[20deg]">
+                                                        <FaWifi className="text-[14px] text-red-200/60" />
                                                         <FaTimes className="absolute text-[10px] text-red-100 drop-shadow-[0_0_4px_rgba(239,68,68,0.9)]" />
                                                     </div>
                                                 ) : (
-                                                    <FaWifi className="text-[14px] text-blue-100 animate-bandwidth drop-shadow-[0_0_8px_rgba(191,219,254,0.8)]" />
+                                                    <FaWifi className="text-[14px] text-white animate-bandwidth rotate-[20deg] drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]" />
                                                 )}
                                             </div>
                                         )}
