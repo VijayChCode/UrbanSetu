@@ -256,6 +256,20 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const suggestionsRef = useRef(null);
     const headerMenuRef = useRef(null);
     const [showFeatures, setShowFeatures] = useState(false);
+    const [showTryPrompt, setShowTryPrompt] = useState(false);
+
+    // Show promotional prompt on mount
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (!isOpen) {
+                setShowTryPrompt(true);
+                // Hide after 6 seconds
+                const hideTimer = setTimeout(() => setShowTryPrompt(false), 6000);
+                return () => clearTimeout(hideTimer);
+            }
+        }, 3000);
+        return () => clearTimeout(timer);
+    }, [isOpen]);
 
     // Typewriter effect for header title
     useEffect(() => {
@@ -6065,52 +6079,85 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
                     <button
                         onClick={isOpen ? handleClose : handleOpen}
-                        className={`relative group w-12 h-12 rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-110 hover:rotate-12 flex items-center justify-center ${isDarkMode ? 'bg-gradient-to-br from-gray-800 to-gray-900' : `bg-gradient-to-br ${themeColors.primary}`
+                        className={`relative group w-14 h-14 rounded-full shadow-[0_10px_40px_-10px_rgba(37,99,235,0.5)] dark:shadow-[0_10px_40px_-10px_rgba(0,0,0,0.6)] hover:shadow-[0_20px_50px_-10px_rgba(37,99,235,0.6)] transition-all duration-500 transform hover:scale-110 active:scale-95 flex items-center justify-center overflow-hidden border border-white/20 dark:border-gray-700/30 ${isDarkMode ? 'bg-gray-900' : `bg-white`
                             }`}
-                        style={{
-                            boxShadow: isDarkMode ? '0 10px 25px rgba(0,0,0,0.3)' : `0 10px 25px ${getThemeRingColor()}40`
-                        }}
                         aria-label="Open AI Chat"
                         title="Chat with SetuAI Assistant!"
                     >
-                        {/* Animated background ring */}
-                        <div
-                            className={`absolute inset-0 rounded-full animate-ping`}
-                            style={{
-                                border: `3px solid ${isDarkMode ? '#4b5563' : getThemeRingColor()}`,
-                            }}
-                        ></div>
+                        {/* Dynamic Background */}
+                        <div className={`absolute inset-0 transition-opacity duration-500 opacity-90 ${isDarkMode ? 'bg-gradient-to-br from-gray-800 via-gray-900 to-black' : `bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600`
+                            }`} />
+
+                        {/* Animated Glass Glow */}
+                        {!isOpen && (
+                            <div className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] bg-white/20 dark:bg-white/10 rotate-[35deg] transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                        )}
+
+                        {/* Animated background rings */}
+                        {!isOpen && (
+                            <>
+                                <div className={`absolute inset-0 rounded-full animate-ping opacity-20`} style={{ backgroundColor: isDarkMode ? '#3b82f6' : '#fff' }} />
+                                <div className={`absolute inset-[-4px] rounded-full border border-blue-400/30 dark:border-blue-500/20 blur-[2px] animate-pulse`} />
+                            </>
+                        )}
 
                         {/* Icon with sparkle effect */}
-                        <div className="relative">
+                        <div className="relative z-10 transition-transform duration-300 group-hover:scale-110">
                             {isOpen ? (
-                                <FaTimes className="w-5 h-5 text-white drop-shadow-lg" />
+                                <FaTimes className="w-5 h-5 text-white drop-shadow-lg animate-fadeIn" />
                             ) : (
                                 <div className="relative">
-                                    <FaRobot className="w-5 h-5 text-white drop-shadow-lg" />
-                                    <FaStar className="absolute -top-1 -right-1 w-3 h-3 text-yellow-300 animate-pulse" />
+                                    <FaRobot className={`w-6 h-6 drop-shadow-lg ${isDarkMode ? 'text-blue-400' : 'text-white'} transition-colors duration-300`} />
+                                    <FaStar className="absolute -top-1 -right-1 w-3.5 h-3.5 text-yellow-300 animate-[pulse_1.5s_infinite] drop-shadow-[0_0_5px_rgba(253,224,71,0.8)]" />
                                 </div>
                             )}
                         </div>
 
                         {!isOpen && unreadCount > 0 && (
-                            <div className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[20px] h-[20px] px-1 flex items-center justify-center border-2 border-white shadow-lg animate-bounce">
+                            <div className="absolute top-0 right-0 z-20 bg-red-500 text-white text-[10px] font-black rounded-full min-w-[20px] h-[20px] px-1 flex items-center justify-center border-2 border-white dark:border-gray-800 shadow-xl animate-bounce">
                                 {unreadCount > 99 ? '99+' : unreadCount}
                             </div>
                         )}
-
-                        {/* Enhanced Hover Tooltip */}
-                        <div className={`absolute bottom-full right-0 mb-3 ${isDarkMode ? 'bg-gray-800 text-white border-gray-600' : 'bg-white text-gray-800 border-gray-100'
-                            } text-sm px-4 py-2 rounded-xl shadow-2xl hidden group-hover:block z-10 whitespace-nowrap border transform -translate-y-1 transition-all duration-200`}>
-                            <div className="flex items-center gap-2">
-                                <span className="text-lg">🤖</span>
-                                <span className="font-medium">Chat with SetuAI Assistant!</span>
-                            </div>
-                            {/* Tooltip arrow */}
-                            <div className={`absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent ${isDarkMode ? 'border-t-gray-800' : 'border-t-white'
-                                }`}></div>
-                        </div>
                     </button>
+
+                    {/* Try SETUAI Expansion Prompt */}
+                    {showTryPrompt && !isOpen && (
+                        <div className="absolute bottom-2 right-16 flex items-center mr-2 animate-[slideInRight_0.5s_ease-out] drop-shadow-2xl z-40">
+                            <div className={`relative px-5 py-3 rounded-2xl whitespace-nowrap overflow-hidden group shadow-2xl border border-white/20 dark:border-gray-700/50 ${isDarkMode ? 'bg-gray-800/90 text-white' : 'bg-white/90 text-gray-900'} backdrop-blur-md`}>
+                                {/* Progress bar background */}
+                                <div className="absolute bottom-0 left-0 h-1 bg-blue-500/30 w-full animate-[shrink_6s_linear]" />
+                                
+                                <div className="flex items-center gap-3">
+                                    <div className={`p-1.5 rounded-lg ${isDarkMode ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'}`}>
+                                        <FaMagic size={14} className="animate-pulse" />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-black tracking-tight leading-none mb-0.5">Meet SETUAI 🤖</span>
+                                        <span className="text-[11px] opacity-70 font-medium">Smart Property Assistant active</span>
+                                    </div>
+                                    <button 
+                                        onClick={() => handleOpen()}
+                                        className={`ml-1 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all hover:scale-105 active:scale-95 ${
+                                            isDarkMode ? 'bg-blue-500 text-white hover:bg-blue-400' : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
+                                        }`}
+                                    >
+                                        Try Now
+                                    </button>
+                                    <button 
+                                        onClick={(e) => { e.stopPropagation(); setShowTryPrompt(false); }}
+                                        className="p-1 opacity-40 hover:opacity-100 transition-opacity"
+                                    >
+                                        <FaTimes size={10} />
+                                    </button>
+                                </div>
+
+                                {/* Arrow */}
+                                <div className={`absolute -right-2 top-1/2 -translate-y-1/2 w-4 h-4 rotate-45 border-t border-r ${
+                                    isDarkMode ? 'bg-gray-800/90 border-transparent' : 'bg-white/90 border-transparent'
+                                }`} />
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 
