@@ -1429,10 +1429,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         }
     };
 
-    // Load chat history for authenticated users (Paginated)
     const loadChatHistory = async (currentSessionId, page = 1) => {
         if (!currentUser || !currentSessionId) return;
 
+        // Capture container and scroll height BEFORE loading state changes to handle tag removal correctly
+        const container = messagesContainerRef.current;
+        const scrollHeightBefore = container ? container.scrollHeight : 0;
+        
         setIsLoadingPreviousMessages(true);
 
         try {
@@ -1458,21 +1461,22 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             }
                         ]);
                         setMessageHistoryPage(1);
+                        setIsLoadingPreviousMessages(false);
                     } else {
                         // Prepend older history
-                        const container = messagesContainerRef.current;
-                        const oldScrollHeight = container.scrollHeight;
-
                         setMessages(prev => [...newMessages, ...prev]);
                         setMessageHistoryPage(page);
+                        setIsLoadingPreviousMessages(false);
 
-                        // Small timeout to allow render before adjusting scroll to prevent jump
+                        // Use multiple ticks to ensure DOM has reflected both message prepend AND loading tag removal
                         setTimeout(() => {
                             if (container) {
-                                container.scrollTop = container.scrollHeight - oldScrollHeight;
+                                const scrollHeightAfter = container.scrollHeight;
+                                const heightAdded = scrollHeightAfter - scrollHeightBefore;
+                                // Adjust scroll to stay at same relative content position
+                                // This prevents the chat from jumping when historical messages or loading tags are added/removed
+                                container.scrollTop = container.scrollTop + heightAdded;
                             }
-                            // Only set loading to false AFTER scroll adjustment to avoid trigger loop
-                            setIsLoadingPreviousMessages(false);
                         }, 50);
                     }
 
@@ -1488,11 +1492,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             console.error('Error loading session history:', error);
             setIsLoadingPreviousMessages(false);
         } finally {
-            // For initial load, we can set it immediately
+            // Only set loaded to true if it was page 1
             if (page === 1) {
-                setIsLoadingPreviousMessages(false);
+                setIsHistoryLoaded(true);
             }
-            setIsHistoryLoaded(true);
         }
     };
 
@@ -2447,19 +2450,20 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         }
     }, [isOpen]);
 
-    // Ensure latest content is visible at bottom when opening and after history loads
+    // Unified initial scroll to bottom logic
+    const hasInitialScrolled = useRef(false);
     useEffect(() => {
-        if (isOpen) {
-            // Give layout a tick, then jump to bottom instantly
-            setTimeout(() => scrollToBottomInstant(), 50);
+        if (isOpen && isHistoryLoaded && !hasInitialScrolled.current) {
+            setTimeout(() => {
+                scrollToBottomInstant();
+                hasInitialScrolled.current = true;
+            }, 100);
         }
-    }, [isOpen]);
-
-    useEffect(() => {
-        if (isOpen && isHistoryLoaded) {
-            setTimeout(() => scrollToBottomInstant(), 50);
+        // Reset flag when closed so it triggers again on next open
+        if (!isOpen) {
+            hasInitialScrolled.current = false;
         }
-    }, [isHistoryLoaded, isOpen]);
+    }, [isOpen, isHistoryLoaded]);
 
     // Track scroll to bottom detection and compute initial state on open and updates
     useEffect(() => {
