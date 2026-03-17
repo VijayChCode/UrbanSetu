@@ -6108,7 +6108,6 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             ) : (
                                 <div className="relative">
                                     <FaRobot className={`w-6 h-6 drop-shadow-lg ${isDarkMode ? 'text-blue-400' : 'text-white'} transition-colors duration-300`} />
-                                    <FaStar className="absolute -top-1 -right-1 w-3.5 h-3.5 text-yellow-300 animate-[pulse_1.5s_infinite] drop-shadow-[0_0_5px_rgba(253,224,71,0.8)]" />
                                 </div>
                             )}
                         </div>
