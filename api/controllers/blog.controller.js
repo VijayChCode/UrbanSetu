@@ -267,7 +267,8 @@ export const getBlogs = async (req, res, next) => {
                 { title: searchRegex },
                 { content: searchRegex },
                 { category: searchRegex },
-                { tags: { $in: [searchRegex] } }
+                { excerpt: searchRegex },
+                { tags: searchRegex }
             ];
 
             if (query.$or) {

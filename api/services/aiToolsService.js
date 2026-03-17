@@ -129,8 +129,9 @@ export const searchProperties = async ({
  */
 export const getPropertyDetails = async ({ propertyId }) => {
     try {
-        if (!propertyId) return JSON.stringify({ error: "Property ID is required." });
-
+        if (!propertyId || !propertyId.match(/^[0-9a-fA-F]{24}$/)) {
+            return JSON.stringify({ found: false, message: "Invalid property ID format." });
+        }
         const listing = await Listing.findById(propertyId).lean();
 
         if (!listing) {
@@ -290,7 +291,7 @@ export const searchBlogsAndGuides = async ({
             query.$or = [
                 { title: { $regex: searchTerm, $options: 'i' } },
                 { category: { $regex: searchTerm, $options: 'i' } },
-                { tags: { $in: [new RegExp(searchTerm, 'i')] } }
+                { tags: { $regex: searchTerm, $options: 'i' } }
             ];
         }
 
@@ -313,7 +314,7 @@ export const searchBlogsAndGuides = async ({
         const summary = results.map(r => `- "${r.title}" (${r.type.toUpperCase()})`).join('\n');
 
         return JSON.stringify({
-            found: true,
+            found: results.length > 0,
             count: results.length,
             summary: summary,
             recommendations: results.map(r => ({
@@ -450,7 +451,7 @@ export const toolDefinitions = [
                 properties: {
                     searchTerm: {
                         type: "string",
-                        description: "Keywords to search for (e.g., 'buying tips', 'market trends')"
+                        description: "Keywords to search for (e.g., 'buying tips', 'market trends'). If the user asks for blogs/guides generically without specifying keywords, leave this as an empty string to find all recent content."
                     },
                     category: {
                         type: "string",

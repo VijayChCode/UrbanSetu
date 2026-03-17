@@ -651,27 +651,18 @@ export const chatWithGemini = async (req, res) => {
                         // Pass userId and imageAudits for context-aware tools
                         toolResult = await toolToExec({ ...functionArgs, userId, imageAudits });
 
-                        // Collect listings or blogs for UI cards
-                        if (normalizedName === 'search_properties' || normalizedName === 'get_user_listings') {
-                            try {
-                                const parsed = JSON.parse(toolResult);
-                                if (parsed.found && parsed.listings) {
-                                    recommendations.push(...parsed.listings);
+                        // Collect results for UI cards (be robust about field names)
+                        try {
+                            const parsed = JSON.parse(toolResult);
+                            if (parsed.found) {
+                                // Accumulate search results from any recognized field
+                                const items = parsed.listings || parsed.recommendations || parsed.data || [];
+                                if (Array.isArray(items) && items.length > 0) {
+                                    recommendations.push(...items);
                                 }
-                            } catch (e) {
-                                console.warn("Could not parse tool result for metadata listing collection:", e);
                             }
-                        }
-
-                        if (normalizedName === 'search_blogs_and_guides') {
-                            try {
-                                const parsed = JSON.parse(toolResult);
-                                if (parsed.found && parsed.recommendations) {
-                                    recommendations.push(...parsed.recommendations);
-                                }
-                            } catch (e) {
-                                console.warn("Could not parse tool result for blog collection:", e);
-                            }
+                        } catch (e) {
+                            console.warn("Could not parse tool result for metadata collection:", e);
                         }
                     } else {
                         console.warn(`❌ Tool not found in registry: ${functionName}`);
@@ -929,20 +920,14 @@ export const chatWithGemini = async (req, res) => {
 
     } catch (error) {
         console.error('Groq API Error:', error);
-        const errorMessage = 'Sorry, I\'m having trouble processing your request. Please try again later.';
+        
+        // Graceful fallback content
+        const fallbackResponse = "I'm having a bit of trouble processing that specific request right now due to a temporary connection surge. However, I'm still here to help! \n\nYou can try rephrasing your question, or check our [Help Center](https://urbansetu.vercel.app/about) for general guidance. I'll be back to full strength in just a moment.";
 
-        // Save the error message to chat history so it persists in red
         if (userId) {
             try {
-                const media = {
-                    images,
-                    imageUrl,
-                    audioUrl,
-                    videoUrl,
-                    documentUrl,
-                    documentName
-                };
-                const userDisplayContent = displayMessage !== undefined ? displayMessage : message;
+                const media = { images, imageUrl, audioUrl, videoUrl, documentUrl, documentName };
+                const userDisplayContent = displayMessage !== undefined ? displayMessage : (message ? message.substring(0, 500) : "Media Attachment");
 
                 const chatHistory = await ChatHistory.findOrCreateSession(userId, currentSessionId);
                 chatHistory.messages.push({
@@ -953,20 +938,21 @@ export const chatWithGemini = async (req, res) => {
                 });
                 chatHistory.messages.push({
                     role: 'assistant',
-                    content: errorMessage,
-                    isError: true,
+                    content: fallbackResponse,
+                    isRestricted: false,
                     timestamp: new Date()
                 });
                 await chatHistory.save();
             } catch (historyError) {
-                console.error('Failed to save error message to history:', historyError);
+                console.error('Failed to save fallback message to history:', historyError);
             }
         }
 
         if (!res.headersSent) {
-            res.status(500).json({
-                success: false,
-                message: errorMessage
+            return res.status(200).json({
+                success: true,
+                response: fallbackResponse,
+                sessionId: currentSessionId
             });
         }
     }
