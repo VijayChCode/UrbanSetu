@@ -2180,7 +2180,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     // Sync settings when the settings modal is opened
     useEffect(() => {
         if (showSettings && currentUser) {
-            syncSessionSettings();
+            handleSettingsSync(true); // Silent sync on open
         }
     }, [showSettings]);
 
@@ -4892,13 +4892,17 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         }
     };
 
-    const handleSettingsSync = async () => {
+    const handleSettingsSync = async (silent = false) => {
         setIsSyncingSettings(true);
         try {
             await syncSessionSettings();
-            toast.success('Synced with latest preferences');
+            if (!silent) {
+                toast.success('Synced with latest preferences');
+            }
         } catch (error) {
-            toast.error('Failed to sync settings');
+            if (!silent) {
+                toast.error('Failed to sync settings');
+            }
         } finally {
             setIsSyncingSettings(false);
         }
@@ -4937,6 +4941,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             }
         } catch (error) {
             console.error('Error syncing session settings:', error);
+            throw error; // Rethrow to handle in the caller
         }
     };
 
@@ -8266,7 +8271,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                             </h3>
                                             {currentUser && (
                                                 <button
-                                                    onClick={handleSettingsSync}
+                                                    onClick={() => handleSettingsSync(false)}
                                                     disabled={isSyncingSettings}
                                                     title="Sync with latest preferences"
                                                     className={`p-1.5 rounded-lg transition-all ${isSyncingSettings
@@ -8278,12 +8283,6 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                 </button>
                                             )}
                                         </div>
-                                        <button
-                                            onClick={handleSettingsClose}
-                                            className={`text-gray-500 hover:text-gray-700 ${isDarkMode ? 'hover:text-gray-300' : ''}`}
-                                        >
-                                            <FaTimes size={20} />
-                                        </button>
                                     </div>
 
                                     {/* Scrollable Content */}

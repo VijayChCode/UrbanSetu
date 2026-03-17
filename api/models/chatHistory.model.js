@@ -105,17 +105,16 @@ const chatHistorySchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
-  // Per-chat settings (synced with frontend Settings & Themes modal)
   settings: {
-    messageLimit: { type: String, default: '100' },
-    dataRetention: { type: String, default: '30' },
-    tone: { type: String, default: 'neutral' },
-    responseLength: { type: String, default: 'medium' },
-    creativity: { type: String, default: 'balanced' },
-    temperature: { type: String, default: '0.7' },
-    topP: { type: String, default: '0.9' },
-    contextWindow: { type: String, default: '4' },
-    enableStreaming: { type: String, default: 'false' }
+    messageLimit: { type: String },
+    dataRetention: { type: String },
+    tone: { type: String },
+    responseLength: { type: String },
+    creativity: { type: String },
+    temperature: { type: String },
+    topP: { type: String },
+    contextWindow: { type: String },
+    enableStreaming: { type: String }
   }
 }, {
   timestamps: true,
