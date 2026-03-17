@@ -6069,7 +6069,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         return;
                                     }
                                     setIsOpen(true);
-                                    setTimeout(() => setShowVoiceInput(true), 100);
+                                    // Delay voice input slightly to allow modal animation to start
+                                    setTimeout(() => {
+                                        if (typeof toggleVoiceInput === 'function') {
+                                            toggleVoiceInput();
+                                        }
+                                        setShowVoiceInput(true);
+                                    }, 600);
                                 }}
                                 className="w-11 h-11 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-2xl flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 border border-white/20"
                                 title="Voice Input"
@@ -6120,7 +6126,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             ) : (
                                 <div className="relative flex items-center justify-center">
                                     {!isOpen && !isLoading && (
-                                        <FaWifi className="absolute -top-3.5 left-1/2 -translate-x-1/2 text-[10px] text-blue-400 animate-pulse drop-shadow-[0_0_5px_rgba(96,165,250,0.8)] z-20" />
+                                        <FaWifi className={`absolute -top-4 left-[62%] -translate-x-1/2 text-[15px] ${isDarkMode ? 'text-blue-400' : 'text-blue-600'} animate-bandwidth rotate-[20deg] drop-shadow-[0_0_8px_rgba(96,165,250,0.9)] z-20`} />
                                     )}
                                     {isLoading ? (
                                         <div className="relative">
@@ -9464,6 +9470,18 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 }
                 .animate-fadeIn { animation: fadeIn 0.25s ease-out; }
                 .animate-slideUp { animation: slideUp 0.28s ease-out; }
+                
+                @keyframes bandwidth {
+                  0%, 100% { opacity: 0.4; transform: scale(0.9) rotate(20deg); }
+                  50% { opacity: 1; transform: scale(1.15) rotate(20deg); }
+                }
+                .animate-bandwidth { animation: bandwidth 1.5s infinite ease-in-out; }
+
+                @keyframes slideLeft {
+                  from { opacity: 0; transform: translateX(20px) translateY(-50%); }
+                  to { opacity: 1; transform: translateX(0) translateY(-50%); }
+                }
+                .animate-slideLeft { animation: slideLeft 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
                 .no-scrollbar::-webkit-scrollbar {
                   display: none;
                 }
