@@ -1609,7 +1609,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 return;
             }
 
-            const response = await authenticatedFetch(`${API_BASE_URL}/api/chat-history/session/${currentSessionId}`, {
+            // Use a limit that covers current message count plus some buffer (min 50)
+            // This ensures we get new messages without losing the current history depth
+            const fetchLimit = Math.max(50, messages.length + 10);
+            const response = await authenticatedFetch(`${API_BASE_URL}/api/chat-history/session/${currentSessionId}?limit=${fetchLimit}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1622,12 +1625,17 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     // Prepend welcome message if not present (same as loadSessionHistory)
                     const defaultWelcome = {
                         role: 'assistant',
-                        content: 'Hello! I\'m SetuAI your AI assistant powered by Groq and co-powered by Sentinel v2.0 Neural Engine (TensorFlow). How can I help you with your real estate needs today?',
+                        content: "Hello! I'm SetuAI your AI assistant powered by Groq and co-powered by Sentinel v2.0 Neural Engine (TensorFlow). How can I help you with your real estate needs today?",
                         timestamp: new Date().toISOString()
                     };
                     let serverMessages = data.data.messages;
-                    if (serverMessages.length === 0 || serverMessages[0].content !== defaultWelcome.content) {
+                    if (serverMessages.length === 0 || (serverMessages.length > 0 && serverMessages[0].content !== defaultWelcome.content)) {
                         serverMessages = [defaultWelcome, ...serverMessages];
+                    }
+
+                    // Apply per-chat settings if available in the refresh response
+                    if (data.data.settings) {
+                        applySessionSettings(data.data.settings);
                     }
 
                     const currentMessageCount = messages.length;
@@ -1638,7 +1646,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         if (diff > 0) {
                             toast.success(`Messages refreshed! ${diff} new messages loaded.`);
                         } else {
-                            toast.success('Messages refreshed and synced with server.');
+                            toast.success('Messages synced with server.');
                         }
                     } else {
                         // Check if any messages have been updated
