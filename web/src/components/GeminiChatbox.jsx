@@ -6139,7 +6139,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             ) : (
                                 <div className="relative flex items-center justify-center">
                                     {!isOpen && !isLoading && (
-                                        <FaWifi className={`absolute -top-4 left-[62%] -translate-x-1/2 text-[15px] ${isDarkMode ? 'text-blue-400' : 'text-blue-600'} animate-bandwidth rotate-[20deg] drop-shadow-[0_0_8px_rgba(96,165,250,0.9)] z-20`} />
+                                        <FaWifi className={`absolute -top-4 left-[62%] -translate-x-1/2 text-[15px] ${isDarkMode ? 'text-blue-400' : 'text-white'} animate-bandwidth rotate-[20deg] drop-shadow-[0_0_8px_rgba(96,165,250,0.9)] z-20`} />
                                     )}
                                     {isLoading ? (
                                         <div className="relative">
