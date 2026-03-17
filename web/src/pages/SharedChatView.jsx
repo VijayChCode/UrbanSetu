@@ -510,7 +510,10 @@ export default function SharedChatView() {
                                                 <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-500 whitespace-nowrap">Elite Recommendations</h4>
                                             </div>
                                             <div className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest bg-gray-50 dark:bg-gray-800 px-3 py-1 rounded-full whitespace-nowrap">
-                                                {msg.recommendations.length} Properties
+                                                {msg.recommendations.length} {(() => {
+                                                    const hasBlogs = msg.recommendations.some(r => r.type === 'blog' || r.type === 'guide');
+                                                    return hasBlogs ? 'Articles' : 'Properties';
+                                                })()}
                                             </div>
                                         </div>
                                         <RecommendationSlider recommendations={msg.recommendations} />

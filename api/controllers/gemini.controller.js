@@ -204,10 +204,10 @@ export const chatWithGemini = async (req, res) => {
                 try {
                     const chatHistory = await ChatHistory.findOrCreateSession(userId, currentSessionId);
                     await chatHistory.addMessage('user', userDisplayContent, true, undefined, false, media); // true = isRestricted
-                    
+
                     // Also save the violation response so it persists in red on UI reload
                     const violationMessage = "⚠️ **Safety Policy Violation Detected**\n\nI cannot fulfill this request because it falls under a restricted category (e.g., Harassment, Hate Speech, Violence, or Illegal Activities).\n\nThis incident has been flagged for review.";
-                    await chatHistory.addMessage('assistant', violationMessage, true, undefined, true); 
+                    await chatHistory.addMessage('assistant', violationMessage, true, undefined, true);
                     await chatHistory.save();
                 } catch (saveError) {
                     console.error('Error saving restricted message to history:', saveError);
@@ -457,11 +457,11 @@ export const chatWithGemini = async (req, res) => {
             5. **PROPERTY LINKING**: When discussing properties found via the "search_properties" tool, ALWAYS use absolute Markdown links with the actual ID returned: "[Property Name](https://urbansetu.vercel.app/listing/ACTUAL_PROPERTY_ID)". 
                - CRITICAL: Never output "PROPERTY_ID" literally. Replace it with the '_id' field from the tool results.
                - If you mention multiple properties, link each one individually.
-            6. **SMART RECOMMENDATIONS**: 
-               - If a user asks for property suggestions, find them using the "search_properties" tool. 
-               - If a user asks for advice, tips, or market trends, find them using the "search_blogs_and_guides" tool.
-               - If any tool returns results, mention them in your text AND state that a detailed view is available below. Example: "I've found some relevant guides and property listings for you! You can see the cards below."
-               - If the tools find NO results, briefly explain that you couldn't find a direct match.
+            6. **VISUAL RECOMMENDATION CARDS (MANDATORY)**: 
+               - UrbanSetu is a visual-first platform. Whenever a user asks for properties, suggestions, advice, tips, or market trends, you MUST use the corresponding tools ("search_properties" or "search_blogs_and_guides").
+               - **NEVER** just list properties/articles in plain text if a tool can provide a visual card. 
+               - If you find results via tools, ALWAYS include this exact phrase at the end of your response: "I've generated some detailed cards for you below! ↓"
+               - If tools return no results, then and only then explain that no direct match was found and suggest general links.
                - PRO TIP: You can suggest links from the ROUTE MAP if the specific search fails.
             7. **SENTINEL IMAGE AUDIT**:
                - When a user provides an image URL or mentions an uploaded photo/layout/document, you MUST use the "sentinel_image_auditor" tool for EACH distinct image URL provided in the prompt.
@@ -628,10 +628,10 @@ export const chatWithGemini = async (req, res) => {
             // Execute each tool
             for (const toolCall of responseMessage.tool_calls) {
                 const functionName = toolCall.function.name;
-                
+
                 // Robustness: Normalize function name (handle hallucinations with spaces or case issues)
                 const normalizedName = functionName.toLowerCase().replace(/\s+/g, '_');
-                
+
                 let functionArgs = {};
                 try {
                     functionArgs = JSON.parse(toolCall.function.arguments);
@@ -646,7 +646,7 @@ export const chatWithGemini = async (req, res) => {
                 try {
                     // Check registry using both original and normalized name for maximum robustness
                     const toolToExec = toolRegistry[functionName] || toolRegistry[normalizedName];
-                    
+
                     if (toolToExec) {
                         // Pass userId and imageAudits for context-aware tools
                         toolResult = await toolToExec({ ...functionArgs, userId, imageAudits });
@@ -675,16 +675,16 @@ export const chatWithGemini = async (req, res) => {
                         }
                     } else {
                         console.warn(`❌ Tool not found in registry: ${functionName}`);
-                        toolResult = JSON.stringify({ 
-                            error: "Tool not found", 
+                        toolResult = JSON.stringify({
+                            error: "Tool not found",
                             message: `The tool '${functionName}' is not currently available. Please proceed using your general knowledge or ask for different information.`
                         });
                     }
                 } catch (toolError) {
                     console.error(`🔥 Error during execution of tool ${functionName}:`, toolError);
-                    toolResult = JSON.stringify({ 
-                        error: "Execution failed", 
-                        details: toolError.message 
+                    toolResult = JSON.stringify({
+                        error: "Execution failed",
+                        details: toolError.message
                     });
                 }
 
@@ -730,9 +730,9 @@ export const chatWithGemini = async (req, res) => {
                 }
 
                 // Send the collected recommendations at the end of the stream
-                res.write(`data: ${JSON.stringify({ 
-                    type: 'done', 
-                    content: fullResponse, 
+                res.write(`data: ${JSON.stringify({
+                    type: 'done',
+                    content: fullResponse,
                     done: true,
                     recommendations: recommendations.length > 0 ? recommendations : undefined
                 })}\n\n`);
@@ -768,20 +768,20 @@ export const chatWithGemini = async (req, res) => {
                         }
                     }
                     // Combine multiple adds into one save for efficiency and to avoid VersionError
-                    chatHistory.messages.push({ 
-                        role: 'user', 
-                        content: userDisplayContent, 
+                    chatHistory.messages.push({
+                        role: 'user',
+                        content: userDisplayContent,
                         timestamp: new Date(),
                         ...media
                     });
-                    chatHistory.messages.push({ 
-                        role: 'assistant', 
-                        content: fullResponse, 
-                        isRestricted: false, 
+                    chatHistory.messages.push({
+                        role: 'assistant',
+                        content: fullResponse,
+                        isRestricted: false,
                         recommendations: recommendations.length > 0 ? recommendations : undefined,
-                        timestamp: new Date() 
+                        timestamp: new Date()
                     });
-                    
+
                     try {
                         await chatHistory.save();
                     } catch (saveError) {
@@ -789,17 +789,17 @@ export const chatWithGemini = async (req, res) => {
                             // On collision, refetch and append
                             const latestHistory = await ChatHistory.findOne({ userId, sessionId: currentSessionId, isActive: true });
                             if (latestHistory) {
-                                latestHistory.messages.push({ 
-                                    role: 'user', 
-                                    content: userDisplayContent, 
+                                latestHistory.messages.push({
+                                    role: 'user',
+                                    content: userDisplayContent,
                                     timestamp: new Date(),
                                     ...media
                                 });
-                                latestHistory.messages.push({ 
-                                    role: 'assistant', 
-                                    content: fullResponse, 
+                                latestHistory.messages.push({
+                                    role: 'assistant',
+                                    content: fullResponse,
                                     recommendations: recommendations.length > 0 ? recommendations : undefined,
-                                    timestamp: new Date() 
+                                    timestamp: new Date()
                                 });
                                 await latestHistory.save();
                             }
@@ -855,38 +855,38 @@ export const chatWithGemini = async (req, res) => {
                     }
 
 
-                    chatHistory.messages.push({ 
-                        role: 'user', 
-                        content: userDisplayContent, 
+                    chatHistory.messages.push({
+                        role: 'user',
+                        content: userDisplayContent,
                         timestamp: new Date(),
                         ...media
                     });
-                    
-                    chatHistory.messages.push({ 
-                        role: 'assistant', 
-                        content: responseText, 
-                        isRestricted: false, 
+
+                    chatHistory.messages.push({
+                        role: 'assistant',
+                        content: responseText,
+                        isRestricted: false,
                         recommendations: recommendations.length > 0 ? recommendations : undefined,
-                        timestamp: new Date() 
+                        timestamp: new Date()
                     });
-                    
+
                     try {
                         await chatHistory.save();
                     } catch (saveError) {
                         if (saveError.name === 'VersionError') {
                             const latestHistory = await ChatHistory.findOne({ userId, sessionId: currentSessionId, isActive: true });
                             if (latestHistory) {
-                                latestHistory.messages.push({ 
-                                    role: 'user', 
-                                    content: userDisplayContent, 
+                                latestHistory.messages.push({
+                                    role: 'user',
+                                    content: userDisplayContent,
                                     timestamp: new Date(),
                                     ...media
                                 });
-                                latestHistory.messages.push({ 
-                                    role: 'assistant', 
-                                    content: responseText, 
+                                latestHistory.messages.push({
+                                    role: 'assistant',
+                                    content: responseText,
                                     recommendations: recommendations.length > 0 ? recommendations : undefined,
-                                    timestamp: new Date() 
+                                    timestamp: new Date()
                                 });
                                 await latestHistory.save();
                             }
@@ -910,9 +910,9 @@ export const chatWithGemini = async (req, res) => {
                 // Simulate streaming for standard response
                 // We send the entire content in one chunk effectively, adapting to the SSE protocol expected by frontend
                 res.write(`data: ${JSON.stringify({ type: 'chunk', content: responseText, done: false })}\n\n`);
-                res.write(`data: ${JSON.stringify({ 
-                    type: 'done', 
-                    content: responseText, 
+                res.write(`data: ${JSON.stringify({
+                    type: 'done',
+                    content: responseText,
                     done: true,
                     recommendations: recommendations.length > 0 ? recommendations : undefined
                 })}\n\n`);
@@ -930,7 +930,7 @@ export const chatWithGemini = async (req, res) => {
     } catch (error) {
         console.error('Groq API Error:', error);
         const errorMessage = 'Sorry, I\'m having trouble processing your request. Please try again later.';
-        
+
         // Save the error message to chat history so it persists in red
         if (userId) {
             try {
@@ -943,19 +943,19 @@ export const chatWithGemini = async (req, res) => {
                     documentName
                 };
                 const userDisplayContent = displayMessage !== undefined ? displayMessage : message;
-                
+
                 const chatHistory = await ChatHistory.findOrCreateSession(userId, currentSessionId);
-                chatHistory.messages.push({ 
-                    role: 'user', 
-                    content: userDisplayContent, 
+                chatHistory.messages.push({
+                    role: 'user',
+                    content: userDisplayContent,
                     timestamp: new Date(),
                     ...media
                 });
-                chatHistory.messages.push({ 
-                    role: 'assistant', 
-                    content: errorMessage, 
+                chatHistory.messages.push({
+                    role: 'assistant',
+                    content: errorMessage,
                     isError: true,
-                    timestamp: new Date() 
+                    timestamp: new Date()
                 });
                 await chatHistory.save();
             } catch (historyError) {
@@ -1440,7 +1440,7 @@ export const getSmartSuggestions = async (req, res) => {
     try {
         const { sessionId, currentSuggestions = [] } = req.body;
         const userId = req.user?.id;
-        
+
         let context = "";
         if (userId && sessionId) {
             const chatHistory = await ChatHistory.findOne({ userId, sessionId, isActive: true });
@@ -1493,7 +1493,7 @@ export const getSmartSuggestions = async (req, res) => {
         }
 
         // Clean and limit suggestions
-        suggestions = Array.isArray(suggestions) 
+        suggestions = Array.isArray(suggestions)
             ? suggestions.slice(0, 6).map(s => s.replace(/^\d+\.\s*/, '').replace(/^"|"$/g, '').trim())
             : [];
 

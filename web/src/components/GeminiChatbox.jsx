@@ -7165,7 +7165,12 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                             </h4>
                                                                         </div>
                                                                         <span className="text-[10px] text-gray-500 font-medium italic">
-                                                                            {message.recommendations.length} {message.recommendations.length === 1 ? 'property' : 'properties'}
+                                                                            {message.recommendations.length} {(() => {
+                                                                                const hasBlogs = message.recommendations.some(r => r.type === 'blog' || r.type === 'guide');
+                                                                                const count = message.recommendations.length;
+                                                                                if (hasBlogs) return count === 1 ? 'article' : 'articles';
+                                                                                return count === 1 ? 'property' : 'properties';
+                                                                            })()}
                                                                         </span>
                                                                     </div>
 

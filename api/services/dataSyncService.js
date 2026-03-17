@@ -574,13 +574,10 @@ export const getRelevantCachedData = (userMessage, selectedProperties = []) => {
     ).slice(0, 2);
 
     if (relevantBlogs.length > 0) {
-        contextData += 'RELEVANT ARTICLES:\n';
+        contextData += 'ARTICLE SEARCH HINTS (Use "search_blogs_and_guides" tool to suggest these articles with visual cards):\n';
         relevantBlogs.forEach((blog, index) => {
-            contextData += `${index + 1}. ${blog.title}\n`;
-            contextData += `   ${blog.excerpt}\n`;
-            if (blog.tags.length > 0) {
-                contextData += `   Tags: ${blog.tags.join(', ')}\n`;
-            }
+            contextData += `${index + 1}. ${blog.title} [ID: ${blog.id}]\n`;
+            contextData += `   ${blog.excerpt?.slice(0, 100)}...\n`;
             contextData += '\n';
         });
     }
