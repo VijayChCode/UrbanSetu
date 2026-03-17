@@ -372,16 +372,18 @@ io.use(async (socket, next) => {
         console.warn('User not found for token:', decoded.id);
       }
     } catch (error) {
-      console.error('Socket auth error:', error.message);
-      // Invalid token, treat as public user (but log for debugging)
-      if (error.name !== 'JsonWebTokenError' && error.name !== 'TokenExpiredError') {
-        console.error('Unexpected auth error:', error);
+      if (error.name === 'TokenExpiredError') {
+        console.warn(`[Socket Auth] Token expired for socket ${socket.id}. Handshake was attempted with an expired JWT.`);
+        return next(new Error('jwt expired')); // Important: Returning error triggers connect_error on client
+      } else {
+        console.error(`[Socket Auth] Authentication failed for socket ${socket.id}:`, error.message);
+        return next(new Error('Authentication failed'));
       }
     }
   } else {
     console.log('Socket connected without token (public user)');
   }
-  // Allow connection for both public and authenticated users
+  // Allow connection for public users (no token provided)
   next();
 });
 

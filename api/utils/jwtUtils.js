@@ -2,8 +2,11 @@ import jwt from 'jsonwebtoken';
 
 // JWT configuration
 const JWT_SECRET = process.env.JWT_TOKEN;
-const ACCESS_TOKEN_EXPIRY = '15m'; // 15 minutes
+const ACCESS_TOKEN_EXPIRY = process.env.JWT_ACCESS_EXPIRE || '1d'; // Default 1 day instead of 15m for better socket stability
 const REFRESH_TOKEN_EXPIRY = process.env.JWT_EXPIRE || '7d'; // Default 7 days
+
+export const ACCESS_TOKEN_MAX_AGE = 24 * 60 * 60 * 1000; // 1 day in ms
+export const REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days in ms
 
 // Generate access token (short-lived)
 export const generateAccessToken = (payload) => {
@@ -67,16 +70,16 @@ export const setSecureCookies = (res, accessToken, refreshToken) => {
         path: '/'
     };
 
-    // Set access token cookie (short-lived)
+    // Set access token cookie (matching ACCESS_TOKEN_EXPIRY)
     res.cookie('access_token', accessToken, {
         ...cookieOptions,
-        maxAge: 15 * 60 * 1000 // 15 minutes
+        maxAge: ACCESS_TOKEN_MAX_AGE
     });
 
     // Set refresh token cookie (long-lived)
     res.cookie('refresh_token', refreshToken, {
         ...cookieOptions,
-        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        maxAge: REFRESH_TOKEN_MAX_AGE
     });
 };
 

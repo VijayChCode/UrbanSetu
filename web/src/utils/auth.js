@@ -24,6 +24,33 @@ export const createAuthenticatedFetchOptions = (options = {}) => {
   };
 };
 
+export const refreshAccessToken = async () => {
+  const refreshToken = localStorage.getItem('refreshToken');
+  if (!refreshToken) return null;
+
+  try {
+    const refreshRes = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ refreshToken }),
+      credentials: 'include'
+    });
+
+    if (refreshRes.ok) {
+      const data = await refreshRes.json();
+      if (data.token) {
+        localStorage.setItem("accessToken", data.token);
+        return data.token;
+      }
+    }
+  } catch (error) {
+    console.error("Error refreshing token:", error);
+  }
+  return null;
+};
+
 export const authenticatedFetch = async (url, options = {}) => {
   const { autoRedirect = true, ...fetchOptions } = options;
   const opts = createAuthenticatedFetchOptions(fetchOptions);
@@ -35,28 +62,12 @@ export const authenticatedFetch = async (url, options = {}) => {
 
     // ONLY attempt refresh if we have a refresh token
     if (refreshToken) {
-      try {
-        const refreshRes = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ refreshToken }),
-          credentials: 'include'
-        });
-
-        if (refreshRes.ok) {
-          const data = await refreshRes.json();
-          if (data.token) {
-            localStorage.setItem("accessToken", data.token);
-            // Retry original request with new token
-            const newOpts = createAuthenticatedFetchOptions({ ...fetchOptions, _retry: true });
-            response = await fetch(url, newOpts);
-            return response;
-          }
-        }
-      } catch (error) {
-        console.error("Error refreshing token:", error);
+      const newToken = await refreshAccessToken();
+      if (newToken) {
+        // Retry original request with new token
+        const newOpts = createAuthenticatedFetchOptions({ ...fetchOptions, _retry: true });
+        response = await fetch(url, newOpts);
+        return response;
       }
     }
 

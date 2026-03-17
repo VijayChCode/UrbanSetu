@@ -1,6 +1,7 @@
 import { errorHandler } from "./error.js"
 import jwt from 'jsonwebtoken';
 import User from '../models/user.model.js';
+import { ACCESS_TOKEN_MAX_AGE } from './jwtUtils.js';
 
 export const verifyToken = async (req, res, next) => {
   try {
@@ -64,7 +65,9 @@ export const verifyToken = async (req, res, next) => {
     res.cookie('access_token', token, {
       httpOnly: true,
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      secure: process.env.NODE_ENV === 'production'
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: ACCESS_TOKEN_MAX_AGE,
+      path: '/'
     });
     req.user = user;
     next();
@@ -133,7 +136,9 @@ export const optionalAuth = async (req, res, next) => {
     res.cookie('access_token', token, {
       httpOnly: true,
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      secure: process.env.NODE_ENV === 'production'
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: ACCESS_TOKEN_MAX_AGE,
+      path: '/'
     });
     req.user = user;
     console.log('optionalAuth - User authenticated:', { id: user._id, role: user.role, email: user.email });

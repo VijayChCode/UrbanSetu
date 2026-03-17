@@ -1,5 +1,5 @@
 import { io } from "socket.io-client";
-import { getAuthToken } from './auth';
+import { getAuthToken, refreshAccessToken } from './auth';
 import { API_BASE_URL } from '../config/api';
 
 // Prefer explicit socket URL, then API base URL, then same-origin
@@ -22,6 +22,18 @@ export let socket = io(SOCKET_URL, {
   withCredentials: true,
   transports: ['websocket'],
 });
+
+// Update socket auth token manually
+export const updateSocketToken = (newToken) => {
+  if (socket) {
+    socket.auth = { token: newToken };
+    if (socket.connected) {
+      // If already connected, we might need to emit a message or reconnect depending on server logic
+      // but usually updating auth object is for the next connection attempt.
+      // Forced reconnection ensures the new token is used by the server middleware.
+    }
+  }
+};
 
 // Current session id (from cookie or redux payload)
 function getSessionId() {
@@ -90,16 +102,20 @@ socket.on('connect_error', (error) => {
   // If token expired, try to refresh or ask user to sign in
   if (error.message && (error.message.includes('expired') || error.message.includes('jwt'))) {
     console.log('[Socket] Token expired, attempting to refresh...');
-    // Clear expired token
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('sessionId');
-    document.cookie = 'access_token=; Max-Age=0; path=/; SameSite=None; Secure';
-    // Try to reconnect with new token if available
-    const newToken = getToken();
-    if (newToken) {
-      socket.auth = { token: newToken };
-      socket.connect();
-    }
+    
+    // Explicitly call refreshAccessToken
+    refreshAccessToken().then(newToken => {
+      if (newToken) {
+        console.log('[Socket] Token refreshed successfully, reconnecting...');
+        socket.auth = { token: newToken };
+        socket.connect();
+      } else {
+        console.log('[Socket] Refresh failed, clearing auth');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('sessionId');
+        document.cookie = 'access_token=; Max-Age=0; path=/; SameSite=None; Secure';
+      }
+    });
   }
 });
 
@@ -183,16 +199,19 @@ export function reconnectSocket() {
     // If token expired, try to refresh or ask user to sign in
     if (error.message && (error.message.includes('expired') || error.message.includes('jwt'))) {
       console.log('[Socket] Token expired, attempting to refresh...');
-      // Clear expired token
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('sessionId');
-      document.cookie = 'access_token=; Max-Age=0; path=/; SameSite=None; Secure';
-      // Try to reconnect with new token if available
-      const newToken = getToken();
-      if (newToken) {
-        socket.auth = { token: newToken };
-        socket.connect();
-      }
+      
+      refreshAccessToken().then(newToken => {
+        if (newToken) {
+          console.log('[Socket] Token refreshed successfully, reconnecting...');
+          socket.auth = { token: newToken };
+          socket.connect();
+        } else {
+          console.log('[Socket] Refresh failed, clearing auth');
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('sessionId');
+          document.cookie = 'access_token=; Max-Age=0; path=/; SameSite=None; Secure';
+        }
+      });
     }
   });
 
