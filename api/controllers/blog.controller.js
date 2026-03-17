@@ -219,6 +219,8 @@ export const getBlogs = async (req, res, next) => {
         // Let's allow filtering. If type is provided, use it.
         if (type === 'blog') {
             query.type = { $in: ['blog', null] };
+        } else if (type === 'all') {
+            // Do not restrict type, fetch both
         } else if (type) {
             query.type = type;
         }
@@ -260,15 +262,15 @@ export const getBlogs = async (req, res, next) => {
         }
 
         if (search) {
-            const searchRegex = { $regex: search, $options: 'i' };
+            const searchRegex = new RegExp(search, 'i');
             const searchQuery = [
                 { title: searchRegex },
                 { content: searchRegex },
-                { tags: searchRegex }
+                { category: searchRegex },
+                { tags: { $in: [searchRegex] } }
             ];
 
             if (query.$or) {
-                // If $or already exists (e.g. from propertyId logic), combine with $and
                 query.$and = [
                     { $or: query.$or },
                     { $or: searchQuery }

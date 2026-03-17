@@ -1743,7 +1743,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             const searchQuery = query ? query.trim() : '';
 
             // Using the existing getBlogs endpoint with search param
-            const url = `${API_BASE_URL}/api/blogs?search=${encodeURIComponent(searchQuery)}&limit=5&type=all`;
+            const url = `${API_BASE_URL}/api/blogs?search=${encodeURIComponent(searchQuery)}&limit=5&type=all&published=true`;
 
             const response = await authenticatedFetch(url, {
                 method: 'GET',
@@ -1754,8 +1754,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
             if (response.ok) {
                 const data = await response.json();
-                // Map to match suggestion structure if needed, or just use as is
-                setBlogSuggestions(data.data || []);
+                // Ensure we handle both data and data.data if API format varies, but controller says data.data
+                setBlogSuggestions(data.data || data || []);
             } else {
                 setBlogSuggestions([]);
             }
@@ -1854,7 +1854,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         const beforeAt = editingMessageContent.substring(0, editSuggestionStartPos);
         const afterAt = editingMessageContent.substring(editSuggestionStartPos + editSuggestionQuery.length + 1);
 
-        const newMessage = `${beforeAt}@${property.name}${afterAt}`;
+        const itemTitle = property.name || property.title || 'Content';
+        const newMessage = `${beforeAt}@${itemTitle}${afterAt}`;
         setEditingMessageContent(newMessage);
 
         setShowEditPropertySuggestions(false);
@@ -1904,11 +1905,16 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         const beforeAt = inputMessage.substring(0, suggestionStartPos);
         const afterAt = inputMessage.substring(suggestionStartPos + suggestionQuery.length + 1);
 
-        const newMessage = `${beforeAt}@${property.name}${afterAt}`;
+        const itemTitle = property.name || property.title || 'Content';
+        const newMessage = `${beforeAt}@${itemTitle}${afterAt}`;
         setInputMessage(newMessage);
 
-        // Add property to selected properties
-        setSelectedProperties(prev => [...prev, property]);
+        // Add property/blog to selected properties (which acts as selected content)
+        setSelectedProperties(prev => {
+            const exists = prev.some(p => (p.id || p._id || p.id) === (property.id || property._id));
+            if (exists) return prev;
+            return [...prev, property];
+        });
 
         // Hide suggestions
         setShowPropertySuggestions(false);
@@ -1926,25 +1932,26 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
     // Handle keyboard navigation for suggestions
     const handleKeyDown = (e) => {
-        if (!showPropertySuggestions) return;
+        const combinedSuggestions = [...propertySuggestions, ...blogSuggestions];
+        if (combinedSuggestions.length === 0) return;
 
         switch (e.key) {
             case 'ArrowDown':
                 e.preventDefault();
                 setSelectedSuggestionIndex(prev =>
-                    prev < propertySuggestions.length - 1 ? prev + 1 : 0
+                    prev < combinedSuggestions.length - 1 ? prev + 1 : 0
                 );
                 break;
             case 'ArrowUp':
                 e.preventDefault();
                 setSelectedSuggestionIndex(prev =>
-                    prev > 0 ? prev - 1 : propertySuggestions.length - 1
+                    prev > 0 ? prev - 1 : combinedSuggestions.length - 1
                 );
                 break;
             case 'Enter':
                 e.preventDefault();
-                if (selectedSuggestionIndex >= 0 && propertySuggestions[selectedSuggestionIndex]) {
-                    handleSuggestionSelect(propertySuggestions[selectedSuggestionIndex]);
+                if (selectedSuggestionIndex >= 0 && combinedSuggestions[selectedSuggestionIndex]) {
+                    handleSuggestionSelect(combinedSuggestions[selectedSuggestionIndex]);
                 }
                 break;
             case 'Escape':
@@ -4078,23 +4085,24 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     // Handle keyboard shortcuts for editing
     const handleEditKeyDown = (e, messageIndex) => {
         if (showEditPropertySuggestions) {
+            const combinedSuggestions = [...propertySuggestions, ...blogSuggestions];
             switch (e.key) {
                 case 'ArrowDown':
                     e.preventDefault();
                     setSelectedEditSuggestionIndex(prev =>
-                        prev < propertySuggestions.length - 1 ? prev + 1 : 0
+                        prev < combinedSuggestions.length - 1 ? prev + 1 : 0
                     );
                     return;
                 case 'ArrowUp':
                     e.preventDefault();
                     setSelectedEditSuggestionIndex(prev =>
-                        prev > 0 ? prev - 1 : propertySuggestions.length - 1
+                        prev > 0 ? prev - 1 : combinedSuggestions.length - 1
                     );
                     return;
                 case 'Enter':
                     e.preventDefault();
-                    if (selectedEditSuggestionIndex >= 0 && propertySuggestions[selectedEditSuggestionIndex]) {
-                        handleEditSuggestionSelect(propertySuggestions[selectedEditSuggestionIndex]);
+                    if (selectedEditSuggestionIndex >= 0 && combinedSuggestions[selectedEditSuggestionIndex]) {
+                        handleEditSuggestionSelect(combinedSuggestions[selectedEditSuggestionIndex]);
                     }
                     return;
                 case 'Escape':
