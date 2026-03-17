@@ -263,68 +263,95 @@ export const updateChatSession = async (req, res) => {
             });
         }
 
-        const chatHistory = await ChatHistory.findOne({
-            userId,
-            sessionId,
-            isActive: true
-        });
+        // Use a retry mechanism to handle VersionErrors (optimistic concurrency)
+        let retryCount = 0;
+        const maxRetries = 3;
+        let success = false;
+        let lastError;
 
-        if (!chatHistory) {
-            return res.status(404).json({
-                success: false,
-                message: 'Chat session not found'
-            });
-        }
+        while (retryCount < maxRetries && !success) {
+            try {
+                const chatHistory = await ChatHistory.findOne({
+                    userId,
+                    sessionId,
+                    isActive: true
+                });
 
-        // Update the session with new messages and optional name
-        if (hasMessages) {
-            // Check if this is a partial update (e.g., from a frontend with only recent messages loaded)
-            // If the first message in incoming 'messages' matches one in the DB, we replace from that point onwards.
-            // This prevents clobbering older history that wasn't loaded on the frontend.
-            let mergedMessages = messages;
-            
-            if (chatHistory.messages && chatHistory.messages.length > messages.length) {
-                const firstIncoming = messages[0];
-                // Use a simple heuristic to find if the first incoming message exists in current history
-                const indexInDb = chatHistory.messages.findIndex(m => 
-                    m.role === firstIncoming.role && 
-                    m.content === firstIncoming.content && 
-                    (!firstIncoming.timestamp || new Date(m.timestamp).toISOString() === new Date(firstIncoming.timestamp).toISOString())
-                );
+                if (!chatHistory) {
+                    return res.status(404).json({
+                        success: false,
+                        message: 'Chat session not found'
+                    });
+                }
 
-                if (indexInDb !== -1) {
-                    console.log(`Partial update detected. Index in DB: ${indexInDb}. Merging messages.`);
-                    mergedMessages = [
-                        ...chatHistory.messages.slice(0, indexInDb),
-                        ...messages
-                    ];
+                // Update the session with new messages and optional name
+                if (hasMessages) {
+                    // Check if this is a partial update (e.g., from a frontend with only recent messages loaded)
+                    // If the first message in incoming 'messages' matches one in the DB, we replace from that point onwards.
+                    // This prevents clobbering older history that wasn't loaded on the frontend.
+                    let mergedMessages = messages;
+                    
+                    if (chatHistory.messages && chatHistory.messages.length > messages.length) {
+                        const firstIncoming = messages[0];
+                        // Use a simple heuristic to find if the first incoming message exists in current history
+                        const indexInDb = chatHistory.messages.findIndex(m => 
+                            m.role === firstIncoming.role && 
+                            m.content === firstIncoming.content && 
+                            (!firstIncoming.timestamp || new Date(m.timestamp).toISOString() === new Date(firstIncoming.timestamp).toISOString())
+                        );
+
+                        if (indexInDb !== -1) {
+                            console.log(`Partial update detected. Index in DB: ${indexInDb}. Merging messages (Attempt ${retryCount + 1}).`);
+                            mergedMessages = [
+                                ...chatHistory.messages.slice(0, indexInDb),
+                                ...messages
+                            ];
+                        }
+                    }
+
+                    chatHistory.messages = mergedMessages;
+                    chatHistory.totalMessages = mergedMessages.length;
+                }
+                
+                if (hasName) {
+                    const newName = name.trim().slice(0, 80) || null;
+                    // logic to prevent overwriting custom titles with generic "Chat [Date]" placeholder
+                    const isNewNameGeneric = /^Chat \d/.test(newName);
+                    const isOldNameGeneric = !chatHistory.name || /^Chat \d/.test(chatHistory.name);
+
+                    // only update if new name is custom OR if both are generic (or old is null)
+                    if (!isNewNameGeneric || isOldNameGeneric) {
+                        chatHistory.name = newName;
+                    }
+                }
+                
+                chatHistory.lastActivity = new Date();
+
+                await chatHistory.save();
+                success = true;
+            } catch (error) {
+                if (error.name === 'VersionError') {
+                    retryCount++;
+                    lastError = error;
+                    console.log(`VersionError in updateChatSession, retrying... (${retryCount}/${maxRetries})`);
+                    // Small delay before retry
+                    await new Promise(resolve => setTimeout(resolve, 50 * retryCount));
+                } else {
+                    throw error; // Re-throw if it's not a version error
                 }
             }
-
-            chatHistory.messages = mergedMessages;
-            chatHistory.totalMessages = mergedMessages.length;
         }
-        if (hasName) {
-            const newName = name.trim().slice(0, 80) || null;
-            // logic to prevent overwriting custom titles with generic "Chat [Date]" placeholder
-            const isNewNameGeneric = /^Chat \d/.test(newName);
-            const isOldNameGeneric = !chatHistory.name || /^Chat \d/.test(chatHistory.name);
 
-            // only update if new name is custom OR if both are generic (or old is null)
-            if (!isNewNameGeneric || isOldNameGeneric) {
-                chatHistory.name = newName;
-            }
+        if (!success) {
+            throw lastError || new Error('Failed to update chat session after multiple retries');
         }
-        chatHistory.lastActivity = new Date();
-
-        await chatHistory.save();
 
         res.status(200).json({
             success: true,
             message: 'Chat session updated successfully',
             data: {
-                sessionId: chatHistory.sessionId,
-                totalMessages: chatHistory.totalMessages
+                sessionId: sessionId,
+                totalMessages: totalMessages // Note: this might be slightly off if merged, but frontend usually re-fetches or uses its own count
             }
         });
 

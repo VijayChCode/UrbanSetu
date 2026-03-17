@@ -705,9 +705,36 @@ export const chatWithGemini = async (req, res) => {
                             console.error("Failed to auto-generate chat title (Streaming):", titleError);
                         }
                     }
-                    await chatHistory.addMessage('user', message);
-                    await chatHistory.addMessage('assistant', fullResponse, false, recommendedProperties.length > 0 ? recommendedProperties : undefined);
-                    await chatHistory.save();
+                    // Combine multiple adds into one save for efficiency and to avoid VersionError
+                    chatHistory.messages.push({ role: 'user', content: message, timestamp: new Date() });
+                    chatHistory.messages.push({ 
+                        role: 'assistant', 
+                        content: fullResponse, 
+                        isRestricted: false, 
+                        recommendations: recommendedProperties.length > 0 ? recommendedProperties : undefined,
+                        timestamp: new Date() 
+                    });
+                    
+                    try {
+                        await chatHistory.save();
+                    } catch (saveError) {
+                        if (saveError.name === 'VersionError') {
+                            // On collision, refetch and append
+                            const latestHistory = await ChatHistory.findOne({ userId, sessionId: currentSessionId, isActive: true });
+                            if (latestHistory) {
+                                latestHistory.messages.push({ role: 'user', content: message, timestamp: new Date() });
+                                latestHistory.messages.push({ 
+                                    role: 'assistant', 
+                                    content: fullResponse, 
+                                    recommendations: recommendedProperties.length > 0 ? recommendedProperties : undefined,
+                                    timestamp: new Date() 
+                                });
+                                await latestHistory.save();
+                            }
+                        } else {
+                            throw saveError;
+                        }
+                    }
                 }
 
                 return res.end();
@@ -756,9 +783,33 @@ export const chatWithGemini = async (req, res) => {
                     }
 
 
-                    await chatHistory.addMessage('user', message);
-                    await chatHistory.addMessage('assistant', responseText, false, recommendedProperties.length > 0 ? recommendedProperties : undefined);
-                    await chatHistory.save();
+                    // Optimized save
+                    chatHistory.messages.push({ role: 'user', content: message, timestamp: new Date() });
+                    chatHistory.messages.push({ 
+                        role: 'assistant', 
+                        content: responseText, 
+                        isRestricted: false, 
+                        recommendations: recommendedProperties.length > 0 ? recommendedProperties : undefined,
+                        timestamp: new Date() 
+                    });
+                    
+                    try {
+                        await chatHistory.save();
+                    } catch (saveError) {
+                        if (saveError.name === 'VersionError') {
+                            const latestHistory = await ChatHistory.findOne({ userId, sessionId: currentSessionId, isActive: true });
+                            if (latestHistory) {
+                                latestHistory.messages.push({ role: 'user', content: message, timestamp: new Date() });
+                                latestHistory.messages.push({ 
+                                    role: 'assistant', 
+                                    content: responseText, 
+                                    recommendations: recommendedProperties.length > 0 ? recommendedProperties : undefined,
+                                    timestamp: new Date() 
+                                });
+                                await latestHistory.save();
+                            }
+                        }
+                    }
                 } catch (e) { console.error(e); }
             }
 
@@ -802,8 +853,13 @@ export const chatWithGemini = async (req, res) => {
         if (userId) {
             try {
                 const chatHistory = await ChatHistory.findOrCreateSession(userId, currentSessionId);
-                await chatHistory.addMessage('user', message);
-                await chatHistory.addMessage('assistant', errorMessage, false, undefined, true);
+                chatHistory.messages.push({ role: 'user', content: message, timestamp: new Date() });
+                chatHistory.messages.push({ 
+                    role: 'assistant', 
+                    content: errorMessage, 
+                    isError: true,
+                    timestamp: new Date() 
+                });
                 await chatHistory.save();
             } catch (historyError) {
                 console.error('Failed to save error message to history:', historyError);
