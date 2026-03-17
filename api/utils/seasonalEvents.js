@@ -354,6 +354,11 @@ export function* getActiveThemes(dateInput = new Date()) {
 
 };
 
+// Internal helper to get all themes marked for email sending today
+export const getSeasonalThemesForEmail = (dateInput = new Date()) => {
+    return Array.from(getActiveThemes(dateInput)).filter(t => t && t.shouldSendEmail);
+};
+
 export const getSeasonalTheme = (dateInput = new Date()) => {
     // Array.from(getActiveThemes) evaluates the generator to get all matches
     const themes = Array.from(getActiveThemes(dateInput)).filter(Boolean);

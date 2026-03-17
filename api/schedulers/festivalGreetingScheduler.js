@@ -1,6 +1,6 @@
 import cron from 'node-cron';
 import User from '../models/user.model.js';
-import { getSeasonalTheme } from '../utils/seasonalEvents.js';
+import { getSeasonalThemesForEmail } from '../utils/seasonalEvents.js';
 import { sendFestivalGreetingEmail } from '../utils/emailService.js';
 
 export const startFestivalGreetingScheduler = () => {
@@ -9,28 +9,23 @@ export const startFestivalGreetingScheduler = () => {
     cron.schedule('0 9 * * *', async () => {
         console.log('🎉 [Festival Greetings] Starting daily check...');
         try {
-            const theme = getSeasonalTheme();
+            const themes = getSeasonalThemesForEmail();
 
-            // Filter out generic seasons or no theme (only send for specific events)
-            if (!theme || theme.id === 'winter') {
+            // Filter out generic seasons (like 'winter') if they don't have explicit email flag
+            // although getSeasonalThemesForEmail already filters by shouldSendEmail
+            if (!themes || themes.length === 0) {
                 console.log('   No specific festival today.');
                 return;
             }
 
-            // Strict check: Only send email on the specific celebration day, not just during the display window
-            if (!theme.shouldSendEmail) {
-                console.log(`   Theme '${theme.name}' is active, but today is not the designtated email sending day. Skipping.`);
-                return;
-            }
-
             const currentYear = new Date().getFullYear();
-            const festivalId = theme.id;
+            const festivalIds = themes.map(t => t.id);
+            const festivalNames = themes.map(t => t.name).join(' & ');
 
-            console.log(`   Found festival: ${theme.name} (${festivalId})`);
+            console.log(`   Found festival(s): ${festivalNames} (${festivalIds.join(', ')})`);
 
-            // Find eligible users: active status and haven't received this festival greeting this year
-            // Note: We intentionally query only users who haven't received it yet to avoid duplicates
-            // even if the scheduler runs multiple times or crashes halfway.
+            // Find eligible users: active status and haven't received ANY of these festival greetings this year
+            // This prevents sending a combined mail if they already got one part of it (e.g. if windows overlap)
             const users = await User.find({
                 status: 'active',
                 email: { $exists: true, $ne: null },
@@ -38,38 +33,41 @@ export const startFestivalGreetingScheduler = () => {
                     $not: {
                         $elemMatch: {
                             year: currentYear,
-                            festivalId: festivalId
+                            festivalId: { $in: festivalIds }
                         }
                     }
                 }
-            });
+            }).limit(5000); // safety cap per run
 
             if (users.length > 0) {
-                console.log(`   Found ${users.length} users eligible for ${theme.name} greeting.`);
+                console.log(`   Found ${users.length} users eligible for ${festivalNames} greeting.`);
             } else {
                 console.log('   No eligible users found (all may have received it already).');
             }
 
-            // Process sequentially to be gentle on mail server, or could use Promise.all with chunks
+            // Process sequentially to be gentle on mail server
             for (const user of users) {
                 try {
-                    const result = await sendFestivalGreetingEmail(user.email, user.username, theme);
+                    // Send combined email
+                    const result = await sendFestivalGreetingEmail(user.email, user.username, themes);
 
                     if (result.success) {
-                        // Update user record immediately after success
+                        // Update user record: Push entries for ALL festivals sent in this combined mail
+                        const updates = festivalIds.map(id => ({
+                            year: currentYear,
+                            festivalId: id,
+                            sentAt: new Date()
+                        }));
+
                         await User.updateOne(
                             { _id: user._id },
                             {
                                 $push: {
-                                    festivalGreetingsSent: {
-                                        year: currentYear,
-                                        festivalId: festivalId,
-                                        sentAt: new Date()
-                                    }
+                                    festivalGreetingsSent: { $each: updates }
                                 }
                             }
                         );
-                        console.log(`   ✅ Sent ${theme.name} greeting to ${user.username}`);
+                        console.log(`   ✅ Sent combined ${festivalNames} greeting to ${user.username}`);
                     } else {
                         console.warn(`   ⚠️ Failed to send (service error) to ${user.username}`);
                     }
