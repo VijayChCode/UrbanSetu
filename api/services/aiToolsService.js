@@ -454,8 +454,7 @@ export const toolDefinitions = [
                     },
                     category: {
                         type: "string",
-                        enum: ["Real Estate Tips", "Market Updates", "Investment Guide", "Home Buying", "Home Selling", "Property Management", "Legal", "Finance", "Rent", "Investment", "City Guide"],
-                        description: "Filter by category if specified."
+                        description: "Filter by category if specified. Common categories: Real Estate Tips, Market Updates, Investment Guide, Home Buying, Home Selling, Property Management, Legal, Finance, Rent, Investment, City Guide."
                     },
                     type: {
                         type: "string",

@@ -338,6 +338,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     // Property suggestion states
     const [showPropertySuggestions, setShowPropertySuggestions] = useState(false);
     const [propertySuggestions, setPropertySuggestions] = useState([]);
+    const [blogSuggestions, setBlogSuggestions] = useState([]);
+    const [isLoadingBlogSuggestions, setIsLoadingBlogSuggestions] = useState(false);
     const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
     const [suggestionQuery, setSuggestionQuery] = useState('');
     const [suggestionStartPos, setSuggestionStartPos] = useState(-1);
@@ -1734,6 +1736,36 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         }
     };
 
+    // Search blogs and guides for @ suggestions
+    const searchBlogs = async (query) => {
+        try {
+            setIsLoadingBlogSuggestions(true);
+            const searchQuery = query ? query.trim() : '';
+
+            // Using the existing getBlogs endpoint with search param
+            const url = `${API_BASE_URL}/api/blogs?search=${encodeURIComponent(searchQuery)}&limit=5&type=all`;
+
+            const response = await authenticatedFetch(url, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                // Map to match suggestion structure if needed, or just use as is
+                setBlogSuggestions(data.data || []);
+            } else {
+                setBlogSuggestions([]);
+            }
+        } catch (error) {
+            setBlogSuggestions([]);
+        } finally {
+            setIsLoadingBlogSuggestions(false);
+        }
+    };
+
     // Search properties for @ suggestions
     const searchProperties = async (query) => {
         try {
@@ -1809,6 +1841,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 setEditSuggestionStartPos(lastAtIndex);
                 setSelectedEditSuggestionIndex(-1);
                 searchProperties(textAfterAt);
+                searchBlogs(textAfterAt);
             } else {
                 setShowEditPropertySuggestions(false);
             }
@@ -1855,8 +1888,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 setSuggestionStartPos(lastAtIndex);
                 setSelectedSuggestionIndex(-1);
 
-                // Search properties
+                // Search properties and blogs
                 searchProperties(textAfterAt);
+                searchBlogs(textAfterAt);
             } else {
                 setShowPropertySuggestions(false);
             }
@@ -6268,7 +6302,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     <div className="p-1.5 md:p-2 bg-white/10 rounded-lg border border-white/20 relative overflow-visible">
                                         {/* Dynamic Header WiFi Aura/Icon */}
                                         {(isLoading || showTypingIndicator || hasChatError) && (
-                                            <div className="absolute -top-3 left-[65%] -translate-x-1/2 z-20 pointer-events-none transition-all duration-300">
+                                            <div className="absolute -top-3.5 -right-2 z-20 pointer-events-none transition-all duration-300">
                                                 {hasChatError ? (
                                                     <div className="relative flex items-center justify-center rotate-[20deg]">
                                                         <FaWifi className="text-[14px] text-red-200/60" />
@@ -7096,18 +7130,28 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                             {/* Edit Mode Property Suggestions */}
                                                             {showEditPropertySuggestions && (
                                                                 <div ref={editSuggestionsRef} className={`absolute bottom-full ${message.role === 'user' ? 'right-0' : 'left-0'} mb-1 w-64 ${isDarkMode ? 'bg-gray-800 border-blue-600' : 'bg-white border-blue-300'} border-2 rounded-lg shadow-2xl z-50 max-h-48 overflow-y-auto`}>
-                                                                    {propertySuggestions.length > 0 ? propertySuggestions.map((property, idx) => (
+                                                                    {(propertySuggestions.length > 0 || blogSuggestions.length > 0) ? [...propertySuggestions, ...blogSuggestions].map((item, idx) => {
+                                                                        const isBlog = item.type === 'blog' || item.type === 'guide';
+                                                                        
+                                                                        return (
                                                                         <button
                                                                             type="button"
-                                                                            key={property.id || idx}
-                                                                            onMouseDown={(e) => { e.preventDefault(); handleEditSuggestionSelect(property); }}
+                                                                            key={item.id || item._id || idx}
+                                                                            onMouseDown={(e) => { e.preventDefault(); handleEditSuggestionSelect(item); }}
                                                                             className={`w-full text-left p-2 text-xs border-b ${isDarkMode ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-100 hover:bg-gray-100'} ${idx === selectedEditSuggestionIndex ? (isDarkMode ? 'bg-gray-700' : 'bg-gray-100') : ''}`}
                                                                         >
-                                                                            <div className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'} truncate`}>{property.name}</div>
-                                                                            <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} truncate`}>{property.location} • ₹{property.price.toLocaleString()}</div>
+                                                                            <div className={`font-medium flex items-center gap-1.5 ${isDarkMode ? 'text-white' : 'text-gray-900'} truncate`}>
+                                                                                {isBlog ? <FaFileAlt className="text-blue-500 flex-shrink-0" size={10} /> : <FaHome className="text-green-500 flex-shrink-0" size={10} />}
+                                                                                {item.name || item.title}
+                                                                            </div>
+                                                                            {isBlog ? (
+                                                                                <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} truncate`}>Category: {item.category || 'General'}</div>
+                                                                            ) : (
+                                                                                <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} truncate`}>{item.location} • ₹{item.price?.toLocaleString()}</div>
+                                                                            )}
                                                                         </button>
-                                                                    )) : (
-                                                                        <div className="p-2 text-xs text-center text-gray-500">No properties found</div>
+                                                                    )}) : (
+                                                                        <div className="p-2 text-xs text-center text-gray-500">No results found</div>
                                                                     )}
                                                                 </div>
                                                             )}
@@ -7818,50 +7862,63 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                             }}>
                                             <div className={`p-3 text-sm font-medium ${isDarkMode ? 'text-blue-400 border-gray-600 bg-blue-900/20' : 'text-blue-600 border-gray-200 bg-blue-50'} border-b`}>
                                                 <div className="flex items-center gap-2">
-                                                    {isLoadingSuggestions ? (
+                                                    {(isLoadingSuggestions || isLoadingBlogSuggestions) ? (
                                                         <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                                                     ) : (
                                                         <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
                                                     )}
-                                                    {isLoadingSuggestions ? 'Loading properties...' :
-                                                        propertySuggestions.length > 0 ? 'Select a property to reference:' : 'No properties found'}
+                                                    {(isLoadingSuggestions || isLoadingBlogSuggestions) ? 'Searching content...' :
+                                                        (propertySuggestions.length > 0 || blogSuggestions.length > 0) ? 'Select content to reference:' : 'No results found'}
                                                 </div>
                                             </div>
-                                            {propertySuggestions.length > 0 ? propertySuggestions.map((property, index) => (
+                                            {(propertySuggestions.length > 0 || blogSuggestions.length > 0) ? [...propertySuggestions, ...blogSuggestions].map((item, index) => {
+                                                const isBlog = item.type === 'blog' || item.type === 'guide';
+                                                
+                                                return (
                                                 <button
                                                     type="button"
-                                                    key={property.id}
-                                                    onMouseDown={(e) => { e.preventDefault(); handleSuggestionSelect(property); }}
+                                                    key={item.id || item._id}
+                                                    onMouseDown={(e) => { e.preventDefault(); handleSuggestionSelect(item); }}
                                                     className={`w-full text-left p-3 ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors ${index === selectedSuggestionIndex ? (isDarkMode ? 'bg-gray-700' : 'bg-gray-100') : ''
                                                         }`}
                                                 >
                                                     <div className="flex items-center space-x-3">
-                                                        {property.image && (
+                                                        {(item.image || item.thumbnail || (item.imageUrls && item.imageUrls[0])) && (
                                                             <img
-                                                                src={property.image}
-                                                                alt={property.name}
+                                                                src={item.image || item.thumbnail || item.imageUrls[0]}
+                                                                alt={item.name || item.title}
                                                                 className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
                                                             />
                                                         )}
                                                         <div className="flex-1 min-w-0">
-                                                            <div className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'} truncate`}>
-                                                                {property.name}
+                                                            <div className={`font-medium flex items-center gap-1.5 ${isDarkMode ? 'text-white' : 'text-gray-900'} truncate`}>
+                                                                {isBlog ? <FaFileAlt className="text-blue-500 flex-shrink-0" size={10} /> : <FaHome className="text-green-500 flex-shrink-0" size={10} />}
+                                                                {item.name || item.title}
                                                             </div>
                                                             <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                                                {property.location}
+                                                                {isBlog ? (item.category || 'General') : item.location}
                                                             </div>
-                                                            <div className={`text-sm font-semibold ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>
-                                                                ₹{property.price.toLocaleString()}
-                                                            </div>
-                                                            <div className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-                                                                {property.bedrooms}BHK • {property.area} sq ft • {property.type}
-                                                            </div>
+                                                            {!isBlog && (
+                                                                <>
+                                                                    <div className={`text-sm font-semibold ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>
+                                                                        ₹{item.price?.toLocaleString()}
+                                                                    </div>
+                                                                    <div className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                                                                        {item.bedrooms}BHK • {item.area} sq ft • {item.type}
+                                                                    </div>
+                                                                </>
+                                                            )}
+                                                            {isBlog && (
+                                                                 <div className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-400'} truncate`}>
+                                                                     {item.excerpt || "Article content available"}
+                                                                 </div>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </button>
-                                            )) : (
+                                            )}) : (
                                                 <div className={`p-3 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-center`}>
-                                                    No properties found. Try typing more characters.
+                                                    No results found. Try typing more characters.
                                                 </div>
                                             )}
                                         </div>

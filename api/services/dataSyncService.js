@@ -527,22 +527,30 @@ export const getRelevantCachedData = (userMessage, selectedProperties = []) => {
     contextData += `LAST SYNC: ${cachedData.stats.lastSync?.toISOString() || 'Never'}\n`;
     contextData += `SERVICES: Property Search, Home Buying, Investment Guidance, Property Management, Legal & Documentation Support\n\n`;
 
-    // Add selected properties first (if any)
+    // Add selected properties and blogs/guides first (if any)
     const BASE_URL = 'https://urbansetu.vercel.app';
     if (selectedProperties.length > 0) {
-        contextData += 'USER-SELECTED PROPERTIES (Referenced in message):\n';
-        selectedProperties.forEach((prop, index) => {
-            const link = `${BASE_URL}/listing/${prop.id}`;
-            const statusBadge = prop.status === 'under_contract' ? ' [SALE-LOCKED]' : (prop.status === 'rented' ? ' [RENT-LOCKED]' : '');
-            const verificationBadge = prop.isVerified ? ' (Verified ✓)' : ' (Pending Verification)';
+        contextData += 'USER-SELECTED CONTENT (Referenced in message):\n';
+        selectedProperties.forEach((item, index) => {
+            if (item.type === 'blog' || item.type === 'guide') {
+                const link = `${BASE_URL}/${item.type === 'guide' ? 'user/guide' : 'blog'}/${item.slug || item.id}`;
+                contextData += `${index + 1}. [${item.title}](${link}) [ARTICLE]\n`;
+                contextData += `   Category: ${item.category || 'General'}\n`;
+                contextData += `   Snippet: ${item.excerpt || item.content?.slice(0, 150) || 'Article content available'}\n`;
+                contextData += '\n';
+            } else {
+                const link = `${BASE_URL}/listing/${item.id || item._id}`;
+                const statusBadge = item.status === 'under_contract' ? ' [SALE-LOCKED]' : (item.status === 'rented' ? ' [RENT-LOCKED]' : '');
+                const verificationBadge = item.isVerified ? ' (Verified ✓)' : ' (Pending Verification)';
 
-            contextData += `${index + 1}. [${prop.name}](${link})${statusBadge}${verificationBadge}\n`;
-            contextData += `   Location: ${prop.location}\n`;
-            contextData += `   Price: ₹${prop.price.toLocaleString()} | Type: ${prop.type.toUpperCase()}\n`;
-            contextData += `   Details: ${prop.bedrooms}BHK | ${prop.bathrooms} Bath | ${prop.area} sq ft\n`;
-            if (prop.esgRating) contextData += `   ESG: ${prop.esgRating} (Score: ${prop.esgScore})\n`;
-            contextData += `   Description: ${prop.description || 'Property details available'}\n`;
-            contextData += '\n';
+                contextData += `${index + 1}. [${item.name}](${link})${statusBadge}${verificationBadge} [PROPERTY]\n`;
+                contextData += `   Location: ${item.location}\n`;
+                contextData += `   Price: ₹${item?.price?.toLocaleString() || 'N/A'} | Type: ${(item.type || '').toUpperCase()}\n`;
+                contextData += `   Details: ${item.bedrooms || 0}BHK | ${item.bathrooms || 0} Bath | ${item.area || 0} sq ft\n`;
+                if (item.esgRating) contextData += `   ESG: ${item.esgRating} (Score: ${item.esgScore})\n`;
+                contextData += `   Description: ${item.description || 'Property details available'}\n`;
+                contextData += '\n';
+            }
         });
     }
 
