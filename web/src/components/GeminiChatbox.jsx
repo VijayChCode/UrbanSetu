@@ -1452,16 +1452,26 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     const newMessages = data.data.messages;
 
                     if (page === 1) {
-                        // Initial load
-                        setMessages(newMessages.length > 0 ? newMessages : [
-                            {
-                                role: 'assistant',
-                                content: "Hello! I'm SetuAI your AI assistant powered by Groq and co-powered by Sentinel v2.0 Neural Engine (TensorFlow). How can I help you with your real estate needs today?",
-                                timestamp: new Date().toISOString()
-                            }
-                        ]);
+                        // Initial load - prepend welcome message if not present
+                        const defaultWelcome = {
+                            role: 'assistant',
+                            content: "Hello! I'm SetuAI your AI assistant powered by Groq and co-powered by Sentinel v2.0 Neural Engine (TensorFlow). How can I help you with your real estate needs today?",
+                            timestamp: new Date().toISOString()
+                        };
+                        let finalMessages = newMessages;
+                        if (finalMessages.length === 0) {
+                            finalMessages = [defaultWelcome];
+                        } else if (finalMessages[0].content !== defaultWelcome.content) {
+                            finalMessages = [defaultWelcome, ...finalMessages];
+                        }
+                        setMessages(finalMessages);
                         setMessageHistoryPage(1);
                         setIsLoadingPreviousMessages(false);
+
+                        // Load chat name from the response
+                        if (data.data.name && !/^Chat \d/i.test(data.data.name) && data.data.name.toLowerCase() !== 'new chat') {
+                            setCurrentChatName(data.data.name);
+                        }
                     } else {
                         // Prepend older history
                         setMessages(prev => [...newMessages, ...prev]);
@@ -1572,13 +1582,27 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             if (response.ok) {
                 const data = await response.json();
                 if (data.success && data.data.messages) {
-                    // Only update if there are new messages or changes
-                    const serverMessages = data.data.messages;
-                    const currentMessageCount = messages.length;
+                    // Prepend welcome message if not present (same as loadSessionHistory)
+                    const defaultWelcome = {
+                        role: 'assistant',
+                        content: 'Hello! I\'m SetuAI your AI assistant powered by Groq and co-powered by Sentinel v2.0 Neural Engine (TensorFlow). How can I help you with your real estate needs today?',
+                        timestamp: new Date().toISOString()
+                    };
+                    let serverMessages = data.data.messages;
+                    if (serverMessages.length === 0 || serverMessages[0].content !== defaultWelcome.content) {
+                        serverMessages = [defaultWelcome, ...serverMessages];
+                    }
 
-                    if (serverMessages.length !== currentMessageCount) {
+                    const currentMessageCount = messages.length;
+                    const diff = serverMessages.length - currentMessageCount;
+
+                    if (diff !== 0) {
                         setMessages(serverMessages);
-                        toast.success(`Messages refreshed! ${serverMessages.length - currentMessageCount} new messages loaded.`);
+                        if (diff > 0) {
+                            toast.success(`Messages refreshed! ${diff} new messages loaded.`);
+                        } else {
+                            toast.success('Messages refreshed and synced with server.');
+                        }
                     } else {
                         // Check if any messages have been updated
                         let hasUpdates = false;
@@ -1596,6 +1620,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         } else {
                             toast.info('Messages are already up to date.');
                         }
+                    }
+
+                    // Also sync the chat name if available
+                    if (data.data.name && !/^Chat \d/i.test(data.data.name) && data.data.name.toLowerCase() !== 'new chat') {
+                        setCurrentChatName(data.data.name);
                     }
 
                     // Scroll to bottom after refresh
@@ -5378,7 +5407,18 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 return;
             }
 
-            console.log('Auto-saving chat:', currentSessionId, 'Messages:', messages.length);
+            // Filter out the client-only welcome message before saving to avoid
+            // sending messages the server doesn't have, which causes "Partial update" loops
+            const welcomeContent = "Hello! I'm SetuAI your AI assistant powered by Groq and co-powered by Sentinel v2.0 Neural Engine (TensorFlow). How can I help you with your real estate needs today?";
+            const messagesToSave = messages.filter((m, idx) => {
+                // Only strip the welcome message if it's the very first message
+                if (idx === 0 && m.role === 'assistant' && m.content === welcomeContent) {
+                    return false;
+                }
+                return true;
+            });
+
+            console.log('Auto-saving chat:', currentSessionId, 'Messages:', messagesToSave.length, '(filtered from', messages.length, ')');
 
             const saveResponse = await authenticatedFetch(`${API_BASE_URL}/api/chat-history/session/${currentSessionId}`, {
                 method: 'PUT',
@@ -5386,9 +5426,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    messages: messages,
+                    messages: messagesToSave,
                     name: `Chat ${new Date().toLocaleDateString()}`,
-                    totalMessages: messages.length,
+                    totalMessages: messagesToSave.length,
                     lastActivity: new Date().toISOString()
                 })
             });
