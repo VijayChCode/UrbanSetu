@@ -10,6 +10,7 @@ import SharedChatViewSkeleton from '../components/skeletons/SharedChatViewSkelet
 import ContactSupportWrapper from '../components/ContactSupportWrapper';
 import { authenticatedFetch } from '../utils/auth';
 import ListingItem from '../components/ListingItem';
+import BlogGuideItem from '../components/BlogGuideItem';
 import ImagePreview from '../components/ImagePreview';
 
 const TypewriterText = ({ text, delay = 35, className = "" }) => {
@@ -204,11 +205,23 @@ export default function SharedChatView() {
                     onScroll={checkScroll}
                     className="flex overflow-x-auto pb-4 gap-6 no-scrollbar scroll-smooth snap-x"
                 >
-                    {recommendations.map((property, pIdx) => (
-                        <div key={property._id || pIdx} className="flex-shrink-0 w-[240px] sm:w-[280px] snap-start transform transition-all duration-500 hover:scale-[1.05] hover:-translate-y-2">
-                            <ListingItem listing={property} />
-                        </div>
-                    ))}
+                    {recommendations.map((item, pIdx) => {
+                        // Determine if it's a property (ListingItem) or a blog/guide (BlogGuideItem)
+                        const isProperty = item.bedrooms !== undefined || item.bathrooms !== undefined || item.type === 'rent' || item.type === 'sale';
+                        const isBlogGuide = item.category || item.excerpt || item.type === 'blog' || item.type === 'guide';
+                        
+                        return (
+                            <div key={item._id || pIdx} className="flex-shrink-0 w-[240px] sm:w-[280px] snap-start transform transition-all duration-500 hover:scale-[1.05] hover:-translate-y-2">
+                                {isProperty ? (
+                                    <ListingItem listing={item} />
+                                ) : isBlogGuide ? (
+                                    <BlogGuideItem item={item} type={item.type || 'blog'} />
+                                ) : (
+                                    <ListingItem listing={item} /> // Fallback for stability
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
     
                 {showRightArrow && (

@@ -459,9 +459,10 @@ export const chatWithGemini = async (req, res) => {
                - If you mention multiple properties, link each one individually.
             6. **SMART RECOMMENDATIONS**: 
                - If a user asks for property suggestions, find them using the "search_properties" tool. 
-               - If the tool returns results, mention them in your text AND state that a detailed view is available below. Example: "I found a few great properties for you in Hyderabad! You can see the full cards below."
-               - If the tool finds NO results, briefly explain that you couldn't find a direct match but suggest they check our [Search Page](https://urbansetu.vercel.app/search) for more filters.
-               - PRO TIP: You can suggest pre-filled search links like "[Properties in Hyderabad](https://urbansetu.vercel.app/search?city=Hyderabad&type=sale)".
+               - If a user asks for advice, tips, or market trends, find them using the "search_blogs_and_guides" tool.
+               - If any tool returns results, mention them in your text AND state that a detailed view is available below. Example: "I've found some relevant guides and property listings for you! You can see the cards below."
+               - If the tools find NO results, briefly explain that you couldn't find a direct match.
+               - PRO TIP: You can suggest links from the ROUTE MAP if the specific search fails.
             7. **SENTINEL IMAGE AUDIT**:
                - When a user provides an image URL or mentions an uploaded photo/layout/document, you MUST use the "sentinel_image_auditor" tool for EACH distinct image URL provided in the prompt.
                - If multiple images are provided, call the tool multiple times (once for each URL) to analyze each one.
@@ -611,7 +612,7 @@ export const chatWithGemini = async (req, res) => {
         // For simplicity in this tool-use upgrade, we prioritize accuracy over streaming for tool calls.
         // If tools are used, we disable streaming for the first hop.
 
-        const recommendedProperties = [];
+        const recommendations = [];
 
         console.log('🤖 Sending request to Groq...');
         let completion = await groq.chat.completions.create(requestPayload);
@@ -650,15 +651,26 @@ export const chatWithGemini = async (req, res) => {
                         // Pass userId and imageAudits for context-aware tools
                         toolResult = await toolToExec({ ...functionArgs, userId, imageAudits });
 
-                        // Collect listings for UI cards if this was a property-related fetch
+                        // Collect listings or blogs for UI cards
                         if (normalizedName === 'search_properties' || normalizedName === 'get_user_listings') {
                             try {
                                 const parsed = JSON.parse(toolResult);
                                 if (parsed.found && parsed.listings) {
-                                    recommendedProperties.push(...parsed.listings);
+                                    recommendations.push(...parsed.listings);
                                 }
                             } catch (e) {
                                 console.warn("Could not parse tool result for metadata listing collection:", e);
+                            }
+                        }
+
+                        if (normalizedName === 'search_blogs_and_guides') {
+                            try {
+                                const parsed = JSON.parse(toolResult);
+                                if (parsed.found && parsed.recommendations) {
+                                    recommendations.push(...parsed.recommendations);
+                                }
+                            } catch (e) {
+                                console.warn("Could not parse tool result for blog collection:", e);
                             }
                         }
                     } else {
@@ -722,7 +734,7 @@ export const chatWithGemini = async (req, res) => {
                     type: 'done', 
                     content: fullResponse, 
                     done: true,
-                    recommendations: recommendedProperties.length > 0 ? recommendedProperties : undefined
+                    recommendations: recommendations.length > 0 ? recommendations : undefined
                 })}\n\n`);
 
                 // Save History
@@ -766,7 +778,7 @@ export const chatWithGemini = async (req, res) => {
                         role: 'assistant', 
                         content: fullResponse, 
                         isRestricted: false, 
-                        recommendations: recommendedProperties.length > 0 ? recommendedProperties : undefined,
+                        recommendations: recommendations.length > 0 ? recommendations : undefined,
                         timestamp: new Date() 
                     });
                     
@@ -786,7 +798,7 @@ export const chatWithGemini = async (req, res) => {
                                 latestHistory.messages.push({ 
                                     role: 'assistant', 
                                     content: fullResponse, 
-                                    recommendations: recommendedProperties.length > 0 ? recommendedProperties : undefined,
+                                    recommendations: recommendations.length > 0 ? recommendations : undefined,
                                     timestamp: new Date() 
                                 });
                                 await latestHistory.save();
@@ -854,7 +866,7 @@ export const chatWithGemini = async (req, res) => {
                         role: 'assistant', 
                         content: responseText, 
                         isRestricted: false, 
-                        recommendations: recommendedProperties.length > 0 ? recommendedProperties : undefined,
+                        recommendations: recommendations.length > 0 ? recommendations : undefined,
                         timestamp: new Date() 
                     });
                     
@@ -873,7 +885,7 @@ export const chatWithGemini = async (req, res) => {
                                 latestHistory.messages.push({ 
                                     role: 'assistant', 
                                     content: responseText, 
-                                    recommendations: recommendedProperties.length > 0 ? recommendedProperties : undefined,
+                                    recommendations: recommendations.length > 0 ? recommendations : undefined,
                                     timestamp: new Date() 
                                 });
                                 await latestHistory.save();
@@ -902,7 +914,7 @@ export const chatWithGemini = async (req, res) => {
                     type: 'done', 
                     content: responseText, 
                     done: true,
-                    recommendations: recommendedProperties.length > 0 ? recommendedProperties : undefined
+                    recommendations: recommendations.length > 0 ? recommendations : undefined
                 })}\n\n`);
                 res.end();
             } else {
@@ -910,7 +922,7 @@ export const chatWithGemini = async (req, res) => {
                     success: true,
                     response: responseText,
                     sessionId: currentSessionId,
-                    recommendations: recommendedProperties.length > 0 ? recommendedProperties : undefined
+                    recommendations: recommendations.length > 0 ? recommendations : undefined
                 });
             }
         }

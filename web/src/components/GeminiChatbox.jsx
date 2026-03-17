@@ -11,6 +11,7 @@ import { authenticatedFetch } from "../utils/auth";
 import { API_BASE_URL } from '../config/api';
 // import { FormattedTextWithLinks } from '../utils/linkFormatter.jsx';
 import ListingItem from './ListingItem';
+import BlogGuideItem from './BlogGuideItem';
 import { isMobileDevice } from '../utils/mobileUtils';
 import { useSelector } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -134,11 +135,23 @@ const RecommendationSlider = ({ recommendations }) => {
                 onScroll={checkScroll}
                 className="flex overflow-x-auto pb-4 gap-4 no-scrollbar scroll-smooth snap-x"
             >
-                {recommendations.map((property, pIdx) => (
-                    <div key={property._id || pIdx} className="flex-shrink-0 w-[240px] snap-start transform transition-transform duration-300 hover:scale-[1.02]">
-                        <ListingItem listing={property} />
-                    </div>
-                ))}
+                {recommendations.map((item, pIdx) => {
+                    // Determine if it's a property (ListingItem) or a blog/guide (BlogGuideItem)
+                    const isProperty = item.bedrooms !== undefined || item.bathrooms !== undefined || item.type === 'rent' || item.type === 'sale';
+                    const isBlogGuide = item.category || item.excerpt || item.type === 'blog' || item.type === 'guide';
+                    
+                    return (
+                        <div key={item._id || pIdx} className="flex-shrink-0 w-[240px] snap-start transform transition-transform duration-300 hover:scale-[1.02]">
+                            {isProperty ? (
+                                <ListingItem listing={item} />
+                            ) : isBlogGuide ? (
+                                <BlogGuideItem item={item} type={item.type || 'blog'} />
+                            ) : (
+                                <ListingItem listing={item} /> // Fallback to property if uncertain
+                            )}
+                        </div>
+                    );
+                })}
             </div>
 
             {showRightArrow && (

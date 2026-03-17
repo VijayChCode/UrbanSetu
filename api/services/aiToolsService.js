@@ -1,4 +1,5 @@
 import Listing from "../models/listing.model.js";
+import Blog from "../models/blog.model.js";
 
 /**
  * AI Tool: Search Properties
@@ -273,13 +274,82 @@ export const sentinelImageAuditor = async ({ image_url, imageAudits }) => {
 };
 
 /**
+ * AI Tool: Search Blogs and Guides
+ * Purpose: Allows the AI to find relevant educational content, market trends, and guides.
+ */
+export const searchBlogsAndGuides = async ({
+    searchTerm = '',
+    category,
+    type, // blog or guide
+    limit = 5
+}) => {
+    try {
+        const query = { published: true };
+
+        if (searchTerm) {
+            query.$or = [
+                { title: { $regex: searchTerm, $options: 'i' } },
+                { category: { $regex: searchTerm, $options: 'i' } },
+                { tags: { $in: [new RegExp(searchTerm, 'i')] } }
+            ];
+        }
+
+        if (category && category !== 'All') query.category = category;
+        if (type && type !== 'all') query.type = type;
+
+        const results = await Blog.find(query)
+            .populate('author', 'username')
+            .sort({ publishedAt: -1 })
+            .limit(limit)
+            .lean();
+
+        if (results.length === 0) {
+            return JSON.stringify({
+                found: false,
+                message: `No ${type || 'blogs or guides'} found for your request.`
+            });
+        }
+
+        const summary = results.map(r => `- "${r.title}" (${r.type.toUpperCase()})`).join('\n');
+
+        return JSON.stringify({
+            found: true,
+            count: results.length,
+            summary: summary,
+            recommendations: results.map(r => ({
+                _id: r._id.toString(),
+                id: r._id.toString(),
+                title: r.title,
+                slug: r.slug,
+                excerpt: r.excerpt,
+                content: r.content.substring(0, 200), // Short preview
+                thumbnail: r.thumbnail,
+                imageUrls: r.imageUrls,
+                videoUrls: r.videoUrls,
+                category: r.category,
+                type: r.type,
+                author: r.author,
+                publishedAt: r.publishedAt,
+                views: r.views,
+                likes: r.likes
+            }))
+        });
+
+    } catch (error) {
+        console.error("Tool Error (searchBlogsAndGuides):", error);
+        return JSON.stringify({ error: "Failed to search blogs and guides." });
+    }
+};
+
+/**
  * Registry of all available tools
  */
 export const toolRegistry = {
     search_properties: searchProperties,
     get_property_details: getPropertyDetails,
     get_user_listings: getUserListings,
-    sentinel_image_auditor: sentinelImageAuditor
+    sentinel_image_auditor: sentinelImageAuditor,
+    search_blogs_and_guides: searchBlogsAndGuides
 };
 
 /**
@@ -367,6 +437,33 @@ export const toolDefinitions = [
                     }
                 },
                 required: ["image_url"]
+            }
+        }
+    },
+    {
+        type: "function",
+        function: {
+            name: "search_blogs_and_guides",
+            description: "Search for educational blogs, real estate guides, market trends, and investment tips on UrbanSetu. Use this when the user asks for advice, learning materials, or market insights.",
+            parameters: {
+                type: "object",
+                properties: {
+                    searchTerm: {
+                        type: "string",
+                        description: "Keywords to search for (e.g., 'buying tips', 'market trends')"
+                    },
+                    category: {
+                        type: "string",
+                        enum: ["Real Estate Tips", "Market Updates", "Investment Guide", "Home Buying", "Home Selling", "Property Management", "Legal", "Finance", "Rent", "Investment", "City Guide"],
+                        description: "Filter by category if specified."
+                    },
+                    type: {
+                        type: "string",
+                        enum: ["blog", "guide", "all"],
+                        description: "Filter by content type: 'blog' or 'guide'."
+                    }
+                },
+                required: []
             }
         }
     }
