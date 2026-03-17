@@ -1429,6 +1429,38 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         }
     };
 
+    // Apply per-chat settings from session data
+    const applySessionSettings = (sessionSettings) => {
+        if (!sessionSettings || typeof sessionSettings !== 'object') return;
+        if (sessionSettings.messageLimit) {
+            setMessageLimit(sessionSettings.messageLimit);
+        }
+        if (sessionSettings.dataRetention) {
+            setDataRetention(sessionSettings.dataRetention);
+        }
+        if (sessionSettings.tone) {
+            setTone(sessionSettings.tone);
+        }
+        if (sessionSettings.responseLength) {
+            setAiResponseLength(sessionSettings.responseLength);
+        }
+        if (sessionSettings.creativity) {
+            setAiCreativity(sessionSettings.creativity);
+        }
+        if (sessionSettings.temperature) {
+            setTemperature(parseFloat(sessionSettings.temperature));
+        }
+        if (sessionSettings.topP) {
+            setTopP(parseFloat(sessionSettings.topP));
+        }
+        if (sessionSettings.contextWindow) {
+            setContextWindow(sessionSettings.contextWindow);
+        }
+        if (sessionSettings.enableStreaming !== undefined) {
+            setEnableStreaming(sessionSettings.enableStreaming === 'true' || sessionSettings.enableStreaming === true);
+        }
+    };
+
     const loadChatHistory = async (currentSessionId, page = 1) => {
         if (!currentUser || !currentSessionId) return;
 
@@ -1471,6 +1503,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         // Load chat name from the response
                         if (data.data.name && !/^Chat \d/i.test(data.data.name) && data.data.name.toLowerCase() !== 'new chat') {
                             setCurrentChatName(data.data.name);
+                        }
+
+                        // Apply per-chat settings from the session
+                        if (data.data.settings) {
+                            applySessionSettings(data.data.settings);
                         }
                     } else {
                         // Prepend older history
@@ -4004,6 +4041,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     // Load bookmarks for this session
                     await loadBookmarkedMessages(sessionId);
 
+                    // Apply per-chat settings from the session data
+                    if (data.data.settings) {
+                        applySessionSettings(data.data.settings);
+                    }
+
                     toast.success('Chat loaded successfully');
                 }
             }
@@ -4487,14 +4529,35 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         setUserSetting('gemini_show_timestamps', enabled.toString());
     };
 
+    // Save chat-specific settings to backend immediately
+    const saveChatSettingsToBackend = async (settingKey, settingValue) => {
+        if (!currentUser) return;
+        const currentSessionId = getOrCreateSessionId();
+        if (!currentSessionId) return;
+
+        try {
+            await authenticatedFetch(`${API_BASE_URL}/api/chat-history/session/${currentSessionId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    settings: { [settingKey]: settingValue }
+                })
+            });
+        } catch (error) {
+            console.error('Error saving chat setting:', settingKey, error);
+        }
+    };
+
     const updateAiResponseLength = (length) => {
         setAiResponseLength(length);
         setUserSetting('gemini_response_length', length);
+        saveChatSettingsToBackend('responseLength', length);
     };
 
     const updateAiCreativity = (creativity) => {
         setAiCreativity(creativity);
         setUserSetting('gemini_creativity', creativity);
+        saveChatSettingsToBackend('creativity', creativity);
     };
 
     const updateSoundEnabled = (enabled) => {
@@ -4510,6 +4573,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const updateDataRetention = (days) => {
         setDataRetention(days);
         setUserSetting('gemini_data_retention', days);
+        saveChatSettingsToBackend('dataRetention', days);
     };
 
     // Advanced Settings Helper Functions
@@ -4521,6 +4585,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const updateMessageLimit = (limit) => {
         setMessageLimit(limit);
         setUserSetting('gemini_message_limit', limit);
+        saveChatSettingsToBackend('messageLimit', limit);
     };
 
     const updateSessionTimeout = (timeout) => {
@@ -4645,11 +4710,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const updateTemperature = (value) => {
         setTemperature(value);
         setUserSetting('gemini_temperature', value);
+        saveChatSettingsToBackend('temperature', value.toString());
     };
 
     const updateTopP = (value) => {
         setTopP(value);
         setUserSetting('gemini_top_p', value);
+        saveChatSettingsToBackend('topP', value.toString());
     };
 
     const updateTopK = (value) => {
@@ -4665,6 +4732,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const updateEnableStreaming = (enabled) => {
         setEnableStreaming(enabled);
         setUserSetting('gemini_streaming', enabled.toString());
+        saveChatSettingsToBackend('enableStreaming', enabled.toString());
     };
 
     const updateEnableContextMemory = (enabled) => {
@@ -4675,6 +4743,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const updateContextWindow = (value) => {
         setContextWindow(value);
         setUserSetting('gemini_context_window', value);
+        saveChatSettingsToBackend('contextWindow', value);
     };
 
     const updateEnableSystemPrompts = (enabled) => {
@@ -5386,16 +5455,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
     // Save current session to backend
     const saveCurrentSession = async () => {
-        if (!currentUser || messages.length === 0) {
-            console.log('Auto-save skipped: No user or no messages');
+        if (!currentUser) {
             return;
         }
 
         // Prevent auto-save if only system messages (like welcome message) exist
-        // This avoids 404 errors when trying to update a session that hasn't been created in DB yet
         const hasUserMessage = messages.some(m => m.role === 'user');
         if (!hasUserMessage) {
-            // console.log('Auto-save skipped: No user messages yet');
             return;
         }
 
@@ -5403,22 +5469,27 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             const currentSessionId = getOrCreateSessionId();
 
             if (!currentSessionId) {
-                console.log('Auto-save skipped: No session ID');
                 return;
             }
 
-            // Filter out the client-only welcome message before saving to avoid
-            // sending messages the server doesn't have, which causes "Partial update" loops
-            const welcomeContent = "Hello! I'm SetuAI your AI assistant powered by Groq and co-powered by Sentinel v2.0 Neural Engine (TensorFlow). How can I help you with your real estate needs today?";
-            const messagesToSave = messages.filter((m, idx) => {
-                // Only strip the welcome message if it's the very first message
-                if (idx === 0 && m.role === 'assistant' && m.content === welcomeContent) {
-                    return false;
-                }
-                return true;
-            });
+            // IMPORTANT: Do NOT send messages here!
+            // The backend chatWithGemini controller already saves messages when the AI responds.
+            // Sending messages from auto-save creates a race condition where stale frontend state
+            // overwrites the DB, causing messages to vanish.
+            // Auto-save only syncs per-chat settings to the backend.
+            const chatSettings = {
+                messageLimit,
+                dataRetention,
+                tone,
+                responseLength: aiResponseLength,
+                creativity: aiCreativity,
+                temperature: temperature?.toString() || '0.7',
+                topP: topP?.toString() || '0.9',
+                contextWindow: contextWindow?.toString() || '4',
+                enableStreaming: enableStreaming?.toString() || 'false'
+            };
 
-            console.log('Auto-saving chat:', currentSessionId, 'Messages:', messagesToSave.length, '(filtered from', messages.length, ')');
+            console.log('Auto-saving chat settings:', currentSessionId);
 
             const saveResponse = await authenticatedFetch(`${API_BASE_URL}/api/chat-history/session/${currentSessionId}`, {
                 method: 'PUT',
@@ -5426,21 +5497,18 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    messages: messagesToSave,
-                    name: `Chat ${new Date().toLocaleDateString()}`,
-                    totalMessages: messagesToSave.length,
+                    settings: chatSettings,
                     lastActivity: new Date().toISOString()
                 })
             });
 
             if (saveResponse.ok) {
-                console.log('Chat auto-saved successfully');
+                console.log('Chat settings auto-saved successfully');
             } else {
-                console.error('Failed to auto-save current chat:', saveResponse.status, saveResponse.statusText);
+                console.error('Failed to auto-save chat settings:', saveResponse.status, saveResponse.statusText);
             }
         } catch (error) {
-            console.error('Error auto-saving chat:', error);
-            // Only report error if it's not a network issue for anonymous users
+            console.error('Error auto-saving chat settings:', error);
             if (currentUser) {
                 reportError(error, { action: 'auto_save_session' });
             }
@@ -7925,7 +7993,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                             {currentUser && (
                                                 <div>
                                                     <h4 className={`text-sm font-medium mb-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                                                        AI Response Settings
+                                                        AI Response Settings <span className={`text-xs font-normal ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>(per chat)</span>
                                                     </h4>
                                                     <div className="space-y-4">
                                                         {/* Response Length */}
@@ -7967,7 +8035,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                             </span>
                                                             <select
                                                                 value={tone}
-                                                                onChange={(e) => { setTone(e.target.value); localStorage.setItem('gemini_tone', e.target.value); }}
+                                                                onChange={(e) => { setTone(e.target.value); localStorage.setItem('gemini_tone', e.target.value); saveChatSettingsToBackend('tone', e.target.value); }}
                                                                 className={`px-3 py-1 rounded border text-sm ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                                                             >
                                                                 <option value="neutral">Neutral</option>
@@ -8030,7 +8098,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                         {/* Data Retention */}
                                                         <div className="flex items-center justify-between">
                                                             <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                                                                Data Retention (days)
+                                                                Data Retention <span className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>(this chat)</span>
                                                             </span>
                                                             <select
                                                                 value={dataRetention}
@@ -8103,7 +8171,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                         {/* Message Limit */}
                                                         <div className="flex items-center justify-between">
                                                             <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                                                                Message Limit
+                                                                Message Limit <span className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>(this chat)</span>
                                                             </span>
                                                             <select
                                                                 value={messageLimit}

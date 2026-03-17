@@ -101,7 +101,8 @@ export const getChatHistory = async (req, res) => {
                 hasMore: hasMore,
                 currentPage: pageNum,
                 lastActivity: chatHistory.lastActivity,
-                createdAt: chatHistory.createdAt
+                createdAt: chatHistory.createdAt,
+                settings: chatHistory.settings || {}
             }
         });
 
@@ -243,7 +244,7 @@ export const clearAllChatHistory = async (req, res) => {
 export const updateChatSession = async (req, res) => {
     try {
         const { sessionId } = req.params;
-        const { messages, totalMessages, name } = req.body;
+        const { messages, totalMessages, name, settings } = req.body;
         const userId = req.user.id;
 
         if (!sessionId) {
@@ -256,10 +257,11 @@ export const updateChatSession = async (req, res) => {
         // At least one of messages or name should be provided
         const hasMessages = Array.isArray(messages);
         const hasName = typeof name === 'string';
-        if (!hasMessages && !hasName) {
+        const hasSettings = settings && typeof settings === 'object';
+        if (!hasMessages && !hasName && !hasSettings) {
             return res.status(400).json({
                 success: false,
-                message: 'Nothing to update. Provide messages or name.'
+                message: 'Nothing to update. Provide messages, name, or settings.'
             });
         }
 
@@ -326,6 +328,17 @@ export const updateChatSession = async (req, res) => {
                 }
                 
                 chatHistory.lastActivity = new Date();
+
+                // Update per-chat settings if provided
+                if (hasSettings) {
+                    if (!chatHistory.settings) chatHistory.settings = {};
+                    const allowedKeys = ['messageLimit', 'dataRetention', 'tone', 'responseLength', 'creativity', 'temperature', 'topP', 'contextWindow', 'enableStreaming'];
+                    for (const key of allowedKeys) {
+                        if (settings[key] !== undefined) {
+                            chatHistory.settings[key] = settings[key];
+                        }
+                    }
+                }
 
                 await chatHistory.save();
                 success = true;

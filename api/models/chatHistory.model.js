@@ -68,6 +68,18 @@ const chatHistorySchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true
+  },
+  // Per-chat settings (synced with frontend Settings & Themes modal)
+  settings: {
+    messageLimit: { type: String, default: '100' },
+    dataRetention: { type: String, default: '30' },
+    tone: { type: String, default: 'neutral' },
+    responseLength: { type: String, default: 'medium' },
+    creativity: { type: String, default: 'balanced' },
+    temperature: { type: String, default: '0.7' },
+    topP: { type: String, default: '0.9' },
+    contextWindow: { type: String, default: '4' },
+    enableStreaming: { type: String, default: 'false' }
   }
 }, {
   timestamps: true,
@@ -134,7 +146,7 @@ chatHistorySchema.statics.getUserSessions = async function (userId) {
     userId,
     isActive: true
   })
-    .select('sessionId totalMessages lastActivity createdAt name')
+    .select('sessionId totalMessages lastActivity createdAt name settings')
     .sort({ lastActivity: -1 })
     .limit(20); // Limit to last 20 sessions
 
@@ -143,7 +155,8 @@ chatHistorySchema.statics.getUserSessions = async function (userId) {
     name: session.name,
     messageCount: session.totalMessages,
     lastMessageAt: session.lastActivity,
-    createdAt: session.createdAt
+    createdAt: session.createdAt,
+    settings: session.settings || {}
   }));
 };
 
