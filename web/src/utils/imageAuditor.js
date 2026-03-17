@@ -22,6 +22,9 @@ export const loadModel = async () => {
     }
 };
 
+const RESTRICTED_KEYWORDS = ['missile', 'projectile', 'weapon', 'gun', 'rifle', 'pistol', 'assault', 'tank', 'explosion', 'firearm', 'ammunition', 'grenade', 'war'];
+const REAL_ESTATE_INDICATORS = ['room', 'house', 'building', 'home', 'apartment', 'living', 'kitchen', 'bedroom', 'bathroom', 'interior', 'furniture', 'exterior', 'facade', 'garden', 'pool', 'garage', 'dining', 'desk', 'office'];
+
 /**
  * Audit an image for quality and content
  * @param {HTMLImageElement|HTMLCanvasElement|ImageData} imageSource 
@@ -36,15 +39,73 @@ export const auditImage = async (imageSource) => {
         // 2. Technical Quality (Blur & Brightness)
         const quality = await checkTechnicalQuality(imageSource);
 
+        // 3. Sophisticated Classification
+        const classification = determineClassification(predictions);
+
         return {
             predictions,
             quality,
-            suggestions: generateSuggestions(predictions)
+            classification,
+            isRealEstateRelated: classification.type === 'Real Estate',
+            suggestions: classification.type === 'Real Estate' ? generateSuggestions(predictions) : []
         };
     } catch (error) {
         console.error('Image Audit Error:', error);
         return null;
     }
+};
+
+/**
+ * Determines a sophisticated classification based on top predictions
+ */
+const determineClassification = (predictions) => {
+    if (!predictions || predictions.length === 0) return { type: 'Unknown', confidence: 0 };
+
+    const topPrediction = predictions[0].className.toLowerCase();
+    const allPredictions = predictions.map(p => p.className.toLowerCase()).join(' ');
+
+    // Check for Restricted/Red-Flag Content
+    const isRestricted = RESTRICTED_KEYWORDS.some(keyword => allPredictions.includes(keyword));
+    if (isRestricted) {
+        return { 
+            type: 'Restricted', 
+            category: 'Safety/Security',
+            reason: 'Content identified as potentially hazardous or violating safety guidelines.',
+            confidence: predictions[0].probability 
+        };
+    }
+
+    // Check for Real Estate Relevance
+    // We check if any of the REAL_ESTATE_INDICATORS appear in predictions OR if we found a room match
+    const isRE = REAL_ESTATE_INDICATORS.some(keyword => allPredictions.includes(keyword)) || 
+                 generateSuggestions(predictions).length > 0;
+    
+    if (isRE) {
+        return { 
+            type: 'Real Estate', 
+            category: 'Property/Interior',
+            reason: 'Content identified as relevant to real estate or property listings.',
+            confidence: predictions[0].probability 
+        };
+    }
+
+    // Check for Nature/Animals
+    const natureKeywords = ['landscape', 'mountain', 'lake', 'ocean', 'forest', 'tree', 'flower', 'animal', 'bird', 'dog', 'cat'];
+    if (natureKeywords.some(keyword => allPredictions.includes(keyword))) {
+        return { 
+            type: 'Nature/Animal', 
+            category: 'Non-Real Estate',
+            reason: 'Content identified as natural landscapes or animals.',
+            confidence: predictions[0].probability 
+        };
+    }
+
+    return { 
+        type: 'General', 
+        category: 'Miscellaneous',
+        reason: 'General content without strong real estate or safety markers.',
+        confidence: predictions[0].probability 
+    };
 };
 
 /**
@@ -63,9 +124,9 @@ const checkTechnicalQuality = async (imageSource) => {
         tensor.dispose();
 
         return {
-            brightness: brightness > 200 ? 'Too Bright' : brightness < 40 ? 'Too Dark' : 'Good',
-            contrast: std < 20 ? 'Low Contrast' : 'Good',
-            score: Math.min(100, Math.round((brightness / 255) * 50 + (std / 128) * 50))
+            brightness: brightness > 220 ? 'Overexposed' : brightness < 30 ? 'Underexposed' : 'Good',
+            contrast: std < 15 ? 'Flat/Low Contrast' : 'Good',
+            score: Math.min(100, Math.round((brightness / 255) * 40 + (std / 128) * 60)) // Weight contrast slightly higher for "quality"
         };
     } catch (err) {
         console.warn('Technical quality check failed:', err);

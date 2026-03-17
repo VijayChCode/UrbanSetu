@@ -600,7 +600,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [enableSystemPrompts, setEnableSystemPrompts] = useState(() => getUserSetting('gemini_system_prompts', 'true') !== 'false');
 
     // Image Auditing Hook (Extended from CreateListing)
-    const { performAudit, auditResults } = useImageAuditor();
+    const { performAudit, auditResults, isAuditing } = useImageAuditor();
 
     // Notification Settings
     const [enableDesktopNotifications, setEnableDesktopNotifications] = useState(() => getUserSetting('gemini_desktop_notifications', 'true') !== 'false');
@@ -637,6 +637,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const historyIndexRef = useRef(-1);
     const [editingMessageIndex, setEditingMessageIndex] = useState(null);
     const [editingMessageContent, setEditingMessageContent] = useState('');
+    const [editingMessageImages, setEditingMessageImages] = useState([]);
     const [copiedMessageIndex, setCopiedMessageIndex] = useState(null);
 
     // Image Upload & Preview State
@@ -2700,7 +2701,15 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             }
 
             messageImages = pendingImages.map(img => img.url).filter(Boolean);
-            const imageTexts = pendingImages.map(img => `I've uploaded a image file: ${img.name}. Please analyze it and help me with it. File URL: ${img.url}`).join('\n');
+            const imageTexts = pendingImages.map(img => {
+                const audit = auditResults[`chat_${img.id}`];
+                let auditInfo = '';
+                if (audit) {
+                    const { quality, classification } = audit;
+                    auditInfo = ` [Sentinel Audit: Quality Score ${quality.score/100}, Classification: ${classification.type} (${classification.category}), Reason: ${classification.reason}]`;
+                }
+                return `I've uploaded a image file: ${img.name}${auditInfo}. Please analyze it and help me with it. File URL: ${img.url}`;
+            }).join('\n');
             
             // Map audits to specific URLs for the AI tool
             const urlAudits = {};
@@ -3561,9 +3570,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     };
 
     // Edit message functions
-    const startEditingMessage = (messageIndex, messageContent) => {
+    const startEditingMessage = (messageIndex, messageContent, images = []) => {
         setEditingMessageIndex(messageIndex);
         setEditingMessageContent(messageContent);
+        setEditingMessageImages(images || []);
     };
 
     const syncChatTreeToBackend = async (currentMessages) => {
@@ -3645,6 +3655,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const cancelEditingMessage = () => {
         setEditingMessageIndex(null);
         setEditingMessageContent('');
+        setEditingMessageImages([]);
     };
 
     const submitEditedMessage = async (messageIndex) => {
@@ -3656,6 +3667,14 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         try {
             const updatedMessages = [...messages];
             const originalMessage = { ...updatedMessages[messageIndex] };
+            
+            // Update content and images
+            const editedMessage = {
+                ...originalMessage,
+                content: editingMessageContent,
+                images: editingMessageImages,
+                timestamp: new Date().toISOString()
+            };
 
             // 1. Capture the "tail" of current conversation at this point
             const currentTail = updatedMessages.slice(messageIndex + 1);
@@ -6584,9 +6603,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                     } transition-all duration-300`}
                                             >
                                                 {/* Media Display */}
-                                                {(message.imageUrl || (message.images && message.images.length > 0)) && (
+                                                {(message.imageUrl || (message.images && message.images.length > 0) || (editingMessageIndex === index && editingMessageImages.length > 0)) && (
                                                     <div className="mb-2 flex flex-wrap gap-2">
-                                                        {(message.images && message.images.length > 0 ? message.images : [message.imageUrl]).filter(Boolean).map((img, imgIdx) => (
+                                                        {(editingMessageIndex === index ? editingMessageImages : (message.images && message.images.length > 0 ? message.images : [message.imageUrl])).filter(Boolean).map((img, imgIdx) => (
                                                             <div key={imgIdx} className="relative group w-32 h-32 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm transition-all hover:scale-[1.02]">
                                                                 <img
                                                                     src={img}
@@ -6594,7 +6613,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                     className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
-                                                                        setPreviewImages(message.images && message.images.length > 0 ? message.images : [message.imageUrl]);
+                                                                        setPreviewImages(editingMessageIndex === index ? editingMessageImages : (message.images && message.images.length > 0 ? message.images : [message.imageUrl]));
                                                                         setPreviewImageIndex(imgIdx);
                                                                         setIsImagePreviewOpen(true);
                                                                     }}
@@ -6603,31 +6622,44 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                         e.target.className = "w-full h-full object-cover opacity-50";
                                                                     }}
                                                                 />
-                                                                <button
-                                                                    className="absolute top-1 right-1 bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 p-1 rounded-full shadow-md transition-all opacity-0 group-hover:opacity-100 hover:scale-110 hidden sm:block"
-                                                                    onClick={async (e) => {
-                                                                        e.stopPropagation();
-                                                                        try {
-                                                                            const response = await fetch(img, { mode: 'cors' });
-                                                                            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                                                                            const blob = await response.blob();
-                                                                            const blobUrl = window.URL.createObjectURL(blob);
-                                                                            const a = document.createElement('a');
-                                                                            a.href = blobUrl;
-                                                                            a.download = `image-${Date.now()}.${blob.type.split('/')[1] || 'jpg'}`;
-                                                                            document.body.appendChild(a);
-                                                                            a.click();
-                                                                            document.body.removeChild(a);
-                                                                            window.URL.revokeObjectURL(blobUrl);
-                                                                        } catch (err) {
-                                                                            console.error('Download error:', err);
-                                                                            toast.error('Failed to download image');
-                                                                        }
-                                                                    }}
-                                                                    title="Download image"
-                                                                >
-                                                                    <FaDownload size={14} />
-                                                                </button>
+                                                                {editingMessageIndex === index ? (
+                                                                    <button
+                                                                        className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white p-1.5 rounded-full shadow-md transition-all opacity-0 group-hover:opacity-100 hover:scale-110 z-10"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setEditingMessageImages(prev => prev.filter((_, i) => i !== imgIdx));
+                                                                        }}
+                                                                        title="Remove image"
+                                                                    >
+                                                                        <FaTimes size={12} />
+                                                                    </button>
+                                                                ) : (
+                                                                    <button
+                                                                        className="absolute top-1 right-1 bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 p-1 rounded-full shadow-md transition-all opacity-0 group-hover:opacity-100 hover:scale-110 hidden sm:block"
+                                                                        onClick={async (e) => {
+                                                                            e.stopPropagation();
+                                                                            try {
+                                                                                const response = await fetch(img, { mode: 'cors' });
+                                                                                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                                                                                const blob = await response.blob();
+                                                                                const blobUrl = window.URL.createObjectURL(blob);
+                                                                                const a = document.createElement('a');
+                                                                                a.href = blobUrl;
+                                                                                a.download = `image-${Date.now()}.${blob.type.split('/')[1] || 'jpg'}`;
+                                                                                document.body.appendChild(a);
+                                                                                a.click();
+                                                                                document.body.removeChild(a);
+                                                                                window.URL.revokeObjectURL(blobUrl);
+                                                                            } catch (err) {
+                                                                                console.error('Download error:', err);
+                                                                                toast.error('Failed to download image');
+                                                                            }
+                                                                        }}
+                                                                        title="Download image"
+                                                                    >
+                                                                        <FaDownload size={14} />
+                                                                    </button>
+                                                                )}
                                                             </div>
                                                         ))}
                                                     </div>
@@ -7066,7 +7098,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                             {/* Edit button for user messages */}
                                                             {message.role === 'user' && !message.isRestricted && (
                                                                 <button
-                                                                    onClick={() => startEditingMessage(index, message.content)}
+                                                                    onClick={() => startEditingMessage(index, message.content, message.images || (message.imageUrl ? [message.imageUrl] : []))}
                                                                     className="p-1 text-white/80 hover:text-white hover:bg-white/20 rounded transition-all duration-200"
                                                                     title="Edit message"
                                                                     aria-label="Edit message"
@@ -7542,13 +7574,19 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                         <img 
                                                                             src={img.url} 
                                                                             alt={img.name} 
-                                                                            className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity" 
+                                                                            className={`w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity ${isAuditing[`chat_${img.id}`] ? 'blur-[1px]' : ''}`} 
                                                                             onClick={() => {
                                                                                 setPreviewImages([img.url]);
                                                                                 setPreviewImageIndex(0);
                                                                                 setIsImagePreviewOpen(true);
                                                                             }}
                                                                         />
+                                                                        {isAuditing[`chat_${img.id}`] && (
+                                                                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-blue-500/20 backdrop-blur-[1px]">
+                                                                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mb-1" />
+                                                                                <span className="text-[7px] font-bold text-white uppercase tracking-widest animate-pulse">Sentinel Auditing</span>
+                                                                            </div>
+                                                                        )}
                                                                         <button 
                                                                             onClick={() => setPendingImages(prev => prev.filter(p => p.id !== img.id))}
                                                                             className="absolute top-1 right-1 p-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 border border-white/20 shadow-md"
