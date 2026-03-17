@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
-import { FaComments, FaTimes, FaPaperPlane, FaRobot, FaCopy, FaSync, FaUser, FaCheck, FaDownload, FaUpload, FaPaperclip, FaCog, FaLightbulb, FaHistory, FaBookmark, FaShare, FaThumbsUp, FaThumbsDown, FaRegBookmark, FaBookmark as FaBookmarkSolid, FaMicrophone, FaStop, FaImage, FaFileAlt, FaMagic, FaStar, FaMoon, FaSun, FaPalette, FaVolumeUp, FaVolumeMute, FaExpand, FaCompress, FaSearch, FaFilter, FaSort, FaEye, FaEyeSlash, FaEdit, FaCheck as FaCheckCircle, FaTimes as FaTimesCircle, FaFlag, FaClipboardList, FaCommentAlt, FaArrowDown, FaTrash, FaEllipsisH, FaEllipsisV, FaShareAlt, FaBan, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { FaComments, FaTimes, FaPaperPlane, FaRobot, FaCopy, FaSync, FaUser, FaCheck, FaDownload, FaUpload, FaPaperclip, FaCog, FaLightbulb, FaHistory, FaBookmark, FaShare, FaThumbsUp, FaThumbsDown, FaRegBookmark, FaBookmark as FaBookmarkSolid, FaMicrophone, FaStop, FaImage, FaFileAlt, FaMagic, FaStar, FaMoon, FaSun, FaPalette, FaVolumeUp, FaVolumeMute, FaExpand, FaCompress, FaSearch, FaFilter, FaSort, FaEye, FaEyeSlash, FaEdit, FaCheck as FaCheckCircle, FaTimes as FaTimesCircle, FaFlag, FaClipboardList, FaCommentAlt, FaArrowDown, FaTrash, FaEllipsisH, FaEllipsisV, FaShareAlt, FaBan, FaChevronLeft, FaChevronRight, FaSave } from 'react-icons/fa';
 import EqualizerButton from './EqualizerButton';
 import ShareChatModal from './ShareChatModal';
 import SocialSharePanel from './SocialSharePanel';
@@ -14,6 +14,7 @@ import { isMobileDevice } from '../utils/mobileUtils';
 import { useSelector } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Prism from 'prismjs';
+import ConfirmationModal from './ConfirmationModal';
 import 'prismjs/themes/prism-tomorrow.css';
 import 'prismjs/components/prism-javascript';
 import 'prismjs/components/prism-python';
@@ -398,6 +399,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [socialShareConfig, setSocialShareConfig] = useState({ url: '', title: '', description: '' });
     const [renameInput, setRenameInput] = useState('');
     const [refreshingBookmarks, setRefreshingBookmarks] = useState(false);
+    const [initialSettingsSnapshot, setInitialSettingsSnapshot] = useState(null);
+    const [isSavingSettings, setIsSavingSettings] = useState(false);
+    const [isSyncingSettings, setIsSyncingSettings] = useState(false);
+    const [showUnsavedSettingsModal, setShowUnsavedSettingsModal] = useState(false);
     const [showInfoModal, setShowInfoModal] = useState(false);
     const [showTermsModal, setShowTermsModal] = useState(false);
     const [showConsentModal, setShowConsentModal] = useState(false);
@@ -4545,6 +4550,164 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     };
 
     // Save chat-specific settings to backend immediately
+    const hasSettingsChanged = () => {
+        if (!initialSettingsSnapshot) return false;
+        return (
+            tone !== initialSettingsSnapshot.tone ||
+            aiResponseLength !== initialSettingsSnapshot.aiResponseLength ||
+            aiCreativity !== initialSettingsSnapshot.aiCreativity ||
+            dataRetention !== initialSettingsSnapshot.dataRetention ||
+            messageLimit !== initialSettingsSnapshot.messageLimit ||
+            temperature !== initialSettingsSnapshot.temperature ||
+            topP !== initialSettingsSnapshot.topP ||
+            enableStreaming !== initialSettingsSnapshot.enableStreaming ||
+            contextWindow !== initialSettingsSnapshot.contextWindow ||
+            showTimestamps !== initialSettingsSnapshot.showTimestamps ||
+            autoScroll !== initialSettingsSnapshot.autoScroll ||
+            fontSize !== initialSettingsSnapshot.fontSize ||
+            messageDensity !== initialSettingsSnapshot.messageDensity ||
+            soundEnabled !== initialSettingsSnapshot.soundEnabled ||
+            typingSounds !== initialSettingsSnapshot.typingSounds ||
+            enableAnalytics !== initialSettingsSnapshot.enableAnalytics ||
+            enableErrorReporting !== initialSettingsSnapshot.enableErrorReporting ||
+            selectedTheme !== initialSettingsSnapshot.selectedTheme ||
+            autoSave !== initialSettingsSnapshot.autoSave ||
+            enableMarkdown !== initialSettingsSnapshot.enableMarkdown ||
+            enableCodeHighlighting !== initialSettingsSnapshot.enableCodeHighlighting
+        );
+    };
+
+    const handleOpenSettings = () => {
+        // Snapshot current settings before showing modal
+        setInitialSettingsSnapshot({
+            tone, aiResponseLength, aiCreativity, dataRetention, messageLimit,
+            temperature, topP, enableStreaming, contextWindow, showTimestamps,
+            autoScroll, fontSize, messageDensity, soundEnabled, typingSounds,
+            enableAnalytics, enableErrorReporting, selectedTheme, autoSave,
+            enableMarkdown, enableCodeHighlighting
+        });
+        setShowSettings(true);
+        setIsHeaderMenuOpen(false);
+    };
+
+    const handleSettingsClose = () => {
+        if (hasSettingsChanged()) {
+            setShowUnsavedSettingsModal(true);
+        } else {
+            setShowSettings(false);
+        }
+    };
+
+    const discardSettingsChanges = () => {
+        if (initialSettingsSnapshot) {
+            setTone(initialSettingsSnapshot.tone);
+            setAiResponseLength(initialSettingsSnapshot.aiResponseLength);
+            setAiCreativity(initialSettingsSnapshot.aiCreativity);
+            setDataRetention(initialSettingsSnapshot.dataRetention);
+            setMessageLimit(initialSettingsSnapshot.messageLimit);
+            setTemperature(initialSettingsSnapshot.temperature);
+            setTopP(initialSettingsSnapshot.topP);
+            setEnableStreaming(initialSettingsSnapshot.enableStreaming);
+            setContextWindow(initialSettingsSnapshot.contextWindow);
+            setShowTimestamps(initialSettingsSnapshot.showTimestamps);
+            setAutoScroll(initialSettingsSnapshot.autoScroll);
+            setFontSize(initialSettingsSnapshot.fontSize);
+            setMessageDensity(initialSettingsSnapshot.messageDensity);
+            setSoundEnabled(initialSettingsSnapshot.soundEnabled);
+            setTypingSounds(initialSettingsSnapshot.typingSounds);
+            setEnableAnalytics(initialSettingsSnapshot.enableAnalytics);
+            setEnableErrorReporting(initialSettingsSnapshot.enableErrorReporting);
+            setSelectedTheme(initialSettingsSnapshot.selectedTheme);
+            setAutoSave(initialSettingsSnapshot.autoSave);
+            setEnableMarkdown(initialSettingsSnapshot.enableMarkdown);
+            setEnableCodeHighlighting(initialSettingsSnapshot.enableCodeHighlighting);
+        }
+        setShowSettings(false);
+        setShowUnsavedSettingsModal(false);
+    };
+
+    const handleSaveAllSettings = async () => {
+        setIsSavingSettings(true);
+        try {
+            // 1. Save all to LocalStorage
+            setUserSetting('gemini_tone', tone);
+            setUserSetting('gemini_response_length', aiResponseLength);
+            setUserSetting('gemini_creativity', aiCreativity);
+            setUserSetting('gemini_data_retention', dataRetention);
+            setUserSetting('gemini_message_limit', messageLimit);
+            setUserSetting('gemini_temperature', temperature.toString());
+            setUserSetting('gemini_top_p', topP.toString());
+            setUserSetting('gemini_streaming', enableStreaming.toString());
+            setUserSetting('gemini_context_window', contextWindow);
+            setUserSetting('gemini_show_timestamps', showTimestamps.toString());
+            setUserSetting('gemini_auto_scroll', autoScroll.toString());
+            setUserSetting('gemini_font_size', fontSize);
+            setUserSetting('gemini_message_density', messageDensity);
+            setUserSetting('gemini_sound_enabled', soundEnabled.toString());
+            setUserSetting('gemini_typing_sounds', typingSounds.toString());
+            setUserSetting('gemini_analytics', enableAnalytics.toString());
+            setUserSetting('gemini_error_reporting', enableErrorReporting.toString());
+            setUserSetting('gemini_theme', selectedTheme);
+            setUserSetting('gemini_auto_save', autoSave.toString());
+            setUserSetting('gemini_enable_markdown', enableMarkdown.toString());
+            setUserSetting('gemini_code_highlighting', enableCodeHighlighting.toString());
+
+            // 2. Save Per-Chat settings to Backend
+            if (currentUser) {
+                const currentSessionId = getOrCreateSessionId();
+                if (currentSessionId) {
+                    const response = await authenticatedFetch(`${API_BASE_URL}/api/chat-history/session/${currentSessionId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            settings: {
+                                tone,
+                                responseLength: aiResponseLength,
+                                creativity: aiCreativity,
+                                dataRetention,
+                                messageLimit,
+                                temperature,
+                                topP,
+                                enableStreaming,
+                                contextWindow
+                            }
+                        })
+                    });
+                    if (!response.ok) throw new Error('Failed to save to backend');
+                }
+            }
+
+            // Update snapshot
+            setInitialSettingsSnapshot({
+                tone, aiResponseLength, aiCreativity, dataRetention, messageLimit,
+                temperature, topP, enableStreaming, contextWindow, showTimestamps,
+                autoScroll, fontSize, messageDensity, soundEnabled, typingSounds,
+                enableAnalytics, enableErrorReporting, selectedTheme, autoSave,
+                enableMarkdown, enableCodeHighlighting
+            });
+
+            toast.success('Settings saved successfully!');
+            setShowSettings(false);
+        } catch (error) {
+            console.error('Error saving settings:', error);
+            toast.error('Failed to save settings to server.');
+        } finally {
+            setIsSavingSettings(false);
+        }
+    };
+
+    const handleSettingsSync = async () => {
+        setIsSyncingSettings(true);
+        try {
+            await syncSessionSettings();
+            toast.success('Synced with latest preferences');
+        } catch (error) {
+            toast.error('Failed to sync settings');
+        } finally {
+            setIsSyncingSettings(false);
+        }
+    };
+
     const saveChatSettingsToBackend = async (settingKey, settingValue) => {
         if (!currentUser) return;
         const currentSessionId = getOrCreateSessionId();
@@ -4583,20 +4746,26 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
     const updateTone = (value) => {
         setTone(value);
-        setUserSetting('gemini_tone', value);
-        saveChatSettingsToBackend('tone', value);
+        if (!showSettings) {
+            setUserSetting('gemini_tone', value);
+            saveChatSettingsToBackend('tone', value);
+        }
     };
 
     const updateAiResponseLength = (length) => {
         setAiResponseLength(length);
-        setUserSetting('gemini_response_length', length);
-        saveChatSettingsToBackend('responseLength', length);
+        if (!showSettings) {
+            setUserSetting('gemini_response_length', length);
+            saveChatSettingsToBackend('responseLength', length);
+        }
     };
 
     const updateAiCreativity = (creativity) => {
         setAiCreativity(creativity);
-        setUserSetting('gemini_creativity', creativity);
-        saveChatSettingsToBackend('creativity', creativity);
+        if (!showSettings) {
+            setUserSetting('gemini_creativity', creativity);
+            saveChatSettingsToBackend('creativity', creativity);
+        }
     };
 
     const updateSoundEnabled = (enabled) => {
@@ -4611,8 +4780,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
     const updateDataRetention = (days) => {
         setDataRetention(days);
-        setUserSetting('gemini_data_retention', days);
-        saveChatSettingsToBackend('dataRetention', days);
+        if (!showSettings) {
+            setUserSetting('gemini_data_retention', days);
+            saveChatSettingsToBackend('dataRetention', days);
+        }
     };
 
     // Advanced Settings Helper Functions
@@ -4623,8 +4794,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
     const updateMessageLimit = (limit) => {
         setMessageLimit(limit);
-        setUserSetting('gemini_message_limit', limit);
-        saveChatSettingsToBackend('messageLimit', limit);
+        if (!showSettings) {
+            setUserSetting('gemini_message_limit', limit);
+            saveChatSettingsToBackend('messageLimit', limit);
+        }
     };
 
     const updateSessionTimeout = (timeout) => {
@@ -4748,14 +4921,18 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     // Advanced AI Settings Helper Functions
     const updateTemperature = (value) => {
         setTemperature(value);
-        setUserSetting('gemini_temperature', value);
-        saveChatSettingsToBackend('temperature', value.toString());
+        if (!showSettings) {
+            setUserSetting('gemini_temperature', value);
+            saveChatSettingsToBackend('temperature', value.toString());
+        }
     };
 
     const updateTopP = (value) => {
         setTopP(value);
-        setUserSetting('gemini_top_p', value);
-        saveChatSettingsToBackend('topP', value.toString());
+        if (!showSettings) {
+            setUserSetting('gemini_top_p', value);
+            saveChatSettingsToBackend('topP', value.toString());
+        }
     };
 
     const updateTopK = (value) => {
@@ -4770,8 +4947,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
     const updateEnableStreaming = (enabled) => {
         setEnableStreaming(enabled);
-        setUserSetting('gemini_streaming', enabled.toString());
-        saveChatSettingsToBackend('enableStreaming', enabled.toString());
+        if (!showSettings) {
+            setUserSetting('gemini_streaming', enabled.toString());
+            saveChatSettingsToBackend('enableStreaming', enabled.toString());
+        }
     };
 
     const updateEnableContextMemory = (enabled) => {
@@ -4781,8 +4960,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
     const updateContextWindow = (value) => {
         setContextWindow(value);
-        setUserSetting('gemini_context_window', value);
-        saveChatSettingsToBackend('contextWindow', value);
+        if (!showSettings) {
+            setUserSetting('gemini_context_window', value);
+            saveChatSettingsToBackend('contextWindow', value);
+        }
     };
 
     const updateEnableSystemPrompts = (enabled) => {
@@ -5851,7 +6032,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                             {/* Theme & Settings */}
                                             <li>
                                                 <button
-                                                    onClick={() => { setShowSettings(true); setIsHeaderMenuOpen(false); }}
+                                                    onClick={() => { handleOpenSettings(); }}
                                                     className={`w-full text-left px-4 py-3 ${isDarkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-100/80'} flex items-center gap-3 transition-all duration-200 hover:scale-[1.02] group`}
                                                 >
                                                     <div className={`p-1.5 rounded-lg ${isDarkMode ? 'bg-purple-500/20' : 'bg-purple-100'} group-hover:scale-110 transition-transform duration-200`}>
@@ -7166,7 +7347,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
                                                     handleKeyDown(e);
                                                 }}
-                                                placeholder={(rateLimitInfo.remaining <= 0 && rateLimitInfo.role !== 'rootadmin') ? "Sign in to continue chatting..." : "Ask me anything about real estate or @mention any property..."}
+                                                placeholder={(rateLimitInfo.remaining <= 0 && rateLimitInfo.role !== 'rootadmin') ? "Sign in to continue chatting..." : "Ask me anything about real estate or @ to mention any property..."}
                                                 aria-label="Type your message"
                                                 aria-describedby="input-help"
                                                 role="textbox"
@@ -7858,11 +8039,26 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 <div className={`${isDarkMode ? 'bg-gray-900' : 'bg-white'} rounded-xl shadow-xl w-[500px] max-w-full max-h-[80vh] flex flex-col animate-scaleIn`}>
                                     {/* Fixed Header */}
                                     <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-                                        <h3 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                                            Settings & Themes
-                                        </h3>
+                                        <div className="flex items-center gap-3">
+                                            <h3 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                                                Themes & Settings
+                                            </h3>
+                                            {currentUser && (
+                                                <button
+                                                    onClick={handleSettingsSync}
+                                                    disabled={isSyncingSettings}
+                                                    title="Sync with latest preferences"
+                                                    className={`p-1.5 rounded-lg transition-all ${isSyncingSettings
+                                                        ? 'bg-blue-100 text-blue-600 animate-spin'
+                                                        : isDarkMode ? 'bg-gray-800 text-gray-400 hover:text-blue-400 hover:bg-gray-700' : 'bg-gray-100 text-gray-500 hover:text-blue-600 hover:bg-blue-50'
+                                                        }`}
+                                                >
+                                                    <FaSync size={14} className={isSyncingSettings ? 'animate-spin' : ''} />
+                                                </button>
+                                            )}
+                                        </div>
                                         <button
-                                            onClick={() => setShowSettings(false)}
+                                            onClick={handleSettingsClose}
                                             className={`text-gray-500 hover:text-gray-700 ${isDarkMode ? 'hover:text-gray-300' : ''}`}
                                         >
                                             <FaTimes size={20} />
@@ -8436,6 +8632,53 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                     </div>
                                                 </div>
                                             )}
+                                        </div>
+                                    </div>
+
+                                    {/* Modal Footer */}
+                                    <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between flex-shrink-0 bg-gray-50/50 dark:bg-gray-800/30 rounded-b-xl">
+                                        <div className="flex flex-col">
+                                            <div className="text-xs text-gray-500 dark:text-gray-400 italic font-medium">
+                                                {hasSettingsChanged() ? (
+                                                    <span className="text-amber-500 flex items-center gap-1.5">
+                                                        <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
+                                                        Unsaved changes pending
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-emerald-500 flex items-center gap-1.5">
+                                                        <FaCheck size={10} />
+                                                        All preferences synced
+                                                    </span>
+                                                )}
+                                            </div>
+                                            {currentUser && (
+                                                <span className="text-[10px] text-gray-400 mt-1 flex items-center gap-1">
+                                                    <FaRobot size={10} />
+                                                    Persisted per chat session
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="flex gap-3">
+                                            <button
+                                                onClick={handleSettingsClose}
+                                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isDarkMode ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-800' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                                                    }`}
+                                            >
+                                                Discard
+                                            </button>
+                                            <button
+                                                onClick={handleSaveAllSettings}
+                                                disabled={isSavingSettings || !hasSettingsChanged()}
+                                                className={`px-6 py-2 rounded-lg text-sm font-semibold text-white transition-all duration-300 shadow-md active:scale-95 ${isSavingSettings || !hasSettingsChanged()
+                                                    ? 'bg-gray-400 dark:bg-gray-700 cursor-not-allowed opacity-50'
+                                                    : 'bg-blue-600 hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-500/30 hover:translate-y-[-1px]'
+                                                    } flex items-center gap-2`}
+                                            >
+                                                {isSavingSettings ? (
+                                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                ) : <FaSave size={14} />}
+                                                {isSavingSettings ? 'Saving...' : 'Save Settings'}
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -10368,6 +10611,18 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     description={socialShareConfig.description}
                 />
             )}
+
+            {/* Confirmation Modals */}
+            <ConfirmationModal
+                isOpen={showUnsavedSettingsModal}
+                onClose={() => setShowUnsavedSettingsModal(false)}
+                onConfirm={discardSettingsChanges}
+                title="Unsaved Changes"
+                message="You have modified your settings but haven't saved them. Are you sure you want to discard these changes?"
+                confirmText="Discard Changes"
+                cancelText="Keep Editing"
+                isDestructive={true}
+            />
         </div>
     );
 };
