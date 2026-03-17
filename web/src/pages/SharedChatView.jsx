@@ -10,6 +10,7 @@ import SharedChatViewSkeleton from '../components/skeletons/SharedChatViewSkelet
 import ContactSupportWrapper from '../components/ContactSupportWrapper';
 import { authenticatedFetch } from '../utils/auth';
 import ListingItem from '../components/ListingItem';
+import ImagePreview from '../components/ImagePreview';
 
 const TypewriterText = ({ text, delay = 35, className = "" }) => {
     const [displayedText, setDisplayedText] = useState('');
@@ -49,6 +50,9 @@ export default function SharedChatView() {
     const [messages, setMessages] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [copiedMessageIndex, setCopiedMessageIndex] = useState(null);
+    const [isImagePreviewOpen, setIsImagePreviewOpen] = useState(false);
+    const [previewImages, setPreviewImages] = useState([]);
+    const [previewImageIndex, setPreviewImageIndex] = useState(0);
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://urbansetu-pvt4.onrender.com';
 
     useEffect(() => {
@@ -247,7 +251,7 @@ export default function SharedChatView() {
                 );
             }
 
-            const subParts = part.split(/(\[.*?\]\(.*?\)|https?:\/\/[^\s]+)/g);
+            const subParts = part.split(/(\[.*?\]\(.*?\)|https?:\/\/[^\s]+|\b\w+\.(?:png|jpg|jpeg|gif|webp)\b)/gi);
             return (
                 <div key={index} className={`${isUser ? 'text-white' : 'text-gray-800 dark:text-gray-200'} leading-relaxed`}>
                     {subParts.map((subPart, subIndex) => {
@@ -266,6 +270,33 @@ export default function SharedChatView() {
                                 <a key={subIndex} href={subPart} target="_blank" rel="noopener noreferrer" className={`${isUser ? 'text-white underline font-bold' : 'text-blue-600 dark:text-blue-400 underline font-semibold'} hover:opacity-80 transition-opacity`}>
                                     {subPart}
                                 </a>
+                            );
+                        }
+
+                        const imageFileMatch = subPart.match(/^\b\w+\.(?:png|jpg|jpeg|gif|webp)\b$/i);
+                        if (imageFileMatch) {
+                            // Find the actual image URL in the current message or history if possible
+                            // For simplicity in shared view, we just render it as a highlighted span that can open preview if common image
+                            return (
+                                <span 
+                                    key={subIndex} 
+                                    className="cursor-pointer text-indigo-500 dark:text-indigo-400 font-bold hover:underline"
+                                    onClick={() => {
+                                        // Try to find if this filename matches any known image URL
+                                        // This is a bit limited for shared view but better than just text
+                                        const knownImages = messages.flatMap(m => m.images || (m.imageUrl ? [m.imageUrl] : []));
+                                        const match = knownImages.find(img => img.includes(subPart));
+                                        if (match) {
+                                            setPreviewImages([match]);
+                                            setPreviewImageIndex(0);
+                                            setIsImagePreviewOpen(true);
+                                        } else {
+                                            toast.info("Image reference found: " + subPart);
+                                        }
+                                    }}
+                                >
+                                    {subPart}
+                                </span>
                             );
                         }
 
@@ -408,6 +439,52 @@ export default function SharedChatView() {
                                     </div>
                                 )}
 
+                                {/* Media Display */}
+                                {(msg.imageUrl || (msg.images && msg.images.length > 0)) && (
+                                    <div className="mb-4 flex flex-wrap gap-3">
+                                        {(msg.images && msg.images.length > 0 ? msg.images : [msg.imageUrl]).filter(Boolean).map((img, imgIdx) => (
+                                            <div key={imgIdx} className="relative group w-32 h-32 sm:w-40 sm:h-40 rounded-2xl overflow-hidden border-2 border-gray-100 dark:border-gray-700 shadow-xl transition-all hover:scale-[1.05] hover:rotate-1">
+                                                <img
+                                                    src={img}
+                                                    alt={`Shared image ${imgIdx + 1}`}
+                                                    className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setPreviewImages(msg.images && msg.images.length > 0 ? msg.images : [msg.imageUrl]);
+                                                        setPreviewImageIndex(imgIdx);
+                                                        setIsImagePreviewOpen(true);
+                                                    }}
+                                                />
+                                                <button
+                                                    className="absolute top-2 right-2 bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 p-2 rounded-xl shadow-lg transition-all opacity-0 group-hover:opacity-100 hover:scale-110 hidden sm:block"
+                                                    onClick={async (e) => {
+                                                        e.stopPropagation();
+                                                        try {
+                                                            const response = await fetch(img, { mode: 'cors' });
+                                                            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                                                            const blob = await response.blob();
+                                                            const blobUrl = window.URL.createObjectURL(blob);
+                                                            const a = document.createElement('a');
+                                                            a.href = blobUrl;
+                                                            a.download = `shared-image-${Date.now()}.${blob.type.split('/')[1] || 'jpg'}`;
+                                                            document.body.appendChild(a);
+                                                            a.click();
+                                                            document.body.removeChild(a);
+                                                            window.URL.revokeObjectURL(blobUrl);
+                                                        } catch (err) {
+                                                            console.error('Download error:', err);
+                                                            toast.error('Failed to download image');
+                                                        }
+                                                    }}
+                                                    title="Download image"
+                                                >
+                                                    <FaDownload size={14} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
                                 <div className={`text-base sm:text-lg whitespace-pre-wrap ${msg.role === 'user' ? 'font-medium' : ''}`}>
                                     {formatText(msg.content, msg.role === 'user')}
                                 </div>
@@ -510,6 +587,13 @@ export default function SharedChatView() {
 
             <GeminiAIWrapper />
             <ContactSupportWrapper />
+
+            <ImagePreview 
+                isOpen={isImagePreviewOpen}
+                onClose={() => setIsImagePreviewOpen(false)}
+                images={previewImages}
+                initialIndex={previewImageIndex}
+            />
 
             <style>{`
                 @font-face { font-family: 'Outfit'; src: url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap'); }

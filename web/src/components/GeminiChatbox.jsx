@@ -5812,6 +5812,59 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 return restored !== undefined ? restored : match; // Return match (placeholder) if undefined
             });
 
+            // Handle image filenames in response (Task 2)
+            // Pattern: something.png, something.jpg, something.jpeg, something.webp (case insensitive)
+            const imagePattern = /\b([a-zA-Z0-9_-]+\.(?:png|jpg|jpeg|webp))\b/gi;
+            if (imagePattern.test(restoredPart)) {
+                const imgParts = restoredPart.split(imagePattern);
+                return (
+                    <span key={index} className={isSentMessage ? "text-white" : ""}>
+                        {imgParts.map((item, i) => {
+                            if (i % 2 === 1) {
+                                // This is an image filename
+                                // Try to find the image URL in message history or current message
+                                let foundImgUrl = null;
+                                
+                                // Look in current message first
+                                const currentImages = message.images || (message.imageUrl ? [message.imageUrl] : []);
+                                foundImgUrl = currentImages.find(url => url.toLowerCase().includes(item.toLowerCase()));
+                                
+                                // If not found, check previous messages (max 10)
+                                if (!foundImgUrl) {
+                                    const reversedMessages = [...messages].reverse().slice(0, 10);
+                                    for (const prevMsg of reversedMessages) {
+                                        const prevImages = prevMsg.images || (prevMsg.imageUrl ? [prevMsg.imageUrl] : []);
+                                        foundImgUrl = prevImages.find(url => url.toLowerCase().includes(item.toLowerCase()));
+                                        if (foundImgUrl) break;
+                                    }
+                                }
+
+                                if (foundImgUrl) {
+                                    return (
+                                        <span 
+                                            key={i}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setPreviewImages([foundImgUrl]);
+                                                setPreviewImageIndex(0);
+                                                setIsImagePreviewOpen(true);
+                                            }}
+                                            className="inline-flex items-center gap-1.5 px-2 py-1 mx-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 font-medium cursor-pointer hover:bg-blue-500/20 transition-all group"
+                                            title="View Image"
+                                        >
+                                            <FaImage className="text-sm group-hover:scale-110 transition-transform" />
+                                            <span className="underline decoration-dotted underline-offset-4">{item}</span>
+                                        </span>
+                                    );
+                                }
+                                return item;
+                            }
+                            return <span key={i} dangerouslySetInnerHTML={{ __html: item }} />;
+                        }) }
+                    </span>
+                );
+            }
+
             return <span key={index} className={isSentMessage ? "text-white" : ""} dangerouslySetInnerHTML={{ __html: restoredPart }} />;
         });
     };
@@ -6551,11 +6604,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                     }}
                                                                 />
                                                                 <button
-                                                                    className="absolute top-1 right-1 bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 p-1 rounded-full shadow-md transition-all opacity-0 group-hover:opacity-100 hover:scale-110"
+                                                                    className="absolute top-1 right-1 bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 p-1 rounded-full shadow-md transition-all opacity-0 group-hover:opacity-100 hover:scale-110 hidden sm:block"
                                                                     onClick={async (e) => {
                                                                         e.stopPropagation();
                                                                         try {
-                                                                            // Use standard fetch instead of authenticatedFetch to avoid CORS credential issues with wildcard domains
                                                                             const response = await fetch(img, { mode: 'cors' });
                                                                             if (!response.ok) throw new Error(`HTTP ${response.status}`);
                                                                             const blob = await response.blob();
@@ -6595,7 +6647,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                 />
                                                             </div>
                                                             <button
-                                                                className="absolute top-2 right-2 bg-white/90 hover:bg-white text-gray-700 p-1 rounded-full shadow-md transition-colors"
+                                                                className="absolute top-2 right-2 bg-white/90 hover:bg-white text-gray-700 p-1 rounded-full shadow-md transition-colors hidden sm:block"
                                                                 onClick={async (e) => {
                                                                     e.stopPropagation();
                                                                     try {
@@ -6668,7 +6720,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                 </div>
                                                             </div>
                                                             <button
-                                                                className="absolute top-2 right-2 bg-white/90 hover:bg-white text-gray-700 p-1 rounded-full shadow-md transition-colors"
+                                                                className="absolute top-2 right-2 bg-white/90 hover:bg-white text-gray-700 p-1 rounded-full shadow-md transition-colors hidden sm:block"
                                                                 onClick={async (e) => {
                                                                     e.stopPropagation();
                                                                     try {

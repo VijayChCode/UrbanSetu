@@ -581,7 +581,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
 
       // Try to fetch the image to handle CORS and get proper blob
       try {
-        const response = await authenticatedFetch(imageUrl, {
+        const response = await fetch(imageUrl, {
           mode: 'cors',
           cache: 'no-cache'
         });
