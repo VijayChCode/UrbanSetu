@@ -2720,11 +2720,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 let auditInfo = '';
                 if (audit) {
                     const { quality, classification } = audit;
-                    auditInfo = ` [Sentinel Audit: Quality Score ${quality.score/100}, Classification: ${classification.type} (${classification.category}), Reason: ${classification.reason}]`;
+                    auditInfo = ` [Sentinel Audit: Quality Score ${quality.score / 100}, Classification: ${classification.type} (${classification.category}), Reason: ${classification.reason}]`;
                 }
                 return `I've uploaded a image file: ${img.name}${auditInfo}. Please analyze it and help me with it. File URL: ${img.url}`;
             }).join('\n');
-            
+
             // Map audits to specific URLs for the AI tool
             const urlAudits = {};
             pendingImages.forEach(img => {
@@ -2739,9 +2739,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             if (!displayUserMessage) {
                 displayUserMessage = ""; // UI will show images
             }
-            
+
             aiPromptMessage = aiPromptMessage ? `${aiPromptMessage}\n\n${imageTexts}` : imageTexts;
-            
+
             setPendingImages([]); // Clear pending images after they are attached
         }
 
@@ -2758,9 +2758,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         setSelectedProperties([]); // Clear selected properties after sending
         setMessages(prev => {
             const currentMessages = Array.isArray(prev) ? prev : [];
-            return [...currentMessages, { 
-                role: 'user', 
-                content: displayUserMessage, 
+            return [...currentMessages, {
+                role: 'user',
+                content: displayUserMessage,
                 timestamp: new Date().toISOString(),
                 images: messageImages,
                 imageAudits: imageAuditsToStream
@@ -3681,7 +3681,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         try {
             const updatedMessages = [...messages];
             const originalMessage = { ...updatedMessages[messageIndex] };
-            
+
             // Update content and images
             const editedMessage = {
                 ...originalMessage,
@@ -4624,7 +4624,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     const file = imageFiles[i];
                     const tempId = Date.now() + Math.random();
                     const controller = new AbortController();
-                    
+
                     // Add to pending with uploading state
                     setPendingImages(prev => [...prev, {
                         id: tempId,
@@ -4638,7 +4638,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     try {
                         let formData = new FormData();
                         formData.append('image', file);
-                        
+
                         const response = await authenticatedFetch(`${import.meta.env.VITE_API_BASE_URL}/api/upload/image`, {
                             method: 'POST',
                             body: formData,
@@ -4650,7 +4650,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         const fileUrl = uploadData.imageUrl;
 
                         // Update pending image with the real URL
-                        setPendingImages(prev => prev.map(img => 
+                        setPendingImages(prev => prev.map(img =>
                             img.id === tempId ? { ...img, url: fileUrl, uploading: false, controller: null } : img
                         ));
 
@@ -4691,11 +4691,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
                 if (!response.ok) throw new Error(`Failed to upload ${file.name}`);
                 const uploadData = await response.json();
-                
+
                 const fileType = file.type.startsWith('audio/') ? 'audio' :
-                                file.type.startsWith('video/') ? 'video' : 'document';
+                    file.type.startsWith('video/') ? 'video' : 'document';
                 const fileUrl = uploadData.imageUrl || uploadData.audioUrl || uploadData.videoUrl || uploadData.documentUrl;
-                
+
                 const promptWithFile = `I've uploaded a ${fileType} file: ${file.name}. Please analyze it and help me with it. File URL: ${fileUrl}`;
                 const displayMsg = `Attached ${fileType}: ${file.name}`;
 
@@ -5857,11 +5857,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 // This is an image filename
                                 // Try to find the image URL in message history or current message
                                 let foundImgUrl = null;
-                                
+
                                 // Look in current message first
                                 const currentImages = message.images || (message.imageUrl ? [message.imageUrl] : []);
                                 foundImgUrl = currentImages.find(url => url.toLowerCase().includes(item.toLowerCase()));
-                                
+
                                 // If not found, check previous messages (max 10)
                                 if (!foundImgUrl) {
                                     const reversedMessages = [...messages].reverse().slice(0, 10);
@@ -5874,7 +5874,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
                                 if (foundImgUrl) {
                                     return (
-                                        <span 
+                                        <span
                                             key={i}
                                             onClick={(e) => {
                                                 e.stopPropagation();
@@ -5893,7 +5893,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 return item;
                             }
                             return <span key={i} dangerouslySetInnerHTML={{ __html: item }} />;
-                        }) }
+                        })}
                     </span>
                 );
             }
@@ -6125,7 +6125,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 } text-sm px-4 py-2 rounded-xl shadow-2xl hidden group-hover:block z-10 whitespace-nowrap border transform -translate-y-1 transition-all duration-200`}>
                                 <div className="flex items-center gap-2">
                                     <span className="text-lg">🤖</span>
-                                    <span className="font-medium">Chat with SetuAI Assistant!</span>
+                                    <span className="font-medium">Ask SetuAI about properties!</span>
                                 </div>
                                 {/* Tooltip arrow */}
                                 <div className={`absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent ${isDarkMode ? 'border-t-gray-800' : 'border-t-white'
@@ -6140,7 +6140,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             <div className={`relative px-5 py-3 rounded-2xl whitespace-nowrap overflow-hidden group shadow-2xl border border-white/20 dark:border-gray-700/50 ${isDarkMode ? 'bg-gray-800/90 text-white' : 'bg-white/90 text-gray-900'} backdrop-blur-md`}>
                                 {/* Progress bar background */}
                                 <div className="absolute bottom-0 left-0 h-1 bg-blue-500/30 w-full animate-[shrink_6s_linear]" />
-                                
+
                                 <div className="flex items-center gap-3">
                                     <div className={`p-1.5 rounded-lg ${isDarkMode ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'}`}>
                                         <FaMagic size={14} className="animate-pulse" />
@@ -6149,15 +6149,14 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         <span className="text-sm font-black tracking-tight leading-none mb-0.5">Meet SETUAI 🤖</span>
                                         <span className="text-[11px] opacity-70 font-medium">Smart Property Assistant active</span>
                                     </div>
-                                    <button 
+                                    <button
                                         onClick={() => handleOpen()}
-                                        className={`ml-1 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all hover:scale-105 active:scale-95 ${
-                                            isDarkMode ? 'bg-blue-500 text-white hover:bg-blue-400' : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
-                                        }`}
+                                        className={`ml-1 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all hover:scale-105 active:scale-95 ${isDarkMode ? 'bg-blue-500 text-white hover:bg-blue-400' : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
+                                            }`}
                                     >
                                         Try Now
                                     </button>
-                                    <button 
+                                    <button
                                         onClick={(e) => { e.stopPropagation(); setShowTryPrompt(false); }}
                                         className="p-1 opacity-40 hover:opacity-100 transition-opacity"
                                     >
@@ -6166,9 +6165,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 </div>
 
                                 {/* Arrow */}
-                                <div className={`absolute -right-2 top-1/2 -translate-y-1/2 w-4 h-4 rotate-45 border-t border-r ${
-                                    isDarkMode ? 'bg-gray-800/90 border-transparent' : 'bg-white/90 border-transparent'
-                                }`} />
+                                <div className={`absolute -right-2 top-1/2 -translate-y-1/2 w-4 h-4 rotate-45 border-t border-r ${isDarkMode ? 'bg-gray-800/90 border-transparent' : 'bg-white/90 border-transparent'
+                                    }`} />
                             </div>
                         </div>
                     )}
@@ -7619,7 +7617,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-500/10">
                                                                         <div className={`w-6 h-6 border-2 ${themeColors.accent.replace('text-', 'border-').replace('-600', '-500')} border-t-transparent rounded-full animate-spin`} />
                                                                         <span className="text-[8px] mt-1 font-bold text-gray-500 uppercase tracking-tighter">Uploading</span>
-                                                                        <button 
+                                                                        <button
                                                                             onClick={() => {
                                                                                 if (img.controller) img.controller.abort();
                                                                                 setPendingImages(prev => prev.filter(p => p.id !== img.id));
@@ -7632,10 +7630,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                     </div>
                                                                 ) : (
                                                                     <>
-                                                                        <img 
-                                                                            src={img.url} 
-                                                                            alt={img.name} 
-                                                                            className={`w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity ${isAuditing[`chat_${img.id}`] ? 'blur-[1px]' : ''}`} 
+                                                                        <img
+                                                                            src={img.url}
+                                                                            alt={img.name}
+                                                                            className={`w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity ${isAuditing[`chat_${img.id}`] ? 'blur-[1px]' : ''}`}
                                                                             onClick={() => {
                                                                                 setPreviewImages([img.url]);
                                                                                 setPreviewImageIndex(0);
@@ -7648,7 +7646,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                                 <span className="text-[7px] font-bold text-white uppercase tracking-widest animate-pulse">Sentinel Auditing</span>
                                                                             </div>
                                                                         )}
-                                                                        <button 
+                                                                        <button
                                                                             onClick={() => setPendingImages(prev => prev.filter(p => p.id !== img.id))}
                                                                             className="absolute top-1 right-1 p-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 border border-white/20 shadow-md"
                                                                             title="Remove image"
@@ -7661,7 +7659,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                         ))}
                                                     </div>
                                                 )}
-                                                
+
                                                 <textarea
                                                     ref={inputRef}
                                                     value={inputMessage}
@@ -10995,7 +10993,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 isDestructive={true}
             />
             {/* Image Preview Modal */}
-            <ImagePreview 
+            <ImagePreview
                 isOpen={isImagePreviewOpen}
                 onClose={() => setIsImagePreviewOpen(false)}
                 images={previewImages}
