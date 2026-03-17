@@ -12,7 +12,12 @@ import AdvancedImage from "./AdvancedImage";
 import SocialSharePanel from './SocialSharePanel';
 
 export default function ListingItem({ listing, onDelete, onWishToggle }) {
-  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  const wishlistContext = useWishlist() || {
+    addToWishlist: async () => {},
+    removeFromWishlist: async () => {},
+    isInWishlist: () => false
+  };
+  const { addToWishlist, removeFromWishlist, isInWishlist } = wishlistContext;
   const [isInWishlistState, setIsInWishlistState] = useState(false);
   const [showAppointmentTooltip, setShowAppointmentTooltip] = useState(false);
   const [showRentTooltip, setShowRentTooltip] = useState(false);

@@ -4,6 +4,8 @@ import ListingItem from './ListingItem';
 import { getLiveRecommendations } from '../utils/sentinelLiveEngine';
 import { authenticatedFetch } from '../utils/auth';
 import SEO from './SEO';
+import { BrowserRouter } from 'react-router-dom';
+import WishlistProvider from '../WishlistContext';
 
 class GlobalErrorBoundary extends React.Component {
     constructor(props) {
@@ -346,18 +348,22 @@ class GlobalErrorBoundary extends React.Component {
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                                        {this.state.recommendations.map((listing) => (
-                                            <div key={`err-rec-${listing._id}`} className="relative group">
-                                                {listing.isLiveMatch && (
-                                                    <div className="absolute -top-2 -right-2 z-20 bg-blue-600 text-white text-[10px] font-black px-2 py-1 rounded-lg shadow-lg transform rotate-12 group-hover:rotate-0 transition-transform">
-                                                        {Math.round(listing.sentinelScore * 100)}% MATCH
+                                    <BrowserRouter>
+                                        <WishlistProvider>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                                {this.state.recommendations.map((listing) => (
+                                                    <div key={`err-rec-${listing._id}`} className="relative group">
+                                                        {listing.isLiveMatch && (
+                                                            <div className="absolute -top-2 -right-2 z-20 bg-blue-600 text-white text-[10px] font-black px-2 py-1 rounded-lg shadow-lg transform rotate-12 group-hover:rotate-0 transition-transform">
+                                                                {Math.round(listing.sentinelScore * 100)}% MATCH
+                                                            </div>
+                                                        )}
+                                                        <ListingItem listing={listing} />
                                                     </div>
-                                                )}
-                                                <ListingItem listing={listing} />
+                                                ))}
                                             </div>
-                                        ))}
-                                    </div>
+                                        </WishlistProvider>
+                                    </BrowserRouter>
                                     
                                     <div className="mt-8 text-center border-t border-gray-100 dark:border-gray-700 pt-6">
                                         <p className="text-sm text-gray-500 dark:text-gray-400 font-medium italic">
