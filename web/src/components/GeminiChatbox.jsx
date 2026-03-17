@@ -1433,9 +1433,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const loadChatHistory = async (currentSessionId, page = 1) => {
         if (!currentUser || !currentSessionId) return;
 
-        if (page > 1) {
-            setIsLoadingPreviousMessages(true);
-        }
+        setIsLoadingPreviousMessages(true);
 
         try {
             const limit = 20;
@@ -1473,6 +1471,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             if (container) {
                                 container.scrollTop = container.scrollHeight - oldScrollHeight;
                             }
+                            // Only set loading to false AFTER scroll adjustment to avoid trigger loop
+                            setIsLoadingPreviousMessages(false);
                         }, 50);
                     }
 
@@ -1482,11 +1482,16 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             } else if (response.status === 404 && page === 1) {
                 console.log('No session history found');
                 setHasMoreHistory(false);
+                setIsLoadingPreviousMessages(false);
             }
         } catch (error) {
             console.error('Error loading session history:', error);
-        } finally {
             setIsLoadingPreviousMessages(false);
+        } finally {
+            // For initial load, we can set it immediately
+            if (page === 1) {
+                setIsLoadingPreviousMessages(false);
+            }
             setIsHistoryLoaded(true);
         }
     };
@@ -1868,8 +1873,17 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         }
     };
 
+    const lastMessageRef = useRef(null);
     useEffect(() => {
-        scrollToBottom();
+        if (messages && messages.length > 0) {
+            const lastMsg = messages[messages.length - 1];
+            // Only auto-scroll to bottom if the last message is new/changed
+            // This prevents scrolling to bottom when prepending history
+            if (lastMsg && (lastMsg.content !== lastMessageRef.current?.content || lastMsg.role !== lastMessageRef.current?.role)) {
+                scrollToBottom();
+                lastMessageRef.current = lastMsg;
+            }
+        }
     }, [messages]);
 
     // Load user-specific settings when currentUser changes
@@ -2481,8 +2495,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             // Show floating date when scrolling starts
             setIsScrolling(true);
 
-            // Check for scroll to top to load previous messages
-            if (el.scrollTop === 0 && hasMoreHistory && !isLoadingPreviousMessages) {
+            // Check for scroll near top to load previous messages
+            // Threshold increased to 30px for better reliability
+            if (el.scrollTop <= 30 && hasMoreHistory && !isLoadingPreviousMessages) {
                 console.log('Loading previous messages...');
                 const currentSessionId = sessionId || localStorage.getItem('gemini_session_id');
                 if (currentSessionId) {
