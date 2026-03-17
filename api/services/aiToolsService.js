@@ -28,7 +28,7 @@ export const searchProperties = async ({
         // Price Range - check both regular and discount prices
         if (minPrice || maxPrice) {
             const priceQuery = [];
-            
+
             if (minPrice) {
                 const min = Number(minPrice);
                 if (!isNaN(min)) {
@@ -36,7 +36,7 @@ export const searchProperties = async ({
                     priceQuery.push({ discountPrice: { $gte: min } });
                 }
             }
-            
+
             if (maxPrice) {
                 const max = Number(maxPrice);
                 if (!isNaN(max)) {
@@ -58,7 +58,7 @@ export const searchProperties = async ({
 
         // Visibility Enforcement (Public only)
         query.visibility = 'public';
-        
+
         // Execute Query - Try verified first
         let listings = await Listing.find({ ...query, isVerified: true })
             .select('name city type regularPrice discountPrice offer imageUrls bedrooms bathrooms area address propertyNumber landmark state pincode isVerified userRef description')
