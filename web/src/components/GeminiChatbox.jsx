@@ -51,8 +51,8 @@ const ScrollingThinkingTags = ({ isHeader = false, isDarkMode = false }) => {
                 style={{ transform: `translateY(-${index * 24}px)` }}
             >
                 {THINKING_TAGS.map((tag, i) => (
-                    <div 
-                        key={i} 
+                    <div
+                        key={i}
                         className={`h-6 flex items-center flex-shrink-0 animate-fadeIn ${isHeader ? 'text-white/90' : isDarkMode ? 'text-gray-300' : 'text-gray-600'} text-xs sm:text-sm font-medium whitespace-nowrap`}
                     // style={{ opacity: index === i ? 1 : 0.3, transition: 'opacity 0.5s' }} REMOVED THIS AS IT MIGHT BE DISTRACTING
                     >
@@ -117,7 +117,7 @@ const RecommendationSlider = ({ recommendations }) => {
     return (
         <div className="relative group/slider">
             {showLeftArrow && (
-                <button 
+                <button
                     onClick={() => scroll('left')}
                     className="absolute left-[-15px] sm:left-[-20px] top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center bg-white dark:bg-gray-800 rounded-full shadow-lg border border-gray-100 dark:border-gray-700 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white transition-all transform hover:scale-110 active:scale-90"
                     aria-label="Previous properties"
@@ -125,8 +125,8 @@ const RecommendationSlider = ({ recommendations }) => {
                     <FaChevronLeft size={12} />
                 </button>
             )}
-            
-            <div 
+
+            <div
                 ref={scrollRef}
                 onScroll={checkScroll}
                 className="flex overflow-x-auto pb-4 gap-4 no-scrollbar scroll-smooth snap-x"
@@ -139,7 +139,7 @@ const RecommendationSlider = ({ recommendations }) => {
             </div>
 
             {showRightArrow && (
-                <button 
+                <button
                     onClick={() => scroll('right')}
                     className="absolute right-[-15px] sm:right-[-20px] top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center bg-white dark:bg-gray-800 rounded-full shadow-lg border border-gray-100 dark:border-gray-700 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white transition-all transform hover:scale-110 active:scale-90"
                     aria-label="Next properties"
@@ -1435,7 +1435,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         // Capture container and scroll height BEFORE loading state changes to handle tag removal correctly
         const container = messagesContainerRef.current;
         const scrollHeightBefore = container ? container.scrollHeight : 0;
-        
+
         setIsLoadingPreviousMessages(true);
 
         try {
@@ -3435,7 +3435,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             await authenticatedFetch(`${API_BASE_URL}/api/chat-history/session/${getOrCreateSessionId()}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     messages: currentMessages,
                     lastActivity: new Date().toISOString()
                 })
@@ -3447,10 +3447,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
     const switchMessageVersion = async (index, newVersionIndex) => {
         if (newVersionIndex < 0) return;
-        
+
         // Use a functional update to get the latest messages
         let finalUpdatedList = null;
-        
+
         setMessages(prev => {
             const next = [...prev];
             const message = { ...next[index] };
@@ -3460,7 +3460,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             // 1. Save current state of this version before switching (CRITICAL to avoid losing current tail/content)
             const currentActiveIndex = message.activeVersionIndex || 0;
             const updatedVariants = [...message.variants];
-            
+
             // Ensure we capture the current visible content and everything after it
             updatedVariants[currentActiveIndex] = {
                 ...updatedVariants[currentActiveIndex],
@@ -3470,7 +3470,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
             // 2. Switch to target version
             const targetVersion = updatedVariants[newVersionIndex];
-            
+
             // Reconstruct the message object for the new version
             const updatedMessage = {
                 ...message,
@@ -3514,21 +3514,21 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             // Save the state of the branch we're leaving before we branch off
             let variants = [];
             let activeIdx = originalMessage.activeVersionIndex || 0;
-            
+
             if (originalMessage.variants && originalMessage.variants.length > 0) {
                 // Keep existing variants and update the current active one before adding the new one
                 variants = [...originalMessage.variants];
-                variants[activeIdx] = { 
-                    ...variants[activeIdx], 
+                variants[activeIdx] = {
+                    ...variants[activeIdx],
                     content: originalMessage.content, // Save current before swapping
-                    tail: currentTail 
+                    tail: currentTail
                 };
             } else {
                 // Initialize first variant if none exist
                 variants = [
-                    { 
-                        content: originalMessage.content, 
-                        tail: currentTail, 
+                    {
+                        content: originalMessage.content,
+                        tail: currentTail,
                         timestamp: originalMessage.timestamp,
                         role: originalMessage.role
                     }
@@ -3567,7 +3567,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             await sendEditedMessageToAPI(editingMessageContent.trim(), nextMessages.slice(0, messageIndex));
 
             toast.info('New conversation branch created');
-            
+
             // Log for debugging
             console.log('Successfully branched message at index', messageIndex, 'New version count:', variants.length + 1);
         } catch (error) {
@@ -7059,7 +7059,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
                                                     handleKeyDown(e);
                                                 }}
-                                                placeholder={(rateLimitInfo.remaining <= 0 && rateLimitInfo.role !== 'rootadmin') ? "Sign in to continue chatting..." : "Ask me anything about real estate or @mention a property..."}
+                                                placeholder={(rateLimitInfo.remaining <= 0 && rateLimitInfo.role !== 'rootadmin') ? "Sign in to continue chatting..." : "Ask me anything about real estate or @mention any property..."}
                                                 aria-label="Type your message"
                                                 aria-describedby="input-help"
                                                 role="textbox"
