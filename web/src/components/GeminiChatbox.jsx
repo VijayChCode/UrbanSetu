@@ -35,30 +35,53 @@ const THINKING_TAGS = [
     "Processing context...",
     "Retrieving information...",
     "Synthesizing response...",
-    "Finalizing answer..."
+    "Finalizing answer...",
+    "Checking details...",
+    "Almost ready...",
+    "Final verification...",
+    "Polishing results...",
+    "Securing response...",
+    "Ensuring accuracy..."
 ];
 
 const ScrollingThinkingTags = ({ isHeader = false, isDarkMode = false }) => {
     const [index, setIndex] = useState(0);
 
     useEffect(() => {
-        const interval = setInterval(() => {
-            setIndex((prev) => (prev + 1) % THINKING_TAGS.length);
-        }, 3000);
-        return () => clearInterval(interval);
-    }, []);
+        let timer;
+        const processTags = () => {
+            // Determine delay for current index - slower changes as requested
+            let delay = 4000; 
+            
+            if (index === 5) { // "Finalizing answer..."
+                delay = 8000; // Stay much longer on this one
+            } else if (index > 5) {
+                delay = 6000; // Change very slowly for the "late" tags
+            }
+
+            timer = setTimeout(() => {
+                setIndex((prev) => {
+                    // Do not loop back to index 0 if we reached the end
+                    if (prev >= THINKING_TAGS.length - 1) return prev;
+                    return prev + 1;
+                });
+            }, delay);
+        };
+
+        processTags();
+        return () => clearTimeout(timer);
+    }, [index]);
 
     return (
         <div className={`overflow-hidden h-6 relative inline-block ${isHeader ? 'min-w-[140px]' : 'min-w-[160px]'} align-middle`}>
             <div
-                className="transition-transform duration-700 ease-in-out absolute inset-0 w-full flex flex-col"
+                className="transition-transform duration-1000 ease-in-out absolute inset-0 w-full flex flex-col"
                 style={{ transform: `translateY(-${index * 24}px)` }}
             >
                 {THINKING_TAGS.map((tag, i) => (
                     <div
                         key={i}
                         className={`h-6 flex items-center flex-shrink-0 animate-fadeIn ${isHeader ? 'text-white/90' : isDarkMode ? 'text-gray-300' : 'text-gray-600'} text-xs sm:text-sm font-medium whitespace-nowrap`}
-                    // style={{ opacity: index === i ? 1 : 0.3, transition: 'opacity 0.5s' }} REMOVED THIS AS IT MIGHT BE DISTRACTING
                     >
                         {tag}
                     </div>
