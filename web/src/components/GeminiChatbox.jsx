@@ -139,7 +139,7 @@ const RecommendationSlider = ({ recommendations }) => {
                     // Determine if it's a property (ListingItem) or a blog/guide (BlogGuideItem)
                     const isProperty = item.bedrooms !== undefined || item.bathrooms !== undefined || item.type === 'rent' || item.type === 'sale';
                     const isBlogGuide = item.category || item.excerpt || item.type === 'blog' || item.type === 'guide';
-                    
+
                     return (
                         <div key={item._id || pIdx} className="flex-shrink-0 w-[240px] snap-start transform transition-transform duration-300 hover:scale-[1.02]">
                             {isProperty ? (
@@ -6167,7 +6167,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         )}
 
                         {/* Icon with sparkle effect */}
-                         <div className="relative z-10 transition-transform duration-300 group-hover:scale-110">
+                        <div className="relative z-10 transition-transform duration-300 group-hover:scale-110">
                             {isOpen ? (
                                 <FaTimes className="w-5 h-5 text-white drop-shadow-lg animate-fadeIn" />
                             ) : (
@@ -7132,25 +7132,26 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                 <div ref={editSuggestionsRef} className={`absolute bottom-full ${message.role === 'user' ? 'right-0' : 'left-0'} mb-1 w-64 ${isDarkMode ? 'bg-gray-800 border-blue-600' : 'bg-white border-blue-300'} border-2 rounded-lg shadow-2xl z-50 max-h-48 overflow-y-auto`}>
                                                                     {(propertySuggestions.length > 0 || blogSuggestions.length > 0) ? [...propertySuggestions, ...blogSuggestions].map((item, idx) => {
                                                                         const isBlog = item.type === 'blog' || item.type === 'guide';
-                                                                        
+
                                                                         return (
-                                                                        <button
-                                                                            type="button"
-                                                                            key={item.id || item._id || idx}
-                                                                            onMouseDown={(e) => { e.preventDefault(); handleEditSuggestionSelect(item); }}
-                                                                            className={`w-full text-left p-2 text-xs border-b ${isDarkMode ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-100 hover:bg-gray-100'} ${idx === selectedEditSuggestionIndex ? (isDarkMode ? 'bg-gray-700' : 'bg-gray-100') : ''}`}
-                                                                        >
-                                                                            <div className={`font-medium flex items-center gap-1.5 ${isDarkMode ? 'text-white' : 'text-gray-900'} truncate`}>
-                                                                                {isBlog ? <FaFileAlt className="text-blue-500 flex-shrink-0" size={10} /> : <FaHome className="text-green-500 flex-shrink-0" size={10} />}
-                                                                                {item.name || item.title}
-                                                                            </div>
-                                                                            {isBlog ? (
-                                                                                <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} truncate`}>Category: {item.category || 'General'}</div>
-                                                                            ) : (
-                                                                                <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} truncate`}>{item.location} • ₹{item.price?.toLocaleString()}</div>
-                                                                            )}
-                                                                        </button>
-                                                                    )}) : (
+                                                                            <button
+                                                                                type="button"
+                                                                                key={item.id || item._id || idx}
+                                                                                onMouseDown={(e) => { e.preventDefault(); handleEditSuggestionSelect(item); }}
+                                                                                className={`w-full text-left p-2 text-xs border-b ${isDarkMode ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-100 hover:bg-gray-100'} ${idx === selectedEditSuggestionIndex ? (isDarkMode ? 'bg-gray-700' : 'bg-gray-100') : ''}`}
+                                                                            >
+                                                                                <div className={`font-medium flex items-center gap-1.5 ${isDarkMode ? 'text-white' : 'text-gray-900'} truncate`}>
+                                                                                    {isBlog ? <FaFileAlt className="text-blue-500 flex-shrink-0" size={10} /> : <FaHome className="text-green-500 flex-shrink-0" size={10} />}
+                                                                                    {item.name || item.title}
+                                                                                </div>
+                                                                                {isBlog ? (
+                                                                                    <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} truncate`}>Category: {item.category || 'General'}</div>
+                                                                                ) : (
+                                                                                    <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} truncate`}>{item.location} • ₹{item.price?.toLocaleString()}</div>
+                                                                                )}
+                                                                            </button>
+                                                                        )
+                                                                    }) : (
                                                                         <div className="p-2 text-xs text-center text-gray-500">No results found</div>
                                                                     )}
                                                                 </div>
@@ -7827,7 +7828,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
                                                         handleKeyDown(e);
                                                     }}
-                                                    placeholder={(rateLimitInfo.remaining <= 0 && rateLimitInfo.role !== 'rootadmin') ? "Sign in to continue chatting..." : "Ask me anything about real estate or @ to mention any property..."}
+                                                    placeholder={(rateLimitInfo.remaining <= 0 && rateLimitInfo.role !== 'rootadmin') ? "Sign in to continue chatting..." : "Ask me anything about real estate or @ to mention any property/blog/guide..."}
                                                     aria-label="Type your message"
                                                     aria-describedby="input-help"
                                                     role="textbox"
@@ -7873,50 +7874,51 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                             </div>
                                             {(propertySuggestions.length > 0 || blogSuggestions.length > 0) ? [...propertySuggestions, ...blogSuggestions].map((item, index) => {
                                                 const isBlog = item.type === 'blog' || item.type === 'guide';
-                                                
+
                                                 return (
-                                                <button
-                                                    type="button"
-                                                    key={item.id || item._id}
-                                                    onMouseDown={(e) => { e.preventDefault(); handleSuggestionSelect(item); }}
-                                                    className={`w-full text-left p-3 ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors ${index === selectedSuggestionIndex ? (isDarkMode ? 'bg-gray-700' : 'bg-gray-100') : ''
-                                                        }`}
-                                                >
-                                                    <div className="flex items-center space-x-3">
-                                                        {(item.image || item.thumbnail || (item.imageUrls && item.imageUrls[0])) && (
-                                                            <img
-                                                                src={item.image || item.thumbnail || item.imageUrls[0]}
-                                                                alt={item.name || item.title}
-                                                                className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
-                                                            />
-                                                        )}
-                                                        <div className="flex-1 min-w-0">
-                                                            <div className={`font-medium flex items-center gap-1.5 ${isDarkMode ? 'text-white' : 'text-gray-900'} truncate`}>
-                                                                {isBlog ? <FaFileAlt className="text-blue-500 flex-shrink-0" size={10} /> : <FaHome className="text-green-500 flex-shrink-0" size={10} />}
-                                                                {item.name || item.title}
-                                                            </div>
-                                                            <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                                                {isBlog ? (item.category || 'General') : item.location}
-                                                            </div>
-                                                            {!isBlog && (
-                                                                <>
-                                                                    <div className={`text-sm font-semibold ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>
-                                                                        ₹{item.price?.toLocaleString()}
-                                                                    </div>
-                                                                    <div className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-                                                                        {item.bedrooms}BHK • {item.area} sq ft • {item.type}
-                                                                    </div>
-                                                                </>
+                                                    <button
+                                                        type="button"
+                                                        key={item.id || item._id}
+                                                        onMouseDown={(e) => { e.preventDefault(); handleSuggestionSelect(item); }}
+                                                        className={`w-full text-left p-3 ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors ${index === selectedSuggestionIndex ? (isDarkMode ? 'bg-gray-700' : 'bg-gray-100') : ''
+                                                            }`}
+                                                    >
+                                                        <div className="flex items-center space-x-3">
+                                                            {(item.image || item.thumbnail || (item.imageUrls && item.imageUrls[0])) && (
+                                                                <img
+                                                                    src={item.image || item.thumbnail || item.imageUrls[0]}
+                                                                    alt={item.name || item.title}
+                                                                    className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
+                                                                />
                                                             )}
-                                                            {isBlog && (
-                                                                 <div className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-400'} truncate`}>
-                                                                     {item.excerpt || "Article content available"}
-                                                                 </div>
-                                                            )}
+                                                            <div className="flex-1 min-w-0">
+                                                                <div className={`font-medium flex items-center gap-1.5 ${isDarkMode ? 'text-white' : 'text-gray-900'} truncate`}>
+                                                                    {isBlog ? <FaFileAlt className="text-blue-500 flex-shrink-0" size={10} /> : <FaHome className="text-green-500 flex-shrink-0" size={10} />}
+                                                                    {item.name || item.title}
+                                                                </div>
+                                                                <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                                                    {isBlog ? (item.category || 'General') : item.location}
+                                                                </div>
+                                                                {!isBlog && (
+                                                                    <>
+                                                                        <div className={`text-sm font-semibold ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>
+                                                                            ₹{item.price?.toLocaleString()}
+                                                                        </div>
+                                                                        <div className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                                                                            {item.bedrooms}BHK • {item.area} sq ft • {item.type}
+                                                                        </div>
+                                                                    </>
+                                                                )}
+                                                                {isBlog && (
+                                                                    <div className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-400'} truncate`}>
+                                                                        {item.excerpt || "Article content available"}
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                </button>
-                                            )}) : (
+                                                    </button>
+                                                )
+                                            }) : (
                                                 <div className={`p-3 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-center`}>
                                                     No results found. Try typing more characters.
                                                 </div>
