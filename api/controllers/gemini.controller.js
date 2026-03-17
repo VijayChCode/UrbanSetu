@@ -604,28 +604,53 @@ export const chatWithGemini = async (req, res) => {
             // Execute each tool
             for (const toolCall of responseMessage.tool_calls) {
                 const functionName = toolCall.function.name;
-                const functionArgs = JSON.parse(toolCall.function.arguments);
+                
+                // Robustness: Normalize function name (handle hallucinations with spaces or case issues)
+                const normalizedName = functionName.toLowerCase().replace(/\s+/g, '_');
+                
+                let functionArgs = {};
+                try {
+                    functionArgs = JSON.parse(toolCall.function.arguments);
+                } catch (e) {
+                    console.error(`⚠️ Error parsing tool arguments for ${functionName}:`, e);
+                    // Continue with empty args if parsing fails
+                }
 
-                console.log(`__ Executing tool: ${functionName}`, functionArgs);
+                console.log(`🛠️ Executing tool: ${functionName} (Normalized: ${normalizedName})`, functionArgs);
 
                 let toolResult;
-                if (toolRegistry[functionName]) {
-                    // Pass userId specifically for tools that need owner context (like get_user_listings)
-                    toolResult = await toolRegistry[functionName]({ ...functionArgs, userId });
+                try {
+                    // Check registry using both original and normalized name for maximum robustness
+                    const toolToExec = toolRegistry[functionName] || toolRegistry[normalizedName];
+                    
+                    if (toolToExec) {
+                        // Pass userId for tools that need owner context (like get_user_listings)
+                        toolResult = await toolToExec({ ...functionArgs, userId });
 
-                    // Collect listings if this was a property search or user listings fetch
-                    if (functionName === 'search_properties' || functionName === 'get_user_listings') {
-                        try {
-                            const parsed = JSON.parse(toolResult);
-                            if (parsed.found && parsed.listings) {
-                                recommendedProperties.push(...parsed.listings);
+                        // Collect listings for UI cards if this was a property-related fetch
+                        if (normalizedName === 'search_properties' || normalizedName === 'get_user_listings') {
+                            try {
+                                const parsed = JSON.parse(toolResult);
+                                if (parsed.found && parsed.listings) {
+                                    recommendedProperties.push(...parsed.listings);
+                                }
+                            } catch (e) {
+                                console.warn("Could not parse tool result for metadata listing collection:", e);
                             }
-                        } catch (e) {
-                            console.error("Error parsing tool result for metadata:", e);
                         }
+                    } else {
+                        console.warn(`❌ Tool not found in registry: ${functionName}`);
+                        toolResult = JSON.stringify({ 
+                            error: "Tool not found", 
+                            message: `The tool '${functionName}' is not currently available. Please proceed using your general knowledge or ask for different information.`
+                        });
                     }
-                } else {
-                    toolResult = JSON.stringify({ error: "Tool not found" });
+                } catch (toolError) {
+                    console.error(`🔥 Error during execution of tool ${functionName}:`, toolError);
+                    toolResult = JSON.stringify({ 
+                        error: "Execution failed", 
+                        details: toolError.message 
+                    });
                 }
 
                 // Append the result to history
