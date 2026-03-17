@@ -16,23 +16,24 @@ const groq = new Groq({
 import { toolRegistry, toolDefinitions } from '../services/aiToolsService.js';
 
 export const chatWithGemini = async (req, res) => {
-    try {
-        const {
-            message,
-            history = [],
-            sessionId,
-            tone = 'neutral',
-            responseLength = 'medium',
-            creativity = 'balanced',
-            temperature = '0.7',
-            topP = '0.8',
-            maxTokens = '2048',
-            enableStreaming = true,
-            contextWindow = '10',
-            selectedProperties
-        } = req.body;
-        const userId = req.user?.id;
+    const {
+        message,
+        history = [],
+        sessionId,
+        tone = 'neutral',
+        responseLength = 'medium',
+        creativity = 'balanced',
+        temperature = '0.7',
+        topP = '0.8',
+        maxTokens = '2048',
+        enableStreaming = true,
+        contextWindow = '10',
+        selectedProperties
+    } = req.body;
+    const userId = req.user?.id;
+    const currentSessionId = sessionId || `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
+    try {
         if (!message) {
             return res.status(400).json({
                 success: false,
@@ -49,8 +50,7 @@ export const chatWithGemini = async (req, res) => {
             });
         }
 
-        // Generate session ID if not provided
-        const currentSessionId = sessionId || `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
 
         const LEGAL_POLICIES = `
             LEGAL & POLICIES:
