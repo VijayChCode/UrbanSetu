@@ -920,9 +920,9 @@ export const chatWithGemini = async (req, res) => {
 
     } catch (error) {
         console.error('Groq API Error:', error);
-        
+
         // Graceful fallback content
-        const fallbackResponse = "I'm having a bit of trouble processing that specific request right now due to a temporary connection surge. However, I'm still here to help! \n\nYou can try rephrasing your question, or check our [Help Center](https://urbansetu.vercel.app/about) for general guidance. I'll be back to full strength in just a moment.";
+        const fallbackResponse = "I'm having a bit of trouble processing that specific request right now due to a temporary connection surge. However, I'm still here to help! \n\nYou can try rephrasing your question, or check our [Help Center](https://urbansetu.vercel.app/help-center) for general guidance. I'll be back to full strength in just a moment.";
 
         if (userId) {
             try {

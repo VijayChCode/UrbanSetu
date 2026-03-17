@@ -3170,9 +3170,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     const currentMessages = Array.isArray(prev) ? prev : [];
                     return [...currentMessages, {
                         role: 'assistant',
-                        content: errorMessage,
+                        content: `I'm having a bit of trouble connecting right now (${errorMessage}). \n\nFeel free to try again in a moment or rephrase your request!`,
                         timestamp: new Date().toISOString(),
-                        isError: true,
+                        isError: false, // Set to false to show as a normal bubble per user request
                         originalUserMessage: lastUserMessageRef.current
                     }];
                 });
