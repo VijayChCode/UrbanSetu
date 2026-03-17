@@ -6256,8 +6256,21 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             {/* Left: assistant identity with status */}
                             <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
                                 <div className="relative">
-                                    <div className="p-1.5 md:p-2 bg-white/10 rounded-lg border border-white/20">
-                                        <FaRobot size={16} className="opacity-90" />
+                                    <div className="p-1.5 md:p-2 bg-white/10 rounded-lg border border-white/20 relative overflow-visible">
+                                        {/* Dynamic Header WiFi Aura/Icon */}
+                                        {(isLoading || showTypingIndicator || hasChatError) && (
+                                            <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 z-20 pointer-events-none transition-all duration-300">
+                                                {hasChatError ? (
+                                                    <div className="relative flex items-center justify-center">
+                                                        <FaWifi className="text-[14px] text-red-300/40" />
+                                                        <FaTimes className="absolute text-[10px] text-red-100 drop-shadow-[0_0_4px_rgba(239,68,68,0.9)]" />
+                                                    </div>
+                                                ) : (
+                                                    <FaWifi className="text-[14px] text-blue-100 animate-bandwidth drop-shadow-[0_0_8px_rgba(191,219,254,0.8)]" />
+                                                )}
+                                            </div>
+                                        )}
+                                        <FaRobot size={16} className={`transition-all duration-500 ${isLoading || showTypingIndicator ? 'text-blue-200 animate-pulse' : 'opacity-90 text-white'}`} />
                                     </div>
                                     {/* Online status indicator with ping effect */}
                                     <div className="absolute -bottom-1 -right-1 w-3 h-3 flex items-center justify-center">
