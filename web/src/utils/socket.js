@@ -28,9 +28,8 @@ export const updateSocketToken = (newToken) => {
   if (socket) {
     socket.auth = { token: newToken };
     if (socket.connected) {
-      // If already connected, we might need to emit a message or reconnect depending on server logic
-      // but usually updating auth object is for the next connection attempt.
-      // Forced reconnection ensures the new token is used by the server middleware.
+      // Forced reconnection ensures the new token is used by the server middleware immediately
+      socket.disconnect().connect();
     }
   }
 };
