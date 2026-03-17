@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
-import { FaComments, FaTimes, FaPaperPlane, FaRobot, FaCopy, FaSync, FaUser, FaCheck, FaDownload, FaUpload, FaPaperclip, FaCog, FaLightbulb, FaHistory, FaBookmark, FaShare, FaThumbsUp, FaThumbsDown, FaRegBookmark, FaBookmark as FaBookmarkSolid, FaMicrophone, FaStop, FaImage, FaFileAlt, FaMagic, FaStar, FaMoon, FaSun, FaPalette, FaVolumeUp, FaVolumeMute, FaExpand, FaCompress, FaSearch, FaFilter, FaSort, FaEye, FaEyeSlash, FaEdit, FaCheck as FaCheckCircle, FaTimes as FaTimesCircle, FaFlag, FaClipboardList, FaCommentAlt, FaArrowDown, FaTrash, FaEllipsisH, FaEllipsisV, FaShareAlt, FaBan, FaChevronLeft, FaChevronRight, FaSave } from 'react-icons/fa';
+import { FaComments, FaTimes, FaWifi, FaPaperPlane, FaRobot, FaCopy, FaSync, FaUser, FaCheck, FaDownload, FaUpload, FaPaperclip, FaCog, FaLightbulb, FaHistory, FaBookmark, FaShare, FaThumbsUp, FaThumbsDown, FaRegBookmark, FaBookmark as FaBookmarkSolid, FaMicrophone, FaStop, FaImage, FaFileAlt, FaMagic, FaStar, FaMoon, FaSun, FaPalette, FaVolumeUp, FaVolumeMute, FaExpand, FaCompress, FaSearch, FaFilter, FaSort, FaEye, FaEyeSlash, FaEdit, FaCheck as FaCheckCircle, FaTimes as FaTimesCircle, FaFlag, FaClipboardList, FaCommentAlt, FaArrowDown, FaTrash, FaEllipsisH, FaEllipsisV, FaShareAlt, FaBan, FaChevronLeft, FaChevronRight, FaSave } from 'react-icons/fa';
 import EqualizerButton from './EqualizerButton';
 import ShareChatModal from './ShareChatModal';
 import SocialSharePanel from './SocialSharePanel';
@@ -6047,16 +6047,20 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 <div className="relative group">
                     {/* Quick Action Buttons */}
                     {!isOpen && (
-                        <div className="absolute bottom-full right-0 mb-4 flex flex-col gap-2 opacity-0 translate-y-4 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300">
+                        <div className="absolute right-full top-1/2 -translate-y-1/2 flex flex-row-reverse items-center gap-3 pr-5 opacity-0 scale-75 translate-x-10 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:translate-x-0 group-hover:pointer-events-auto transition-all duration-500 ease-out z-50">
                             <button
                                 onClick={() => {
-                                    createNewSession();
+                                    if (!currentUser) {
+                                        toast.info('Please login to upload files');
+                                        return;
+                                    }
                                     setIsOpen(true);
+                                    setTimeout(() => setShowFileUpload(true), 100);
                                 }}
-                                className="w-10 h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-110"
-                                title="New Chat"
+                                className="w-11 h-11 bg-purple-500 hover:bg-purple-600 text-white rounded-full shadow-2xl flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 border border-white/20"
+                                title="Upload File"
                             >
-                                <FaComments size={14} />
+                                <FaUpload size={16} />
                             </button>
                             <button
                                 onClick={() => {
@@ -6067,24 +6071,20 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     setIsOpen(true);
                                     setTimeout(() => setShowVoiceInput(true), 100);
                                 }}
-                                className="w-10 h-10 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-110"
+                                className="w-11 h-11 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-2xl flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 border border-white/20"
                                 title="Voice Input"
                             >
-                                <FaMicrophone size={14} />
+                                <FaMicrophone size={16} />
                             </button>
                             <button
                                 onClick={() => {
-                                    if (!currentUser) {
-                                        toast.info('Please login to upload files');
-                                        return;
-                                    }
+                                    createNewSession();
                                     setIsOpen(true);
-                                    setTimeout(() => setShowFileUpload(true), 100);
                                 }}
-                                className="w-10 h-10 bg-purple-500 hover:bg-purple-600 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-110"
-                                title="Upload File"
+                                className="w-11 h-11 bg-blue-500 hover:bg-blue-600 text-white rounded-full shadow-2xl flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 border border-white/20"
+                                title="New Chat"
                             >
-                                <FaUpload size={14} />
+                                <FaComments size={16} />
                             </button>
                         </div>
                     )}
@@ -6119,6 +6119,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 <FaTimes className="w-5 h-5 text-white drop-shadow-lg animate-fadeIn" />
                             ) : (
                                 <div className="relative flex items-center justify-center">
+                                    {!isOpen && !isLoading && (
+                                        <FaWifi className="absolute -top-3.5 left-1/2 -translate-x-1/2 text-[10px] text-blue-400 animate-pulse drop-shadow-[0_0_5px_rgba(96,165,250,0.8)] z-20" />
+                                    )}
                                     {isLoading ? (
                                         <div className="relative">
                                             <FaRobot className="w-6 h-6 text-blue-400 animate-pulse drop-shadow-[0_0_8px_rgba(96,165,250,0.8)]" />
@@ -6155,8 +6158,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
                     {/* Try SETUAI Expansion Prompt */}
                     {showTryPrompt && !isOpen && (
-                        <div className="absolute bottom-2 right-16 flex items-center mr-2 animate-[slideInRight_0.5s_ease-out] drop-shadow-2xl z-40">
-                            <div className={`relative px-5 py-3 rounded-2xl whitespace-nowrap overflow-hidden group shadow-2xl border border-white/20 dark:border-gray-700/50 ${isDarkMode ? 'bg-gray-800/90 text-white' : 'bg-white/90 text-gray-900'} backdrop-blur-md`}>
+                        <div className="absolute bottom-full right-0 mb-5 flex items-center animate-[slideUp_0.5s_ease-out] drop-shadow-2xl z-40 max-w-[90vw] md:max-w-xs">
+                            <div className={`relative px-5 py-3 rounded-2xl whitespace-nowrap overflow-hidden group shadow-2xl border border-white/20 dark:border-gray-700/50 ${isDarkMode ? 'bg-gray-800/95 text-white' : 'bg-white/95 text-gray-900'} backdrop-blur-md`}>
                                 {/* Progress bar background */}
                                 <div className="absolute bottom-0 left-0 h-1 bg-blue-500/30 w-full animate-[shrink_6s_linear]" />
 
@@ -6166,7 +6169,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     </div>
                                     <div className="flex flex-col">
                                         <span className="text-sm font-black tracking-tight leading-none mb-0.5">Meet SETUAI 🤖</span>
-                                        <span className="text-[11px] opacity-70 font-medium">Smart Property Assistant active</span>
+                                        <span className="text-[11px] opacity-70 font-medium truncate max-w-[120px] sm:max-w-none">Smart Property Assistant active</span>
                                     </div>
                                     <button
                                         onClick={() => handleOpen()}
@@ -6175,16 +6178,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     >
                                         Try Now
                                     </button>
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); setShowTryPrompt(false); }}
-                                        className="p-1 opacity-40 hover:opacity-100 transition-opacity"
-                                    >
-                                        <FaTimes size={10} />
-                                    </button>
                                 </div>
 
                                 {/* Arrow */}
-                                <div className={`absolute -right-2 top-1/2 -translate-y-1/2 w-4 h-4 rotate-45 border-t border-r ${isDarkMode ? 'bg-gray-800/90 border-transparent' : 'bg-white/90 border-transparent'
+                                <div className={`absolute -bottom-2 right-6 w-4 h-4 rotate-45 border-r border-b ${isDarkMode ? 'bg-gray-800/95 border-gray-700/50' : 'bg-white/95 border-gray-200'
                                     }`} />
                             </div>
                         </div>
