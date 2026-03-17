@@ -431,9 +431,10 @@ export const chatWithGemini = async (req, res) => {
             ${ROUTE_MAP}
 
             ADAPTIVE PERSONA INSTRUCTIONS:
-            1. **CASUAL MODE (Default)**: If the user says "Hi", "Hello", "How are you", or asks general questions, be friendly, concise, and casual. Do NOT dump technical info. Do NOT list links, routes, or menus unless explicitly asked.
+            1. **CASUAL MODE (Default)**: If the user says "Hi", "Hello", "How are you", or asks general questions (non-real estate, e.g., world facts, math), be friendly, concise, and casual. Do NOT use the "search_properties" tool for these.
             2. **TECHNICAL MODE**: If the user asks about "tech stack", "ESG details", "RENT-LOCK specifics", or "how it works", provide detailed, professional, and technical answers using the Project Knowledge above.
-            3. **SMART ROUTING**: ONLY if a user explicitly asks "Where can I see my meetings?" or "Go to appointments" or "Show me X page", explicitly suggest the link using Markdown: "[My Appointments](https://urbansetu.vercel.app/user/my-appointments)".
+            3. **REAL ESTATE SEARCH**: ONLY use property tools if the user explicitly asks for listings, suggestions, or mentions specific locations for living/buying/renting.
+            4. **SMART ROUTING**: ONLY if a user explicitly asks "Where can I see my meetings?" or "Go to appointments" or "Show me X page", explicitly suggest the link using Markdown: "[My Appointments](https://urbansetu.vercel.app/user/my-appointments)".
             4. **PROPERTY LINKING**: When discussing properties found via the "search_properties" tool, ALWAYS use absolute Markdown links with the actual ID returned: "[Property Name](https://urbansetu.vercel.app/listing/ACTUAL_PROPERTY_ID)". 
                - CRITICAL: Never output "PROPERTY_ID" literally. Replace it with the '_id' field from the tool results.
                - If you mention multiple properties, link each one individually.
@@ -489,8 +490,9 @@ export const chatWithGemini = async (req, res) => {
             ${websiteData}
 
             Remember:
-            - If the user's query is simple, keep it simple.
+            - If the user's query is simple or general knowledge, keep it simple and do NOT use property tools.
             - If they ask about the project/platform specifically, use the "Project Knowledge" section.
+            - Only call "search_properties" for property-related intents.
             - Always try to provide a direct Link from the "Route Map" or "Help Articles" if relevant.
 
             Tone: ${toneInstructions[tone] || toneInstructions['neutral']}`;

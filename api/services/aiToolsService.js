@@ -229,7 +229,7 @@ export const toolDefinitions = [
         type: "function",
         function: {
             name: "search_properties",
-            description: "Search for real estate properties (apartments, houses, villas) based on location, price, and other criteria.",
+            description: "Search ONLY for real estate properties (apartments, houses, villas) on UrbanSetu. Use this ONLY when the user asks to find, buy, rent, or suggest properties. Do NOT use for general knowledge (e.g., capitals, math, coding).",
             parameters: {
                 type: "object",
                 properties: {
@@ -251,8 +251,8 @@ export const toolDefinitions = [
                     },
                     type: {
                         type: "string",
-                        enum: ["sale", "rent", "all"],
-                        description: "Type of listing: for sale or rent"
+                        enum: ["sale", "rent", "all", ""],
+                        description: "Type of listing: 'sale', 'rent', or 'all'. Leave empty if not specified."
                     },
                     bedrooms: {
                         type: ["number", "string"],
