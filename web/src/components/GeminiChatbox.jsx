@@ -257,19 +257,21 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const headerMenuRef = useRef(null);
     const [showFeatures, setShowFeatures] = useState(false);
     const [showTryPrompt, setShowTryPrompt] = useState(false);
+    const [hasShownPrompt, setHasShownPrompt] = useState(false);
 
-    // Show promotional prompt on mount
+    // Show promotional prompt on mount (only once)
     useEffect(() => {
+        if (hasShownPrompt || isOpen) return;
+
         const timer = setTimeout(() => {
-            if (!isOpen) {
-                setShowTryPrompt(true);
-                // Hide after 6 seconds
-                const hideTimer = setTimeout(() => setShowTryPrompt(false), 6000);
-                return () => clearTimeout(hideTimer);
-            }
+            setShowTryPrompt(true);
+            setHasShownPrompt(true);
+            // Hide after 6 seconds
+            const hideTimer = setTimeout(() => setShowTryPrompt(false), 6000);
+            return () => clearTimeout(hideTimer);
         }, 3000);
         return () => clearTimeout(timer);
-    }, [isOpen]);
+    }, [isOpen, hasShownPrompt]);
 
     // Typewriter effect for header title
     useEffect(() => {
@@ -6102,12 +6104,19 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         )}
 
                         {/* Icon with sparkle effect */}
-                        <div className="relative z-10 transition-transform duration-300 group-hover:scale-110">
+                         <div className="relative z-10 transition-transform duration-300 group-hover:scale-110">
                             {isOpen ? (
                                 <FaTimes className="w-5 h-5 text-white drop-shadow-lg animate-fadeIn" />
                             ) : (
-                                <div className="relative">
-                                    <FaRobot className={`w-6 h-6 drop-shadow-lg ${isDarkMode ? 'text-blue-400' : 'text-white'} transition-colors duration-300`} />
+                                <div className="relative flex items-center justify-center">
+                                    {isLoading ? (
+                                        <div className="relative">
+                                            <FaRobot className="w-6 h-6 text-blue-400 animate-pulse drop-shadow-[0_0_8px_rgba(96,165,250,0.8)]" />
+                                            <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-400 rounded-full animate-ping"></div>
+                                        </div>
+                                    ) : (
+                                        <FaRobot className={`w-6 h-6 drop-shadow-lg ${isDarkMode ? 'text-blue-400' : 'text-white'} transition-colors duration-300`} />
+                                    )}
                                 </div>
                             )}
                         </div>
