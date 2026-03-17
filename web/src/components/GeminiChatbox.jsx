@@ -2739,7 +2739,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 role: 'user', 
                 content: displayUserMessage, 
                 timestamp: new Date().toISOString(),
-                images: messageImages 
+                images: messageImages,
+                imageAudits: imageAuditsToStream
             }];
         });
         // Add to history stack for Ctrl+Z retrieval
@@ -3602,6 +3603,12 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             updatedVariants[currentActiveIndex] = {
                 ...updatedVariants[currentActiveIndex],
                 content: message.content,
+                images: message.images,
+                imageUrl: message.imageUrl,
+                audioUrl: message.audioUrl,
+                videoUrl: message.videoUrl,
+                documentUrl: message.documentUrl,
+                documentName: message.documentName,
                 tail: next.slice(index + 1)
             };
 
@@ -3612,6 +3619,12 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             const updatedMessage = {
                 ...message,
                 content: targetVersion.content || '',
+                images: targetVersion.images,
+                imageUrl: targetVersion.imageUrl,
+                audioUrl: targetVersion.audioUrl,
+                videoUrl: targetVersion.videoUrl,
+                documentUrl: targetVersion.documentUrl,
+                documentName: targetVersion.documentName,
                 activeVersionIndex: newVersionIndex,
                 variants: updatedVariants,
                 timestamp: targetVersion.timestamp || message.timestamp
@@ -3658,6 +3671,12 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 variants[activeIdx] = {
                     ...variants[activeIdx],
                     content: originalMessage.content, // Save current before swapping
+                    images: originalMessage.images,
+                    imageUrl: originalMessage.imageUrl,
+                    audioUrl: originalMessage.audioUrl,
+                    videoUrl: originalMessage.videoUrl,
+                    documentUrl: originalMessage.documentUrl,
+                    documentName: originalMessage.documentName,
                     tail: currentTail
                 };
             } else {
@@ -3665,6 +3684,12 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 variants = [
                     {
                         content: originalMessage.content,
+                        images: originalMessage.images,
+                        imageUrl: originalMessage.imageUrl,
+                        audioUrl: originalMessage.audioUrl,
+                        videoUrl: originalMessage.videoUrl,
+                        documentUrl: originalMessage.documentUrl,
+                        documentName: originalMessage.documentName,
                         tail: currentTail,
                         timestamp: originalMessage.timestamp,
                         role: originalMessage.role
@@ -3684,6 +3709,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             const newMessage = {
                 ...originalMessage,
                 content: editingMessageContent.trim(),
+                // Keep the same media in the new version branch
                 timestamp: newVersion.timestamp,
                 variants: [...variants, newVersion],
                 activeVersionIndex: newVersionIndex
@@ -3700,8 +3726,15 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             // 5. Sync initial branch state to backend before sending new prompt
             await syncChatTreeToBackend(nextMessages);
 
-            // 6. Send to API - passing the history only UP TO the edit point
-            await sendEditedMessageToAPI(editingMessageContent.trim(), nextMessages.slice(0, messageIndex));
+            // 6. Send to API - passing the history only UP TO the edit point, plus any media
+            await sendEditedMessageToAPI(editingMessageContent.trim(), nextMessages.slice(0, messageIndex), {
+                images: originalMessage.images,
+                imageUrl: originalMessage.imageUrl,
+                audioUrl: originalMessage.audioUrl,
+                videoUrl: originalMessage.videoUrl,
+                documentUrl: originalMessage.documentUrl,
+                documentName: originalMessage.documentName
+            });
 
             toast.info('New conversation branch created');
 
@@ -3714,7 +3747,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     };
 
     // Send edited message directly to API
-    const sendEditedMessageToAPI = async (messageContent, historyOverride = null) => {
+    const sendEditedMessageToAPI = async (messageContent, historyOverride = null, media = {}) => {
         if (!messageContent.trim() || isLoading) return;
 
         // Check rate limit
@@ -3740,6 +3773,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 },
                 body: JSON.stringify({
                     message: messageContent,
+                    ...media,
                     history: (historyOverride || messages).slice(-10), // Use history override if provided
                     sessionId: currentSessionId,
                     tone: currentUser ? tone : 'neutral', // Send current tone setting or default for public users
@@ -7440,10 +7474,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                                 if (img.controller) img.controller.abort();
                                                                                 setPendingImages(prev => prev.filter(p => p.id !== img.id));
                                                                             }}
-                                                                            className="absolute top-0 right-0 p-0.5 bg-red-500/80 hover:bg-red-600 text-white rounded-bl-lg shadow-sm"
+                                                                            className="absolute top-1 right-1 p-1.5 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg z-20 transition-all duration-200 hover:scale-110"
                                                                             title="Cancel upload"
                                                                         >
-                                                                            <FaTimes size={8} />
+                                                                            <FaTimes size={10} />
                                                                         </button>
                                                                     </div>
                                                                 ) : (
@@ -7460,7 +7494,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                         />
                                                                         <button 
                                                                             onClick={() => setPendingImages(prev => prev.filter(p => p.id !== img.id))}
-                                                                            className="absolute top-1 right-1 p-1 bg-black/60 hover:bg-black/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 border border-white/20"
+                                                                            className="absolute top-1 right-1 p-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 border border-white/20 shadow-md"
                                                                             title="Remove image"
                                                                         >
                                                                             <FaTimes size={10} />

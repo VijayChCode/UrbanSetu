@@ -58,6 +58,17 @@ export const chatWithGemini = async (req, res) => {
             });
         }
 
+        const userDisplayContent = displayMessage !== undefined ? displayMessage : sanitizedMessage;
+        const media = {
+            images,
+            imageUrl,
+            audioUrl,
+            videoUrl,
+            documentUrl,
+            documentName,
+            imageAudits
+        };
+
 
 
         const LEGAL_POLICIES = `
@@ -192,7 +203,7 @@ export const chatWithGemini = async (req, res) => {
             if (userId) {
                 try {
                     const chatHistory = await ChatHistory.findOrCreateSession(userId, currentSessionId);
-                    await chatHistory.addMessage('user', sanitizedMessage, true); // true = isRestricted
+                    await chatHistory.addMessage('user', userDisplayContent, true, undefined, false, media); // true = isRestricted
                     
                     // Also save the violation response so it persists in red on UI reload
                     const violationMessage = "⚠️ **Safety Policy Violation Detected**\n\nI cannot fulfill this request because it falls under a restricted category (e.g., Harassment, Hate Speech, Violence, or Illegal Activities).\n\nThis incident has been flagged for review.";
@@ -745,7 +756,12 @@ export const chatWithGemini = async (req, res) => {
                         }
                     }
                     // Combine multiple adds into one save for efficiency and to avoid VersionError
-                    chatHistory.messages.push({ role: 'user', content: message, timestamp: new Date() });
+                    chatHistory.messages.push({ 
+                        role: 'user', 
+                        content: userDisplayContent, 
+                        timestamp: new Date(),
+                        ...media
+                    });
                     chatHistory.messages.push({ 
                         role: 'assistant', 
                         content: fullResponse, 
@@ -761,7 +777,12 @@ export const chatWithGemini = async (req, res) => {
                             // On collision, refetch and append
                             const latestHistory = await ChatHistory.findOne({ userId, sessionId: currentSessionId, isActive: true });
                             if (latestHistory) {
-                                latestHistory.messages.push({ role: 'user', content: message, timestamp: new Date() });
+                                latestHistory.messages.push({ 
+                                    role: 'user', 
+                                    content: userDisplayContent, 
+                                    timestamp: new Date(),
+                                    ...media
+                                });
                                 latestHistory.messages.push({ 
                                     role: 'assistant', 
                                     content: fullResponse, 
@@ -822,18 +843,6 @@ export const chatWithGemini = async (req, res) => {
                     }
 
 
-                    // Optimized save with media fields
-                    const media = {
-                        images,
-                        imageUrl,
-                        audioUrl,
-                        videoUrl,
-                        documentUrl,
-                        documentName
-                    };
-
-                    const userDisplayContent = displayMessage !== undefined ? displayMessage : message;
-                    
                     chatHistory.messages.push({ 
                         role: 'user', 
                         content: userDisplayContent, 
@@ -1519,6 +1528,13 @@ export const updateSessionHistory = async (req, res) => {
             isError: msg.isError || false,
             recommendations: msg.recommendations,
             activeVersionIndex: msg.activeVersionIndex || 0,
+            images: msg.images,
+            imageUrl: msg.imageUrl,
+            audioUrl: msg.audioUrl,
+            videoUrl: msg.videoUrl,
+            documentUrl: msg.documentUrl,
+            documentName: msg.documentName,
+            imageAudits: msg.imageAudits,
             variants: (msg.variants || []).map(v => ({
                 role: v.role || msg.role,
                 content: v.content,
@@ -1526,6 +1542,13 @@ export const updateSessionHistory = async (req, res) => {
                 isError: v.isError || false,
                 isRestricted: v.isRestricted || false,
                 timestamp: v.timestamp || new Date(),
+                images: v.images,
+                imageUrl: v.imageUrl,
+                audioUrl: v.audioUrl,
+                videoUrl: v.videoUrl,
+                documentUrl: v.documentUrl,
+                documentName: v.documentName,
+                imageAudits: v.imageAudits,
                 tail: v.tail || []
             }))
         }));

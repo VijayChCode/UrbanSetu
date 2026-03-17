@@ -50,6 +50,13 @@ const chatHistorySchema = new mongoose.Schema({
       isError: Boolean,
       isRestricted: Boolean,
       timestamp: { type: Date, default: Date.now },
+      images: [String],
+      imageUrl: String,
+      audioUrl: String,
+      videoUrl: String,
+      documentUrl: String,
+      documentName: String,
+      imageAudits: Object,
       tail: { type: Array, default: [] }
     }],
     activeVersionIndex: {
@@ -57,6 +64,10 @@ const chatHistorySchema = new mongoose.Schema({
       default: 0
     },
     // Media Attachments
+    imageAudits: {
+      type: Object,
+      default: undefined
+    },
     images: {
       type: [String],
       default: undefined
