@@ -4,7 +4,7 @@ import ListingItem from './ListingItem';
 import { getLiveRecommendations } from '../utils/sentinelLiveEngine';
 import { authenticatedFetch } from '../utils/auth';
 import SEO from './SEO';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter, Link } from 'react-router-dom';
 import WishlistProvider from '../WishlistContext';
 
 class GlobalErrorBoundary extends React.Component {
@@ -17,7 +17,8 @@ class GlobalErrorBoundary extends React.Component {
             switchCount: parseInt(sessionStorage.getItem('err_switch_count') || '0'),
             isPersistentError: false,
             recommendations: [],
-            loadingRecs: true
+            loadingRecs: true,
+            visibleRecsCount: 4
         };
         this.timer = null;
     }
@@ -96,6 +97,16 @@ class GlobalErrorBoundary extends React.Component {
         } catch (e) { }
         return null;
     };
+    getExplorePath = () => {
+        const currentUser = this.getCurrentUser();
+        if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) {
+            return "/admin/explore";
+        } else if (currentUser) {
+            return "/user/search";
+        }
+        return "/search";
+    };
+
 
     fetchRecommendations = async () => {
         const currentUser = this.getCurrentUser();
@@ -130,15 +141,15 @@ class GlobalErrorBoundary extends React.Component {
                 } catch (e) { }
 
                 const validListings = listings.filter(l => l.userRef !== currentUser._id && l.sellerId !== currentUser._id);
-                const recs = await getLiveRecommendations(validListings, 4, userPreferences);
+                const recs = await getLiveRecommendations(validListings, 100, userPreferences);
                 
                 if (recs.length > 0) {
                     this.setState({ recommendations: recs });
                 } else {
-                    this.setState({ recommendations: listings.sort(() => 0.5 - Math.random()).slice(0, 4) });
+                    this.setState({ recommendations: listings.sort(() => 0.5 - Math.random()) });
                 }
             } else {
-                this.setState({ recommendations: listings.sort(() => 0.5 - Math.random()).slice(0, 4) });
+                this.setState({ recommendations: listings.sort(() => 0.5 - Math.random()) });
             }
         } catch (error) {
             console.error("ErrorBoundary: Failed to fetch recommendations", error);
@@ -327,43 +338,58 @@ class GlobalErrorBoundary extends React.Component {
                         <div className="w-full max-w-6xl animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
                             <div className="relative overflow-hidden p-1 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-blue-600/10 rounded-[2.5rem]">
                                 <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-8 rounded-[2.4rem] border border-white/50 dark:border-gray-700/50 shadow-xl">
-                                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-                                        <div className="flex flex-col md:flex-row md:items-center gap-4">
-                                            <h2 className="text-2xl font-black text-gray-900 dark:text-white flex items-center gap-3">
-                                                <span className="p-2 bg-blue-600 text-white rounded-xl shadow-lg ring-4 ring-blue-50 dark:ring-blue-900/10">
-                                                    {this.getCurrentUser() ? <FaRobot className="animate-pulse" /> : <FaRocket className="animate-bounce" />}
-                                                </span>
-                                                {this.getCurrentUser() ? "Sentinel Live" : "Explore Properties"}
-                                            </h2>
-                                            <div className="flex flex-col">
-                                                <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 rounded-full w-fit">
-                                                    <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">
-                                                        {this.getCurrentUser() ? "RECOMMENDING BASED ON YOUR CURRENT SESSION" : "HANDPICKED RECOMMENDATIONS"}
-                                                    </span>
-                                                </div>
-                                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-1 font-medium italic">
-                                                    {this.getCurrentUser() ? "Tensor-mode active · Browse while we fix the connection" : "Real-time updates · Discover your next home"}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <BrowserRouter>
-                                        <WishlistProvider>
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                                                {this.state.recommendations.map((listing) => (
-                                                    <div key={`err-rec-${listing._id}`} className="relative group">
-                                                        {listing.isLiveMatch && (
-                                                            <div className="absolute -top-2 -right-2 z-20 bg-blue-600 text-white text-[10px] font-black px-2 py-1 rounded-lg shadow-lg transform rotate-12 group-hover:rotate-0 transition-transform">
-                                                                {Math.round(listing.sentinelScore * 100)}% MATCH
-                                                            </div>
-                                                        )}
-                                                        <ListingItem listing={listing} />
+                                        <BrowserRouter>
+                                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                                                <div className="flex flex-col md:flex-row md:items-center gap-4">
+                                                    <h2 className="text-2xl font-black text-gray-900 dark:text-white flex items-center gap-3">
+                                                        <span className="p-2 bg-blue-600 text-white rounded-xl shadow-lg ring-4 ring-blue-50 dark:ring-blue-900/10">
+                                                            {this.getCurrentUser() ? <FaRobot className="animate-pulse" /> : <FaRocket className="animate-bounce" />}
+                                                        </span>
+                                                        {this.getCurrentUser() ? "Sentinel Live" : "Explore Properties"}
+                                                    </h2>
+                                                    <div className="flex flex-col">
+                                                        <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 rounded-full w-fit">
+                                                            <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">
+                                                                {this.getCurrentUser() ? "RECOMMENDING BASED ON YOUR CURRENT SESSION" : "HANDPICKED RECOMMENDATIONS"}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-1 font-medium italic">
+                                                            {this.getCurrentUser() ? "Tensor-mode active · Browse while we fix the connection" : "Real-time updates · Discover your next home"}
+                                                        </p>
                                                     </div>
-                                                ))}
+                                                </div>
+                                                <Link
+                                                    to={this.getExplorePath()}
+                                                    className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-bold hover:text-blue-700 dark:hover:text-blue-300 transition-all hover:translate-x-1"
+                                                >
+                                                    View All <FaArrowRight />
+                                                </Link>
                                             </div>
-                                        </WishlistProvider>
-                                    </BrowserRouter>
+                                            <WishlistProvider>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                                    {this.state.recommendations.slice(0, this.state.visibleRecsCount).map((listing) => (
+                                                        <div key={`err-rec-${listing._id}`} className="relative group">
+                                                            {listing.isLiveMatch && (
+                                                                <div className="absolute -top-2 -right-2 z-20 bg-blue-600 text-white text-[10px] font-black px-2 py-1 rounded-lg shadow-lg transform rotate-12 group-hover:rotate-0 transition-transform">
+                                                                    {Math.round(listing.sentinelScore * 100)}% MATCH
+                                                                </div>
+                                                            )}
+                                                            <ListingItem listing={listing} />
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </WishlistProvider>
+                                            {this.state.recommendations.length > this.state.visibleRecsCount && (
+                                                <div className="mt-8 text-center">
+                                                    <button
+                                                        onClick={() => this.setState(prev => ({ visibleRecsCount: prev.visibleRecsCount + 4 }))}
+                                                        className="px-6 py-3 bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 font-bold rounded-xl shadow-lg border border-blue-100 dark:border-blue-900 hover:bg-blue-50 dark:hover:bg-gray-700 transition-all transform hover:scale-105 flex items-center gap-2 mx-auto"
+                                                    >
+                                                        View More Recommendations <FaArrowRight />
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </BrowserRouter>
                                     
                                     <div className="mt-8 text-center border-t border-gray-100 dark:border-gray-700 pt-6">
                                         <p className="text-sm text-gray-500 dark:text-gray-400 font-medium italic">

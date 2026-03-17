@@ -13,8 +13,8 @@ import SocialSharePanel from './SocialSharePanel';
 
 export default function ListingItem({ listing, onDelete, onWishToggle }) {
   const wishlistContext = useWishlist() || {
-    addToWishlist: async () => {},
-    removeFromWishlist: async () => {},
+    addToWishlist: async () => { },
+    removeFromWishlist: async () => { },
     isInWishlist: () => false
   };
   const { addToWishlist, removeFromWishlist, isInWishlist } = wishlistContext;
