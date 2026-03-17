@@ -17,7 +17,14 @@ import { toolRegistry, toolDefinitions } from '../services/aiToolsService.js';
 
 export const chatWithGemini = async (req, res) => {
     const {
-        message,
+        message,           // Full prompt with URLs
+        displayMessage,    // Clean message for UI history
+        images,            // Array of image URLs
+        imageUrl,
+        audioUrl,
+        videoUrl,
+        documentUrl,
+        documentName,
         history = [],
         sessionId,
         tone = 'neutral',
@@ -34,10 +41,10 @@ export const chatWithGemini = async (req, res) => {
     const currentSessionId = sessionId || `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     try {
-        if (!message) {
+        if (!message && !images?.length && !imageUrl && !audioUrl && !videoUrl && !documentUrl) {
             return res.status(400).json({
                 success: false,
-                message: 'Message is required'
+                message: 'Content or media is required'
             });
         }
 
@@ -435,17 +442,21 @@ export const chatWithGemini = async (req, res) => {
             2. **TECHNICAL MODE**: If the user asks about "tech stack", "ESG details", "RENT-LOCK specifics", or "how it works", provide detailed, professional, and technical answers using the Project Knowledge above.
             3. **REAL ESTATE SEARCH**: ONLY use property tools if the user explicitly asks for listings, suggestions, or mentions specific locations for living/buying/renting.
             4. **SMART ROUTING**: ONLY if a user explicitly asks "Where can I see my meetings?" or "Go to appointments" or "Show me X page", explicitly suggest the link using Markdown: "[My Appointments](https://urbansetu.vercel.app/user/my-appointments)".
-            4. **PROPERTY LINKING**: When discussing properties found via the "search_properties" tool, ALWAYS use absolute Markdown links with the actual ID returned: "[Property Name](https://urbansetu.vercel.app/listing/ACTUAL_PROPERTY_ID)". 
+            5. **PROPERTY LINKING**: When discussing properties found via the "search_properties" tool, ALWAYS use absolute Markdown links with the actual ID returned: "[Property Name](https://urbansetu.vercel.app/listing/ACTUAL_PROPERTY_ID)". 
                - CRITICAL: Never output "PROPERTY_ID" literally. Replace it with the '_id' field from the tool results.
                - If you mention multiple properties, link each one individually.
-            5. **SMART RECOMMENDATIONS**: 
+            6. **SMART RECOMMENDATIONS**: 
                - If a user asks for property suggestions, find them using the "search_properties" tool. 
                - If the tool returns results, mention them in your text AND state that a detailed view is available below. Example: "I found a few great properties for you in Hyderabad! You can see the full cards below."
                - If the tool finds NO results, briefly explain that you couldn't find a direct match but suggest they check our [Search Page](https://urbansetu.vercel.app/search) for more filters.
                - PRO TIP: You can suggest pre-filled search links like "[Properties in Hyderabad](https://urbansetu.vercel.app/search?city=Hyderabad&type=sale)".
-            6. **STATUS AWARENESS**: Always mention if a property is "[SALE-LOCKED]" or "[RENT-LOCKED]" based on the status provided in the context. Explain that these statuses mean the property is secured and no further negotiations are being accepted for now.
-            7. **AUTHENTICATION AWARENESS**: For any link containing "/user/" (e.g., My Listings, Appointments, Rent Wallet), explicitly mention that the user must be logged in to access it.
-            8. **OWNED PROPERTIES (LANDLORD/OWNED MODE)**: 
+            7. **SENTINEL IMAGE AUDIT**:
+               - When a user provides an image URL or mentions an uploaded photo/layout/document, you MUST use the "sentinel_image_auditor" tool for EACH distinct image URL provided in the prompt.
+               - If multiple images are provided, call the tool multiple times (once for each URL) to analyze each one.
+               - Incorporate the audit findings (quality score, detected entities, audit summary) into your response to provide technical feedback to the user about their upload.
+            8. **STATUS AWARENESS**: Always mention if a property is "[SALE-LOCKED]" or "[RENT-LOCKED]" based on the status provided in the context. Explain that these statuses mean the property is secured and no further negotiations are being accepted for now.
+            9. **AUTHENTICATION AWARENESS**: For any link containing "/user/" (e.g., My Listings, Appointments, Rent Wallet), explicitly mention that the user must be logged in to access it.
+            10. **OWNED PROPERTIES (LANDLORD/OWNED MODE)**: 
                - If the user asks about "my properties", "my listings", or "how are my houses performing", use the "get_user_listings" tool.
                - If they are NOT logged in, politely encourage them to [Sign In](https://urbansetu.vercel.app/sign-in) to see their personalized property dashboard.
                - Once you have their listings, you can offer advice on improvements, price adjustments, or verification status to help them sell/rent faster.
@@ -810,8 +821,25 @@ export const chatWithGemini = async (req, res) => {
                     }
 
 
-                    // Optimized save
-                    chatHistory.messages.push({ role: 'user', content: message, timestamp: new Date() });
+                    // Optimized save with media fields
+                    const media = {
+                        images,
+                        imageUrl,
+                        audioUrl,
+                        videoUrl,
+                        documentUrl,
+                        documentName
+                    };
+
+                    const userDisplayContent = displayMessage !== undefined ? displayMessage : message;
+                    
+                    chatHistory.messages.push({ 
+                        role: 'user', 
+                        content: userDisplayContent, 
+                        timestamp: new Date(),
+                        ...media
+                    });
+                    
                     chatHistory.messages.push({ 
                         role: 'assistant', 
                         content: responseText, 
@@ -826,7 +854,12 @@ export const chatWithGemini = async (req, res) => {
                         if (saveError.name === 'VersionError') {
                             const latestHistory = await ChatHistory.findOne({ userId, sessionId: currentSessionId, isActive: true });
                             if (latestHistory) {
-                                latestHistory.messages.push({ role: 'user', content: message, timestamp: new Date() });
+                                latestHistory.messages.push({ 
+                                    role: 'user', 
+                                    content: userDisplayContent, 
+                                    timestamp: new Date(),
+                                    ...media
+                                });
                                 latestHistory.messages.push({ 
                                     role: 'assistant', 
                                     content: responseText, 
@@ -879,8 +912,23 @@ export const chatWithGemini = async (req, res) => {
         // Save the error message to chat history so it persists in red
         if (userId) {
             try {
+                const media = {
+                    images,
+                    imageUrl,
+                    audioUrl,
+                    videoUrl,
+                    documentUrl,
+                    documentName
+                };
+                const userDisplayContent = displayMessage !== undefined ? displayMessage : message;
+                
                 const chatHistory = await ChatHistory.findOrCreateSession(userId, currentSessionId);
-                chatHistory.messages.push({ role: 'user', content: message, timestamp: new Date() });
+                chatHistory.messages.push({ 
+                    role: 'user', 
+                    content: userDisplayContent, 
+                    timestamp: new Date(),
+                    ...media
+                });
                 chatHistory.messages.push({ 
                     role: 'assistant', 
                     content: errorMessage, 

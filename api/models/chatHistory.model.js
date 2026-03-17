@@ -55,6 +55,31 @@ const chatHistorySchema = new mongoose.Schema({
     activeVersionIndex: {
       type: Number,
       default: 0
+    },
+    // Media Attachments
+    images: {
+      type: [String],
+      default: undefined
+    },
+    imageUrl: {
+      type: String,
+      default: undefined
+    },
+    audioUrl: {
+      type: String,
+      default: undefined
+    },
+    videoUrl: {
+      type: String,
+      default: undefined
+    },
+    documentUrl: {
+      type: String,
+      default: undefined
+    },
+    documentName: {
+      type: String,
+      default: undefined
     }
   }],
   totalMessages: {
@@ -115,14 +140,15 @@ chatHistorySchema.statics.findOrCreateSession = async function (userId, sessionI
 };
 
 // Instance method to add a message
-chatHistorySchema.methods.addMessage = function (role, content, isRestricted = false, recommendations = undefined, isError = false) {
+chatHistorySchema.methods.addMessage = function (role, content, isRestricted = false, recommendations = undefined, isError = false, media = {}) {
   this.messages.push({
     role,
     content,
     isRestricted,
     isError,
     recommendations,
-    timestamp: new Date()
+    timestamp: new Date(),
+    ...media
   });
   return this.save();
 };
