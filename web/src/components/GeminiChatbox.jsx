@@ -14,6 +14,7 @@ import ListingItem from './ListingItem';
 import { isMobileDevice } from '../utils/mobileUtils';
 import { useSelector } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useImageAuditor } from '../hooks/useImageAuditor';
 import Prism from 'prismjs';
 import ConfirmationModal from './ConfirmationModal';
 import 'prismjs/themes/prism-tomorrow.css';
@@ -597,6 +598,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [enableContextMemory, setEnableContextMemory] = useState(() => getUserSetting('gemini_context_memory', 'true') !== 'false');
     const [contextWindow, setContextWindow] = useState(() => getUserSetting('gemini_context_window', '10'));
     const [enableSystemPrompts, setEnableSystemPrompts] = useState(() => getUserSetting('gemini_system_prompts', 'true') !== 'false');
+
+    // Image Auditing Hook (Extended from CreateListing)
+    const { performAudit, auditResults } = useImageAuditor();
 
     // Notification Settings
     const [enableDesktopNotifications, setEnableDesktopNotifications] = useState(() => getUserSetting('gemini_desktop_notifications', 'true') !== 'false');
@@ -2685,7 +2689,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         let displayUserMessage = userMessage;
         let messageImages = [];
         let aiPromptMessage = userMessage;
-        
+        let imageAuditsToStream = {}; // Initialize here
+
         if (pendingImages.length > 0) {
             // Check if all are uploaded
             const stillUploading = pendingImages.some(img => img.uploading);
@@ -2697,6 +2702,16 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             messageImages = pendingImages.map(img => img.url).filter(Boolean);
             const imageTexts = pendingImages.map(img => `I've uploaded a image file: ${img.name}. Please analyze it and help me with it. File URL: ${img.url}`).join('\n');
             
+            // Map audits to specific URLs for the AI tool
+            const urlAudits = {};
+            pendingImages.forEach(img => {
+                const audit = auditResults[`chat_${img.id}`];
+                if (img.url && audit) {
+                    urlAudits[img.url] = audit;
+                }
+            });
+            imageAuditsToStream = urlAudits; // Store for request body
+
             // If there's no text, use a fallback for display, but prompt AI with specific context
             if (!displayUserMessage) {
                 displayUserMessage = ""; // UI will show images
@@ -2770,6 +2785,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         message: aiPromptMessage,
                         displayMessage: displayUserMessage, // Custom field for non-link storage
                         images: messageImages, // Explicitly pass images
+                        imageAudits: imageAuditsToStream, // Pass pre-calculated audits to backend
                         history: enableContextMemory ? messages.slice(-parseInt(contextWindow)) : messages.slice(-10),
                         sessionId: currentSessionId,
                         tone: currentUser ? tone : 'neutral',
@@ -2918,6 +2934,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         message: aiPromptMessage,
                         displayMessage: displayUserMessage,
                         images: messageImages,
+                        imageAudits: imageAuditsToStream, // Pass pre-calculated audits to backend
                         history: enableContextMemory ? messages.slice(-parseInt(contextWindow)) : messages.slice(-10),
                         sessionId: currentSessionId,
                         tone: currentUser ? tone : 'neutral',
@@ -4569,6 +4586,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         setPendingImages(prev => prev.map(img => 
                             img.id === tempId ? { ...img, url: fileUrl, uploading: false, controller: null } : img
                         ));
+
+                        // Trigger pixel-level audit for the AI (using the file object)
+                        performAudit(file, tempId, 'chat');
                     } catch (err) {
                         if (err.name === 'AbortError') {
                             console.log('Upload aborted');
@@ -4628,7 +4648,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
                 setIsLoading(true);
 
-                const response = await authenticatedFetch(`${API_BASE_URL}/api/gemini/chat`, {
+                const chatResponse = await authenticatedFetch(`${API_BASE_URL}/api/gemini/chat`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -4640,8 +4660,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     })
                 });
 
-                if (response.ok) {
-                    const result = await response.json();
+                if (chatResponse.ok) {
+                    const result = await chatResponse.json();
                     setMessages(prev => [...prev, {
                         role: 'assistant',
                         content: result.response,

@@ -26,6 +26,7 @@ export const chatWithGemini = async (req, res) => {
         documentUrl,
         documentName,
         history = [],
+        imageAudits = {},  // Audit results from the frontend (URLs mapped to analysis)
         sessionId,
         tone = 'neutral',
         responseLength = 'medium',
@@ -635,8 +636,8 @@ export const chatWithGemini = async (req, res) => {
                     const toolToExec = toolRegistry[functionName] || toolRegistry[normalizedName];
                     
                     if (toolToExec) {
-                        // Pass userId for tools that need owner context (like get_user_listings)
-                        toolResult = await toolToExec({ ...functionArgs, userId });
+                        // Pass userId and imageAudits for context-aware tools
+                        toolResult = await toolToExec({ ...functionArgs, userId, imageAudits });
 
                         // Collect listings for UI cards if this was a property-related fetch
                         if (normalizedName === 'search_properties' || normalizedName === 'get_user_listings') {
