@@ -6112,9 +6112,24 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             )}
                         </div>
 
+
                         {!isOpen && unreadCount > 0 && (
                             <div className="absolute top-0 right-0 z-20 bg-red-500 text-white text-[10px] font-black rounded-full min-w-[20px] h-[20px] px-1 flex items-center justify-center border-2 border-white dark:border-gray-800 shadow-xl animate-bounce">
                                 {unreadCount > 99 ? '99+' : unreadCount}
+                            </div>
+                        )}
+
+                        {/* Enhanced Hover Tooltip */}
+                        {!isOpen && (
+                            <div className={`absolute bottom-full right-0 mb-3 ${isDarkMode ? 'bg-gray-800 text-white border-gray-600' : 'bg-white text-gray-800 border-gray-100'
+                                } text-sm px-4 py-2 rounded-xl shadow-2xl hidden group-hover:block z-10 whitespace-nowrap border transform -translate-y-1 transition-all duration-200`}>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-lg">🤖</span>
+                                    <span className="font-medium">Chat with SetuAI Assistant!</span>
+                                </div>
+                                {/* Tooltip arrow */}
+                                <div className={`absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent ${isDarkMode ? 'border-t-gray-800' : 'border-t-white'
+                                    }`}></div>
                             </div>
                         )}
                     </button>
