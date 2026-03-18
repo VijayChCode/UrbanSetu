@@ -2743,11 +2743,26 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         e.preventDefault();
         if (!inputMessage.trim() || isLoading) return;
 
-        // Check message limit
-        const messageLimitNum = parseInt(messageLimit);
-        if (messages.length >= messageLimitNum) {
-            toast.error(`Message limit reached (${messageLimitNum} messages). Please start a new chat session.`);
-            return;
+        // Check message limit (skip if unlimited)
+        if (messageLimit !== 'unlimited') {
+            const messageLimitNum = parseInt(messageLimit);
+            if (!isNaN(messageLimitNum) && messageLimitNum > 0) {
+                if (messages.length >= messageLimitNum) {
+                    toast.error(
+                        `🚫 Message limit reached (${messageLimitNum} messages). You can increase your message limit from the ⚙️ Themes & Settings panel, or start a new chat session.`,
+                        { autoClose: 6000 }
+                    );
+                    return;
+                }
+                // Warn user when approaching the limit (within 5 messages)
+                const remaining = messageLimitNum - messages.length;
+                if (remaining > 0 && remaining <= 5) {
+                    toast.warn(
+                        `⚠️ You have ${remaining} message${remaining === 1 ? '' : 's'} left in this session. Extend your limit from ⚙️ Themes & Settings.`,
+                        { autoClose: 4000, toastId: 'msg-limit-warn' }
+                    );
+                }
+            }
         }
 
         // Check character limit
