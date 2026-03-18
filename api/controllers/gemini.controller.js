@@ -50,8 +50,9 @@ export const chatWithGemini = async (req, res) => {
         }
 
         // Basic input sanitization
-        const sanitizedMessage = message.trim().substring(0, 2000); // Limit message length
-        if (sanitizedMessage !== message.trim()) {
+        const safeMessage = message || '';
+        const sanitizedMessage = safeMessage.trim().substring(0, 2000); // Limit message length
+        if (sanitizedMessage !== safeMessage.trim()) {
             return res.status(400).json({
                 success: false,
                 message: 'Message too long. Please keep it under 2000 characters.'
