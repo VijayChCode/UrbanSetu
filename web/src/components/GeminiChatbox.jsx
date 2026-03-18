@@ -2749,7 +2749,24 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!inputMessage.trim() || isLoading) return;
+        // Allow submission if there's text OR pending images (image-only messages are valid)
+        if ((!inputMessage.trim() && pendingImages.length === 0) || isLoading) return;
+
+        // Check if images are still uploading
+        if (pendingImages.length > 0) {
+            const stillUploading = pendingImages.some(img => img.uploading);
+            if (stillUploading) {
+                toast.warning('⏳ Please wait — your images are still uploading. They\'ll be ready in a moment!', { autoClose: 4000, toastId: 'img-upload-wait' });
+                return;
+            }
+
+            // Check if images are still being audited by Sentinel
+            const pendingAudits = pendingImages.some(img => !auditResults[`chat_${img.id}`]);
+            if (isAuditing || pendingAudits) {
+                toast.warning('🔍 Please wait — Sentinel is scanning your images for safety & quality. Almost done!', { autoClose: 4000, toastId: 'img-audit-wait' });
+                return;
+            }
+        }
 
         // Check message limit (skip if unlimited)
         // Use totalMessageCount (from backend) for accurate enforcement, even when history is lazy-loaded
@@ -2812,13 +2829,6 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         let imageAuditsToStream = {}; // Initialize here
 
         if (pendingImages.length > 0) {
-            // Check if all are uploaded
-            const stillUploading = pendingImages.some(img => img.uploading);
-            if (stillUploading) {
-                toast.warning('Please wait for all images to finish uploading');
-                return;
-            }
-
             messageImages = pendingImages.map(img => img.url).filter(Boolean);
             const imageTexts = pendingImages.map(img => {
                 const audit = auditResults[`chat_${img.id}`];
