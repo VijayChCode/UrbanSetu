@@ -708,7 +708,14 @@ export default function NotificationBell({ mobile = false }) {
                 {/* Header */}
                 <div className="px-6 pt-4 pb-2">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Activity</h3>
+                    <h3 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight flex items-center gap-2">
+                      Activity
+                      {allNotifications.length > 0 && (
+                        <span className="text-sm font-bold bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 px-2.5 py-0.5 rounded-full">
+                          {allNotifications.length}
+                        </span>
+                      )}
+                    </h3>
                     <button
                       onClick={() => setIsOpen(false)}
                       className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-xl p-2.5 transition-all"
@@ -1328,7 +1335,14 @@ export default function NotificationBell({ mobile = false }) {
                 {/* Header */}
                 <div className="px-6 py-5 border-b border-gray-100/50 dark:border-gray-800">
                   <div className="flex items-center justify-between mb-1">
-                    <h3 className="text-xl font-black text-gray-900 dark:text-white tracking-tight">Notifications</h3>
+                    <h3 className="text-xl font-black text-gray-900 dark:text-white tracking-tight flex items-center gap-2">
+                      Notifications
+                      {allNotifications.length > 0 && (
+                        <span className="text-xs font-bold bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full">
+                          {allNotifications.length}
+                        </span>
+                      )}
+                    </h3>
                     <button
                       onClick={() => setIsOpen(false)}
                       className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 bg-gray-50 dark:bg-gray-800 rounded-xl p-2 transition-all hover:rotate-90"
