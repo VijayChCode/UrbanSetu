@@ -587,9 +587,22 @@ export const chatWithGemini = async (req, res) => {
         });
 
         // Add current user message
+        // If image audits are already provided from the frontend, inject them into the message
+        // so the AI doesn't redundantly try to call sentinel_image_auditor (which causes tool_use_failed errors)
+        let finalUserMessage = sanitizedMessage;
+        if (imageAudits && Object.keys(imageAudits).length > 0) {
+            const auditSummaries = Object.entries(imageAudits).map(([url, audit]) => {
+                const fileName = url.split('/').pop() || 'uploaded image';
+                const qualityInfo = audit.quality ? `Quality Score: ${(audit.quality.score / 100).toFixed(2)}, Brightness: ${audit.quality.brightness}, Contrast: ${audit.quality.contrast}` : 'N/A';
+                const classInfo = audit.classification ? `Type: ${audit.classification.type} (${audit.classification.category}), Reason: ${audit.classification.reason}` : 'N/A';
+                const suggestionsInfo = audit.suggestions ? audit.suggestions.join(', ') : 'N/A';
+                return `[Image: ${fileName}] Already audited by Sentinel Vision. ${qualityInfo}. Classification: ${classInfo}. Detected: ${suggestionsInfo}. URL: ${url}`;
+            }).join('\n');
+            finalUserMessage += `\n\n[SENTINEL AUDIT RESULTS - DO NOT call sentinel_image_auditor, these images are already analyzed]:\n${auditSummaries}`;
+        }
         messages.push({
             role: 'user',
-            content: sanitizedMessage
+            content: finalUserMessage
         });
 
         // -------------------------------------------------------------
@@ -615,7 +628,27 @@ export const chatWithGemini = async (req, res) => {
         const recommendations = [];
 
         console.log('🤖 Sending request to Groq...');
-        let completion = await groq.chat.completions.create(requestPayload);
+        let completion;
+        try {
+            completion = await groq.chat.completions.create(requestPayload);
+        } catch (toolError) {
+            // Handle tool_use_failed errors by retrying without tools
+            if (toolError.status === 400 && toolError.error?.error?.code === 'tool_use_failed') {
+                console.warn('⚠️ Tool use failed, retrying without tools...');
+                const retryPayload = {
+                    messages: messages,
+                    model: GROQ_MODEL,
+                    temperature: getTemperature(creativity, tone, temperature),
+                    max_completion_tokens: getMaxTokens(responseLength),
+                    top_p: getTopP(topP),
+                    stream: false
+                    // No tools - let the AI respond directly
+                };
+                completion = await groq.chat.completions.create(retryPayload);
+            } else {
+                throw toolError; // Re-throw non-tool errors
+            }
+        }
         let responseMessage = completion.choices[0].message;
 
         // CHECK FOR TOOL CALLS

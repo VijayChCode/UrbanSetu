@@ -428,7 +428,7 @@ export const toolDefinitions = [
         type: "function",
         function: {
             name: "sentinel_image_auditor",
-            description: "Audit and analyze images (property photos, documents, layouts) using the Sentinel Vision system. Use this when a user provides an image URL or asks to analyze an uploaded photo.",
+            description: "Audit and analyze images using the Sentinel Vision system. IMPORTANT: Do NOT call this tool if the user's message already contains '[SENTINEL AUDIT RESULTS]' — those images have already been analyzed. Only use this tool when the user explicitly asks you to re-audit an image that has no existing analysis.",
             parameters: {
                 type: "object",
                 properties: {
