@@ -2761,8 +2761,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             }
 
             // Check if images are still being audited by Sentinel
-            const pendingAudits = pendingImages.some(img => !auditResults[`chat_${img.id}`]);
-            if (isAuditing || pendingAudits) {
+            // isAuditing is an object { "chat_<id>": true/false }, NOT a boolean
+            // Only block if an audit is actively running; if it finished (even with no result), allow sending
+            const anyStillAuditing = pendingImages.some(img => isAuditing[`chat_${img.id}`] === true);
+            if (anyStillAuditing) {
                 toast.warning('🔍 Please wait — Sentinel is scanning your images for safety & quality. Almost done!', { autoClose: 4000, toastId: 'img-audit-wait' });
                 return;
             }
