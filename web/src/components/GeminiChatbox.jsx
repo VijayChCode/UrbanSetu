@@ -264,6 +264,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [messageHistoryPage, setMessageHistoryPage] = useState(1);
     const [hasMoreHistory, setHasMoreHistory] = useState(false);
     const [isLoadingPreviousMessages, setIsLoadingPreviousMessages] = useState(false);
+    const [totalMessageCount, setTotalMessageCount] = useState(0); // Tracks actual total messages from backend (not just loaded ones)
     const [inputMessage, setInputMessage] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [sessionId, setSessionId] = useState(null);
@@ -1554,6 +1555,12 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 if (data.success && data.data.messages && Array.isArray(data.data.messages)) {
                     const newMessages = data.data.messages;
 
+                    // Store the actual total message count from backend
+                    if (data.data.totalMessages !== undefined) {
+                        setTotalMessageCount(data.data.totalMessages);
+                        console.log('Total message count from backend:', data.data.totalMessages);
+                    }
+
                     if (page === 1) {
                         // Initial load - prepend welcome message if not present
                         const defaultWelcome = {
@@ -1599,7 +1606,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     }
 
                     setHasMoreHistory(data.data.hasMore);
-                    console.log(`Session history loaded (Page ${page}):`, newMessages.length, 'messages');
+                    console.log(`Session history loaded (Page ${page}):`, newMessages.length, 'messages, Total:', data.data.totalMessages);
                 }
             } else if (response.status === 404 && page === 1) {
                 console.log('No session history found');
@@ -1650,6 +1657,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 timestamp: new Date().toISOString()
             }
         ]);
+        setTotalMessageCount(0); // Reset total message count for new session
         // Generate new session ID
         const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         localStorage.setItem('gemini_session_id', newSessionId);
@@ -2744,21 +2752,24 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         if (!inputMessage.trim() || isLoading) return;
 
         // Check message limit (skip if unlimited)
+        // Use totalMessageCount (from backend) for accurate enforcement, even when history is lazy-loaded
         if (messageLimit !== 'unlimited') {
             const messageLimitNum = parseInt(messageLimit);
             if (!isNaN(messageLimitNum) && messageLimitNum > 0) {
-                if (messages.length >= messageLimitNum) {
+                // Use the larger of totalMessageCount and messages.length for accurate enforcement
+                const actualMessageCount = Math.max(totalMessageCount, messages.length);
+                if (actualMessageCount >= messageLimitNum) {
                     toast.error(
-                        `🚫 Message limit reached (${messageLimitNum} messages). You can increase your message limit from the ⚙️ Themes & Settings panel, or start a new chat session.`,
+                        `🚫 Message limit reached (${actualMessageCount}/${messageLimitNum} messages). You can increase your message limit from the ⚙️ Themes & Settings panel, or start a new chat session.`,
                         { autoClose: 6000 }
                     );
                     return;
                 }
                 // Warn user when approaching the limit (within 5 messages)
-                const remaining = messageLimitNum - messages.length;
+                const remaining = messageLimitNum - actualMessageCount;
                 if (remaining > 0 && remaining <= 5) {
                     toast.warn(
-                        `⚠️ You have ${remaining} message${remaining === 1 ? '' : 's'} left in this session. Extend your limit from ⚙️ Themes & Settings.`,
+                        `⚠️ You have ${remaining} message${remaining === 1 ? '' : 's'} left in this session (${actualMessageCount}/${messageLimitNum}). Extend your limit from ⚙️ Themes & Settings.`,
                         { autoClose: 4000, toastId: 'msg-limit-warn' }
                     );
                 }
@@ -2860,6 +2871,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 imageAudits: imageAuditsToStream
             }];
         });
+        // Increment total message count for accurate limit enforcement
+        setTotalMessageCount(prev => prev + 1);
         // Add to history stack for Ctrl+Z retrieval
         messageHistoryRef.current.push(displayUserMessage || '(Images)');
         historyIndexRef.current = -1;
@@ -2943,6 +2956,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         isStreaming: true
                     }];
                 });
+                // Increment total message count for the assistant response
+                setTotalMessageCount(prev => prev + 1);
 
                 try {
                     let buffer = '';
@@ -3096,6 +3111,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             recommendations: data.recommendations
                         }];
                     });
+                    // Increment total message count for the assistant response
+                    setTotalMessageCount(prev => prev + 1);
                     if (!isOpen) {
                         setUnreadCount(count => count + 1);
                     }
@@ -3772,6 +3789,21 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             return;
         }
 
+        // Check message limit for edited messages (skip if unlimited)
+        if (messageLimit !== 'unlimited') {
+            const messageLimitNum = parseInt(messageLimit);
+            if (!isNaN(messageLimitNum) && messageLimitNum > 0) {
+                const actualMessageCount = Math.max(totalMessageCount, messages.length);
+                if (actualMessageCount >= messageLimitNum) {
+                    toast.error(
+                        `🚫 Message limit reached (${actualMessageCount}/${messageLimitNum} messages). You can increase your message limit from the ⚙️ Themes & Settings panel, or start a new chat session.`,
+                        { autoClose: 6000 }
+                    );
+                    return;
+                }
+            }
+        }
+
         try {
             const updatedMessages = [...messages];
             const originalMessage = { ...updatedMessages[messageIndex] };
@@ -3934,6 +3966,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     console.log('Last message:', newMessages[newMessages.length - 1]);
                     return newMessages;
                 });
+                // Increment total message count for the edited message assistant response
+                setTotalMessageCount(prev => prev + 1);
 
                 // Play sound when edited message response is received
                 playSound('message-received.mp3');
@@ -4286,6 +4320,12 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     }
 
                     setMessages(sessionMessages);
+                    // Update total message count from backend response
+                    if (data.data.totalMessages !== undefined) {
+                        setTotalMessageCount(data.data.totalMessages);
+                    } else {
+                        setTotalMessageCount(sessionMessages.length);
+                    }
                     setSessionId(sessionId);
                     localStorage.setItem('gemini_session_id', sessionId);
 
@@ -4416,6 +4456,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         timestamp: new Date().toISOString()
                     };
                     setMessages([defaultMessage]);
+                    setTotalMessageCount(0); // Reset total message count for new session
                     setCurrentChatName('');
                     setDisplayedTitle('SetuAI');
                     setIsGeneratingTitle(false);
