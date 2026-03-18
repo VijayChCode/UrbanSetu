@@ -47,19 +47,31 @@ const sharedChatSchema = new mongoose.Schema({
             type: Array,
             default: undefined
         },
+        activeVersionIndex: {
+            type: Number,
+            default: 0
+        },
+        imageUrl: String,
+        images: [String],
+        audioUrl: String,
+        videoUrl: String,
+        documentUrl: String,
+        documentName: String,
         variants: [{
             content: String,
             role: String,
             recommendations: Array,
             isError: Boolean,
             isRestricted: Boolean,
+            imageUrl: String,
+            images: [String],
+            audioUrl: String,
+            videoUrl: String,
+            documentUrl: String,
+            documentName: String,
             timestamp: { type: Date, default: Date.now },
             tail: { type: Array, default: [] }
         }],
-        activeVersionIndex: {
-            type: Number,
-            default: 0
-        }
     }],
     isActive: {
         type: Boolean,

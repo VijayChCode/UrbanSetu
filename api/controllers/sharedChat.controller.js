@@ -52,12 +52,24 @@ export const importSharedChat = async (req, res) => {
                 isRestricted: false,
                 recommendations: m.recommendations,
                 timestamp: m.timestamp || new Date(),
+                imageUrl: m.imageUrl,
+                images: m.images,
+                audioUrl: m.audioUrl,
+                videoUrl: m.videoUrl,
+                documentUrl: m.documentUrl,
+                documentName: m.documentName,
                 variants: m.variants ? m.variants.map(v => ({
                     role: v.role,
                     content: v.content,
                     recommendations: v.recommendations,
                     timestamp: v.timestamp,
                     tail: v.tail,
+                    imageUrl: v.imageUrl,
+                    images: v.images,
+                    audioUrl: v.audioUrl,
+                    videoUrl: v.videoUrl,
+                    documentUrl: v.documentUrl,
+                    documentName: v.documentName,
                     isRestricted: false
                 })) : undefined,
                 activeVersionIndex: m.activeVersionIndex || 0
@@ -174,12 +186,24 @@ export const createSharedChat = async (req, res) => {
                     timestamp: m.timestamp,
                     recommendations: m.recommendations,
                     isRestricted: false,
+                    imageUrl: m.imageUrl,
+                    images: m.images,
+                    audioUrl: m.audioUrl,
+                    videoUrl: m.videoUrl,
+                    documentUrl: m.documentUrl,
+                    documentName: m.documentName,
                     variants: m.variants ? m.variants.filter(v => !v.isRestricted).map(v => ({
                         role: v.role,
                         content: v.content,
                         recommendations: v.recommendations,
                         timestamp: v.timestamp,
-                        tail: v.tail, // Note: tail might contain restricted messages, but usually branching is clean.
+                        tail: v.tail,
+                        imageUrl: v.imageUrl,
+                        images: v.images,
+                        audioUrl: v.audioUrl,
+                        videoUrl: v.videoUrl,
+                        documentUrl: v.documentUrl,
+                        documentName: v.documentName,
                         isRestricted: false
                     })) : undefined,
                     activeVersionIndex: m.activeVersionIndex || 0
@@ -212,12 +236,24 @@ export const createSharedChat = async (req, res) => {
                     timestamp: m.timestamp,
                     recommendations: m.recommendations,
                     isRestricted: false,
+                    imageUrl: m.imageUrl,
+                    images: m.images,
+                    audioUrl: m.audioUrl,
+                    videoUrl: m.videoUrl,
+                    documentUrl: m.documentUrl,
+                    documentName: m.documentName,
                     variants: m.variants ? m.variants.filter(v => !v.isRestricted).map(v => ({
                         role: v.role,
                         content: v.content,
                         recommendations: v.recommendations,
                         timestamp: v.timestamp,
                         tail: v.tail,
+                        imageUrl: v.imageUrl,
+                        images: v.images,
+                        audioUrl: v.audioUrl,
+                        videoUrl: v.videoUrl,
+                        documentUrl: v.documentUrl,
+                        documentName: v.documentName,
                         isRestricted: false
                     })) : undefined,
                     activeVersionIndex: m.activeVersionIndex || 0
@@ -381,12 +417,24 @@ export const updateSharedChat = async (req, res) => {
                 timestamp: m.timestamp,
                 recommendations: m.recommendations,
                 isRestricted: false,
+                imageUrl: m.imageUrl,
+                images: m.images,
+                audioUrl: m.audioUrl,
+                videoUrl: m.videoUrl,
+                documentUrl: m.documentUrl,
+                documentName: m.documentName,
                 variants: m.variants ? m.variants.filter(v => !v.isRestricted).map(v => ({
                     role: v.role,
                     content: v.content,
                     recommendations: v.recommendations,
                     timestamp: v.timestamp,
                     tail: v.tail,
+                    imageUrl: v.imageUrl,
+                    images: v.images,
+                    audioUrl: v.audioUrl,
+                    videoUrl: v.videoUrl,
+                    documentUrl: v.documentUrl,
+                    documentName: v.documentName,
                     isRestricted: false
                 })) : undefined,
                 activeVersionIndex: m.activeVersionIndex || 0
@@ -414,8 +462,8 @@ export const updateSharedChat = async (req, res) => {
                 timestamp: m.timestamp instanceof Date ? m.timestamp.toISOString() : m.timestamp,
                 activeVersionIndex: m.activeVersionIndex || 0,
                 variantCount: m.variants ? m.variants.length : 0,
-                // Also check the content of the active variant if possible, 
-                // but usually activeVersionIndex and content of the main msg are enough.
+                imageCount: (m.images ? m.images.length : 0) + (m.imageUrl ? 1 : 0),
+                totalMedia: (m.audioUrl ? 1 : 0) + (m.videoUrl ? 1 : 0) + (m.documentUrl ? 1 : 0)
             });
 
             const currentSharedSummary = JSON.stringify(sharedChat.messages.map(simplifyMessage));

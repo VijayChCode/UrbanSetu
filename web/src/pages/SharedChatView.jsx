@@ -394,8 +394,11 @@ export default function SharedChatView() {
                         ) : (
                             <button onClick={handleImportChat} disabled={importing} className="h-10 flex items-center gap-2 px-4 rounded-xl bg-indigo-600 text-white font-black text-[10px] uppercase shadow-lg shadow-indigo-600/30 active:scale-95 transition-all disabled:opacity-70 group overflow-hidden">
                                 {importing ? (
-                                    <div className="flex items-center gap-2">
-                                        <span>Importing<span className="animate-dots"></span></span>
+                                    <div className="flex items-center">
+                                        <span>Importing</span>
+                                        <span className="relative w-5 inline-block text-left ml-0.5">
+                                            <span className="animate-dots absolute left-0 top-0"></span>
+                                        </span>
                                     </div>
                                 ) : (
                                     <>
