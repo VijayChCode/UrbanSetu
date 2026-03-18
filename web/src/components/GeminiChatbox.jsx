@@ -700,6 +700,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [isImagePreviewOpen, setIsImagePreviewOpen] = useState(false);
     const [previewImages, setPreviewImages] = useState([]);
     const [previewImageIndex, setPreviewImageIndex] = useState(0);
+    const [isDraggingOver, setIsDraggingOver] = useState(false); // Drag-and-drop visual feedback
+    const dragCounterRef = React.useRef(0); // Track nested drag enter/leave events
 
     // Reporting State
     const [showReportModal, setShowReportModal] = useState(false);
@@ -2744,6 +2746,78 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 return;
             }
             await uploadFilesAndSend(imageFiles);
+        }
+    };
+
+    // Drag and Drop handlers for the input area
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        // Set the drop effect to show a copy cursor
+        e.dataTransfer.dropEffect = 'copy';
+    };
+
+    const handleDragEnter = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dragCounterRef.current += 1;
+        // Only show overlay if files are being dragged (not text)
+        if (e.dataTransfer.types && e.dataTransfer.types.includes('Files')) {
+            setIsDraggingOver(true);
+        }
+    };
+
+    const handleDragLeave = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dragCounterRef.current -= 1;
+        if (dragCounterRef.current === 0) {
+            setIsDraggingOver(false);
+        }
+    };
+
+    const handleDrop = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDraggingOver(false);
+        dragCounterRef.current = 0;
+
+        if (!currentUser) {
+            toast.info('Please login to upload images');
+            return;
+        }
+
+        const files = Array.from(e.dataTransfer.files);
+        if (files.length === 0) return;
+
+        // Filter to supported file types (same as handleFileUpload)
+        const validImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
+        const validAudioTypes = ['audio/mp3', 'audio/wav', 'audio/m4a', 'audio/aac', 'audio/ogg', 'audio/webm'];
+        const validVideoTypes = ['video/mp4', 'video/webm', 'video/ogg', 'video/mov', 'video/mkv'];
+        const validDocTypes = ['application/pdf', 'text/plain', 'text/csv', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+        const allValidTypes = [...validImageTypes, ...validAudioTypes, ...validVideoTypes, ...validDocTypes];
+        const maxSize = 10 * 1024 * 1024; // 10MB
+
+        const validFiles = [];
+        const rejectedFiles = [];
+
+        files.forEach(file => {
+            if (file.size > maxSize) {
+                rejectedFiles.push(`${file.name} (too large - max 10MB)`);
+            } else if (!allValidTypes.includes(file.type)) {
+                rejectedFiles.push(`${file.name} (unsupported format)`);
+            } else {
+                validFiles.push(file);
+            }
+        });
+
+        if (rejectedFiles.length > 0) {
+            toast.error(`Rejected: ${rejectedFiles.join(', ')}`);
+        }
+
+        if (validFiles.length > 0) {
+            await uploadFilesAndSend(validFiles);
+            toast.success(`📎 ${validFiles.length} file${validFiles.length > 1 ? 's' : ''} dropped — uploading now!`, { autoClose: 2000, toastId: 'drop-upload' });
         }
     };
 
@@ -7735,7 +7809,23 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 </div>
                             )}
 
-                            <form onSubmit={handleSubmit} className={`flex space-x-2 items-end`}>
+                            <form onSubmit={handleSubmit} className={`flex space-x-2 items-end relative`}
+                                onDragOver={handleDragOver}
+                                onDragEnter={handleDragEnter}
+                                onDragLeave={handleDragLeave}
+                                onDrop={handleDrop}
+                            >
+                                {/* Drag and Drop Overlay */}
+                                {isDraggingOver && (
+                                    <div className="absolute inset-0 z-50 flex items-center justify-center bg-blue-500/20 border-2 border-dashed border-blue-400 rounded-xl backdrop-blur-[2px] animate-pulse pointer-events-none">
+                                        <div className="flex flex-col items-center gap-1">
+                                            <svg className="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                            </svg>
+                                            <span className="text-sm font-semibold text-blue-300">Drop files here to upload</span>
+                                        </div>
+                                    </div>
+                                )}
                                 <div className="flex-1 relative">
                                     {/* Voice Meter / Input Box Toggle */}
                                     {(isListening || isProcessingVoice) ? (
