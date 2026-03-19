@@ -3128,7 +3128,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
                                         // Clear loading state for streaming
                                         setIsLoading(false);
-                                        
+
                                         // Update local metrics and session total
                                         if (tokenUsage && tokenUsage.totalTokens) {
                                             const added = tokenUsage.totalTokens;
@@ -3241,7 +3241,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     });
                     // Increment total message count for the assistant response
                     setTotalMessageCount(prev => prev + 1);
-                    
+
                     // Update local metrics and session total
                     if (data.tokenUsage && (data.tokenUsage.totalTokens || data.tokenUsage.total_tokens)) {
                         const added = data.tokenUsage.totalTokens || data.tokenUsage.total_tokens;
@@ -8478,15 +8478,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         <h4 className={`font-semibold flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                                             <FaHistory className="text-blue-500" />
                                             Chat History
-                                            {lifetimeUsage && lifetimeUsage.totalTokens > 0 && (
-                                                <div
-                                                    className={`ml-2 px-2 py-0.5 rounded-full text-[10px] flex items-center gap-1 border ${isDarkMode ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400' : 'bg-yellow-50 border-yellow-200 text-yellow-700'}`}
-                                                    title="Total tokens consumed across your entire account history (persists even if chats are deleted)"
-                                                >
-                                                    <div className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></div>
-                                                    <span>Σ {lifetimeUsage.totalTokens.toLocaleString()} Total Tokens Used</span>
-                                                </div>
-                                            )}
+
                                         </h4>
                                         <div className="flex items-center gap-2">
                                             {chatSessions.length > 0 && (
@@ -8697,6 +8689,15 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                 >
                                                     Delete Selected ({selectedHistoryIds.length})
                                                 </button>
+                                            )}
+                                            {lifetimeUsage && lifetimeUsage.totalTokens > 0 && (
+                                                <div
+                                                    className={`px-2 py-0.5 rounded-full text-[10px] flex items-center gap-1 border ${isDarkMode ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400' : 'bg-yellow-50 border-yellow-200 text-yellow-700'}`}
+                                                    title="Total tokens consumed across your entire account history (persists even if chats are deleted)"
+                                                >
+                                                    <div className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></div>
+                                                    <span>Σ {lifetimeUsage.totalTokens.toLocaleString()} Total Tokens Used</span>
+                                                </div>
                                             )}
                                         </div>
                                         <button
