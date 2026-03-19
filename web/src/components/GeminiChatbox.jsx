@@ -6668,7 +6668,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                             <li>
                                                 <div
                                                     className={`w-full text-left px-4 py-3 ${isDarkMode ? 'hover:bg-gray-700/10' : 'hover:bg-gray-50/50'} flex items-center gap-3 transition-all duration-200 cursor-default group`}
-                                                    title={`Tokens used in this session (Prompt, Completion, Total)`}
+                                                    title={`Tokens used in this session (Prompt, Completion, Suggestions, Total)`}
                                                 >
                                                     <div className={`p-1.5 rounded-lg ${isDarkMode ? 'bg-yellow-500/20' : 'bg-yellow-100'} group-hover:scale-110 transition-transform duration-200`}>
                                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-yellow-600">
