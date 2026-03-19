@@ -1016,16 +1016,26 @@ export default function AdminDashboard() {
               Welcome back, {currentUser.username}! 👋
               {theme && (
                 <span
-                  className="text-2xl cursor-pointer hover:scale-110 transition-transform filter drop-shadow-md"
-                  title={theme.name}
+                  className="text-2xl cursor-pointer hover:scale-110 transition-transform filter drop-shadow-md flex items-center gap-1"
+                  title={allThemes.length > 1 ? allThemes.map(t => t.name).join(' & ') : theme.name}
                   onClick={() => setShowThemeInfo(true)}
                 >
-                  {theme.icon}
+                  {allThemes.map((t, i) => (
+                    <span key={i}>{t.icon}</span>
+                  ))}
                 </span>
               )}
             </h1>
             <p className="text-blue-100 text-lg max-w-2xl">
-              {theme?.greeting ? theme.greeting : "Here's what's happening with your platform today."} Check analytics and manage listings efficiently.
+              {theme?.greeting 
+                ? (allThemes.length > 1
+                    ? (allThemes.length > 2
+                        ? `${allThemes.slice(0, -1).map(t => t.greeting.replace(/[.!]$/, '')).join(', ')} & ${allThemes[allThemes.length - 1].greeting.replace(/[.!]$/, '')}`
+                        : allThemes.map(t => t.greeting.replace(/[.!]$/, '')).join(' & ')
+                      )
+                    : theme.greeting
+                  )
+                : "Here's what's happening with your platform today."} Check analytics and manage listings efficiently.
             </p>
           </div>
           <div className="flex gap-3 relative z-10 w-full md:w-auto">

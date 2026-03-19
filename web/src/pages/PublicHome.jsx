@@ -305,9 +305,21 @@ export default function PublicHome() {
                 <span
                   className="flex items-center gap-2 cursor-pointer hover:scale-105 transition-transform"
                   onClick={() => setShowThemeInfo(true)}
-                  title={theme.name}
+                  title={allThemes.length > 1 ? allThemes.map(t => t.name).join(' & ') : theme.name}
                 >
-                  {theme.icon} {theme.greeting}
+                  <span className="flex items-center gap-1">
+                    {allThemes.map((t, i) => (
+                      <span key={i}>{t.icon}</span>
+                    ))}
+                  </span>
+                  <span>
+                    {allThemes.length > 1
+                      ? (allThemes.length > 2
+                        ? `${allThemes.slice(0, -1).map(t => t.greeting.replace(/[.!]$/, '')).join(', ')} & ${allThemes[allThemes.length - 1].greeting.replace(/[.!]$/, '')}`
+                        : allThemes.map(t => t.greeting.replace(/[.!]$/, '')).join(' & ')
+                      )
+                      : theme.greeting}
+                  </span>
                 </span>
               ) : (
                 "#1 Real Estate Platform in India"
