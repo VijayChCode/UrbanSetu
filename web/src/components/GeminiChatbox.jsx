@@ -6809,14 +6809,37 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                             {(messages.length > 1 || messages.some(m => m.role === 'user')) && (
                                                 <li>
                                                     <button
-                                                        onClick={() => {
+                                                        onClick={async () => {
                                                             setIsHeaderMenuOpen(false);
                                                             if (!currentUser) {
                                                                 setAuthModal({ isOpen: true, type: 'save' });
                                                                 return;
                                                             }
                                                             try {
-                                                                const lines = messages.map(m => {
+                                                                // Fetch the FULL chat history from backend, not just locally loaded messages
+                                                                const currentSessionId = getOrCreateSessionId();
+                                                                let allMessages = messages; // fallback to local
+                                                                if (currentSessionId && currentUser) {
+                                                                    try {
+                                                                        toast.info('Preparing full chat for download...');
+                                                                        const resp = await authenticatedFetch(`${API_BASE_URL}/api/chat-history/session/${currentSessionId}?page=1&limit=10000`);
+                                                                        if (resp.ok) {
+                                                                            const data = await resp.json();
+                                                                            if (data.success && data.data.messages && data.data.messages.length > 0) {
+                                                                                allMessages = data.data.messages;
+                                                                                console.log(`Save Chat: fetched ${allMessages.length} messages from backend (local had ${messages.length})`);
+                                                                            }
+                                                                        }
+                                                                    } catch (fetchErr) {
+                                                                        console.warn('Could not fetch full history, saving locally loaded messages:', fetchErr);
+                                                                    }
+                                                                }
+                                                                // Filter out the welcome message from the export
+                                                                const welcomePrefix = "Hello! I'm SetuAI";
+                                                                const exportMessages = allMessages.filter(m =>
+                                                                    !(m.role === 'assistant' && m.content && m.content.startsWith(welcomePrefix))
+                                                                );
+                                                                const lines = exportMessages.map(m => {
                                                                     // Mask restricted content in downloaded file
                                                                     if (m.isRestricted) {
                                                                         if (m.role === 'user') return `You: [Restricted Content - Violation Detected]`;
@@ -6833,6 +6856,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                 a.click();
                                                                 document.body.removeChild(a);
                                                                 URL.revokeObjectURL(url);
+                                                                toast.success('Chat saved successfully!');
                                                             } catch (e) {
                                                                 toast.error('Failed to save chat');
                                                             }
