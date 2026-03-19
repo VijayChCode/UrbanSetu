@@ -6340,13 +6340,21 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
                     <button
                         onClick={isOpen ? handleClose : handleOpen}
-                        className={`relative group w-14 h-14 rounded-full shadow-[0_10px_40px_-10px_rgba(37,99,235,0.5)] dark:shadow-[0_10px_40px_-10px_rgba(0,0,0,0.6)] hover:shadow-[0_20px_50px_-10px_rgba(37,99,235,0.6)] transition-all duration-500 transform hover:scale-110 active:scale-95 flex items-center justify-center overflow-hidden border border-white/20 dark:border-gray-700/30 ${isDarkMode ? 'bg-gray-900' : `bg-white`
+                        className={`relative group w-12 h-12 rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-110 hover:rotate-12 flex items-center justify-center overflow-hidden border border-white/20 dark:border-gray-700/30 ${isDarkMode ? 'bg-gray-900' : `bg-white`
                             }`}
                         aria-label="Open AI Chat"
                         title="Chat with SetuAI Assistant!"
                     >
+                        {/* Animated background ring - Ripple Effect */}
+                        <div
+                            className="absolute inset-0 rounded-full animate-ping z-0"
+                            style={{
+                                border: `3px solid ${getThemeRingColor()}55`,
+                            }}
+                        ></div>
+
                         {/* Dynamic Background */}
-                        <div className={`absolute inset-0 transition-opacity duration-500 opacity-90 ${isDarkMode ? 'bg-gradient-to-br from-gray-800 via-gray-900 to-black' : `bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600`
+                        <div className={`absolute inset-0 transition-opacity duration-500 opacity-90 z-0 ${isDarkMode ? 'bg-gradient-to-br from-gray-800 via-gray-900 to-black' : `bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600`
                             }`} />
 
                         {/* Animated Glass Glow */}
@@ -6354,12 +6362,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             <div className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] bg-white/20 dark:bg-white/10 rotate-[35deg] transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
                         )}
 
-                        {/* Animated background rings */}
+                        {/* Animated background pulse */}
                         {!isOpen && (
-                            <>
-                                <div className={`absolute inset-0 rounded-full animate-ping opacity-20`} style={{ backgroundColor: isDarkMode ? '#3b82f6' : '#fff' }} />
-                                <div className={`absolute inset-[-4px] rounded-full border border-blue-400/30 dark:border-blue-500/20 blur-[2px] animate-pulse`} />
-                            </>
+                            <div className={`absolute inset-[-4px] rounded-full border border-blue-400/30 dark:border-blue-500/20 blur-[2px] animate-pulse`} />
                         )}
 
                         {/* Icon with sparkle effect */}
@@ -6382,11 +6387,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     )}
                                     {isLoading ? (
                                         <div className="relative">
-                                            <FaRobot className="w-6 h-6 text-blue-400 animate-pulse drop-shadow-[0_0_8px_rgba(96,165,250,0.8)]" />
+                                            <FaRobot className="w-5 h-5 text-blue-400 animate-pulse drop-shadow-[0_0_8px_rgba(96,165,250,0.8)]" />
                                             <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-400 rounded-full animate-ping"></div>
                                         </div>
                                     ) : (
-                                        <FaRobot className={`w-6 h-6 drop-shadow-lg ${isDarkMode ? 'text-blue-400' : 'text-white'} transition-colors duration-300`} />
+                                        <FaRobot className={`w-5 h-5 drop-shadow-lg ${isDarkMode ? 'text-blue-400' : 'text-white'} transition-colors duration-300`} />
                                     )}
                                 </div>
                             )}
