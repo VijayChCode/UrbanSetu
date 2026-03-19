@@ -113,15 +113,24 @@ export default function ThemeDetailModal({ theme, themes: themesProp, isOpen, on
                             "
                         </p>
 
-                        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 mb-4">
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                        <p className="text-sm text-gray-600 dark:text-gray-300 mb-6 leading-relaxed italic border-t border-gray-100 dark:border-gray-700 pt-4">
+                            On this {allThemes.length > 2 ? 'wonderful day of multiple celebrations' : (isMultiple ? 'wonderful day of double celebration' : 'auspicious occasion')} of <strong>{isMultiple 
+                                ? (allThemes.length > 2 
+                                    ? `${allThemes.slice(0, -1).map(t => t.name).join(', ')} & ${allThemes[allThemes.length - 1].name}`
+                                    : allThemes.map(t => t.name).join(' & ')
+                                  )
+                                : primaryTheme.name}</strong>, everyone at UrbanSetu wishes you happiness, prosperity, and the warmth of home.
+                        </p>
+
+                        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 mb-2 shadow-inner">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wider mb-2">
                                 {isMultiple ? 'Active Festivals Today' : 'Current Active Theme'}
                             </p>
-                            <div className="flex flex-wrap justify-center gap-2 mt-2">
+                            <div className="flex flex-wrap justify-center gap-2">
                                 {allThemes.map((t, i) => (
                                     ['santa-hat', 'party-hat', 'kite', 'flag', 'heart', 'pumpkin', 'colors', 'mango', 'moon', 'bow', 'rakhi', 'modak', 'flower', 'marigold', 'diya', 'snow-cap', 'clover', 'leaf', 'glasses', 'turkey', 'dragon', 'trident', 'mace', 'cross', 'egg', 'lantern', 'chariot', 'flute', 'torch', 'atom', 'lotus', 'book', 'balloon', 'building', 'rocket', 'bonfire', 'peace', 'harvest', 'tie', 'khanda', 'gudi', 'sun', 'venus'].includes(t.logoDecoration) && (
-                                        <span key={t.id || i} className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-1 rounded-md">
-                                            {isMultiple ? `${t.icon} Special Effect` : 'Special Effect Active'}
+                                        <span key={t.id || i} className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-200 px-3 py-1.5 rounded-full font-bold">
+                                            {isMultiple ? `${t.icon} ${t.name} Effect` : 'Special Effect Active'}
                                         </span>
                                     )
                                 ))}
