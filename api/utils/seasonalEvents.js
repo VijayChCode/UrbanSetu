@@ -330,8 +330,39 @@ export function* getActiveThemes(dateInput = new Date()) {
         { id: 'navaratri', year: 2025, month: 8, day: 22, window: 9, name: 'Navaratri', icon: '🔱', sec: '💃', greet: 'Happy Navaratri!', desc: 'Nine nights of devotion and celebration.', deco: 'trident' },
         { id: 'dussehra', year: 2025, month: 9, day: 2, window: 1, name: 'Dussehra', icon: '🏹', sec: '🌼', greet: 'Happy Dussehra!', desc: 'Victory of good over evil. Happy Dasara!', deco: 'bow' },
         { id: 'diwali', year: 2025, month: 9, day: 20, window: 3, name: 'Diwali', icon: '🪔', sec: '✨', greet: 'Happy Diwali!', desc: 'May the festival of lights brighten your life and home.', deco: 'diya' },
+        { id: 'chhath', year: 2025, month: 9, day: 27, window: 3, name: 'Chhath Puja', icon: '🌅', sec: '🕉️', greet: 'Happy Chhath Puja!', desc: 'Wishing you a blessed Chhath Puja filled with faith and devotion.', deco: 'sun' },
+        { id: 'lohri', year: 2025, month: 0, day: 13, window: 0, name: 'Lohri', icon: '🔥', sec: '🥜', greet: 'Happy Lohri!', desc: 'May the warmth of the bonfire fill your heart with joy.', deco: 'bonfire' },
+        { id: 'basant', year: 2025, month: 1, day: 2, window: 0, name: 'Basant Panchami', icon: '🪁', sec: '🌼', greet: 'Happy Basant Panchami!', desc: 'Celebrating the arrival of spring and goddess Saraswati.', deco: 'kite' },
+        { id: 'gudipadwa', year: 2025, month: 2, day: 30, window: 1, name: 'Gudi Padwa', icon: '🪁', sec: '🎋', greet: 'Happy Gudi Padwa!', desc: 'New beginnings and success to you. Happy Nav Varsh!', deco: 'gudi' },
 
-        // 2026 entries omitted for brevity but logic applies similarly
+        // 2026
+        { id: 'cny', year: 2026, month: 1, day: 17, window: 3, name: 'Chinese New Year', icon: '🐉', sec: '🧧', greet: 'Gong Xi Fa Cai!', desc: 'Wishing you wealth and prosperity in the Year of the Horse! 🐎', deco: 'dragon' },
+        { id: 'shivaratri', year: 2026, month: 1, day: 15, window: 1, name: 'Maha Shivaratri', icon: '🕉️', sec: '🔱', greet: 'Har Har Mahadev!', desc: 'May Lord Shiva bless you with strength and wisdom.', deco: 'trident' },
+        { id: 'holi', year: 2026, month: 2, day: 4, window: 1, name: 'Holi', icon: '🎨', sec: '🌈', greet: 'Happy Holi!', desc: 'Splash of colors, joy, and happiness! Have a vibrant Holi.', deco: 'colors' },
+        { id: 'ugadi', year: 2026, month: 2, day: 19, window: 1, name: 'Ugadi', icon: '🥭', sec: '🌿', greet: 'Happy Ugadi!', desc: 'New beginnings and new hopes. Happy New Year!', deco: 'mango' },
+        { id: 'eidfitr', year: 2026, month: 2, day: 20, window: 2, name: 'Eid al-Fitr', icon: '🌙', sec: '🤲', greet: 'Eid Mubarak!', desc: 'May this Eid bring joy and peace to your heart and home.', deco: 'moon' },
+        { id: 'ramnavami', year: 2026, month: 2, day: 27, window: 1, name: 'Sri Rama Navami', icon: '🏹', sec: '🚩', greet: 'Jai Shri Ram!', desc: 'Celebrating the birth of Lord Rama. May righteousness prevail.', deco: 'bow' },
+        { id: 'hanuman', year: 2026, month: 3, day: 2, window: 1, name: 'Hanuman Jayanti', icon: '🙏', sec: '💪', greet: 'Jai Bajrangbali!', desc: 'Strength, devotion, and courage. Happy Hanuman Jayanti!', deco: 'mace' },
+        { id: 'goodfriday', year: 2026, month: 3, day: 3, window: 0, name: 'Good Friday', icon: '✝️', sec: '🕯️', greet: 'Blessed Good Friday', desc: 'Remembering the sacrifice and love. Have a blessed day.', deco: 'cross' },
+        { id: 'easter', year: 2026, month: 3, day: 5, window: 1, name: 'Easter', icon: '🥚', sec: '🐰', greet: 'Happy Easter!', desc: 'New life and new hope. Happy Easter!', deco: 'egg' },
+        { id: 'eidadha', year: 2026, month: 4, day: 27, window: 2, name: 'Eid al-Adha', icon: '🕌', sec: '🐑', greet: 'Eid Mubarak!', desc: 'Wishing you a blessed Eid al-Adha filled with sacrifice and faith.', deco: 'lantern' },
+        { id: 'rathyatra', year: 2026, month: 6, day: 16, window: 1, name: 'Rath Yatra', icon: '🎡', sec: '🚩', greet: 'Jai Jagannath!', desc: 'May the divine chariot bring you good fortune.', deco: 'chariot' },
+        { id: 'muharram', year: 2026, month: 6, day: 16, window: 1, name: 'Islamic New Year', icon: '☪️', sec: '📅', greet: 'Blessed Muharram', desc: 'Reflecting on the New Year with faith and hope.', deco: 'moon' },
+        { id: 'rakhi', year: 2026, month: 7, day: 28, window: 1, name: 'Raksha Bandhan', icon: '🧵', sec: '✨', greet: 'Happy Raksha Bandhan!', desc: 'Celebrating the bond of love and protection.', deco: 'rakhi' },
+        { id: 'janmashtami', year: 2026, month: 8, day: 1, window: 1, name: 'Janmashtami', icon: '🪈', sec: '🦚', greet: 'Happy Janmashtami!', desc: 'Celebrating the birth of Lord Krishna with joy.', deco: 'flute' },
+        { id: 'ganesh', year: 2026, month: 8, day: 14, window: 5, name: 'Ganesh Chaturthi', icon: '🐘', sec: '🕉️', greet: 'Happy Ganesh Chaturthi!', desc: 'Ganpati Bappa Morya! May obstacles be removed from your path.', deco: 'modak' },
+        { id: 'onam', year: 2026, month: 7, day: 26, window: 2, name: 'Onam', icon: '⛵', sec: '🌺', greet: 'Happy Onam!', desc: 'Harvest festival greetings from God\'s own country.', deco: 'flower' },
+        { id: 'navaratri', year: 2026, month: 9, day: 11, window: 9, name: 'Navaratri', icon: '🔱', sec: '💃', greet: 'Happy Navaratri!', desc: 'Nine nights of devotion and celebration.', deco: 'trident' },
+        { id: 'dussehra', year: 2026, month: 9, day: 20, window: 1, name: 'Dussehra', icon: '🏹', sec: '🌼', greet: 'Happy Dussehra!', desc: 'Victory of good over evil. Happy Dasara!', deco: 'bow' },
+        { id: 'karwachauth', year: 2026, month: 9, day: 29, window: 0, name: 'Karwa Chauth', icon: '🌕', sec: '🥣', greet: 'Happy Karwa Chauth!', desc: 'Celebrating the bond of love and marriage.', deco: 'moon' },
+        { id: 'diwali', year: 2026, month: 10, day: 8, window: 3, name: 'Diwali', icon: '🪔', sec: '✨', greet: 'Happy Diwali!', desc: 'May the festival of lights brighten your life and home.', deco: 'diya' },
+        { id: 'lohri', year: 2026, month: 0, day: 13, window: 0, name: 'Lohri', icon: '🔥', sec: '🥜', greet: 'Happy Lohri!', desc: 'May the warmth of the bonfire fill your heart with joy.', deco: 'bonfire' },
+        { id: 'basant', year: 2026, month: 0, day: 23, window: 0, name: 'Basant Panchami', icon: '🪁', sec: '🌼', greet: 'Happy Basant Panchami!', desc: 'Celebrating the arrival of spring and goddess Saraswati.', deco: 'kite' },
+        { id: 'chhath', year: 2026, month: 10, day: 13, window: 3, name: 'Chhath Puja', icon: '🌅', sec: '🕉️', greet: 'Happy Chhath Puja!', desc: 'Wishing you a blessed Chhath Puja filled with faith and devotion.', deco: 'sun' },
+        { id: 'gudipadwa', year: 2026, month: 2, day: 19, window: 1, name: 'Gudi Padwa', icon: '🪁', sec: '🎋', greet: 'Happy Gudi Padwa!', desc: 'New beginnings and success to you. Happy Nav Varsh!', deco: 'gudi' },
+        { id: 'mahavir', year: 2026, month: 2, day: 31, window: 0, name: 'Mahavir Jayanti', icon: '🕉️', sec: '🙏', greet: 'Happy Mahavir Jayanti', desc: 'Celebrating peace and non-violence.', deco: 'peace' },
+        { id: 'buddha', year: 2026, month: 4, day: 31, window: 0, name: 'Buddha Purnima', icon: '🏵️', sec: '🧘', greet: 'Happy Buddha Purnima', desc: 'Enlightenment and peace to all.', deco: 'lotus' },
+        { id: 'gurunanak', year: 2026, month: 10, day: 24, window: 0, name: 'Guru Nanak Jayanti', icon: 'ੴ', sec: '🕯️', greet: 'Happy Gurpurab!', desc: 'Spreading the light of oneness and service.', deco: 'khanda' },
     ];
 
     for (const f of festivals) {
@@ -350,9 +381,7 @@ export function* getActiveThemes(dateInput = new Date()) {
             }
         }
     }
-
-
-};
+}
 
 // Internal helper to get all themes marked for email sending today
 export const getSeasonalThemesForEmail = (dateInput = new Date()) => {
