@@ -15424,8 +15424,12 @@ export const sendFestivalGreetingEmail = async (email, username, inputTheme) => 
   const isMultiple = themes.length > 1;
 
   // Header Data
+  // Header Data
   const combinedIcons = themes.map(t => t.icon).join(' ');
-  const combinedNames = themes.map(t => t.name).join(' & ');
+  const combinedNames = themes.length > 2 
+    ? `${themes.slice(0, -1).map(t => t.name).join(', ')} & ${themes[themes.length - 1].name}`
+    : themes.map(t => t.name).join(' & ');
+
   const combinedSubject = isMultiple
     ? `${combinedIcons} Special Festival Greetings: ${combinedNames} - UrbanSetu`
     : `${themes[0].icon} ${themes[0].greeting} - UrbanSetu`;
@@ -15467,7 +15471,7 @@ export const sendFestivalGreetingEmail = async (email, username, inputTheme) => 
             `).join('')}
             
             <p style="color: #4b5563; margin: 25px 0 20px 0; line-height: 1.6; font-size: 16px;">
-              On this ${isMultiple ? 'wonderful day of double celebration' : 'auspicious occasion'} of <strong>${combinedNames}</strong>, everyone at UrbanSetu wishes you happiness, prosperity, and the warmth of home.
+              On this ${themes.length > 2 ? 'wonderful day of multiple celebrations' : (isMultiple ? 'wonderful day of double celebration' : 'auspicious occasion')} of <strong>${combinedNames}</strong>, everyone at UrbanSetu wishes you happiness, prosperity, and the warmth of home.
             </p>
 
             <p style="color: #4b5563; margin: 0 0 30px 0; line-height: 1.6; font-size: 16px;">
