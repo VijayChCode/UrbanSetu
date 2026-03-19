@@ -6677,7 +6677,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                         </svg>
                                                     </div>
                                                     <div className="flex flex-col">
-                                                        <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 opacity-80">Session Usage</span>
+                                                        <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 opacity-80">Current Session Usage</span>
                                                         <span className={`font-semibold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-700'}`}>
                                                             {/* Show total session tokens including extra out-of-band ones */}
                                                             {Math.max(activeSessionTokens, messages.reduce((sum, msg) => sum + (msg.tokenUsage?.totalTokens || 0), 0)).toLocaleString()} <span className="text-[10px] opacity-70">tokens</span>
