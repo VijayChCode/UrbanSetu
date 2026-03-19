@@ -456,9 +456,9 @@ export default function ContactSupport({ forceModalOpen = false, onModalClose = 
               <span className="font-bold tracking-tight">
                 {currentUser && unreadReplies > 0
                   ? `${unreadReplies} new repl${unreadReplies !== 1 ? 'ies' : 'y'}`
-                  : 'Chat with Support'}
+                  : 'Contact Support'}
               </span>
-              
+
               {/* Tooltip arrow - pointing right towards the icon */}
               <div className="absolute left-[calc(100%-1px)] top-1/2 -translate-y-1/2 w-0 h-0 border-t-[8px] border-b-[8px] border-l-[10px] border-transparent border-l-white dark:border-l-gray-800"></div>
             </div>

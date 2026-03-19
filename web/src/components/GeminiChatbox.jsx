@@ -6350,7 +6350,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         {/* Inner container for background and shine - with overflow-hidden */}
                         <div className="absolute inset-0 overflow-hidden rounded-full pointer-events-none">
                             {/* Dynamic Background */}
-                            <div className={`absolute inset-0 transition-opacity duration-500 opacity-90 z-0 ${isDarkMode ? 'bg-gradient-to-br from-gray-800 via-gray-900 to-black' : `bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600`
+                            <div className={`absolute inset-0 transition-opacity duration-500 opacity-90 z-0 ${isDarkMode ? 'bg-gradient-to-br from-gray-800 via-gray-900 to-black' : `bg-gradient-to-br ${themeColors.primary}`
                                 }`} />
                             
                             {/* Animated Glass Glow (Shine) */}
@@ -6371,7 +6371,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
                         {/* Animated outer pulse glow */}
                         {!isOpen && (
-                            <div className={`absolute inset-[-4px] rounded-full border-2 border-blue-500/60 dark:border-blue-400/60 blur-[3px] animate-pulse transition-opacity duration-300`} />
+                            <div 
+                                className={`absolute inset-[-4px] rounded-full border-2 blur-[3px] animate-pulse transition-opacity duration-300`} 
+                                style={{ borderColor: `${getThemeRingColor()}99` }}
+                            />
                         )}
 
                         {/* Icon with sparkle effect */}
@@ -6388,17 +6391,29 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                     <FaTimes className="absolute text-[10px] text-white drop-shadow-[0_0_4px_rgba(239,68,68,0.9)]" />
                                                 </div>
                                             ) : (
-                                                <FaWifi className={`text-[15px] ${isDarkMode ? 'text-blue-400' : 'text-white'} animate-bandwidth rotate-[20deg] drop-shadow-[0_0_8px_rgba(96,165,250,0.9)]`} />
+                                                <FaWifi 
+                                                    className={`text-[15px] animate-bandwidth rotate-[20deg] drop-shadow-[0_0_8px_rgba(96,165,250,0.9)]`} 
+                                                    style={{ color: isDarkMode ? getThemeRingColor() : 'white' }}
+                                                />
                                             )}
                                         </div>
                                     )}
                                     {isLoading ? (
                                         <div className="relative">
-                                            <FaRobot className="w-5 h-5 text-blue-400 animate-pulse drop-shadow-[0_0_8px_rgba(96,165,250,0.8)]" />
-                                            <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-400 rounded-full animate-ping"></div>
+                                            <FaRobot 
+                                                className="w-5 h-5 animate-pulse drop-shadow-[0_0_8px_rgba(96,165,250,0.8)]" 
+                                                style={{ color: isDarkMode ? getThemeRingColor() : 'white' }}
+                                            />
+                                            <div 
+                                                className="absolute -top-1 -right-1 w-2 h-2 rounded-full animate-ping"
+                                                style={{ backgroundColor: isDarkMode ? getThemeRingColor() : 'white' }}
+                                            ></div>
                                         </div>
                                     ) : (
-                                        <FaRobot className={`w-5 h-5 drop-shadow-lg ${isDarkMode ? 'text-blue-400' : 'text-white'} transition-colors duration-300`} />
+                                        <FaRobot 
+                                            className="w-5 h-5 drop-shadow-lg transition-colors duration-300" 
+                                            style={{ color: isDarkMode ? getThemeRingColor() : 'white' }}
+                                        />
                                     )}
                                 </div>
                             )}
