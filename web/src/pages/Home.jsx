@@ -298,16 +298,29 @@ export default function Home() {
 
                     return (
                       <span className="text-lg sm:text-xl font-bold flex flex-wrap items-center justify-center text-center gap-x-2 gap-y-1">
-                        <span className="text-gray-700 dark:text-gray-200">{theme?.greeting || greet},</span>
+                        <span className="text-gray-700 dark:text-gray-200">
+                          {allThemes.length > 1 
+                            ? (allThemes.length > 2
+                                ? `${allThemes.slice(0, -1).map(t => t.greeting.replace(/[.!]$/, '')).join(', ')} & ${allThemes[allThemes.length - 1].greeting.split('!')[0]}`
+                                : allThemes.map(t => t.greeting.replace(/[.!]$/, '')).join(' & ')
+                              )
+                            : (theme?.greeting || greet)},
+                        </span>
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 break-words max-w-[200px] sm:max-w-none truncate">
                           <EncryptedText text={`${name}!`} />
                         </span>
                         <span
-                          className={`inline-block ml-1 text-2xl filter drop-shadow-md ${theme ? 'cursor-pointer hover:scale-110 transition-transform' : ''}`}
+                          className={`inline-block ml-1 text-2xl filter drop-shadow-md cursor-pointer hover:scale-110 transition-transform flex items-center gap-1`}
                           onClick={() => theme && setShowThemeInfo(true)}
-                          title={theme ? theme.name : "Greetings"}
+                          title={allThemes.length > 1 ? allThemes.map(t => t.name).join(' & ') : (theme?.name || "Greetings")}
                         >
-                          {emoji}
+                          {allThemes.length > 1 ? (
+                            allThemes.map((t, i) => (
+                              <span key={i}>{t.icon}</span>
+                            ))
+                          ) : (
+                            <span>{emoji}</span>
+                          )}
                         </span>
                       </span>
                     );

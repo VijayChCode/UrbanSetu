@@ -1026,16 +1026,19 @@ export default function AdminDashboard() {
                 </span>
               )}
             </h1>
-            <p className="text-blue-100 text-lg max-w-2xl">
-              {theme?.greeting 
-                ? (allThemes.length > 1
-                    ? (allThemes.length > 2
-                        ? `${allThemes.slice(0, -1).map(t => t.greeting.replace(/[.!]$/, '')).join(', ')} & ${allThemes[allThemes.length - 1].greeting.replace(/[.!]$/, '')}`
-                        : allThemes.map(t => t.greeting.replace(/[.!]$/, '')).join(' & ')
+            <p className="text-blue-100 text-lg max-w-2xl mt-1">
+              <span className="font-extrabold text-[#FACC15] drop-shadow-[0_0_12px_rgba(250,204,21,0.5)] tracking-wide transition-all">
+                {theme?.greeting 
+                    ? (allThemes.length > 1
+                        ? (allThemes.length > 2
+                            ? `${allThemes.slice(0, -1).map(t => t.greeting.replace(/[.!]$/, '')).join(', ')} & ${allThemes[allThemes.length - 1].greeting.replace(/[.!]$/, '')}`
+                            : allThemes.map(t => t.greeting.replace(/[.!]$/, '')).join(' & ')
+                          )
+                        : theme.greeting
                       )
-                    : theme.greeting
-                  )
-                : "Here's what's happening with your platform today."} Check analytics and manage listings efficiently.
+                    : "Here's what's happening with your platform today."}
+              </span> 
+              <span className="ml-1 opacity-90">Check analytics and manage listings efficiently.</span>
             </p>
           </div>
           <div className="flex gap-3 relative z-10 w-full md:w-auto">
