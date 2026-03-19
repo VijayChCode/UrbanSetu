@@ -51,8 +51,8 @@ const ScrollingThinkingTags = ({ isHeader = false, isDarkMode = false }) => {
         let timer;
         const processTags = () => {
             // Determine delay for current index - slower changes as requested
-            let delay = 4000; 
-            
+            let delay = 4000;
+
             if (index === 5) { // "Finalizing answer..."
                 delay = 8000; // Stay much longer on this one
             } else if (index > 5) {
@@ -8044,7 +8044,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
                                                         handleKeyDown(e);
                                                     }}
-                                                    placeholder={(rateLimitInfo.remaining <= 0 && rateLimitInfo.role !== 'rootadmin') ? "Sign in to continue chatting..." : "Ask me anything about real estate or @ to mention any property/blog/guide..."}
+                                                    placeholder={(rateLimitInfo.remaining <= 0 && rateLimitInfo.role !== 'rootadmin') ? "Sign in to continue chatting..." : "Ask me anything about real estate or @ mention any property/blog/guide..."}
                                                     aria-label="Type your message"
                                                     aria-describedby="input-help"
                                                     role="textbox"
