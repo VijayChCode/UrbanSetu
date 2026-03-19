@@ -3805,12 +3805,20 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const syncChatTreeToBackend = async (currentMessages) => {
         if (!currentUser || !getOrCreateSessionId()) return;
         try {
-            console.log('Syncing chat tree to backend...', currentMessages.length, 'messages');
+            // Filter out the dynamically-added welcome message before syncing.
+            // The welcome message is prepended client-side by loadChatHistory() and is NOT
+            // stored in the DB. Sending it would break the server-side merge heuristic.
+            const welcomePrefix = "Hello! I'm SetuAI your AI assistant powered by Groq and co-powered by Sentinel v2.0 Neural Engine (TensorFlow). How can I help you with your real estate needs today?";
+            const messagesToSync = currentMessages.filter(m =>
+                !(m.role === 'assistant' && m.content && m.content.startsWith(welcomePrefix))
+            );
+
+            console.log('Syncing chat tree to backend...', messagesToSync.length, 'messages (filtered from', currentMessages.length, ')');
             await authenticatedFetch(`${API_BASE_URL}/api/chat-history/session/${getOrCreateSessionId()}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    messages: currentMessages,
+                    messages: messagesToSync,
                     lastActivity: new Date().toISOString()
                 })
             });
@@ -5616,27 +5624,12 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 });
             }
 
-            // Clean up old messages from current chat
-            setMessages(prev => {
-                if (Array.isArray(prev) && prev.length > 0) {
-                    const filteredMessages = prev.filter(message => {
-                        try {
-                            const messageDate = new Date(message.timestamp);
-                            return messageDate >= cutoffDate;
-                        } catch (error) {
-                            console.warn('Invalid message date:', message, error);
-                            return true; // Keep message if date is invalid
-                        }
-                    });
-
-                    if (filteredMessages.length !== prev.length) {
-                        console.log(`Cleaned up ${prev.length - filteredMessages.length} old messages from current chat`);
-                    }
-
-                    return filteredMessages;
-                }
-                return prev;
-            });
+            // NOTE: We intentionally do NOT filter messages from the current active session here.
+            // The frontend only has a partial/paginated view of messages, so removing messages
+            // from local state would cause data loss if any sync (edit/version switch) sends
+            // this truncated state back to the server, permanently overwriting the full DB history.
+            // Message-level retention cleanup should only be done server-side where the full
+            // message history is available.
         } catch (error) {
             console.error('Error in data retention cleanup:', error);
         }
@@ -6352,7 +6345,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             {/* Dynamic Background */}
                             <div className={`absolute inset-0 transition-opacity duration-500 opacity-90 z-0 ${isDarkMode ? 'bg-gradient-to-br from-gray-800 via-gray-900 to-black' : `bg-gradient-to-br ${themeColors.primary}`
                                 }`} />
-                            
+
                             {/* Animated Glass Glow (Shine) */}
                             {!isOpen && (
                                 <div className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] bg-white/20 dark:bg-white/10 rotate-[35deg] transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
@@ -6371,8 +6364,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
                         {/* Animated outer pulse glow */}
                         {!isOpen && (
-                            <div 
-                                className={`absolute inset-[-4px] rounded-full border-2 blur-[3px] animate-pulse transition-opacity duration-300`} 
+                            <div
+                                className={`absolute inset-[-4px] rounded-full border-2 blur-[3px] animate-pulse transition-opacity duration-300`}
                                 style={{ borderColor: `${getThemeRingColor()}99` }}
                             />
                         )}
@@ -6391,8 +6384,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                     <FaTimes className="absolute text-[10px] text-white drop-shadow-[0_0_4px_rgba(239,68,68,0.9)]" />
                                                 </div>
                                             ) : (
-                                                <FaWifi 
-                                                    className={`text-[15px] animate-bandwidth rotate-[20deg] drop-shadow-[0_0_8px_rgba(96,165,250,0.9)]`} 
+                                                <FaWifi
+                                                    className={`text-[15px] animate-bandwidth rotate-[20deg] drop-shadow-[0_0_8px_rgba(96,165,250,0.9)]`}
                                                     style={{ color: isDarkMode ? getThemeRingColor() : 'white' }}
                                                 />
                                             )}
@@ -6400,18 +6393,18 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     )}
                                     {isLoading ? (
                                         <div className="relative">
-                                            <FaRobot 
-                                                className="w-5 h-5 animate-pulse drop-shadow-[0_0_8px_rgba(96,165,250,0.8)]" 
+                                            <FaRobot
+                                                className="w-5 h-5 animate-pulse drop-shadow-[0_0_8px_rgba(96,165,250,0.8)]"
                                                 style={{ color: isDarkMode ? getThemeRingColor() : 'white' }}
                                             />
-                                            <div 
+                                            <div
                                                 className="absolute -top-1 -right-1 w-2 h-2 rounded-full animate-ping"
                                                 style={{ backgroundColor: isDarkMode ? getThemeRingColor() : 'white' }}
                                             ></div>
                                         </div>
                                     ) : (
-                                        <FaRobot 
-                                            className="w-5 h-5 drop-shadow-lg transition-colors duration-300" 
+                                        <FaRobot
+                                            className="w-5 h-5 drop-shadow-lg transition-colors duration-300"
                                             style={{ color: isDarkMode ? getThemeRingColor() : 'white' }}
                                         />
                                     )}
@@ -6446,13 +6439,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         <div className="absolute bottom-full right-0 mb-5 flex items-center animate-[slideUp_0.5s_ease-out] drop-shadow-2xl z-40 max-w-[90vw] md:max-w-xs">
                             <div className={`relative px-5 py-3 rounded-2xl whitespace-nowrap overflow-hidden group shadow-2xl border border-white/20 dark:border-gray-700/50 ${isDarkMode ? 'bg-gray-800/95 text-white' : 'bg-white/95 text-gray-900'} backdrop-blur-md`}>
                                 {/* Progress bar background */}
-                                <div 
-                                    className="absolute bottom-0 left-0 h-1 w-full animate-[shrink_6s_linear]" 
+                                <div
+                                    className="absolute bottom-0 left-0 h-1 w-full animate-[shrink_6s_linear]"
                                     style={{ backgroundColor: `${getThemeRingColor()}4d` }} // 30% opacity
                                 />
 
                                 <div className="flex items-center gap-3">
-                                    <div 
+                                    <div
                                         className={`p-1.5 rounded-lg ${!isDarkMode ? themeColors.secondary : ''}`}
                                         style={isDarkMode ? { backgroundColor: `${getThemeRingColor()}33`, color: getThemeRingColor() } : {}}
                                     >

@@ -1535,6 +1535,8 @@ export const getSmartSuggestions = async (req, res) => {
 /**
  * Update a chat session's full message history, including variants and versioning.
  * This is used for persisting branching conversations.
+ * MERGE-PROTECTED: If frontend sends fewer messages than the DB has (due to pagination),
+ * we merge the incoming messages with the existing DB history to prevent data loss.
  */
 export const updateSessionHistory = async (req, res) => {
     try {
@@ -1551,8 +1553,8 @@ export const updateSessionHistory = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Chat history not found' });
         }
 
-        // Map frontend messages (which might have camelCase variants) to backend schema
-        chatHistory.messages = messages.map(msg => ({
+        // Map frontend messages to backend schema
+        const mappedMessages = messages.map(msg => ({
             role: msg.role,
             content: msg.content,
             timestamp: msg.timestamp || new Date(),
@@ -1584,6 +1586,36 @@ export const updateSessionHistory = async (req, res) => {
                 tail: v.tail || []
             }))
         }));
+
+        // MERGE PROTECTION: If the incoming messages are fewer than the DB messages,
+        // the frontend likely only had a partial/paginated view. We merge instead of replacing.
+        if (chatHistory.messages && chatHistory.messages.length > mappedMessages.length && mappedMessages.length > 0) {
+            const firstIncoming = mappedMessages[0];
+            
+            // Find where the first incoming message matches in the DB
+            const indexInDb = chatHistory.messages.findIndex(m =>
+                m.role === firstIncoming.role &&
+                m.content === firstIncoming.content &&
+                (!firstIncoming.timestamp || new Date(m.timestamp).toISOString() === new Date(firstIncoming.timestamp).toISOString())
+            );
+
+            if (indexInDb !== -1) {
+                // Merge: keep older DB messages + replace from match point with incoming
+                console.log(`[updateSessionHistory] Partial update detected. DB has ${chatHistory.messages.length} msgs, incoming has ${mappedMessages.length}. Merging from index ${indexInDb}.`);
+                chatHistory.messages = [
+                    ...chatHistory.messages.slice(0, indexInDb),
+                    ...mappedMessages
+                ];
+            } else {
+                // If no match found but incoming is still fewer, log a warning but still update
+                // This handles edge cases where messages were edited and content changed
+                console.warn(`[updateSessionHistory] WARNING: Incoming (${mappedMessages.length}) < DB (${chatHistory.messages.length}) but no overlap found. Updating anyway.`);
+                chatHistory.messages = mappedMessages;
+            }
+        } else {
+            // Full update or incoming >= DB — safe to replace
+            chatHistory.messages = mappedMessages;
+        }
 
         await chatHistory.save();
 

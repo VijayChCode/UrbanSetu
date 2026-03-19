@@ -328,6 +328,12 @@ export const updateChatSession = async (req, res) => {
                                 ...chatHistory.messages.slice(0, indexInDb),
                                 ...messages
                             ];
+                        } else {
+                            // SAFETY: No overlap found but incoming is fewer than DB.
+                            // This likely means a paginated frontend sent a partial view.
+                            // Do NOT replace — keep existing DB messages to prevent data loss.
+                            console.warn(`[updateChatSession] WARNING: No overlap found. Incoming: ${messages.length}, DB: ${chatHistory.messages.length}. Keeping DB messages to prevent data loss.`);
+                            mergedMessages = chatHistory.messages;
                         }
                     }
 
