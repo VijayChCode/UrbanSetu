@@ -6446,11 +6446,17 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         <div className="absolute bottom-full right-0 mb-5 flex items-center animate-[slideUp_0.5s_ease-out] drop-shadow-2xl z-40 max-w-[90vw] md:max-w-xs">
                             <div className={`relative px-5 py-3 rounded-2xl whitespace-nowrap overflow-hidden group shadow-2xl border border-white/20 dark:border-gray-700/50 ${isDarkMode ? 'bg-gray-800/95 text-white' : 'bg-white/95 text-gray-900'} backdrop-blur-md`}>
                                 {/* Progress bar background */}
-                                <div className="absolute bottom-0 left-0 h-1 bg-blue-500/30 w-full animate-[shrink_6s_linear]" />
+                                <div 
+                                    className="absolute bottom-0 left-0 h-1 w-full animate-[shrink_6s_linear]" 
+                                    style={{ backgroundColor: `${getThemeRingColor()}4d` }} // 30% opacity
+                                />
 
                                 <div className="flex items-center gap-3">
-                                    <div className={`p-1.5 rounded-lg ${isDarkMode ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'}`}>
-                                        <FaMagic size={14} className="animate-pulse" />
+                                    <div 
+                                        className={`p-1.5 rounded-lg ${!isDarkMode ? themeColors.secondary : ''}`}
+                                        style={isDarkMode ? { backgroundColor: `${getThemeRingColor()}33`, color: getThemeRingColor() } : {}}
+                                    >
+                                        <FaMagic size={14} className={`animate-pulse ${!isDarkMode ? themeColors.accent : ''}`} />
                                     </div>
                                     <div className="flex flex-col">
                                         <span className="text-sm font-black tracking-tight leading-none mb-0.5">Meet SETUAI 🤖</span>
@@ -6458,8 +6464,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     </div>
                                     <button
                                         onClick={() => handleOpen()}
-                                        className={`ml-1 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all hover:scale-105 active:scale-95 ${isDarkMode ? 'bg-blue-500 text-white hover:bg-blue-400' : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
-                                            }`}
+                                        className={`ml-1 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all hover:scale-105 active:scale-95 ${!isDarkMode ? `${themeColors.secondary} ${themeColors.accent} hover:opacity-80` : 'text-white hover:opacity-90'}`}
+                                        style={isDarkMode ? { backgroundColor: getThemeRingColor() } : {}}
                                     >
                                         Try Now
                                     </button>
