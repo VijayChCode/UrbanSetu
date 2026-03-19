@@ -8681,7 +8681,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
                                     {/* Fixed Footer */}
                                     <div className="flex justify-between items-center p-4 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
-                                        <div>
+                                        <div className="flex items-center gap-2">
                                             {selectedHistoryIds.length > 0 && (
                                                 <button
                                                     onClick={() => setShowDeleteSelectedModal(true)}
@@ -8690,22 +8690,24 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                     Delete Selected ({selectedHistoryIds.length})
                                                 </button>
                                             )}
+                                        </div>
+                                        <div className="flex items-center gap-3">
                                             {lifetimeUsage && lifetimeUsage.totalTokens > 0 && (
                                                 <div
                                                     className={`px-2 py-0.5 rounded-full text-[10px] flex items-center gap-1 border ${isDarkMode ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400' : 'bg-yellow-50 border-yellow-200 text-yellow-700'}`}
                                                     title="Total tokens consumed across your entire account history (persists even if chats are deleted)"
                                                 >
                                                     <div className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></div>
-                                                    <span>Σ {lifetimeUsage.totalTokens.toLocaleString()} Total Tokens Used</span>
+                                                    <span>Σ {lifetimeUsage.totalTokens.toLocaleString()} Lifetime Tokens</span>
                                                 </div>
                                             )}
+                                            <button
+                                                onClick={() => { setShowHistory(false); setOpenHistoryMenuSessionId(null); }}
+                                                className={`px-4 py-2 text-sm rounded bg-gradient-to-r ${themeColors.primary} text-white hover:opacity-90 transition-all duration-200`}
+                                            >
+                                                Close
+                                            </button>
                                         </div>
-                                        <button
-                                            onClick={() => { setShowHistory(false); setOpenHistoryMenuSessionId(null); }}
-                                            className={`px-4 py-2 text-sm rounded bg-gradient-to-r ${themeColors.primary} text-white hover:opacity-90 transition-all duration-200`}
-                                        >
-                                            Close
-                                        </button>
                                     </div>
                                 </div>
                             </div>
