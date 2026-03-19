@@ -598,6 +598,21 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         if (!currentUser) return 'conservative';
         return getUserSetting('gemini_creativity', 'balanced');
     });
+
+    // Suggestions load limit states
+    const [suggestionLoadCount, setSuggestionLoadCount] = useState(0);
+    const [canLoadMoreSuggestions, setCanLoadMoreSuggestions] = useState(true);
+
+    // Reset suggestion load count after 1 minute of inactivity
+    useEffect(() => {
+        if (suggestionLoadCount > 0) {
+            const timer = setTimeout(() => {
+                setSuggestionLoadCount(0);
+                setCanLoadMoreSuggestions(true);
+            }, 60000); // 1 minute reset
+            return () => clearTimeout(timer);
+        }
+    }, [suggestionLoadCount]);
     const [soundEnabled, setSoundEnabled] = useState(() => getUserSetting('gemini_sound_enabled', 'true') !== 'false');
     const [typingSounds, setTypingSounds] = useState(() => getUserSetting('gemini_typing_sounds', 'true') !== 'false');
     const [dataRetention, setDataRetention] = useState(() => getUserSetting('gemini_data_retention', '30'));
@@ -5634,7 +5649,14 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     };
 
     const handleLoadMoreSuggestions = async () => {
-        if (isLoadingMoreSuggestions) return;
+        if (isLoadingMoreSuggestions || !canLoadMoreSuggestions) return;
+
+        // Check limit
+        if (suggestionLoadCount >= 5) {
+            toast.warning('Refresh limit reached. Please wait a minute for rest.', { icon: '⏳' });
+            setCanLoadMoreSuggestions(false);
+            return;
+        }
 
         setIsLoadingMoreSuggestions(true);
         try {
@@ -5651,6 +5673,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             const data = await res.json();
             if (data.success && data.suggestions && data.suggestions.length > 0) {
                 setSmartSuggestions(data.suggestions);
+                setSuggestionLoadCount(prev => prev + 1);
                 toast.success('Suggestions updated!', { icon: '✨' });
             } else {
                 toast.error('Failed to get new suggestions');
@@ -7767,11 +7790,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                             <div className="flex items-center gap-1">
                                                 <button
                                                     onClick={handleLoadMoreSuggestions}
-                                                    disabled={isLoadingMoreSuggestions}
+                                                    disabled={isLoadingMoreSuggestions || !canLoadMoreSuggestions}
                                                     className={`p-1 rounded-full transition-all duration-200 ${isDarkMode
                                                         ? 'hover:bg-gray-700 text-gray-500'
-                                                        : `hover:bg-white text-gray-400 shadow-sm border border-transparent hover:border-blue-100`} hover:text-blue-500`}
-                                                    title="Load More Suggestions"
+                                                        : `hover:bg-white text-gray-400 shadow-sm border border-transparent hover:border-blue-100`} hover:text-blue-500 ${!canLoadMoreSuggestions ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                    title={!canLoadMoreSuggestions ? "Refresh limit reached. Please wait." : "Load More Suggestions"}
                                                 >
                                                     <FaSync size={10} className={isLoadingMoreSuggestions ? 'animate-spin' : ''} />
                                                 </button>
