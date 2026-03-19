@@ -449,17 +449,19 @@ export default function ContactSupport({ forceModalOpen = false, onModalClose = 
 
           {/* Enhanced Hover Tooltip - Only show if there are unread replies */}
           {/* Enhanced Hover Tooltip */}
-          <div className="absolute right-full top-1/2 -translate-y-1/2 mr-4 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-sm px-4 py-2 rounded-2xl shadow-2xl hidden group-hover:flex items-center gap-2 z-10 whitespace-nowrap border border-gray-100 dark:border-gray-700 animate-slideLeft transition-all duration-300">
-            <div className="flex items-center gap-2">
+          {/* Enhanced Animatic Hover Tooltip */}
+          <div className="absolute right-full top-1/2 -translate-y-1/2 mr-4 opacity-0 scale-90 translate-x-4 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:translate-x-0 group-hover:pointer-events-auto transition-all duration-500 ease-out z-10 whitespace-nowrap">
+            <div className="relative bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-sm px-6 py-2.5 rounded-full shadow-[0_10px_40px_-10px_rgba(37,99,235,0.2)] dark:shadow-[0_20px_50px_-10px_rgba(0,0,0,0.5)] flex items-center gap-3 border border-gray-100 dark:border-gray-700 backdrop-blur-md">
               <span className="text-lg">💬</span>
-              <span className="font-medium">
+              <span className="font-bold tracking-tight">
                 {currentUser && unreadReplies > 0
                   ? `${unreadReplies} new repl${unreadReplies !== 1 ? 'ies' : 'y'}`
-                  : 'Contact Support'}
+                  : 'Chat with Support'}
               </span>
+              
+              {/* Tooltip arrow - pointing right towards the icon */}
+              <div className="absolute left-[calc(100%-1px)] top-1/2 -translate-y-1/2 w-0 h-0 border-t-[8px] border-b-[8px] border-l-[10px] border-transparent border-l-white dark:border-l-gray-800"></div>
             </div>
-            {/* Tooltip arrow - pointing right towards the icon */}
-            <div className="absolute left-full top-1/2 -translate-y-1/2 w-0 h-0 border-t-[6px] border-b-[6px] border-l-[8px] border-transparent border-l-white dark:border-l-gray-800"></div>
           </div>
         </button>
       </div>
