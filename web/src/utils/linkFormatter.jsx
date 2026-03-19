@@ -109,6 +109,8 @@ const processTextSegment = (text, isSentMessage, searchQuery) => {
         <a
           key={`mention-${index}`}
           href={href}
+          target="_blank"
+          rel="noopener noreferrer"
           onClick={(e) => {
             // Ensure propagation stopped for modal/overlay contexts, but allow navigation
             e.stopPropagation();
