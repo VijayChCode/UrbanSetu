@@ -1580,10 +1580,15 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
                     if (page === 1) {
                         // Initial load - prepend welcome message if not present
+                        // Use the earliest message's timestamp (or session createdAt) so the welcome
+                        // message groups under the correct date divider, NOT today's date.
+                        const welcomeTimestamp = newMessages.length > 0
+                            ? (newMessages[0].timestamp || data.data.createdAt || new Date().toISOString())
+                            : new Date().toISOString();
                         const defaultWelcome = {
                             role: 'assistant',
                             content: "Hello! I'm SetuAI your AI assistant powered by Groq and co-powered by Sentinel v2.0 Neural Engine (TensorFlow). How can I help you with your real estate needs today?",
-                            timestamp: new Date().toISOString()
+                            timestamp: welcomeTimestamp
                         };
                         let finalMessages = newMessages;
                         if (finalMessages.length === 0) {
@@ -1719,12 +1724,16 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 const data = await response.json();
                 if (data.success && data.data.messages) {
                     // Prepend welcome message if not present (same as loadSessionHistory)
+                    // Use the earliest message's timestamp so date dividers are correct
+                    let serverMessages = data.data.messages;
+                    const welcomeTimestamp = serverMessages.length > 0
+                        ? (serverMessages[0].timestamp || data.data.createdAt || new Date().toISOString())
+                        : new Date().toISOString();
                     const defaultWelcome = {
                         role: 'assistant',
                         content: "Hello! I'm SetuAI your AI assistant powered by Groq and co-powered by Sentinel v2.0 Neural Engine (TensorFlow). How can I help you with your real estate needs today?",
-                        timestamp: new Date().toISOString()
+                        timestamp: welcomeTimestamp
                     };
-                    let serverMessages = data.data.messages;
                     if (serverMessages.length === 0 || (serverMessages.length > 0 && serverMessages[0].content !== defaultWelcome.content)) {
                         serverMessages = [defaultWelcome, ...serverMessages];
                     }
