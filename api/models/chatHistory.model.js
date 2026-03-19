@@ -111,6 +111,10 @@ const chatHistorySchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  nonMessageTokens: {
+    type: Number,
+    default: 0
+  },
   lastActivity: {
     type: Date,
     default: Date.now
@@ -145,8 +149,8 @@ chatHistorySchema.pre('save', function (next) {
   this.lastActivity = new Date();
   this.totalMessages = this.messages.length;
 
-  // Calculate total tokens across all messages
-  this.totalTokens = this.messages.reduce((total, msg) => {
+  // Calculate total tokens across all messages + out-of-band tokens (like suggestions)
+  this.totalTokens = (this.nonMessageTokens || 0) + this.messages.reduce((total, msg) => {
     return total + (msg.tokenUsage?.totalTokens || 0);
   }, 0);
 

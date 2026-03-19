@@ -385,6 +385,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [showHistory, setShowHistory] = useState(false);
     const [chatSessions, setChatSessions] = useState([]);
     const [lifetimeUsage, setLifetimeUsage] = useState({ totalTokens: 0 });
+    const [activeSessionTokens, setActiveSessionTokens] = useState(0);
     const [isLoadingSessions, setIsLoadingSessions] = useState(false);
     const [isTyping, setIsTyping] = useState(false);
     const [typingText, setTypingText] = useState('');
@@ -3127,6 +3128,16 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
                                         // Clear loading state for streaming
                                         setIsLoading(false);
+                                        
+                                        // Update local metrics and session total
+                                        if (tokenUsage && tokenUsage.totalTokens) {
+                                            const added = tokenUsage.totalTokens;
+                                            setActiveSessionTokens(prev => prev + added);
+                                            setLifetimeUsage(prev => ({
+                                                ...prev,
+                                                totalTokens: (prev.totalTokens || 0) + added
+                                            }));
+                                        }
                                     } else if (streamData.type === 'error') {
                                         throw new Error(streamData.content);
                                     }
@@ -3230,6 +3241,16 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     });
                     // Increment total message count for the assistant response
                     setTotalMessageCount(prev => prev + 1);
+                    
+                    // Update local metrics and session total
+                    if (data.tokenUsage && (data.tokenUsage.totalTokens || data.tokenUsage.total_tokens)) {
+                        const added = data.tokenUsage.totalTokens || data.tokenUsage.total_tokens;
+                        setActiveSessionTokens(prev => prev + added);
+                        setLifetimeUsage(prev => ({
+                            ...prev,
+                            totalTokens: (prev.totalTokens || 0) + added
+                        }));
+                    }
                     if (!isOpen) {
                         setUnreadCount(count => count + 1);
                     }
@@ -4404,7 +4425,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 const activeSessionId = getOrCreateSessionId();
                 const activeSession = sessions.find(s => s.sessionId === activeSessionId);
                 if (activeSession) {
-                    const isGeneric = !activeSession.name || /^Chat \d/i.test(activeSession.name) || activeSession.name.toLowerCase() === 'new chat';
+                    setActiveSessionTokens(activeSession.totalTokens || 0);
+                    const isGenericNodes = !activeSession.name || /^Chat \d/i.test(activeSession.name) || activeSession.name.toLowerCase() === 'new chat';
                     if (!isGeneric) {
                         if (activeSession.name !== currentChatName) {
                             setCurrentChatName(activeSession.name);
@@ -5687,6 +5709,17 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             if (data.success && data.suggestions && data.suggestions.length > 0) {
                 setSmartSuggestions(data.suggestions);
                 setSuggestionLoadCount(prev => prev + 1);
+
+                // Add suggestion tokens to current session total and lifetime
+                if (data.usage && data.usage.total_tokens) {
+                    const tokensAdded = data.usage.total_tokens;
+                    setActiveSessionTokens(prev => prev + tokensAdded);
+                    setLifetimeUsage(prev => ({
+                        ...prev,
+                        totalTokens: (prev.totalTokens || 0) + tokensAdded
+                    }));
+                }
+
                 toast.success('Suggestions updated!', { icon: '✨' });
             } else {
                 toast.error('Failed to get new suggestions');
@@ -6646,7 +6679,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                     <div className="flex flex-col">
                                                         <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 opacity-80">Session Usage</span>
                                                         <span className={`font-semibold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-700'}`}>
-                                                            {messages.reduce((sum, msg) => sum + (msg.tokenUsage?.totalTokens || 0), 0).toLocaleString()} <span className="text-[10px] opacity-70">tokens</span>
+                                                            {/* Show total session tokens including extra out-of-band ones */}
+                                                            {Math.max(activeSessionTokens, messages.reduce((sum, msg) => sum + (msg.tokenUsage?.totalTokens || 0), 0)).toLocaleString()} <span className="text-[10px] opacity-70">tokens</span>
                                                         </span>
                                                     </div>
                                                 </div>
@@ -8450,7 +8484,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                     title="Total tokens consumed across your entire account history (persists even if chats are deleted)"
                                                 >
                                                     <div className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></div>
-                                                    <span>Σ {lifetimeUsage.totalTokens.toLocaleString()} Lifetime Tokens</span>
+                                                    <span>Σ {lifetimeUsage.totalTokens.toLocaleString()} Total Tokens Used</span>
                                                 </div>
                                             )}
                                         </h4>

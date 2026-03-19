@@ -809,6 +809,10 @@ export const chatWithGemini = async (req, res) => {
 
                             if (generatedTitle && generatedTitle.length > 2) {
                                 chatHistory.name = generatedTitle.replace(/^"|"$/g, '');
+                                if (titleResponse.usage && userId) {
+                                    chatHistory.nonMessageTokens = (chatHistory.nonMessageTokens || 0) + (titleResponse.usage.total_tokens || 0);
+                                    updateUserAIUsage(userId, titleResponse.usage);
+                                }
                                 await chatHistory.save();
                             }
                         } catch (titleError) {
@@ -910,6 +914,10 @@ export const chatWithGemini = async (req, res) => {
 
                             if (generatedTitle && generatedTitle.length > 2) {
                                 chatHistory.name = generatedTitle.replace(/^"|"$/g, '');
+                                if (titleResponse.usage && userId) {
+                                    chatHistory.nonMessageTokens = (chatHistory.nonMessageTokens || 0) + (titleResponse.usage.total_tokens || 0);
+                                    updateUserAIUsage(userId, titleResponse.usage);
+                                }
                                 await chatHistory.save();
                             }
                         } catch (titleError) {
@@ -1565,8 +1573,31 @@ export const getSmartSuggestions = async (req, res) => {
             model: GROQ_MODEL,
             response_format: { type: "json_object" }
         });
-
         const content = completion.choices[0].message.content;
+
+        // Track persistent usage
+        if (userId && completion.usage) {
+            updateUserAIUsage(userId, completion.usage);
+
+            // Increment current session's out-of-band tokens (nonMessageTokens)
+            if (sessionId) {
+                try {
+                    const tokens = completion.usage.total_tokens || 0;
+                    // We update nonMessageTokens and ALSO totalTokens in one atomic operation
+                    await ChatHistory.findOneAndUpdate(
+                        { userId, sessionId, isActive: true },
+                        {
+                            $inc: { 
+                                nonMessageTokens: tokens,
+                                totalTokens: tokens
+                            }
+                        }
+                    );
+                } catch (sessErr) {
+                    console.warn("Failed to increment session tokens for suggestions:", sessErr);
+                }
+            }
+        }
         let suggestions = [];
         try {
             const parsed = JSON.parse(content);
@@ -1589,7 +1620,8 @@ export const getSmartSuggestions = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            suggestions: suggestions.length > 0 ? suggestions : ["Find premium properties", "Check ESG scores", "How to use Rent-Lock"]
+            suggestions: suggestions.length > 0 ? suggestions : ["Find premium properties", "Check ESG scores", "How to use Rent-Lock"],
+            usage: completion.usage // Return usage metadata
         });
 
     } catch (error) {
