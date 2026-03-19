@@ -32,7 +32,7 @@ import axios from 'axios';
 import { usePageTitle } from '../hooks/usePageTitle';
 import DailyQuote from "../components/DailyQuote";
 import SeasonalEffects from "../components/SeasonalEffects";
-import { useSeasonalTheme } from "../hooks/useSeasonalTheme.jsx";
+import { useSeasonalTheme, useAllSeasonalThemes } from "../hooks/useSeasonalTheme.jsx";
 import ThemeDetailModal from "../components/ThemeDetailModal";
 import { API_BASE_URL } from '../config/api';
 import { authenticatedFetch } from '../utils/auth';
@@ -41,6 +41,7 @@ export default function AdminDashboard() {
   // Set page title
   usePageTitle("Admin Dashboard - Analytics & Management");
   const theme = useSeasonalTheme();
+  const allThemes = useAllSeasonalThemes();
 
   const { currentUser } = useSelector((state) => state.user);
   const [offerListings, setOfferListings] = useState([]);
@@ -2274,6 +2275,7 @@ export default function AdminDashboard() {
       )}
       <ThemeDetailModal
         theme={theme}
+        themes={allThemes}
         isOpen={showThemeInfo}
         onClose={() => setShowThemeInfo(false)}
       />

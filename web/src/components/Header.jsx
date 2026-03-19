@@ -15,10 +15,13 @@ import { LogIn } from "lucide-react";
 import { UserPlus, LogOut } from "lucide-react";
 import ThemeToggle from "./ThemeToggle.jsx";
 import SeasonalEffects from './SeasonalEffects';
-import { useSeasonalTheme } from "../hooks/useSeasonalTheme.jsx";
+import { useSeasonalTheme, useAllSeasonalThemes } from "../hooks/useSeasonalTheme.jsx";
+import ThemeDetailModal from "./ThemeDetailModal";
 
 export default function Header() {
   const theme = useSeasonalTheme();
+  const allThemes = useAllSeasonalThemes();
+  const [showThemeInfo, setShowThemeInfo] = useState(false);
   const { currentUser } = useSelector((state) => state.user);
   const dispatch = useDispatch();
   const [searchTerm, setSearchTerm] = useState("");
@@ -314,160 +317,30 @@ export default function Header() {
                   <div className={`absolute -inset-1 bg-gradient-to-r ${theme?.textGradient ? theme.textGradient.replace('bg-clip-text text-transparent', '') : 'from-yellow-400 to-orange-500'} rounded-xl blur opacity-30 group-hover:opacity-50 transition-opacity duration-300`}></div>
 
                   {/* Seasonal Logo Interaction - Animated Icons */}
-                  {theme?.logoDecoration === 'santa-hat' && (
-                    <span className="absolute -top-3 -right-2 text-2xl filter drop-shadow-md animate-wiggle">🎅</span>
-                  )}
-                  {theme?.logoDecoration === 'party-hat' && (
-                    <span className="absolute -top-4 -right-2 text-2xl filter drop-shadow-md animate-wiggle">🎉</span>
-                  )}
-                  {theme?.logoDecoration === 'kite' && (
-                    <span className="absolute -top-4 -right-3 text-2xl filter drop-shadow-md animate-sway">🪁</span>
-                  )}
-                  {theme?.logoDecoration === 'flag' && (
-                    <span className="absolute -top-3 -right-2 text-2xl filter drop-shadow-md animate-flag-wave">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" className="w-full h-full rounded-sm shadow-sm overflow-hidden inline-block align-middle" style={{ width: '1.2em', height: '0.8em', verticalAlign: 'middle' }}>
-                        <path fill="#FF9933" d="M0 0h900v200H0z" />
-                        <path fill="#FFF" d="M0 200h900v200H0z" />
-                        <path fill="#138808" d="M0 400h900v200H0z" />
-                        <g transform="translate(450 300)">
-                          <circle r="92.5" fill="none" stroke="#000080" strokeWidth="15" />
-                          <circle r="16" fill="#000080" />
-                          <g id="d">
-                            <g id="c">
-                              <g id="b">
-                                <g id="a" fill="#000080">
-                                  <path d="M0-92.5L5.5-8.5l-11 0z" />
-                                </g>
-                                <use href="#a" transform="rotate(15)" />
-                              </g>
-                              <use href="#b" transform="rotate(30)" />
-                            </g>
-                            <use href="#c" transform="rotate(60)" />
-                          </g>
-                          <use href="#d" transform="rotate(120)" />
-                          <use href="#d" transform="rotate(240)" />
-                        </g>
-                      </svg>
-                    </span>
-                  )}
-                  {theme?.logoDecoration === 'heart' && (
-                    <span className="absolute -top-3 -right-2 text-xl filter drop-shadow-md animate-grow-shrink">❤️</span>
-                  )}
-                  {theme?.logoDecoration === 'pumpkin' && (
-                    <span className="absolute -top-3 -right-2 text-xl filter drop-shadow-md animate-bounce">🎃</span>
-                  )}
-                  {theme?.logoDecoration === 'colors' && (
-                    <span className="absolute -top-3 -right-2 text-xl filter drop-shadow-md animate-spin-slow">🎨</span>
-                  )}
-                  {theme?.logoDecoration === 'mango' && (
-                    <span className="absolute -top-3 -right-2 text-xl filter drop-shadow-md animate-wiggle-slow">🥭</span>
-                  )}
-                  {theme?.logoDecoration === 'moon' && (
-                    <span className="absolute -top-3 -right-2 text-xl filter drop-shadow-md animate-pulse">🌙</span>
-                  )}
-                  {theme?.logoDecoration === 'bow' && (
-                    <span className="absolute -top-3 -right-2 text-xl filter drop-shadow-md -rotate-45 animate-pulse">🏹</span>
-                  )}
-                  {theme?.logoDecoration === 'rakhi' && (
-                    <span className="absolute -top-3 -right-2 text-xl filter drop-shadow-md animate-wiggle">🧵</span>
-                  )}
-                  {theme?.logoDecoration === 'modak' && (
-                    <span className="absolute -top-3 -right-2 text-xl filter drop-shadow-md animate-bounce">🥟</span>
-                  )}
-                  {theme?.logoDecoration === 'flower' && (
-                    <span className="absolute -top-3 -right-2 text-xl filter drop-shadow-md animate-spin" style={{ animationDuration: '8s' }}>🌺</span>
-                  )}
-                  {theme?.logoDecoration === 'marigold' && (
-                    <span className="absolute -top-3 -right-2 text-xl filter drop-shadow-md animate-spin-slow">🌼</span>
-                  )}
-                  {theme?.logoDecoration === 'diya' && (
-                    <span className="absolute -top-3 -right-2 text-2xl filter drop-shadow-md animate-flicker">🪔</span>
-                  )}
-                  {theme?.logoDecoration === 'snow-cap' && (
-                    <span className="absolute -top-3 -right-2 text-xl filter drop-shadow-md animate-spin-slow">❄️</span>
-                  )}
-                  {/* Extended Festival Decorations */}
-                  {theme?.logoDecoration === 'clover' && (
-                    <span className="absolute -top-3 -right-2 text-xl filter drop-shadow-md animate-wiggle">☘️</span>
-                  )}
-                  {theme?.logoDecoration === 'leaf' && (
-                    <span className="absolute -top-3 -right-2 text-xl filter drop-shadow-md animate-grow-shrink">🌱</span>
-                  )}
-                  {theme?.logoDecoration === 'glasses' && (
-                    <span className="absolute -top-3 -right-2 text-xl filter drop-shadow-md animate-wiggle-slow">👓</span>
-                  )}
-                  {theme?.logoDecoration === 'turkey' && (
-                    <span className="absolute -top-3 -right-2 text-xl filter drop-shadow-md animate-bounce">🦃</span>
-                  )}
-                  {theme?.logoDecoration === 'dragon' && (
-                    <span className="absolute -top-3 -right-2 text-xl filter drop-shadow-md animate-sway">🐉</span>
-                  )}
-                  {theme?.logoDecoration === 'trident' && (
-                    <span className="absolute -top-3 -right-2 text-xl filter drop-shadow-md animate-pulse">🔱</span>
-                  )}
-                  {theme?.logoDecoration === 'mace' && (
-                    <span className="absolute -top-3 -right-2 text-xl filter drop-shadow-md animate-wiggle">🙏</span>
-                  )}
-                  {theme?.logoDecoration === 'cross' && (
-                    <span className="absolute -top-3 -right-2 text-xl filter drop-shadow-md animate-pulse">✝️</span>
-                  )}
-                  {theme?.logoDecoration === 'egg' && (
-                    <span className="absolute -top-3 -right-2 text-xl filter drop-shadow-md animate-bounce">🥚</span>
-                  )}
-                  {theme?.logoDecoration === 'lantern' && (
-                    <span className="absolute -top-3 -right-2 text-xl filter drop-shadow-md animate-flicker">🕌</span>
-                  )}
-                  {theme?.logoDecoration === 'chariot' && (
-                    <span className="absolute -top-3 -right-2 text-xl filter drop-shadow-md animate-spin-slow">🎡</span>
-                  )}
-                  {theme?.logoDecoration === 'flute' && (
-                    <span className="absolute -top-3 -right-2 text-xl filter drop-shadow-md animate-wiggle">🪈</span>
-                  )}
-                  {theme?.logoDecoration === 'torch' && (
-                    <span className="absolute -top-3 -right-2 text-2xl filter drop-shadow-md animate-flicker">🔥</span>
-                  )}
-                  {theme?.logoDecoration === 'atom' && (
-                    <span className="absolute -top-3 -right-2 text-xl filter drop-shadow-md animate-spin-slow">⚛️</span>
-                  )}
-                  {theme?.logoDecoration === 'lotus' && (
-                    <span className="absolute -top-3 -right-2 text-xl filter drop-shadow-md animate-grow-shrink">🪷</span>
-                  )}
-                  {theme?.logoDecoration === 'book' && (
-                    <span className="absolute -top-3 -right-2 text-xl filter drop-shadow-md animate-wiggle-slow">📚</span>
-                  )}
-                  {theme?.logoDecoration === 'balloon' && (
-                    <span className="absolute -top-3 -right-2 text-2xl filter drop-shadow-md animate-fly">🎈</span>
-                  )}
-                  {theme?.logoDecoration === 'building' && (
-                    <span className="absolute -top-3 -right-2 text-xl filter drop-shadow-md">🏗️</span>
-                  )}
-                  {theme?.logoDecoration === 'rocket' && (
-                    <span className="absolute -top-3 -right-2 text-2xl filter drop-shadow-md animate-fly">🚀</span>
-                  )}
-                  {theme?.logoDecoration === 'bonfire' && (
-                    <span className="absolute -top-3 -right-2 text-2xl filter drop-shadow-md animate-flicker">🔥</span>
-                  )}
-                  {theme?.logoDecoration === 'peace' && (
-                    <span className="absolute -top-3 -right-2 text-xl filter drop-shadow-md animate-spin-slow">☮️</span>
-                  )}
-                  {theme?.logoDecoration === 'harvest' && (
-                    <span className="absolute -top-3 -right-2 text-xl filter drop-shadow-md animate-sway">🌾</span>
-                  )}
-                  {theme?.logoDecoration === 'tie' && (
-                    <span className="absolute -top-3 -right-2 text-xl filter drop-shadow-md">👔</span>
-                  )}
-                  {theme?.logoDecoration === 'khanda' && (
-                    <span className="absolute -top-3 -right-2 text-xl filter drop-shadow-md animate-pulse">☬</span>
-                  )}
-                  {theme?.logoDecoration === 'gudi' && (
-                    <span className="absolute -top-4 -right-3 text-2xl filter drop-shadow-md animate-sway">🪁</span>
-                  )}
-                  {theme?.logoDecoration === 'sun' && (
-                    <span className="absolute -top-3 -right-2 text-xl filter drop-shadow-md animate-spin-slow">☀️</span>
-                  )}
-                  {theme?.logoDecoration === 'venus' && (
-                    <span className="absolute -top-3 -right-2 text-xl filter drop-shadow-md">👩</span>
-                  )}
+                  <div className="absolute -top-3 -right-2 flex pointer-events-none">
+                    {allThemes.map((t, i) => {
+                      const decoration = t.logoDecoration;
+                      if (!decoration) return null;
+
+                      // Position overrides for multiple icons to prevent overlap
+                      const posClasses = i === 0 ? "-top-3 -right-2" : (i === 1 ? "-top-4 -right-5" : "-bottom-2 -right-4");
+
+                      return (
+                        <div
+                          key={t.id || i}
+                          className={`absolute ${posClasses} pointer-events-auto cursor-pointer hover:scale-110 transition-transform z-10`}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setShowThemeInfo(true);
+                          }}
+                          title={t.name}
+                        >
+                          <LogoDecoration decoration={decoration} />
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
                 <div>
                   <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white drop-shadow-lg flex items-center">
@@ -615,7 +488,101 @@ export default function Header() {
           </div>
         )}
       </header>
+      <ThemeDetailModal
+        theme={theme}
+        themes={allThemes}
+        isOpen={showThemeInfo}
+        onClose={() => setShowThemeInfo(false)}
+      />
     </>
+  );
+}
+
+function LogoDecoration({ decoration }) {
+  const decorations = {
+    'santa-hat': { icon: '🎅', animate: 'animate-wiggle', size: 'text-2xl' },
+    'party-hat': { icon: '🎉', animate: 'animate-wiggle', size: 'text-2xl' },
+    'kite': { icon: '🪁', animate: 'animate-sway', size: 'text-2xl' },
+    'flag': {
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" className="w-full h-full rounded-sm shadow-sm overflow-hidden inline-block align-middle" style={{ width: '1.2em', height: '0.8em', verticalAlign: 'middle' }}>
+          <path fill="#FF9933" d="M0 0h900v200H0z" />
+          <path fill="#FFF" d="M0 200h900v200H0z" />
+          <path fill="#138808" d="M0 400h900v200H0z" />
+          <g transform="translate(450 300)">
+            <circle r="92.5" fill="none" stroke="#000080" strokeWidth="15" />
+            <circle r="16" fill="#000080" />
+            <g id="d">
+              <g id="c">
+                <g id="b">
+                  <g id="a" fill="#000080">
+                    <path d="M0-92.5L5.5-8.5l-11 0z" />
+                  </g>
+                  <use href="#a" transform="rotate(15)" />
+                </g>
+                <use href="#b" transform="rotate(30)" />
+              </g>
+              <use href="#c" transform="rotate(60)" />
+            </g>
+            <use href="#d" transform="rotate(120)" />
+            <use href="#d" transform="rotate(240)" />
+          </g>
+        </svg>
+      ),
+      animate: 'animate-flag-wave',
+      size: 'text-2xl'
+    },
+    'heart': { icon: '❤️', animate: 'animate-grow-shrink', size: 'text-xl' },
+    'pumpkin': { icon: '🎃', animate: 'animate-bounce', size: 'text-xl' },
+    'colors': { icon: '🎨', animate: 'animate-spin-slow', size: 'text-xl' },
+    'mango': { icon: '🥭', animate: 'animate-wiggle-slow', size: 'text-xl' },
+    'moon': { icon: '🌙', animate: 'animate-pulse', size: 'text-xl' },
+    'bow': { icon: '🏹', animate: 'animate-pulse -rotate-45', size: 'text-xl' },
+    'rakhi': { icon: '🧵', animate: 'animate-wiggle', size: 'text-xl' },
+    'modak': { icon: '🥟', animate: 'animate-bounce', size: 'text-xl' },
+    'flower': { icon: '🌺', animate: 'animate-spin', size: 'text-xl', style: { animationDuration: '8s' } },
+    'marigold': { icon: '🌼', animate: 'animate-spin-slow', size: 'text-xl' },
+    'diya': { icon: '🪔', animate: 'animate-flicker', size: 'text-2xl' },
+    'snow-cap': { icon: '❄️', animate: 'animate-spin-slow', size: 'text-xl' },
+    'clover': { icon: '☘️', animate: 'animate-wiggle', size: 'text-xl' },
+    'leaf': { icon: '🌱', animate: 'animate-grow-shrink', size: 'text-xl' },
+    'glasses': { icon: '👓', animate: 'animate-wiggle-slow', size: 'text-xl' },
+    'turkey': { icon: '🦃', animate: 'animate-bounce', size: 'text-xl' },
+    'dragon': { icon: '🐉', animate: 'animate-sway', size: 'text-xl' },
+    'trident': { icon: '🔱', animate: 'animate-pulse', size: 'text-xl' },
+    'mace': { icon: '🙏', animate: 'animate-wiggle', size: 'text-xl' },
+    'cross': { icon: '✝️', animate: 'animate-pulse', size: 'text-xl' },
+    'egg': { icon: '🥚', animate: 'animate-bounce', size: 'text-xl' },
+    'lantern': { icon: '🕌', animate: 'animate-flicker', size: 'text-xl' },
+    'chariot': { icon: '🎡', animate: 'animate-spin-slow', size: 'text-xl' },
+    'flute': { icon: '🪈', animate: 'animate-wiggle', size: 'text-xl' },
+    'torch': { icon: '🔥', animate: 'animate-flicker', size: 'text-2xl' },
+    'atom': { icon: '⚛️', animate: 'animate-spin-slow', size: 'text-xl' },
+    'lotus': { icon: '🪷', animate: 'animate-grow-shrink', size: 'text-xl' },
+    'book': { icon: '📚', animate: 'animate-wiggle-slow', size: 'text-xl' },
+    'balloon': { icon: '🎈', animate: 'animate-fly', size: 'text-2xl' },
+    'building': { icon: '🏗️', animate: '', size: 'text-xl' },
+    'rocket': { icon: '🚀', animate: 'animate-fly', size: 'text-2xl' },
+    'bonfire': { icon: '🔥', animate: 'animate-flicker', size: 'text-2xl' },
+    'peace': { icon: '☮️', animate: 'animate-spin-slow', size: 'text-xl' },
+    'harvest': { icon: '🌾', animate: 'animate-sway', size: 'text-xl' },
+    'tie': { icon: '👔', animate: '', size: 'text-xl' },
+    'khanda': { icon: '☬', animate: 'animate-pulse', size: 'text-xl' },
+    'gudi': { icon: '🪁', animate: 'animate-sway', size: 'text-2xl' },
+    'sun': { icon: '☀️', animate: 'animate-spin-slow', size: 'text-xl' },
+    'venus': { icon: '👩', animate: 'animate-pulse', size: 'text-xl' },
+  };
+
+  const config = decorations[decoration];
+  if (!config) return null;
+
+  return (
+    <span
+      className={`${config.size} filter drop-shadow-md ${config.animate}`}
+      style={config.style || {}}
+    >
+      {config.icon}
+    </span>
   );
 }
 

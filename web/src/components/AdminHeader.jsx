@@ -15,7 +15,7 @@ import { authenticatedFetch } from '../utils/auth';
 import SearchSuggestions from './SearchSuggestions';
 import ThemeToggle from "./ThemeToggle.jsx";
 import SeasonalEffects from './SeasonalEffects';
-import { useSeasonalTheme } from "../hooks/useSeasonalTheme.jsx";
+import { useSeasonalTheme, useAllSeasonalThemes } from "../hooks/useSeasonalTheme.jsx";
 import ThemeDetailModal from "./ThemeDetailModal";
 
 const THEME_DECORATIONS = {
@@ -95,6 +95,7 @@ const THEME_DECORATIONS = {
 
 export default function AdminHeader() {
   const theme = useSeasonalTheme();
+  const allThemes = useAllSeasonalThemes();
   const { currentUser } = useSelector((state) => state.user);
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -395,20 +396,31 @@ export default function AdminHeader() {
                   <div className={`absolute -inset-1 bg-gradient-to-r ${theme?.textGradient ? theme.textGradient.replace('bg-clip-text text-transparent', '') : 'from-yellow-400 to-orange-500'} rounded-xl blur opacity-30 group-hover:opacity-50 transition-opacity duration-300`}></div>
 
                   {/* Seasonal Logo Interaction - Animated Icons */}
-                  {theme?.logoDecoration && THEME_DECORATIONS[theme.logoDecoration] && (
-                    <span
-                      className={`absolute ${THEME_DECORATIONS[theme.logoDecoration].pos} ${THEME_DECORATIONS[theme.logoDecoration].size} filter drop-shadow-md ${THEME_DECORATIONS[theme.logoDecoration].animate} cursor-pointer hover:scale-110 transition-transform z-10`}
-                      style={THEME_DECORATIONS[theme.logoDecoration].style || {}}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setShowThemeInfo(true);
-                      }}
-                      title={theme.name}
-                    >
-                      {THEME_DECORATIONS[theme.logoDecoration].icon}
-                    </span>
-                  )}
+                  <div className="absolute -top-3 -right-2 flex pointer-events-none">
+                    {allThemes.map((t, i) => {
+                      const decoration = t.logoDecoration;
+                      if (!decoration || !THEME_DECORATIONS[decoration]) return null;
+
+                      // Position overrides for multiple icons to prevent overlap
+                      const posClasses = i === 0 ? THEME_DECORATIONS[decoration].pos : (i === 1 ? "-top-4 -right-5" : "-bottom-2 -right-4");
+
+                      return (
+                        <div
+                          key={t.id || i}
+                          className={`absolute ${posClasses} ${THEME_DECORATIONS[decoration].size} pointer-events-auto cursor-pointer hover:scale-110 transition-transform z-10 filter drop-shadow-md ${THEME_DECORATIONS[decoration].animate}`}
+                          style={THEME_DECORATIONS[decoration].style || {}}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setShowThemeInfo(true);
+                          }}
+                          title={t.name}
+                        >
+                          {THEME_DECORATIONS[decoration].icon}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
                 <div>
                   <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white drop-shadow-lg flex items-center">
@@ -631,6 +643,7 @@ export default function AdminHeader() {
       </AnimatePresence>
       <ThemeDetailModal
         theme={theme}
+        themes={allThemes}
         isOpen={showThemeInfo}
         onClose={() => setShowThemeInfo(false)}
       />

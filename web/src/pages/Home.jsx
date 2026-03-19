@@ -22,7 +22,7 @@ import {
 import AdsterraBanner from "../components/AdsterraBanner";
 import SeasonalEffects from "../components/SeasonalEffects";
 import DailyQuote from "../components/DailyQuote";
-import { useSeasonalTheme } from "../hooks/useSeasonalTheme";
+import { useSeasonalTheme, useAllSeasonalThemes } from "../hooks/useSeasonalTheme";
 import ThemeDetailModal from "../components/ThemeDetailModal";
 import { authenticatedFetch } from "../utils/auth";
 import { getLiveRecommendations } from "../utils/sentinelLiveEngine";
@@ -31,6 +31,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function Home() {
   const theme = useSeasonalTheme();
+  const allThemes = useAllSeasonalThemes();
   // Set page title
   usePageTitle("Dashboard - Find Your Dream Home");
 
@@ -757,6 +758,7 @@ export default function Home() {
       <GeminiAIWrapper />
       <ThemeDetailModal
         theme={theme}
+        themes={allThemes}
         isOpen={showThemeInfo}
         onClose={() => setShowThemeInfo(false)}
       />

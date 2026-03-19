@@ -34,7 +34,7 @@ import avataaarsSchema from '../data/dicebear-avataaars-schema.json';
 
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useSignout } from '../hooks/useSignout';
-import { useSeasonalTheme } from "../hooks/useSeasonalTheme.jsx";
+import { useSeasonalTheme, useAllSeasonalThemes } from "../hooks/useSeasonalTheme.jsx";
 import ThemeDetailModal from "../components/ThemeDetailModal";
 
 const THEME_DECORATIONS = {
@@ -321,6 +321,7 @@ const AnimatedCounter = ({ end, duration = 1000, delay = 0 }) => {
 
 export default function Profile() {
   const theme = useSeasonalTheme();
+  const allThemes = useAllSeasonalThemes();
   // Set page title
   usePageTitle("My Profile - Account Settings");
 
@@ -2692,6 +2693,7 @@ export default function Profile() {
       <ContactSupportWrapper />
       <ThemeDetailModal
         theme={theme}
+        themes={allThemes}
         isOpen={showThemeInfo}
         onClose={() => setShowThemeInfo(false)}
       />

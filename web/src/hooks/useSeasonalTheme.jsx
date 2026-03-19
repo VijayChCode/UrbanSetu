@@ -495,28 +495,27 @@ export function* getActiveThemes() {
         };
     }
 }
+// Get all currently active themes as an array (non-seasonal festivals only for multi-display)
+export const getAllActiveThemes = () => {
+    const allThemes = Array.from(getActiveThemes()).filter(Boolean);
+    // Filter out generic seasons (winter/summer/etc.) so we only show actual festivals
+    const festivals = allThemes.filter(t => !['winter', 'summer', 'autumn', 'spring', 'monsoon'].includes(t.id));
+    return festivals.length > 0 ? festivals : allThemes;
+};
+
+// Returns all active themes as an array for multi-festival support
+export const useAllSeasonalThemes = () => {
+    const themes = useMemo(() => getAllActiveThemes(), []);
+    return themes;
+};
+
+// Returns the primary (highest priority) theme for backward compatibility
 export const useSeasonalTheme = () => {
     const theme = useMemo(() => {
-        const themes = Array.from(getActiveThemes()).filter(Boolean);
+        const themes = getAllActiveThemes();
         if (themes.length === 0) return null;
-
-        // Let's deduce an "exact day" for the UI prioritization if possible.
-        // It's mostly guesswork since frontend lacks shouldSendEmail, 
-        // but we can look for festivals ending today or just take themes[0].
-        // The first exact matching theme returned from fixed dates or f.day
-        const today = new Date();
-        const d = today.getDate();
-
-        // We simulate finding the exact date. Since we don't have shouldSendEmail here,
-        // we'll just prioritize the LAST festival in the activeThemes (usually variable overrides fixed? No, just the simplest: pick first)
-        // Wait, for Frontend, the variable festivals actually represent the most important daily changing ones.
-        // To be perfectly aligned with backend, we should use backend's priority. But here we just return the first.
-        // But wait! If we just yield all, they are in order. The issue was variable festival wasn't overwriting Sankranti.
-        // Sankranti is window 3. Lohri is window 0. 
-        // Window 0 means exact day!
-        // We can prioritize window=0! Or we can prioritize themes that were yielded by variable array where f.day === today.day
-        // We'll just define a simple rule: if a theme id has window 0, it's highly specific.
-        return themes[themes.length - 1]; // Reverse order priority gives variable festivals (defined lower down) priority over fixed ones like Sankranti!
+        // Last theme has highest priority (variable festivals defined later override fixed ones)
+        return themes[themes.length - 1];
     }, []);
 
     return theme;

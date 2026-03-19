@@ -22,7 +22,7 @@ import AdsterraBanner from "../components/AdsterraBanner";
 import AdHighperformanceBanner from "../components/AdHighperformanceBanner";
 import SeasonalEffects from "../components/SeasonalEffects";
 import DailyQuote from "../components/DailyQuote";
-import { useSeasonalTheme } from "../hooks/useSeasonalTheme.jsx";
+import { useSeasonalTheme, useAllSeasonalThemes } from "../hooks/useSeasonalTheme.jsx";
 import ThemeDetailModal from "../components/ThemeDetailModal";
 
 import { authenticatedFetch } from '../utils/auth';
@@ -31,6 +31,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function PublicHome() {
   const theme = useSeasonalTheme();
+  const allThemes = useAllSeasonalThemes();
   const navigate = useNavigate();
   const { currentUser } = useSelector((state) => state.user);
 
@@ -647,6 +648,7 @@ export default function PublicHome() {
       <GeminiAIWrapper />
       <ThemeDetailModal
         theme={theme}
+        themes={allThemes}
         isOpen={showThemeInfo}
         onClose={() => setShowThemeInfo(false)}
       />
