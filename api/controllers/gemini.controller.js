@@ -1,5 +1,6 @@
 import { Groq } from 'groq-sdk';
 import ChatHistory from '../models/chatHistory.model.js';
+import User from '../models/user.model.js';
 import MessageRating from '../models/messageRating.model.js';
 import About from '../models/about.model.js';
 import Deployment from '../models/deployment.model.js';
@@ -14,6 +15,23 @@ const groq = new Groq({
 });
 
 import { toolRegistry, toolDefinitions } from '../services/aiToolsService.js';
+
+// Helper to update global user AI usage (lifetime tokens)
+const updateUserAIUsage = async (userId, usage) => {
+    if (!userId || !usage) return;
+    try {
+        await User.findByIdAndUpdate(userId, {
+            $inc: {
+                'aiUsage.totalPromptTokens': usage.prompt_tokens || 0,
+                'aiUsage.totalCompletionTokens': usage.completion_tokens || 0,
+                'aiUsage.totalTokens': usage.total_tokens || 0
+            },
+            $set: { 'aiUsage.lastUsed': new Date() }
+        });
+    } catch (err) {
+        console.error('Failed to update user AI usage:', err);
+    }
+};
 
 export const chatWithGemini = async (req, res) => {
     const {
@@ -817,6 +835,11 @@ export const chatWithGemini = async (req, res) => {
                         } : undefined
                     });
 
+                    // Update persistent USER usage (lifetime)
+                    if (userId && completion?.usage) {
+                        updateUserAIUsage(userId, completion.usage);
+                    }
+
                     try {
                         await chatHistory.save();
                     } catch (saveError) {
@@ -914,6 +937,11 @@ export const chatWithGemini = async (req, res) => {
                             totalTokens: completion.usage.total_tokens
                         } : undefined
                     });
+
+                    // Update persistent USER usage (lifetime)
+                    if (userId && completion?.usage) {
+                        updateUserAIUsage(userId, completion.usage);
+                    }
 
                     try {
                         await chatHistory.save();
@@ -1017,6 +1045,9 @@ export const chatWithGemini = async (req, res) => {
             }
         }
 
+        // We don't have Groq usage here, so we skip updateUserAIUsage for fallback responses
+        // unless they are from Groq (not applicable here).
+
         if (!res.headersSent) {
             return res.status(200).json({
                 success: true,
@@ -1041,9 +1072,13 @@ export const getUserChatSessions = async (req, res) => {
 
         const sessions = await ChatHistory.getUserSessions(userId);
 
+        // Also fetch global user usage (for lifetime total tracking)
+        const user = await User.findById(userId).select('aiUsage').lean();
+
         res.status(200).json({
             success: true,
-            sessions: sessions
+            sessions: sessions,
+            lifetimeUsage: user?.aiUsage || { totalTokens: 0, totalPromptTokens: 0, totalCompletionTokens: 0 }
         });
     } catch (error) {
         console.error('Error getting chat sessions:', error);

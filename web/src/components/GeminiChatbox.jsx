@@ -384,6 +384,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [showBookmarks, setShowBookmarks] = useState(false);
     const [showHistory, setShowHistory] = useState(false);
     const [chatSessions, setChatSessions] = useState([]);
+    const [lifetimeUsage, setLifetimeUsage] = useState({ totalTokens: 0 });
     const [isLoadingSessions, setIsLoadingSessions] = useState(false);
     const [isTyping, setIsTyping] = useState(false);
     const [typingText, setTypingText] = useState('');
@@ -4397,6 +4398,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 const data = await response.json();
                 const sessions = data.sessions || [];
                 setChatSessions(sessions);
+                setLifetimeUsage(data.lifetimeUsage || { totalTokens: 0 });
 
                 // Sync currentChatName with the active session
                 const activeSessionId = getOrCreateSessionId();
@@ -6629,6 +6631,29 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 {isHeaderMenuOpen && (
                                     <div ref={headerMenuRef} className={`absolute right-0 top-full mt-3 ${isDarkMode ? 'bg-gray-800/95 text-gray-200 border-gray-600' : 'bg-white/95 text-gray-800 border-gray-200'} rounded-xl shadow-2xl border backdrop-blur-sm w-64 z-50 animate-fade-in origin-top-right max-h-[60vh] overflow-y-auto`}>
                                         <ul className="py-2 text-sm">
+                                            {/* Session Usage / Tokens */}
+                                            <li>
+                                                <div
+                                                    className={`w-full text-left px-4 py-3 ${isDarkMode ? 'hover:bg-gray-700/10' : 'hover:bg-gray-50/50'} flex items-center gap-3 transition-all duration-200 cursor-default group`}
+                                                    title={`Tokens used in this session (Prompt, Completion, Total)`}
+                                                >
+                                                    <div className={`p-1.5 rounded-lg ${isDarkMode ? 'bg-yellow-500/20' : 'bg-yellow-100'} group-hover:scale-110 transition-transform duration-200`}>
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-yellow-600">
+                                                            <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2" />
+                                                            <text x="12" y="15" textAnchor="middle" fontSize="10" fontWeight="bold" fill="currentColor">T</text>
+                                                        </svg>
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 opacity-80">Session Usage</span>
+                                                        <span className={`font-semibold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-700'}`}>
+                                                            {messages.reduce((sum, msg) => sum + (msg.tokenUsage?.totalTokens || 0), 0).toLocaleString()} <span className="text-[10px] opacity-70">tokens</span>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </li>
+
+                                            <li className={`border-t ${isDarkMode ? 'border-gray-600/50' : 'border-gray-200/50'} my-1`}></li>
+
                                             {/* New Chat */}
                                             <li>
                                                 <button
@@ -6793,28 +6818,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                 </button>
                                             </li>
 
-                                            {/* Session Usage / Tokens */}
-                                            <li>
-                                                <div
-                                                    className={`w-full text-left px-4 py-3 ${isDarkMode ? 'hover:bg-gray-700/10' : 'hover:bg-gray-50/50'} flex items-center gap-3 transition-all duration-200 cursor-default group`}
-                                                    title={`Tokens used in this session (Prompt, Completion, Total)`}
-                                                >
-                                                    <div className={`p-1.5 rounded-lg ${isDarkMode ? 'bg-yellow-500/20' : 'bg-yellow-100'} group-hover:scale-110 transition-transform duration-200`}>
-                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-yellow-600">
-                                                            <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2" />
-                                                            <text x="12" y="15" textAnchor="middle" fontSize="10" fontWeight="bold" fill="currentColor">T</text>
-                                                        </svg>
-                                                    </div>
-                                                    <div className="flex flex-col">
-                                                        <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 opacity-80">Session Usage</span>
-                                                        <span className={`font-semibold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-700'}`}>
-                                                            {messages.reduce((sum, msg) => sum + (msg.tokenUsage?.totalTokens || 0), 0).toLocaleString()} <span className="text-[10px] opacity-70">tokens</span>
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </li>
 
-                                            <li className={`border-t ${isDarkMode ? 'border-gray-600/50' : 'border-gray-200/50'} my-2`}></li>
 
                                             {/* Expand/Collapse only on desktop */}
                                             <li className="hidden md:block">
@@ -8439,13 +8443,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         <h4 className={`font-semibold flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                                             <FaHistory className="text-blue-500" />
                                             Chat History
-                                            {chatSessions.length > 0 && (
+                                            {lifetimeUsage && lifetimeUsage.totalTokens > 0 && (
                                                 <div
                                                     className={`ml-2 px-2 py-0.5 rounded-full text-[10px] flex items-center gap-1 border ${isDarkMode ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400' : 'bg-yellow-50 border-yellow-200 text-yellow-700'}`}
-                                                    title="Total tokens across all sessions in this list"
+                                                    title="Total tokens consumed across your entire account history (persists even if chats are deleted)"
                                                 >
                                                     <div className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></div>
-                                                    <span>Σ {chatSessions.reduce((sum, s) => sum + (s.totalTokens || 0), 0).toLocaleString()} tokens</span>
+                                                    <span>Σ {lifetimeUsage.totalTokens.toLocaleString()} Lifetime Tokens</span>
                                                 </div>
                                             )}
                                         </h4>

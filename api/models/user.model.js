@@ -362,6 +362,12 @@ const userSchema = new mongoose.Schema({
   tempSubscriptionSource: {
     type: String,
     select: false
+  },
+  aiUsage: {
+    totalPromptTokens: { type: Number, default: 0 },
+    totalCompletionTokens: { type: Number, default: 0 },
+    totalTokens: { type: Number, default: 0 },
+    lastUsed: { type: Date, default: null }
   }
 }, { timestamps: true });
 
