@@ -6287,7 +6287,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         <div style={{ display: isContactSupportOpen ? 'none' : 'block' }}>
             {/* Enhanced Floating AI Chat Button */}
             <div className={`fixed bottom-20 right-6 z-50 ${isMobileMenuOpen ? 'hidden' : ''}`}>
-                <div className="relative group">
+                <div className="relative group w-12 h-12">
                     {/* Quick Action Buttons */}
                     {!isOpen && (
                         <div className="absolute right-full top-1/2 -translate-y-1/2 flex flex-row-reverse items-center gap-3 pr-5 opacity-0 scale-75 translate-x-10 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:translate-x-0 group-hover:pointer-events-auto transition-all duration-500 ease-out z-50">
@@ -6338,33 +6338,40 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         </div>
                     )}
 
+
+
                     <button
                         onClick={isOpen ? handleClose : handleOpen}
-                        className={`relative group w-12 h-12 rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-110 hover:rotate-12 flex items-center justify-center overflow-hidden border border-white/20 dark:border-gray-700/30 ${isDarkMode ? 'bg-gray-900' : `bg-white`
+                        className={`relative group w-12 h-12 rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-110 hover:rotate-12 flex items-center justify-center border border-white/20 dark:border-gray-700/30 ${isDarkMode ? 'bg-gray-900' : `bg-white`
                             }`}
                         aria-label="Open AI Chat"
                         title="Chat with SetuAI Assistant!"
                     >
-                        {/* Animated background ring - Ripple Effect */}
-                        <div
-                            className="absolute inset-0 rounded-full animate-ping z-0"
-                            style={{
-                                border: `3px solid ${getThemeRingColor()}55`,
-                            }}
-                        ></div>
+                        {/* Inner container for background and shine - with overflow-hidden */}
+                        <div className="absolute inset-0 overflow-hidden rounded-full pointer-events-none">
+                            {/* Dynamic Background */}
+                            <div className={`absolute inset-0 transition-opacity duration-500 opacity-90 z-0 ${isDarkMode ? 'bg-gradient-to-br from-gray-800 via-gray-900 to-black' : `bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600`
+                                }`} />
+                            
+                            {/* Animated Glass Glow (Shine) */}
+                            {!isOpen && (
+                                <div className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] bg-white/20 dark:bg-white/10 rotate-[35deg] transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                            )}
+                        </div>
 
-                        {/* Dynamic Background */}
-                        <div className={`absolute inset-0 transition-opacity duration-500 opacity-90 z-0 ${isDarkMode ? 'bg-gradient-to-br from-gray-800 via-gray-900 to-black' : `bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600`
-                            }`} />
-
-                        {/* Animated Glass Glow */}
+                        {/* Animated background ripple - Ping Effect (Synchronized with Support) */}
                         {!isOpen && (
-                            <div className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] bg-white/20 dark:bg-white/10 rotate-[35deg] transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                            <div
+                                className="absolute inset-0 rounded-full animate-ping pointer-events-none z-0"
+                                style={{
+                                    border: `4px solid ${getThemeRingColor()}ee`, // Use 'ee' (93%) for high visibility
+                                }}
+                            ></div>
                         )}
 
-                        {/* Animated background pulse */}
+                        {/* Animated outer pulse glow */}
                         {!isOpen && (
-                            <div className={`absolute inset-[-4px] rounded-full border border-blue-400/30 dark:border-blue-500/20 blur-[2px] animate-pulse`} />
+                            <div className={`absolute inset-[-4px] rounded-full border-2 border-blue-500/60 dark:border-blue-400/60 blur-[3px] animate-pulse transition-opacity duration-300`} />
                         )}
 
                         {/* Icon with sparkle effect */}
