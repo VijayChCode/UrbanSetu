@@ -68,31 +68,25 @@ export default function ThemeDetailModal({ theme, themes: themesProp, isOpen, on
                     </div>
 
                     <div className="p-6 text-center">
-                        {/* Festival Names */}
-                        {isMultiple ? (
-                            <>
-                                <h3 className={`text-2xl font-bold bg-clip-text text-transparent ${primaryTheme.textGradient || 'bg-gradient-to-r from-blue-600 to-purple-600'} mb-3`}>
-                                    {allThemes.map(t => t.name).join(' & ')}
-                                </h3>
-                                {/* Individual Greetings */}
-                                <div className="space-y-2 mb-4">
-                                    {allThemes.map((t, i) => (
-                                        <p key={t.id || i} className="text-lg text-gray-700 dark:text-gray-200 font-medium">
-                                            "{t.greeting} {userName && <span className="text-blue-600 dark:text-blue-400 break-words">{userName}!</span>}"
-                                        </p>
-                                    ))}
-                                </div>
-                            </>
-                        ) : (
-                            <>
-                                <h3 className={`text-2xl font-bold bg-clip-text text-transparent ${primaryTheme.textGradient || 'bg-gradient-to-r from-blue-600 to-purple-600'} mb-2`}>
-                                    {primaryTheme.name}
-                                </h3>
-                                <p className="text-xl text-gray-700 dark:text-gray-200 font-medium mb-4">
-                                    "{primaryTheme.greeting} {userName && <span className="text-blue-600 dark:text-blue-400 break-words">{userName}!</span>}"
-                                </p>
-                            </>
-                        )}
+                        {/* Final Greeting Calculation */}
+                        <h3 className={`text-2xl font-bold bg-clip-text text-transparent ${primaryTheme.textGradient || 'bg-gradient-to-r from-blue-600 to-purple-600'} ${isMultiple ? 'mb-3' : 'mb-2'}`}>
+                            {isMultiple 
+                                ? (allThemes.length > 2 
+                                    ? `${allThemes.slice(0, -1).map(t => t.name).join(', ')} & ${allThemes[allThemes.length - 1].name}`
+                                    : allThemes.map(t => t.name).join(' & ')
+                                  )
+                                : primaryTheme.name}
+                        </h3>
+
+                        <p className={`${isMultiple ? 'text-lg' : 'text-xl'} text-gray-700 dark:text-gray-200 font-medium mb-4`}>
+                            "{isMultiple 
+                                ? (allThemes.length > 2
+                                    ? `${allThemes.slice(0, -1).map(t => t.greeting.replace(/[.!]$/, '')).join(', ')} & ${allThemes[allThemes.length - 1].greeting.replace(/[.!]$/, '')}`
+                                    : allThemes.map(t => t.greeting.replace(/[.!]$/, '')).join(' & ')
+                                  )
+                                : primaryTheme.greeting.replace(/[.!]$/, '')
+                            }! {userName && <span className="text-blue-600 dark:text-blue-400 break-words">{userName}!</span>}"
+                        </p>
 
                         <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 mb-4">
                             <p className="text-sm text-gray-500 dark:text-gray-400">
