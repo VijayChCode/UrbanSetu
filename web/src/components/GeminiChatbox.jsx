@@ -8478,7 +8478,6 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         <h4 className={`font-semibold flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                                             <FaHistory className="text-blue-500" />
                                             Chat History
-
                                         </h4>
                                         <div className="flex items-center gap-2">
                                             {chatSessions.length > 0 && (
@@ -8698,7 +8697,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                     title="Total tokens consumed across your entire account history (persists even if chats are deleted)"
                                                 >
                                                     <div className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></div>
-                                                    <span>Σ {lifetimeUsage.totalTokens.toLocaleString()} Lifetime Tokens</span>
+                                                    <span>Σ {lifetimeUsage.totalTokens.toLocaleString()} Lifetime Tokens Used</span>
                                                 </div>
                                             )}
                                             <button
