@@ -312,13 +312,34 @@ export default function PublicHome() {
                       <span key={i}>{t.icon}</span>
                     ))}
                   </span>
-                  <span>
-                    {allThemes.length > 1
-                      ? (allThemes.length > 2
-                        ? `${allThemes.slice(0, -1).map(t => t.greeting.replace(/[.!]$/, '')).join(', ')} & ${allThemes[allThemes.length - 1].greeting.replace(/[.!]$/, '')}`
-                        : allThemes.map(t => t.greeting.replace(/[.!]$/, '')).join(' & ')
-                      )
-                      : theme.greeting}
+                  <span className="flex flex-wrap items-center gap-x-1">
+                    {allThemes.length > 1 ? (
+                      allThemes.map((t, i) => {
+                        const parts = t.greeting.replace(/[.!]$/, '').split(' ');
+                        const mainGreeting = parts[0]; // "Happy"
+                        const festivalName = parts.slice(1).join(' '); 
+                        return (
+                          <span key={i} className="flex items-center">
+                            <span className="text-white font-medium">{mainGreeting} </span>
+                            <span className="ml-1 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400 font-extrabold">
+                              {festivalName}
+                            </span>
+                            {i < allThemes.length - 2 ? (
+                              <span className="text-white/60 mx-1">,</span>
+                            ) : i === allThemes.length - 2 ? (
+                              <span className="text-white/60 mx-1.5">&</span>
+                            ) : null}
+                          </span>
+                        );
+                      })
+                    ) : (
+                      <>
+                        <span className="text-white font-medium">{theme.greeting.split(' ')[0]} </span>
+                        <span className="ml-1 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400 font-extrabold">
+                          {theme.greeting.split(' ').slice(1).join(' ').replace(/[.!]$/, '')}
+                        </span>
+                      </>
+                    )}
                   </span>
                 </span>
               ) : (
