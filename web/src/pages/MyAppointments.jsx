@@ -2156,6 +2156,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   }, [showChatModal]);
   const [allProperties, setAllProperties] = useState([]);
   const [propertiesLoaded, setPropertiesLoaded] = useState(false);
+  const [allBlogs, setAllBlogs] = useState([]);
+  const [blogsLoaded, setBlogsLoaded] = useState(false);
+  const [isLoadingBlogSuggestions, setIsLoadingBlogSuggestions] = useState(false);
 
   // Reinitiation countdown timer state
   const [paymentStatusForReinitiate, setPaymentStatusForReinitiate] = useState(null);
@@ -2242,36 +2245,65 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
     };
   }, [appt?._id, socket]);
 
-  // Lazy-load global property list when user starts typing a mention
+  // Lazy-load global content (properties, blogs, guides) when user starts typing a mention
   useEffect(() => {
     if (!showChatModal) return;
     const hasMentionTrigger = /@[^\s]*$/.test(comment || "");
-    if (!hasMentionTrigger || propertiesLoaded) return;
-    (async () => {
-      try {
-        const res = await authenticatedFetch(`${API_BASE_URL}/api/listing/get?limit=300&forSuggestion=true`);
-        const data = await res.json();
-        const mapped = Array.isArray(data) ? data.map(l => ({
-          id: l._id,
-          name: l.name || 'Property',
-          city: l.city,
-          state: l.state,
-          price: l.discountPrice || l.regularPrice || l.price || 0,
-          bedrooms: l.bedrooms || 0,
-          bathrooms: l.bathrooms || 0,
-          area: l.area || 0,
-          imageUrls: l.imageUrls || [],
-          imageUrl: l.imageUrl,
-          image: l.image,
-          thumbnail: l.thumbnail
-        })) : [];
-        setAllProperties(mapped);
-        setPropertiesLoaded(true);
-      } catch (_) {
-        // ignore failures; suggestions will fallback to appointments only
-      }
-    })();
-  }, [comment, showChatModal, propertiesLoaded]);
+    if (!hasMentionTrigger) return;
+
+    // Load properties if not already loaded
+    if (!propertiesLoaded) {
+      (async () => {
+        try {
+          const res = await authenticatedFetch(`${API_BASE_URL}/api/listing/get?limit=300&forSuggestion=true`);
+          const data = await res.json();
+          const mapped = Array.isArray(data) ? data.map(l => ({
+            id: l._id,
+            name: l.name || 'Property',
+            city: l.city,
+            state: l.state,
+            price: l.discountPrice || l.regularPrice || l.price || 0,
+            bedrooms: l.bedrooms || 0,
+            bathrooms: l.bathrooms || 0,
+            area: l.area || 0,
+            imageUrls: l.imageUrls || [],
+            imageUrl: l.imageUrl,
+            image: l.image,
+            thumbnail: l.thumbnail,
+            type: 'property'
+          })) : [];
+          setAllProperties(mapped);
+          setPropertiesLoaded(true);
+        } catch (_) {
+          // ignore failures
+        }
+      })();
+    }
+
+    // Load blogs if not already loaded
+    if (!blogsLoaded) {
+      (async () => {
+        try {
+          setIsLoadingBlogSuggestions(true);
+          const res = await authenticatedFetch(`${API_BASE_URL}/api/blogs?limit=300&type=all&published=true`);
+          const data = await res.json();
+          const mapped = (data.data || data || []).map(b => ({
+            id: b._id,
+            name: b.title || 'Blog',
+            category: b.category || 'General',
+            image: b.thumbnail || b.image || null,
+            type: 'blog'
+          }));
+          setAllBlogs(mapped);
+          setBlogsLoaded(true);
+        } catch (_) {
+          // ignore failures
+        } finally {
+          setIsLoadingBlogSuggestions(false);
+        }
+      })();
+    }
+  }, [comment, showChatModal, propertiesLoaded, blogsLoaded]);
 
   // Fetch payment status for reinitiation check if appointment is cancelled
   useEffect(() => {
@@ -8131,6 +8163,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                         <div className="absolute top-full right-0 mt-2 bg-gray-800 text-white text-xs rounded-lg px-3 py-2 shadow-lg z-20 max-w-xs animate-fadeIn">
                           <div className="font-semibold mb-2">⌨️ Keyboard Shortcuts:</div>
                           <div className="mb-2">• Press Ctrl + / to quickly focus and type your message</div>
+                          <div className="mb-2">• @ mention any property/blog/guide</div>
                           <div className="mb-2">• Press Esc to close chatbox.</div>
                           <div className="border-t border-gray-600 pt-2 mt-2">
                             <div className="font-semibold mb-2">📎 File Upload Guidelines:</div>
@@ -9677,7 +9710,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                             bedrooms: l?.bedrooms || 0,
                             bathrooms: l?.bathrooms || 0,
                             area: l?.area || 0,
-                            image: Array.isArray(l?.imageUrls) ? l.imageUrls[0] : (l?.imageUrl || l?.image || null)
+                            image: Array.isArray(l?.imageUrls) ? l.imageUrls[0] : (l?.imageUrl || l?.image || null),
+                            type: 'property'
                           };
                         });
                         const propList = Array.isArray(allProperties) ? allProperties : [];
@@ -9691,67 +9725,99 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                             bedrooms: p?.bedrooms || 0,
                             bathrooms: p?.bathrooms || 0,
                             area: p?.area || 0,
-                            image: Array.isArray(p?.imageUrls) ? p.imageUrls[0] : (p?.imageUrl || p?.image || p?.thumbnail || null)
+                            image: Array.isArray(p?.imageUrls) ? p.imageUrls[0] : (p?.imageUrl || p?.image || p?.thumbnail || null),
+                            type: 'property'
                           };
                         });
-                        // Combine and deduplicate by ID
-                        const combined = [...apptProps, ...allPropsDetailed];
-                        const uniquePropsMap = new Map();
+
+                        const blogList = Array.isArray(allBlogs) ? allBlogs : [];
+                        const filteredBlogs = blogList.map(b => ({
+                          id: b.id,
+                          name: b.name,
+                          category: b.category,
+                          image: b.image,
+                          type: 'blog'
+                        }));
+
+                        // Combine everything
+                        const combined = [...apptProps, ...allPropsDetailed, ...filteredBlogs];
+                        const uniqueMap = new Map();
 
                         // Add appointment properties first (they have more complete data)
                         apptProps.forEach(prop => {
                           if (prop.id && prop.name) {
-                            uniquePropsMap.set(prop.id, prop);
+                            uniqueMap.set(`prop-${prop.id}`, prop);
                           }
                         });
 
                         // Add all properties, but don't override existing ones
                         allPropsDetailed.forEach(prop => {
-                          if (prop.id && prop.name && !uniquePropsMap.has(prop.id)) {
-                            uniquePropsMap.set(prop.id, prop);
+                          if (prop.id && prop.name && !uniqueMap.has(`prop-${prop.id}`)) {
+                            uniqueMap.set(`prop-${prop.id}`, prop);
                           }
                         });
 
-                        const uniqueProps = Array.from(uniquePropsMap.values())
+                        // Add blogs
+                        filteredBlogs.forEach(blog => {
+                          if (blog.id && blog.name) {
+                            uniqueMap.set(`blog-${blog.id}`, blog);
+                          }
+                        });
+
+                        const suggestions = Array.from(uniqueMap.values())
                           .filter(p => p.name && p.name.toLowerCase().includes(query));
 
 
-                        if (uniqueProps.length === 0) return <div className="p-3 text-sm text-gray-500 dark:text-gray-400 text-center">No properties found. Try typing more characters.</div>;
-                        return uniqueProps.slice(0, 8).map((p, index) => (
-                          <button key={`${p.id}-${index}`} type="button" className="w-full text-left p-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" onClick={() => {
-                            const el = inputRef.current; const base = comment || ''; const m = base.match(/@([^\s]*)$/); if (!m) return; const start = base.lastIndexOf('@');
-                            const token = `@[${p.name}](${p.id})`;
-                            const next = base.slice(0, start) + token + ' ' + base.slice(start + m[0].length);
-                            setComment(next);
-                            setTimeout(() => { try { el?.focus(); el?.setSelectionRange(start + token.length + 1, start + token.length + 1); } catch (_) { } }, 0);
-                          }}>
-                            <div className="flex items-center space-x-3">
-                              <div className="w-12 h-12 flex-shrink-0 rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
-                                {p.image ? (
-                                  <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
-                                ) : (
-                                  <div className="text-gray-500 text-xs text-center">
-                                    <div className="font-bold">🏠</div>
+                        if (suggestions.length === 0) return <div className="p-3 text-sm text-gray-500 dark:text-gray-400 text-center">No content found. Try typing more characters.</div>;
+                        return suggestions.slice(0, 10).map((p, index) => {
+                          const isBlog = p.type === 'blog';
+                          return (
+                            <button key={`${p.id}-${index}`} type="button" className="w-full text-left p-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" onClick={() => {
+                              const el = inputRef.current; const base = comment || ''; const m = base.match(/@([^\s]*)$/); if (!m) return; const start = base.lastIndexOf('@');
+                              // Handle mentions based on type
+                              const token = isBlog ? `@[${p.name}](${p.id})` : `@[${p.name}](${p.id})`; // Mentions look same in MD, but back-end handles them
+                              const next = base.slice(0, start) + token + ' ' + base.slice(start + m[0].length);
+                              setComment(next);
+                              setTimeout(() => { try { el?.focus(); el?.setSelectionRange(start + token.length + 1, start + token.length + 1); } catch (_) { } }, 0);
+                            }}>
+                              <div className="flex items-center space-x-3">
+                                <div className="w-12 h-12 flex-shrink-0 rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
+                                  {p.image ? (
+                                    <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <div className="text-gray-500 text-xs text-center">
+                                      {isBlog ? <FaFileAlt className="text-blue-500" size={20} /> : <div className="font-bold text-xl">🏠</div>}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="font-medium text-gray-900 dark:text-white truncate flex items-center gap-1.5">
+                                    {isBlog ? <FaFileAlt className="text-blue-500 flex-shrink-0" size={10} /> : <div className="text-green-500 flex-shrink-0">🏠</div>}
+                                    {p.name}
                                   </div>
-                                )}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="font-medium text-gray-900 dark:text-white truncate">{p.name}</div>
-                                <div className="text-sm text-gray-500 dark:text-gray-400">
-                                  {p.city && p.state ? `${p.city}, ${p.state}` : (p.city || p.state || 'Location not available')}
+                                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                                    {isBlog ? p.category : (p.city && p.state ? `${p.city}, ${p.state}` : (p.city || p.state || 'Location not available'))}
+                                  </div>
+                                  {!isBlog && (
+                                    <>
+                                      {p.price && p.price > 0 ? (
+                                        <div className="text-sm font-semibold text-green-600">₹{Number(p.price).toLocaleString()}</div>
+                                      ) : (
+                                        <div className="text-sm text-gray-400">Price not available</div>
+                                      )}
+                                      <div className="text-xs text-gray-400">
+                                        {[p.bedrooms > 0 && `${p.bedrooms}BHK`, p.area > 0 && `${p.area} sq ft`].filter(Boolean).join(' • ') || 'Details not available'}
+                                      </div>
+                                    </>
+                                  )}
+                                  {isBlog && (
+                                    <div className="text-xs text-gray-400 italic">Blog/Guide Article</div>
+                                  )}
                                 </div>
-                                {p.price && p.price > 0 ? (
-                                  <div className="text-sm font-semibold text-green-600">₹{Number(p.price).toLocaleString()}</div>
-                                ) : (
-                                  <div className="text-sm text-gray-400">Price not available</div>
-                                )}
-                                <div className="text-xs text-gray-400">
-                                  {[p.bedrooms > 0 && `${p.bedrooms}BHK`, p.area > 0 && `${p.area} sq ft`].filter(Boolean).join(' • ') || 'Details not available'}
-                                </div>
                               </div>
-                            </div>
-                          </button>
-                        ));
+                            </button>
+                          );
+                        });
                       })()}
                     </div>
                   )}
