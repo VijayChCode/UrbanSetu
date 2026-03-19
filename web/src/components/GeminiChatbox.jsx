@@ -384,6 +384,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [showBookmarks, setShowBookmarks] = useState(false);
     const [showHistory, setShowHistory] = useState(false);
     const [chatSessions, setChatSessions] = useState([]);
+    const [isLoadingSessions, setIsLoadingSessions] = useState(false);
     const [isTyping, setIsTyping] = useState(false);
     const [typingText, setTypingText] = useState('');
     const [showQuickActions, setShowQuickActions] = useState(false);
@@ -4383,6 +4384,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const loadChatSessions = async () => {
         if (!currentUser) return [];
 
+        setIsLoadingSessions(true);
         try {
             const response = await authenticatedFetch(`${API_BASE_URL}/api/gemini/sessions`);
 
@@ -4415,6 +4417,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         } catch (error) {
             console.error('Error loading chat sessions:', error);
             return [];
+        } finally {
+            setIsLoadingSessions(false);
         }
     };
 
@@ -8367,12 +8371,14 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                             Chat History
                                         </h4>
                                         <div className="flex items-center gap-2">
-                                            <button
-                                                onClick={() => setShowDeleteAllModal(true)}
-                                                className="px-3 py-1.5 text-xs rounded bg-red-600 text-white hover:bg-red-700"
-                                            >
-                                                Delete All
-                                            </button>
+                                            {chatSessions.length > 0 && (
+                                                <button
+                                                    onClick={() => setShowDeleteAllModal(true)}
+                                                    className="px-3 py-1.5 text-xs rounded bg-red-600 text-white hover:bg-red-700"
+                                                >
+                                                    Delete All
+                                                </button>
+                                            )}
                                             <button
                                                 onClick={() => { createNewSession(); setShowHistory(false); }}
                                                 className="px-3 py-1.5 text-xs rounded bg-green-600 text-white hover:bg-green-700 flex items-center gap-1"
@@ -8385,7 +8391,12 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
                                     {/* Scrollable Content */}
                                     <div className="flex-1 overflow-y-auto p-4">
-                                        {chatSessions.length === 0 ? (
+                                        {isLoadingSessions ? (
+                                            <div className="flex flex-col items-center justify-center py-10 space-y-3 animate-fadeIn">
+                                                <FaSync className={`animate-spin text-2xl ${themeColors.accent}`} />
+                                                <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Loading chat history...</p>
+                                            </div>
+                                        ) : chatSessions.length === 0 ? (
                                             <div className="text-center py-8 space-y-3">
                                                 <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>No chats yet</p>
                                                 <button
