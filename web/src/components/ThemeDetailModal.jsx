@@ -80,31 +80,31 @@ export default function ThemeDetailModal({ theme, themes: themesProp, isOpen, on
 
                         <p className={`${isMultiple ? 'text-lg' : 'text-xl'} text-gray-700 dark:text-gray-200 font-medium mb-4 flex flex-wrap justify-center items-center`}>
                             "
-                            {allThemes.length > 1 ? (
-                                allThemes.map((t, idx) => {
-                                    const parts = t.greeting.replace(/[.!]$/, '').split(' ');
-                                    const mainGreeting = parts[0];
-                                    const festivalName = parts.slice(1).join(' ');
-                                    const isLast = idx === allThemes.length - 1;
-                                    return (
-                                        <span key={idx} className="flex items-center">
-                                            <span className="ml-1">{mainGreeting}</span>
-                                            <span className="ml-1 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 font-extrabold">
-                                                {festivalName}
+                            <span className="ml-1">{(primaryTheme?.greeting || "").split(' ')[0]}</span>
+                            <span className="flex items-center">
+                                {allThemes.length > 1 ? (
+                                    allThemes.map((t, idx) => {
+                                        const parts = t.greeting.replace(/[.!]$/, '').split(' ');
+                                        const festivalName = parts.slice(1).join(' ');
+                                        const isLast = idx === allThemes.length - 1;
+                                        return (
+                                            <span key={idx} className="flex items-center">
+                                                <span className="ml-1 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 font-extrabold">
+                                                    {festivalName}
+                                                </span>
+                                                {idx < allThemes.length - 2 ? <span className="mr-1">,</span> : idx === allThemes.length - 2 ? <span className="mx-1">&</span> : isLast ? <span>!</span> : ''}
                                             </span>
-                                            {idx < allThemes.length - 2 ? <span>,</span> : idx === allThemes.length - 2 ? <span className="mx-1.5">&</span> : isLast ? <span>!</span> : ''}
+                                        );
+                                    })
+                                ) : (
+                                    <span className="flex items-center">
+                                        <span className="ml-1 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 font-extrabold">
+                                            {primaryTheme.greeting.split(' ').slice(1).join(' ').replace(/[.!]$/, '')}
                                         </span>
-                                    );
-                                })
-                            ) : (
-                                <span className="flex items-center">
-                                    <span className="ml-1">{primaryTheme.greeting.split(' ')[0]}</span>
-                                    <span className="ml-1 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 font-extrabold">
-                                        {primaryTheme.greeting.split(' ').slice(1).join(' ').replace(/[.!]$/, '')}
+                                        <span>!</span>
                                     </span>
-                                    <span>!</span>
-                                </span>
-                            )}
+                                )}
+                            </span>
                             {userName && (
                                 <span className="ml-1.5 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 font-extrabold break-words">
                                     {userName}!

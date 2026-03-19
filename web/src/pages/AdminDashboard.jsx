@@ -1027,17 +1027,24 @@ export default function AdminDashboard() {
               )}
             </h1>
             <p className="text-blue-100 text-lg max-w-2xl mt-1">
-              <span className="font-extrabold text-[#FACC15] drop-shadow-[0_0_12px_rgba(250,204,21,0.5)] tracking-wide transition-all">
-                {theme?.greeting 
-                    ? (allThemes.length > 1
-                        ? (allThemes.length > 2
-                            ? `${allThemes.slice(0, -1).map(t => t.greeting.replace(/[.!]$/, '')).join(', ')} & ${allThemes[allThemes.length - 1].greeting.replace(/[.!]$/, '')}`
-                            : allThemes.map(t => t.greeting.replace(/[.!]$/, '')).join(' & ')
-                          )
-                        : theme.greeting
-                      )
-                    : "Here's what's happening with your platform today."}
-              </span> 
+              {theme?.greeting ? (
+                <>
+                  <span className="font-extrabold text-[#FACC15] drop-shadow-[0_0_12px_rgba(250,204,21,0.5)] tracking-wide">
+                    {theme.greeting.split(' ')[0]} 
+                  </span>
+                  {allThemes.map((t, i) => {
+                    const festivalName = t.greeting.replace(/[.!]$/, '').split(' ').slice(1).join(' ');
+                    return (
+                        <span key={i} className="font-extrabold text-[#FACC15] drop-shadow-[0_0_12px_rgba(250,204,21,0.5)] tracking-wide">
+                          <span className="ml-1">{festivalName}</span>
+                          {i < allThemes.length - 2 ? <span>, </span> : i === allThemes.length - 2 ? <span className="mx-1">&</span> : ''}
+                        </span>
+                    );
+                  })}
+                </>
+              ) : (
+                <span className="opacity-90">Here's what's happening with your platform today.</span>
+              )}
               <span className="ml-1 opacity-90">Check analytics and manage listings efficiently.</span>
             </p>
           </div>

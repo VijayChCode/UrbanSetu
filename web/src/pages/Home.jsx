@@ -298,41 +298,39 @@ export default function Home() {
 
                     return (
                       <span className="text-lg sm:text-xl font-bold flex flex-wrap items-center justify-center text-center gap-x-2 gap-y-1">
-                        <span className="flex flex-wrap items-center justify-center gap-x-1.5 transition-all duration-300">
-                          {allThemes.length > 1 
-                            ? (
-                                allThemes.map((t, idx) => {
-                                  const parts = t.greeting.replace(/[.!]$/, '').split(' ');
-                                  const mainGreeting = parts[0];
-                                  const festivalName = parts.slice(1).join(' ');
-                                  return (
-                                    <span key={idx} className="flex items-center">
-                                      <span className="text-gray-700 dark:text-gray-200">{mainGreeting} </span>
-                                      <span className="ml-1 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
-                                        {festivalName}
+                        <span className="flex flex-wrap items-center justify-center gap-x-1 transition-all duration-300">
+                          <span className="text-gray-700 dark:text-gray-200">
+                            {(theme?.greeting || greet).split(' ')[0]}
+                          </span>
+                          <span className="flex items-center">
+                            {allThemes.length > 1 
+                              ? (
+                                  allThemes.map((t, idx) => {
+                                    const parts = t.greeting.replace(/[.!]$/, '').split(' ');
+                                    const festivalName = parts.slice(1).join(' ');
+                                    return (
+                                      <span key={idx} className="flex items-center">
+                                        <span className="ml-1 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
+                                          {festivalName}
+                                        </span>
+                                        {idx < allThemes.length - 2 ? 
+                                          <span className="text-gray-700 dark:text-gray-200">, </span> : 
+                                          idx === allThemes.length - 2 ? 
+                                          <span className="text-gray-700 dark:text-gray-200 mx-1">&</span> : ''
+                                        }
                                       </span>
-                                      {idx < allThemes.length - 2 ? 
-                                        <span className="text-gray-700 dark:text-gray-200">, </span> : 
-                                        idx === allThemes.length - 2 ? 
-                                        <span className="text-gray-700 dark:text-gray-200 mx-1.5">&</span> : ''
-                                      }
+                                    );
+                                  })
+                                )
+                              : (
+                                  theme?.greeting && (
+                                    <span className="ml-1 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
+                                      {theme.greeting.split(' ').slice(1).join(' ').replace(/[.!]$/, '')}
                                     </span>
-                                  );
-                                })
-                              )
-                            : (
-                                theme?.greeting 
-                                  ? (
-                                    <>
-                                      <span className="text-gray-700 dark:text-gray-200">{theme.greeting.split(' ')[0]}</span>
-                                      <span className="ml-1 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
-                                        {theme.greeting.split(' ').slice(1).join(' ').replace(/[.!]$/, '')}
-                                      </span>
-                                    </>
                                   )
-                                  : <span className="text-gray-700 dark:text-gray-200">{greet}</span>
-                              )
-                          }
+                                )
+                            }
+                          </span>
                           <span className="text-gray-700 dark:text-gray-200">,</span>
                         </span>
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 break-words max-w-[200px] sm:max-w-none truncate">
