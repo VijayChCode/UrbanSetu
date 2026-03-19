@@ -2292,7 +2292,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
             name: b.title || 'Blog',
             category: b.category || 'General',
             image: b.thumbnail || b.image || null,
-            type: 'blog'
+            type: b.type || 'blog'
           }));
           setAllBlogs(mapped);
           setBlogsLoaded(true);
@@ -9775,7 +9775,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                             <button key={`${p.id}-${index}`} type="button" className="w-full text-left p-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" onClick={() => {
                               const el = inputRef.current; const base = comment || ''; const m = base.match(/@([^\s]*)$/); if (!m) return; const start = base.lastIndexOf('@');
                               // Handle mentions based on type
-                              const token = isBlog ? `@[${p.name}](${p.id})` : `@[${p.name}](${p.id})`; // Mentions look same in MD, but back-end handles them
+                              const token = (p.type === 'blog' || p.type === 'guide') ? `@[${p.name}](${p.type}:${p.id})` : `@[${p.name}](listing:${p.id})`;
                               const next = base.slice(0, start) + token + ' ' + base.slice(start + m[0].length);
                               setComment(next);
                               setTimeout(() => { try { el?.focus(); el?.setSelectionRange(start + token.length + 1, start + token.length + 1); } catch (_) { } }, 0);

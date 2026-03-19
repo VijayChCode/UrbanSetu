@@ -77,8 +77,30 @@ const processTextSegment = (text, isSentMessage, searchQuery) => {
     const mentionPlaceholder = mentionPlaceholders.find(p => p.placeholder === subPart);
     if (mentionPlaceholder) {
       const { name, listingId } = mentionPlaceholder;
-      const basePrefix = window.location.pathname.includes('/admin') ? '/admin/listing/' : '/user/listing/';
-      const href = `${basePrefix}${listingId}`;
+      let href = "#";
+      let basePrefix = "";
+
+      const isAdmin = window.location.pathname.includes('/admin');
+
+      // Check for type prefix in the ID
+      if (listingId.startsWith('blog:')) {
+        const id = listingId.split(':')[1];
+        basePrefix = isAdmin ? '/admin/blog/' : '/user/blog/';
+        href = `${basePrefix}${id}`;
+      } else if (listingId.startsWith('guide:')) {
+        const id = listingId.split(':')[1];
+        basePrefix = isAdmin ? '/admin/guide/' : '/user/guide/';
+        href = `${basePrefix}${id}`;
+      } else if (listingId.startsWith('listing:') || listingId.startsWith('prop:')) {
+        const id = listingId.split(':')[1];
+        basePrefix = isAdmin ? '/admin/listing/' : '/user/listing/';
+        href = `${basePrefix}${id}`;
+      } else {
+        // Legacy or default: assume property listing
+        basePrefix = isAdmin ? '/admin/listing/' : '/user/listing/';
+        href = `${basePrefix}${listingId}`;
+      }
+
       const linkClasses = isSentMessage
         ? "text-white underline decoration-dotted hover:text-blue-200 cursor-pointer"
         : "text-blue-600 underline decoration-dotted hover:text-blue-800 cursor-pointer";
@@ -87,7 +109,10 @@ const processTextSegment = (text, isSentMessage, searchQuery) => {
         <a
           key={`mention-${index}`}
           href={href}
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            // Ensure propagation stopped for modal/overlay contexts, but allow navigation
+            e.stopPropagation();
+          }}
           className={linkClasses}
           title={`Open ${name}`}
         >
