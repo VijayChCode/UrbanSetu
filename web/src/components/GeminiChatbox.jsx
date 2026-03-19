@@ -7532,29 +7532,30 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                         </div>
                                                     )}
 
-                                                    {/* Token Usage Badge for assistant messages */}
-                                                    {message.role === 'assistant' && message.tokenUsage && !message.isError && !message.isRestricted && (
-                                                        <div
-                                                            className="flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-medium cursor-default animate-fadeIn"
-                                                            style={{
-                                                                background: isDarkMode ? 'rgba(234, 179, 8, 0.15)' : 'rgba(234, 179, 8, 0.1)',
-                                                                color: isDarkMode ? '#facc15' : '#a16207',
-                                                                border: `1px solid ${isDarkMode ? 'rgba(234, 179, 8, 0.25)' : 'rgba(234, 179, 8, 0.2)'}`,
-                                                                animation: 'tokenFadeIn 0.6s ease-out'
-                                                            }}
-                                                            title={`Prompt: ${message.tokenUsage.promptTokens} · Completion: ${message.tokenUsage.completionTokens} · Total: ${message.tokenUsage.totalTokens} tokens`}
-                                                        >
-                                                            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
-                                                                <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2" />
-                                                                <text x="12" y="16" textAnchor="middle" fontSize="12" fontWeight="bold" fill="currentColor">T</text>
-                                                            </svg>
-                                                            <span>{message.tokenUsage.totalTokens}</span>
-                                                        </div>
-                                                    )}
+
 
                                                     {/* Action buttons - hidden when editing */}
                                                     {editingMessageIndex !== index && (
-                                                        <div className="flex gap-1 transition-all duration-200">
+                                                        <div className="flex items-center gap-1.5 transition-all duration-200">
+                                                            {/* Token Usage Badge for assistant messages */}
+                                                            {message.role === 'assistant' && message.tokenUsage && !message.isError && !message.isRestricted && (
+                                                                <div
+                                                                    className="flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-medium cursor-default animate-fadeIn mr-1"
+                                                                    style={{
+                                                                        background: isDarkMode ? 'rgba(234, 179, 8, 0.15)' : 'rgba(234, 179, 8, 0.1)',
+                                                                        color: isDarkMode ? '#facc15' : '#a16207',
+                                                                        border: `1px solid ${isDarkMode ? 'rgba(234, 179, 8, 0.25)' : 'rgba(234, 179, 8, 0.2)'}`,
+                                                                        animation: 'tokenFadeIn 0.6s ease-out'
+                                                                    }}
+                                                                    title={`Prompt: ${message.tokenUsage.promptTokens} · Completion: ${message.tokenUsage.completionTokens} · Total: ${message.tokenUsage.totalTokens} tokens`}
+                                                                >
+                                                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
+                                                                        <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2" />
+                                                                        <text x="12" y="16" textAnchor="middle" fontSize="12" fontWeight="bold" fill="currentColor">T</text>
+                                                                    </svg>
+                                                                    <span>{message.tokenUsage.totalTokens}</span>
+                                                                </div>
+                                                            )}
                                                             {/* Copy icon for all messages */}
                                                             <button
                                                                 onClick={async () => {
