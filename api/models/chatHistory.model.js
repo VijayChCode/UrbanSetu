@@ -43,6 +43,11 @@ const chatHistorySchema = new mongoose.Schema({
       type: Date,
       default: Date.now
     },
+    tokenUsage: {
+      promptTokens: Number,
+      completionTokens: Number,
+      totalTokens: Number
+    },
     variants: [{
       content: String,
       role: String,
@@ -57,6 +62,11 @@ const chatHistorySchema = new mongoose.Schema({
       documentUrl: String,
       documentName: String,
       imageAudits: Object,
+      tokenUsage: {
+        promptTokens: Number,
+        completionTokens: Number,
+        totalTokens: Number
+      },
       tail: { type: Array, default: [] }
     }],
     activeVersionIndex: {
@@ -97,6 +107,10 @@ const chatHistorySchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  totalTokens: {
+    type: Number,
+    default: 0
+  },
   lastActivity: {
     type: Date,
     default: Date.now
@@ -130,6 +144,12 @@ const chatHistorySchema = new mongoose.Schema({
 chatHistorySchema.pre('save', function (next) {
   this.lastActivity = new Date();
   this.totalMessages = this.messages.length;
+
+  // Calculate total tokens across all messages
+  this.totalTokens = this.messages.reduce((total, msg) => {
+    return total + (msg.tokenUsage?.totalTokens || 0);
+  }, 0);
+
   next();
 });
 
@@ -182,7 +202,7 @@ chatHistorySchema.statics.getUserSessions = async function (userId) {
     userId,
     isActive: true
   })
-    .select('sessionId totalMessages lastActivity createdAt name settings')
+    .select('sessionId totalMessages totalTokens lastActivity createdAt name settings')
     .sort({ lastActivity: -1 })
     .limit(20); // Limit to last 20 sessions
 
@@ -190,6 +210,7 @@ chatHistorySchema.statics.getUserSessions = async function (userId) {
     sessionId: session.sessionId,
     name: session.name,
     messageCount: session.totalMessages,
+    totalTokens: session.totalTokens || 0,
     lastMessageAt: session.lastActivity,
     createdAt: session.createdAt,
     settings: session.settings || {}

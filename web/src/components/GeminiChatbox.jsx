@@ -6793,6 +6793,27 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                 </button>
                                             </li>
 
+                                            {/* Session Usage / Tokens */}
+                                            <li>
+                                                <div
+                                                    className={`w-full text-left px-4 py-3 ${isDarkMode ? 'hover:bg-gray-700/10' : 'hover:bg-gray-50/50'} flex items-center gap-3 transition-all duration-200 cursor-default group`}
+                                                    title={`Tokens used in this session (Prompt, Completion, Total)`}
+                                                >
+                                                    <div className={`p-1.5 rounded-lg ${isDarkMode ? 'bg-yellow-500/20' : 'bg-yellow-100'} group-hover:scale-110 transition-transform duration-200`}>
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-yellow-600">
+                                                            <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2" />
+                                                            <text x="12" y="15" textAnchor="middle" fontSize="10" fontWeight="bold" fill="currentColor">T</text>
+                                                        </svg>
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 opacity-80">Session Usage</span>
+                                                        <span className={`font-semibold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-700'}`}>
+                                                            {messages.reduce((sum, msg) => sum + (msg.tokenUsage?.totalTokens || 0), 0).toLocaleString()} <span className="text-[10px] opacity-70">tokens</span>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </li>
+
                                             <li className={`border-t ${isDarkMode ? 'border-gray-600/50' : 'border-gray-200/50'} my-2`}></li>
 
                                             {/* Expand/Collapse only on desktop */}
@@ -8418,6 +8439,15 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         <h4 className={`font-semibold flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                                             <FaHistory className="text-blue-500" />
                                             Chat History
+                                            {chatSessions.length > 0 && (
+                                                <div
+                                                    className={`ml-2 px-2 py-0.5 rounded-full text-[10px] flex items-center gap-1 border ${isDarkMode ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400' : 'bg-yellow-50 border-yellow-200 text-yellow-700'}`}
+                                                    title="Total tokens across all sessions in this list"
+                                                >
+                                                    <div className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></div>
+                                                    <span>Σ {chatSessions.reduce((sum, s) => sum + (s.totalTokens || 0), 0).toLocaleString()} tokens</span>
+                                                </div>
+                                            )}
                                         </h4>
                                         <div className="flex items-center gap-2">
                                             {chatSessions.length > 0 && (
@@ -8512,8 +8542,17 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                     <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                                                                         {new Date(session.lastMessageAt).toLocaleString()}
                                                                     </div>
-                                                                    <div className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                                                                        {session.messageCount} messages
+                                                                    <div className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'} flex items-center justify-between`}>
+                                                                        <span>{session.messageCount} messages</span>
+                                                                        {session.totalTokens > 0 && (
+                                                                            <span className={`flex items-center gap-0.5 ${isDarkMode ? 'text-yellow-500/70' : 'text-yellow-600/80'}`}>
+                                                                                <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor">
+                                                                                    <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2" />
+                                                                                    <text x="12" y="15" textAnchor="middle" fontSize="12" fontWeight="bold" fill="currentColor">T</text>
+                                                                                </svg>
+                                                                                {session.totalTokens.toLocaleString()}
+                                                                            </span>
+                                                                        )}
                                                                     </div>
                                                                 </button>
                                                                 <div className="relative">

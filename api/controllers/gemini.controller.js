@@ -809,7 +809,12 @@ export const chatWithGemini = async (req, res) => {
                         content: fullResponse,
                         isRestricted: false,
                         recommendations: recommendations.length > 0 ? recommendations : undefined,
-                        timestamp: new Date()
+                        timestamp: new Date(),
+                        tokenUsage: completion?.usage ? {
+                            promptTokens: completion.usage.prompt_tokens,
+                            completionTokens: completion.usage.completion_tokens,
+                            totalTokens: completion.usage.total_tokens
+                        } : undefined
                     });
 
                     try {
@@ -829,7 +834,12 @@ export const chatWithGemini = async (req, res) => {
                                     role: 'assistant',
                                     content: fullResponse,
                                     recommendations: recommendations.length > 0 ? recommendations : undefined,
-                                    timestamp: new Date()
+                                    timestamp: new Date(),
+                                    tokenUsage: completion?.usage ? {
+                                        promptTokens: completion.usage.prompt_tokens,
+                                        completionTokens: completion.usage.completion_tokens,
+                                        totalTokens: completion.usage.total_tokens
+                                    } : undefined
                                 });
                                 await latestHistory.save();
                             }
@@ -897,7 +907,12 @@ export const chatWithGemini = async (req, res) => {
                         content: responseText,
                         isRestricted: false,
                         recommendations: recommendations.length > 0 ? recommendations : undefined,
-                        timestamp: new Date()
+                        timestamp: new Date(),
+                        tokenUsage: completion?.usage ? {
+                            promptTokens: completion.usage.prompt_tokens,
+                            completionTokens: completion.usage.completion_tokens,
+                            totalTokens: completion.usage.total_tokens
+                        } : undefined
                     });
 
                     try {
@@ -916,7 +931,12 @@ export const chatWithGemini = async (req, res) => {
                                     role: 'assistant',
                                     content: responseText,
                                     recommendations: recommendations.length > 0 ? recommendations : undefined,
-                                    timestamp: new Date()
+                                    timestamp: new Date(),
+                                    tokenUsage: completion?.usage ? {
+                                        promptTokens: completion.usage.prompt_tokens,
+                                        completionTokens: completion.usage.completion_tokens,
+                                        totalTokens: completion.usage.total_tokens
+                                    } : undefined
                                 });
                                 await latestHistory.save();
                             }
