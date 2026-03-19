@@ -759,7 +759,12 @@ export const chatWithGemini = async (req, res) => {
                     type: 'done',
                     content: fullResponse,
                     done: true,
-                    recommendations: recommendations.length > 0 ? recommendations : undefined
+                    recommendations: recommendations.length > 0 ? recommendations : undefined,
+                    tokenUsage: completion?.usage ? {
+                        promptTokens: completion.usage.prompt_tokens,
+                        completionTokens: completion.usage.completion_tokens,
+                        totalTokens: completion.usage.total_tokens
+                    } : undefined
                 })}\n\n`);
 
                 // Save History
@@ -939,7 +944,12 @@ export const chatWithGemini = async (req, res) => {
                     type: 'done',
                     content: responseText,
                     done: true,
-                    recommendations: recommendations.length > 0 ? recommendations : undefined
+                    recommendations: recommendations.length > 0 ? recommendations : undefined,
+                    tokenUsage: completion?.usage ? {
+                        promptTokens: completion.usage.prompt_tokens,
+                        completionTokens: completion.usage.completion_tokens,
+                        totalTokens: completion.usage.total_tokens
+                    } : undefined
                 })}\n\n`);
                 res.end();
             } else {
@@ -947,7 +957,12 @@ export const chatWithGemini = async (req, res) => {
                     success: true,
                     response: responseText,
                     sessionId: currentSessionId,
-                    recommendations: recommendations.length > 0 ? recommendations : undefined
+                    recommendations: recommendations.length > 0 ? recommendations : undefined,
+                    tokenUsage: completion?.usage ? {
+                        promptTokens: completion.usage.prompt_tokens,
+                        completionTokens: completion.usage.completion_tokens,
+                        totalTokens: completion.usage.total_tokens
+                    } : undefined
                 });
             }
         }

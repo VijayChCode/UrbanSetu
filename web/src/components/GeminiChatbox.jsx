@@ -3108,6 +3108,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         isStreamingComplete = true;
                                         streamingResponse = streamData.content;
                                         const recommendations = streamData.recommendations;
+                                        const tokenUsage = streamData.tokenUsage;
 
                                         // Finalize the streaming message
                                         setMessages(prev => {
@@ -3117,6 +3118,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                             if (lastMessage && lastMessage.isStreaming) {
                                                 lastMessage.content = streamingResponse;
                                                 lastMessage.recommendations = recommendations;
+                                                if (tokenUsage) lastMessage.tokenUsage = tokenUsage;
                                                 delete lastMessage.isStreaming;
                                             }
                                             return updatedMessages;
@@ -3142,6 +3144,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 isStreamingComplete = true;
                                 streamingResponse = streamData.content;
                                 const recommendations = streamData.recommendations;
+                                const tokenUsage = streamData.tokenUsage;
                                 // Finalize message...
                                 setMessages(prev => {
                                     const currentMessages = Array.isArray(prev) ? prev : [];
@@ -3150,6 +3153,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     if (lastMessage && lastMessage.isStreaming) {
                                         lastMessage.content = streamingResponse;
                                         lastMessage.recommendations = recommendations;
+                                        if (tokenUsage) lastMessage.tokenUsage = tokenUsage;
                                         delete lastMessage.isStreaming;
                                     }
                                     return updatedMessages;
@@ -3219,7 +3223,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             role: 'assistant',
                             content: trimmedResponse,
                             timestamp: new Date().toISOString(),
-                            recommendations: data.recommendations
+                            recommendations: data.recommendations,
+                            tokenUsage: data.tokenUsage || undefined
                         }];
                     });
                     // Increment total message count for the assistant response
@@ -7502,6 +7507,26 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                         </div>
                                                     )}
 
+                                                    {/* Token Usage Badge for assistant messages */}
+                                                    {message.role === 'assistant' && message.tokenUsage && !message.isError && !message.isRestricted && (
+                                                        <div
+                                                            className="flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-medium cursor-default animate-fadeIn"
+                                                            style={{
+                                                                background: isDarkMode ? 'rgba(234, 179, 8, 0.15)' : 'rgba(234, 179, 8, 0.1)',
+                                                                color: isDarkMode ? '#facc15' : '#a16207',
+                                                                border: `1px solid ${isDarkMode ? 'rgba(234, 179, 8, 0.25)' : 'rgba(234, 179, 8, 0.2)'}`,
+                                                                animation: 'tokenFadeIn 0.6s ease-out'
+                                                            }}
+                                                            title={`Prompt: ${message.tokenUsage.promptTokens} · Completion: ${message.tokenUsage.completionTokens} · Total: ${message.tokenUsage.totalTokens} tokens`}
+                                                        >
+                                                            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
+                                                                <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2" />
+                                                                <text x="12" y="16" textAnchor="middle" fontSize="12" fontWeight="bold" fill="currentColor">T</text>
+                                                            </svg>
+                                                            <span>{message.tokenUsage.totalTokens}</span>
+                                                        </div>
+                                                    )}
+
                                                     {/* Action buttons - hidden when editing */}
                                                     {editingMessageIndex !== index && (
                                                         <div className="flex gap-1 transition-all duration-200">
@@ -9879,6 +9904,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                   to { opacity: 1; transform: scale(1); }
                 }
                 .animate-scaleIn { animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+                @keyframes tokenFadeIn {
+                  from { opacity: 0; transform: translateY(4px) scale(0.9); }
+                  to { opacity: 1; transform: translateY(0) scale(1); }
+                }
                 @keyframes sendIconFly {
                   0% {
                     transform: translate(0, 0) scale(1);
