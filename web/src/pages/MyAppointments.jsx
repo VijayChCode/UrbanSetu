@@ -8162,9 +8162,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                       {showShortcutTip && (
                         <div className="absolute top-full right-0 mt-2 bg-gray-800 text-white text-xs rounded-lg px-3 py-2 shadow-lg z-20 max-w-xs animate-fadeIn">
                           <div className="font-semibold mb-2">⌨️ Keyboard Shortcuts:</div>
-                          <div className="mb-2">• Press Ctrl + / to quickly focus and type your message</div>
-                          <div className="mb-2">• @ mention any property/blog/guide</div>
-                          <div className="mb-2">• Press Esc to close chatbox.</div>
+                          <div>• Press Ctrl + / to quickly focus and type your message</div>
+                          <div>• @ mention any property/blog/guide</div>
+                          <div>• Press Esc to close chatbox.</div>
                           <div className="border-t border-gray-600 pt-2 mt-2">
                             <div className="font-semibold mb-2">📎 File Upload Guidelines:</div>
                             <div>• Photos: JPG, PNG, GIF, WebP (≤ 10MB)</div>
