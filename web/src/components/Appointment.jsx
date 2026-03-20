@@ -76,7 +76,7 @@ export default function Appointment() {
           const data = await listingRes.json();
           const listingData = data.listing || (data._id ? data : null);
           setListing(listingData);
-          
+
           const ownerId = listingData?.userRef?._id || listingData?.userRef;
           if (listingData && currentUser && String(ownerId) === String(currentUser._id)) {
             setIsOwner(true);
@@ -86,7 +86,7 @@ export default function Appointment() {
 
           // Check if property is unavailable or removed
           const isListingRemoved = listingData && (listingData.isDeleted || listingData.availabilityStatus === 'suspended');
-          
+
           if (listingData && (['booked', 'sold', 'rented', 'under_contract', 'reserved'].includes(listingData.availabilityStatus) || isListingRemoved)) {
             setIsUnavailable(true);
             setCheckingActive(false);
@@ -169,6 +169,7 @@ export default function Appointment() {
     try {
       const res = await authenticatedFetch(`${API_BASE_URL}/api/bookings`, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
           listingId,
@@ -229,7 +230,7 @@ export default function Appointment() {
           <div className="text-red-600 dark:text-red-400 text-5xl mb-6">🚫</div>
           <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Ownership Restriction</h3>
           <p className="text-gray-600 dark:text-gray-400 mb-8">
-            You are the owner of <span className="font-bold text-blue-600 dark:text-blue-400">{listing?.name || "this property"}</span>. 
+            You are the owner of <span className="font-bold text-blue-600 dark:text-blue-400">{listing?.name || "this property"}</span>.
             Booking appointments is reserved for potential buyers.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -258,7 +259,7 @@ export default function Appointment() {
           <div className="text-orange-600 dark:text-orange-400 text-5xl mb-6">🔒</div>
           <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Property Unavailable</h3>
           <p className="text-gray-600 dark:text-gray-400 mb-8">
-            The property <span className="font-bold text-blue-600 dark:text-blue-400">{listing?.name || "this property"}</span> is no longer available for booking. It may have been sold, rented, removed, or is currently under an active contract. If the status changes, it will become available again.
+            The property <span className="font-bold text-blue-600 dark:text-blue-400">{listing?.name || "this property"}</span> is no longer available for booking. It may have been sold, removed, or is currently under an active contract. If the status changes, it will become available again.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
@@ -345,184 +346,184 @@ export default function Appointment() {
         )}
 
         <div className="max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 relative">
-        <h3 className="text-3xl font-extrabold text-blue-700 dark:text-blue-400 mb-6 text-center drop-shadow">
-          Book Appointment
-        </h3>
-        {showPaymentMessage ? (
-          <div className="text-center py-10">
-            {paymentStatus === 'success' ? (
-              <>
-                <div className="text-green-600 dark:text-green-400 text-xl font-semibold mb-2">Payment Successful!</div>
-                <div className="text-gray-700 dark:text-gray-300 mb-2">Appointment booked successfully!</div>
-                <div className="text-gray-600 dark:text-gray-400 text-sm mb-2">The property owner will review your request.</div>
-                <div className="text-sm text-gray-500 dark:text-gray-500">Redirecting to Myappointments...</div>
-              </>
-            ) : (
-              <>
-                <div className="text-red-600 dark:text-red-400 text-xl font-semibold mb-2">Payment Unsuccessful</div>
-                <div className="text-gray-700 dark:text-gray-300 mb-2">Please complete your payment from Myppointments to confirm booking</div>
-                <div className="text-sm text-gray-500 dark:text-gray-500">Redirecting to Myappointments...</div>
-              </>
-            )}
-          </div>
-        ) : booked ? (
-          <div className="text-center py-10">
-            <div className="text-green-600 dark:text-green-400 text-xl font-semibold">Appointment booked successfully!</div>
-            <div className="text-gray-700 dark:text-gray-300 mt-1">The property owner will review your request.</div>
-            <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">Redirecting to your appointments...</div>
-            <div className="mt-6 flex items-center justify-center gap-3">
-              <button onClick={() => navigate('/user/movers')} className="px-4 py-2 rounded bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 text-sm">Book Packers & Movers</button>
-              <button onClick={() => navigate('/user/services')} className="px-4 py-2 rounded bg-purple-600 dark:bg-purple-500 text-white hover:bg-purple-700 dark:hover:bg-purple-600 text-sm">On-Demand Services</button>
+          <h3 className="text-3xl font-extrabold text-blue-700 dark:text-blue-400 mb-6 text-center drop-shadow">
+            Book Appointment
+          </h3>
+          {showPaymentMessage ? (
+            <div className="text-center py-10">
+              {paymentStatus === 'success' ? (
+                <>
+                  <div className="text-green-600 dark:text-green-400 text-xl font-semibold mb-2">Payment Successful!</div>
+                  <div className="text-gray-700 dark:text-gray-300 mb-2">Appointment booked successfully!</div>
+                  <div className="text-gray-600 dark:text-gray-400 text-sm mb-2">The property owner will review your request.</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-500">Redirecting to Myappointments...</div>
+                </>
+              ) : (
+                <>
+                  <div className="text-red-600 dark:text-red-400 text-xl font-semibold mb-2">Payment Unsuccessful</div>
+                  <div className="text-gray-700 dark:text-gray-300 mb-2">Please complete your payment from Myppointments to confirm booking</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-500">Redirecting to Myappointments...</div>
+                </>
+              )}
             </div>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Select Date</label>
-                <input
-                  type="date"
-                  name="date"
-                  value={formData.date}
-                  onChange={handleChange}
-                  className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                  min={new Date().toISOString().split("T")[0]}
-                  required
-                />
+          ) : booked ? (
+            <div className="text-center py-10">
+              <div className="text-green-600 dark:text-green-400 text-xl font-semibold">Appointment booked successfully!</div>
+              <div className="text-gray-700 dark:text-gray-300 mt-1">The property owner will review your request.</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">Redirecting to your appointments...</div>
+              <div className="mt-6 flex items-center justify-center gap-3">
+                <button onClick={() => navigate('/user/movers')} className="px-4 py-2 rounded bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 text-sm">Book Packers & Movers</button>
+                <button onClick={() => navigate('/user/services')} className="px-4 py-2 rounded bg-purple-600 dark:bg-purple-500 text-white hover:bg-purple-700 dark:hover:bg-purple-600 text-sm">On-Demand Services</button>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Select Time</label>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Select Date</label>
+                  <input
+                    type="date"
+                    name="date"
+                    value={formData.date}
+                    onChange={handleChange}
+                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    min={new Date().toISOString().split("T")[0]}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Select Time</label>
+                  <select
+                    name="time"
+                    value={formData.time}
+                    onChange={handleChange}
+                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    required
+                  >
+                    <option value="">Select Time (9 AM - 7 PM)</option>
+                    {Array.from({ length: 21 }, (_, i) => {
+                      const totalMinutes = 9 * 60 + i * 30;
+                      const hour = Math.floor(totalMinutes / 60);
+                      const minutes = totalMinutes % 60;
+                      const timeStr = `${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+                      const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+                      const period = hour >= 12 ? 'PM' : 'AM';
+                      const displayStr = `${displayHour}:${minutes.toString().padStart(2, '0')} ${period}`;
+                      return (
+                        <option key={timeStr} value={timeStr}>
+                          {displayStr}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <select
-                  name="time"
-                  value={formData.time}
+                  name="purpose"
+                  value={formData.purpose}
                   onChange={handleChange}
                   className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                   required
                 >
-                  <option value="">Select Time (9 AM - 7 PM)</option>
-                  {Array.from({ length: 21 }, (_, i) => {
-                    const totalMinutes = 9 * 60 + i * 30;
-                    const hour = Math.floor(totalMinutes / 60);
-                    const minutes = totalMinutes % 60;
-                    const timeStr = `${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-                    const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
-                    const period = hour >= 12 ? 'PM' : 'AM';
-                    const displayStr = `${displayHour}:${minutes.toString().padStart(2, '0')} ${period}`;
-                    return (
-                      <option key={timeStr} value={timeStr}>
-                        {displayStr}
-                      </option>
-                    );
-                  })}
+                  <option value="">Select Purpose</option>
+                  {/* Rent option removed - redirects to Rent Property page */}
+                  {(listingType === 'sale' || listingType === 'buy') && <option value="buy">Buy</option>}
                 </select>
               </div>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <select
-                name="purpose"
-                value={formData.purpose}
-                onChange={handleChange}
-                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                required
-              >
-                <option value="">Select Purpose</option>
-                {/* Rent option removed - redirects to Rent Property page */}
-                {(listingType === 'sale' || listingType === 'buy') && <option value="buy">Buy</option>}
-              </select>
-            </div>
-
-            <input
-              type="text"
-              name="propertyName"
-              value={formData.propertyName}
-              onChange={handleChange}
-              placeholder="Property Name"
-              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-              readOnly
-              disabled
-              required
-            />
-
-            <textarea
-              name="propertyDescription"
-              value={formData.propertyDescription}
-              onChange={handleChange}
-              placeholder="Property Description"
-              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none dark:bg-gray-700 dark:text-white"
-              rows="2"
-              readOnly
-              disabled
-              required
-            ></textarea>
-
-            <textarea
-              name="message"
-              value={formData.message}
-              onChange={handleChange}
-              placeholder="Tell us about your requirements... (Optional)"
-              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none dark:bg-gray-700 dark:text-white"
-              rows="4"
-            ></textarea>
-
-            {/* Agreement Checkbox */}
-            <div className="flex items-center gap-2 mt-2">
               <input
-                type="checkbox"
-                id="agreement"
-                checked={agreed}
-                onChange={e => setAgreed(e.target.checked)}
+                type="text"
+                name="propertyName"
+                value={formData.propertyName}
+                onChange={handleChange}
+                placeholder="Property Name"
+                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                readOnly
+                disabled
                 required
               />
-              <label htmlFor="agreement" className="text-sm text-gray-700 dark:text-gray-300 select-none">
-                I understand that <span className="font-semibold text-blue-700 dark:text-blue-400">my contact information and details will be shared with the seller</span> for this appointment.
-              </label>
-            </div>
 
-            {/* Region Selection */}
-            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
-              <div className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Select Region</div>
-              <div className="flex items-center gap-4 text-sm text-gray-700 dark:text-gray-300">
-                <label className="inline-flex items-center gap-2 hover:cursor-pointer">
-                  <input type="radio" name="region" value="india" checked={region === 'india'} onChange={() => setRegion('india')} className="cursor-pointer" />
-                  <span>India (₹100 via Razorpay)</span>
-                </label>
-                <label className="inline-flex items-center gap-2 hover:cursor-pointer">
-                  <input type="radio" name="region" value="international" checked={region === 'international'} onChange={() => setRegion('international')} className="cursor-pointer" />
-                  <span>International ($5 via PayPal)</span>
+              <textarea
+                name="propertyDescription"
+                value={formData.propertyDescription}
+                onChange={handleChange}
+                placeholder="Property Description"
+                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none dark:bg-gray-700 dark:text-white"
+                rows="2"
+                readOnly
+                disabled
+                required
+              ></textarea>
+
+              <textarea
+                name="message"
+                value={formData.message}
+                onChange={handleChange}
+                placeholder="Tell us about your requirements... (Optional)"
+                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none dark:bg-gray-700 dark:text-white"
+                rows="4"
+              ></textarea>
+
+              {/* Agreement Checkbox */}
+              <div className="flex items-center gap-2 mt-2">
+                <input
+                  type="checkbox"
+                  id="agreement"
+                  checked={agreed}
+                  onChange={e => setAgreed(e.target.checked)}
+                  required
+                />
+                <label htmlFor="agreement" className="text-sm text-gray-700 dark:text-gray-300 select-none">
+                  I understand that <span className="font-semibold text-blue-700 dark:text-blue-400">my contact information and details will be shared with the seller</span> for this appointment.
                 </label>
               </div>
-            </div>
 
-            <div className="flex justify-center mt-6">
-              <button
-                type="submit"
-                className="w-full bg-blue-600 dark:bg-blue-500 text-white font-bold py-3 rounded-lg shadow-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={loading || !agreed || hasActiveAppointment || checkingActive}
-              >
-                {checkingActive ? "Checking..." : loading ? "Booking..." : hasActiveAppointment ? "Already Booked" : "Book Appointment"}
-              </button>
-            </div>
-            {hasActiveAppointment && (
-              <div className="text-red-600 dark:text-red-400 text-sm mt-2 text-center font-semibold">
-                You already have an active appointment for this property. Please complete, cancel, or wait for the other party to respond before booking again.
+              {/* Region Selection */}
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+                <div className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Select Region</div>
+                <div className="flex items-center gap-4 text-sm text-gray-700 dark:text-gray-300">
+                  <label className="inline-flex items-center gap-2 hover:cursor-pointer">
+                    <input type="radio" name="region" value="india" checked={region === 'india'} onChange={() => setRegion('india')} className="cursor-pointer" />
+                    <span>India (₹100 via Razorpay)</span>
+                  </label>
+                  <label className="inline-flex items-center gap-2 hover:cursor-pointer">
+                    <input type="radio" name="region" value="international" checked={region === 'international'} onChange={() => setRegion('international')} className="cursor-pointer" />
+                    <span>International ($5 via PayPal)</span>
+                  </label>
+                </div>
               </div>
-            )}
-          </form>
+
+              <div className="flex justify-center mt-6">
+                <button
+                  type="submit"
+                  className="w-full bg-blue-600 dark:bg-blue-500 text-white font-bold py-3 rounded-lg shadow-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={loading || !agreed || hasActiveAppointment || checkingActive}
+                >
+                  {checkingActive ? "Checking..." : loading ? "Booking..." : hasActiveAppointment ? "Already Booked" : "Book Appointment"}
+                </button>
+              </div>
+              {hasActiveAppointment && (
+                <div className="text-red-600 dark:text-red-400 text-sm mt-2 text-center font-semibold">
+                  You already have an active appointment for this property. Please complete, cancel, or wait for the other party to respond before booking again.
+                </div>
+              )}
+            </form>
+          )}
+        </div>
+
+        {/* Payment Modal */}
+        {showPaymentModal && appointmentData && (
+          <PaymentModal
+            isOpen={showPaymentModal}
+            onClose={handlePaymentClose}
+            appointment={appointmentData}
+            onPaymentSuccess={handlePaymentSuccess}
+          />
         )}
-      </div>
 
-      {/* Payment Modal */}
-      {showPaymentModal && appointmentData && (
-        <PaymentModal
-          isOpen={showPaymentModal}
-          onClose={handlePaymentClose}
-          appointment={appointmentData}
-          onPaymentSuccess={handlePaymentSuccess}
-        />
-      )}
-
-      <ContactSupportWrapper />
+        <ContactSupportWrapper />
       </div>
     </div>
   );
