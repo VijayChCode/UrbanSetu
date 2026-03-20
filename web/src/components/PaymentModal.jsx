@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { motion } from 'framer-motion';
 import { FaCreditCard, FaDollarSign, FaShieldAlt, FaDownload, FaCheckCircle, FaTimes, FaSpinner, FaCoins } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { authenticatedFetch } from '../utils/auth';
@@ -1302,23 +1303,35 @@ const PaymentModal = ({ isOpen, onClose, appointment, onPaymentSuccess, existing
                       const threshold = isRazorpay ? '₹1,000' : '$12';
 
                       return earnedCoins > 0 ? (
-                        <div className="mt-3 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg p-2 flex items-center justify-between border border-yellow-200 dark:border-yellow-700">
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          whileHover={{ scale: 1.02 }}
+                          transition={{ duration: 0.3 }}
+                          className="mt-3 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg p-2 flex items-center justify-between border border-yellow-200 dark:border-yellow-700 cursor-default"
+                        >
                           <span className="text-xs font-semibold text-yellow-800 dark:text-yellow-300 flex items-center gap-1">
                             <FaCoins className="text-yellow-600 dark:text-yellow-400" /> You will earn:
                           </span>
                           <span className="text-sm font-bold text-yellow-700 dark:text-yellow-400">
                             {earnedCoins} SetuCoins
                           </span>
-                        </div>
+                        </motion.div>
                       ) : (
-                        <div className="mt-3 bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 rounded-lg p-2.5 border border-yellow-200 dark:border-yellow-800/50">
+                        <motion.div
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          whileHover={{ scale: 1.02 }}
+                          transition={{ duration: 0.4 }}
+                          className="mt-3 bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 rounded-lg p-2.5 border border-yellow-200 dark:border-yellow-800/50 cursor-default"
+                        >
                           <div className="flex items-center gap-2">
-                            <FaCoins className="text-yellow-500 dark:text-yellow-400 text-sm flex-shrink-0" />
+                            <FaCoins className="text-yellow-500 dark:text-yellow-400 text-sm flex-shrink-0 animate-bounce" />
                             <span className="text-xs text-yellow-800 dark:text-yellow-300 font-medium">
                               <span className="font-bold">SetuCoins:</span> Earn 1 coin for every {threshold} paid. <span className="text-yellow-600 dark:text-yellow-400 font-semibold">10 coins = ₹1 discount!</span>
                             </span>
                           </div>
-                        </div>
+                        </motion.div>
                       );
                     })()}
                   </div>
