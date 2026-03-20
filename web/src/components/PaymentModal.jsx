@@ -1294,27 +1294,33 @@ const PaymentModal = ({ isOpen, onClose, appointment, onPaymentSuccess, existing
                       </div>
                     </div>
 
-                    {/* Completion Reward Preview */}
-                    {preferredMethod === 'razorpay' && paymentData?.payment?.amount >= 1000 && (
-                      <div className="mt-3 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg p-2 flex items-center justify-between border border-yellow-200 dark:border-yellow-700">
-                        <span className="text-xs font-semibold text-yellow-800 dark:text-yellow-300 flex items-center gap-1">
-                          <FaCoins className="text-yellow-600 dark:text-yellow-400" /> You will earn:
-                        </span>
-                        <span className="text-sm font-bold text-yellow-700 dark:text-yellow-400">
-                          {Math.floor(paymentData?.payment?.amount / 1000)} SetuCoins
-                        </span>
-                      </div>
-                    )}
-                    {preferredMethod === 'paypal' && paymentData?.payment?.amount >= 12 && (
-                      <div className="mt-3 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg p-2 flex items-center justify-between border border-yellow-200 dark:border-yellow-700">
-                        <span className="text-xs font-semibold text-yellow-800 dark:text-yellow-300 flex items-center gap-1">
-                          <FaCoins className="text-yellow-600 dark:text-yellow-400" /> You will earn:
-                        </span>
-                        <span className="text-sm font-bold text-yellow-700 dark:text-yellow-400">
-                          {Math.floor(paymentData?.payment?.amount / 12)} SetuCoins
-                        </span>
-                      </div>
-                    )}
+                    {/* Completion Reward Preview - SetuCoins */}
+                    {(() => {
+                      const amount = paymentData?.payment?.amount || 0;
+                      const isRazorpay = preferredMethod === 'razorpay';
+                      const earnedCoins = isRazorpay ? Math.floor(amount / 1000) : Math.floor(amount / 12);
+                      const threshold = isRazorpay ? '₹1,000' : '$12';
+
+                      return earnedCoins > 0 ? (
+                        <div className="mt-3 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg p-2 flex items-center justify-between border border-yellow-200 dark:border-yellow-700">
+                          <span className="text-xs font-semibold text-yellow-800 dark:text-yellow-300 flex items-center gap-1">
+                            <FaCoins className="text-yellow-600 dark:text-yellow-400" /> You will earn:
+                          </span>
+                          <span className="text-sm font-bold text-yellow-700 dark:text-yellow-400">
+                            {earnedCoins} SetuCoins
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="mt-3 bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 rounded-lg p-2.5 border border-yellow-200 dark:border-yellow-800/50">
+                          <div className="flex items-center gap-2">
+                            <FaCoins className="text-yellow-500 dark:text-yellow-400 text-sm flex-shrink-0" />
+                            <span className="text-xs text-yellow-800 dark:text-yellow-300 font-medium">
+                              <span className="font-bold">SetuCoins:</span> Earn 1 coin for every {threshold} paid. <span className="text-yellow-600 dark:text-yellow-400 font-semibold">10 coins = ₹1 discount!</span>
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {/* Payment Method */}
