@@ -8591,7 +8591,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                             e.stopPropagation();
                                                                             setOpenHistoryMenuSessionId(prev => prev === session.sessionId ? null : session.sessionId);
                                                                         }}
-                                                                        className="ml-2 p-1 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded transition-all duration-200"
+                                                                        className={`ml-2 p-1 ${isDarkMode ? 'text-gray-400 hover:text-white hover:bg-gray-700' : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'} rounded transition-all duration-200`}
                                                                         title="Chat options"
                                                                         data-chat-options-dropdown
                                                                     >
