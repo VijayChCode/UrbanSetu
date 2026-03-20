@@ -628,7 +628,8 @@ export default function MyAppointments() {
 
     if (!chatIdFromUrl) {
       chatRouteResolvedRef.current = null;
-      setMissingChatbookError(null);
+      // Don't clear missingChatbookError here — the modal needs to stay visible
+      // until the user manually dismisses it via the "Close" button
       return;
     }
 
@@ -665,8 +666,6 @@ export default function MyAppointments() {
         if (userId !== buyerId && userId !== sellerId) {
           if (!cancelled) {
             setMissingChatbookError(chatIdFromUrl);
-            toast.error('You do not have access to this appointment chat.');
-            navigate('/user/my-appointments', { replace: true });
           }
           return;
         }
@@ -684,8 +683,6 @@ export default function MyAppointments() {
           if (response.status === 403) {
             if (!cancelled) {
               setMissingChatbookError(chatIdFromUrl);
-              toast.error('You do not have access to this appointment chat.');
-              navigate('/user/my-appointments', { replace: true });
             }
             return;
           }
@@ -712,8 +709,6 @@ export default function MyAppointments() {
           if (userId !== buyerId && userId !== sellerId) {
             if (!cancelled) {
               setMissingChatbookError(chatIdFromUrl);
-              toast.error('You do not have access to this appointment chat.');
-              navigate('/user/my-appointments', { replace: true });
             }
             return;
           }
@@ -2051,10 +2046,10 @@ export default function MyAppointments() {
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[200] p-4 animate-fade-in">
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-8 max-w-md w-full animate-fade-in-up">
               <div className="text-center">
-                <div className="text-red-500 text-5xl mb-4">❌</div>
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Appointment Not Found</h2>
+                <div className="text-red-500 text-5xl mb-4">🔒</div>
+                <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Access Denied</h2>
                 <p className="text-gray-600 dark:text-gray-300 mb-6">
-                  The appointment you're looking for doesn't exist or you don't have access to it. It may have been deleted or archived.
+                  The appointment chat you're trying to access doesn't belong to your account, doesn't exist, or may have been deleted or archived.
                 </p>
                 <div className="flex justify-center">
                   <button
@@ -2064,7 +2059,7 @@ export default function MyAppointments() {
                     }}
                     className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors shadow-md hover:shadow-lg"
                   >
-                    Close
+                    Go Back to My Appointments
                   </button>
                 </div>
               </div>
