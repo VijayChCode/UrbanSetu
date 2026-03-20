@@ -2163,6 +2163,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   // Infinite scroll/pagination for chat
   const MESSAGES_PAGE_SIZE = 30;
   const [visibleCount, setVisibleCount] = useState(MESSAGES_PAGE_SIZE);
+  const [isLoadingOlderMessages, setIsLoadingOlderMessages] = useState(false);
+  const loadingOlderRef = useRef(false);
   const [currentFloatingDate, setCurrentFloatingDate] = useState('');
   const [isScrolling, setIsScrolling] = useState(false);
   const [isOtherPartyOnline, setIsOtherPartyOnline] = useState(false);
@@ -3964,19 +3966,29 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
     }
   }, [currentSearchIndex, searchResults]);
 
-  // Increase visible messages when scrolled to top
+  // Increase visible messages when scrolled to top (lazy loading)
   useEffect(() => {
     const container = chatContainerRef.current;
     if (!container) return;
     const onScrollTopLoadMore = () => {
-      if (container.scrollTop <= 0 && comments.length > visibleCount) {
+      if (container.scrollTop <= 30 && comments.length > visibleCount && !loadingOlderRef.current) {
+        loadingOlderRef.current = true;
+        setIsLoadingOlderMessages(true);
         const prevHeight = container.scrollHeight;
-        setVisibleCount(prev => Math.min(prev + MESSAGES_PAGE_SIZE, comments.length));
-        // Maintain scroll position after increasing items
+        // Small delay to show spinner before rendering more items
         setTimeout(() => {
-          const newHeight = container.scrollHeight;
-          container.scrollTop = newHeight - prevHeight;
-        }, 0);
+          setVisibleCount(prev => Math.min(prev + MESSAGES_PAGE_SIZE, comments.length));
+          // Maintain scroll position after increasing items
+          requestAnimationFrame(() => {
+            const newHeight = container.scrollHeight;
+            container.scrollTop = newHeight - prevHeight;
+            setIsLoadingOlderMessages(false);
+            // Debounce: prevent rapid consecutive loads
+            setTimeout(() => {
+              loadingOlderRef.current = false;
+            }, 300);
+          });
+        }, 150);
       }
     };
     container.addEventListener('scroll', onScrollTopLoadMore);
@@ -4790,45 +4802,78 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
     }
   };
 
+  // Helper: scroll to a message by ID, auto-expanding visibleCount if needed
+  const scrollToMessageById = (messageId, highlightClass = 'search-highlight') => {
+    // Check if message is in filteredComments (the full list)
+    const msgIndex = filteredComments.findIndex(c => c._id === messageId);
+    if (msgIndex === -1) return; // message not found at all
+
+    // Calculate how many items from the END (since we slice from the end)
+    const totalItems = filteredComments.length;
+    const fromEnd = totalItems - msgIndex; // how far from the end this message is
+
+    // If the message is outside the currently visible window, expand visibleCount
+    if (fromEnd > visibleCount) {
+      // Expand to include this message plus some buffer
+      setVisibleCount(Math.min(fromEnd + 10, totalItems));
+    }
+
+    // Wait for DOM to update with expanded items, then scroll
+    setTimeout(() => {
+      const el = messageRefs.current[messageId] || document.querySelector(`[data-message-id="${messageId}"]`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add(highlightClass);
+        setTimeout(() => {
+          el.classList.remove(highlightClass);
+        }, 2500);
+      }
+    }, 100);
+  };
+
   const scrollToSearchResult = (commentId) => {
     const messageElement = messageRefs.current[commentId];
-    if (messageElement) {
-      // Enhanced scroll animation with better timing
-      messageElement.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
-        inline: 'nearest'
+    // If element isn't in DOM yet, expand visibleCount
+    if (!messageElement) {
+      scrollToMessageById(commentId, 'search-highlight');
+      return;
+    }
+
+    // Enhanced scroll animation with better timing
+    messageElement.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+      inline: 'nearest'
+    });
+
+    // Enhanced search highlight animation with multiple effects
+    setTimeout(() => {
+      // Remove any existing highlights first
+      document.querySelectorAll('.search-highlight').forEach(el => {
+        el.classList.remove('search-highlight', 'search-pulse', 'search-glow');
       });
 
-      // Enhanced search highlight animation with multiple effects
+      // Add enhanced search highlight with multiple animation classes
+      messageElement.classList.add('search-highlight', 'search-pulse', 'search-glow');
+
+      // Add a search ripple effect
+      const ripple = document.createElement('div');
+      ripple.className = 'search-ripple';
+      messageElement.style.position = 'relative';
+      messageElement.appendChild(ripple);
+
+      // Remove ripple after animation
       setTimeout(() => {
-        // Remove any existing highlights first
-        document.querySelectorAll('.search-highlight').forEach(el => {
-          el.classList.remove('search-highlight', 'search-pulse', 'search-glow');
-        });
+        if (ripple.parentNode) {
+          ripple.parentNode.removeChild(ripple);
+        }
+      }, 1000);
 
-        // Add enhanced search highlight with multiple animation classes
-        messageElement.classList.add('search-highlight', 'search-pulse', 'search-glow');
-
-        // Add a search ripple effect
-        const ripple = document.createElement('div');
-        ripple.className = 'search-ripple';
-        messageElement.style.position = 'relative';
-        messageElement.appendChild(ripple);
-
-        // Remove ripple after animation
-        setTimeout(() => {
-          if (ripple.parentNode) {
-            ripple.parentNode.removeChild(ripple);
-          }
-        }, 1000);
-
-        // Remove highlight effects after enhanced duration
-        setTimeout(() => {
-          messageElement.classList.remove('search-highlight', 'search-pulse', 'search-glow');
-        }, 3000);
-      }, 300);
-    }
+      // Remove highlight effects after enhanced duration
+      setTimeout(() => {
+        messageElement.classList.remove('search-highlight', 'search-pulse', 'search-glow');
+      }, 3000);
+    }, 300);
   };
 
   const handleDateSelect = (date) => {
@@ -8508,8 +8553,52 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
 
                     // Render visible items
                     const visibleItems = mergedTimeline.slice(Math.max(0, mergedTimeline.length - Math.min(visibleCount, mergedTimeline.length)));
+                    const hasOlderMessages = mergedTimeline.length > visibleItems.length;
 
-                    return visibleItems.map((item, mapIndex) => {
+                    return (<>
+                      {/* Loading older messages indicator */}
+                      {isLoadingOlderMessages && (
+                        <div className="flex justify-center py-3 animate-fadeIn">
+                          <div className="flex items-center gap-2 px-4 py-2 rounded-full border shadow-lg bg-gray-800/90 border-gray-700 text-blue-400 backdrop-blur-md">
+                            <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span className="text-[10px] font-bold uppercase tracking-widest">Loading History</span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* "Load earlier messages" banner when there are older messages not yet rendered */}
+                      {hasOlderMessages && !isLoadingOlderMessages && (
+                        <div className="flex justify-center py-2">
+                          <button
+                            onClick={() => {
+                              loadingOlderRef.current = true;
+                              setIsLoadingOlderMessages(true);
+                              const container = chatContainerRef.current;
+                              const prevHeight = container ? container.scrollHeight : 0;
+                              setTimeout(() => {
+                                setVisibleCount(prev => Math.min(prev + MESSAGES_PAGE_SIZE, filteredComments.length));
+                                requestAnimationFrame(() => {
+                                  if (container) {
+                                    const newHeight = container.scrollHeight;
+                                    container.scrollTop = newHeight - prevHeight;
+                                  }
+                                  setIsLoadingOlderMessages(false);
+                                  setTimeout(() => { loadingOlderRef.current = false; }, 300);
+                                });
+                              }, 150);
+                            }}
+                            className="flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold text-blue-400 bg-gray-800/60 border border-gray-700 hover:bg-gray-700/80 hover:text-blue-300 transition-all duration-200 shadow-md hover:shadow-lg"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+                            Load earlier messages ({mergedTimeline.length - visibleItems.length} more)
+                          </button>
+                        </div>
+                      )}
+
+                      {visibleItems.map((item, mapIndex) => {
                       const index = mergedTimeline.length - visibleItems.length + mapIndex;
                       const previousItem = index > 0 ? mergedTimeline[index - 1] : null;
                       const currentDate = item.timestamp;
@@ -8605,6 +8694,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                       setTimeout(() => {
                                         messageRefs.current[c.replyTo]?.classList.remove('reply-highlight');
                                       }, 1600);
+                                    } else {
+                                      scrollToMessageById(c.replyTo, 'reply-highlight');
                                     }
                                   }} role="button" tabIndex={0} aria-label="Go to replied message">
                                     <span className="text-xs text-gray-700 dark:text-gray-300 font-medium truncate max-w-[150px] flex items-center gap-1">
@@ -9367,7 +9458,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
 
                         </React.Fragment>
                       );
-                    });
+                    })}
+                    </>);
                   })()}
 
                   <div ref={chatEndRef} />
@@ -12183,15 +12275,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                 }`}
                               onClick={() => {
                                 setShowStarredModal(false);
-                                // Scroll to the message in the main chat if it exists
-                                const messageElement = document.querySelector(`[data-message-id="${message._id}"]`);
-                                if (messageElement) {
-                                  messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                  messageElement.classList.add('starred-highlight');
-                                  setTimeout(() => {
-                                    messageElement.classList.remove('starred-highlight');
-                                  }, 1600);
-                                }
+                                // Scroll to the message in the main chat - auto-expand visibleCount if needed
+                                scrollToMessageById(message._id, 'starred-highlight');
                               }}
                             >
                               <div className="whitespace-pre-wrap break-words">
