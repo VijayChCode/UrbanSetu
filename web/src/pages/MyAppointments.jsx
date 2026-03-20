@@ -2145,7 +2145,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
 
   const [replyTo, setReplyTo] = useState(null);
   const [comment, setComment] = useState("");
-  const [comments, setComments] = useState(appt.comments || []);
+  const [comments, setComments] = useState([]);
+  const [totalCommentsCount, setTotalCommentsCount] = useState(0);
+  const [chatPage, setChatPage] = useState(1);
+  const [allCommentsLoaded, setAllCommentsLoaded] = useState(false);
   const [sending, setSending] = useState(false);
   const [editingComment, setEditingComment] = useState(null);
   const [editText, setEditText] = useState("");
@@ -2157,7 +2160,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   const chatEndRef = useRef(null);
   const chatContainerRef = useRef(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
-  const [unreadNewMessages, setUnreadNewMessages] = useState(0);
+  const [unreadNewMessages, setUnreadNewMessages] = useState(() => {
+    // Correctly initialize from backend counters
+    const role = appt.role || (appt.buyerId?._id === currentUser._id || appt.buyerId === currentUser._id ? 'buyer' : 'seller');
+    return role === 'buyer' ? appt.buyerUnreadMessageCount || 0 : appt.sellerUnreadMessageCount || 0;
+  });
   // Show unread divider only right after opening chat when there are unread messages
   const [showUnreadDividerOnOpen, setShowUnreadDividerOnOpen] = useState(false);
   // Prefer scrolling to unread on open from notification
@@ -3059,15 +3066,16 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
         throw { response: { status: res.status, data: errorData } };
       }
       const data = await res.json();
-      // Find the new comment from the response
-      const newComment = data.comments[data.comments.length - 1];
+      // Backend now returns { comment: ... } directly (optimized response)
+      // Fallback to old format for backward compatibility
+      const newComment = data.comment || data.comments?.[data.comments.length - 1];
 
-      // Replace the temp message with the real one
-      setComments(prev => prev.map(msg =>
-        msg._id === tempId
-          ? { ...newComment }
-          : msg
-      ));
+      if (newComment) {
+        // Replace the temp message with the real one
+        setComments(prev => prev.map(msg =>
+          msg._id === tempId ? { ...newComment } : msg
+        ));
+      }
     } catch (error) {
       console.error('Send image error:', error);
       setComments(prev => prev.filter(msg => msg._id !== tempId));
@@ -3237,7 +3245,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
       });
       if (!res.ok) throw new Error('Failed to send video');
       const data = await res.json();
-      setComments(data.comments || data.updated?.comments || data?.appointment?.comments || []);
+      const newComment = data.comment || data.comments?.[data.comments.length - 1];
+      if (newComment) {
+        setComments(prev => prev.map(m => m._id === tempId ? { ...m, ...newComment } : m));
+      }
     } catch (err) {
       toast.error('Failed to send video');
       setComments(prev => prev.filter(m => m._id !== tempId));
@@ -3300,7 +3311,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
       });
       if (!res.ok) throw new Error('Failed to send audio');
       const data = await res.json();
-      setComments(data.comments || data.updated?.comments || data?.appointment?.comments || []);
+      const newComment = data.comment || data.comments?.[data.comments.length - 1];
+      if (newComment) {
+        setComments(prev => prev.map(m => m._id === tempId ? { ...m, ...newComment } : m));
+      }
     } catch (err) {
       toast.error('Failed to send audio');
       setComments(prev => prev.filter(m => m._id !== tempId));
@@ -3363,7 +3377,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
       });
       if (!res.ok) throw new Error('Failed to send document');
       const data = await res.json();
-      setComments(data.comments || data.updated?.comments || data?.appointment?.comments || []);
+      const newComment = data.comment || data.comments?.[data.comments.length - 1];
+      if (newComment) {
+        setComments(prev => prev.map(m => m._id === tempId ? { ...m, ...newComment } : m));
+      }
     } catch (err) {
       toast.error('Failed to send document');
       setComments(prev => prev.filter(m => m._id !== tempId));
@@ -3968,19 +3985,42 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
     }
   }, [currentSearchIndex, searchResults]);
 
-  // Increase visible messages when scrolled to top (lazy loading)
+  // Handle database pagination when scrolled to top
   useEffect(() => {
     const container = chatContainerRef.current;
-    if (!container) return;
-    const onScrollTopLoadMore = () => {
-      if (container.scrollTop <= 30 && comments.length > visibleCount && !loadingOlderRef.current) {
+    if (!container || !showChatModal) return;
+
+    const onScrollTopLoadMore = async () => {
+      if (container.scrollTop <= 30 && !allCommentsLoaded && !loadingOlderRef.current && !loadingComments) {
         loadingOlderRef.current = true;
         setIsLoadingOlderMessages(true);
         const prevHeight = container.scrollHeight;
-        // Small delay to show spinner before rendering more items
-        setTimeout(() => {
-          setVisibleCount(prev => Math.min(prev + MESSAGES_PAGE_SIZE, comments.length));
-          // Maintain scroll position after increasing items
+        
+        try {
+          // Fetch previous page from database
+          const nextPage = chatPage + 1;
+          const res = await authenticatedFetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments?page=${nextPage}&limit=${MESSAGES_PAGE_SIZE}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.comments && data.comments.length > 0) {
+              setTotalCommentsCount(data.totalComments);
+              setComments(prev => {
+                const existingIds = new Set(prev.map(c => c._id));
+                const filteredNew = data.comments.filter(c => !existingIds.has(c._id));
+                return [...filteredNew, ...prev];
+              });
+              setChatPage(nextPage);
+              if (data.currentPage >= data.totalPages) {
+                setAllCommentsLoaded(true);
+              }
+            } else {
+              setAllCommentsLoaded(true);
+            }
+          }
+        } catch (err) {
+          console.error('Failed to load older messages:', err);
+        } finally {
+          // Maintain scroll position after prepending items
           requestAnimationFrame(() => {
             const newHeight = container.scrollHeight;
             container.scrollTop = newHeight - prevHeight;
@@ -3990,45 +4030,64 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
               loadingOlderRef.current = false;
             }, 300);
           });
-        }, 150);
+        }
       }
     };
     container.addEventListener('scroll', onScrollTopLoadMore);
     return () => container.removeEventListener('scroll', onScrollTopLoadMore);
-  }, [comments.length, visibleCount]);
+  }, [appt._id, chatPage, allCommentsLoaded, loadingComments, showChatModal, MESSAGES_PAGE_SIZE]);
 
-  // Reset visible count when opening chat or comments change drastically
+  // Load first page of comments when opening chat
   useEffect(() => {
-    if (!showChatModal) return;
-    // Ensure at least unread messages are visible when opening
-    const computedUnread = comments.filter(c =>
-      c.senderEmail !== currentUser.email &&
-      (!c.readBy || !c.readBy.includes(currentUser._id))
-    ).length;
-    const shouldPreferUnread = preferUnreadOnOpen || (preferUnreadForAppointmentId === appt._id);
-    const unreadToUse = shouldPreferUnread ? (unreadNewMessages || computedUnread) : unreadNewMessages;
-    if (unreadToUse > 0) {
-      setVisibleCount(prev => Math.max(MESSAGES_PAGE_SIZE, unreadNewMessages + 5));
-      // After next paint, scroll to first unread message instead of bottom
-      setTimeout(() => {
-        const targetIndex = Math.max(0, filteredComments.length - unreadToUse);
-        const targetMsg = filteredComments[targetIndex];
-        if (targetMsg && messageRefs.current[targetMsg._id]) {
-          try {
-            messageRefs.current[targetMsg._id].scrollIntoView({ behavior: 'auto', block: 'center' });
-          } catch (_) { }
-        }
-        // Show divider only on open case
-        setShowUnreadDividerOnOpen(true);
-        setPreferUnreadOnOpen(false);
-        if (preferUnreadForAppointmentId === appt._id) setPreferUnreadForAppointmentId(null);
-      }, 50);
-    } else {
-      // No unread -> go to bottom as usual
-      setVisibleCount(MESSAGES_PAGE_SIZE);
-      setTimeout(() => scrollToBottom(), 0);
+    if (!showChatModal) {
+      // Clean up when closed (optional: keep in memory if small)
+      return;
     }
-  }, [appt._id, showChatModal]);
+    
+    const initializeChat = async () => {
+      setLoadingComments(true);
+      try {
+        const initialLimit = Math.max(MESSAGES_PAGE_SIZE, unreadNewMessages + 10);
+        const res = await authenticatedFetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments?page=1&limit=${initialLimit}`);
+        if (!res.ok) throw new Error('Failed to fetch initial messages');
+        const data = await res.json();
+        
+        setTotalCommentsCount(data.totalComments);
+        setComments(data.comments || []);
+        setChatPage(1);
+        setAllCommentsLoaded(data.currentPage >= data.totalPages);
+        
+        // Initial positioning logic
+        setTimeout(() => {
+          if (unreadNewMessages > 0) {
+            // Find first unread message by ID (the backend returns everything filtered for user)
+            // Actually, we can just find it in our local array
+            const firstUnread = data.comments.find(c => 
+              c.senderEmail !== currentUser.email && 
+              (!c.readBy || !c.readBy.includes(currentUser._id))
+            );
+            
+            if (firstUnread && messageRefs.current[firstUnread._id]) {
+              messageRefs.current[firstUnread._id].scrollIntoView({ behavior: 'auto', block: 'center' });
+              setShowUnreadDividerOnOpen(true);
+            } else {
+              scrollToBottom();
+            }
+          } else {
+            scrollToBottom();
+          }
+          setLoadingComments(false); // Move here to allow renderer to settle
+        }, 100);
+      } catch (err) {
+        console.error('Chat init error:', err);
+        setLoadingComments(false);
+      }
+    };
+
+    initializeChat();
+    setPreferUnreadOnOpen(false);
+    if (preferUnreadForAppointmentId === appt._id) setPreferUnreadForAppointmentId(null);
+  }, [appt._id, showChatModal, unreadNewMessages]);
 
   // Hide the one-time unread divider on first user scroll
   useEffect(() => {
@@ -4431,10 +4490,46 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   };
 
   const showMessageInfo = (message) => {
-    setSelectedMessageForInfo(message);
-    setShowMessageInfoModal(true);
-  };
-  const handleCommentSend = async () => {
+     setSelectedMessageForInfo(message);
+     setShowMessageInfoModal(true);
+   };
+ 
+   // Fetch messages for pagination
+   const fetchChatMessages = useCallback(async (page, pageSize = MESSAGES_PAGE_SIZE) => {
+     if (!appt?._id || loadingComments) return;
+     setLoadingComments(true);
+     try {
+       const res = await authenticatedFetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments?page=${page}&limit=${pageSize}`);
+       if (!res.ok) throw new Error('Failed to fetch messages');
+       const data = await res.json();
+       
+       if (data.comments.length === 0) {
+         setAllCommentsLoaded(true);
+       } else {
+         setTotalCommentsCount(data.totalComments);
+         setComments(prev => {
+           // On first page, just replace (usually for open). On other pages, prepend.
+           if (page === 1) return data.comments;
+           
+           // Simple duplicate check (avoid adding local-only messages or double loading)
+           const existingIds = new Set(prev.map(c => c._id));
+           const newMessages = data.comments.filter(c => !existingIds.has(c._id));
+           return [...newMessages, ...prev];
+         });
+         
+         if (data.currentPage >= data.totalPages) {
+           setAllCommentsLoaded(true);
+         }
+       }
+       setChatPage(page);
+     } catch (err) {
+       console.error('Error fetching chat messages:', err);
+     } finally {
+       setLoadingComments(false);
+     }
+   }, [appt._id, loadingComments, MESSAGES_PAGE_SIZE]);
+ 
+   const handleCommentSend = async () => {
     if (!comment.trim()) return;
     if (isChatSendBlocked) {
       toast.info('Sending disabled for this appointment status. You can view chat history.');
@@ -4514,8 +4609,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
         }
         const data = await res.json();
 
-        // Find the new comment from the response
-        const newComment = data.comments[data.comments.length - 1];
+        // Backend now returns { comment: ... } directly (optimized response)
+        // Fallback to old format for backward compatibility
+        const newComment = data.comment || data.comments?.[data.comments.length - 1];
 
         // Update only the status and ID of the temp message, keeping it visible
         // Preserve replyTo if it was a call (not sent to backend but stored locally)
