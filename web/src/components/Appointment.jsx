@@ -3,7 +3,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import ContactSupportWrapper from './ContactSupportWrapper';
 import PaymentModal from './PaymentModal';
-import { FaMapMarkerAlt } from "react-icons/fa";
+import SetuCoinParticles from './SetuCoins/SetuCoinParticles';
+import { FaMapMarkerAlt, FaCoins } from "react-icons/fa";
 import { toast } from 'react-toastify';
 import { authenticatedFetch } from '../utils/auth';
 import { usePageTitle } from '../hooks/usePageTitle';
@@ -53,6 +54,10 @@ export default function Appointment() {
   const [listing, setListing] = useState(null);
   const [isOwner, setIsOwner] = useState(false);
   const [isUnavailable, setIsUnavailable] = useState(false);
+
+  // SetuCoins state
+  const [showCoinBurst, setShowCoinBurst] = useState(false);
+  const [coinsEarned, setCoinsEarned] = useState(0);
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -198,13 +203,22 @@ export default function Appointment() {
     setPaymentStatus('success');
     setShowPaymentMessage(true);
     toast.success('Appointment booked and payment confirmed!');
+
+    // Calculate coins earned (1 coin per ₹1000 for Razorpay, 1 coin per $12 for PayPal)
+    const paymentAmount = payment?.amount || 0;
+    const earnedCoins = paymentAmount >= 1000 ? Math.floor(paymentAmount / 1000) : (paymentAmount >= 12 ? Math.floor(paymentAmount / 12) : 0);
+    if (earnedCoins > 0) {
+      setCoinsEarned(earnedCoins);
+      setShowCoinBurst(true);
+    }
+
     setTimeout(() => {
       if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) {
         navigate('/admin/appointments');
       } else {
         navigate('/user/my-appointments');
       }
-    }, 2000);
+    }, earnedCoins > 0 ? 4000 : 2000);
   };
 
   const handlePaymentClose = () => {
@@ -356,6 +370,26 @@ export default function Appointment() {
                   <div className="text-green-600 dark:text-green-400 text-xl font-semibold mb-2">Payment Successful!</div>
                   <div className="text-gray-700 dark:text-gray-300 mb-2">Appointment booked successfully!</div>
                   <div className="text-gray-600 dark:text-gray-400 text-sm mb-2">The property owner will review your request.</div>
+
+                  {/* SetuCoins Earned Display */}
+                  {coinsEarned > 0 && (
+                    <div className="flex flex-col items-center justify-center p-5 bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/10 dark:to-amber-900/10 rounded-2xl border border-yellow-200 dark:border-yellow-800/50 my-4 max-w-sm mx-auto shadow-sm animate-fade-in">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="p-2 bg-yellow-100 dark:bg-yellow-800/50 rounded-full">
+                          <FaCoins className="text-yellow-500 text-2xl animate-bounce" />
+                        </div>
+                        <span className="font-extrabold text-gray-800 dark:text-white text-xl tracking-tight">SetuCoins Earned!</span>
+                      </div>
+                      <p className="text-gray-600 dark:text-gray-300 text-base">
+                        You've earned <span className="font-black text-yellow-600 dark:text-yellow-400 text-2xl mx-1">+{coinsEarned}</span> coins.
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 font-medium flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-pulse"></span>
+                        Redeem coins for discounts on future bookings!
+                      </p>
+                    </div>
+                  )}
+
                   <div className="text-sm text-gray-500 dark:text-gray-500">Redirecting to Myappointments...</div>
                 </>
               ) : (
@@ -524,6 +558,7 @@ export default function Appointment() {
         )}
 
         <ContactSupportWrapper />
+        {showCoinBurst && <SetuCoinParticles active={true} count={50} onComplete={() => setShowCoinBurst(false)} />}
       </div>
     </div>
   );
