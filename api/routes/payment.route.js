@@ -653,8 +653,8 @@ router.post("/verify", verifyToken, async (req, res) => {
             const payingUser = await User.findById(contract.tenantId._id);
 
             if (payingUser) {
-              // 1. Credit coins for payment amount (1 coin per ₹1000)
-              const coinsToCredit = Math.floor(payment.amount / 1000);
+              // 1. Credit coins for payment amount (1% cashback: 1 coin per ₹10, 10 coins = ₹1)
+              const coinsToCredit = Math.floor(payment.amount / 10);
 
               if (coinsToCredit > 0) {
                 await CoinService.credit({
@@ -807,15 +807,16 @@ router.post("/verify", verifyToken, async (req, res) => {
     }
 
 
-    // --- SetuCoins Consistency: Reward general payments > 1000 INR / $12 ---
+    // --- SetuCoins Consistency: Reward general payments (1% cashback) ---
     if (payment.paymentType !== 'monthly_rent' && payment.paymentType !== 'emi') {
       try {
         const CoinService = (await import('../services/coinService.js')).default;
         let earnedCoins = 0;
+        // 1% cashback: INR → 1 coin per ₹10 (10 coins=₹1), USD → 8 coins per $1 (800 coins=$1)
         if (payment.currency === 'USD') {
-          earnedCoins = Math.floor(payment.amount / 12);
+          earnedCoins = Math.floor(payment.amount * 8);
         } else {
-          earnedCoins = Math.floor(payment.amount / 1000);
+          earnedCoins = Math.floor(payment.amount / 10);
         }
 
         if (earnedCoins > 0) {
@@ -1271,12 +1272,12 @@ router.post('/razorpay/verify', verifyToken, async (req, res) => {
         // --- Award SetuCoins Reward ---
         const CoinService = (await import('../services/coinService.js')).default;
         let earnedCoins = 0;
-        // Standardize Earning Rates: INR 1000 = 1 Coin | USD 12 = 1 Coin
+        // 1% cashback: INR → 1 coin per ₹10 (10 coins=₹1), USD → 8 coins per $1 (800 coins=$1)
         if (payment.currency === 'USD') {
-          earnedCoins = Math.floor(payment.amount / 12);
+          earnedCoins = Math.floor(payment.amount * 8);
         } else {
           // Default to INR (payment.currency === 'INR' or undefined)
-          earnedCoins = Math.floor(payment.amount / 1000);
+          earnedCoins = Math.floor(payment.amount / 10);
         }
 
         if (earnedCoins > 0) {
@@ -1526,15 +1527,16 @@ router.post('/razorpay/verify', verifyToken, async (req, res) => {
       }
     }
 
-    // --- SetuCoins Consistency: Reward general payments > 1000 INR / $12 ---
+    // --- SetuCoins Consistency: Reward general payments (1% cashback) ---
     if (payment.paymentType !== 'monthly_rent' && payment.paymentType !== 'emi') {
       try {
         const CoinService = (await import('../services/coinService.js')).default;
         let earnedCoins = 0;
+        // 1% cashback: INR → 1 coin per ₹10 (10 coins=₹1), USD → 8 coins per $1 (800 coins=$1)
         if (payment.currency === 'USD') {
-          earnedCoins = Math.floor(payment.amount / 12);
+          earnedCoins = Math.floor(payment.amount * 8);
         } else {
-          earnedCoins = Math.floor(payment.amount / 1000);
+          earnedCoins = Math.floor(payment.amount / 10);
         }
 
         if (earnedCoins > 0) {

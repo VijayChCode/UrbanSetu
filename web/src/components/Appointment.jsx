@@ -204,9 +204,10 @@ export default function Appointment() {
     setShowPaymentMessage(true);
     toast.success('Appointment booked and payment confirmed!');
 
-    // Calculate coins earned (1 coin per ₹1000 for Razorpay, 1 coin per $12 for PayPal)
+    // Calculate coins earned (1% cashback: INR → 1 coin per ₹10, USD → 8 coins per $1)
     const paymentAmount = payment?.amount || 0;
-    const earnedCoins = paymentAmount >= 1000 ? Math.floor(paymentAmount / 1000) : (paymentAmount >= 12 ? Math.floor(paymentAmount / 12) : 0);
+    const paymentCurrency = payment?.currency || 'INR';
+    const earnedCoins = paymentCurrency === 'USD' ? Math.floor(paymentAmount * 8) : Math.floor(paymentAmount / 10);
     if (earnedCoins > 0) {
       setCoinsEarned(earnedCoins);
       setShowCoinBurst(true);

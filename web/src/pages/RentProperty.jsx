@@ -2017,8 +2017,8 @@ export default function RentProperty() {
               </div>
             </div>
 
-            {/* SetuCoins Earning Banner */}
-            {getTotalAmount() >= 1000 && (
+            {/* SetuCoins Earning Banner (1% cashback: 1 coin per ₹10) */}
+            {getTotalAmount() >= 10 && (
               <div className="bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-6 flex items-center justify-between shadow-sm">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-yellow-100 dark:bg-yellow-800 rounded-full text-yellow-600 dark:text-yellow-400 shadow-inner">
@@ -2026,10 +2026,10 @@ export default function RentProperty() {
                   </div>
                   <div>
                     <h4 className="font-bold text-gray-800 dark:text-white flex items-center gap-1">SetuCoins Rewards <span className="text-[10px] bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300 px-1.5 py-0.5 rounded border border-yellow-200 dark:border-yellow-700">LOYALTY</span></h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-300">You will earn <span className="font-bold text-yellow-600 dark:text-yellow-400 text-lg">{Math.floor(getTotalAmount() / 1000)} SetuCoins</span> with this payment!</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">You will earn <span className="font-bold text-yellow-600 dark:text-yellow-400 text-lg">{Math.floor(getTotalAmount() / 10)} SetuCoins</span> with this payment!</p>
                   </div>
                 </div>
-                <div className="hidden sm:block text-yellow-500 font-bold text-xl animate-pulse">+{Math.floor(getTotalAmount() / 1000)}</div>
+                <div className="hidden sm:block text-yellow-500 font-bold text-xl animate-pulse">+{Math.floor(getTotalAmount() / 10)}</div>
               </div>
             )}
 
@@ -2175,8 +2175,8 @@ export default function RentProperty() {
               <FaHome /> Step 5: Finalize Move-in
             </h2>
 
-            {/* SetuCoins Earned Success Display */}
-            {(lastPayment?.amount || getTotalAmount()) >= 1000 && (
+            {/* SetuCoins Earned Success Display (1% cashback: 1 coin per ₹10) */}
+            {(lastPayment?.amount || getTotalAmount()) >= 10 && (
               <div className="flex flex-col items-center justify-center p-6 bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/10 dark:to-amber-900/10 rounded-2xl border border-yellow-200 dark:border-yellow-800/50 mb-8 max-w-2xl mx-auto shadow-sm animate-fade-in">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="p-2 bg-yellow-100 dark:bg-yellow-800/50 rounded-full">
@@ -2186,7 +2186,7 @@ export default function RentProperty() {
                 </div>
                 <div className="text-center">
                   <p className="text-gray-600 dark:text-gray-300 text-lg">
-                    Congratulations! You've earned <span className="font-black text-yellow-600 dark:text-yellow-400 text-3xl mx-1">+{Math.floor((lastPayment?.amount || getTotalAmount()) / 1000)}</span> coins.
+                    Congratulations! You've earned <span className="font-black text-yellow-600 dark:text-yellow-400 text-3xl mx-1">+{Math.floor((lastPayment?.amount || getTotalAmount()) / 10)}</span> coins.
                   </p>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-3 font-medium flex items-center justify-center gap-2">
                     <span className="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-pulse"></span>

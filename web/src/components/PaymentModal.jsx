@@ -1295,12 +1295,12 @@ const PaymentModal = ({ isOpen, onClose, appointment, onPaymentSuccess, existing
                       </div>
                     </div>
 
-                    {/* Completion Reward Preview - SetuCoins */}
+                    {/* Completion Reward Preview - SetuCoins (1% cashback: 10 coins = ₹1, 800 coins = $1) */}
                     {(() => {
                       const amount = paymentData?.payment?.amount || 0;
                       const isRazorpay = preferredMethod === 'razorpay';
-                      const earnedCoins = isRazorpay ? Math.floor(amount / 1000) : Math.floor(amount / 12);
-                      const threshold = isRazorpay ? '₹1,000' : '$12';
+                      // 1% cashback: INR → 1 coin per ₹10 (10 coins=₹1), USD → 8 coins per $1 (800 coins=$1)
+                      const earnedCoins = isRazorpay ? Math.floor(amount / 10) : Math.floor(amount * 8);
 
                       return earnedCoins > 0 ? (
                         <motion.div
@@ -1328,7 +1328,7 @@ const PaymentModal = ({ isOpen, onClose, appointment, onPaymentSuccess, existing
                           <div className="flex items-center gap-2">
                             <FaCoins className="text-yellow-500 dark:text-yellow-400 text-sm flex-shrink-0 animate-bounce" />
                             <span className="text-xs text-yellow-800 dark:text-yellow-300 font-medium">
-                              <span className="font-bold">SetuCoins:</span> Earn 1 coin for every {threshold} paid. <span className="text-yellow-600 dark:text-yellow-400 font-semibold">10 coins = ₹1 discount!</span>
+                              <span className="font-bold">SetuCoins:</span> Earn 1% cashback in coins on every payment! <span className="text-yellow-600 dark:text-yellow-400 font-semibold">10 coins = ₹1 discount!</span>
                             </span>
                           </div>
                         </motion.div>
