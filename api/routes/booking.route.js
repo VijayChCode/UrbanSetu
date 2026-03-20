@@ -2761,10 +2761,12 @@ router.post("/test-booking-email", verifyToken, async (req, res) => {
   }
 });
 
-// GET: Fetch a single booking by ID (with comments)
-router.get('/:id', async (req, res) => {
+// GET: Fetch a single booking by ID (with comments) — PROTECTED
+router.get('/:id', verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = req.user.id;
+
     const bookingDoc = await booking.findById(id)
       .populate('buyerId', 'username email mobileNumber avatar')
       .populate('sellerId', 'username email mobileNumber avatar')
@@ -2772,6 +2774,16 @@ router.get('/:id', async (req, res) => {
     if (!bookingDoc) {
       return res.status(404).json({ message: 'Appointment not found.' });
     }
+
+    // Ownership check: only buyer, seller, or admin can access
+    const isBuyer = bookingDoc.buyerId?._id?.toString() === userId || bookingDoc.buyerId?.toString() === userId;
+    const isSeller = bookingDoc.sellerId?._id?.toString() === userId || bookingDoc.sellerId?.toString() === userId;
+    const isAdmin = req.user.role === 'admin' || req.user.role === 'rootadmin';
+
+    if (!isBuyer && !isSeller && !isAdmin) {
+      return res.status(403).json({ message: 'You do not have access to this appointment.' });
+    }
+
     // Return both formats for backward compatibility
     // Some code expects { success: true, booking: ... }, others expect the booking directly
     const response = { ...bookingDoc.toObject(), success: true, booking: bookingDoc };

@@ -656,6 +656,22 @@ export default function MyAppointments() {
         archivedAppointments.find((appt) => appt._id === chatIdFromUrl);
 
       let appointment = findLocalAppointment();
+
+      // Validate ownership for locally found appointments too
+      if (appointment && currentUser?._id) {
+        const userId = currentUser._id.toString();
+        const buyerId = appointment.buyerId?._id?.toString() || appointment.buyerId?.toString();
+        const sellerId = appointment.sellerId?._id?.toString() || appointment.sellerId?.toString();
+        if (userId !== buyerId && userId !== sellerId) {
+          if (!cancelled) {
+            setMissingChatbookError(chatIdFromUrl);
+            toast.error('You do not have access to this appointment chat.');
+            navigate('/user/my-appointments', { replace: true });
+          }
+          return;
+        }
+      }
+
       if (appointment) {
         openChatForAppointment(appointment);
         return;
@@ -665,6 +681,14 @@ export default function MyAppointments() {
         const response = await authenticatedFetch(`${API_BASE_URL}/api/bookings/${chatIdFromUrl}`);
 
         if (!response.ok) {
+          if (response.status === 403) {
+            if (!cancelled) {
+              setMissingChatbookError(chatIdFromUrl);
+              toast.error('You do not have access to this appointment chat.');
+              navigate('/user/my-appointments', { replace: true });
+            }
+            return;
+          }
           if (response.status === 404) {
             if (!cancelled) setMissingChatbookError(chatIdFromUrl);
             return;
@@ -679,11 +703,24 @@ export default function MyAppointments() {
           throw new Error('Invalid appointment payload');
         }
 
+        // Frontend ownership validation (defense-in-depth)
         if (currentUser?._id) {
           const userId = currentUser._id.toString();
-          if (appointment.buyerId && (appointment.buyerId._id === userId || appointment.buyerId === userId)) {
+          const buyerId = appointment.buyerId?._id?.toString() || appointment.buyerId?.toString();
+          const sellerId = appointment.sellerId?._id?.toString() || appointment.sellerId?.toString();
+
+          if (userId !== buyerId && userId !== sellerId) {
+            if (!cancelled) {
+              setMissingChatbookError(chatIdFromUrl);
+              toast.error('You do not have access to this appointment chat.');
+              navigate('/user/my-appointments', { replace: true });
+            }
+            return;
+          }
+
+          if (userId === buyerId) {
             appointment.role = 'buyer';
-          } else if (appointment.sellerId && (appointment.sellerId._id === userId || appointment.sellerId === userId)) {
+          } else if (userId === sellerId) {
             appointment.role = 'seller';
           }
         }
