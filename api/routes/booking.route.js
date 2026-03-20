@@ -2,6 +2,7 @@ import express from "express";
 import mongoose from "mongoose";
 import booking from "../models/booking.model.js";
 import Listing from "../models/listing.model.js";
+import DeletedListing from "../models/deletedListing.model.js";
 import User from "../models/user.model.js";
 import { verifyToken } from '../utils/verify.js';
 import Review from '../models/review.model.js';
@@ -43,6 +44,11 @@ router.post("/", verifyToken, async (req, res) => {
     // Find the listing to get seller information
     const listing = await Listing.findById(listingId);
     if (!listing) {
+      // Check if it exists in deleted listings
+      const isDeleted = await DeletedListing.findOne({ originalListingId: listingId });
+      if (isDeleted) {
+        return res.status(404).json({ message: "This property is no longer active or has been removed." });
+      }
       return res.status(404).json({ message: "Listing not found." });
     }
 
@@ -2534,6 +2540,11 @@ router.post("/admin", verifyToken, async (req, res) => {
     // Find the listing to get seller information
     const listing = await Listing.findById(listingId);
     if (!listing) {
+      // Check if it exists in deleted listings
+      const isDeleted = await DeletedListing.findOne({ originalListingId: listingId });
+      if (isDeleted) {
+        return res.status(404).json({ message: "This property is no longer active or has been removed." });
+      }
       return res.status(404).json({ message: "Listing not found." });
     }
     const seller = await User.findById(listing.userRef);

@@ -355,17 +355,6 @@ const listingSchema = new mongoose.Schema({
         min: 0
     },
 
-    // Property Verification
-    isVerified: {
-        type: Boolean,
-        default: false,
-        index: true
-    },
-    verificationId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'PropertyVerification',
-        default: null
-    },
 
     // Locality Score (pre-computed)
     localityScore: {

@@ -195,6 +195,14 @@ export default function RentProperty() {
           return;
         }
 
+        // Check if property is removed or suspended
+        const isListingGone = listingData && (listingData.isDeleted || listingData.availabilityStatus === 'suspended');
+        if (isListingGone) {
+          toast.error("This property is no longer active and cannot be booked for rent.");
+          navigate("/user");
+          return;
+        }
+
         // Check if property is already booked by someone else (moved up for priority)
         if (listingData && (listingData.availabilityStatus === 'booked' || listingData.availabilityStatus === 'rented')) {
           // But first we must see if the current user has an existing contract for it

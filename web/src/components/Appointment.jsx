@@ -84,8 +84,10 @@ export default function Appointment() {
             return;
           }
 
-          // Check if property is unavailable
-          if (listingData && ['booked', 'sold', 'rented'].includes(listingData.availabilityStatus)) {
+          // Check if property is unavailable or removed
+          const isListingRemoved = listingData && (listingData.isDeleted || listingData.availabilityStatus === 'suspended');
+          
+          if (listingData && (['booked', 'sold', 'rented', 'under_contract', 'reserved'].includes(listingData.availabilityStatus) || isListingRemoved)) {
             setIsUnavailable(true);
             setCheckingActive(false);
             return;
@@ -256,7 +258,7 @@ export default function Appointment() {
           <div className="text-orange-600 dark:text-orange-400 text-5xl mb-6">🔒</div>
           <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Property Unavailable</h3>
           <p className="text-gray-600 dark:text-gray-400 mb-8">
-            The property <span className="font-bold text-blue-600 dark:text-blue-400">{listing?.name || "this property"}</span> is no longer available for booking. It has been sold, rented, or is currently under an active contract with another user. If the booking expires or is cancelled, it will become available again.
+            The property <span className="font-bold text-blue-600 dark:text-blue-400">{listing?.name || "this property"}</span> is no longer available for booking. It may have been sold, rented, removed, or is currently under an active contract. If the status changes, it will become available again.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
