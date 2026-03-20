@@ -402,7 +402,7 @@ export default function MyAppointments() {
   useEffect(() => {
     // Listen for permanent delete events
     const removeHandler = (e) => {
-      setAppointments((prev) => prev.filter((appt) => appt._id !== e.detail));
+      setAllAppointments((prev) => prev.filter((appt) => appt._id !== e.detail));
     };
     window.addEventListener('removeAppointmentRow', removeHandler);
     return () => {
@@ -479,7 +479,7 @@ export default function MyAppointments() {
   // Dynamically update user info in appointments when currentUser changes
   useEffect(() => {
     if (!currentUser) return;
-    setAppointments(prevAppointments => prevAppointments.map(appt => {
+    setAllAppointments(prevAppointments => prevAppointments.map(appt => {
       const updated = { ...appt };
 
       // Update buyer info if current user is the buyer
@@ -510,7 +510,7 @@ export default function MyAppointments() {
 
   useEffect(() => {
     function handleAppointmentUpdate(data) {
-      setAppointments((prev) =>
+      setAllAppointments((prev) =>
         prev.map(appt =>
           appt._id === data.appointmentId ? { ...appt, ...data.updatedAppointment } : appt
         )
@@ -518,7 +518,7 @@ export default function MyAppointments() {
     }
 
     function handlePaymentStatusUpdate(data) {
-      setAppointments((prev) =>
+      setAllAppointments((prev) =>
         prev.map(appt =>
           appt._id === data.appointmentId ? { ...appt, paymentConfirmed: data.paymentConfirmed } : appt
         )
@@ -529,7 +529,7 @@ export default function MyAppointments() {
     function handleCustomPaymentStatusUpdate(event) {
       const { appointmentId, paymentConfirmed } = event.detail;
       if (appointmentId) {
-        setAppointments((prev) =>
+        setAllAppointments((prev) =>
           prev.map(appt =>
             appt._id === appointmentId ? { ...appt, paymentConfirmed: Boolean(paymentConfirmed) } : appt
           )
@@ -557,13 +557,13 @@ export default function MyAppointments() {
       } else if (appt.sellerId && currentUser && (appt.sellerId._id === currentUser._id || appt.sellerId === currentUser._id)) {
         appt.role = 'seller';
       }
-      setAppointments((prev) => [appt, ...prev]);
+      setAllAppointments((prev) => [appt, ...prev]);
     }
     socket.on('appointmentCreated', handleAppointmentCreated);
 
     // Listen for profile updates to update user info in appointments
     const handleProfileUpdate = (profileData) => {
-      setAppointments(prevAppointments => prevAppointments.map(appt => {
+      setAllAppointments(prevAppointments => prevAppointments.map(appt => {
         const updated = { ...appt };
 
         // Update buyer info if the updated user is the buyer
@@ -787,7 +787,7 @@ export default function MyAppointments() {
         throw { response: { status: res.status, data: errorData } };
       }
       const data = await res.json();
-      setAppointments((prev) =>
+      setAllAppointments((prev) =>
         prev.map((appt) => (appt._id === id ? { ...appt, status } : appt))
       );
       const statusText = status === "accepted" ? "accepted" : "rejected";
@@ -833,7 +833,7 @@ export default function MyAppointments() {
         throw { response: { status: res.status, data: errorData } };
       }
       const data = await res.json();
-      setAppointments((prev) =>
+      setAllAppointments((prev) =>
         prev.map((appt) => (appt._id === id ? { ...appt, saleStatus: 'token_paid' } : appt))
       );
       toast.success("Property locked! Token payment marked as received. Emails have been sent.", {
@@ -885,7 +885,7 @@ export default function MyAppointments() {
       }
       const data = await res.json();
 
-      setAppointments((prev) =>
+      setAllAppointments((prev) =>
         prev.map((appt) => (appt._id === id ? { ...appt, saleStatus: 'sold', status: 'completed' } : appt))
       );
       toast.success("Congratulations! Property marked as sold. Emails have been sent to both parties.", {
@@ -963,7 +963,7 @@ export default function MyAppointments() {
         throw { response: { status: res.status, data: errorData } };
       }
       const data = await res.json();
-      setAppointments((prev) =>
+      setAllAppointments((prev) =>
         prev.map((appt) => (appt._id === appointmentToHandle ? { ...appt, status: "deletedByAdmin", adminComment: deleteReason } : appt))
       );
       toast.success("Appointment deleted successfully. Both buyer and seller have been notified.", {
@@ -1002,9 +1002,9 @@ export default function MyAppointments() {
         throw { response: { status: res.status, data: errorData } };
       }
       const data = await res.json();
-      const archivedAppt = appointments.find(appt => appt._id === appointmentToHandle);
+      const archivedAppt = allAppointments.find(appt => appt._id === appointmentToHandle) || appointments.find(appt => appt._id === appointmentToHandle);
       if (archivedAppt) {
-        setAppointments((prev) => prev.filter((appt) => appt._id !== appointmentToHandle));
+        setAllAppointments((prev) => prev.filter((appt) => appt._id !== appointmentToHandle));
         setArchivedAppointments((prev) => [{ ...archivedAppt, archivedAt: new Date() }, ...prev]);
       }
       toast.success("Appointment archived successfully.", {
@@ -1040,7 +1040,7 @@ export default function MyAppointments() {
       const unarchivedAppt = archivedAppointments.find(appt => appt._id === appointmentToHandle);
       if (unarchivedAppt) {
         setArchivedAppointments((prev) => prev.filter((appt) => appt._id !== appointmentToHandle));
-        setAppointments((prev) => [{ ...unarchivedAppt, archivedAt: undefined }, ...prev]);
+        setAllAppointments((prev) => [{ ...unarchivedAppt, archivedAt: undefined }, ...prev]);
       }
       toast.success("Appointment unarchived successfully.", {
         autoClose: 3000,
@@ -1147,14 +1147,14 @@ export default function MyAppointments() {
       setReinitiateData(null);
       setReinitiatePaymentStatus(null);
       navigate("/user/my-appointments");
-      setAppointments((prev) => prev.map(appt => appt._id === data.appointment._id ? { ...appt, ...data.appointment } : appt));
+      setAllAppointments((prev) => prev.map(appt => appt._id === data.appointment._id ? { ...appt, ...data.appointment } : appt));
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to reinitiate appointment.');
     }
   }
   //next
   const handleCancelRefresh = (cancelledId, cancelledStatus) => {
-    setAppointments((prev) => prev.map(appt => appt._id === cancelledId ? { ...appt, status: cancelledStatus } : appt));
+    setAllAppointments((prev) => prev.map(appt => appt._id === cancelledId ? { ...appt, status: cancelledStatus } : appt));
   };
 
   // Add this function to fetch latest data on demand
@@ -1165,7 +1165,8 @@ export default function MyAppointments() {
       const res = await authenticatedFetch(`${API_BASE_URL}/api/bookings/my`);
       if (!res.ok) throw new Error('Failed to fetch appointments');
       const data = await res.json();
-      setAppointments(data);
+      const allAppts = data.appointments || data;
+      setAllAppointments(allAppts);
 
       // Fetch archived appointments for all users
       if (currentUser) {
