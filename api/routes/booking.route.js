@@ -700,35 +700,44 @@ router.post('/:id/comment', verifyToken, async (req, res) => {
           const recipientId = recipientUser._id.toString();
           const recipientOnline = onlineUsers.has(recipientId);
 
-          // Update unread counters and decide email
+          // Update unread counters atomically to avoid VersionError on concurrent sends
           const now = new Date();
           let shouldSendEmail = false;
-          const apptDoc = await booking.findById(id);
-          if (apptDoc) {
-            // Increment unread for recipient only if sender is the other party
-            if (isBuyer) {
-              // recipient is seller
-              apptDoc.sellerUnreadMessageCount = (apptDoc.sellerUnreadMessageCount || 0) + 1;
-              // Cooldown and first-unread logic when offline
+
+          if (isBuyer) {
+            // recipient is seller - atomically increment seller unread count
+            const apptDoc = await booking.findOneAndUpdate(
+              { _id: id },
+              { $inc: { sellerUnreadMessageCount: 1 } },
+              { new: true }
+            );
+            if (apptDoc) {
               const lastSent = apptDoc.sellerLastEmailSentAt ? new Date(apptDoc.sellerLastEmailSentAt) : null;
               const cooldownMs = 60 * 60 * 1000; // 60 minutes
               const inCooldown = lastSent && (now - lastSent) < cooldownMs;
               if (!recipientOnline && apptDoc.sellerUnreadMessageCount === 1 && !inCooldown) {
                 shouldSendEmail = true;
-                apptDoc.sellerLastEmailSentAt = now;
+                // Set the email sent timestamp atomically
+                await booking.updateOne({ _id: id }, { $set: { sellerLastEmailSentAt: now } });
               }
-            } else if (isSeller) {
-              // recipient is buyer
-              apptDoc.buyerUnreadMessageCount = (apptDoc.buyerUnreadMessageCount || 0) + 1;
+            }
+          } else if (isSeller) {
+            // recipient is buyer - atomically increment buyer unread count
+            const apptDoc = await booking.findOneAndUpdate(
+              { _id: id },
+              { $inc: { buyerUnreadMessageCount: 1 } },
+              { new: true }
+            );
+            if (apptDoc) {
               const lastSent = apptDoc.buyerLastEmailSentAt ? new Date(apptDoc.buyerLastEmailSentAt) : null;
               const cooldownMs = 60 * 60 * 1000; // 60 minutes
               const inCooldown = lastSent && (now - lastSent) < cooldownMs;
               if (!recipientOnline && apptDoc.buyerUnreadMessageCount === 1 && !inCooldown) {
                 shouldSendEmail = true;
-                apptDoc.buyerLastEmailSentAt = now;
+                // Set the email sent timestamp atomically
+                await booking.updateOne({ _id: id }, { $set: { buyerLastEmailSentAt: now } });
               }
             }
-            await apptDoc.save();
           }
 
           if (shouldSendEmail) {
@@ -2345,7 +2354,7 @@ router.patch('/:id/comments/read', verifyToken, async (req, res) => {
       return res.status(400).json({ message: 'User ID not found in token.' });
     }
 
-    let bookingDoc = await booking.findById(id);
+    let bookingDoc = await booking.findById(id).lean();
     if (!bookingDoc) {
       return res.status(404).json({ message: 'Appointment not found.' });
     }
@@ -2359,130 +2368,65 @@ router.patch('/:id/comments/read', verifyToken, async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to read comments for this appointment.' });
     }
 
-    let updated = false;
+    const isParticipant = userIdStr === buyerIdStr || userIdStr === sellerIdStr;
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    const now = new Date();
 
-    if (bookingDoc.comments && Array.isArray(bookingDoc.comments)) {
-      bookingDoc.comments.forEach(comment => {
-        try {
-          // Skip deleted comments or comments from the same user
-          if (comment.deleted || comment.senderEmail === req.user.email) {
-            return;
-          }
-
-          // Ensure readBy is an array
-          if (!comment.readBy || !Array.isArray(comment.readBy)) {
-            comment.readBy = [];
-          }
-
-          // Convert ObjectIds to strings for comparison
-          const readByStrings = comment.readBy.map(id => id ? id.toString() : '');
-          if (!readByStrings.includes(userIdStr)) {
-            comment.readBy.push(userId);
-
-            // Only mark as "read" status if the reader is a participant (Buyer/Seller)
-            // Admins spectating should NOT trigger the blue ticks
-            if (userIdStr === buyerIdStr || userIdStr === sellerIdStr) {
-              comment.status = "read";
-              comment.readAt = new Date();
+    // Use atomic operations to mark comments as read - no VersionError possible
+    // Step 1: For participant (buyer/seller), update status to 'read' and add to readBy
+    if (isParticipant) {
+      await booking.updateOne(
+        { _id: id },
+        {
+          $set: {
+            'comments.$[elem].status': 'read',
+            'comments.$[elem].readAt': now
+          },
+          $addToSet: { 'comments.$[elem].readBy': userObjectId }
+        },
+        {
+          arrayFilters: [
+            {
+              'elem.senderEmail': { $ne: req.user.email },
+              'elem.deleted': { $ne: true },
+              'elem.readBy': { $not: { $elemMatch: { $eq: userObjectId } } }
             }
-            updated = true;
-          }
-        } catch (commentError) {
-          console.error('Error processing individual comment:', {
-            commentId: comment._id,
-            error: commentError.message
-          });
-          // Continue with other comments even if one fails
+          ]
         }
-      });
+      );
+    } else {
+      // Admin: only add to readBy, don't change status
+      await booking.updateOne(
+        { _id: id },
+        {
+          $addToSet: { 'comments.$[elem].readBy': userObjectId }
+        },
+        {
+          arrayFilters: [
+            {
+              'elem.senderEmail': { $ne: req.user.email },
+              'elem.deleted': { $ne: true },
+              'elem.readBy': { $not: { $elemMatch: { $eq: userObjectId } } }
+            }
+          ]
+        }
+      );
     }
 
-    if (updated) {
-      // Reset smart email unread counters for this user since they read/opened chat
-      try {
-        if (userIdStr === buyerIdStr) {
-          bookingDoc.buyerUnreadMessageCount = 0;
-          bookingDoc.buyerLastEmailSentAt = null; // reset offline-session
-        } else if (userIdStr === sellerIdStr) {
-          bookingDoc.sellerUnreadMessageCount = 0;
-          bookingDoc.sellerLastEmailSentAt = null; // reset offline-session
-        }
-      } catch (e) {
-        console.warn('Failed to reset unread counters:', e.message);
-      }
-
-      // Use retry logic to handle version conflicts
-      let retryCount = 0;
-      const maxRetries = 3;
-
-      while (retryCount < maxRetries) {
-        try {
-          await bookingDoc.save();
-          break; // Success, exit retry loop
-        } catch (saveError) {
-          if (saveError.name === 'VersionError' && retryCount < maxRetries - 1) {
-            // Retry with fresh document
-            retryCount++;
-            // Only log on final retry to reduce log spam
-            if (retryCount === maxRetries - 1) {
-              console.log(`Version conflict, final retry... (${retryCount}/${maxRetries})`);
-            }
-
-            // Add minimal delay to reduce contention (optimized for speed)
-            const delay = Math.min(20 * Math.pow(2, retryCount - 1), 100); // 20ms, 40ms, 80ms max
-            await new Promise(resolve => setTimeout(resolve, delay));
-
-            // Refetch the document to get latest version
-            const freshDoc = await booking.findById(id);
-            if (!freshDoc) {
-              return res.status(404).json({ message: 'Appointment not found during retry.' });
-            }
-
-            // Reapply the read status updates to fresh document
-            let freshUpdated = false;
-            if (freshDoc.comments && Array.isArray(freshDoc.comments)) {
-              freshDoc.comments.forEach(comment => {
-                try {
-                  if (comment.deleted || comment.senderEmail === req.user.email) {
-                    return;
-                  }
-
-                  if (!comment.readBy || !Array.isArray(comment.readBy)) {
-                    comment.readBy = [];
-                  }
-
-                  const readByStrings = comment.readBy.map(id => id ? id.toString() : '');
-                  if (!readByStrings.includes(userIdStr)) {
-                    comment.readBy.push(userId);
-
-                    // Only mark as "read" status if the reader is a participant (Buyer/Seller)
-                    if (userIdStr === buyerIdStr || userIdStr === sellerIdStr) {
-                      comment.status = "read";
-                      comment.readAt = new Date();
-                    }
-                    freshUpdated = true;
-                  }
-                } catch (commentError) {
-                  console.error('Error processing comment during retry:', commentError.message);
-                }
-              });
-            }
-
-            bookingDoc = freshDoc;
-            updated = freshUpdated;
-
-            if (!updated) {
-              // No updates needed on fresh document, break out
-              break;
-            }
-          } else {
-            // Non-version error or max retries reached
-            console.error('Error saving booking document:', saveError);
-            return res.status(500).json({ message: 'Failed to save read status.', error: saveError.message });
-          }
-        }
-      }
+    // Step 2: Reset unread counters atomically
+    if (userIdStr === buyerIdStr) {
+      await booking.updateOne(
+        { _id: id },
+        { $set: { buyerUnreadMessageCount: 0, buyerLastEmailSentAt: null } }
+      );
+    } else if (userIdStr === sellerIdStr) {
+      await booking.updateOne(
+        { _id: id },
+        { $set: { sellerUnreadMessageCount: 0, sellerLastEmailSentAt: null } }
+      );
     }
+
+    const updated = true;
 
     // Emit read event for real-time updates (only if socket.io is available)
     try {
@@ -3685,58 +3629,109 @@ export default router;
 
 // --- SOCKET.IO: User Appointments Page Active (for delivered ticks) ---
 export function registerUserAppointmentsSocket(io) {
+  // Debounce map: userId -> timeout to prevent rapid re-triggering
+  const activeDebounce = new Map();
+  // Per-appointment lock to serialize messageReceived operations
+  const appointmentLocks = new Map();
+
   io.on('connection', (socket) => {
     socket.on('userAppointmentsActive', async ({ userId }) => {
-      try {
-        // Find all bookings where this user is buyer or seller
-        const bookings = await booking.find({
-          $or: [{ buyerId: userId }, { sellerId: userId }]
-        });
-        for (const appt of bookings) {
-          let updated = false;
-          for (const comment of appt.comments) {
-            // Only mark as delivered if:
-            // 1. Comment is not from this user 
-            // 2. Comment status is "sent" (meaning it was sent while recipient was offline)
-            // 3. Comment is not already delivered or read
-            if (comment.sender.toString() !== userId &&
-              comment.status === 'sent' &&
-              !comment.readBy?.includes(userId)) {
-              comment.status = 'delivered';
-              updated = true;
-              io.emit('commentDelivered', { appointmentId: appt._id.toString(), commentId: comment._id.toString() });
+      // Debounce: ignore if same user triggers within 2 seconds
+      if (activeDebounce.has(userId)) {
+        clearTimeout(activeDebounce.get(userId));
+      }
+      activeDebounce.set(userId, setTimeout(async () => {
+        activeDebounce.delete(userId);
+        try {
+          // Use atomic updateMany with arrayFilters to mark comments as delivered
+          // This avoids the find-modify-save pattern that causes VersionError
+          const result = await booking.updateMany(
+            {
+              $or: [{ buyerId: userId }, { sellerId: userId }],
+              'comments.status': 'sent'
+            },
+            {
+              $set: { 'comments.$[elem].status': 'delivered' }
+            },
+            {
+              arrayFilters: [
+                {
+                  'elem.sender': { $ne: new mongoose.Types.ObjectId(userId) },
+                  'elem.status': 'sent'
+                }
+              ]
+            }
+          );
+
+          // If any documents were modified, emit delivery events
+          if (result.modifiedCount > 0) {
+            // Fetch the affected bookings to emit individual delivery events
+            const affectedBookings = await booking.find(
+              {
+                $or: [{ buyerId: userId }, { sellerId: userId }],
+                'comments.status': 'delivered'
+              },
+              { _id: 1, comments: { $elemMatch: { status: 'delivered' } } }
+            ).lean();
+
+            for (const appt of affectedBookings) {
+              if (appt.comments) {
+                for (const comment of appt.comments) {
+                  if (comment.status === 'delivered' && comment.sender.toString() !== userId) {
+                    io.emit('commentDelivered', {
+                      appointmentId: appt._id.toString(),
+                      commentId: comment._id.toString()
+                    });
+                  }
+                }
+              }
             }
           }
-          if (updated) await appt.save();
+        } catch (err) {
+          console.error('Error marking comments as delivered:', err);
         }
-      } catch (err) {
-        console.error('Error marking comments as delivered:', err);
-      }
+      }, 500)); // 500ms debounce
     });
 
     // Handle message received by online user
     socket.on('messageReceived', async ({ appointmentId, commentId, userId }) => {
+      // Per-appointment lock to serialize concurrent operations
+      const lockKey = `${appointmentId}_delivered`;
+      while (appointmentLocks.get(lockKey)) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+      appointmentLocks.set(lockKey, true);
+
       try {
-        const appt = await booking.findById(appointmentId);
-        if (!appt) return;
+        // Use atomic updateOne with arrayFilters - no version conflict possible
+        const result = await booking.updateOne(
+          { _id: appointmentId },
+          {
+            $set: { 'comments.$[elem].status': 'delivered' }
+          },
+          {
+            arrayFilters: [
+              {
+                'elem._id': new mongoose.Types.ObjectId(commentId),
+                'elem.sender': { $ne: new mongoose.Types.ObjectId(userId) },
+                'elem.status': 'sent'
+              }
+            ]
+          }
+        );
 
-        const comment = appt.comments.id(commentId);
-        if (!comment) return;
-
-        // Only mark as delivered if:
-        // 1. Comment is not from this user
-        // 2. Comment status is "sent"
-        // 3. User is not already in readBy array
-        if (comment.sender.toString() !== userId &&
-          comment.status === 'sent' &&
-          !comment.readBy?.includes(userId)) {
-          comment.status = 'delivered';
-          await appt.save();
-          io.emit('commentDelivered', { appointmentId: appointmentId.toString(), commentId: commentId.toString() });
+        if (result.modifiedCount > 0) {
+          io.emit('commentDelivered', {
+            appointmentId: appointmentId.toString(),
+            commentId: commentId.toString()
+          });
         }
       } catch (err) {
         console.error('Error marking message as delivered on receive:', err);
+      } finally {
+        appointmentLocks.delete(lockKey);
       }
     });
   });
 }
+

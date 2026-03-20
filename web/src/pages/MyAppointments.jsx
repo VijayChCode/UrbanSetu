@@ -601,10 +601,12 @@ export default function MyAppointments() {
 
   useEffect(() => {
     if (!currentUser) return;
-    // Emit userAppointmentsActive every 1 seconds
+    // Emit immediately when page loads so delivery status registers promptly
+    socket.emit('userAppointmentsActive', { userId: currentUser._id });
+    // Then emit periodically (every 30 seconds) to catch any missed updates
     const interval = setInterval(() => {
       socket.emit('userAppointmentsActive', { userId: currentUser._id });
-    }, 1000);
+    }, 30000);
     return () => clearInterval(interval);
   }, [currentUser]);
 
