@@ -2300,7 +2300,7 @@ export default function RentProperty() {
             </div>
           </div>
         )}
-        {showCoinBurst && <SetuCoinParticles count={50} onComplete={() => setShowCoinBurst(false)} />}
+        {showCoinBurst && <SetuCoinParticles active={true} count={50} onComplete={() => setShowCoinBurst(false)} />}
       </div>
     </div >
   );

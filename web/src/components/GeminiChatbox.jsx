@@ -18,6 +18,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useImageAuditor } from '../hooks/useImageAuditor';
 import Prism from 'prismjs';
 import ConfirmationModal from './ConfirmationModal';
+import SetuCoinParticles from './SetuCoins/SetuCoinParticles';
 import 'prismjs/themes/prism-tomorrow.css';
 import 'prismjs/components/prism-javascript';
 import 'prismjs/components/prism-python';
@@ -380,6 +381,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [ratingMeta, setRatingMeta] = useState({}); // { ratingKey: { feedback, user, time } }
     const [allRatings, setAllRatings] = useState([]);
     const [allRatingsLoading, setAllRatingsLoading] = useState(false);
+    const [showCoinBurst, setShowCoinBurst] = useState(false);
+    const [burstCount, setBurstCount] = useState(15);
     const [showSettings, setShowSettings] = useState(false);
     const [showBookmarks, setShowBookmarks] = useState(false);
     const [showHistory, setShowHistory] = useState(false);
@@ -3137,6 +3140,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                 ...prev,
                                                 totalTokens: (prev.totalTokens || 0) + added
                                             }));
+
+                                            // Trigger coin burst animation for realistic token usage feedback
+                                            setBurstCount(Math.min(35, Math.max(12, Math.floor(added / 4))));
+                                            setShowCoinBurst(true);
                                         }
                                     } else if (streamData.type === 'error') {
                                         throw new Error(streamData.content);
@@ -3250,6 +3257,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             ...prev,
                             totalTokens: (prev.totalTokens || 0) + added
                         }));
+
+                        // Trigger coin burst animation for realistic token usage feedback
+                        setBurstCount(Math.min(35, Math.max(12, Math.floor(added / 4))));
+                        setShowCoinBurst(true);
                     }
                     if (!isOpen) {
                         setUnreadCount(count => count + 1);
@@ -8591,11 +8602,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                             e.stopPropagation();
                                                                             setOpenHistoryMenuSessionId(prev => prev === session.sessionId ? null : session.sessionId);
                                                                         }}
-                                                                        className={`ml-2 p-1 ${isDarkMode ? 'text-gray-400 hover:text-white hover:bg-gray-700' : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'} rounded transition-all duration-200`}
+                                                                        className={`ml-2 p-1.5 ${isDarkMode ? 'text-gray-300 hover:text-white hover:bg-gray-700' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'} rounded-lg transition-all duration-200 flex items-center justify-center`}
                                                                         title="Chat options"
                                                                         data-chat-options-dropdown
                                                                     >
-                                                                        ⋯
+                                                                        <FaEllipsisH size={14} />
                                                                     </button>
                                                                     {openHistoryMenuSessionId === session.sessionId && (
                                                                         <div className={`absolute right-0 top-6 ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'} border rounded shadow-lg z-10 w-36`} data-chat-options-dropdown>
@@ -11528,6 +11539,15 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 currentIndex={previewImageIndex}
                 setCurrentIndex={setPreviewImageIndex}
             />
+
+            {/* Coin Burst Animation for Token Usage Feedback */}
+            {showCoinBurst && (
+                <SetuCoinParticles
+                    active={true}
+                    count={burstCount}
+                    onComplete={() => setShowCoinBurst(false)}
+                />
+            )}
         </div>
     );
 };

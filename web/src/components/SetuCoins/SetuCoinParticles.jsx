@@ -8,6 +8,11 @@ import { FaCoins } from 'react-icons/fa';
 export default function SetuCoinParticles({ active, onComplete, count = 12 }) {
     const [particles, setParticles] = useState([]);
 
+    const onCompleteRef = React.useRef(onComplete);
+    useEffect(() => {
+        onCompleteRef.current = onComplete;
+    }, [onComplete]);
+
     useEffect(() => {
         if (active) {
             const newParticles = Array.from({ length: count }).map((_, i) => ({
@@ -21,12 +26,12 @@ export default function SetuCoinParticles({ active, onComplete, count = 12 }) {
 
             const timer = setTimeout(() => {
                 setParticles([]);
-                if (onComplete) onComplete();
+                if (onCompleteRef.current) onCompleteRef.current();
             }, 2000);
 
             return () => clearTimeout(timer);
         }
-    }, [active, count, onComplete]);
+    }, [active, count]);
 
     if (!active || particles.length === 0) return null;
 
