@@ -2145,10 +2145,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
 
   const [replyTo, setReplyTo] = useState(null);
   const [comment, setComment] = useState("");
-  const [comments, setComments] = useState([]);
-  const [totalCommentsCount, setTotalCommentsCount] = useState(0);
-  const [chatPage, setChatPage] = useState(1);
-  const [allCommentsLoaded, setAllCommentsLoaded] = useState(false);
+  const [comments, setComments] = useState(appt.comments || []);
   const [sending, setSending] = useState(false);
   const [editingComment, setEditingComment] = useState(null);
   const [editText, setEditText] = useState("");
@@ -2160,11 +2157,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   const chatEndRef = useRef(null);
   const chatContainerRef = useRef(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
-  const [unreadNewMessages, setUnreadNewMessages] = useState(() => {
-    // Correctly initialize from backend counters
-    const role = appt.role || (appt.buyerId?._id === currentUser._id || appt.buyerId === currentUser._id ? 'buyer' : 'seller');
-    return role === 'buyer' ? appt.buyerUnreadMessageCount || 0 : appt.sellerUnreadMessageCount || 0;
-  });
+  const [unreadNewMessages, setUnreadNewMessages] = useState(0);
   // Show unread divider only right after opening chat when there are unread messages
   const [showUnreadDividerOnOpen, setShowUnreadDividerOnOpen] = useState(false);
   // Prefer scrolling to unread on open from notification
@@ -3066,16 +3059,15 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
         throw { response: { status: res.status, data: errorData } };
       }
       const data = await res.json();
-      // Backend now returns { comment: ... } directly (optimized response)
-      // Fallback to old format for backward compatibility
-      const newComment = data.comment || data.comments?.[data.comments.length - 1];
+      // Find the new comment from the response
+      const newComment = data.comments[data.comments.length - 1];
 
-      if (newComment) {
-        // Replace the temp message with the real one
-        setComments(prev => prev.map(msg =>
-          msg._id === tempId ? { ...newComment } : msg
-        ));
-      }
+      // Replace the temp message with the real one
+      setComments(prev => prev.map(msg =>
+        msg._id === tempId
+          ? { ...newComment }
+          : msg
+      ));
     } catch (error) {
       console.error('Send image error:', error);
       setComments(prev => prev.filter(msg => msg._id !== tempId));
@@ -3245,10 +3237,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
       });
       if (!res.ok) throw new Error('Failed to send video');
       const data = await res.json();
-      const newComment = data.comment || data.comments?.[data.comments.length - 1];
-      if (newComment) {
-        setComments(prev => prev.map(m => m._id === tempId ? { ...m, ...newComment } : m));
-      }
+      setComments(data.comments || data.updated?.comments || data?.appointment?.comments || []);
     } catch (err) {
       toast.error('Failed to send video');
       setComments(prev => prev.filter(m => m._id !== tempId));
@@ -3311,10 +3300,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
       });
       if (!res.ok) throw new Error('Failed to send audio');
       const data = await res.json();
-      const newComment = data.comment || data.comments?.[data.comments.length - 1];
-      if (newComment) {
-        setComments(prev => prev.map(m => m._id === tempId ? { ...m, ...newComment } : m));
-      }
+      setComments(data.comments || data.updated?.comments || data?.appointment?.comments || []);
     } catch (err) {
       toast.error('Failed to send audio');
       setComments(prev => prev.filter(m => m._id !== tempId));
@@ -3377,10 +3363,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
       });
       if (!res.ok) throw new Error('Failed to send document');
       const data = await res.json();
-      const newComment = data.comment || data.comments?.[data.comments.length - 1];
-      if (newComment) {
-        setComments(prev => prev.map(m => m._id === tempId ? { ...m, ...newComment } : m));
-      }
+      setComments(data.comments || data.updated?.comments || data?.appointment?.comments || []);
     } catch (err) {
       toast.error('Failed to send document');
       setComments(prev => prev.filter(m => m._id !== tempId));
@@ -3985,42 +3968,19 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
     }
   }, [currentSearchIndex, searchResults]);
 
-  // Handle database pagination when scrolled to top
+  // Increase visible messages when scrolled to top (lazy loading)
   useEffect(() => {
     const container = chatContainerRef.current;
-    if (!container || !showChatModal) return;
-
-    const onScrollTopLoadMore = async () => {
-      if (container.scrollTop <= 30 && !allCommentsLoaded && !loadingOlderRef.current && !loadingComments) {
+    if (!container) return;
+    const onScrollTopLoadMore = () => {
+      if (container.scrollTop <= 30 && comments.length > visibleCount && !loadingOlderRef.current) {
         loadingOlderRef.current = true;
         setIsLoadingOlderMessages(true);
         const prevHeight = container.scrollHeight;
-        
-        try {
-          // Fetch previous page from database
-          const nextPage = chatPage + 1;
-          const res = await authenticatedFetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments?page=${nextPage}&limit=${MESSAGES_PAGE_SIZE}`);
-          if (res.ok) {
-            const data = await res.json();
-            if (data.comments && data.comments.length > 0) {
-              setTotalCommentsCount(data.totalComments);
-              setComments(prev => {
-                const existingIds = new Set(prev.map(c => c._id));
-                const filteredNew = data.comments.filter(c => !existingIds.has(c._id));
-                return [...filteredNew, ...prev];
-              });
-              setChatPage(nextPage);
-              if (data.currentPage >= data.totalPages) {
-                setAllCommentsLoaded(true);
-              }
-            } else {
-              setAllCommentsLoaded(true);
-            }
-          }
-        } catch (err) {
-          console.error('Failed to load older messages:', err);
-        } finally {
-          // Maintain scroll position after prepending items
+        // Small delay to show spinner before rendering more items
+        setTimeout(() => {
+          setVisibleCount(prev => Math.min(prev + MESSAGES_PAGE_SIZE, comments.length));
+          // Maintain scroll position after increasing items
           requestAnimationFrame(() => {
             const newHeight = container.scrollHeight;
             container.scrollTop = newHeight - prevHeight;
@@ -4030,64 +3990,45 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
               loadingOlderRef.current = false;
             }, 300);
           });
-        }
+        }, 150);
       }
     };
     container.addEventListener('scroll', onScrollTopLoadMore);
     return () => container.removeEventListener('scroll', onScrollTopLoadMore);
-  }, [appt._id, chatPage, allCommentsLoaded, loadingComments, showChatModal, MESSAGES_PAGE_SIZE]);
+  }, [comments.length, visibleCount]);
 
-  // Load first page of comments when opening chat
+  // Reset visible count when opening chat or comments change drastically
   useEffect(() => {
-    if (!showChatModal) {
-      // Clean up when closed (optional: keep in memory if small)
-      return;
+    if (!showChatModal) return;
+    // Ensure at least unread messages are visible when opening
+    const computedUnread = comments.filter(c =>
+      c.senderEmail !== currentUser.email &&
+      (!c.readBy || !c.readBy.includes(currentUser._id))
+    ).length;
+    const shouldPreferUnread = preferUnreadOnOpen || (preferUnreadForAppointmentId === appt._id);
+    const unreadToUse = shouldPreferUnread ? (unreadNewMessages || computedUnread) : unreadNewMessages;
+    if (unreadToUse > 0) {
+      setVisibleCount(prev => Math.max(MESSAGES_PAGE_SIZE, unreadNewMessages + 5));
+      // After next paint, scroll to first unread message instead of bottom
+      setTimeout(() => {
+        const targetIndex = Math.max(0, filteredComments.length - unreadToUse);
+        const targetMsg = filteredComments[targetIndex];
+        if (targetMsg && messageRefs.current[targetMsg._id]) {
+          try {
+            messageRefs.current[targetMsg._id].scrollIntoView({ behavior: 'auto', block: 'center' });
+          } catch (_) { }
+        }
+        // Show divider only on open case
+        setShowUnreadDividerOnOpen(true);
+        setPreferUnreadOnOpen(false);
+        if (preferUnreadForAppointmentId === appt._id) setPreferUnreadForAppointmentId(null);
+      }, 50);
+    } else {
+      // No unread -> go to bottom as usual
+      setVisibleCount(MESSAGES_PAGE_SIZE);
+      setTimeout(() => scrollToBottom(), 0);
     }
-    
-    const initializeChat = async () => {
-      setLoadingComments(true);
-      try {
-        const initialLimit = Math.max(MESSAGES_PAGE_SIZE, unreadNewMessages + 10);
-        const res = await authenticatedFetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments?page=1&limit=${initialLimit}`);
-        if (!res.ok) throw new Error('Failed to fetch initial messages');
-        const data = await res.json();
-        
-        setTotalCommentsCount(data.totalComments);
-        setComments(data.comments || []);
-        setChatPage(1);
-        setAllCommentsLoaded(data.currentPage >= data.totalPages);
-        
-        // Initial positioning logic
-        setTimeout(() => {
-          if (unreadNewMessages > 0) {
-            // Find first unread message by ID (the backend returns everything filtered for user)
-            // Actually, we can just find it in our local array
-            const firstUnread = data.comments.find(c => 
-              c.senderEmail !== currentUser.email && 
-              (!c.readBy || !c.readBy.includes(currentUser._id))
-            );
-            
-            if (firstUnread && messageRefs.current[firstUnread._id]) {
-              messageRefs.current[firstUnread._id].scrollIntoView({ behavior: 'auto', block: 'center' });
-              setShowUnreadDividerOnOpen(true);
-            } else {
-              scrollToBottom();
-            }
-          } else {
-            scrollToBottom();
-          }
-          setLoadingComments(false); // Move here to allow renderer to settle
-        }, 100);
-      } catch (err) {
-        console.error('Chat init error:', err);
-        setLoadingComments(false);
-      }
-    };
-
-    initializeChat();
-    setPreferUnreadOnOpen(false);
-    if (preferUnreadForAppointmentId === appt._id) setPreferUnreadForAppointmentId(null);
-  }, [appt._id, showChatModal, unreadNewMessages]);
+  }, [appt._id, showChatModal]);
 
   // Hide the one-time unread divider on first user scroll
   useEffect(() => {
@@ -4490,46 +4431,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   };
 
   const showMessageInfo = (message) => {
-     setSelectedMessageForInfo(message);
-     setShowMessageInfoModal(true);
-   };
- 
-   // Fetch messages for pagination
-   const fetchChatMessages = useCallback(async (page, pageSize = MESSAGES_PAGE_SIZE) => {
-     if (!appt?._id || loadingComments) return;
-     setLoadingComments(true);
-     try {
-       const res = await authenticatedFetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments?page=${page}&limit=${pageSize}`);
-       if (!res.ok) throw new Error('Failed to fetch messages');
-       const data = await res.json();
-       
-       if (data.comments.length === 0) {
-         setAllCommentsLoaded(true);
-       } else {
-         setTotalCommentsCount(data.totalComments);
-         setComments(prev => {
-           // On first page, just replace (usually for open). On other pages, prepend.
-           if (page === 1) return data.comments;
-           
-           // Simple duplicate check (avoid adding local-only messages or double loading)
-           const existingIds = new Set(prev.map(c => c._id));
-           const newMessages = data.comments.filter(c => !existingIds.has(c._id));
-           return [...newMessages, ...prev];
-         });
-         
-         if (data.currentPage >= data.totalPages) {
-           setAllCommentsLoaded(true);
-         }
-       }
-       setChatPage(page);
-     } catch (err) {
-       console.error('Error fetching chat messages:', err);
-     } finally {
-       setLoadingComments(false);
-     }
-   }, [appt._id, loadingComments, MESSAGES_PAGE_SIZE]);
- 
-   const handleCommentSend = async () => {
+    setSelectedMessageForInfo(message);
+    setShowMessageInfoModal(true);
+  };
+  const handleCommentSend = async () => {
     if (!comment.trim()) return;
     if (isChatSendBlocked) {
       toast.info('Sending disabled for this appointment status. You can view chat history.');
@@ -4609,9 +4514,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
         }
         const data = await res.json();
 
-        // Backend now returns { comment: ... } directly (optimized response)
-        // Fallback to old format for backward compatibility
-        const newComment = data.comment || data.comments?.[data.comments.length - 1];
+        // Find the new comment from the response
+        const newComment = data.comments[data.comments.length - 1];
 
         // Update only the status and ID of the temp message, keeping it visible
         // Preserve replyTo if it was a call (not sent to backend but stored locally)
@@ -8699,866 +8603,866 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                       )}
 
                       {visibleItems.map((item, mapIndex) => {
-                      const index = mergedTimeline.length - visibleItems.length + mapIndex;
-                      const previousItem = index > 0 ? mergedTimeline[index - 1] : null;
-                      const currentDate = item.timestamp;
-                      const previousDate = previousItem ? previousItem.timestamp : null;
-                      const isNewDay = previousDate ? currentDate.toDateString() !== previousDate.toDateString() : true;
+                        const index = mergedTimeline.length - visibleItems.length + mapIndex;
+                        const previousItem = index > 0 ? mergedTimeline[index - 1] : null;
+                        const currentDate = item.timestamp;
+                        const previousDate = previousItem ? previousItem.timestamp : null;
+                        const isNewDay = previousDate ? currentDate.toDateString() !== previousDate.toDateString() : true;
 
 
-                      // If it's a message, render chat message (existing logic)
-                      const c = item.message;
-                      const isMe = c.senderEmail === currentUser.email;
-                      const isEditing = editingComment === c._id;
-                      const formattedDate = currentDate.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric' });
+                        // If it's a message, render chat message (existing logic)
+                        const c = item.message;
+                        const isMe = c.senderEmail === currentUser.email;
+                        const isEditing = editingComment === c._id;
+                        const formattedDate = currentDate.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric' });
 
-                      return (
-                        <React.Fragment key={c._id || index}>
-                          {isNewDay && (
-                            <div className="w-full flex justify-center my-2">
-                              <span className="bg-blue-600 text-white text-xs px-4 py-2 rounded-full shadow-lg border-2 border-white">{getDateLabel(currentDate)}</span>
-                            </div>
-                          )}
-                          {/* New messages divider: only right after opening when unread exists */}
-                          {showUnreadDividerOnOpen && unreadNewMessages > 0 && item.type === 'message' && (() => {
-                            // Find the index of this message in filteredComments
-                            const messageIndex = filteredComments.findIndex(msg => msg._id === c._id);
-                            return messageIndex === filteredComments.length - unreadNewMessages;
-                          })() && (
-                              <div className="w-full flex items-center my-2">
-                                <div className="flex-1 h-px bg-gray-300"></div>
-                                <span className="mx-2 text-xs font-semibold text-red-600 bg-red-50 px-2 py-1 rounded-full border border-red-200">
-                                  {unreadNewMessages} unread message{unreadNewMessages > 1 ? 's' : ''}
-                                </span>
-                                <div className="flex-1 h-px bg-gray-300"></div>
+                        return (
+                          <React.Fragment key={c._id || index}>
+                            {isNewDay && (
+                              <div className="w-full flex justify-center my-2">
+                                <span className="bg-blue-600 text-white text-xs px-4 py-2 rounded-full shadow-lg border-2 border-white">{getDateLabel(currentDate)}</span>
                               </div>
                             )}
-                          <div className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-fadeInChatBubble`} style={{ animationDelay: `${0.03 * index}s` }}>
-                            {/* Selection checkbox - only show in selection mode */}
-                            {isSelectionMode && (
-                              <div className={`flex items-start ${isMe ? 'order-2 ml-2' : 'order-1 mr-2'}`}>
-                                <input
-                                  type="checkbox"
-                                  checked={selectedMessages.some(msg => msg._id === c._id)}
-                                  onChange={(e) => {
-                                    if (e.target.checked) {
-                                      setSelectedMessages(prev => [...prev, c]);
-                                    } else {
-                                      setSelectedMessages(prev => prev.filter(msg => msg._id !== c._id));
-                                    }
-                                  }}
-                                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                                />
-                              </div>
-                            )}
-                            <div
-                              ref={el => messageRefs.current[c._id] = el}
-                              id={`message-${c._id}`}
-                              data-message-id={c._id}
-                              className={`relative rounded-2xl px-4 sm:px-5 shadow-xl max-w-[90%] sm:max-w-[80%] md:max-w-[70%] lg:max-w-[60%] xl:max-w-[50%] break-words overflow-visible transition-all duration-300 min-h-[60px] ${c.audioUrl && !c.deleted ? 'min-w-[280px] sm:min-w-[320px]' : ''} ${settings.messageDensity === 'compact' ? 'py-1' : settings.messageDensity === 'spacious' ? 'py-5' : 'py-3'
-                                } ${settings.fontSize === 'small' ? 'text-xs' : settings.fontSize === 'large' ? 'text-base' : 'text-sm'
-                                } ${isMe
-                                  ? 'bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-500 hover:to-purple-600 text-white shadow-blue-200 dark:shadow-blue-900/40 hover:shadow-blue-300 hover:shadow-2xl'
-                                  : 'bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-750 text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-gray-700 shadow-gray-200 dark:shadow-gray-900/40 hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-xl'
-                                } ${highlightedPinnedMessage === c._id ? 'ring-4 ring-purple-400 shadow-2xl scale-105' : ''
-                                } ${isSelectionMode && selectedMessages.some(msg => msg._id === c._id) ? 'ring-2 ring-blue-400' : ''}`}
-                              style={{ animationDelay: `${0.03 * index}s` }}
-                            >
-                              {/* Reply preview above message if this is a reply */}
-                              {c.replyTo && (() => {
-                                // Check if replyTo is a call (starts with "call-")
-                                const isCallReply = c.replyTo.startsWith('call-');
-                                let repliedMessage = null;
-
-                                if (isCallReply) {
-                                  // Look for the call in callHistory
-                                  const callId = c.replyTo.replace('call-', '');
-                                  const repliedCall = callHistory.find(call =>
-                                    (call._id || call.callId) === callId
-                                  );
-                                  if (repliedCall) {
-                                    repliedMessage = {
-                                      message: `${repliedCall.callType === 'video' ? 'Video' : 'Audio'} call`
-                                    };
-                                  }
-                                } else {
-                                  // Look for the message in comments
-                                  repliedMessage = comments.find(msg => msg._id === c.replyTo);
-                                }
-
-                                return (
-                                  <div className="border-l-4 border-purple-400 pl-3 mb-2 text-xs bg-gradient-to-r from-purple-50 to-blue-50 hover:from-purple-100 hover:to-blue-100 dark:from-purple-900/20 dark:to-blue-900/20 dark:hover:from-purple-900/40 dark:hover:to-blue-900/40 rounded-lg w-full max-w-full break-words cursor-pointer transition-all duration-200 hover:shadow-sm" onClick={() => {
-                                    if (messageRefs.current[c.replyTo]) {
-                                      messageRefs.current[c.replyTo].scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                      messageRefs.current[c.replyTo].classList.add('reply-highlight');
-                                      setTimeout(() => {
-                                        messageRefs.current[c.replyTo]?.classList.remove('reply-highlight');
-                                      }, 1600);
-                                    } else {
-                                      scrollToMessageById(c.replyTo, 'reply-highlight');
-                                    }
-                                  }} role="button" tabIndex={0} aria-label="Go to replied message">
-                                    <span className="text-xs text-gray-700 dark:text-gray-300 font-medium truncate max-w-[150px] flex items-center gap-1">
-                                      <span className="text-purple-500">↩</span>
-                                      {repliedMessage?.message?.substring(0, 30) || 'Original message'}{repliedMessage?.message?.length > 30 ? '...' : ''}
-                                    </span>
-                                  </div>
-                                );
-                              })()}
-                              {/* Sender label for admin messages */}
-                              {!isMe && (c.senderEmail !== appt.buyerId?.email) && (c.senderEmail !== appt.sellerId?.email) && (
-                                <div className="font-semibold mb-1 text-xs text-purple-600 dark:text-purple-400">UrbanSetu</div>
-                              )}
-                              <div className={`text-left ${isMe ? 'font-medium' : ''} ${settings.fontSize === 'small' ? 'text-sm' : settings.fontSize === 'large' ? 'text-lg' : 'text-base'
-                                }`}>
-                                {c.deleted ? (
-                                  <span className="flex items-center gap-1 text-gray-400 italic">
-                                    <FaBan className="inline-block text-lg" /> {c.senderEmail === currentUser.email ? "You deleted this message" : "This message was deleted."}
+                            {/* New messages divider: only right after opening when unread exists */}
+                            {showUnreadDividerOnOpen && unreadNewMessages > 0 && item.type === 'message' && (() => {
+                              // Find the index of this message in filteredComments
+                              const messageIndex = filteredComments.findIndex(msg => msg._id === c._id);
+                              return messageIndex === filteredComments.length - unreadNewMessages;
+                            })() && (
+                                <div className="w-full flex items-center my-2">
+                                  <div className="flex-1 h-px bg-gray-300"></div>
+                                  <span className="mx-2 text-xs font-semibold text-red-600 bg-red-50 px-2 py-1 rounded-full border border-red-200">
+                                    {unreadNewMessages} unread message{unreadNewMessages > 1 ? 's' : ''}
                                   </span>
-                                ) : (
-                                  <div>
-                                    {isEditing ? (
-                                      <div className="bg-yellow-100 border-l-4 border-yellow-400 px-2 py-1 rounded">
-                                        <span className="text-yellow-800 text-xs font-medium">✏️ Editing this message below...</span>
-                                      </div>
-                                    ) : (
-                                      <>
-                                        {/* Image Message */}
-                                        {c.imageUrl && (
-                                          <div className="mb-2">
-                                            <img
-                                              src={c.imageUrl}
-                                              alt="Shared image"
-                                              className="max-w-full max-h-64 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                                              onClick={() => {
-                                                const imageUrls = (comments || []).filter(msg => !!msg.imageUrl).map(msg => msg.imageUrl);
-                                                const startIndex = Math.max(0, imageUrls.indexOf(c.imageUrl));
-                                                setPreviewImages(imageUrls);
-                                                setPreviewIndex(startIndex);
-                                                setShowImagePreview(true);
-                                              }}
-                                              onError={(e) => {
-                                                e.target.src = "https://via.placeholder.com/300x200?text=Image+Not+Found";
-                                                e.target.className = "max-w-full max-h-64 rounded-lg opacity-50";
+                                  <div className="flex-1 h-px bg-gray-300"></div>
+                                </div>
+                              )}
+                            <div className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-fadeInChatBubble`} style={{ animationDelay: `${0.03 * index}s` }}>
+                              {/* Selection checkbox - only show in selection mode */}
+                              {isSelectionMode && (
+                                <div className={`flex items-start ${isMe ? 'order-2 ml-2' : 'order-1 mr-2'}`}>
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedMessages.some(msg => msg._id === c._id)}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setSelectedMessages(prev => [...prev, c]);
+                                      } else {
+                                        setSelectedMessages(prev => prev.filter(msg => msg._id !== c._id));
+                                      }
+                                    }}
+                                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                                  />
+                                </div>
+                              )}
+                              <div
+                                ref={el => messageRefs.current[c._id] = el}
+                                id={`message-${c._id}`}
+                                data-message-id={c._id}
+                                className={`relative rounded-2xl px-4 sm:px-5 shadow-xl max-w-[90%] sm:max-w-[80%] md:max-w-[70%] lg:max-w-[60%] xl:max-w-[50%] break-words overflow-visible transition-all duration-300 min-h-[60px] ${c.audioUrl && !c.deleted ? 'min-w-[280px] sm:min-w-[320px]' : ''} ${settings.messageDensity === 'compact' ? 'py-1' : settings.messageDensity === 'spacious' ? 'py-5' : 'py-3'
+                                  } ${settings.fontSize === 'small' ? 'text-xs' : settings.fontSize === 'large' ? 'text-base' : 'text-sm'
+                                  } ${isMe
+                                    ? 'bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-500 hover:to-purple-600 text-white shadow-blue-200 dark:shadow-blue-900/40 hover:shadow-blue-300 hover:shadow-2xl'
+                                    : 'bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-750 text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-gray-700 shadow-gray-200 dark:shadow-gray-900/40 hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-xl'
+                                  } ${highlightedPinnedMessage === c._id ? 'ring-4 ring-purple-400 shadow-2xl scale-105' : ''
+                                  } ${isSelectionMode && selectedMessages.some(msg => msg._id === c._id) ? 'ring-2 ring-blue-400' : ''}`}
+                                style={{ animationDelay: `${0.03 * index}s` }}
+                              >
+                                {/* Reply preview above message if this is a reply */}
+                                {c.replyTo && (() => {
+                                  // Check if replyTo is a call (starts with "call-")
+                                  const isCallReply = c.replyTo.startsWith('call-');
+                                  let repliedMessage = null;
+
+                                  if (isCallReply) {
+                                    // Look for the call in callHistory
+                                    const callId = c.replyTo.replace('call-', '');
+                                    const repliedCall = callHistory.find(call =>
+                                      (call._id || call.callId) === callId
+                                    );
+                                    if (repliedCall) {
+                                      repliedMessage = {
+                                        message: `${repliedCall.callType === 'video' ? 'Video' : 'Audio'} call`
+                                      };
+                                    }
+                                  } else {
+                                    // Look for the message in comments
+                                    repliedMessage = comments.find(msg => msg._id === c.replyTo);
+                                  }
+
+                                  return (
+                                    <div className="border-l-4 border-purple-400 pl-3 mb-2 text-xs bg-gradient-to-r from-purple-50 to-blue-50 hover:from-purple-100 hover:to-blue-100 dark:from-purple-900/20 dark:to-blue-900/20 dark:hover:from-purple-900/40 dark:hover:to-blue-900/40 rounded-lg w-full max-w-full break-words cursor-pointer transition-all duration-200 hover:shadow-sm" onClick={() => {
+                                      if (messageRefs.current[c.replyTo]) {
+                                        messageRefs.current[c.replyTo].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                        messageRefs.current[c.replyTo].classList.add('reply-highlight');
+                                        setTimeout(() => {
+                                          messageRefs.current[c.replyTo]?.classList.remove('reply-highlight');
+                                        }, 1600);
+                                      } else {
+                                        scrollToMessageById(c.replyTo, 'reply-highlight');
+                                      }
+                                    }} role="button" tabIndex={0} aria-label="Go to replied message">
+                                      <span className="text-xs text-gray-700 dark:text-gray-300 font-medium truncate max-w-[150px] flex items-center gap-1">
+                                        <span className="text-purple-500">↩</span>
+                                        {repliedMessage?.message?.substring(0, 30) || 'Original message'}{repliedMessage?.message?.length > 30 ? '...' : ''}
+                                      </span>
+                                    </div>
+                                  );
+                                })()}
+                                {/* Sender label for admin messages */}
+                                {!isMe && (c.senderEmail !== appt.buyerId?.email) && (c.senderEmail !== appt.sellerId?.email) && (
+                                  <div className="font-semibold mb-1 text-xs text-purple-600 dark:text-purple-400">UrbanSetu</div>
+                                )}
+                                <div className={`text-left ${isMe ? 'font-medium' : ''} ${settings.fontSize === 'small' ? 'text-sm' : settings.fontSize === 'large' ? 'text-lg' : 'text-base'
+                                  }`}>
+                                  {c.deleted ? (
+                                    <span className="flex items-center gap-1 text-gray-400 italic">
+                                      <FaBan className="inline-block text-lg" /> {c.senderEmail === currentUser.email ? "You deleted this message" : "This message was deleted."}
+                                    </span>
+                                  ) : (
+                                    <div>
+                                      {isEditing ? (
+                                        <div className="bg-yellow-100 border-l-4 border-yellow-400 px-2 py-1 rounded">
+                                          <span className="text-yellow-800 text-xs font-medium">✏️ Editing this message below...</span>
+                                        </div>
+                                      ) : (
+                                        <>
+                                          {/* Image Message */}
+                                          {c.imageUrl && (
+                                            <div className="mb-2">
+                                              <img
+                                                src={c.imageUrl}
+                                                alt="Shared image"
+                                                className="max-w-full max-h-64 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                                onClick={() => {
+                                                  const imageUrls = (comments || []).filter(msg => !!msg.imageUrl).map(msg => msg.imageUrl);
+                                                  const startIndex = Math.max(0, imageUrls.indexOf(c.imageUrl));
+                                                  setPreviewImages(imageUrls);
+                                                  setPreviewIndex(startIndex);
+                                                  setShowImagePreview(true);
+                                                }}
+                                                onError={(e) => {
+                                                  e.target.src = "https://via.placeholder.com/300x200?text=Image+Not+Found";
+                                                  e.target.className = "max-w-full max-h-64 rounded-lg opacity-50";
+                                                }}
+                                              />
+                                            </div>
+                                          )}
+                                          {/* Video Message */}
+                                          {c.videoUrl && (
+                                            <VideoMessageBubble
+                                              videoUrl={c.videoUrl}
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                const videoUrls = (comments || []).filter(msg => !!msg.videoUrl && !msg.deleted).map(msg => msg.videoUrl);
+                                                const startIndex = Math.max(0, videoUrls.indexOf(c.videoUrl));
+                                                window.dispatchEvent(new CustomEvent('open-media-preview', {
+                                                  detail: { videos: videoUrls, index: startIndex }
+                                                }));
                                               }}
                                             />
-                                          </div>
-                                        )}
-                                        {/* Video Message */}
-                                        {c.videoUrl && (
-                                          <VideoMessageBubble
-                                            videoUrl={c.videoUrl}
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              const videoUrls = (comments || []).filter(msg => !!msg.videoUrl && !msg.deleted).map(msg => msg.videoUrl);
-                                              const startIndex = Math.max(0, videoUrls.indexOf(c.videoUrl));
-                                              window.dispatchEvent(new CustomEvent('open-media-preview', {
-                                                detail: { videos: videoUrls, index: startIndex }
-                                              }));
-                                            }}
-                                          />
-                                        )}
-                                        {/* Audio Message */}
-                                        {c.audioUrl && (
-                                          <div className="mb-2">
-                                            <div className="relative">
-                                              <div className="w-full min-w-[280px] sm:min-w-[320px]">
-                                                <audio
-                                                  src={c.audioUrl}
-                                                  className="w-full"
-                                                  controls
-                                                  preload="metadata"
-                                                  onClick={(e) => e.stopPropagation()}
-                                                  ref={(audioEl) => {
-                                                    if (audioEl && !audioEl.dataset.audioId) {
-                                                      audioEl.dataset.audioId = c._id;
+                                          )}
+                                          {/* Audio Message */}
+                                          {c.audioUrl && (
+                                            <div className="mb-2">
+                                              <div className="relative">
+                                                <div className="w-full min-w-[280px] sm:min-w-[320px]">
+                                                  <audio
+                                                    src={c.audioUrl}
+                                                    className="w-full"
+                                                    controls
+                                                    preload="metadata"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    ref={(audioEl) => {
+                                                      if (audioEl && !audioEl.dataset.audioId) {
+                                                        audioEl.dataset.audioId = c._id;
 
-                                                      // Sync with header volume control
-                                                      audioEl.volume = currentVolume;
-                                                      audioEl.muted = isSoundMuted;
+                                                        // Sync with header volume control
+                                                        audioEl.volume = currentVolume;
+                                                        audioEl.muted = isSoundMuted;
 
-                                                      // Add play event listener to pause other audios
-                                                      audioEl.addEventListener('play', () => {
-                                                        // Pause all other audio elements
-                                                        document.querySelectorAll('audio[data-audio-id]').forEach(otherAudio => {
-                                                          if (otherAudio !== audioEl && !otherAudio.paused) {
-                                                            otherAudio.pause();
+                                                        // Add play event listener to pause other audios
+                                                        audioEl.addEventListener('play', () => {
+                                                          // Pause all other audio elements
+                                                          document.querySelectorAll('audio[data-audio-id]').forEach(otherAudio => {
+                                                            if (otherAudio !== audioEl && !otherAudio.paused) {
+                                                              otherAudio.pause();
+                                                            }
+                                                          });
+                                                        });
+
+                                                        // Add playback rate change listener
+                                                        audioEl.addEventListener('ratechange', () => {
+                                                          const rate = audioEl.playbackRate;
+                                                          const rateDisplay = document.querySelector(`[data-audio-id="${c._id}"].playback-rate-display`);
+                                                          if (rateDisplay) {
+                                                            rateDisplay.textContent = `${rate}x`;
+                                                          }
+                                                          // Update active speed in dropdown
+                                                          const speedMenu = document.querySelector(`[data-audio-speed-menu="${c._id}"]`);
+                                                          if (speedMenu) {
+                                                            const speedButtons = speedMenu.querySelectorAll('[data-speed-option]');
+                                                            speedButtons.forEach(btn => {
+                                                              btn.classList.remove('bg-blue-100', 'text-blue-700');
+                                                              btn.classList.add('text-gray-700', 'hover:bg-gray-100');
+                                                              if (parseFloat(btn.dataset.speedOption) === rate) {
+                                                                btn.classList.remove('text-gray-700', 'hover:bg-gray-100');
+                                                                btn.classList.add('bg-blue-100', 'text-blue-700');
+                                                              }
+                                                            });
                                                           }
                                                         });
-                                                      });
 
-                                                      // Add playback rate change listener
-                                                      audioEl.addEventListener('ratechange', () => {
-                                                        const rate = audioEl.playbackRate;
+                                                        // Add volume change listener for bidirectional sync
+                                                        audioEl.addEventListener('volumechange', () => {
+                                                          // Update header volume bar when audio player volume changes
+                                                          if (!audioEl.muted) {
+                                                            setCurrentVolume(audioEl.volume);
+                                                            setVolume(audioEl.volume, true); // Skip audio elements to prevent circular updates
+                                                          }
+
+                                                          // Check if all audio elements are muted to update header mute state
+                                                          const allAudioElements = document.querySelectorAll('audio[data-audio-id]');
+                                                          const allMuted = Array.from(allAudioElements).every(audio => audio.muted);
+                                                          const anyUnmuted = Array.from(allAudioElements).some(audio => !audio.muted);
+
+                                                          // Only update header mute state if all are muted or if this was a global unmute action
+                                                          if (allMuted && !isSoundMuted) {
+                                                            // All audio elements are now muted, update header to muted
+                                                            setIsSoundMuted(true);
+                                                          } else if (anyUnmuted && isSoundMuted) {
+                                                            // At least one audio is unmuted and header shows muted, update header to unmuted
+                                                            setIsSoundMuted(false);
+                                                          }
+                                                        });
+
+                                                        // Set initial speed display
                                                         const rateDisplay = document.querySelector(`[data-audio-id="${c._id}"].playback-rate-display`);
                                                         if (rateDisplay) {
-                                                          rateDisplay.textContent = `${rate}x`;
+                                                          rateDisplay.textContent = `${audioEl.playbackRate}x`;
                                                         }
-                                                        // Update active speed in dropdown
-                                                        const speedMenu = document.querySelector(`[data-audio-speed-menu="${c._id}"]`);
-                                                        if (speedMenu) {
-                                                          const speedButtons = speedMenu.querySelectorAll('[data-speed-option]');
-                                                          speedButtons.forEach(btn => {
-                                                            btn.classList.remove('bg-blue-100', 'text-blue-700');
-                                                            btn.classList.add('text-gray-700', 'hover:bg-gray-100');
-                                                            if (parseFloat(btn.dataset.speedOption) === rate) {
-                                                              btn.classList.remove('text-gray-700', 'hover:bg-gray-100');
-                                                              btn.classList.add('bg-blue-100', 'text-blue-700');
-                                                            }
-                                                          });
-                                                        }
-                                                      });
-
-                                                      // Add volume change listener for bidirectional sync
-                                                      audioEl.addEventListener('volumechange', () => {
-                                                        // Update header volume bar when audio player volume changes
-                                                        if (!audioEl.muted) {
-                                                          setCurrentVolume(audioEl.volume);
-                                                          setVolume(audioEl.volume, true); // Skip audio elements to prevent circular updates
-                                                        }
-
-                                                        // Check if all audio elements are muted to update header mute state
-                                                        const allAudioElements = document.querySelectorAll('audio[data-audio-id]');
-                                                        const allMuted = Array.from(allAudioElements).every(audio => audio.muted);
-                                                        const anyUnmuted = Array.from(allAudioElements).some(audio => !audio.muted);
-
-                                                        // Only update header mute state if all are muted or if this was a global unmute action
-                                                        if (allMuted && !isSoundMuted) {
-                                                          // All audio elements are now muted, update header to muted
-                                                          setIsSoundMuted(true);
-                                                        } else if (anyUnmuted && isSoundMuted) {
-                                                          // At least one audio is unmuted and header shows muted, update header to unmuted
-                                                          setIsSoundMuted(false);
-                                                        }
-                                                      });
-
-                                                      // Set initial speed display
-                                                      const rateDisplay = document.querySelector(`[data-audio-id="${c._id}"].playback-rate-display`);
-                                                      if (rateDisplay) {
-                                                        rateDisplay.textContent = `${audioEl.playbackRate}x`;
-                                                      }
-                                                    }
-                                                  }}
-                                                />
-                                              </div>
-                                              <div className="mt-2 flex justify-between items-center">
-                                                <div className="flex items-center gap-2">
-                                                  <button
-                                                    className={`px-3 py-1.5 text-xs rounded-full shadow-sm border transition-colors ${isMe ? 'bg-white text-blue-600 hover:bg-blue-50 border-blue-200' : 'bg-blue-600 text-white hover:bg-blue-700 border-transparent'}`}
-                                                    onClick={async (e) => {
-                                                      e.stopPropagation();
-                                                      try {
-                                                        const response = await authenticatedFetch(c.audioUrl, { mode: 'cors' });
-                                                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                                                        const blob = await response.blob();
-                                                        const blobUrl = window.URL.createObjectURL(blob);
-                                                        const a = document.createElement('a');
-                                                        a.href = blobUrl;
-                                                        a.download = c.audioName || `audio-${c._id || Date.now()}`;
-                                                        document.body.appendChild(a);
-                                                        a.click();
-                                                        a.remove();
-                                                        setTimeout(() => window.URL.revokeObjectURL(blobUrl), 200);
-                                                        toast.success('Audio downloaded successfully');
-                                                      } catch (error) {
-                                                        const a = document.createElement('a');
-                                                        a.href = c.audioUrl;
-                                                        a.download = c.audioName || `audio-${c._id || Date.now()}`;
-                                                        a.target = '_blank';
-                                                        document.body.appendChild(a);
-                                                        a.click();
-                                                        a.remove();
-                                                        toast.success('Audio download started');
                                                       }
                                                     }}
-                                                    title="Download audio"
-                                                  >
-                                                    <span className="inline-flex items-center gap-1">
-                                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4" /></svg>
-                                                      Download
-                                                    </span>
-                                                  </button>
-                                                  <span className={`text-xs playback-rate-display ${isMe ? 'text-blue-100' : 'text-gray-500'}`} data-audio-id={c._id}>1x</span>
+                                                  />
                                                 </div>
-
-                                                {/* Three dots menu for audio options */}
-                                                <div className="relative">
-                                                  <button
-                                                    className={`p-2 rounded-full hover:bg-gray-100 transition-colors ${isMe ? 'text-white hover:bg-blue-500' : 'text-gray-600 hover:bg-gray-200'}`}
-                                                    onClick={(e) => {
-                                                      e.stopPropagation();
-                                                      const menu = document.querySelector(`[data-audio-menu="${c._id}"]`);
-                                                      if (menu) {
-                                                        menu.classList.toggle('hidden');
-                                                        // Close other audio menus when opening this one
-                                                        if (!menu.classList.contains('hidden')) {
-                                                          document.querySelectorAll('[data-audio-menu]').forEach(otherMenu => {
-                                                            if (otherMenu !== menu) {
-                                                              otherMenu.classList.add('hidden');
-                                                            }
-                                                          });
+                                                <div className="mt-2 flex justify-between items-center">
+                                                  <div className="flex items-center gap-2">
+                                                    <button
+                                                      className={`px-3 py-1.5 text-xs rounded-full shadow-sm border transition-colors ${isMe ? 'bg-white text-blue-600 hover:bg-blue-50 border-blue-200' : 'bg-blue-600 text-white hover:bg-blue-700 border-transparent'}`}
+                                                      onClick={async (e) => {
+                                                        e.stopPropagation();
+                                                        try {
+                                                          const response = await authenticatedFetch(c.audioUrl, { mode: 'cors' });
+                                                          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                                                          const blob = await response.blob();
+                                                          const blobUrl = window.URL.createObjectURL(blob);
+                                                          const a = document.createElement('a');
+                                                          a.href = blobUrl;
+                                                          a.download = c.audioName || `audio-${c._id || Date.now()}`;
+                                                          document.body.appendChild(a);
+                                                          a.click();
+                                                          a.remove();
+                                                          setTimeout(() => window.URL.revokeObjectURL(blobUrl), 200);
+                                                          toast.success('Audio downloaded successfully');
+                                                        } catch (error) {
+                                                          const a = document.createElement('a');
+                                                          a.href = c.audioUrl;
+                                                          a.download = c.audioName || `audio-${c._id || Date.now()}`;
+                                                          a.target = '_blank';
+                                                          document.body.appendChild(a);
+                                                          a.click();
+                                                          a.remove();
+                                                          toast.success('Audio download started');
                                                         }
-                                                      }
-                                                    }}
-                                                    title="Audio options"
-                                                  >
-                                                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                                                      <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
-                                                    </svg>
-                                                  </button>
-
-                                                  {/* Audio options dropdown - Main Menu */}
-                                                  <div
-                                                    data-audio-menu={c._id}
-                                                    className="hidden absolute right-0 bottom-full mb-1 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-[9999]"
-                                                  >
-                                                    <div className="py-1">
-                                                      <button
-                                                        className="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-                                                        onClick={(e) => {
-                                                          e.stopPropagation();
-                                                          const mainMenu = document.querySelector(`[data-audio-menu="${c._id}"]`);
-                                                          const speedMenu = document.querySelector(`[data-audio-speed-menu="${c._id}"]`);
-                                                          if (mainMenu && speedMenu) {
-                                                            mainMenu.classList.add('hidden');
-                                                            speedMenu.classList.remove('hidden');
-                                                          }
-                                                        }}
-                                                      >
-                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                                        </svg>
-                                                        Playback Speed
-                                                        <svg className="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                                        </svg>
-                                                      </button>
-
-                                                      <button
-                                                        className="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-                                                        onClick={(e) => {
-                                                          e.stopPropagation();
-                                                          const mainMenu = document.querySelector(`[data-audio-menu="${c._id}"]`);
-                                                          const controlsMenu = document.querySelector(`[data-audio-controls-menu="${c._id}"]`);
-                                                          if (mainMenu && controlsMenu) {
-                                                            mainMenu.classList.add('hidden');
-                                                            controlsMenu.classList.remove('hidden');
-                                                          }
-                                                        }}
-                                                      >
-                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h1m4 0h1m-6-8h8a2 2 0 012 2v8a2 2 0 01-2 2H8a2 2 0 01-2-2V6a2 2 0 012-2z" />
-                                                        </svg>
-                                                        Audio Controls
-                                                        <svg className="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                                        </svg>
-                                                      </button>
-                                                    </div>
+                                                      }}
+                                                      title="Download audio"
+                                                    >
+                                                      <span className="inline-flex items-center gap-1">
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4" /></svg>
+                                                        Download
+                                                      </span>
+                                                    </button>
+                                                    <span className={`text-xs playback-rate-display ${isMe ? 'text-blue-100' : 'text-gray-500'}`} data-audio-id={c._id}>1x</span>
                                                   </div>
 
-                                                  {/* Audio Speed Menu */}
-                                                  <div
-                                                    data-audio-speed-menu={c._id}
-                                                    className="hidden absolute right-0 bottom-full mb-1 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-[9999]"
-                                                  >
-                                                    <div className="py-1">
-                                                      <div className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide flex items-center gap-2">
+                                                  {/* Three dots menu for audio options */}
+                                                  <div className="relative">
+                                                    <button
+                                                      className={`p-2 rounded-full hover:bg-gray-100 transition-colors ${isMe ? 'text-white hover:bg-blue-500' : 'text-gray-600 hover:bg-gray-200'}`}
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        const menu = document.querySelector(`[data-audio-menu="${c._id}"]`);
+                                                        if (menu) {
+                                                          menu.classList.toggle('hidden');
+                                                          // Close other audio menus when opening this one
+                                                          if (!menu.classList.contains('hidden')) {
+                                                            document.querySelectorAll('[data-audio-menu]').forEach(otherMenu => {
+                                                              if (otherMenu !== menu) {
+                                                                otherMenu.classList.add('hidden');
+                                                              }
+                                                            });
+                                                          }
+                                                        }
+                                                      }}
+                                                      title="Audio options"
+                                                    >
+                                                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                                        <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+                                                      </svg>
+                                                    </button>
+
+                                                    {/* Audio options dropdown - Main Menu */}
+                                                    <div
+                                                      data-audio-menu={c._id}
+                                                      className="hidden absolute right-0 bottom-full mb-1 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-[9999]"
+                                                    >
+                                                      <div className="py-1">
                                                         <button
-                                                          className="p-1 hover:bg-gray-100 rounded"
+                                                          className="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
                                                           onClick={(e) => {
                                                             e.stopPropagation();
                                                             const mainMenu = document.querySelector(`[data-audio-menu="${c._id}"]`);
                                                             const speedMenu = document.querySelector(`[data-audio-speed-menu="${c._id}"]`);
                                                             if (mainMenu && speedMenu) {
-                                                              speedMenu.classList.add('hidden');
-                                                              mainMenu.classList.remove('hidden');
+                                                              mainMenu.classList.add('hidden');
+                                                              speedMenu.classList.remove('hidden');
                                                             }
                                                           }}
                                                         >
                                                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                                          </svg>
+                                                          Playback Speed
+                                                          <svg className="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                                           </svg>
                                                         </button>
-                                                        Playback Speed
-                                                      </div>
-                                                      {[0.5, 0.75, 1, 1.25, 1.5, 2].map(speed => (
+
                                                         <button
-                                                          key={speed}
-                                                          data-speed-option={speed}
-                                                          className={`w-full px-3 py-2 text-left text-sm flex items-center justify-between transition-colors ${speed === 1 ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                                                            }`}
-                                                          onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            const audioEl = document.querySelector(`[data-audio-id="${c._id}"]`);
-                                                            if (audioEl) {
-                                                              audioEl.playbackRate = speed;
-                                                              // Update speed display immediately
-                                                              const rateDisplay = document.querySelector(`[data-audio-id="${c._id}"].playback-rate-display`);
-                                                              if (rateDisplay) {
-                                                                rateDisplay.textContent = `${speed}x`;
-                                                              }
-                                                            }
-
-                                                            // Update highlighting in the speed menu
-                                                            const menu = document.querySelector(`[data-audio-speed-menu="${c._id}"]`);
-                                                            if (menu) {
-                                                              // Remove highlighting from all speed buttons
-                                                              const speedButtons = menu.querySelectorAll('[data-speed-option]');
-                                                              speedButtons.forEach(btn => {
-                                                                btn.classList.remove('bg-blue-100', 'text-blue-700');
-                                                                btn.classList.add('text-gray-700', 'hover:bg-gray-100');
-                                                              });
-
-                                                              // Add highlighting to the selected speed button
-                                                              const selectedButton = menu.querySelector(`[data-speed-option="${speed}"]`);
-                                                              if (selectedButton) {
-                                                                selectedButton.classList.remove('text-gray-700', 'hover:bg-gray-100');
-                                                                selectedButton.classList.add('bg-blue-100', 'text-blue-700');
-                                                              }
-                                                            }
-
-                                                            const speedMenu = document.querySelector(`[data-audio-speed-menu="${c._id}"]`);
-                                                            if (speedMenu) {
-                                                              speedMenu.classList.add('hidden');
-                                                            }
-                                                          }}
-                                                        >
-                                                          <span>{speed}x</span>
-                                                          {speed === 1 && <span className="text-xs text-gray-400">Normal</span>}
-                                                        </button>
-                                                      ))}
-                                                    </div>
-                                                  </div>
-
-                                                  {/* Audio Controls Menu */}
-                                                  <div
-                                                    data-audio-controls-menu={c._id}
-                                                    className="hidden absolute right-0 bottom-full mb-1 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-[9999]"
-                                                  >
-                                                    <div className="py-1">
-                                                      <div className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide flex items-center gap-2">
-                                                        <button
-                                                          className="p-1 hover:bg-gray-100 rounded"
+                                                          className="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
                                                           onClick={(e) => {
                                                             e.stopPropagation();
                                                             const mainMenu = document.querySelector(`[data-audio-menu="${c._id}"]`);
                                                             const controlsMenu = document.querySelector(`[data-audio-controls-menu="${c._id}"]`);
                                                             if (mainMenu && controlsMenu) {
-                                                              controlsMenu.classList.add('hidden');
-                                                              mainMenu.classList.remove('hidden');
+                                                              mainMenu.classList.add('hidden');
+                                                              controlsMenu.classList.remove('hidden');
                                                             }
                                                           }}
                                                         >
                                                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h1m4 0h1m-6-8h8a2 2 0 012 2v8a2 2 0 01-2 2H8a2 2 0 01-2-2V6a2 2 0 012-2z" />
+                                                          </svg>
+                                                          Audio Controls
+                                                          <svg className="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                                           </svg>
                                                         </button>
-                                                        Audio Controls
                                                       </div>
+                                                    </div>
 
-                                                      <button
-                                                        className="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-                                                        onClick={(e) => {
-                                                          e.stopPropagation();
-                                                          const audioEl = document.querySelector(`[data-audio-id="${c._id}"]`);
-                                                          if (audioEl) {
-                                                            if (audioEl.paused) {
-                                                              audioEl.play();
-                                                            } else {
-                                                              audioEl.pause();
+                                                    {/* Audio Speed Menu */}
+                                                    <div
+                                                      data-audio-speed-menu={c._id}
+                                                      className="hidden absolute right-0 bottom-full mb-1 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-[9999]"
+                                                    >
+                                                      <div className="py-1">
+                                                        <div className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide flex items-center gap-2">
+                                                          <button
+                                                            className="p-1 hover:bg-gray-100 rounded"
+                                                            onClick={(e) => {
+                                                              e.stopPropagation();
+                                                              const mainMenu = document.querySelector(`[data-audio-menu="${c._id}"]`);
+                                                              const speedMenu = document.querySelector(`[data-audio-speed-menu="${c._id}"]`);
+                                                              if (mainMenu && speedMenu) {
+                                                                speedMenu.classList.add('hidden');
+                                                                mainMenu.classList.remove('hidden');
+                                                              }
+                                                            }}
+                                                          >
+                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                                            </svg>
+                                                          </button>
+                                                          Playback Speed
+                                                        </div>
+                                                        {[0.5, 0.75, 1, 1.25, 1.5, 2].map(speed => (
+                                                          <button
+                                                            key={speed}
+                                                            data-speed-option={speed}
+                                                            className={`w-full px-3 py-2 text-left text-sm flex items-center justify-between transition-colors ${speed === 1 ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                                              }`}
+                                                            onClick={(e) => {
+                                                              e.stopPropagation();
+                                                              const audioEl = document.querySelector(`[data-audio-id="${c._id}"]`);
+                                                              if (audioEl) {
+                                                                audioEl.playbackRate = speed;
+                                                                // Update speed display immediately
+                                                                const rateDisplay = document.querySelector(`[data-audio-id="${c._id}"].playback-rate-display`);
+                                                                if (rateDisplay) {
+                                                                  rateDisplay.textContent = `${speed}x`;
+                                                                }
+                                                              }
+
+                                                              // Update highlighting in the speed menu
+                                                              const menu = document.querySelector(`[data-audio-speed-menu="${c._id}"]`);
+                                                              if (menu) {
+                                                                // Remove highlighting from all speed buttons
+                                                                const speedButtons = menu.querySelectorAll('[data-speed-option]');
+                                                                speedButtons.forEach(btn => {
+                                                                  btn.classList.remove('bg-blue-100', 'text-blue-700');
+                                                                  btn.classList.add('text-gray-700', 'hover:bg-gray-100');
+                                                                });
+
+                                                                // Add highlighting to the selected speed button
+                                                                const selectedButton = menu.querySelector(`[data-speed-option="${speed}"]`);
+                                                                if (selectedButton) {
+                                                                  selectedButton.classList.remove('text-gray-700', 'hover:bg-gray-100');
+                                                                  selectedButton.classList.add('bg-blue-100', 'text-blue-700');
+                                                                }
+                                                              }
+
+                                                              const speedMenu = document.querySelector(`[data-audio-speed-menu="${c._id}"]`);
+                                                              if (speedMenu) {
+                                                                speedMenu.classList.add('hidden');
+                                                              }
+                                                            }}
+                                                          >
+                                                            <span>{speed}x</span>
+                                                            {speed === 1 && <span className="text-xs text-gray-400">Normal</span>}
+                                                          </button>
+                                                        ))}
+                                                      </div>
+                                                    </div>
+
+                                                    {/* Audio Controls Menu */}
+                                                    <div
+                                                      data-audio-controls-menu={c._id}
+                                                      className="hidden absolute right-0 bottom-full mb-1 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-[9999]"
+                                                    >
+                                                      <div className="py-1">
+                                                        <div className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide flex items-center gap-2">
+                                                          <button
+                                                            className="p-1 hover:bg-gray-100 rounded"
+                                                            onClick={(e) => {
+                                                              e.stopPropagation();
+                                                              const mainMenu = document.querySelector(`[data-audio-menu="${c._id}"]`);
+                                                              const controlsMenu = document.querySelector(`[data-audio-controls-menu="${c._id}"]`);
+                                                              if (mainMenu && controlsMenu) {
+                                                                controlsMenu.classList.add('hidden');
+                                                                mainMenu.classList.remove('hidden');
+                                                              }
+                                                            }}
+                                                          >
+                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                                            </svg>
+                                                          </button>
+                                                          Audio Controls
+                                                        </div>
+
+                                                        <button
+                                                          className="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                                                          onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            const audioEl = document.querySelector(`[data-audio-id="${c._id}"]`);
+                                                            if (audioEl) {
+                                                              if (audioEl.paused) {
+                                                                audioEl.play();
+                                                              } else {
+                                                                audioEl.pause();
+                                                              }
                                                             }
-                                                          }
-                                                          const menu = document.querySelector(`[data-audio-controls-menu="${c._id}"]`);
-                                                          if (menu) {
-                                                            menu.classList.add('hidden');
-                                                          }
-                                                        }}
-                                                      >
-                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h1m4 0h1m-6-8h8a2 2 0 012 2v8a2 2 0 01-2 2H8a2 2 0 01-2-2V6a2 2 0 012-2z" />
-                                                        </svg>
-                                                        Toggle Play/Pause
-                                                      </button>
+                                                            const menu = document.querySelector(`[data-audio-controls-menu="${c._id}"]`);
+                                                            if (menu) {
+                                                              menu.classList.add('hidden');
+                                                            }
+                                                          }}
+                                                        >
+                                                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h1m4 0h1m-6-8h8a2 2 0 012 2v8a2 2 0 01-2 2H8a2 2 0 01-2-2V6a2 2 0 012-2z" />
+                                                          </svg>
+                                                          Toggle Play/Pause
+                                                        </button>
 
-                                                      <button
-                                                        className="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-                                                        onClick={(e) => {
-                                                          e.stopPropagation();
-                                                          const audioEl = document.querySelector(`[data-audio-id="${c._id}"]`);
-                                                          if (audioEl) {
-                                                            audioEl.currentTime = 0;
-                                                          }
-                                                          const menu = document.querySelector(`[data-audio-controls-menu="${c._id}"]`);
-                                                          if (menu) {
-                                                            menu.classList.add('hidden');
-                                                          }
-                                                        }}
-                                                      >
-                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                                        </svg>
-                                                        Restart Audio
-                                                      </button>
+                                                        <button
+                                                          className="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                                                          onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            const audioEl = document.querySelector(`[data-audio-id="${c._id}"]`);
+                                                            if (audioEl) {
+                                                              audioEl.currentTime = 0;
+                                                            }
+                                                            const menu = document.querySelector(`[data-audio-controls-menu="${c._id}"]`);
+                                                            if (menu) {
+                                                              menu.classList.add('hidden');
+                                                            }
+                                                          }}
+                                                        >
+                                                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                                          </svg>
+                                                          Restart Audio
+                                                        </button>
 
-                                                      <button
-                                                        className="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-                                                        onClick={(e) => {
-                                                          e.stopPropagation();
-                                                          const audioEl = document.querySelector(`[data-audio-id="${c._id}"]`);
-                                                          if (audioEl) {
-                                                            audioEl.muted = !audioEl.muted;
-                                                            // Trigger volumechange event to sync with header
-                                                            audioEl.dispatchEvent(new Event('volumechange'));
-                                                          }
-                                                          const menu = document.querySelector(`[data-audio-controls-menu="${c._id}"]`);
-                                                          if (menu) {
-                                                            menu.classList.add('hidden');
-                                                          }
-                                                        }}
-                                                      >
-                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
-                                                        </svg>
-                                                        Toggle Mute
-                                                      </button>
+                                                        <button
+                                                          className="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                                                          onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            const audioEl = document.querySelector(`[data-audio-id="${c._id}"]`);
+                                                            if (audioEl) {
+                                                              audioEl.muted = !audioEl.muted;
+                                                              // Trigger volumechange event to sync with header
+                                                              audioEl.dispatchEvent(new Event('volumechange'));
+                                                            }
+                                                            const menu = document.querySelector(`[data-audio-controls-menu="${c._id}"]`);
+                                                            if (menu) {
+                                                              menu.classList.add('hidden');
+                                                            }
+                                                          }}
+                                                        >
+                                                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+                                                          </svg>
+                                                          Toggle Mute
+                                                        </button>
+                                                      </div>
                                                     </div>
                                                   </div>
                                                 </div>
                                               </div>
+                                              {c.message && (
+                                                <div className={`mt-2 text-sm whitespace-pre-wrap break-words ${isMe ? 'text-white' : 'text-gray-700 dark:text-gray-200'}`}>
+                                                  {c.message}
+                                                  {c.edited && (
+                                                    <span className={`ml-2 text-[10px] italic whitespace-nowrap ${isMe ? 'text-blue-200' : 'text-gray-400'}`}>(Edited)</span>
+                                                  )}
+                                                </div>
+                                              )}
                                             </div>
-                                            {c.message && (
-                                              <div className={`mt-2 text-sm whitespace-pre-wrap break-words ${isMe ? 'text-white' : 'text-gray-700 dark:text-gray-200'}`}>
-                                                {c.message}
-                                                {c.edited && (
-                                                  <span className={`ml-2 text-[10px] italic whitespace-nowrap ${isMe ? 'text-blue-200' : 'text-gray-400'}`}>(Edited)</span>
-                                                )}
-                                              </div>
-                                            )}
-                                          </div>
-                                        )}
-                                        {/* Document Message */}
-                                        {c.documentUrl && (
-                                          <div className="mb-2 group relative flex items-center bg-gray-50/90 hover:bg-white border hover:border-blue-200 text-gray-800 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all w-fit max-w-[85%] sm:max-w-[320px]">
-                                            {/* Clickable Area for View */}
-                                            <div
-                                              className="flex-1 flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-blue-50/30 transition-colors min-w-0"
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                // Construct preview URL
-                                                const cleanUrl = c.documentUrl.split('?')[0];
-                                                const ext = cleanUrl.split('.').pop().toLowerCase();
-                                                let type = 'document';
-                                                if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) type = 'image';
-                                                else if (ext === 'pdf') type = 'pdf';
+                                          )}
+                                          {/* Document Message */}
+                                          {c.documentUrl && (
+                                            <div className="mb-2 group relative flex items-center bg-gray-50/90 hover:bg-white border hover:border-blue-200 text-gray-800 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all w-fit max-w-[85%] sm:max-w-[320px]">
+                                              {/* Clickable Area for View */}
+                                              <div
+                                                className="flex-1 flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-blue-50/30 transition-colors min-w-0"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  // Construct preview URL
+                                                  const cleanUrl = c.documentUrl.split('?')[0];
+                                                  const ext = cleanUrl.split('.').pop().toLowerCase();
+                                                  let type = 'document';
+                                                  if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) type = 'image';
+                                                  else if (ext === 'pdf') type = 'pdf';
 
-                                                // Open preview in new tab
-                                                const previewUrl = `/user/view-chat/preview?url=${encodeURIComponent(c.documentUrl)}&name=${encodeURIComponent(c.documentName || 'Document')}&type=${type}&participants=${encodeURIComponent((appt.buyerId?.email || '') + ',' + (appt.sellerId?.email || ''))}&appointmentId=${appt._id}`;
-                                                window.open(previewUrl, '_blank');
-                                              }}
-                                              title="Click to view document"
-                                            >
-                                              <div className="bg-blue-100 p-2 rounded-lg text-blue-600 flex-shrink-0">
-                                                <FaFileAlt size={16} />
+                                                  // Open preview in new tab
+                                                  const previewUrl = `/user/view-chat/preview?url=${encodeURIComponent(c.documentUrl)}&name=${encodeURIComponent(c.documentName || 'Document')}&type=${type}&participants=${encodeURIComponent((appt.buyerId?.email || '') + ',' + (appt.sellerId?.email || ''))}&appointmentId=${appt._id}`;
+                                                  window.open(previewUrl, '_blank');
+                                                }}
+                                                title="Click to view document"
+                                              >
+                                                <div className="bg-blue-100 p-2 rounded-lg text-blue-600 flex-shrink-0">
+                                                  <FaFileAlt size={16} />
+                                                </div>
+                                                <div className="flex flex-col min-w-0 overflow-hidden">
+                                                  <span className="text-sm font-medium truncate text-gray-900 w-full text-left">{c.documentName || 'Document'}</span>
+                                                </div>
                                               </div>
-                                              <div className="flex flex-col min-w-0 overflow-hidden">
-                                                <span className="text-sm font-medium truncate text-gray-900 w-full text-left">{c.documentName || 'Document'}</span>
-                                              </div>
+
+                                              {/* Separator */}
+                                              <div className="w-[1px] h-8 bg-gray-200 flex-shrink-0" />
+
+                                              {/* Download Button */}
+                                              <button
+                                                className="p-3 text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-colors flex-shrink-0 z-10"
+                                                title="Download"
+                                                onClick={async (e) => {
+                                                  e.stopPropagation();
+                                                  try {
+                                                    const response = await authenticatedFetch(c.documentUrl, { mode: 'cors' });
+                                                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                                                    const blob = await response.blob();
+                                                    const blobUrl = window.URL.createObjectURL(blob);
+                                                    const a = document.createElement('a');
+                                                    a.href = blobUrl;
+                                                    a.download = c.documentName || `document-${c._id || Date.now()}`;
+                                                    document.body.appendChild(a);
+                                                    a.click();
+                                                    a.remove();
+                                                    setTimeout(() => window.URL.revokeObjectURL(blobUrl), 200);
+                                                    toast.success('Document downloaded successfully');
+                                                  } catch (error) {
+                                                    console.error('Download failed:', error);
+                                                    // Fallback to direct link
+                                                    const a = document.createElement('a');
+                                                    a.href = c.documentUrl;
+                                                    a.download = c.documentName || `document-${c._id || Date.now()}`;
+                                                    a.target = '_blank';
+                                                    document.body.appendChild(a);
+                                                    a.click();
+                                                    a.remove();
+                                                    toast.success('Document download started');
+                                                  }
+                                                }}
+                                              >
+                                                <FaDownload size={14} />
+                                              </button>
                                             </div>
+                                          )}
+                                          {/* Link Preview in Message */}
+                                          {(() => {
+                                            // Only show preview if it wasn't dismissed before sending
+                                            if (c.previewDismissed) return null;
 
-                                            {/* Separator */}
-                                            <div className="w-[1px] h-8 bg-gray-200 flex-shrink-0" />
+                                            const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+\.[^\s]{2,}(?:\/[^\s]*)?|[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}(?:\/[^\s]*)?)/gi;
+                                            const urls = (c.message || '').match(urlRegex);
+                                            if (urls && urls.length > 0) {
+                                              return (
+                                                <div className="mb-2 max-h-40 overflow-hidden">
+                                                  <LinkPreview
+                                                    url={urls[0]}
+                                                    className="max-w-xs"
+                                                    showRemoveButton={false}
+                                                    clickable={true}
+                                                  />
+                                                </div>
+                                              );
+                                            }
+                                            return null;
+                                          })()}
 
-                                            {/* Download Button */}
-                                            <button
-                                              className="p-3 text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-colors flex-shrink-0 z-10"
-                                              title="Download"
-                                              onClick={async (e) => {
-                                                e.stopPropagation();
-                                                try {
-                                                  const response = await authenticatedFetch(c.documentUrl, { mode: 'cors' });
-                                                  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                                                  const blob = await response.blob();
-                                                  const blobUrl = window.URL.createObjectURL(blob);
-                                                  const a = document.createElement('a');
-                                                  a.href = blobUrl;
-                                                  a.download = c.documentName || `document-${c._id || Date.now()}`;
-                                                  document.body.appendChild(a);
-                                                  a.click();
-                                                  a.remove();
-                                                  setTimeout(() => window.URL.revokeObjectURL(blobUrl), 200);
-                                                  toast.success('Document downloaded successfully');
-                                                } catch (error) {
-                                                  console.error('Download failed:', error);
-                                                  // Fallback to direct link
-                                                  const a = document.createElement('a');
-                                                  a.href = c.documentUrl;
-                                                  a.download = c.documentName || `document-${c._id || Date.now()}`;
-                                                  a.target = '_blank';
-                                                  document.body.appendChild(a);
-                                                  a.click();
-                                                  a.remove();
-                                                  toast.success('Document download started');
-                                                }
-                                              }}
-                                            >
-                                              <FaDownload size={14} />
-                                            </button>
-                                          </div>
-                                        )}
-                                        {/* Link Preview in Message */}
-                                        {(() => {
-                                          // Only show preview if it wasn't dismissed before sending
-                                          if (c.previewDismissed) return null;
-
-                                          const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+\.[^\s]{2,}(?:\/[^\s]*)?|[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}(?:\/[^\s]*)?)/gi;
-                                          const urls = (c.message || '').match(urlRegex);
-                                          if (urls && urls.length > 0) {
-                                            return (
-                                              <div className="mb-2 max-h-40 overflow-hidden">
-                                                <LinkPreview
-                                                  url={urls[0]}
-                                                  className="max-w-xs"
-                                                  showRemoveButton={false}
-                                                  clickable={true}
-                                                />
-                                              </div>
-                                            );
-                                          }
-                                          return null;
-                                        })()}
-
-                                        {/* Only show message text for non-audio messages (audio messages handle their caption internally) */}
-                                        {!c.audioUrl && (
-                                          <div className="inline">
-                                            <FormattedTextWithReadMore
-                                              text={(c.message || '').replace(/\n+$/, '')}
-                                              isSentMessage={isMe}
-                                              className="whitespace-pre-wrap break-words"
-                                              searchQuery={searchQuery}
-                                            />
-                                            {c.edited && (
-                                              <span className="ml-2 text-[10px] italic text-gray-300 whitespace-nowrap">(Edited)</span>
-                                            )}
-                                          </div>
-                                        )}
-                                      </>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-1 justify-end mt-2" data-message-actions>
-                                {/* Pin indicator for pinned messages */}
-                                {c.pinned && (
-                                  <FaThumbtack className={`${isMe ? 'text-purple-300' : 'text-purple-500'} text-[10px]`} title="Pinned message" />
-                                )}
-                                {/* Star indicator for starred messages */}
-                                {c.starredBy?.includes(currentUser._id) && (
-                                  <FaStar className={`${isMe ? 'text-yellow-300' : 'text-yellow-500'} text-[10px]`} title="Starred message" />
-                                )}
-                                <span className={`${isMe ? 'text-blue-200' : 'text-gray-500'} text-[10px]`}>
-                                  {new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
-                                </span>
-                                {/* Options icon - visible for all messages including deleted ones */}
-                                <button
-                                  className={`${c.senderEmail === currentUser.email
-                                    ? 'text-blue-200 hover:text-white'
-                                    : 'text-gray-500 hover:text-gray-700'
-                                    } transition-all duration-200 hover:scale-110 p-1 rounded-full hover:bg-white hover:bg-opacity-20 ml-1`}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setHeaderOptionsMessageId(c._id);
-                                    if (!isChatSendBlocked) {
-                                      toggleReactionsBar(c._id);
-                                    }
-                                  }}
-                                  title="Message options"
-                                  aria-label="Message options"
-                                >
-                                  <FaEllipsisV size={12} />
-                                </button>
-
-                                {/* Display reactions */}
-                                {!c.deleted && c.reactions && c.reactions.length > 0 && (
-                                  <div className="flex items-center gap-1 ml-1">
-                                    {(() => {
-                                      // Group reactions by emoji
-                                      const groupedReactions = {};
-                                      c.reactions.forEach(reaction => {
-                                        if (!groupedReactions[reaction.emoji]) {
-                                          groupedReactions[reaction.emoji] = [];
-                                        }
-                                        groupedReactions[reaction.emoji].push(reaction);
-                                      });
-
-                                      return Object.entries(groupedReactions).map(([emoji, reactions]) => {
-                                        const hasUserReaction = reactions.some(r => r.userId === currentUser._id);
-                                        const userNames = reactions.map(r => r.userName).join(', ');
-
-                                        return (
-                                          <button
-                                            key={emoji}
-                                            onClick={() => handleQuickReaction(c._id, emoji)}
-                                            className={`text-xs rounded-full px-2 py-1 flex items-center gap-1 transition-all duration-200 hover:scale-105 ${hasUserReaction
-                                              ? 'bg-blue-500 border-2 border-blue-600 hover:bg-blue-600 shadow-md'
-                                              : 'bg-gray-100 border border-gray-300 hover:bg-gray-200'
-                                              }`}
-                                            title={`${userNames} reacted with ${emoji}${hasUserReaction ? ' (Click to remove)' : ' (Click to add)'}`}
-                                          >
-                                            <span>{emoji}</span>
-                                            <span className={`${hasUserReaction ? 'text-white font-semibold' : 'text-gray-600'}`}>
-                                              {reactions.length}
-                                            </span>
-                                          </button>
-                                        );
-                                      });
-                                    })()}
-                                  </div>
-                                )}
-                                {(c.senderEmail === currentUser.email) && !c.deleted && (
-                                  <span className="flex items-center gap-1 ml-1">
-                                    {c.readBy?.includes(otherParty?._id)
-                                      ? <FaCheckDouble className="text-green-400 text-xs transition-all duration-300 animate-fadeIn" title="Read" />
-                                      : c.status === 'delivered'
-                                        ? <FaCheckDouble className="text-blue-200 text-xs transition-all duration-300 animate-fadeIn" title="Delivered" />
-                                        : c.status === 'sending'
-                                          ? <FaCheck className="text-blue-200 text-xs animate-pulse transition-all duration-300" title="Sending..." />
-                                          : <FaCheck className="text-blue-200 text-xs transition-all duration-300 animate-fadeIn" title="Sent" />}
+                                          {/* Only show message text for non-audio messages (audio messages handle their caption internally) */}
+                                          {!c.audioUrl && (
+                                            <div className="inline">
+                                              <FormattedTextWithReadMore
+                                                text={(c.message || '').replace(/\n+$/, '')}
+                                                isSentMessage={isMe}
+                                                className="whitespace-pre-wrap break-words"
+                                                searchQuery={searchQuery}
+                                              />
+                                              {c.edited && (
+                                                <span className="ml-2 text-[10px] italic text-gray-300 whitespace-nowrap">(Edited)</span>
+                                              )}
+                                            </div>
+                                          )}
+                                        </>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-1 justify-end mt-2" data-message-actions>
+                                  {/* Pin indicator for pinned messages */}
+                                  {c.pinned && (
+                                    <FaThumbtack className={`${isMe ? 'text-purple-300' : 'text-purple-500'} text-[10px]`} title="Pinned message" />
+                                  )}
+                                  {/* Star indicator for starred messages */}
+                                  {c.starredBy?.includes(currentUser._id) && (
+                                    <FaStar className={`${isMe ? 'text-yellow-300' : 'text-yellow-500'} text-[10px]`} title="Starred message" />
+                                  )}
+                                  <span className={`${isMe ? 'text-blue-200' : 'text-gray-500'} text-[10px]`}>
+                                    {new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
                                   </span>
-                                )}
+                                  {/* Options icon - visible for all messages including deleted ones */}
+                                  <button
+                                    className={`${c.senderEmail === currentUser.email
+                                      ? 'text-blue-200 hover:text-white'
+                                      : 'text-gray-500 hover:text-gray-700'
+                                      } transition-all duration-200 hover:scale-110 p-1 rounded-full hover:bg-white hover:bg-opacity-20 ml-1`}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setHeaderOptionsMessageId(c._id);
+                                      if (!isChatSendBlocked) {
+                                        toggleReactionsBar(c._id);
+                                      }
+                                    }}
+                                    title="Message options"
+                                    aria-label="Message options"
+                                  >
+                                    <FaEllipsisV size={12} />
+                                  </button>
+
+                                  {/* Display reactions */}
+                                  {!c.deleted && c.reactions && c.reactions.length > 0 && (
+                                    <div className="flex items-center gap-1 ml-1">
+                                      {(() => {
+                                        // Group reactions by emoji
+                                        const groupedReactions = {};
+                                        c.reactions.forEach(reaction => {
+                                          if (!groupedReactions[reaction.emoji]) {
+                                            groupedReactions[reaction.emoji] = [];
+                                          }
+                                          groupedReactions[reaction.emoji].push(reaction);
+                                        });
+
+                                        return Object.entries(groupedReactions).map(([emoji, reactions]) => {
+                                          const hasUserReaction = reactions.some(r => r.userId === currentUser._id);
+                                          const userNames = reactions.map(r => r.userName).join(', ');
+
+                                          return (
+                                            <button
+                                              key={emoji}
+                                              onClick={() => handleQuickReaction(c._id, emoji)}
+                                              className={`text-xs rounded-full px-2 py-1 flex items-center gap-1 transition-all duration-200 hover:scale-105 ${hasUserReaction
+                                                ? 'bg-blue-500 border-2 border-blue-600 hover:bg-blue-600 shadow-md'
+                                                : 'bg-gray-100 border border-gray-300 hover:bg-gray-200'
+                                                }`}
+                                              title={`${userNames} reacted with ${emoji}${hasUserReaction ? ' (Click to remove)' : ' (Click to add)'}`}
+                                            >
+                                              <span>{emoji}</span>
+                                              <span className={`${hasUserReaction ? 'text-white font-semibold' : 'text-gray-600'}`}>
+                                                {reactions.length}
+                                              </span>
+                                            </button>
+                                          );
+                                        });
+                                      })()}
+                                    </div>
+                                  )}
+                                  {(c.senderEmail === currentUser.email) && !c.deleted && (
+                                    <span className="flex items-center gap-1 ml-1">
+                                      {c.readBy?.includes(otherParty?._id)
+                                        ? <FaCheckDouble className="text-green-400 text-xs transition-all duration-300 animate-fadeIn" title="Read" />
+                                        : c.status === 'delivered'
+                                          ? <FaCheckDouble className="text-blue-200 text-xs transition-all duration-300 animate-fadeIn" title="Delivered" />
+                                          : c.status === 'sending'
+                                            ? <FaCheck className="text-blue-200 text-xs animate-pulse transition-all duration-300" title="Sending..." />
+                                            : <FaCheck className="text-blue-200 text-xs transition-all duration-300 animate-fadeIn" title="Sent" />}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
-                            </div>
 
-                            {/* Reactions Bar - positioned inside message container (above only) */}
-                            {(() => {
-                              const shouldShow = !c.deleted && showReactionsBar && reactionsMessageId === c._id;
-                              if (!shouldShow) return false;
+                              {/* Reactions Bar - positioned inside message container (above only) */}
+                              {(() => {
+                                const shouldShow = !c.deleted && showReactionsBar && reactionsMessageId === c._id;
+                                if (!shouldShow) return false;
 
-                              // Only show inline reaction bar if message should be positioned above
-                              const messageElement = document.querySelector(`[data-message-id="${c._id}"]`);
-                              if (messageElement) {
-                                const messageRect = messageElement.getBoundingClientRect();
-                                const chatContainer = chatContainerRef.current;
-                                if (chatContainer) {
-                                  const containerRect = chatContainer.getBoundingClientRect();
-                                  const distanceFromTop = messageRect.top - containerRect.top;
+                                // Only show inline reaction bar if message should be positioned above
+                                const messageElement = document.querySelector(`[data-message-id="${c._id}"]`);
+                                if (messageElement) {
+                                  const messageRect = messageElement.getBoundingClientRect();
+                                  const chatContainer = chatContainerRef.current;
+                                  if (chatContainer) {
+                                    const containerRect = chatContainer.getBoundingClientRect();
+                                    const distanceFromTop = messageRect.top - containerRect.top;
 
-                                  // If message is near top and has space below, don't show inline bar (floating bar will handle it)
-                                  if (distanceFromTop < 120) {
-                                    const spaceBelow = containerRect.bottom - messageRect.bottom;
-                                    const reactionBarHeight = 60;
+                                    // If message is near top and has space below, don't show inline bar (floating bar will handle it)
+                                    if (distanceFromTop < 120) {
+                                      const spaceBelow = containerRect.bottom - messageRect.bottom;
+                                      const reactionBarHeight = 60;
 
-                                    if (spaceBelow >= reactionBarHeight + 20) {
-                                      return false; // Don't show inline bar, floating bar will handle it
+                                      if (spaceBelow >= reactionBarHeight + 20) {
+                                        return false; // Don't show inline bar, floating bar will handle it
+                                      }
                                     }
                                   }
                                 }
-                              }
-                              return true; // Show inline bar for above positioning
-                            })() && (
-                                <div className={`absolute -top-8 ${isMe ? 'right-0' : 'left-0'} bg-red-500 dark:bg-red-900/40 rounded-full shadow-lg border-2 border-red-600 dark:border-red-800 p-1 flex items-center gap-1 animate-reactions-bar z-[999999] reactions-bar transition-all duration-300`} style={{ minWidth: 'max-content' }}>
-                                  {/* Quick reaction buttons */}
-                                  <button
-                                    onClick={() => handleQuickReaction(c._id, '👍')}
-                                    className={`w-8 h-8 flex items-center justify-center text-lg transition-transform rounded-full ${isChatSendBlocked
-                                      ? 'bg-gray-200 dark:bg-gray-700 cursor-not-allowed opacity-50'
-                                      : c.reactions?.some(r => r.emoji === '👍' && r.userId === currentUser._id)
-                                        ? 'bg-blue-100 dark:bg-blue-900/40 border-2 border-blue-400 dark:border-blue-500'
+                                return true; // Show inline bar for above positioning
+                              })() && (
+                                  <div className={`absolute -top-8 ${isMe ? 'right-0' : 'left-0'} bg-red-500 dark:bg-red-900/40 rounded-full shadow-lg border-2 border-red-600 dark:border-red-800 p-1 flex items-center gap-1 animate-reactions-bar z-[999999] reactions-bar transition-all duration-300`} style={{ minWidth: 'max-content' }}>
+                                    {/* Quick reaction buttons */}
+                                    <button
+                                      onClick={() => handleQuickReaction(c._id, '👍')}
+                                      className={`w-8 h-8 flex items-center justify-center text-lg transition-transform rounded-full ${isChatSendBlocked
+                                        ? 'bg-gray-200 dark:bg-gray-700 cursor-not-allowed opacity-50'
+                                        : c.reactions?.some(r => r.emoji === '👍' && r.userId === currentUser._id)
+                                          ? 'bg-blue-100 dark:bg-blue-900/40 border-2 border-blue-400 dark:border-blue-500'
+                                          : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-110'
+                                        }`}
+                                      disabled={isChatSendBlocked}
+                                      title={isChatSendBlocked ? "Reactions disabled" : "Like"}
+                                    >
+                                      👍
+                                    </button>
+                                    <button
+                                      onClick={() => handleQuickReaction(c._id, '❤️')}
+                                      className={`w-8 h-8 flex items-center justify-center text-lg transition-transform rounded-full ${isChatSendBlocked
+                                        ? 'bg-gray-200 dark:bg-gray-700 cursor-not-allowed opacity-50'
+                                        : c.reactions?.some(r => r.emoji === '❤️' && r.userId === currentUser._id)
+                                          ? 'bg-blue-100 dark:bg-blue-900/40 border-2 border-blue-400 dark:border-blue-500'
+                                          : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-110'
+                                        }`}
+                                      disabled={isChatSendBlocked}
+                                      title={isChatSendBlocked ? "Reactions disabled" : "Love"}
+                                    >
+                                      ❤️
+                                    </button>
+                                    <button
+                                      onClick={() => handleQuickReaction(c._id, '😂')}
+                                      className={`w-8 h-8 flex items-center justify-center text-lg transition-transform rounded-full ${isChatSendBlocked
+                                        ? 'bg-gray-200 dark:bg-gray-700 cursor-not-allowed opacity-50'
+                                        : c.reactions?.some(r => r.emoji === '😂' && r.userId === currentUser._id)
+                                          ? 'bg-blue-100 dark:bg-blue-900/40 border-2 border-blue-400 dark:border-blue-500'
+                                          : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-110'
+                                        }`}
+                                      disabled={isChatSendBlocked}
+                                      title={isChatSendBlocked ? "Reactions disabled" : "Laugh"}
+                                    >
+                                      😂
+                                    </button>
+                                    <button
+                                      onClick={() => handleQuickReaction(c._id, '😮')}
+                                      className={`w-8 h-8 flex items-center justify-center text-lg transition-transform rounded-full ${isChatSendBlocked
+                                        ? 'bg-gray-200 dark:bg-gray-700 cursor-not-allowed opacity-50'
+                                        : c.reactions?.some(r => r.emoji === '😮' && r.userId === currentUser._id)
+                                          ? 'bg-blue-100 dark:bg-blue-900/40 border-2 border-blue-400 dark:border-blue-500'
+                                          : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-110'
+                                        }`}
+                                      disabled={isChatSendBlocked}
+                                      title={isChatSendBlocked ? "Reactions disabled" : "Wow"}
+                                    >
+                                      😮
+                                    </button>
+                                    <button
+                                      onClick={() => handleQuickReaction(c._id, '😢')}
+                                      className={`w-8 h-8 flex items-center justify-center text-lg transition-transform rounded-full ${isChatSendBlocked
+                                        ? 'bg-gray-200 dark:bg-gray-700 cursor-not-allowed opacity-50'
+                                        : c.reactions?.some(r => r.emoji === '😢' && r.userId === currentUser._id)
+                                          ? 'bg-blue-100 dark:bg-blue-900/40 border-2 border-blue-400 dark:border-blue-500'
+                                          : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-110'
+                                        }`}
+                                      disabled={isChatSendBlocked}
+                                      title={isChatSendBlocked ? "Reactions disabled" : "Sad"}
+                                    >
+                                      😢
+                                    </button>
+                                    <button
+                                      onClick={() => handleQuickReaction(c._id, '😡')}
+                                      className={`w-8 h-8 flex items-center justify-center text-lg transition-transform rounded-full ${isChatSendBlocked
+                                        ? 'bg-gray-200 dark:bg-gray-700 cursor-not-allowed opacity-50'
+                                        : c.reactions?.some(r => r.emoji === '😡' && r.userId === currentUser._id)
+                                          ? 'bg-blue-100 dark:bg-blue-900/40 border-2 border-blue-400 dark:border-blue-500'
+                                          : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-110'
+                                        }`}
+                                      disabled={isChatSendBlocked}
+                                      title={isChatSendBlocked ? "Reactions disabled" : "Angry"}
+                                    >
+                                      😡
+                                    </button>
+                                    <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1"></div>
+                                    <button
+                                      onClick={toggleReactionsEmojiPicker}
+                                      className={`w-8 h-8 flex items-center justify-center text-lg transition-transform rounded-full ${isChatSendBlocked
+                                        ? 'bg-gray-200 dark:bg-gray-700 cursor-not-allowed opacity-50'
                                         : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-110'
-                                      }`}
-                                    disabled={isChatSendBlocked}
-                                    title={isChatSendBlocked ? "Reactions disabled" : "Like"}
-                                  >
-                                    👍
-                                  </button>
-                                  <button
-                                    onClick={() => handleQuickReaction(c._id, '❤️')}
-                                    className={`w-8 h-8 flex items-center justify-center text-lg transition-transform rounded-full ${isChatSendBlocked
-                                      ? 'bg-gray-200 dark:bg-gray-700 cursor-not-allowed opacity-50'
-                                      : c.reactions?.some(r => r.emoji === '❤️' && r.userId === currentUser._id)
-                                        ? 'bg-blue-100 dark:bg-blue-900/40 border-2 border-blue-400 dark:border-blue-500'
-                                        : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-110'
-                                      }`}
-                                    disabled={isChatSendBlocked}
-                                    title={isChatSendBlocked ? "Reactions disabled" : "Love"}
-                                  >
-                                    ❤️
-                                  </button>
-                                  <button
-                                    onClick={() => handleQuickReaction(c._id, '😂')}
-                                    className={`w-8 h-8 flex items-center justify-center text-lg transition-transform rounded-full ${isChatSendBlocked
-                                      ? 'bg-gray-200 dark:bg-gray-700 cursor-not-allowed opacity-50'
-                                      : c.reactions?.some(r => r.emoji === '😂' && r.userId === currentUser._id)
-                                        ? 'bg-blue-100 dark:bg-blue-900/40 border-2 border-blue-400 dark:border-blue-500'
-                                        : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-110'
-                                      }`}
-                                    disabled={isChatSendBlocked}
-                                    title={isChatSendBlocked ? "Reactions disabled" : "Laugh"}
-                                  >
-                                    😂
-                                  </button>
-                                  <button
-                                    onClick={() => handleQuickReaction(c._id, '😮')}
-                                    className={`w-8 h-8 flex items-center justify-center text-lg transition-transform rounded-full ${isChatSendBlocked
-                                      ? 'bg-gray-200 dark:bg-gray-700 cursor-not-allowed opacity-50'
-                                      : c.reactions?.some(r => r.emoji === '😮' && r.userId === currentUser._id)
-                                        ? 'bg-blue-100 dark:bg-blue-900/40 border-2 border-blue-400 dark:border-blue-500'
-                                        : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-110'
-                                      }`}
-                                    disabled={isChatSendBlocked}
-                                    title={isChatSendBlocked ? "Reactions disabled" : "Wow"}
-                                  >
-                                    😮
-                                  </button>
-                                  <button
-                                    onClick={() => handleQuickReaction(c._id, '😢')}
-                                    className={`w-8 h-8 flex items-center justify-center text-lg transition-transform rounded-full ${isChatSendBlocked
-                                      ? 'bg-gray-200 dark:bg-gray-700 cursor-not-allowed opacity-50'
-                                      : c.reactions?.some(r => r.emoji === '😢' && r.userId === currentUser._id)
-                                        ? 'bg-blue-100 dark:bg-blue-900/40 border-2 border-blue-400 dark:border-blue-500'
-                                        : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-110'
-                                      }`}
-                                    disabled={isChatSendBlocked}
-                                    title={isChatSendBlocked ? "Reactions disabled" : "Sad"}
-                                  >
-                                    😢
-                                  </button>
-                                  <button
-                                    onClick={() => handleQuickReaction(c._id, '😡')}
-                                    className={`w-8 h-8 flex items-center justify-center text-lg transition-transform rounded-full ${isChatSendBlocked
-                                      ? 'bg-gray-200 dark:bg-gray-700 cursor-not-allowed opacity-50'
-                                      : c.reactions?.some(r => r.emoji === '😡' && r.userId === currentUser._id)
-                                        ? 'bg-blue-100 dark:bg-blue-900/40 border-2 border-blue-400 dark:border-blue-500'
-                                        : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-110'
-                                      }`}
-                                    disabled={isChatSendBlocked}
-                                    title={isChatSendBlocked ? "Reactions disabled" : "Angry"}
-                                  >
-                                    😡
-                                  </button>
-                                  <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1"></div>
-                                  <button
-                                    onClick={toggleReactionsEmojiPicker}
-                                    className={`w-8 h-8 flex items-center justify-center text-lg transition-transform rounded-full ${isChatSendBlocked
-                                      ? 'bg-gray-200 dark:bg-gray-700 cursor-not-allowed opacity-50'
-                                      : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-110'
-                                      }`}
-                                    disabled={isChatSendBlocked}
-                                    title={isChatSendBlocked ? "Reactions disabled" : "More emojis"}
-                                  >
-                                    ➕
-                                  </button>
+                                        }`}
+                                      disabled={isChatSendBlocked}
+                                      title={isChatSendBlocked ? "Reactions disabled" : "More emojis"}
+                                    >
+                                      ➕
+                                    </button>
 
 
-                                </div>
-                              )}
-                          </div>
+                                  </div>
+                                )}
+                            </div>
 
 
-                        </React.Fragment>
-                      );
-                    })}
+                          </React.Fragment>
+                        );
+                      })}
                     </>);
                   })()}
 

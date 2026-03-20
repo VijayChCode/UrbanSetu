@@ -282,7 +282,6 @@ router.get("/my", verifyToken, async (req, res) => {
       .populate('buyerId', 'username email mobileNumber avatar profileVisibility')
       .populate('sellerId', 'username email mobileNumber avatar profileVisibility')
       .populate('listingId', '_id name address')
-      .select('-comments')
       .sort({ createdAt: -1 });
 
     // Add role information to each booking and apply privacy masking
@@ -330,7 +329,6 @@ router.get("/pending", async (req, res) => {
       .populate('buyerId', 'username email mobileNumber avatar')
       .populate('sellerId', 'username email mobileNumber avatar')
       .populate('listingId', '_id name address')
-      .select('-comments') // Added to project away comments
       .sort({ createdAt: -1 });
     res.status(200).json(pendingBookings);
   } catch (err) {
@@ -581,37 +579,32 @@ router.post('/:id/comment', verifyToken, async (req, res) => {
     const { message, replyTo, imageUrl, videoUrl, documentUrl, documentName, documentMimeType, audioUrl, audioName, audioMimeType, type, previewDismissed } = req.body;
     const { id } = req.params;
     const userId = req.user.id;
-    const userEmail = req.user.email;
 
     // Validate ObjectId format
     if (!id || !mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ message: 'Invalid appointment ID format.' });
     }
 
-    // Single lean query: find booking and validate access
-    const bookingToComment = await booking.findById(id).select('buyerId sellerId propertyName').lean();
+    const bookingToComment = await booking.findById(id);
     if (!bookingToComment) {
       return res.status(404).json({ message: 'Appointment not found.' });
     }
 
-    const buyerIdStr = bookingToComment.buyerId.toString();
-    const sellerIdStr = bookingToComment.sellerId.toString();
-    const isBuyer = buyerIdStr === userId;
-    const isSeller = sellerIdStr === userId;
+    // Only allow comments if user is the buyer, seller, or admin
+    const isBuyer = bookingToComment.buyerId.toString() === userId;
+    const isSeller = bookingToComment.sellerId.toString() === userId;
 
-    // Check admin only if not buyer/seller (saves a DB query for normal users)
-    let isAdmin = false;
-    if (!isBuyer && !isSeller) {
-      const user = await User.findById(userId).select('role adminApprovalStatus').lean();
-      isAdmin = (user && user.role === 'admin' && user.adminApprovalStatus === 'approved') || (user && user.role === 'rootadmin');
-      if (!isAdmin) {
-        return res.status(403).json({ message: "You can only comment on your own appointments unless you are an admin or root admin." });
-      }
+    // Check if user is admin or rootadmin
+    const user = await User.findById(userId);
+    const isAdmin = (user && user.role === 'admin' && user.adminApprovalStatus === 'approved') || (user && user.role === 'rootadmin');
+
+    if (!isBuyer && !isSeller && !isAdmin) {
+      return res.status(403).json({ message: "You can only comment on your own appointments unless you are an admin or root admin." });
     }
 
     const newComment = {
       sender: userId,
-      senderEmail: userEmail,
+      senderEmail: req.user.email,
       message,
       status: "sent",
       readBy: [userId],
@@ -624,159 +617,203 @@ router.post('/:id/comment', verifyToken, async (req, res) => {
       ...(typeof previewDismissed === 'boolean' ? { previewDismissed } : {}),
     };
 
-    // Save comment with atomic push — only project back the new comment (last element)
     const updated = await booking.findByIdAndUpdate(
       id,
       { $push: { comments: newComment } },
-      { new: true, projection: { comments: { $slice: -1 } } }
-    );
+      { new: true }
+    ).populate('buyerId', 'username email mobileNumber')
+      .populate('sellerId', 'username email mobileNumber')
+      .populate('listingId', '_id name address');
 
-    if (!updated || !updated.comments || updated.comments.length === 0) {
-      return res.status(500).json({ message: 'Failed to add comment.' });
+    // Emit socket.io event for real-time comment update
+    const io = req.app.get('io');
+    if (io) {
+      // Send only the new comment (last in array)
+      const newCommentObj = updated.comments[updated.comments.length - 1];
+
+      // Determine the recipient of the message
+      const isBuyer = bookingToComment.buyerId.toString() === userId;
+
+      const isSeller = bookingToComment.sellerId.toString() === userId;
+      const isAdmin = !isBuyer && !isSeller;
+
+      // Get populated booking data for email addresses
+      const populatedBooking = await booking.findById(id)
+        .populate('buyerId', 'email')
+        .populate('sellerId', 'email');
+
+      // Prepare complete data for emission
+      const emitData = {
+        appointmentId: id,
+        comment: newCommentObj,
+        buyerEmail: populatedBooking.buyerId.email,
+        sellerEmail: populatedBooking.sellerId.email
+      };
+
+      if (isAdmin) {
+        // If admin is sending, emit to both buyer and seller
+        io.to(bookingToComment.buyerId.toString()).emit('commentUpdate', emitData);
+        io.to(bookingToComment.sellerId.toString()).emit('commentUpdate', emitData);
+
+        // For admin, only emit to appointment room (not personal room) to avoid duplicates
+        // Admin will receive the message through appointment room since they're joined to all appointment rooms
+        io.to(`appointment_${id}`).emit('commentUpdate', emitData);
+      } else {
+        // If buyer or seller is sending, emit to the other party
+        const recipientId = isBuyer ? bookingToComment.sellerId.toString() : bookingToComment.buyerId.toString();
+        // Removed excessive logging
+        io.to(recipientId).emit('commentUpdate', emitData);
+
+        // Also emit to the sender for their own message sync
+        io.to(userId).emit('commentUpdate', emitData);
+
+        // Emit to appointment room for admin access (so admin sees user messages immediately)
+        io.to(`appointment_${id}`).emit('commentUpdate', emitData);
+
+        // ADDITIONAL: Explicitly emit to all connected admin sockets to ensure they receive user messages
+        const adminSockets = Array.from(io.sockets.sockets.values()).filter(s =>
+          s.adminId && (s.adminRole === 'admin' || s.adminRole === 'rootadmin')
+        );
+
+        for (const adminSocket of adminSockets) {
+          adminSocket.emit('commentUpdate', emitData);
+        }
+      }
+
+      // Smart email notification to the other party
+      try {
+        const sender = await User.findById(userId).select('username email firstName lastName');
+        const recipientUser = isBuyer
+          ? await User.findById(bookingToComment.sellerId).select('email firstName lastName _id')
+          : await User.findById(bookingToComment.buyerId).select('email firstName lastName _id');
+
+        if (sender && recipientUser && recipientUser.email) {
+          const senderName = sender.firstName && sender.lastName
+            ? `${sender.firstName} ${sender.lastName}`
+            : sender.username;
+          const recipientName = recipientUser.firstName && recipientUser.lastName
+            ? `${recipientUser.firstName} ${recipientUser.lastName}`
+            : recipientUser.email.split('@')[0];
+
+          // Determine online status of recipient
+          const onlineUsers = req.app.get('onlineUsers') || new Set();
+          const recipientId = recipientUser._id.toString();
+          const recipientOnline = onlineUsers.has(recipientId);
+
+          // Update unread counters atomically to avoid VersionError on concurrent sends
+          const now = new Date();
+          let shouldSendEmail = false;
+
+          if (isBuyer) {
+            // recipient is seller - atomically increment seller unread count
+            const apptDoc = await booking.findOneAndUpdate(
+              { _id: id },
+              { $inc: { sellerUnreadMessageCount: 1 } },
+              { new: true }
+            );
+            if (apptDoc) {
+              const lastSent = apptDoc.sellerLastEmailSentAt ? new Date(apptDoc.sellerLastEmailSentAt) : null;
+              const cooldownMs = 60 * 60 * 1000; // 60 minutes
+              const inCooldown = lastSent && (now - lastSent) < cooldownMs;
+              if (!recipientOnline && apptDoc.sellerUnreadMessageCount === 1 && !inCooldown) {
+                shouldSendEmail = true;
+                // Set the email sent timestamp atomically
+                await booking.updateOne({ _id: id }, { $set: { sellerLastEmailSentAt: now } });
+              }
+            }
+          } else if (isSeller) {
+            // recipient is buyer - atomically increment buyer unread count
+            const apptDoc = await booking.findOneAndUpdate(
+              { _id: id },
+              { $inc: { buyerUnreadMessageCount: 1 } },
+              { new: true }
+            );
+            if (apptDoc) {
+              const lastSent = apptDoc.buyerLastEmailSentAt ? new Date(apptDoc.buyerLastEmailSentAt) : null;
+              const cooldownMs = 60 * 60 * 1000; // 60 minutes
+              const inCooldown = lastSent && (now - lastSent) < cooldownMs;
+              if (!recipientOnline && apptDoc.buyerUnreadMessageCount === 1 && !inCooldown) {
+                shouldSendEmail = true;
+                // Set the email sent timestamp atomically
+                await booking.updateOne({ _id: id }, { $set: { buyerLastEmailSentAt: now } });
+              }
+            }
+          }
+
+          if (shouldSendEmail) {
+            const messagePreview = message || (imageUrl ? '📷 Image' : (videoUrl ? '🎥 Video' : (documentUrl ? '📄 Document' : (audioUrl ? '🔊 Audio' : 'Message'))));
+            const messageDetails = {
+              recipientName,
+              senderName,
+              appointmentId: id,
+              propertyName: bookingToComment.propertyName || 'Your Property',
+              messagePreview: (messagePreview || '').toString().substring(0, 140),
+              messageType: type || 'text'
+            };
+            // Send email asynchronously without blocking the response
+            sendNewMessageNotificationEmail(recipientUser.email, messageDetails)
+              .then(() => console.log(`📧 New message notification email sent to: ${recipientUser.email}`))
+              .catch(err => console.error('Error sending background email notification:', err));
+          } else {
+            console.log('📧 Email suppressed (online or cooldown or not first unread). Recipient:', recipientUser.email);
+          }
+
+          // ALWAYS try to send Push Notification regardless of email cooldown (Pushes are less intrusive)
+          const pushPreview = message || (imageUrl ? '📷 Image' : (videoUrl ? '🎥 Video' : (documentUrl ? '📄 Document' : (audioUrl ? '🔊 Audio' : 'Message'))));
+          sendPushNotification(recipientUser._id.toString(), `New message from ${senderName}`, pushPreview, {
+            appointmentId: id,
+            type: 'chat_message',
+            category: 'chat_message',
+            actions: [
+              { title: '💬 View Chat', identifier: 'view_chat' }
+            ]
+          });
+        }
+      } catch (emailError) {
+        // Log critical errors in setup (not sending) but don't block
+        console.error('Error processing new message notification setup:', emailError);
+      }
+
+      // Only mark as delivered if the intended recipient is online
+      const onlineUsers = req.app.get('onlineUsers') || new Set();
+
+      if (isAdmin) {
+        // If admin is sending, check if both buyer and seller are online
+        const buyerOnline = onlineUsers.has(bookingToComment.buyerId.toString());
+        const sellerOnline = onlineUsers.has(bookingToComment.sellerId.toString());
+
+        if (buyerOnline || sellerOnline) {
+          // Mark as delivered if at least one recipient is online
+          await booking.findOneAndUpdate(
+            { _id: id, 'comments._id': newCommentObj._id },
+            { $set: { 'comments.$.status': 'delivered', 'comments.$.deliveredAt': new Date() } }
+          );
+          // Emit delivery status immediately
+          io.emit('commentDelivered', { appointmentId: id, commentId: newCommentObj._id });
+        } else {
+          // Removed excessive logging
+        }
+      } else {
+        // If buyer or seller is sending, check if the other party is online
+        const recipientId = isBuyer ? bookingToComment.sellerId.toString() : bookingToComment.buyerId.toString();
+
+        if (onlineUsers.has(recipientId)) {
+          // Recipient is online, mark as delivered immediately
+          await booking.findOneAndUpdate(
+            { _id: id, 'comments._id': newCommentObj._id },
+            { $set: { 'comments.$.status': 'delivered', 'comments.$.deliveredAt': new Date() } }
+          );
+          // Emit delivery status immediately
+          io.emit('commentDelivered', { appointmentId: id, commentId: newCommentObj._id });
+        } else {
+          // Recipient is offline, keep status as "sent"
+          // When they come online, the socket handler will mark it as delivered
+          // Removed excessive logging
+        }
+      }
     }
 
-    const newCommentObj = updated.comments[0]; // The only comment returned (the new one)
-
-    // ===== RESPOND IMMEDIATELY — all background work happens below without blocking =====
-    res.status(200).json({ comment: newCommentObj });
-
-    // ===== BACKGROUND: Socket emissions, delivery, email, push — all fire-and-forget =====
-    (async () => {
-      try {
-        const io = req.app.get('io');
-        if (!io) return;
-
-        // Prepare emit data — use the already-known emails if available, or fetch minimally
-        let buyerEmail, sellerEmail;
-        try {
-          const [buyerDoc, sellerDoc] = await Promise.all([
-            User.findById(buyerIdStr).select('email username firstName lastName').lean(),
-            User.findById(sellerIdStr).select('email username firstName lastName').lean()
-          ]);
-          buyerEmail = buyerDoc?.email;
-          sellerEmail = sellerDoc?.email;
-
-          const emitData = {
-            appointmentId: id,
-            comment: newCommentObj,
-            buyerEmail,
-            sellerEmail
-          };
-
-          // Emit socket events
-          if (isAdmin) {
-            io.to(buyerIdStr).emit('commentUpdate', emitData);
-            io.to(sellerIdStr).emit('commentUpdate', emitData);
-            io.to(`appointment_${id}`).emit('commentUpdate', emitData);
-          } else {
-            const recipientId = isBuyer ? sellerIdStr : buyerIdStr;
-            io.to(recipientId).emit('commentUpdate', emitData);
-            io.to(userId).emit('commentUpdate', emitData);
-            io.to(`appointment_${id}`).emit('commentUpdate', emitData);
-
-            // Emit to admin sockets
-            try {
-              const adminSockets = Array.from(io.sockets.sockets.values()).filter(s =>
-                s.adminId && (s.adminRole === 'admin' || s.adminRole === 'rootadmin')
-              );
-              for (const adminSocket of adminSockets) {
-                adminSocket.emit('commentUpdate', emitData);
-              }
-            } catch (_) { }
-          }
-
-          // Delivery marking
-          const onlineUsers = req.app.get('onlineUsers') || new Set();
-          if (isAdmin) {
-            if (onlineUsers.has(buyerIdStr) || onlineUsers.has(sellerIdStr)) {
-              await booking.updateOne(
-                { _id: id, 'comments._id': newCommentObj._id },
-                { $set: { 'comments.$.status': 'delivered', 'comments.$.deliveredAt': new Date() } }
-              );
-              io.emit('commentDelivered', { appointmentId: id, commentId: newCommentObj._id });
-            }
-          } else {
-            const recipientId = isBuyer ? sellerIdStr : buyerIdStr;
-            if (onlineUsers.has(recipientId)) {
-              await booking.updateOne(
-                { _id: id, 'comments._id': newCommentObj._id },
-                { $set: { 'comments.$.status': 'delivered', 'comments.$.deliveredAt': new Date() } }
-              );
-              io.emit('commentDelivered', { appointmentId: id, commentId: newCommentObj._id });
-            }
-          }
-
-          // Email + push notifications
-          const sender = isBuyer ? buyerDoc : (isSeller ? sellerDoc : await User.findById(userId).select('username firstName lastName').lean());
-          const recipientUser = isBuyer ? sellerDoc : buyerDoc;
-
-          if (sender && recipientUser && recipientUser.email) {
-            const senderName = sender.firstName && sender.lastName
-              ? `${sender.firstName} ${sender.lastName}`
-              : sender.username;
-            const recipientName = recipientUser.firstName && recipientUser.lastName
-              ? `${recipientUser.firstName} ${recipientUser.lastName}`
-              : recipientUser.email.split('@')[0];
-
-            const recipientOnline = onlineUsers.has((isBuyer ? sellerIdStr : buyerIdStr));
-            const now = new Date();
-            let shouldSendEmail = false;
-
-            if (isBuyer) {
-              const apptDoc = await booking.findOneAndUpdate(
-                { _id: id },
-                { $inc: { sellerUnreadMessageCount: 1 } },
-                { new: true, projection: { sellerUnreadMessageCount: 1, sellerLastEmailSentAt: 1 } }
-              );
-              if (apptDoc) {
-                const lastSent = apptDoc.sellerLastEmailSentAt ? new Date(apptDoc.sellerLastEmailSentAt) : null;
-                const inCooldown = lastSent && (now - lastSent) < 3600000;
-                if (!recipientOnline && apptDoc.sellerUnreadMessageCount === 1 && !inCooldown) {
-                  shouldSendEmail = true;
-                  await booking.updateOne({ _id: id }, { $set: { sellerLastEmailSentAt: now } });
-                }
-              }
-            } else if (isSeller) {
-              const apptDoc = await booking.findOneAndUpdate(
-                { _id: id },
-                { $inc: { buyerUnreadMessageCount: 1 } },
-                { new: true, projection: { buyerUnreadMessageCount: 1, buyerLastEmailSentAt: 1 } }
-              );
-              if (apptDoc) {
-                const lastSent = apptDoc.buyerLastEmailSentAt ? new Date(apptDoc.buyerLastEmailSentAt) : null;
-                const inCooldown = lastSent && (now - lastSent) < 3600000;
-                if (!recipientOnline && apptDoc.buyerUnreadMessageCount === 1 && !inCooldown) {
-                  shouldSendEmail = true;
-                  await booking.updateOne({ _id: id }, { $set: { buyerLastEmailSentAt: now } });
-                }
-              }
-            }
-
-            if (shouldSendEmail) {
-              const messagePreview = message || (imageUrl ? '📷 Image' : (videoUrl ? '🎥 Video' : (documentUrl ? '📄 Document' : (audioUrl ? '🔊 Audio' : 'Message'))));
-              sendNewMessageNotificationEmail(recipientUser.email, {
-                recipientName, senderName, appointmentId: id,
-                propertyName: bookingToComment.propertyName || 'Your Property',
-                messagePreview: (messagePreview || '').toString().substring(0, 140),
-                messageType: type || 'text'
-              }).catch(err => console.error('Error sending email notification:', err));
-            }
-
-            // Push notification (fire-and-forget)
-            const pushPreview = message || (imageUrl ? '📷 Image' : (videoUrl ? '🎥 Video' : (documentUrl ? '📄 Document' : (audioUrl ? '🔊 Audio' : 'Message'))));
-            sendPushNotification(recipientUser._id?.toString() || (isBuyer ? sellerIdStr : buyerIdStr), `New message from ${senderName}`, pushPreview, {
-              appointmentId: id, type: 'chat_message', category: 'chat_message',
-              actions: [{ title: '💬 View Chat', identifier: 'view_chat' }]
-            });
-          }
-        } catch (bgErr) {
-          console.error('Background notification error:', bgErr);
-        }
-      } catch (outerErr) {
-        console.error('Background comment processing error:', outerErr);
-      }
-    })();
-
+    res.status(200).json(updated);
   } catch (err) {
     res.status(500).json({ message: 'Failed to add comment.' });
   }
@@ -2081,7 +2118,6 @@ router.get('/archived', verifyToken, async (req, res) => {
       .populate('buyerId', 'username email mobileNumber avatar')
       .populate('sellerId', 'username email mobileNumber avatar')
       .populate('listingId', '_id name address')
-      .select('-comments')
       .sort({ archivedAt: -1, updatedAt: -1 }); // Sort by most recently archived first, fallback to updatedAt
 
     // Add role information for regular users
@@ -2669,69 +2705,7 @@ router.post("/test-booking-email", verifyToken, async (req, res) => {
   }
 });
 
-// GET: Paginated comments for an appointment
-router.get('/:id/comments', verifyToken, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { page = 1, limit = 30 } = req.query;
-    const userId = req.user.id;
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: 'Invalid appointment ID.' });
-    }
-
-    // Check access permissions with a lean query
-    const bookingDoc = await booking.findById(id).select('buyerId sellerId').lean();
-    if (!bookingDoc) {
-      return res.status(404).json({ message: 'Appointment not found.' });
-    }
-
-    const isBuyer = bookingDoc.buyerId.toString() === userId;
-    const isSeller = bookingDoc.sellerId.toString() === userId;
-    
-    // Check admin ONLY if not buyer/seller (saves a DB query)
-    let isAdmin = false;
-    if (!isBuyer && !isSeller) {
-      const user = await User.findById(userId).select('role adminApprovalStatus').lean();
-      isAdmin = (user && user.role === 'admin' && user.adminApprovalStatus === 'approved') || (user && user.role === 'rootadmin');
-      if (!isAdmin) {
-        return res.status(403).json({ message: 'You do not have access to this appointment.' });
-      }
-    }
-
-    // Use aggregation for efficient server-side pagination
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-    
-    // We fetch latest messages first (highest index/latest timestamp)
-    const paginatedResults = await booking.aggregate([
-      { $match: { _id: new mongoose.Types.ObjectId(id) } },
-      { $project: { commentsCount: { $size: "$comments" }, comments: 1 } },
-      { $unwind: '$comments' },
-      { $sort: { 'comments.timestamp': -1 } }, // Latest first for pagination
-      { $skip: skip },
-      { $limit: parseInt(limit) },
-      { $group: { _id: '$_id', comments: { $push: '$comments' }, totalCount: { $first: "$commentsCount" } } }
-    ]);
-
-    if (!paginatedResults || paginatedResults.length === 0) {
-      return res.json({ comments: [], totalComments: 0, currentPage: parseInt(page), totalPages: 0 });
-    }
-
-    const { comments, totalCount } = paginatedResults[0];
-
-    res.status(200).json({ 
-      comments: comments.reverse(), // Reverse back to chronological order for frontend
-      totalComments: totalCount,
-      currentPage: parseInt(page),
-      totalPages: Math.ceil(totalCount / parseInt(limit))
-    });
-  } catch (err) {
-    console.error('Error fetching paginated comments:', err);
-    res.status(500).json({ message: 'Failed to fetch comments.' });
-  }
-});
-
-// GET: Fetch a single booking by ID (with optional lean behavior) — PROTECTED
+// GET: Fetch a single booking by ID (with comments) — PROTECTED
 router.get('/:id', verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
@@ -3760,4 +3734,3 @@ export function registerUserAppointmentsSocket(io) {
     });
   });
 }
-
