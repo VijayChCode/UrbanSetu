@@ -6,6 +6,15 @@
   :root {
     --snow-color: #94a3b8;
     /* Slate-400 for visibility on light backgrounds */
+    --font-sans: "Twemoji Country Flags", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  }
+
+  /* Flag emoji polyfill for Windows */
+  @font-face {
+    font-family: "Twemoji Country Flags";
+    unicode-range: U+1F1E6-1F1FF, U+1F3F4, U+E0062-E0063, U+E0065, U+E0067, U+E006C, U+E006E, U+E0073-E0074, U+E0077, U+E007F;
+    src: url("https://cdn.jsdelivr.net/npm/country-flag-emoji-polyfill@0.1.3/dist/TwemojiCountryFlags.woff2") format("woff2");
+    font-display: swap;
   }
 
   .dark {
@@ -14,6 +23,7 @@
 
   body {
     @apply bg-white text-gray-900 transition-colors duration-300;
+    font-family: var(--font-sans);
   }
 
   .dark body {

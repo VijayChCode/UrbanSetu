@@ -4484,8 +4484,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
     // Remove the global sending state to allow multiple messages
     // setSending(true);
 
-    // Removed auto-focus: Don't automatically focus input after sending message
-    // User can manually click to focus when needed
+    // Re-focus input after sending to keep mobile keyboard open
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
 
     // Scroll to bottom immediately after adding the message
     if (chatEndRef.current) {
@@ -10305,6 +10307,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                 </div>
 
                 <button
+                  onMouseDown={(e) => {
+                    // Prevent the button from stealing focus from the textarea
+                    // This keeps the mobile keyboard open after sending
+                    e.preventDefault();
+                  }}
                   onClick={(e) => {
                     e.preventDefault();
                     if (editingComment) {
