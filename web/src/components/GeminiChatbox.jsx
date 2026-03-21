@@ -6592,10 +6592,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                             <div className="absolute -top-3.5 -right-2 z-20 pointer-events-none transition-all duration-300">
                                                 {hasChatError ? (
                                                     <div className="relative flex items-center justify-center">
-                                                        <FaWifi className="text-[14px] text-red-200/40 rotate-[20deg]" />
+                                                        <FaWifi className="text-[14px] text-red-400 rotate-[20deg] drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
                                                         <div className="absolute -top-1 -right-1 z-30">
-                                                            <div className="bg-red-500 text-white rounded-full w-3 h-3 flex items-center justify-center border border-white shadow-sm ring-1 ring-red-900/20">
-                                                                <FaTimes size={7} />
+                                                            <div className="bg-red-500 text-white rounded-full w-3.5 h-3.5 flex items-center justify-center border-2 border-white shadow-lg ring-1 ring-red-900/40">
+                                                                <FaTimes size={8} />
                                                             </div>
                                                         </div>
                                                     </div>
