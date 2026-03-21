@@ -469,6 +469,92 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [showInfoModal, setShowInfoModal] = useState(false);
     const [showTermsModal, setShowTermsModal] = useState(false);
     const [showConsentModal, setShowConsentModal] = useState(false);
+
+    // Safety Policy Violation & Cooldown State
+    const VIOLATION_LIMIT = 3;
+    const COOLDOWN_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+    const [policyViolations, setPolicyViolations] = useState(() => {
+        return parseInt(localStorage.getItem(getUserKey('policy_violations')) || '0');
+    });
+    const [cooldownEnd, setCooldownEnd] = useState(() => {
+        return parseInt(localStorage.getItem(getUserKey('cooldown_end')) || '0');
+    });
+    const [isBlockedByPolicy, setIsBlockedByPolicy] = useState(false);
+    const [showViolationModal, setShowViolationModal] = useState(false);
+
+    // Sync violation states and handle cooldown check
+    useEffect(() => {
+        const checkCooldown = () => {
+            const now = Date.now();
+            if (cooldownEnd > 0 && now < cooldownEnd) {
+                if (!isBlockedByPolicy) setIsBlockedByPolicy(true);
+            } else {
+                if (isBlockedByPolicy) {
+                    setIsBlockedByPolicy(false);
+                    // Reset on expiry
+                    setPolicyViolations(0);
+                    localStorage.setItem(getUserKey('policy_violations'), '0');
+                    localStorage.removeItem(getUserKey('cooldown_end'));
+                }
+            }
+        };
+
+        checkCooldown();
+        const timer = setInterval(checkCooldown, 30000); // Check every 30s
+        return () => clearInterval(timer);
+    }, [cooldownEnd, isBlockedByPolicy, currentUser]);
+
+    // Track policy violations and trigger block if needed
+    const handlePolicyViolation = () => {
+        const newCount = policyViolations + 1;
+        setPolicyViolations(newCount);
+        localStorage.setItem(getUserKey('policy_violations'), newCount.toString());
+
+        if (newCount >= VIOLATION_LIMIT) {
+            const endTime = Date.now() + COOLDOWN_DURATION;
+            setCooldownEnd(endTime);
+            localStorage.setItem(getUserKey('cooldown_end'), endTime.toString());
+            setIsBlockedByPolicy(true);
+            setShowViolationModal(true);
+            setHasChatError(true);
+        }
+    };
+
+    // Sync policy status with backend
+    const fetchPolicyStatus = async () => {
+        try {
+            const res = await authenticatedFetch(`${API_BASE_URL}/api/gemini/policy-status`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.success && data.status) {
+                    const { isBlocked, violations, cooldownEnd: serverCooldown } = data.status;
+                    
+                    setPolicyViolations(violations);
+                    if (isBlocked && serverCooldown) {
+                        const endMs = new Date(serverCooldown).getTime();
+                        setCooldownEnd(endMs);
+                        setIsBlockedByPolicy(true);
+                        
+                        // Sync localStorage
+                        localStorage.setItem(getUserKey('policy_violations'), violations.toString());
+                        localStorage.setItem(getUserKey('cooldown_end'), endMs.toString());
+                    } else if (isBlockedByPolicy && !isBlocked) {
+                        setIsBlockedByPolicy(false);
+                        setCooldownEnd(0);
+                        localStorage.removeItem(getUserKey('cooldown_end'));
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Failed to sync policy status:', error);
+        }
+    };
+
+    useEffect(() => {
+        if (isOpen) {
+            fetchPolicyStatus();
+        }
+    }, [isOpen, currentUser]);
     // Floating date label like WhatsApp
     const [floatingDateLabel, setFloatingDateLabel] = useState('');
     const [isScrolling, setIsScrolling] = useState(false);
@@ -2852,7 +2938,14 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     };
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
+        if (e) e.preventDefault();
+        
+        // Cooldown/Policy Block check
+        if (isBlockedByPolicy) {
+            setShowViolationModal(true);
+            return;
+        }
+
         // Allow submission if there's text OR pending images (image-only messages are valid)
         if ((!inputMessage.trim() && pendingImages.length === 0) || isLoading) return;
 
@@ -3050,9 +3143,23 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     }),
                     signal: abortControllerRef.current.signal
                 });
-
                 if (!response.ok) {
                     const errorData = await response.json();
+                    if (response.status === 403 && errorData.isBlocked) {
+                        setPolicyViolations(errorData.policyViolations || VIOLATION_LIMIT);
+                        if (errorData.cooldownEnd) {
+                            const endMs = new Date(errorData.cooldownEnd).getTime();
+                            setCooldownEnd(endMs);
+                            localStorage.setItem(getUserKey('cooldown_end'), endMs.toString());
+                        }
+                        setIsBlockedByPolicy(true);
+                        setShowViolationModal(true);
+                        throw new Error('Access Restricted: Safety Policy Cooldown Active');
+                    }
+                    if (response.status === 403 && errorData.message?.includes('restricted content')) {
+                        handlePolicyViolation();
+                        throw new Error('Safety Policy Violation Detected');
+                    }
                     throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
                 }
 
@@ -3222,6 +3329,21 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
                 if (!response.ok) {
                     const errorData = await response.json();
+                    if (response.status === 403 && errorData.isBlocked) {
+                        setPolicyViolations(errorData.policyViolations || VIOLATION_LIMIT);
+                        if (errorData.cooldownEnd) {
+                            const endMs = new Date(errorData.cooldownEnd).getTime();
+                            setCooldownEnd(endMs);
+                            localStorage.setItem(getUserKey('cooldown_end'), endMs.toString());
+                        }
+                        setIsBlockedByPolicy(true);
+                        setShowViolationModal(true);
+                        throw new Error('Access Restricted: Safety Policy Cooldown Active');
+                    }
+                    if (response.status === 403 && errorData.message?.includes('restricted content')) {
+                        handlePolicyViolation();
+                        throw new Error('Safety Policy Violation Detected');
+                    }
                     throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
                 }
 
@@ -3320,9 +3442,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 fetchRateLimitStatus();
                 return;
             }
+            // The 403 handling was moved to the `if (!response.ok)` block above,
+            // as `response` is not directly available in the catch block.
+            // If the error message includes 'restricted content' from a thrown error,
+            // it will be caught by the next `if` block.
 
-            if (error.message.includes('restricted content')) {
-                // Handle AI Moderated Restriction
+            if (error.message.includes('restricted content') || error.message.includes('Safety Policy Violation Detected')) {
+                // Handle AI Moderated Restriction or explicit policy violation
                 setMessages(prev => {
                     const currentMessages = Array.isArray(prev) ? prev : [];
                     const updatedMessages = [...currentMessages];
@@ -3352,6 +3478,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 });
                 setHasChatError(true);
                 autoReportRestrictedContent(lastUserMessageRef.current, "AI Moderated");
+                
+                // Trigger violation sequence
+                handlePolicyViolation();
                 // Note: For policy violations, we keep the prompt count decremented
             } else {
                 // For technical errors, backend won't count them either
@@ -3516,6 +3645,21 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
             if (!response.ok) {
                 const errorData = await response.json();
+                if (response.status === 403 && errorData.isBlocked) {
+                    setPolicyViolations(errorData.policyViolations || VIOLATION_LIMIT);
+                    if (errorData.cooldownEnd) {
+                        const endMs = new Date(errorData.cooldownEnd).getTime();
+                        setCooldownEnd(endMs);
+                        localStorage.setItem(getUserKey('cooldown_end'), endMs.toString());
+                    }
+                    setIsBlockedByPolicy(true);
+                    setShowViolationModal(true);
+                    throw new Error('Access Restricted: Safety Policy Cooldown Active');
+                }
+                if (response.status === 403 && errorData.message?.includes('restricted content')) {
+                    handlePolicyViolation();
+                    throw new Error('Safety Policy Violation Detected');
+                }
                 throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
             }
 
@@ -7622,7 +7766,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                             </button>
 
                                                             {/* Edit button for user messages */}
-                                                            {message.role === 'user' && !message.isRestricted && (
+                                                            {message.role === 'user' && !message.isRestricted && !isBlockedByPolicy && (
                                                                 <button
                                                                     onClick={() => startEditingMessage(index, message.content, message.images || (message.imageUrl ? [message.imageUrl] : []))}
                                                                     className="p-1 text-white/80 hover:text-white hover:bg-white/20 rounded transition-all duration-200"
@@ -7703,7 +7847,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                         })();
                                                                         if (previousUserMessage) retryMessage(previousUserMessage, index);
                                                                     }}
-                                                                    disabled={isLoading || (rateLimitInfo.remaining <= 0 && rateLimitInfo.role !== 'rootadmin')}
+                                                                    disabled={isLoading || isBlockedByPolicy || (rateLimitInfo.remaining <= 0 && rateLimitInfo.role !== 'rootadmin')}
                                                                     className={`p-1 ${themeColors.accent} hover:opacity-80 hover:${themeColors.secondary} rounded transition-all duration-200 disabled:opacity-50`}
                                                                     title="Try Again"
                                                                     aria-label="Try Again"
@@ -7950,11 +8094,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                             <div className="flex items-center gap-1">
                                                 <button
                                                     onClick={handleLoadMoreSuggestions}
-                                                    disabled={isLoadingMoreSuggestions || !canLoadMoreSuggestions}
+                                                    disabled={isBlockedByPolicy || isLoadingMoreSuggestions || !canLoadMoreSuggestions}
                                                     className={`p-1 rounded-full transition-all duration-200 ${isDarkMode
                                                         ? 'hover:bg-gray-700 text-gray-500'
-                                                        : `hover:bg-white text-gray-400 shadow-sm border border-transparent hover:border-blue-100`} hover:text-blue-500 ${!canLoadMoreSuggestions ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                    title={!canLoadMoreSuggestions ? "Refresh limit reached. Please wait." : "Load More Suggestions"}
+                                                        : `hover:bg-white text-gray-400 shadow-sm border border-transparent hover:border-blue-100`} hover:text-blue-500 ${isBlockedByPolicy || !canLoadMoreSuggestions ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                    title={isBlockedByPolicy ? "Disabled during cooldown" : !canLoadMoreSuggestions ? "Refresh limit reached. Please wait." : "Load More Suggestions"}
                                                 >
                                                     <FaSync size={10} className={isLoadingMoreSuggestions ? 'animate-spin' : ''} />
                                                 </button>
@@ -7974,10 +8118,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                             {smartSuggestions.map((suggestion, index) => (
                                                 <button
                                                     key={index}
-                                                    onClick={() => handleSmartSuggestion(suggestion)}
-                                                    className={`text-[11px] px-3 py-1.5 rounded-xl border transition-all duration-300 hover:scale-[1.03] active:scale-95 whitespace-nowrap flex-shrink-0 ${isDarkMode
-                                                        ? `bg-gray-900/60 border-gray-600 text-gray-300 hover:bg-gray-800 hover:border-white/20 hover:text-white`
-                                                        : `bg-white ${themeColors.border} ${themeColors.accent} hover:bg-gray-50 shadow-sm`
+                                                    onClick={() => !isBlockedByPolicy && handleSmartSuggestion(suggestion)}
+                                                    className={`text-[11px] px-3 py-1.5 rounded-xl border transition-all duration-300 ${isBlockedByPolicy ? 'opacity-50 cursor-not-allowed' : 'hover:scale-[1.03] active:scale-95'} whitespace-nowrap flex-shrink-0 ${isDarkMode
+                                                        ? `bg-gray-900/60 border-gray-600 text-gray-300 ${isBlockedByPolicy ? '' : 'hover:bg-gray-800 hover:border-white/20 hover:text-white'}`
+                                                        : `bg-white ${themeColors.border} ${themeColors.accent} ${isBlockedByPolicy ? '' : 'hover:bg-gray-50 shadow-sm'}`
                                                         }`}
                                                     style={{
                                                         animationDelay: `${index * 50}ms`,
@@ -8204,7 +8348,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
                                                         handleKeyDown(e);
                                                     }}
-                                                    placeholder={(rateLimitInfo.remaining <= 0 && rateLimitInfo.role !== 'rootadmin') ? "Sign in to continue chatting..." : "Ask me anything about real estate or @ mention any property/blog/guide..."}
+                                                    placeholder={isBlockedByPolicy ? "Access restricted due to policy violations. Check terms for details." : (rateLimitInfo.remaining <= 0 && rateLimitInfo.role !== 'rootadmin') ? "Sign in to continue chatting..." : "Ask me anything about real estate or @ mention any property/blog/guide..."}
                                                     aria-label="Type your message"
                                                     aria-describedby="input-help"
                                                     role="textbox"
@@ -8212,9 +8356,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                     className={`w-full pl-12 ${inputMessage.length > 1800 ? 'pr-24' : 'pr-12'} py-3 border rounded-2xl resize-none focus:outline-none focus:ring-2 ${themeColors.accent.replace('text-', 'focus:ring-').replace('-600', '-500')} focus:border-transparent text-sm transition-all duration-200 ${isDarkMode
                                                         ? 'bg-gray-800/50 border-gray-700 text-white placeholder-gray-400 backdrop-blur-sm'
                                                         : 'bg-white border-gray-200 text-gray-900 shadow-sm hover:border-gray-300'
-                                                        }`}
+                                                        } ${isBlockedByPolicy ? 'opacity-70 cursor-not-allowed' : ''}`}
                                                     style={{ minHeight: '48px', maxHeight: '250px' }}
-                                                    disabled={(rateLimitInfo.remaining <= 0 && rateLimitInfo.role !== 'rootadmin')}
+                                                    disabled={isBlockedByPolicy || (rateLimitInfo.remaining <= 0 && rateLimitInfo.role !== 'rootadmin')}
                                                 />
                                             </div>
                                             {inputMessage.length > 1800 && (
@@ -8337,10 +8481,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     <button
                                         type="submit"
                                         onMouseDown={(e) => e.preventDefault()}
-                                        disabled={(!inputMessage.trim() && pendingImages.length === 0) || inputMessage.length > 2000 || isListening || isProcessingVoice || (rateLimitInfo.remaining <= 0 && rateLimitInfo.role !== 'rootadmin')}
+                                        disabled={isBlockedByPolicy || (!inputMessage.trim() && pendingImages.length === 0) || inputMessage.length > 2000 || isListening || isProcessingVoice || (rateLimitInfo.remaining <= 0 && rateLimitInfo.role !== 'rootadmin')}
                                         className={`bg-gradient-to-r ${themeColors.primary} text-white p-2 rounded-full hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-110 flex-shrink-0 flex items-center justify-center w-12 h-12 group hover:shadow-2xl active:scale-95 shadow-lg border-b-4 border-black/10`}
                                         aria-label="Send message"
-                                        title="Send message"
+                                        title={isBlockedByPolicy ? "Blocked" : "Send message"}
                                     >
                                         <div className="relative">
                                             {sendIconSent ? (
@@ -10839,7 +10983,24 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     </section>
 
                                     <section>
-                                        <h3 className="font-bold text-lg mb-2 text-blue-500">5. Changes to Terms</h3>
+                                        <h3 className="font-bold text-lg mb-2 text-blue-500">5. Safety Policy & Cooldown</h3>
+                                        <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>
+                                            To ensure a safe environment for all users, we strictly enforce our safety policies.
+                                            Repeated violations (3 or more) of our content guidelines will result in an automatic temporary block.
+                                        </p>
+                                        <div className={`mt-3 p-3 rounded-lg border ${isDarkMode ? 'bg-red-900/10 border-red-900/30 text-red-400' : 'bg-red-50 border-red-100 text-red-700'}`}>
+                                            <p className="font-bold mb-1">Cooldown Rules:</p>
+                                            <ul className="list-disc pl-5 text-sm space-y-1">
+                                                <li>Violation limit: 3 incidents.</li>
+                                                <li>Suspension duration: 24 hours per block.</li>
+                                                <li>During suspension: Chat input, editing, retry options, and smart suggestions will be completely disabled.</li>
+                                                <li>Status is tracked per user (or per device for public visitors).</li>
+                                            </ul>
+                                        </div>
+                                    </section>
+
+                                    <section>
+                                        <h3 className="font-bold text-lg mb-2 text-blue-500">6. Changes to Terms</h3>
                                         <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>
                                             We reserve the right to modify these terms at any time. Continued use of the service constitutes acceptance of updated terms.
                                         </p>
@@ -11548,6 +11709,58 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     count={burstCount}
                     onComplete={() => setShowCoinBurst(false)}
                 />
+            )}
+
+            {/* Policy Violation Modal */}
+            {showViolationModal && (
+                <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
+                    <div className={`w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border-2 ${isDarkMode ? 'bg-gray-900 border-red-900/50' : 'bg-white border-red-100'} animate-scaleIn`}>
+                        <div className="bg-red-600 p-6 flex items-center justify-center relative overflow-hidden">
+                            <div className="absolute inset-0 bg-white/10 animate-pulse"></div>
+                            <FaBan size={48} className="text-white relative z-10" />
+                        </div>
+                        <div className="p-8 text-center">
+                            <h3 className={`text-2xl font-black mb-3 ${isDarkMode ? 'text-white' : 'text-gray-900 uppercase tracking-tighter'}`}>
+                                Access Restricted
+                            </h3>
+                            <p className={`text-sm mb-6 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                Your access to the SetuAI chatbot has been temporarily restricted due to repeated safety policy violations.
+                            </p>
+
+                            <div className={`p-4 rounded-xl mb-6 text-left ${isDarkMode ? 'bg-gray-800' : 'bg-red-50'}`}>
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-xs font-bold uppercase tracking-widest text-red-500">Cooldown Status</span>
+                                    <span className={`text-[10px] px-2 py-0.5 rounded-full ${isDarkMode ? 'bg-red-900/50 text-red-300' : 'bg-red-100 text-red-700'}`}>Active</span>
+                                </div>
+                                <div className="space-y-3">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-xs opacity-70">Remaining Time:</span>
+                                        <span className="text-xs font-bold">~{Math.ceil((cooldownEnd - Date.now()) / (60 * 60 * 1000))} hours</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-xs opacity-70">Violation Limit:</span>
+                                        <span className="text-xs font-bold">{policyViolations} / {VIOLATION_LIMIT}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col gap-3">
+                                <button
+                                    onClick={() => { setShowViolationModal(false); setShowTermsModal(true); }}
+                                    className={`w-full py-3 rounded-xl font-bold transition-all duration-300 hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 ${isDarkMode ? 'bg-gray-700 text-white hover:bg-gray-600 border border-white/10' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'}`}
+                                >
+                                    <FaFileAlt size={16} /> Read Usage Policy
+                                </button>
+                                <button
+                                    onClick={() => setShowViolationModal(false)}
+                                    className={`w-full py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg shadow-red-500/30 transition-all duration-300 hover:scale-[1.02] active:scale-95`}
+                                >
+                                    Understand & Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );

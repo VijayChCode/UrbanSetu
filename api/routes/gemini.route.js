@@ -1,5 +1,5 @@
 import express from 'express';
-import { chatWithGemini, getUserChatSessions, rateMessage, getMessageRatings, createNewSession, deleteSession, deleteAllSessions, bookmarkMessage, removeBookmark, getBookmarkedMessages, getAllMessageRatings, deleteRating, getSmartSuggestions, updateSessionHistory } from '../controllers/gemini.controller.js';
+import { chatWithGemini, getUserChatSessions, rateMessage, getMessageRatings, createNewSession, deleteSession, deleteAllSessions, bookmarkMessage, removeBookmark, getBookmarkedMessages, getAllMessageRatings, deleteRating, getSmartSuggestions, updateSessionHistory, getPolicyStatus } from '../controllers/gemini.controller.js';
 import { optionalAuth, verifyToken } from '../utils/verify.js';
 import { aiChatRateLimit, getRateLimitStatus } from '../middleware/aiRateLimiter.js';
 import { cleanupOldChatData, getDataRetentionStats, cleanupUserData } from '../services/dataRetentionService.js';
@@ -60,6 +60,9 @@ router.get('/rate-limit-status', optionalAuth, (req, res) => {
         });
     }
 });
+
+// Get policy violation status (optional authentication)
+router.get('/policy-status', optionalAuth, getPolicyStatus);
 
 // Data retention cleanup endpoints (admin only)
 router.post('/cleanup-data', verifyToken, async (req, res) => {

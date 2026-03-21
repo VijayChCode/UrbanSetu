@@ -4,6 +4,7 @@ import User from '../models/user.model.js';
 import MessageRating from '../models/messageRating.model.js';
 import About from '../models/about.model.js';
 import Deployment from '../models/deployment.model.js';
+import PolicyViolation from '../models/policyViolation.model.js';
 import { getRelevantCachedData, needsReindexing, indexAllWebsiteData } from '../services/dataSyncService.js';
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
@@ -57,7 +58,41 @@ export const chatWithGemini = async (req, res) => {
         selectedProperties
     } = req.body;
     const userId = req.user?.id;
+    const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
     const currentSessionId = sessionId || `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+    // -------------------------------------------------------------
+    // COOLDOWN / POLICY ENFORCEMENT CHECK
+    // -------------------------------------------------------------
+    try {
+        let blockInfo = null;
+        if (userId) {
+            const user = await User.findById(userId).select('policyViolations cooldownEnd');
+            if (user && user.cooldownEnd && user.cooldownEnd > new Date()) {
+                blockInfo = { end: user.cooldownEnd, count: user.policyViolations };
+            }
+        } else if (clientIp) {
+            const guestBlock = await PolicyViolation.findOne({ ip: clientIp });
+            if (guestBlock && guestBlock.cooldownEnd && guestBlock.cooldownEnd > new Date()) {
+                blockInfo = { end: guestBlock.cooldownEnd, count: guestBlock.violations };
+            }
+        }
+
+        if (blockInfo) {
+            const remainingHours = Math.ceil((blockInfo.end - new Date()) / (1000 * 60 * 60));
+            return res.status(403).json({
+                success: false,
+                message: 'Access Restricted: Safety Policy Cooldown Active',
+                isBlocked: true,
+                policyViolations: blockInfo.count,
+                cooldownEnd: blockInfo.end,
+                remainingHours: remainingHours
+            });
+        }
+    } catch (checkErr) {
+        console.error('Error during policy check:', checkErr);
+    }
+    // -------------------------------------------------------------
 
     try {
         if (!message && !images?.length && !imageUrl && !audioUrl && !videoUrl && !documentUrl) {
@@ -217,6 +252,37 @@ export const chatWithGemini = async (req, res) => {
 
         if (isRestricted) {
             console.warn(`[Moderation] Blocked restricted content from user ${userId || 'guest'}`);
+
+            // Persistent Restriction Logic
+            try {
+                if (userId) {
+                    const user = await User.findById(userId);
+                    if (user) {
+                        const newCount = (user.policyViolations || 0) + 1;
+                        user.policyViolations = newCount;
+                        if (newCount >= 3) { // VIOLATION_LIMIT = 3
+                            user.cooldownEnd = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+                        }
+                        await user.save();
+                    }
+                } else if (clientIp) {
+                    const guestBlock = await PolicyViolation.findOneAndUpdate(
+                        { ip: clientIp },
+                        { 
+                            $inc: { violations: 1 },
+                            $set: { lastViolation: new Date() }
+                        },
+                        { upsert: true, new: true }
+                    );
+                    
+                    if (guestBlock.violations >= 3) {
+                        guestBlock.cooldownEnd = new Date(Date.now() + 24 * 60 * 60 * 1000);
+                        await guestBlock.save();
+                    }
+                }
+            } catch (dbErr) {
+                console.error('Error updating violation database:', dbErr);
+            }
 
             // Save restricted message to history if user is logged in
             if (userId) {
@@ -1730,6 +1796,51 @@ export const updateSessionHistory = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Internal server error'
+        });
+    }
+};
+
+export const getPolicyStatus = async (req, res) => {
+    const userId = req.user?.id;
+    const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
+
+    try {
+        let status = {
+            isBlocked: false,
+            violations: 0,
+            cooldownEnd: null,
+            remainingHours: 0
+        };
+
+        if (userId) {
+            const user = await User.findById(userId).select('policyViolations cooldownEnd');
+            if (user) {
+                status.violations = user.policyViolations || 0;
+                status.cooldownEnd = user.cooldownEnd;
+                status.isBlocked = !!(user.cooldownEnd && user.cooldownEnd > new Date());
+            }
+        } else if (clientIp) {
+            const guestBlock = await PolicyViolation.findOne({ ip: clientIp });
+            if (guestBlock) {
+                status.violations = guestBlock.violations || 0;
+                status.cooldownEnd = guestBlock.cooldownEnd;
+                status.isBlocked = !!(guestBlock.cooldownEnd && guestBlock.cooldownEnd > new Date());
+            }
+        }
+
+        if (status.isBlocked && status.cooldownEnd) {
+            status.remainingHours = Math.ceil((new Date(status.cooldownEnd) - new Date()) / (1000 * 60 * 60));
+        }
+
+        res.json({
+            success: true,
+            status
+        });
+    } catch (error) {
+        console.error('Failed to get policy status:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to get policy status'
         });
     }
 };

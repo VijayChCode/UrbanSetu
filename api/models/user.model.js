@@ -368,6 +368,14 @@ const userSchema = new mongoose.Schema({
     totalCompletionTokens: { type: Number, default: 0 },
     totalTokens: { type: Number, default: 0 },
     lastUsed: { type: Date, default: null }
+  },
+  policyViolations: {
+    type: Number,
+    default: 0
+  },
+  cooldownEnd: {
+    type: Date,
+    default: null
   }
 }, { timestamps: true });
 
