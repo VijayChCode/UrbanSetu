@@ -6591,16 +6591,16 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         {(isLoading || showTypingIndicator || hasChatError) && (
                                             <div className="absolute -top-3.5 -right-2 z-20 pointer-events-none transition-all duration-300">
                                                 {hasChatError ? (
-                                                    <div className="relative flex items-center justify-center">
-                                                        <FaWifi className="text-[14px] text-red-400 rotate-[20deg] drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
-                                                        <div className="absolute -top-1 -right-1 z-30">
-                                                            <div className="bg-red-500 text-white rounded-full w-3.5 h-3.5 flex items-center justify-center border-2 border-white shadow-lg ring-1 ring-red-900/40">
-                                                                <FaTimes size={8} />
+                                                    <div className="relative flex items-center justify-center translate-x-1 -translate-y-1">
+                                                        <FaWifi className="text-[22px] text-red-400 rotate-[20deg] drop-shadow-[0_0_10px_rgba(239,68,68,0.8)]" />
+                                                        <div className="absolute -top-1.5 -right-1.5 z-30">
+                                                            <div className="bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center border-2 border-white shadow-xl ring-2 ring-red-900/40">
+                                                                <FaTimes size={10} />
                                                             </div>
                                                         </div>
                                                     </div>
                                                 ) : (
-                                                    <FaWifi className="text-[14px] text-white animate-bandwidth rotate-[20deg] drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]" />
+                                                    <FaWifi className="text-[22px] text-white animate-bandwidth rotate-[20deg] drop-shadow-[0_0_10px_rgba(255,255,255,0.7)]" />
                                                 )}
                                             </div>
                                         )}
