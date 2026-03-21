@@ -4437,7 +4437,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 const activeSession = sessions.find(s => s.sessionId === activeSessionId);
                 if (activeSession) {
                     setActiveSessionTokens(activeSession.totalTokens || 0);
-                    const isGenericNodes = !activeSession.name || /^Chat \d/i.test(activeSession.name) || activeSession.name.toLowerCase() === 'new chat';
+                    const isGeneric = !activeSession.name || /^Chat \d/i.test(activeSession.name) || activeSession.name.toLowerCase() === 'new chat';
                     if (!isGeneric) {
                         if (activeSession.name !== currentChatName) {
                             setCurrentChatName(activeSession.name);
