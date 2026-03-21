@@ -2859,6 +2859,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     }, [isOpen, messages, hasMoreHistory, messageHistoryPage, isLoadingPreviousMessages, sessionId]);
 
     const handlePaste = async (e) => {
+        if (isBlockedByPolicy) return;
         const items = (e.clipboardData || e.originalEvent?.clipboardData)?.items;
         if (!items) return;
 
@@ -2882,6 +2883,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
     // Drag and Drop handlers for the input area
     const handleDragOver = (e) => {
+        if (isBlockedByPolicy) return;
         e.preventDefault();
         e.stopPropagation();
         // Set the drop effect to show a copy cursor
@@ -2889,6 +2891,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     };
 
     const handleDragEnter = (e) => {
+        if (isBlockedByPolicy) return;
         e.preventDefault();
         e.stopPropagation();
         dragCounterRef.current += 1;
@@ -2908,6 +2911,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     };
 
     const handleDrop = async (e) => {
+        if (isBlockedByPolicy) return;
         e.preventDefault();
         e.stopPropagation();
         setIsDraggingOver(false);
@@ -4887,6 +4891,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     }, []);
 
     const toggleVoiceInput = () => {
+        if (isBlockedByPolicy) {
+            toast.warning('Voice input is disabled during your policy cooldown.');
+            return;
+        }
         if (!currentUser) {
             toast.info('Please login to use voice input');
             return;
@@ -6510,6 +6518,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         <div className="absolute right-full top-1/2 -translate-y-1/2 flex flex-row-reverse items-center gap-3 pr-5 opacity-0 scale-75 translate-x-10 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:translate-x-0 group-hover:pointer-events-auto transition-all duration-500 ease-out z-50">
                             <button
                                 onClick={() => {
+                                    if (isBlockedByPolicy) {
+                                        toast.warning('File upload is disabled during your policy cooldown.');
+                                        return;
+                                    }
                                     if (!currentUser) {
                                         toast.info('Please login to upload files');
                                         return;
@@ -6517,13 +6529,18 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     setIsOpen(true);
                                     setTimeout(() => setShowFileUpload(true), 100);
                                 }}
-                                className="w-11 h-11 bg-purple-500 hover:bg-purple-600 text-white rounded-full shadow-2xl flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 border border-white/20"
+                                disabled={isBlockedByPolicy}
+                                className={`w-11 h-11 bg-purple-500 hover:bg-purple-600 text-white rounded-full shadow-2xl flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 border border-white/20 ${isBlockedByPolicy ? 'opacity-50 cursor-not-allowed grayscale' : ''}`}
                                 title="Upload File"
                             >
                                 <FaUpload size={16} />
                             </button>
                             <button
                                 onClick={() => {
+                                    if (isBlockedByPolicy) {
+                                        toast.warning('Voice input is disabled during your policy cooldown.');
+                                        return;
+                                    }
                                     if (!currentUser) {
                                         toast.info('Please login to use voice input');
                                         return;
@@ -6537,7 +6554,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         setShowVoiceInput(true);
                                     }, 600);
                                 }}
-                                className="w-11 h-11 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-2xl flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 border border-white/20"
+                                disabled={isBlockedByPolicy}
+                                className={`w-11 h-11 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-2xl flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 border border-white/20 ${isBlockedByPolicy ? 'opacity-50 cursor-not-allowed grayscale' : ''}`}
                                 title="Voice Input"
                             >
                                 <FaMicrophone size={16} />
@@ -8218,6 +8236,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                         <button
                                                             type="button"
                                                             onClick={() => {
+                                                                if (isBlockedByPolicy) {
+                                                                    toast.warning('File upload is disabled during your policy cooldown.');
+                                                                    return;
+                                                                }
                                                                 if (!currentUser) {
                                                                     toast.info('Please login to upload files');
                                                                     return;
@@ -8225,7 +8247,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                 setShowFileUpload(true);
                                                                 setShowInputOptions(false);
                                                             }}
-                                                            className={`w-full text-left px-4 py-3 flex items-center gap-3 transition-colors ${isDarkMode ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-50 text-gray-700'}`}
+                                                            disabled={isBlockedByPolicy}
+                                                            className={`w-full text-left px-4 py-3 flex items-center gap-3 transition-colors ${isDarkMode ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-50 text-gray-700'} ${isBlockedByPolicy ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                         >
                                                             <div className={`p-1.5 rounded-lg ${isDarkMode ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'}`}>
                                                                 <FaPaperclip size={14} />
@@ -8236,10 +8259,15 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                         <button
                                                             type="button"
                                                             onClick={() => {
+                                                                if (isBlockedByPolicy) {
+                                                                    toast.warning('Voice input is disabled during your policy cooldown.');
+                                                                    return;
+                                                                }
                                                                 toggleVoiceInput();
                                                                 setShowInputOptions(false);
                                                             }}
-                                                            className={`w-full text-left px-4 py-3 flex items-center gap-3 transition-colors ${isDarkMode ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-50 text-gray-700'}`}
+                                                            disabled={isBlockedByPolicy}
+                                                            className={`w-full text-left px-4 py-3 flex items-center gap-3 transition-colors ${isDarkMode ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-50 text-gray-700'} ${isBlockedByPolicy ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                         >
                                                             <div className={`p-1.5 rounded-lg ${isDarkMode ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-600'}`}>
                                                                 <FaMicrophone size={14} />
