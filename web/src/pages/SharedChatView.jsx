@@ -41,7 +41,7 @@ export default function SharedChatView() {
     const navigate = useNavigate();
     const { currentUser } = useSelector((state) => state.user);
     const [chatData, setChatData] = useState(null);
-    usePageTitle(chatData ? chatData.title : "Shared Chat", "SetuAI Shared Chat");
+    usePageTitle(chatData?.title || "Shared Chat", "SetuAI Shared Chat");
     const [loading, setLoading] = useState(true);
     const [importing, setImporting] = useState(false);
     const [importedSessionId, setImportedSessionId] = useState(null);
@@ -394,11 +394,9 @@ export default function SharedChatView() {
                         ) : (
                             <button onClick={handleImportChat} disabled={importing} className="h-10 flex items-center gap-2 px-4 rounded-xl bg-indigo-600 text-white font-black text-[10px] uppercase shadow-lg shadow-indigo-600/30 active:scale-95 transition-all disabled:opacity-70 group overflow-hidden">
                                 {importing ? (
-                                    <div className="flex items-center">
+                                    <div className="flex items-center whitespace-nowrap">
                                         <span>Importing</span>
-                                        <span className="relative w-5 inline-block text-left ml-0.5">
-                                            <span className="animate-dots absolute left-0 top-0"></span>
-                                        </span>
+                                        <span className="animate-dots ml-0.5 w-6 inline-block text-left"></span>
                                     </div>
                                 ) : (
                                     <>
@@ -408,9 +406,6 @@ export default function SharedChatView() {
                                 )}
                             </button>
                         )}
-                        <a href="/ai" className="w-10 h-10 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-xl text-gray-600 dark:text-gray-300 hover:bg-blue-600 hover:text-white transition-all shadow-sm active:rotate-12" title="New Chat">
-                            <FaPaperPlane size={14} />
-                        </a>
                     </div>
                 </div>
             </header>
