@@ -481,6 +481,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     });
     const [isBlockedByPolicy, setIsBlockedByPolicy] = useState(false);
     const [showViolationModal, setShowViolationModal] = useState(false);
+    const [remainingCooldownText, setRemainingCooldownText] = useState('');
 
     // Sync violation states and handle cooldown check
     useEffect(() => {
@@ -488,6 +489,19 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             const now = Date.now();
             if (cooldownEnd > 0 && now < cooldownEnd) {
                 if (!isBlockedByPolicy) setIsBlockedByPolicy(true);
+                
+                // Calculate remaining time
+                const diff = cooldownEnd - now;
+                const hours = Math.floor(diff / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                
+                if (hours > 0) {
+                    setRemainingCooldownText(`${hours}h ${minutes}m left`);
+                } else if (minutes > 0) {
+                    setRemainingCooldownText(`${minutes}m left`);
+                } else {
+                    setRemainingCooldownText('Ending soon...');
+                }
             } else {
                 if (isBlockedByPolicy) {
                     setIsBlockedByPolicy(false);
@@ -495,6 +509,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     setPolicyViolations(0);
                     localStorage.setItem(getUserKey('policy_violations'), '0');
                     localStorage.removeItem(getUserKey('cooldown_end'));
+                    setRemainingCooldownText('');
                 }
             }
         };
@@ -528,13 +543,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 const data = await res.json();
                 if (data.success && data.status) {
                     const { isBlocked, violations, cooldownEnd: serverCooldown } = data.status;
-                    
+
                     setPolicyViolations(violations);
                     if (isBlocked && serverCooldown) {
                         const endMs = new Date(serverCooldown).getTime();
                         setCooldownEnd(endMs);
                         setIsBlockedByPolicy(true);
-                        
+
                         // Sync localStorage
                         localStorage.setItem(getUserKey('policy_violations'), violations.toString());
                         localStorage.setItem(getUserKey('cooldown_end'), endMs.toString());
@@ -2939,7 +2954,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
     const handleSubmit = async (e) => {
         if (e) e.preventDefault();
-        
+
         // Cooldown/Policy Block check
         if (isBlockedByPolicy) {
             setShowViolationModal(true);
@@ -3478,7 +3493,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 });
                 setHasChatError(true);
                 autoReportRestrictedContent(lastUserMessageRef.current, "AI Moderated");
-                
+
                 // Trigger violation sequence
                 handlePolicyViolation();
                 // Note: For policy violations, we keep the prompt count decremented
@@ -8348,7 +8363,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
                                                         handleKeyDown(e);
                                                     }}
-                                                    placeholder={isBlockedByPolicy ? "Access restricted due to policy violations. Check terms for details." : (rateLimitInfo.remaining <= 0 && rateLimitInfo.role !== 'rootadmin') ? "Sign in to continue chatting..." : "Ask me anything about real estate or @ mention any property/blog/guide..."}
+                                                    placeholder={isBlockedByPolicy ? `Restricted: ${remainingCooldownText || 'Checking status...'}` : (rateLimitInfo.remaining <= 0 && rateLimitInfo.role !== 'rootadmin') ? "Sign in to continue chatting..." : "Ask me anything about real estate or @ mention any property/blog/guide..."}
                                                     aria-label="Type your message"
                                                     aria-describedby="input-help"
                                                     role="textbox"
