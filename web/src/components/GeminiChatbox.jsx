@@ -4557,6 +4557,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         key: `${sessionId}_${bookmark.messageIndex}_${bookmark.messageTimestamp}`,
                         content: bookmark.messageContent,
                         timestamp: bookmark.messageTimestamp,
+                        messageIndex: bookmark.messageIndex,
                         role: bookmark.messageRole,
                         sessionId: sessionId
                     }));
@@ -8462,7 +8463,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                         <button
                                                             onClick={() => {
                                                                 const currentSessionId = getOrCreateSessionId();
-                                                                toggleBookmark(bookmark.messageIndex || 0, { content: bookmark.content, timestamp: bookmark.timestamp });
+                                                                toggleBookmark(bookmark.messageIndex, bookmark);
                                                             }}
                                                             className={`text-xs px-2 py-1 rounded ${isDarkMode ? 'bg-red-900/30 hover:bg-red-800 text-red-300' : 'bg-red-100 hover:bg-red-200 text-red-700'}`}
                                                         >
