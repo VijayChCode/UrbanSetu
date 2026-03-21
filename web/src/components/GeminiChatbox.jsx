@@ -10985,9 +10985,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
             {
                 showTermsModal && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowTermsModal(false)}>
                         <div
                             className={`w-11/12 max-w-2xl max-h-[85vh] flex flex-col rounded-xl shadow-xl relative ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
+                            onClick={e => e.stopPropagation()}
                         >
                             {/* Header */}
                             <div className={`flex flex-shrink-0 items-center justify-between p-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
@@ -10995,12 +10996,6 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     <FaFileAlt className="text-blue-500 text-xl" />
                                     <h2 className="text-xl font-bold">Terms of Service</h2>
                                 </div>
-                                <button
-                                    onClick={() => setShowTermsModal(false)}
-                                    className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
-                                >
-                                    <FaTimes size={20} />
-                                </button>
                             </div>
 
                             {/* Scrollable Content */}
@@ -11072,16 +11067,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 </div>
 
                                 {/* Footer Action (If viewing from consent modal, this effectively returns to it) */}
-                                <div className={`p-4 border-t flex justify-between items-center ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
-                                    <p className={`text-xs sm:text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                <div className={`p-4 border-t flex justify-center items-center ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+                                    <p className={`text-xs sm:text-sm text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                                         For comprehensive platform policies, please read our full <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600 hover:underline font-medium transition-colors">Terms & Conditions</a>.
                                     </p>
-                                    <button
-                                        onClick={() => setShowTermsModal(false)}
-                                        className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex-shrink-0 ml-4"
-                                    >
-                                        Close
-                                    </button>
                                 </div>
                             </div>
                         </div>
