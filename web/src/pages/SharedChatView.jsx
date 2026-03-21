@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { FaRobot, FaUser, FaClock, FaCalendar, FaExclamationTriangle, FaArrowRight, FaDownload, FaExternalLinkAlt, FaChevronLeft, FaChevronRight, FaPaperPlane, FaUserCircle, FaCopy, FaCheck } from 'react-icons/fa';
 import { toast } from 'react-toastify';
-
 import { usePageTitle } from '../hooks/usePageTitle';
 import GeminiAIWrapper from "../components/GeminiAIWrapper";
 import SharedChatViewSkeleton from '../components/skeletons/SharedChatViewSkeleton';
@@ -121,7 +120,7 @@ export default function SharedChatView() {
 
     const switchMessageVersion = (index, newVersionIndex) => {
         if (newVersionIndex < 0) return;
-        
+
         setMessages(prev => {
             const next = [...prev];
             const message = { ...next[index] };
@@ -131,7 +130,7 @@ export default function SharedChatView() {
             // 1. Save current state of this version before switching
             const currentActiveIndex = message.activeVersionIndex || 0;
             const updatedVariants = [...message.variants];
-            
+
             updatedVariants[currentActiveIndex] = {
                 ...updatedVariants[currentActiveIndex],
                 content: message.content,
@@ -142,7 +141,7 @@ export default function SharedChatView() {
 
             // 2. Switch to target version
             const targetVersion = updatedVariants[newVersionIndex];
-            
+
             const updatedMessage = {
                 ...message,
                 content: targetVersion.content,
@@ -160,25 +159,25 @@ export default function SharedChatView() {
             ];
         });
     };
-    
+
     const RecommendationSlider = ({ recommendations }) => {
         const scrollRef = React.useRef(null);
         const [showLeftArrow, setShowLeftArrow] = React.useState(false);
         const [showRightArrow, setShowRightArrow] = React.useState(true);
-    
+
         const checkScroll = () => {
             if (!scrollRef.current) return;
             const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
             setShowLeftArrow(scrollLeft > 10);
             setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
         };
-    
+
         React.useEffect(() => {
             checkScroll();
             window.addEventListener('resize', checkScroll);
             return () => window.removeEventListener('resize', checkScroll);
         }, []);
-    
+
         const scroll = (direction) => {
             if (!scrollRef.current) return;
             const scrollAmount = 300;
@@ -187,11 +186,11 @@ export default function SharedChatView() {
                 behavior: 'smooth'
             });
         };
-    
+
         return (
             <div className="relative group/slider">
                 {showLeftArrow && (
-                    <button 
+                    <button
                         onClick={() => scroll('left')}
                         className="absolute left-[-15px] sm:left-[-20px] top-1/2 -translate-y-1/2 z-10 w-9 h-9 flex items-center justify-center bg-white dark:bg-gray-800 rounded-full shadow-2xl border border-gray-100 dark:border-gray-700 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600 hover:text-white transition-all transform hover:scale-110 active:scale-90"
                         aria-label="Previous properties"
@@ -199,8 +198,8 @@ export default function SharedChatView() {
                         <FaChevronLeft size={14} />
                     </button>
                 )}
-                
-                <div 
+
+                <div
                     ref={scrollRef}
                     onScroll={checkScroll}
                     className="flex overflow-x-auto pb-4 gap-6 no-scrollbar scroll-smooth snap-x"
@@ -209,7 +208,7 @@ export default function SharedChatView() {
                         // Determine if it's a property (ListingItem) or a blog/guide (BlogGuideItem)
                         const isProperty = item.bedrooms !== undefined || item.bathrooms !== undefined || item.type === 'rent' || item.type === 'sale';
                         const isBlogGuide = item.category || item.excerpt || item.type === 'blog' || item.type === 'guide';
-                        
+
                         return (
                             <div key={item._id || pIdx} className="flex-shrink-0 w-[240px] sm:w-[280px] snap-start transform transition-all duration-500 hover:scale-[1.05] hover:-translate-y-2">
                                 {isProperty ? (
@@ -223,9 +222,9 @@ export default function SharedChatView() {
                         );
                     })}
                 </div>
-    
+
                 {showRightArrow && (
-                    <button 
+                    <button
                         onClick={() => scroll('right')}
                         className="absolute right-[-15px] sm:right-[-20px] top-1/2 -translate-y-1/2 z-10 w-9 h-9 flex items-center justify-center bg-white dark:bg-gray-800 rounded-full shadow-2xl border border-gray-100 dark:border-gray-700 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600 hover:text-white transition-all transform hover:scale-110 active:scale-90"
                         aria-label="Next properties"
@@ -291,8 +290,8 @@ export default function SharedChatView() {
                             // Find the actual image URL in the current message or history if possible
                             // For simplicity in shared view, we just render it as a highlighted span that can open preview if common image
                             return (
-                                <span 
-                                    key={subIndex} 
+                                <span
+                                    key={subIndex}
                                     className="cursor-pointer text-indigo-500 dark:text-indigo-400 font-bold hover:underline"
                                     onClick={() => {
                                         // Try to find if this filename matches any known image URL
@@ -426,9 +425,9 @@ export default function SharedChatView() {
 
                                 {msg.variants && msg.variants.length > 1 && (
                                     <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-black tracking-tighter ${msg.role === 'user' ? 'bg-white/10 text-white/90' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'} mb-4 w-fit border ${msg.role === 'user' ? 'border-white/20' : 'border-gray-200 dark:border-gray-600'} select-none`}>
-                                        <button 
-                                            onClick={(e) => { e.stopPropagation(); switchMessageVersion(index, (msg.activeVersionIndex || 0) - 1); }} 
-                                            disabled={(msg.activeVersionIndex || 0) === 0} 
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); switchMessageVersion(index, (msg.activeVersionIndex || 0) - 1); }}
+                                            disabled={(msg.activeVersionIndex || 0) === 0}
                                             className="hover:scale-125 disabled:opacity-30 transition-all p-0.5"
                                             title="Previous version"
                                         >
@@ -439,9 +438,9 @@ export default function SharedChatView() {
                                             <span className="opacity-50">/</span>
                                             <span className="opacity-90">{msg.variants.length}</span>
                                         </div>
-                                        <button 
-                                            onClick={(e) => { e.stopPropagation(); switchMessageVersion(index, (msg.activeVersionIndex || 0) + 1); }} 
-                                            disabled={(msg.activeVersionIndex || 0) === msg.variants.length - 1} 
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); switchMessageVersion(index, (msg.activeVersionIndex || 0) + 1); }}
+                                            disabled={(msg.activeVersionIndex || 0) === msg.variants.length - 1}
                                             className="hover:scale-125 disabled:opacity-30 transition-all p-0.5"
                                             title="Next version"
                                         >
@@ -602,7 +601,7 @@ export default function SharedChatView() {
             <GeminiAIWrapper />
             <ContactSupportWrapper />
 
-            <ImagePreview 
+            <ImagePreview
                 isOpen={isImagePreviewOpen}
                 onClose={() => setIsImagePreviewOpen(false)}
                 images={previewImages}

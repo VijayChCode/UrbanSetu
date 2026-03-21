@@ -6562,10 +6562,15 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             </button>
                             <button
                                 onClick={() => {
+                                    if (isBlockedByPolicy) {
+                                        toast.warning('Starting a new chat is disabled during your policy cooldown.');
+                                        return;
+                                    }
                                     createNewSession();
                                     setIsOpen(true);
                                 }}
-                                className="w-11 h-11 bg-blue-500 hover:bg-blue-600 text-white rounded-full shadow-2xl flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 border border-white/20"
+                                disabled={isBlockedByPolicy}
+                                className={`w-11 h-11 bg-blue-500 hover:bg-blue-600 text-white rounded-full shadow-2xl flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 border border-white/20 ${isBlockedByPolicy ? 'opacity-50 cursor-not-allowed grayscale' : ''}`}
                                 title="New Chat"
                             >
                                 <FaComments size={16} />
@@ -6880,10 +6885,18 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                             {/* New Chat */}
                                             <li>
                                                 <button
-                                                    onClick={() => { createNewSession(); setIsHeaderMenuOpen(false); }}
-                                                    className={`w-full text-left px-4 py-3 ${isDarkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-100/80'} flex items-center gap-3 transition-all duration-200 hover:scale-[1.02] group`}
+                                                    onClick={() => {
+                                                        if (isBlockedByPolicy) {
+                                                            toast.warning('Starting a new chat is disabled during your policy cooldown.');
+                                                            return;
+                                                        }
+                                                        createNewSession();
+                                                        setIsHeaderMenuOpen(false);
+                                                    }}
+                                                    disabled={isBlockedByPolicy}
+                                                    className={`w-full text-left px-4 py-3 ${isDarkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-100/80'} flex items-center gap-3 transition-all duration-200 ${isBlockedByPolicy ? 'opacity-50 cursor-not-allowed grayscale' : 'hover:scale-[1.02] group'}`}
                                                 >
-                                                    <div className={`p-1.5 rounded-lg ${isDarkMode ? 'bg-blue-500/20' : 'bg-blue-100'} group-hover:scale-110 transition-transform duration-200`}>
+                                                    <div className={`p-1.5 rounded-lg ${isDarkMode ? 'bg-blue-500/20' : 'bg-blue-100'} ${isBlockedByPolicy ? '' : 'group-hover:scale-110'} transition-transform duration-200`}>
                                                         <FaComments size={14} className="text-blue-500" />
                                                     </div>
                                                     <span className="font-medium">New Chat</span>
@@ -8688,8 +8701,16 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                 </button>
                                             )}
                                             <button
-                                                onClick={() => { createNewSession(); setShowHistory(false); }}
-                                                className="px-3 py-1.5 text-xs rounded bg-green-600 text-white hover:bg-green-700 flex items-center gap-1"
+                                                onClick={() => {
+                                                    if (isBlockedByPolicy) {
+                                                        toast.warning('Starting a new chat is disabled during your policy cooldown.');
+                                                        return;
+                                                    }
+                                                    createNewSession();
+                                                    setShowHistory(false);
+                                                }}
+                                                disabled={isBlockedByPolicy}
+                                                className={`px-3 py-1.5 text-xs rounded bg-green-600 text-white flex items-center gap-1 ${isBlockedByPolicy ? 'opacity-50 cursor-not-allowed grayscale' : 'hover:bg-green-700'}`}
                                             >
                                                 <FaComments size={10} />
                                                 New Chat
