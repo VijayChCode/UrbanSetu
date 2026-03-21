@@ -10985,10 +10985,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
             {
                 showTermsModal && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowTermsModal(false)}>
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
                         <div
                             className={`w-11/12 max-w-2xl max-h-[85vh] flex flex-col rounded-xl shadow-xl relative ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
-                            onClick={e => e.stopPropagation()}
                         >
                             {/* Header */}
                             <div className={`flex flex-shrink-0 items-center justify-between p-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
@@ -10996,6 +10995,12 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     <FaFileAlt className="text-blue-500 text-xl" />
                                     <h2 className="text-xl font-bold">Terms of Service</h2>
                                 </div>
+                                <button
+                                    onClick={() => setShowTermsModal(false)}
+                                    className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
+                                >
+                                    <FaTimes size={20} />
+                                </button>
                             </div>
 
                             {/* Scrollable Content */}
