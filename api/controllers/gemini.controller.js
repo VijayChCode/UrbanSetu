@@ -318,7 +318,16 @@ export const chatWithGemini = async (req, res) => {
                     await chatHistory.addMessage('user', userDisplayContent, true, undefined, false, media); // true = isRestricted
 
                     // Also save the violation response so it persists in red on UI reload
-                    const violationMessage = "⚠️ **Safety Policy Violation Detected**\n\nI cannot fulfill this request because it falls under a restricted category (e.g., Harassment, Hate Speech, Violence, or Illegal Activities).\n\nThis incident has been flagged for review.";
+                    // Also save the violation response so it persists in red on UI reload
+                    const remaining = Math.max(0, 3 - newCount);
+                    let violationFooter = "";
+                    if (newCount >= 3) {
+                        violationFooter = `\n\n**Maximum violations reached (${newCount}/3).** Your access to the AI assistant has been restricted for 24 hours.`;
+                    } else {
+                        violationFooter = `\n\n**Warning: This is violation ${newCount}/3.** You have ${remaining} more ${remaining === 1 ? 'chance' : 'chances'} before a 24-hour restriction is applied.`;
+                    }
+
+                    const violationMessage = `⚠️ **Safety Policy Violation Detected**\n\nI cannot fulfill this request because it falls under a restricted category (e.g., Harassment, Hate Speech, Violence, or Illegal Activities).${violationFooter}\n\nThis incident has been flagged for review.`;
                     await chatHistory.addMessage('assistant', violationMessage, true, undefined, true);
                     await chatHistory.save();
                 } catch (saveError) {
@@ -328,7 +337,9 @@ export const chatWithGemini = async (req, res) => {
 
             return res.status(403).json({
                 success: false,
-                message: 'Policy violation: restricted content detected.'
+                message: 'Policy violation: restricted content detected.',
+                policyViolations: newCount,
+                policyLimit: 3
             });
         }
         // -------------------------------------------------------------

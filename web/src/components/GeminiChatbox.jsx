@@ -3183,7 +3183,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     }
                     if (response.status === 403 && errorData.message?.includes('restricted content')) {
                         handlePolicyViolation();
-                        throw new Error('Safety Policy Violation Detected');
+                        const vError = new Error('Safety Policy Violation Detected');
+                        vError.violationsCount = errorData.policyViolations || (policyViolations + 1);
+                        vError.isNowBlocked = (vError.violationsCount >= VIOLATION_LIMIT);
+                        throw vError;
                     }
                     throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
                 }
@@ -3367,7 +3370,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     }
                     if (response.status === 403 && errorData.message?.includes('restricted content')) {
                         handlePolicyViolation();
-                        throw new Error('Safety Policy Violation Detected');
+                        const vError = new Error('Safety Policy Violation Detected');
+                        vError.violationsCount = errorData.policyViolations || (policyViolations + 1);
+                        vError.isNowBlocked = (vError.violationsCount >= VIOLATION_LIMIT);
+                        throw vError;
                     }
                     throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
                 }
@@ -3491,9 +3497,19 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     }
 
                     // 2. Add the violation message bubble
+                    const currentViolations = error.violationsCount || (policyViolations + 1);
+                    const remaining = Math.max(0, VIOLATION_LIMIT - currentViolations);
+                    
+                    let violationFooter = "";
+                    if (currentViolations >= VIOLATION_LIMIT) {
+                        violationFooter = `\n\n**Maximum violations reached (${currentViolations}/${VIOLATION_LIMIT}).** Your access to the AI assistant has been restricted for 24 hours.`;
+                    } else {
+                        violationFooter = `\n\n**Warning: This is violation ${currentViolations}/${VIOLATION_LIMIT}.** You have ${remaining} more ${remaining === 1 ? 'chance' : 'chances'} before a 24-hour restriction is applied.`;
+                    }
+
                     updatedMessages.push({
                         role: 'assistant',
-                        content: "⚠️ **Safety Policy Violation Detected**\n\nI cannot fulfill this request because it falls under a restricted category (e.g., Harassment, Hate Speech, Violence, or Illegal Activities).\n\nThis incident has been flagged for review.",
+                        content: `⚠️ **Safety Policy Violation Detected**\n\nI cannot fulfill this request because it falls under a restricted category (e.g., Harassment, Hate Speech, Violence, or Illegal Activities).${violationFooter}\n\nThis incident has been flagged for review.`,
                         timestamp: new Date().toISOString(),
                         isError: true,
                         isViolation: true
@@ -3683,7 +3699,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 }
                 if (response.status === 403 && errorData.message?.includes('restricted content')) {
                     handlePolicyViolation();
-                    throw new Error('Safety Policy Violation Detected');
+                    const vError = new Error('Safety Policy Violation Detected');
+                    vError.violationsCount = errorData.policyViolations || (policyViolations + 1);
+                    vError.isNowBlocked = (vError.violationsCount >= VIOLATION_LIMIT);
+                    throw vError;
                 }
                 throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
             }
@@ -6834,12 +6853,16 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
                             {/* Enhanced Right controls */}
                             <div className="flex items-center gap-1 relative flex-shrink-0">
-                                {isBlockedByPolicy && (
+                                {policyViolations > 0 && (
                                     <button
                                         onClick={() => setShowViolationModal(true)}
-                                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-500/20 text-red-100 hover:bg-red-500/30 transition-all duration-300 animate-pulse border border-red-500/30"
-                                        title="Policy Restriction Active - Click for Details"
-                                        aria-label="View Policy Restriction Details"
+                                        className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-300 border ${
+                                            isBlockedByPolicy 
+                                                ? 'bg-red-500/20 text-red-100 hover:bg-red-500/30 animate-pulse border-red-500/30' 
+                                                : 'text-white/70 hover:text-white hover:bg-white/10 border-transparent hover:border-white/20'
+                                        }`}
+                                        title={isBlockedByPolicy ? "Policy Restriction Active - Click for Details" : `Safety Policy Status (${policyViolations}/${VIOLATION_LIMIT})`}
+                                        aria-label="View Policy Status"
                                     >
                                         <FaShieldAlt className="text-sm" />
                                     </button>
@@ -11789,28 +11812,44 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             {showViolationModal && (
                 <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
                     <div className={`w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border-2 ${isDarkMode ? 'bg-gray-900 border-red-900/50' : 'bg-white border-red-100'} animate-scaleIn`}>
-                        <div className="bg-red-600 p-6 flex items-center justify-center relative overflow-hidden">
+                        <div className={`${isBlockedByPolicy ? 'bg-red-600' : 'bg-blue-600'} p-6 flex items-center justify-center relative overflow-hidden`}>
                             <div className="absolute inset-0 bg-white/10 animate-pulse"></div>
-                            <FaBan size={48} className="text-white relative z-10" />
+                            {isBlockedByPolicy ? (
+                                <FaBan size={48} className="text-white relative z-10" />
+                            ) : (
+                                <FaShieldAlt size={48} className="text-white relative z-10" />
+                            )}
                         </div>
                         <div className="p-8 text-center">
                             <h3 className={`text-2xl font-black mb-3 ${isDarkMode ? 'text-white' : 'text-gray-900 uppercase tracking-tighter'}`}>
-                                Access Restricted
+                                {isBlockedByPolicy ? 'Access Restricted' : 'Safety Policy Status'}
                             </h3>
                             <p className={`text-sm mb-6 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                                Your access to the SetuAI chatbot has been temporarily restricted due to repeated safety policy violations.
+                                {isBlockedByPolicy 
+                                    ? 'Your access to the SetuAI chatbot has been temporarily restricted due to repeated safety policy violations.' 
+                                    : 'Your account has recorded one or more safety policy violations. Please review our usage guidelines to avoid further restrictions.'
+                                }
                             </p>
 
-                            <div className={`p-4 rounded-xl mb-6 text-left ${isDarkMode ? 'bg-gray-800' : 'bg-red-50'}`}>
+                            <div className={`p-4 rounded-xl mb-6 text-left ${isDarkMode ? 'bg-gray-800' : isBlockedByPolicy ? 'bg-red-50' : 'bg-blue-50'}`}>
                                 <div className="flex items-center justify-between mb-2">
-                                    <span className="text-xs font-bold uppercase tracking-widest text-red-500">Cooldown Status</span>
-                                    <span className={`text-[10px] px-2 py-0.5 rounded-full ${isDarkMode ? 'bg-red-900/50 text-red-300' : 'bg-red-100 text-red-700'}`}>Active</span>
+                                    <span className={`text-xs font-bold uppercase tracking-widest ${isBlockedByPolicy ? 'text-red-500' : 'text-blue-500'}`}>
+                                        {isBlockedByPolicy ? 'Cooldown Status' : 'Account Health'}
+                                    </span>
+                                    <span className={`text-[10px] px-2 py-0.5 rounded-full ${isDarkMode 
+                                        ? (isBlockedByPolicy ? 'bg-red-900/50 text-red-300' : 'bg-blue-900/50 text-blue-300')
+                                        : (isBlockedByPolicy ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700')
+                                    }`}>
+                                        {isBlockedByPolicy ? 'Active' : 'Warning'}
+                                    </span>
                                 </div>
                                 <div className="space-y-3">
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-xs opacity-70">Remaining Time:</span>
-                                        <span className="text-xs font-bold">~{Math.ceil((cooldownEnd - Date.now()) / (60 * 60 * 1000))} hours</span>
-                                    </div>
+                                    {isBlockedByPolicy && (
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-xs opacity-70">Remaining Time:</span>
+                                            <span className="text-xs font-bold">~{Math.max(0, Math.ceil((cooldownEnd - Date.now()) / (60 * 60 * 1000)))} hours</span>
+                                        </div>
+                                    )}
                                     <div className="flex justify-between items-center">
                                         <span className="text-xs opacity-70">Violation Limit:</span>
                                         <span className="text-xs font-bold">{policyViolations} / {VIOLATION_LIMIT}</span>
