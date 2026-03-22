@@ -265,6 +265,8 @@ export const chatWithGemini = async (req, res) => {
         if (isRestricted) {
             console.warn(`[Moderation] Blocked restricted content from user ${userId || 'guest'}`);
 
+            let newCount = 1; // Default to 1
+
             // Persistent Restriction Logic
             try {
                 if (userId) {
@@ -272,7 +274,7 @@ export const chatWithGemini = async (req, res) => {
                     if (user) {
                         // If cooldown already passed, reset count to 1, else increment
                         const isExpired = user.cooldownEnd && user.cooldownEnd < new Date();
-                        const newCount = isExpired ? 1 : (user.policyViolations || 0) + 1;
+                        newCount = isExpired ? 1 : (user.policyViolations || 0) + 1;
                         
                         user.policyViolations = newCount;
                         if (newCount >= 3) { // VIOLATION_LIMIT = 3
@@ -284,7 +286,6 @@ export const chatWithGemini = async (req, res) => {
                     }
                 } else if (clientIp) {
                     const guestBlock = await PolicyViolation.findOne({ ip: clientIp });
-                    let newCount = 1;
                     let resetData = { lastViolation: new Date() };
 
                     if (guestBlock) {
@@ -298,6 +299,7 @@ export const chatWithGemini = async (req, res) => {
                         }
                         resetData.violations = newCount;
                     } else {
+                        newCount = 1;
                         resetData.violations = 1;
                     }
 
@@ -317,7 +319,6 @@ export const chatWithGemini = async (req, res) => {
                     const chatHistory = await ChatHistory.findOrCreateSession(userId, currentSessionId);
                     await chatHistory.addMessage('user', userDisplayContent, true, undefined, false, media); // true = isRestricted
 
-                    // Also save the violation response so it persists in red on UI reload
                     // Also save the violation response so it persists in red on UI reload
                     const remaining = Math.max(0, 3 - newCount);
                     let violationFooter = "";
