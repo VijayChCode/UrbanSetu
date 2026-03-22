@@ -3518,7 +3518,6 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     return updatedMessages;
                 });
                 setHasChatError(true);
-                autoReportRestrictedContent(lastUserMessageRef.current, "AI Moderated");
 
                 // Trigger violation sequence
                 handlePolicyViolation();
@@ -11866,7 +11865,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 </button>
                                 <button
                                     onClick={() => setShowViolationModal(false)}
-                                    className={`w-full py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg shadow-red-500/30 transition-all duration-300 hover:scale-[1.02] active:scale-95`}
+                                    className={`w-full py-3 ${isBlockedByPolicy ? 'bg-red-600 hover:bg-red-700 shadow-red-500/30' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/30'} text-white rounded-xl font-bold shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-95`}
                                 >
                                     Understand & Close
                                 </button>
