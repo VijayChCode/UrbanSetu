@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
-import { FaComments, FaTimes, FaWifi, FaPaperPlane, FaRobot, FaCopy, FaSync, FaUser, FaCheck, FaHome, FaFileAlt, FaDownload, FaUpload, FaPaperclip, FaCog, FaLightbulb, FaHistory, FaBookmark, FaShare, FaThumbsUp, FaThumbsDown, FaRegBookmark, FaBookmark as FaBookmarkSolid, FaMicrophone, FaStop, FaImage, FaMagic, FaStar, FaMoon, FaSun, FaPalette, FaVolumeUp, FaVolumeMute, FaExpand, FaCompress, FaSearch, FaFilter, FaSort, FaEye, FaEyeSlash, FaEdit, FaCheck as FaCheckCircle, FaTimes as FaTimesCircle, FaFlag, FaClipboardList, FaCommentAlt, FaArrowDown, FaTrash, FaEllipsisH, FaEllipsisV, FaShareAlt, FaBan, FaChevronLeft, FaChevronRight, FaSave } from 'react-icons/fa';
+import { FaComments, FaTimes, FaWifi, FaPaperPlane, FaRobot, FaCopy, FaSync, FaUser, FaCheck, FaHome, FaFileAlt, FaDownload, FaUpload, FaPaperclip, FaCog, FaLightbulb, FaHistory, FaBookmark, FaShare, FaThumbsUp, FaThumbsDown, FaRegBookmark, FaBookmark as FaBookmarkSolid, FaMicrophone, FaStop, FaImage, FaMagic, FaStar, FaMoon, FaSun, FaPalette, FaVolumeUp, FaVolumeMute, FaExpand, FaCompress, FaSearch, FaFilter, FaSort, FaEye, FaEyeSlash, FaEdit, FaCheck as FaCheckCircle, FaTimes as FaTimesCircle, FaFlag, FaShieldAlt, FaClipboardList, FaCommentAlt, FaArrowDown, FaTrash, FaEllipsisH, FaEllipsisV, FaShareAlt, FaBan, FaChevronLeft, FaChevronRight, FaSave } from 'react-icons/fa';
 import EqualizerButton from './EqualizerButton';
 import ShareChatModal from './ShareChatModal';
 import SocialSharePanel from './SocialSharePanel';
@@ -554,6 +554,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         const endMs = new Date(serverCooldown).getTime();
                         setCooldownEnd(endMs);
                         setIsBlockedByPolicy(true);
+                        setShowViolationModal(true); // Show modal on mount if blocked
 
                         // Sync localStorage
                         localStorage.setItem(getUserKey('policy_violations'), violations.toString());
@@ -6833,6 +6834,16 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
                             {/* Enhanced Right controls */}
                             <div className="flex items-center gap-1 relative flex-shrink-0">
+                                {isBlockedByPolicy && (
+                                    <button
+                                        onClick={() => setShowViolationModal(true)}
+                                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-500/20 text-red-100 hover:bg-red-500/30 transition-all duration-300 animate-pulse border border-red-500/30"
+                                        title="Policy Restriction Active - Click for Details"
+                                        aria-label="View Policy Restriction Details"
+                                    >
+                                        <FaShieldAlt className="text-sm" />
+                                    </button>
+                                )}
 
                                 <button
                                     ref={headerMenuButtonRef}

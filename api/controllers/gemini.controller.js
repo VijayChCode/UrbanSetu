@@ -58,7 +58,9 @@ export const chatWithGemini = async (req, res) => {
         selectedProperties
     } = req.body;
     const userId = req.user?.id;
-    const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
+    // Normalize client IP (take first one if it's a list from proxy)
+    const rawIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
+    const clientIp = rawIp.split(',')[0].trim();
     const currentSessionId = sessionId || `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     // -------------------------------------------------------------
@@ -68,13 +70,23 @@ export const chatWithGemini = async (req, res) => {
         let blockInfo = null;
         if (userId) {
             const user = await User.findById(userId).select('policyViolations cooldownEnd');
-            if (user && user.cooldownEnd && user.cooldownEnd > new Date()) {
-                blockInfo = { end: user.cooldownEnd, count: user.policyViolations };
+            if (user) {
+                if (user.cooldownEnd && user.cooldownEnd > new Date()) {
+                    blockInfo = { end: user.cooldownEnd, count: user.policyViolations };
+                } else if (user.policyViolations > 0) {
+                    // Reset expired cooldown violations
+                    await User.findByIdAndUpdate(userId, { $set: { policyViolations: 0, cooldownEnd: null } });
+                }
             }
         } else if (clientIp) {
             const guestBlock = await PolicyViolation.findOne({ ip: clientIp });
-            if (guestBlock && guestBlock.cooldownEnd && guestBlock.cooldownEnd > new Date()) {
-                blockInfo = { end: guestBlock.cooldownEnd, count: guestBlock.violations };
+            if (guestBlock) {
+                if (guestBlock.cooldownEnd && guestBlock.cooldownEnd > new Date()) {
+                    blockInfo = { end: guestBlock.cooldownEnd, count: guestBlock.violations };
+                } else if (guestBlock.violations > 0) {
+                    // Reset expired cooldown violations
+                    await PolicyViolation.findOneAndUpdate({ ip: clientIp }, { $set: { violations: 0, cooldownEnd: null } });
+                }
             }
         }
 
@@ -258,27 +270,42 @@ export const chatWithGemini = async (req, res) => {
                 if (userId) {
                     const user = await User.findById(userId);
                     if (user) {
-                        const newCount = (user.policyViolations || 0) + 1;
+                        // If cooldown already passed, reset count to 1, else increment
+                        const isExpired = user.cooldownEnd && user.cooldownEnd < new Date();
+                        const newCount = isExpired ? 1 : (user.policyViolations || 0) + 1;
+                        
                         user.policyViolations = newCount;
                         if (newCount >= 3) { // VIOLATION_LIMIT = 3
                             user.cooldownEnd = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+                        } else if (isExpired) {
+                            user.cooldownEnd = null; // Clear expired date
                         }
                         await user.save();
                     }
                 } else if (clientIp) {
-                    const guestBlock = await PolicyViolation.findOneAndUpdate(
+                    const guestBlock = await PolicyViolation.findOne({ ip: clientIp });
+                    let newCount = 1;
+                    let resetData = { lastViolation: new Date() };
+
+                    if (guestBlock) {
+                        const isExpired = guestBlock.cooldownEnd && guestBlock.cooldownEnd < new Date();
+                        newCount = isExpired ? 1 : (guestBlock.violations || 0) + 1;
+                        
+                        if (newCount >= 3) {
+                            resetData.cooldownEnd = new Date(Date.now() + 24 * 60 * 60 * 1000);
+                        } else if (isExpired) {
+                            resetData.cooldownEnd = null;
+                        }
+                        resetData.violations = newCount;
+                    } else {
+                        resetData.violations = 1;
+                    }
+
+                    await PolicyViolation.findOneAndUpdate(
                         { ip: clientIp },
-                        { 
-                            $inc: { violations: 1 },
-                            $set: { lastViolation: new Date() }
-                        },
+                        { $set: resetData },
                         { upsert: true, new: true }
                     );
-                    
-                    if (guestBlock.violations >= 3) {
-                        guestBlock.cooldownEnd = new Date(Date.now() + 24 * 60 * 60 * 1000);
-                        await guestBlock.save();
-                    }
                 }
             } catch (dbErr) {
                 console.error('Error updating violation database:', dbErr);
@@ -1802,7 +1829,7 @@ export const updateSessionHistory = async (req, res) => {
 
 export const getPolicyStatus = async (req, res) => {
     const userId = req.user?.id;
-    const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
+    let clientIp = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip).split(',')[0].trim();
 
     try {
         let status = {
@@ -1815,16 +1842,32 @@ export const getPolicyStatus = async (req, res) => {
         if (userId) {
             const user = await User.findById(userId).select('policyViolations cooldownEnd');
             if (user) {
-                status.violations = user.policyViolations || 0;
+                const isBlocked = !!(user.cooldownEnd && user.cooldownEnd > new Date());
+                const violations = (user.cooldownEnd && user.cooldownEnd < new Date()) ? 0 : (user.policyViolations || 0);
+                
+                status.violations = violations;
                 status.cooldownEnd = user.cooldownEnd;
-                status.isBlocked = !!(user.cooldownEnd && user.cooldownEnd > new Date());
+                status.isBlocked = isBlocked;
+                
+                // Active cleanup if expired
+                if (!isBlocked && user.policyViolations > 0) {
+                    await User.findByIdAndUpdate(userId, { $set: { policyViolations: 0, cooldownEnd: null } });
+                }
             }
         } else if (clientIp) {
             const guestBlock = await PolicyViolation.findOne({ ip: clientIp });
             if (guestBlock) {
-                status.violations = guestBlock.violations || 0;
+                const isBlocked = !!(guestBlock.cooldownEnd && guestBlock.cooldownEnd > new Date());
+                const violations = (guestBlock.cooldownEnd && guestBlock.cooldownEnd < new Date()) ? 0 : (guestBlock.violations || 0);
+
+                status.violations = violations;
                 status.cooldownEnd = guestBlock.cooldownEnd;
-                status.isBlocked = !!(guestBlock.cooldownEnd && guestBlock.cooldownEnd > new Date());
+                status.isBlocked = isBlocked;
+
+                // Active cleanup if expired
+                if (!isBlocked && guestBlock.violations > 0) {
+                    await PolicyViolation.findOneAndUpdate({ ip: clientIp }, { $set: { violations: 0, cooldownEnd: null } });
+                }
             }
         }
 
