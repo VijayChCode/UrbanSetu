@@ -73,8 +73,8 @@ export const chatWithGemini = async (req, res) => {
             if (user) {
                 if (user.cooldownEnd && user.cooldownEnd > new Date()) {
                     blockInfo = { end: user.cooldownEnd, count: user.policyViolations };
-                } else if (user.policyViolations > 0) {
-                    // Reset expired cooldown violations
+                } else if (user.cooldownEnd && user.cooldownEnd < new Date()) {
+                    // Reset only if a cooldown has actually expired
                     await User.findByIdAndUpdate(userId, { $set: { policyViolations: 0, cooldownEnd: null } });
                 }
             }
@@ -83,8 +83,8 @@ export const chatWithGemini = async (req, res) => {
             if (guestBlock) {
                 if (guestBlock.cooldownEnd && guestBlock.cooldownEnd > new Date()) {
                     blockInfo = { end: guestBlock.cooldownEnd, count: guestBlock.violations };
-                } else if (guestBlock.violations > 0) {
-                    // Reset expired cooldown violations
+                } else if (guestBlock.cooldownEnd && guestBlock.cooldownEnd < new Date()) {
+                    // Reset only if a cooldown has actually expired
                     await PolicyViolation.findOneAndUpdate({ ip: clientIp }, { $set: { violations: 0, cooldownEnd: null } });
                 }
             }
@@ -1861,9 +1861,10 @@ export const getPolicyStatus = async (req, res) => {
                 status.cooldownEnd = user.cooldownEnd;
                 status.isBlocked = isBlocked;
                 
-                // Active cleanup if expired
-                if (!isBlocked && user.policyViolations > 0) {
+                // Active cleanup only if cooldown WAS set and HAS expired
+                if (user.cooldownEnd && user.cooldownEnd < new Date()) {
                     await User.findByIdAndUpdate(userId, { $set: { policyViolations: 0, cooldownEnd: null } });
+                    status.violations = 0;
                 }
             }
         } else if (clientIp) {
@@ -1876,9 +1877,10 @@ export const getPolicyStatus = async (req, res) => {
                 status.cooldownEnd = guestBlock.cooldownEnd;
                 status.isBlocked = isBlocked;
 
-                // Active cleanup if expired
-                if (!isBlocked && guestBlock.violations > 0) {
+                // Active cleanup only if cooldown WAS set and HAS expired
+                if (guestBlock.cooldownEnd && guestBlock.cooldownEnd < new Date()) {
                     await PolicyViolation.findOneAndUpdate({ ip: clientIp }, { $set: { violations: 0, cooldownEnd: null } });
+                    status.violations = 0;
                 }
             }
         }
