@@ -323,9 +323,9 @@ export default function Home() {
                                   })
                                 )
                               : (
-                                  theme?.greeting && (
+                                  (theme?.greeting || greet).split(' ').length > 1 && (
                                     <span className="ml-1 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
-                                      {theme.greeting.split(' ').slice(1).join(' ').replace(/[.!]$/, '')}
+                                      {(theme?.greeting || greet).split(' ').slice(1).join(' ').replace(/[.!]$/, '')}
                                     </span>
                                   )
                                 )
