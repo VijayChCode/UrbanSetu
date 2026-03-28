@@ -141,6 +141,14 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
   const [isReported, setIsReported] = useState(false);
   const contextMenuRef = useRef(null);
 
+  // UrbanSetu Custom Spinner Component (Small version used in Reporting)
+  const CompactUrbanSetuSpinner = () => (
+    <div className="relative w-12 h-12 flex items-center justify-center">
+      <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-blue-500 border-r-purple-500 animate-spin"></div>
+      <div className="absolute inset-0 rounded-full border-2 border-transparent border-b-purple-400/30 border-l-blue-400/30 animate-[spin_2s_linear_infinite_reverse] opacity-40"></div>
+    </div>
+  );
+
   // Preview Thumbnail States
   const [previewTime, setPreviewTime] = useState(0);
   const [previewPos, setPreviewPos] = useState(0);
@@ -1775,8 +1783,14 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center z-[60] pointer-events-none">
             <div className="flex flex-col items-center gap-4">
-              <div className="bg-black/60 backdrop-blur-md p-6 rounded-full shadow-2xl ring-1 ring-white/10">
-                <FaSpinner className="text-white animate-spin text-5xl" />
+              <div className="bg-black/60 backdrop-blur-xl p-8 rounded-full shadow-2xl ring-1 ring-white/20 relative group overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/10 to-purple-600/10 animate-pulse"></div>
+                <div className="relative w-20 h-20 flex items-center justify-center">
+                  <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-blue-500 border-r-purple-500 animate-spin"></div>
+                  <div className="absolute inset-0 rounded-full border-2 border-transparent border-b-purple-400/50 border-l-blue-400/50 animate-[spin_1.5s_linear_infinite_reverse] opacity-50"></div>
+                  <div className="absolute inset-0 rounded-full border-8 border-blue-500/5 blur-lg"></div>
+                  <FaVideo className="text-blue-400/30 animate-pulse text-3xl" />
+                </div>
               </div>
               {showRetryButton && !isManualRetrying && (
                 <button
@@ -2464,7 +2478,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
             {reportingIssue && (
               <div className="absolute inset-0 bg-black/60 backdrop-blur-md flex flex-col items-center justify-center z-20 animate-fadeIn">
                 <div className="flex flex-col items-center gap-4">
-                  <FaSpinner className="w-10 h-10 text-blue-500 animate-spin" />
+                  <CompactUrbanSetuSpinner />
                   <span className="text-white font-bold tracking-widest text-xs uppercase animate-pulse">Reporting...</span>
                 </div>
               </div>
