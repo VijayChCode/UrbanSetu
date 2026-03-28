@@ -9,26 +9,26 @@ import React from 'react';
  * @param {string} className - Additional classes
  */
 const UrbanSetuSpinner = ({ size = 'md', isBright = false, className = '' }) => {
-    // Proportional dimensions for the high-thickness design
+    // REFINED RADII: Significantly reduced based on visual feedback while maintaining high-thickness logic
     const sizeClasses = {
-        sm: 'w-8 h-8',
-        md: 'w-12 h-12',
-        lg: 'w-16 h-16',
-        xl: 'w-24 h-24'
+        sm: 'w-5 h-5',
+        md: 'w-8 h-8',
+        lg: 'w-11 h-11',
+        xl: 'w-14 h-14'
     };
 
     const currentSize = sizeClasses[size] || sizeClasses.md;
 
     // Define colors for the gradient to match the vibrant image precisely
-    const startColor = isBright ? '#60a5fa' : '#3949ab'; // Soft/Light Blue vs Deep Blue
-    const midColor = isBright ? '#a78bfa' : '#7e57c2';   // Light purple vs Indigo-Purple
-    const endColor = isBright ? '#f472b6' : '#ec407a';   // Vibrant Pink
-    const highlightColor = isBright ? '#ffffff' : '#f06292'; // White-Pink highlight for the tip
+    const startColor = isBright ? '#60a5fa' : '#3949ab'; 
+    const midColor = isBright ? '#a78bfa' : '#7e57c2';   
+    const endColor = isBright ? '#f472b6' : '#ec407a';   
+    const highlightColor = isBright ? '#ffffff' : '#f06292'; 
 
     return (
         <div className={`relative flex items-center justify-center ${currentSize} ${className}`}>
             {/* Soft background glow to match the reference's atmospheric feel */}
-            <div className={`absolute inset-0 rounded-full blur-2xl animate-pulse 
+            <div className={`absolute inset-0 rounded-full blur-xl animate-pulse 
                 ${isBright ? 'bg-blue-300/30' : 'bg-blue-600/10'}`}>
             </div>
 
@@ -37,26 +37,23 @@ const UrbanSetuSpinner = ({ size = 'md', isBright = false, className = '' }) => 
                 className="absolute inset-0 rounded-full animate-spin transition-all duration-300 drop-shadow-[0_0_8px_rgba(59,130,246,0.4)]"
                 style={{
                     background: `conic-gradient(from 0deg, transparent 0%, ${startColor} 30%, ${midColor} 60%, ${endColor} 85%, ${highlightColor} 100%)`,
-                    mask: 'radial-gradient(farthest-side, transparent calc(100% - 8px), black calc(100% - 7px))',
-                    WebkitMask: 'radial-gradient(farthest-side, transparent calc(100% - 8px), black calc(100% - 7px))',
-                    // Size-specific thickness (Xpx subtraction = border thickness)
+                    mask: 'radial-gradient(farthest-side, transparent calc(100% - 6px), black calc(100% - 5px))',
+                    WebkitMask: 'radial-gradient(farthest-side, transparent calc(100% - 6px), black calc(100% - 5px))',
+                    // Proportional thickness reduction for smaller sizes
                     ...(size === 'sm' && { 
-                        mask: 'radial-gradient(farthest-side, transparent calc(100% - 5px), black calc(100% - 4px))', 
-                        WebkitMask: 'radial-gradient(farthest-side, transparent calc(100% - 5px), black calc(100% - 4px))' 
+                        mask: 'radial-gradient(farthest-side, transparent calc(100% - 2.5px), black calc(100% - 2px))', 
+                        WebkitMask: 'radial-gradient(farthest-side, transparent calc(100% - 2.5px), black calc(100% - 2px))' 
                     }),
                     ...(size === 'xl' && { 
-                        mask: 'radial-gradient(farthest-side, transparent calc(100% - 15px), black calc(100% - 14px))', 
-                        WebkitMask: 'radial-gradient(farthest-side, transparent calc(100% - 15px), black calc(100% - 14px))' 
+                        mask: 'radial-gradient(farthest-side, transparent calc(100% - 7px), black calc(100% - 6px))', 
+                        WebkitMask: 'radial-gradient(farthest-side, transparent calc(100% - 7px), black calc(100% - 6px))' 
                     })
                 }}
             ></div>
 
             {/* Inner highlights to add rotating "glimmers" and depth */}
             <div 
-                className="absolute inset-2 rounded-full border-t-2 border-white/10 animate-[spin_3s_linear_infinite]"
-            ></div>
-            <div 
-                className={`absolute inset-0 rounded-full border-b-[1px] border-transparent border-b-white/5 animate-pulse`}
+                className="absolute inset-1 rounded-full border-t border-white/10 animate-[spin_3s_linear_infinite]"
             ></div>
         </div>
     );
