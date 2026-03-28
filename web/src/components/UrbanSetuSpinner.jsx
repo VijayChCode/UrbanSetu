@@ -1,51 +1,62 @@
 import React from 'react';
 
 /**
- * UrbanSetu Custom Gradient Spinner
- * A premium, branded loading indicator used throughout the platform.
+ * UrbanSetu Premium High-Contrast Spinner
+ * Matches the thick, vibrant, gradient-heavy design from the reference image.
  * 
  * @param {string} size - 'sm' | 'md' | 'lg' | 'xl'
- * @param {boolean} isBright - Increase visibility for very dark backgrounds
- * @param {string} className - Additional classes for container
+ * @param {boolean} isBright - Standardized bright variant
+ * @param {string} className - Additional classes
  */
 const UrbanSetuSpinner = ({ size = 'md', isBright = false, className = '' }) => {
-    // Standard sizes
+    // Proportional dimensions for the high-thickness design
     const sizeClasses = {
-        sm: 'w-6 h-6',
-        md: 'w-10 h-10',
-        lg: 'w-12 h-12',
-        xl: 'w-16 h-16'
-    };
-
-    const ringThickness = {
-        sm: 'border-2',
-        md: 'border-3',
-        lg: 'border-3',
-        xl: 'border-4'
+        sm: 'w-8 h-8',
+        md: 'w-12 h-12',
+        lg: 'w-16 h-16',
+        xl: 'w-24 h-24'
     };
 
     const currentSize = sizeClasses[size] || sizeClasses.md;
-    const currentThickness = ringThickness[size] || ringThickness.md;
+
+    // Define colors for the gradient to match the vibrant image precisely
+    const startColor = isBright ? '#60a5fa' : '#3949ab'; // Soft/Light Blue vs Deep Blue
+    const midColor = isBright ? '#a78bfa' : '#7e57c2';   // Light purple vs Indigo-Purple
+    const endColor = isBright ? '#f472b6' : '#ec407a';   // Vibrant Pink
+    const highlightColor = isBright ? '#ffffff' : '#f06292'; // White-Pink highlight for the tip
 
     return (
         <div className={`relative flex items-center justify-center ${currentSize} ${className}`}>
-            {/* Background Glow for high visibility on dark backgrounds */}
-            {isBright && (
-                <div className="absolute inset-0 rounded-full bg-blue-500/10 blur-xl animate-pulse"></div>
-            )}
-            
-            {/* Primary Gradient Ring (Fast) */}
+            {/* Soft background glow to match the reference's atmospheric feel */}
+            <div className={`absolute inset-0 rounded-full blur-2xl animate-pulse 
+                ${isBright ? 'bg-blue-300/30' : 'bg-blue-600/10'}`}>
+            </div>
+
+            {/* The Main Thick Gradient Spinner Ring (The "Doughnut" look from the image) */}
             <div 
-                className={`absolute inset-0 rounded-full ${currentThickness} border-transparent 
-                ${isBright ? 'border-t-blue-400 border-r-purple-400' : 'border-t-blue-500 border-r-purple-500'} 
-                animate-spin shadow-[0_0_20px_rgba(59,130,246,0.3)]`}
+                className="absolute inset-0 rounded-full animate-spin transition-all duration-300 drop-shadow-[0_0_8px_rgba(59,130,246,0.4)]"
+                style={{
+                    background: `conic-gradient(from 0deg, transparent 0%, ${startColor} 30%, ${midColor} 60%, ${endColor} 85%, ${highlightColor} 100%)`,
+                    mask: 'radial-gradient(farthest-side, transparent calc(100% - 8px), black calc(100% - 7px))',
+                    WebkitMask: 'radial-gradient(farthest-side, transparent calc(100% - 8px), black calc(100% - 7px))',
+                    // Size-specific thickness (Xpx subtraction = border thickness)
+                    ...(size === 'sm' && { 
+                        mask: 'radial-gradient(farthest-side, transparent calc(100% - 5px), black calc(100% - 4px))', 
+                        WebkitMask: 'radial-gradient(farthest-side, transparent calc(100% - 5px), black calc(100% - 4px))' 
+                    }),
+                    ...(size === 'xl' && { 
+                        mask: 'radial-gradient(farthest-side, transparent calc(100% - 15px), black calc(100% - 14px))', 
+                        WebkitMask: 'radial-gradient(farthest-side, transparent calc(100% - 15px), black calc(100% - 14px))' 
+                    })
+                }}
             ></div>
-            
-            {/* Secondary Counter-Rotating Ring (Slow) */}
+
+            {/* Inner highlights to add rotating "glimmers" and depth */}
             <div 
-                className={`absolute inset-0 rounded-full ${size === 'sm' ? 'border-1' : 'border-2'} 
-                border-transparent ${isBright ? 'border-b-purple-300/60 border-l-blue-300/60' : 'border-b-purple-400/50 border-l-blue-400/50'} 
-                animate-[spin_1.5s_linear_infinite_reverse] ${isBright ? 'opacity-70' : 'opacity-40'}`}
+                className="absolute inset-2 rounded-full border-t-2 border-white/10 animate-[spin_3s_linear_infinite]"
+            ></div>
+            <div 
+                className={`absolute inset-0 rounded-full border-b-[1px] border-transparent border-b-white/5 animate-pulse`}
             ></div>
         </div>
     );
