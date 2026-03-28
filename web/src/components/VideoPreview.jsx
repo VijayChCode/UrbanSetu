@@ -1776,9 +1776,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center z-[60] pointer-events-none">
             <div className="flex flex-col items-center gap-4">
-              <div className="bg-black/60 backdrop-blur-xl p-8 rounded-full shadow-2xl ring-1 ring-white/20 relative group overflow-hidden">
-                <UrbanSetuSpinner size="xl" showIcon={true} />
-              </div>
+              <UrbanSetuSpinner size="xl" />
               {showRetryButton && !isManualRetrying && (
                 <button
                   onClick={(e) => {
