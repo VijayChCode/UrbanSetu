@@ -1795,9 +1795,9 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
 
         {/* Big Center Overlay */}
         {!isPlaying && !isLoading && !isMiniMode && (
-          <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
-            <div className="bg-black/40 backdrop-blur-sm p-6 rounded-full shadow-lg">
-              {isEnded ? <FaRedo className="text-white text-4xl opacity-80" /> : <FaPlay className="text-white text-4xl ml-1 opacity-80" />}
+          <div className="absolute inset-x-0 inset-y-0 flex items-center justify-center z-10 pointer-events-none transition-all duration-500">
+            <div className="drop-shadow-[0_0_15px_rgba(0,0,0,0.6)] animate-scaleIn">
+              {isEnded ? <FaRedo className="text-white text-5xl opacity-90" /> : <FaPlay className="text-white text-5xl ml-1 opacity-90" />}
             </div>
           </div>
         )}
@@ -1882,9 +1882,11 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
           <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
             <button
               onClick={(e) => { e.stopPropagation(); togglePlay(e); }}
-              className={`pointer-events-auto transform transition-all duration-300 bg-black/60 backdrop-blur-sm p-6 rounded-full text-white hover:scale-110 shadow-2xl ${isLoading ? 'opacity-0 scale-90 pointer-events-none' : (!isPlaying || showControls) ? 'opacity-100 scale-100' : 'opacity-0 scale-90 pointer-events-none'}`}
+              className={`pointer-events-auto transform transition-all duration-300 text-white hover:scale-110 drop-shadow-[0_0_20px_rgba(0,0,0,0.7)] ${isLoading ? 'opacity-0 scale-90 pointer-events-none' : (!isPlaying || showControls) ? 'opacity-100 scale-100' : 'opacity-0 scale-90 pointer-events-none'}`}
             >
-              {isEnded ? <FaRedo className="text-4xl" /> : isPlaying && !isLoading ? <FaPause className="text-4xl" /> : <FaPlay className="text-4xl pl-2" />}
+              <div className="flex items-center justify-center">
+                {isEnded ? <FaRedo className="text-5xl" /> : isPlaying && !isLoading ? <FaPause className="text-5xl" /> : <FaPlay className="text-5xl pl-2" />}
+              </div>
             </button>
           </div>
         )}
