@@ -2215,7 +2215,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
               )}
 
               <div className="absolute inset-y-0 left-0 bg-white/40 transition-all" style={{ width: `${loadedProgress}%` }} />
-              <div className="absolute inset-y-0 left-0 bg-blue-500 transition-all" style={{ width: `${progress}%` }} />
+              <div className="absolute inset-y-0 left-0 bg-gradient-to-r from-blue-500 to-purple-500 transition-all shadow-[0_0_10px_rgba(59,130,246,0.5)]" style={{ width: `${progress}%` }} />
               <div className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-lg scale-0 group-hover/slider:scale-100 transition-transform" style={{ left: `${progress}%` }} />
             </div>
 

@@ -8,17 +8,18 @@ import React from 'react';
  * @param {string} className - Additional classes for container
  */
 const UrbanSetuSpinner = ({ size = 'md', className = '' }) => {
+    // Reduced Radii: Approximately 20-30% smaller than previous version
     const sizeClasses = {
-        sm: 'w-8 h-8',
-        md: 'w-12 h-12',
-        lg: 'w-16 h-16',
-        xl: 'w-20 h-20'
+        sm: 'w-6 h-6',
+        md: 'w-10 h-10',
+        lg: 'w-12 h-12',
+        xl: 'w-16 h-16'
     };
 
     const ringThickness = {
         sm: 'border-2',
         md: 'border-3',
-        lg: 'border-4',
+        lg: 'border-3',
         xl: 'border-4'
     };
 
