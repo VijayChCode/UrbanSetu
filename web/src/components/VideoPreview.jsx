@@ -2451,7 +2451,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
             {/* Reported Overlay/Feedback */}
             {isReported && (
               <div className="absolute inset-0 bg-[#1a1a1a]/90 backdrop-blur-md flex flex-col items-center justify-center animate-fadeIn z-10">
-                <div className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center mb-6 animate-scaleIn shadow-[0_0_30px_rgba(16,185,129,0.3)]">
+                <div className="w-20 h-20 bg-gradient-to-tr from-blue-600 to-purple-600 rounded-full flex items-center justify-center mb-6 animate-scaleIn shadow-[0_0_30px_rgba(59,130,246,0.5)]">
                   <FaCheckCircle className="w-10 h-10 text-white" />
                 </div>
                 <h4 className="text-2xl font-black text-white mb-2 tracking-tight">Reported</h4>
