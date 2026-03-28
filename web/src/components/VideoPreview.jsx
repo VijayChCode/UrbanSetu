@@ -2463,7 +2463,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
             {reportingIssue && (
               <div className="absolute inset-0 bg-black/60 backdrop-blur-md flex flex-col items-center justify-center z-20 animate-fadeIn">
                 <div className="flex flex-col items-center gap-4">
-                  <UrbanSetuSpinner size="md" />
+                  <UrbanSetuSpinner size="lg" isBright={true} />
                   <span className="text-white font-bold tracking-widest text-xs uppercase animate-pulse">Reporting...</span>
                 </div>
               </div>
