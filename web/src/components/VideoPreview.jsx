@@ -1678,7 +1678,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
     >
       {/* Mini Mode Overlays */}
       {isMiniMode && (
-        <div className={`absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/60 backdrop-blur-[2px] p-2 transition-all duration-500 
+        <div className={`absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/40 p-2 transition-all duration-500 
           ${isMobile 
             ? (showControls ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none') 
             : 'opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto'
