@@ -1910,8 +1910,8 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
 
         {/* YouTube-style cumulative seek feedback */}
         {seekFeedback && (
-          <div className={`absolute ${seekFeedback === 'rewind' ? 'left-10' : 'right-10'} top-1/2 -translate-y-1/2 z-40 flex flex-col items-center justify-center text-white bg-black/50 p-6 rounded-full backdrop-blur-sm`}>
-            <FaUndo className={`text-3xl mb-1 ${seekFeedback === 'forward' ? 'transform scale-x-[-1]' : ''}`} />
+          <div className={`absolute ${seekFeedback === 'rewind' ? 'left-12' : 'right-12'} top-1/2 -translate-y-1/2 z-40 flex flex-col items-center justify-center text-white drop-shadow-[0_0_10px_rgba(0,0,0,0.8)]`}>
+            <FaUndo className={`text-4xl mb-1 ${seekFeedback === 'forward' ? 'transform scale-x-[-1]' : ''}`} />
             <span className="font-bold text-sm tracking-wide">{seekLabel || (seekFeedback === 'rewind' ? '-5s' : '+5s')}</span>
           </div>
         )}
