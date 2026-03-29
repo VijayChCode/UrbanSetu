@@ -8369,7 +8369,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                         )}
                                                                         <button
                                                                             onClick={() => setPendingImages(prev => prev.filter(p => p.id !== img.id))}
-                                                                            className="absolute top-1 right-1 p-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 border border-white/20 shadow-md"
+                                                                            className="absolute top-1 right-1 p-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full transition-all duration-200 border border-white/20 shadow-md z-20"
                                                                             title="Remove image"
                                                                         >
                                                                             <FaTimes size={10} />
