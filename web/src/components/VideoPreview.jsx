@@ -2317,15 +2317,19 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
 
             {/* ── Action Row — mirrors mobile VideoViewer layout ── */}
             <div className="flex items-center justify-center gap-2 border-t border-white/10 pt-2 mt-0.5">
-              <button
-                onClick={toggleMiniMode}
-                title="Picture in Picture"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-all active:scale-95 text-xs font-semibold"
-              >
-                <FaClone size={13} />
-                <span className="hidden sm:inline">Mini</span>
-              </button>
-              <div className="w-px h-4 bg-white/15 mx-0.5" />
+              {!isFullscreen && (
+                <>
+                  <button
+                    onClick={toggleMiniMode}
+                    title="Picture in Picture"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-all active:scale-95 text-xs font-semibold"
+                  >
+                    <FaClone size={13} />
+                    <span className="hidden sm:inline">Mini</span>
+                  </button>
+                  <div className="w-px h-4 bg-white/15 mx-0.5" />
+                </>
+              )}
               <button
                 onClick={handleRotate}
                 title="Rotate"
