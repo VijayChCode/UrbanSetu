@@ -855,22 +855,39 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
 
   const handleSeek = (amount) => {
     if (videoRef.current) {
+      const isForward = amount > 0;
+      const side = isForward ? 'right' : 'left';
+
+      // Reset accumulator if side switches
+      if (seekSideRef.current !== side) {
+        seekAccumRef.current = 0;
+        seekSideRef.current = side;
+      }
+
+      // Accumulate for visual feedback
+      seekAccumRef.current += amount;
+      const secs = Math.abs(seekAccumRef.current);
+      setSeekLabel(`${amount > 0 ? '+' : '-'}${secs}s`);
+      setSeekFeedback(isForward ? 'forward' : 'rewind');
+
+      // Immediate seek for keyboard arrows/controls
       const newTime = videoRef.current.currentTime + amount;
       if (isFinite(newTime)) {
         videoRef.current.currentTime = Math.max(0, Math.min(newTime, videoRef.current.duration || 0));
-        
-        // Show side feedback (matches image 2)
-        const side = amount > 0 ? 'forward' : 'rewind';
-        setSeekFeedback(side);
-        setSeekLabel(`${amount > 0 ? '+' : '-'}${Math.abs(amount)}s`);
-        
-        // Auto-hide after 1 second
+      }
+
+      // Reset the visual accumulation and fade out after a silence
+      if (seekDebounceTimerRef.current) clearTimeout(seekDebounceTimerRef.current);
+      seekDebounceTimerRef.current = setTimeout(() => {
+        seekAccumRef.current = 0;
+        seekSideRef.current = null;
+
         if (gestureTimeoutRef.current) clearTimeout(gestureTimeoutRef.current);
         gestureTimeoutRef.current = setTimeout(() => {
           setSeekFeedback(null);
           setSeekLabel('');
-        }, 1000);
-      }
+        }, 600);
+      }, 700);
     }
   };
 
