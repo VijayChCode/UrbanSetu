@@ -149,6 +149,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
   const [previewPos, setPreviewPos] = useState(0);
   const [showPreview, setShowPreview] = useState(false);
   const previewVideoRef = useRef(null);
+  const abortControllerRef = useRef(null);
 
   // Helper to optimize Cloudinary URLs
   const optimizeVideoUrl = (url) => {
@@ -1000,6 +1001,18 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
 
   const handleDownload = async (e) => {
     e.stopPropagation();
+
+    // Cancellation logic
+    if (downloadState === 'downloading') {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+      setDownloadState('idle');
+      showFeedback("Download cancelled.");
+      return;
+    }
+
     if (downloadState !== 'idle') return;
 
     const url = videos[currentIndex];
@@ -1008,11 +1021,18 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
     setDownloadState('downloading');
     showFeedback("Download started...");
 
+    // Setup cancellation
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     try {
       const isCloudinary = url.includes('cloudinary.com');
+      const fetchOptions = { signal: controller.signal };
+      
       const response = isCloudinary
-        ? await fetch(url)
-        : await authenticatedFetch(url);
+        ? await fetch(url, fetchOptions)
+        : await authenticatedFetch(url, fetchOptions);
+      
       const blob = await response.blob();
       const blobUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -1027,6 +1047,10 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
       showFeedback("Download complete!");
       setTimeout(() => setDownloadState('idle'), 3000);
     } catch (err) {
+      if (err.name === 'AbortError') {
+        // Handled via state update in cancellation block above
+        return;
+      }
       console.error('Download error:', err);
       // Fallback
       const link = document.createElement('a');
@@ -1038,6 +1062,10 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
       document.body.removeChild(link);
       setDownloadState('idle');
       showFeedback("Download error. Opening link...");
+    } finally {
+      if (abortControllerRef.current === controller) {
+        abortControllerRef.current = null;
+      }
     }
   };
 
@@ -2423,13 +2451,15 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
               )}
               <button
                 onClick={handleDownload}
-                title="Download"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-all active:scale-95 text-xs font-semibold"
-                disabled={downloadState !== 'idle'}
+                title={downloadState === 'downloading' ? "Cancel Download" : "Download"}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all active:scale-95 text-xs font-semibold ${
+                  downloadState === 'downloading' ? 'text-red-400 bg-red-400/10 hover:bg-red-400/20 shadow-lg animate-pulse' : 'text-white/70 hover:text-white hover:bg-white/10'
+                }`}
+                disabled={downloadState === 'completed'}
               >
-                <FaDownload size={13} className={downloadState === 'downloading' ? 'animate-bounce' : ''} />
+                {downloadState === 'downloading' ? <FaTimes size={13} /> : <FaDownload size={13} className={downloadState === 'downloading' ? 'animate-bounce' : ''} />}
                 <span className="hidden sm:inline">
-                  {downloadState === 'downloading' ? 'Downloading...' : downloadState === 'completed' ? 'Downloaded!' : 'Download'}
+                  {downloadState === 'downloading' ? 'Cancel' : downloadState === 'completed' ? 'Downloaded!' : 'Download'}
                 </span>
               </button>
             </div>
