@@ -1663,7 +1663,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
         : {}
       }
       className={`${isMiniMode
-        ? 'rounded-xl shadow-2xl border border-gray-700 overflow-hidden bg-black'
+        ? 'rounded-xl shadow-2xl border border-gray-700 overflow-hidden bg-black group'
         : 'fixed inset-0 bg-black z-[9999] flex items-center justify-center select-none touch-none'
         } transition-shadow duration-300`}
       onContextMenu={handleContextMenu}
@@ -1678,31 +1678,38 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
     >
       {/* Mini Mode Overlays */}
       {isMiniMode && (
-        <div className={`absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/40 transition-opacity duration-300 p-2 ${showControls ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+        <div className={`absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/60 backdrop-blur-[2px] p-2 transition-all duration-500 
+          ${isMobile 
+            ? (showControls ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none') 
+            : 'opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto'
+          }`}>
           <button
             onClick={toggleMiniMode}
-            className="mb-2 bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full p-2 text-white transition-all transform hover:scale-110 shadow-lg"
+            className="mb-3 bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full p-2.5 text-white transition-all transform hover:scale-110 shadow-lg translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 duration-500 ease-out"
             onMouseDown={(e) => e.stopPropagation()}
             onTouchStart={(e) => e.stopPropagation()}
+            title="Restore Player"
           >
             <FaWindowRestore size={20} />
           </button>
-          <div className="flex gap-2">
+          <div className="flex gap-3 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 duration-500 delay-75 ease-out">
             <button
               onClick={togglePlay}
-              className="bg-white/10 hover:bg-white/20 p-2 rounded-full text-white"
+              className="bg-white/10 hover:bg-white/25 p-2.5 rounded-full text-white transition-all hover:scale-110 border border-white/10 backdrop-blur-md"
               onMouseDown={(e) => e.stopPropagation()}
               onTouchStart={(e) => e.stopPropagation()}
+              title={isPlaying ? "Pause" : "Play"}
             >
-              {isPlaying && !isLoading ? <FaPause size={10} /> : <FaPlay size={10} />}
+              {isPlaying && !isLoading ? <FaPause size={12} /> : <FaPlay size={12} className="ml-0.5" />}
             </button>
             <button
               onClick={handleCloseRequest}
-              className="bg-red-500/80 hover:bg-red-600 p-2 rounded-full text-white"
+              className="bg-red-500/80 hover:bg-red-600 p-2.5 rounded-full text-white transition-all hover:scale-110 shadow-[0_0_15px_rgba(239,68,68,0.3)]"
               onMouseDown={(e) => e.stopPropagation()}
               onTouchStart={(e) => e.stopPropagation()}
+              title="Close"
             >
-              <FaTimes size={10} />
+              <FaTimes size={12} />
             </button>
           </div>
         </div>
