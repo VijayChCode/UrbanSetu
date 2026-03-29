@@ -2318,8 +2318,14 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
 
             <div className="flex items-center justify-between text-white">
               <div className="flex items-center gap-4">
+                <button onClick={() => handleSeek(-5)} className="hover:text-blue-400 transition-transform active:scale-95" title="Rewind 5s">
+                  <FaChevronLeft size={20} />
+                </button>
                 <button onClick={togglePlay} className="hover:text-blue-400 transition-transform active:scale-95">
                   {isPlaying && !isLoading ? <FaPause size={22} /> : <FaPlay size={22} className="ml-1" />}
+                </button>
+                <button onClick={() => handleSeek(5)} className="hover:text-blue-400 transition-transform active:scale-95" title="Forward 5s">
+                  <FaChevronRight size={20} />
                 </button>
                 <div
                   className={`flex items-center group/volume-container ${isMobile ? 'relative' : ''}`}
@@ -2423,7 +2429,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
                 title="Rotate"
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-all active:scale-95 text-xs font-semibold"
               >
-                <FaUndo size={13} />
+                <FaSync size={13} />
                 <span className="hidden sm:inline">Rotate</span>
               </button>
               <div className="w-px h-4 bg-white/15 mx-0.5" />
