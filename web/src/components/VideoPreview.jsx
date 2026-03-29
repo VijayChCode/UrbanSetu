@@ -858,7 +858,18 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
       const newTime = videoRef.current.currentTime + amount;
       if (isFinite(newTime)) {
         videoRef.current.currentTime = Math.max(0, Math.min(newTime, videoRef.current.duration || 0));
-        showFeedback(`${amount > 0 ? '+' : ''}${amount}s`);
+        
+        // Show side feedback (matches image 2)
+        const side = amount > 0 ? 'forward' : 'rewind';
+        setSeekFeedback(side);
+        setSeekLabel(`${amount > 0 ? '+' : '-'}${Math.abs(amount)}s`);
+        
+        // Auto-hide after 1 second
+        if (gestureTimeoutRef.current) clearTimeout(gestureTimeoutRef.current);
+        gestureTimeoutRef.current = setTimeout(() => {
+          setSeekFeedback(null);
+          setSeekLabel('');
+        }, 1000);
       }
     }
   };
@@ -2250,15 +2261,9 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
             </div>
 
             <div className="flex items-center justify-between text-white">
-              <div className="flex items-center gap-5">
-                <button onClick={() => handleSeek(-5)} title="Rewind 5s" className="hover:text-blue-400 transition-transform active:scale-95 opacity-80 hover:opacity-100">
-                  <FaUndo size={16} />
-                </button>
+              <div className="flex items-center gap-4">
                 <button onClick={togglePlay} className="hover:text-blue-400 transition-transform active:scale-95">
                   {isPlaying && !isLoading ? <FaPause size={22} /> : <FaPlay size={22} className="ml-1" />}
-                </button>
-                <button onClick={() => handleSeek(5)} title="Forward 5s" className="hover:text-blue-400 transition-transform active:scale-95 opacity-80 hover:opacity-100">
-                  <FaRedo size={16} />
                 </button>
                 <div
                   className={`flex items-center group/volume-container ${isMobile ? 'relative' : ''}`}
