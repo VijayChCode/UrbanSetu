@@ -40,6 +40,8 @@ const WishList = () => {
   const [stats, setStats] = useState({ totalValue: 0, averagePrice: 0, priceRange: { min: 0, max: 0 }, typeDistribution: {}, cityDistribution: {} });
   const [showAIRecommendations, setShowAIRecommendations] = useState(false);
   const [shareModal, setShareModal] = useState({ isOpen: false, url: '', title: '', description: '' });
+  // Track pending requests for specific listings to prevent race conditions from rapid clicking
+  const pendingRequestsRef = useRef(new Set());
 
   const fetchWishlist = async () => {
     if (!currentUser?._id) return;
@@ -74,6 +76,8 @@ const WishList = () => {
   useEffect(() => { calculateStats(); }, [items]);
 
   const handleRemove = async (listingId) => {
+    if (pendingRequestsRef.current.has(listingId)) return;
+    pendingRequestsRef.current.add(listingId);
     try {
       const res = await authenticatedFetch(`${API_BASE_URL}/api/wishlist/remove/${listingId}`, { method: 'DELETE' });
       if (res.ok) {
@@ -81,7 +85,10 @@ const WishList = () => {
         setWishlistItems(prev => prev.filter(w => (w.listingId?.['_id'] || w.listingIdRaw) !== listingId));
         toast.success('Removed from wishlist');
       }
-    } catch (_) { }
+    } catch (_) { 
+    } finally {
+      pendingRequestsRef.current.delete(listingId);
+    }
   };
 
   // Receive heart toggle from card to immediately remove without refresh
@@ -156,6 +163,8 @@ const WishList = () => {
   };
 
   const addToWishlist = async (listing) => {
+    if (pendingRequestsRef.current.has(listing._id)) return;
+    pendingRequestsRef.current.add(listing._id);
     try {
       const res = await authenticatedFetch(`${API_BASE_URL}/api/wishlist/add`, {
         method: 'POST',
@@ -178,6 +187,8 @@ const WishList = () => {
     } catch (error) {
       console.error('Error adding to wishlist:', error);
       toast.error('Failed to add to wishlist');
+    } finally {
+      pendingRequestsRef.current.delete(listing._id);
     }
   };
 
