@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { socket } from './utils/socket';
@@ -15,6 +15,8 @@ const WishlistProvider = ({ children }) => {
   const { currentUser } = useSelector((state) => state.user);
   const [wishlist, setWishlist] = useState([]);
   const [loading, setLoading] = useState(false);
+  // Track pending requests for specific listings to prevent race conditions from rapid clicking
+  const pendingRequestsRef = useRef(new Set());
 
   // Fetch user's wishlist from API
   const fetchWishlist = async () => {
@@ -80,6 +82,11 @@ const WishlistProvider = ({ children }) => {
       console.error('User must be logged in to add to wishlist');
       return;
     }
+
+    // Prevent multiple concurrent requests for the same listing
+    if (pendingRequestsRef.current.has(product._id)) return;
+    pendingRequestsRef.current.add(product._id);
+
     // Optimistically update UI
     setWishlist(prev => {
       if (prev.find(item => item._id === product._id)) return prev;
@@ -109,6 +116,8 @@ const WishlistProvider = ({ children }) => {
     } catch (error) {
       setWishlist(prev => prev.filter(item => item._id !== product._id));
       console.error('Error adding to wishlist:', error);
+    } finally {
+      pendingRequestsRef.current.delete(product._id);
     }
   };
 
@@ -118,6 +127,11 @@ const WishlistProvider = ({ children }) => {
       console.error('User must be logged in to remove from wishlist');
       return { success: false, message: 'User must be logged in to remove from wishlist' };
     }
+
+    // Prevent multiple concurrent requests for the same listing
+    if (pendingRequestsRef.current.has(id)) return;
+    pendingRequestsRef.current.add(id);
+
     // Optimistically update UI
     setWishlist(prev => prev.filter(item => item._id !== id));
     // Emit socket event
@@ -140,6 +154,8 @@ const WishlistProvider = ({ children }) => {
       fetchWishlist();
       console.error('Error removing from wishlist:', error);
       return { success: false, message: 'Failed to remove property. Please try again.' };
+    } finally {
+      pendingRequestsRef.current.delete(id);
     }
   };
 

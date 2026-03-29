@@ -43,26 +43,44 @@ export const addToWishlist = async (req, res, next) => {
             return next(errorHandler(404, "Listing not found"));
         }
 
-        // Check if already in wishlist
+        // Check if already in wishlist (double check before creating)
         const existingItem = await Wishlist.findOne({ userId, listingId });
         if (existingItem) {
-            return next(errorHandler(400, "Item already in wishlist"));
+            return res.status(200).json({
+                success: true,
+                message: "Item was already in your wishlist",
+                wishlistItem: existingItem
+            });
         }
 
-        // Add to wishlist
-        const effective = (listing.offer && listing.discountPrice) ? listing.discountPrice : listing.regularPrice;
-        const wishlistItem = await Wishlist.create({
-            userId,
-            listingId,
-            effectivePriceAtAdd: effective ?? null
-        });
-        await wishlistItem.populate('listingId');
-        const obj = wishlistItem.toObject();
-        res.status(201).json({
-            success: true,
-            message: "Added to wishlist successfully",
-            wishlistItem: { ...obj, listingIdRaw: obj.listingId?._id || listingId }
-        });
+        try {
+            // Add to wishlist
+            const effective = (listing.offer && listing.discountPrice) ? listing.discountPrice : listing.regularPrice;
+            const wishlistItem = await Wishlist.create({
+                userId,
+                listingId,
+                effectivePriceAtAdd: effective ?? null
+            });
+            await wishlistItem.populate('listingId');
+            const obj = wishlistItem.toObject();
+            res.status(201).json({
+                success: true,
+                message: "Added to wishlist successfully",
+                wishlistItem: { ...obj, listingIdRaw: obj.listingId?._id || listingId }
+            });
+        } catch (error) {
+            // Handle race condition where item was added between findOne and create
+            if (error.code === 11000) {
+                const item = await Wishlist.findOne({ userId, listingId }).populate('listingId');
+                const obj = item.toObject();
+                return res.status(200).json({
+                    success: true,
+                    message: "Item already in wishlist",
+                    wishlistItem: { ...obj, listingIdRaw: obj.listingId?._id || listingId }
+                });
+            }
+            throw error;
+        }
     } catch (error) {
         next(error);
     }
@@ -76,8 +94,12 @@ export const removeFromWishlist = async (req, res, next) => {
 
         const wishlistItem = await Wishlist.findOneAndDelete({ userId, listingId });
         
+        // Return success even if not found to make it idempotent
         if (!wishlistItem) {
-            return next(errorHandler(404, "Item not found in wishlist"));
+            return res.status(200).json({
+                success: true,
+                message: "Property is not in your wishlist"
+            });
         }
 
         res.status(200).json({
