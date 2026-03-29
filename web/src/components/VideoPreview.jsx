@@ -130,6 +130,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
 
   // Custom Context Menu & Advanced States
   const [contextMenu, setContextMenu] = useState({ show: false, x: 0, y: 0 });
+  const [copiedKey, setCopiedKey] = useState(null);
   const [isLooping, setIsLooping] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [showRemainingTime, setShowRemainingTime] = useState(false);
@@ -1059,14 +1060,24 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
     }
   };
 
-  const copyToClipboard = async (text, message) => {
+  const copyToClipboard = async (text, message, key = null) => {
     try {
       await navigator.clipboard.writeText(text);
-      toast.success(message || "Copied to clipboard!");
+      if (key) {
+        setCopiedKey(key);
+        // Success feedback within the menu
+        setTimeout(() => {
+          setCopiedKey(null);
+          setContextMenu(prev => ({ ...prev, show: false }));
+        }, 1000);
+      } else {
+        toast.success(message || "Copied to clipboard!");
+        setContextMenu(prev => ({ ...prev, show: false }));
+      }
     } catch (err) {
       toast.error("Failed to copy");
+      setContextMenu(prev => ({ ...prev, show: false }));
     }
-    setContextMenu(prev => ({ ...prev, show: false }));
   };
 
   const getDebugInfo = () => {
@@ -2090,39 +2101,39 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
 
             <div
               className="px-4 py-2.5 hover:bg-white/10 flex items-center gap-3 cursor-pointer transition-colors group"
-              onClick={() => copyToClipboard(videos[currentIndex], "Video URL copied!")}
+              onClick={() => copyToClipboard(videos[currentIndex], "Video URL copied!", "videoUrl")}
             >
               <FaLink className="text-sm text-white/60 group-hover:text-white" />
-              <span className="text-[13px] text-white/90">Copy video URL</span>
+              <span className="text-[13px] text-white/90">{copiedKey === 'videoUrl' ? 'Copied!' : 'Copy video URL'}</span>
             </div>
 
             <div
               className="px-4 py-2.5 hover:bg-white/10 flex items-center gap-3 cursor-pointer transition-colors group"
               onClick={() => {
                 const time = Math.floor(videoRef.current?.currentTime || 0);
-                copyToClipboard(`${videos[currentIndex]}?t=${time}`, `URL copied at ${time}s!`);
+                copyToClipboard(`${videos[currentIndex]}?t=${time}`, `URL copied at ${time}s!`, "urlAtTime");
               }}
             >
               <FaHistory className="text-sm text-white/60 group-hover:text-white" />
-              <span className="text-[13px] text-white/90">Copy URL at current time</span>
+              <span className="text-[13px] text-white/90">{copiedKey === 'urlAtTime' ? 'Copied!' : 'Copy URL at current time'}</span>
             </div>
 
             <div
               className="px-4 py-2.5 hover:bg-white/10 flex items-center gap-3 cursor-pointer transition-colors group"
-              onClick={() => copyToClipboard(`<iframe src="${videos[currentIndex]}" allowfullscreen></iframe>`, "Embed code copied!")}
+              onClick={() => copyToClipboard(`<iframe src="${videos[currentIndex]}" allowfullscreen></iframe>`, "Embed code copied!", "embedCode")}
             >
               <FaCode className="text-sm text-white/60 group-hover:text-white" />
-              <span className="text-[13px] text-white/90">Copy embed code</span>
+              <span className="text-[13px] text-white/90">{copiedKey === 'embedCode' ? 'Copied!' : 'Copy embed code'}</span>
             </div>
 
             <div className="h-[1px] bg-white/5 my-1" />
 
             <div
               className="px-4 py-2.5 hover:bg-white/10 flex items-center gap-3 cursor-pointer transition-colors group"
-              onClick={() => copyToClipboard(getDebugInfo(), "Debug info copied!")}
+              onClick={() => copyToClipboard(getDebugInfo(), "Debug info copied!", "debugInfo")}
             >
               <FaInfoCircle className="text-sm text-white/60 group-hover:text-white" />
-              <span className="text-[13px] text-white/90">Copy debug info</span>
+              <span className="text-[13px] text-white/90">{copiedKey === 'debugInfo' ? 'Copied!' : 'Copy debug info'}</span>
             </div>
 
             <div
@@ -2364,15 +2375,19 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
                 <span>{playbackRate}x</span>
               </button>
               <div className="w-px h-4 bg-white/15 mx-0.5" />
-              <button
-                onClick={toggleShare}
-                title="Share"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-all active:scale-95 text-xs font-semibold"
-              >
-                <FaShareAlt size={13} />
-                <span className="hidden sm:inline">Share</span>
-              </button>
-              <div className="w-px h-4 bg-white/15 mx-0.5" />
+              {!isFullscreen && (
+                <>
+                  <button
+                    onClick={toggleShare}
+                    title="Share"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-all active:scale-95 text-xs font-semibold"
+                  >
+                    <FaShareAlt size={13} />
+                    <span className="hidden sm:inline">Share</span>
+                  </button>
+                  <div className="w-px h-4 bg-white/15 mx-0.5" />
+                </>
+              )}
               <button
                 onClick={handleDownload}
                 title="Download"
