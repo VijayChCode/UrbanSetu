@@ -8,6 +8,7 @@ import {
   FaChevronRight,
   FaPlay,
   FaPause,
+  FaSync,
   FaVolumeUp,
   FaVolumeDown,
   FaVolumeMute,
