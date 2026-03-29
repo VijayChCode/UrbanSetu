@@ -131,6 +131,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
   // Custom Context Menu & Advanced States
   const [contextMenu, setContextMenu] = useState({ show: false, x: 0, y: 0 });
   const [copiedKey, setCopiedKey] = useState(null);
+  const [downloadState, setDownloadState] = useState('idle'); // 'idle' | 'downloading' | 'completed'
   const [isLooping, setIsLooping] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [showRemainingTime, setShowRemainingTime] = useState(false);
@@ -999,10 +1000,13 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
 
   const handleDownload = async (e) => {
     e.stopPropagation();
+    if (downloadState !== 'idle') return;
+
     const url = videos[currentIndex];
     const filename = `video-${currentIndex + 1}.mp4`;
 
-    showFeedback("Download started.");
+    setDownloadState('downloading');
+    showFeedback("Download started...");
 
     try {
       const isCloudinary = url.includes('cloudinary.com');
@@ -1018,7 +1022,12 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(blobUrl);
+
+      setDownloadState('completed');
+      showFeedback("Download complete!");
+      setTimeout(() => setDownloadState('idle'), 3000);
     } catch (err) {
+      console.error('Download error:', err);
       // Fallback
       const link = document.createElement('a');
       link.href = url;
@@ -1027,6 +1036,8 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      setDownloadState('idle');
+      showFeedback("Download error. Opening link...");
     }
   };
 
@@ -1728,8 +1739,8 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
       {/* Mini Mode Overlays */}
       {isMiniMode && (
         <div className={`absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/40 p-2 transition-all duration-500 
-          ${isMobile 
-            ? (showControls ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none') 
+          ${isMobile
+            ? (showControls ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none')
             : 'opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto'
           }`}>
           <button
@@ -2414,9 +2425,12 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
                 onClick={handleDownload}
                 title="Download"
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-all active:scale-95 text-xs font-semibold"
+                disabled={downloadState !== 'idle'}
               >
-                <FaDownload size={13} />
-                <span className="hidden sm:inline">Save</span>
+                <FaDownload size={13} className={downloadState === 'downloading' ? 'animate-bounce' : ''} />
+                <span className="hidden sm:inline">
+                  {downloadState === 'downloading' ? 'Downloading...' : downloadState === 'completed' ? 'Downloaded!' : 'Download'}
+                </span>
               </button>
             </div>
           </div>
