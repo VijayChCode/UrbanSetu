@@ -1028,11 +1028,11 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
     try {
       const isCloudinary = url.includes('cloudinary.com');
       const fetchOptions = { signal: controller.signal };
-      
+
       const response = isCloudinary
         ? await fetch(url, fetchOptions)
         : await authenticatedFetch(url, fetchOptions);
-      
+
       const blob = await response.blob();
       const blobUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -2452,14 +2452,13 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
               <button
                 onClick={handleDownload}
                 title={downloadState === 'downloading' ? "Cancel Download" : "Download"}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all active:scale-95 text-xs font-semibold ${
-                  downloadState === 'downloading' ? 'text-red-400 bg-red-400/10 hover:bg-red-400/20 shadow-lg animate-pulse' : 'text-white/70 hover:text-white hover:bg-white/10'
-                }`}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all active:scale-95 text-xs font-semibold ${downloadState === 'downloading' ? 'text-red-400 bg-red-400/10 hover:bg-red-400/20 shadow-lg animate-pulse' : 'text-white/70 hover:text-white hover:bg-white/10'
+                  }`}
                 disabled={downloadState === 'completed'}
               >
                 {downloadState === 'downloading' ? <FaTimes size={13} /> : <FaDownload size={13} className={downloadState === 'downloading' ? 'animate-bounce' : ''} />}
                 <span className="hidden sm:inline">
-                  {downloadState === 'downloading' ? 'Cancel' : downloadState === 'completed' ? 'Downloaded!' : 'Download'}
+                  {downloadState === 'downloading' ? 'Cancel Download' : downloadState === 'completed' ? 'Downloaded!' : 'Download'}
                 </span>
               </button>
             </div>
