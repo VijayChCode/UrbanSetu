@@ -292,7 +292,7 @@ export default function Home() {
                   {(() => {
                     const name = currentUser.firstName || currentUser.username || currentUser.name || currentUser.fullName || 'Friend';
                     const hour = new Date().getHours();
-                    const greet = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+                    const greet = hour < 12 ? 'Good Morning' : hour < 18 ? 'Good Afternoon' : 'Good Evening';
                     // Use seasonal icon if available, otherwise time-based emoji
                     const emoji = theme ? theme.icon : (hour < 12 ? '☀️' : hour < 18 ? '🌤️' : '🌙');
 
@@ -303,32 +303,32 @@ export default function Home() {
                             {(theme?.greeting || greet).split(' ')[0]}
                           </span>
                           <span className="flex items-center">
-                            {allThemes.length > 1 
+                            {allThemes.length > 1
                               ? (
-                                  allThemes.map((t, idx) => {
-                                    const parts = t.greeting.replace(/[.!]$/, '').split(' ');
-                                    const festivalName = parts.slice(1).join(' ');
-                                    return (
-                                      <span key={idx} className="flex items-center">
-                                        <span className="ml-1 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
-                                          {festivalName}
-                                        </span>
-                                        {idx < allThemes.length - 2 ? 
-                                          <span className="text-gray-700 dark:text-gray-200">, </span> : 
-                                          idx === allThemes.length - 2 ? 
-                                          <span className="text-gray-700 dark:text-gray-200 mx-1">&</span> : ''
-                                        }
+                                allThemes.map((t, idx) => {
+                                  const parts = t.greeting.replace(/[.!]$/, '').split(' ');
+                                  const festivalName = parts.slice(1).join(' ');
+                                  return (
+                                    <span key={idx} className="flex items-center">
+                                      <span className="ml-1 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
+                                        {festivalName}
                                       </span>
-                                    );
-                                  })
-                                )
-                              : (
-                                  (theme?.greeting || greet).split(' ').length > 1 && (
-                                    <span className="ml-1 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
-                                      {(theme?.greeting || greet).split(' ').slice(1).join(' ').replace(/[.!]$/, '')}
+                                      {idx < allThemes.length - 2 ?
+                                        <span className="text-gray-700 dark:text-gray-200">, </span> :
+                                        idx === allThemes.length - 2 ?
+                                          <span className="text-gray-700 dark:text-gray-200 mx-1">&</span> : ''
+                                      }
                                     </span>
-                                  )
+                                  );
+                                })
+                              )
+                              : (
+                                (theme?.greeting || greet).split(' ').length > 1 && (
+                                  <span className="ml-1 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
+                                    {(theme?.greeting || greet).split(' ').slice(1).join(' ').replace(/[.!]$/, '')}
+                                  </span>
                                 )
+                              )
                             }
                           </span>
                           <span className="text-gray-700 dark:text-gray-200">,</span>
