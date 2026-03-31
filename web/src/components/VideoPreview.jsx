@@ -1894,7 +1894,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
         )}
 
         {/* Big Center Overlay */}
-        {!isPlaying && !isLoading && (
+        {!isPlaying && !isLoading && (!isMiniMode || isEnded) && (
           <div className="absolute inset-x-0 inset-y-0 flex items-center justify-center z-10 pointer-events-none transition-all duration-500">
             <div className="drop-shadow-[0_0_15px_rgba(0,0,0,0.6)] animate-scaleIn">
               {isEnded ? (
@@ -1982,7 +1982,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
         )}
 
         {/* Center Control Button */}
-        {(true) && (
+        {(!isMiniMode || isEnded) && (
           <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
             <button
               onClick={(e) => { e.stopPropagation(); togglePlay(e); }}
