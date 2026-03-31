@@ -6,6 +6,8 @@ import {
   FaTimes,
   FaChevronLeft,
   FaChevronRight,
+  FaAngleDoubleLeft,
+  FaAngleDoubleRight,
   FaPlay,
   FaPause,
   FaSync,
@@ -795,7 +797,9 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
 
     calculateAutoScale();
     window.addEventListener('resize', calculateAutoScale);
-    return () => window.removeEventListener('resize', calculateAutoScale);
+    return () => {
+      window.removeEventListener('resize', calculateAutoScale);
+    };
   }, [rotation, currentIndex, isLoading]); // Recalculate on rotation, video change, or load completion
 
   // Effect to handle overflow updates when isMiniMode changes
@@ -2320,13 +2324,13 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
             <div className="flex items-center justify-between text-white">
               <div className="flex items-center gap-4">
                 <button onClick={() => handleSeek(-5)} className="hover:text-blue-400 transition-transform active:scale-95" title="Rewind 5s">
-                  <FaChevronLeft size={20} />
+                  <FaAngleDoubleLeft size={20} />
                 </button>
                 <button onClick={togglePlay} className="hover:text-blue-400 transition-transform active:scale-95">
                   {isPlaying && !isLoading ? <FaPause size={22} /> : <FaPlay size={22} className="ml-1" />}
                 </button>
                 <button onClick={() => handleSeek(5)} className="hover:text-blue-400 transition-transform active:scale-95" title="Forward 5s">
-                  <FaChevronRight size={20} />
+                  <FaAngleDoubleRight size={20} />
                 </button>
                 <div
                   className={`flex items-center group/volume-container ${isMobile ? 'relative' : ''}`}
