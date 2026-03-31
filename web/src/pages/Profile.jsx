@@ -1396,7 +1396,7 @@ export default function Profile() {
                     {/* Seasonal Animated Icon */}
                     {theme?.logoDecoration && THEME_DECORATIONS[theme.logoDecoration] && (
                       <span
-                        className={`text-3xl ml-2 filter drop-shadow-md ${THEME_DECORATIONS[theme.logoDecoration].animate} cursor-pointer hover:scale-110 transition-transform`}
+                        className={`text-3xl ml-2 filter drop-shadow-md cursor-pointer hover:scale-110 transition-transform`}
                         style={THEME_DECORATIONS[theme.logoDecoration].style || {}}
                         onClick={(e) => {
                           e.preventDefault();
@@ -1411,7 +1411,7 @@ export default function Profile() {
                     {/* Fallback */}
                     {theme?.icon && !theme?.logoDecoration && (
                       <span
-                        className="text-3xl ml-2 filter drop-shadow-md animate-bounce cursor-pointer hover:scale-110 transition-transform"
+                        className="text-3xl ml-2 filter drop-shadow-md cursor-pointer hover:scale-110 transition-transform"
                         title={theme.name}
                         onClick={(e) => {
                           e.preventDefault();
