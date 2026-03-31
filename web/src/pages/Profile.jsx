@@ -103,7 +103,7 @@ const THEME_DECORATIONS = {
   'building': { icon: '🏗️', animate: '', size: 'text-xl', pos: '-top-3 -right-2' },
   'rocket': { icon: '🚀', animate: 'animate-fly', size: 'text-2xl', pos: '-top-3 -right-2' },
   'bonfire': { icon: '🔥', animate: 'animate-flicker', size: 'text-2xl', pos: '-top-3 -right-2' },
-  'peace': { icon: '☮️', animate: 'animate-spin-slow', size: 'text-xl', pos: '-top-3 -right-2' },
+  'peace': { icon: '🕉️', animate: 'animate-spin-slow', size: 'text-xl', pos: '-top-3 -right-2' },
   'harvest': { icon: '🌾', animate: 'animate-sway', size: 'text-xl', pos: '-top-3 -right-2' },
   'tie': { icon: '👔', animate: '', size: 'text-xl', pos: '-top-3 -right-2' },
   'khanda': { icon: '☬', animate: 'animate-pulse', size: 'text-xl', pos: '-top-3 -right-2' },

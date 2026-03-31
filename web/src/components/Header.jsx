@@ -564,7 +564,7 @@ function LogoDecoration({ decoration }) {
     'building': { icon: '🏗️', animate: '', size: 'text-xl' },
     'rocket': { icon: '🚀', animate: 'animate-fly', size: 'text-2xl' },
     'bonfire': { icon: '🔥', animate: 'animate-flicker', size: 'text-2xl' },
-    'peace': { icon: '☮️', animate: 'animate-spin-slow', size: 'text-xl' },
+    'peace': { icon: '🕉️', animate: 'animate-spin-slow', size: 'text-xl' },
     'harvest': { icon: '🌾', animate: 'animate-sway', size: 'text-xl' },
     'tie': { icon: '👔', animate: '', size: 'text-xl' },
     'khanda': { icon: '☬', animate: 'animate-pulse', size: 'text-xl' },
