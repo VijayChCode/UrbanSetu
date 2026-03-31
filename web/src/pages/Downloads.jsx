@@ -249,8 +249,12 @@ export default function Downloads() {
 
                     {/* Mobile Version List (Visible only on mobile) */}
                     <div className="grid grid-cols-1 gap-4 lg:hidden">
-                        {filteredFiles.map((file) => (
-                            <div key={file.id} className="bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-sm">
+                        {filteredFiles.map((file, index) => (
+                            <div 
+                                key={file.id} 
+                                className="bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-sm"
+                                style={{ animation: `vHistoryFadeIn 0.4s ease-out ${index * 0.05}s backwards` }}
+                            >
                                 <div className="flex items-start justify-between mb-4">
                                     <div className="flex items-center gap-3">
                                         <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
@@ -315,8 +319,12 @@ export default function Downloads() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-                                {filteredFiles.map((file) => (
-                                    <tr key={file.id} className="hover:bg-blue-50/30 dark:hover:bg-blue-900/5 transition-colors group">
+                                {filteredFiles.map((file, index) => (
+                                    <tr 
+                                        key={file.id} 
+                                        className="hover:bg-blue-50/30 dark:hover:bg-blue-900/5 transition-colors group"
+                                        style={{ animation: `vHistoryFadeIn 0.3s ease-out ${index * 0.03}s backwards` }}
+                                    >
                                         <td className="px-8 py-8 whitespace-nowrap">
                                             <div className="flex items-center gap-4">
                                                 <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-2xl group-hover:bg-white dark:group-hover:bg-gray-700 shadow-sm transition-colors">
@@ -453,6 +461,12 @@ export default function Downloads() {
                     </div>
                 </div>
             )}
+            <style>{`
+                @keyframes vHistoryFadeIn {
+                    from { opacity: 0; transform: translateY(10px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+            `}</style>
         </div>
     );
 }
