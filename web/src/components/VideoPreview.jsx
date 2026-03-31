@@ -1791,9 +1791,9 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
               className="bg-white/10 hover:bg-white/25 p-2.5 rounded-full text-white transition-all hover:scale-110 border border-white/10 backdrop-blur-md"
               onMouseDown={(e) => e.stopPropagation()}
               onTouchStart={(e) => e.stopPropagation()}
-              title={isPlaying ? "Pause" : "Play"}
+              title={isEnded ? "Replay" : isPlaying ? "Pause" : "Play"}
             >
-              {isPlaying && !isLoading ? <FaPause size={12} /> : <FaPlay size={12} className="ml-0.5" />}
+              {isEnded ? <FaRedo size={12} /> : isPlaying && !isLoading ? <FaPause size={12} /> : <FaPlay size={12} className="ml-0.5" />}
             </button>
             <button
               onClick={handleCloseRequest}
@@ -1894,10 +1894,14 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
         )}
 
         {/* Big Center Overlay */}
-        {!isPlaying && !isLoading && !isMiniMode && (
+        {!isPlaying && !isLoading && (
           <div className="absolute inset-x-0 inset-y-0 flex items-center justify-center z-10 pointer-events-none transition-all duration-500">
             <div className="drop-shadow-[0_0_15px_rgba(0,0,0,0.6)] animate-scaleIn">
-              {isEnded ? <FaRedo className="text-white text-5xl opacity-90" /> : <FaPlay className="text-white text-5xl ml-1 opacity-90" />}
+              {isEnded ? (
+                <FaRedo className={`text-white opacity-90 ${isMiniMode ? 'text-2xl' : 'text-5xl'}`} />
+              ) : (
+                <FaPlay className={`text-white ml-1 opacity-90 ${isMiniMode ? 'text-2xl' : 'text-5xl'}`} />
+              )}
             </div>
           </div>
         )}
@@ -1978,14 +1982,20 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
         )}
 
         {/* Center Control Button */}
-        {!isMiniMode && (
+        {(true) && (
           <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
             <button
               onClick={(e) => { e.stopPropagation(); togglePlay(e); }}
               className={`pointer-events-auto transform transition-all duration-300 text-white hover:scale-110 drop-shadow-[0_0_20px_rgba(0,0,0,0.7)] ${isLoading ? 'opacity-0 scale-90 pointer-events-none' : (!isPlaying || showControls) ? 'opacity-100 scale-100' : 'opacity-0 scale-90 pointer-events-none'}`}
             >
               <div className="flex items-center justify-center">
-                {isEnded ? <FaRedo className="text-5xl" /> : isPlaying && !isLoading ? <FaPause className="text-5xl" /> : <FaPlay className="text-5xl pl-2" />}
+                {isEnded ? (
+                  <FaRedo className={isMiniMode ? "text-2xl" : "text-5xl"} />
+                ) : isPlaying && !isLoading ? (
+                  <FaPause className={isMiniMode ? "text-2xl" : "text-5xl"} />
+                ) : (
+                  <FaPlay className={`${isMiniMode ? "text-2xl pl-1" : "text-5xl pl-2"}`} />
+                )}
               </div>
             </button>
           </div>
