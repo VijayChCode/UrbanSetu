@@ -966,8 +966,8 @@ export const verifyAuth = async (req, res, next) => {
                 // Set new cookies
                 setSecureCookies(res, newAccessToken, newRefreshToken);
 
-                // Use the user data directly since we already fetched it
-                return res.status(200).json(user);
+                // Return sanitized user data (strip sensitive fields)
+                return res.status(200).json(sanitizeUserForVerify(user));
 
             } catch (refreshError) {
                 // Both tokens failed
@@ -985,12 +985,62 @@ export const verifyAuth = async (req, res, next) => {
             return res.status(200).json({ authenticated: false, message: "User not found" });
         }
 
-        res.status(200).json(user);
+        // Return sanitized user data (strip sensitive fields)
+        res.status(200).json(sanitizeUserForVerify(user));
     } catch (error) {
         // Fallback error handler
         return res.status(200).json({ authenticated: false, message: "Authentication failed" });
     }
 };
+
+/**
+ * Sanitize user document for the /auth/verify response.
+ * Only returns fields the frontend needs for currentUser state.
+ * Strips sensitive internal data like sessions, tokens, IPs, etc.
+ */
+function sanitizeUserForVerify(user) {
+    const userObj = user.toObject ? user.toObject() : { ...user };
+
+    // Build a safe settings object (exclude pushTokens)
+    const safeSettings = { ...(userObj.settings || {}) };
+    delete safeSettings.pushTokens;
+
+    return {
+        _id: userObj._id,
+        username: userObj.username,
+        email: userObj.email,
+        mobileNumber: userObj.mobileNumber,
+        avatar: userObj.avatar,
+        role: userObj.role,
+        isDefaultAdmin: userObj.isDefaultAdmin,
+        adminApprovalStatus: userObj.adminApprovalStatus,
+        status: userObj.status,
+        address: userObj.address,
+        gender: userObj.gender,
+        settings: safeSettings,
+        profileVisibility: userObj.profileVisibility,
+        isLocked: userObj.isLocked,
+        isSubscribed: userObj.isSubscribed,
+        isGeneratedMobile: userObj.isGeneratedMobile,
+        createdAt: userObj.createdAt,
+        lastLogin: userObj.lastLogin,
+        gamification: {
+            setuCoinsBalance: userObj.gamification?.setuCoinsBalance ?? 0,
+            totalCoinsEarned: userObj.gamification?.totalCoinsEarned ?? 0,
+            currentStreak: userObj.gamification?.currentStreak ?? 0,
+            hasReceivedProfileCompletionBonus: userObj.gamification?.hasReceivedProfileCompletionBonus ?? false,
+            coinsExpiryDate: userObj.gamification?.coinsExpiryDate ?? null,
+            referredBy: userObj.gamification?.referredBy ?? null,
+        },
+        rentalProfile: {
+            isLandlord: userObj.rentalProfile?.isLandlord ?? false,
+            isTenant: userObj.rentalProfile?.isTenant ?? false,
+            activeContractsAsLandlord: userObj.rentalProfile?.activeContractsAsLandlord ?? 0,
+            activeContractsAsTenant: userObj.rentalProfile?.activeContractsAsTenant ?? 0,
+            verifiedLandlord: userObj.rentalProfile?.verifiedLandlord ?? false,
+        },
+    };
+}
 
 // Store for password reset tokens (in production, use Redis)
 const resetTokenStore = new Map();
