@@ -121,6 +121,13 @@ export default function Oauth({ pageType, disabled = false, onAuthStart = null, 
             } catch (popupError) {
                 console.log('Popup failed:', popupError);
 
+                // User intentionally closed the popup — just reset state, no error needed
+                if (popupError.code === 'auth/popup-closed-by-user' || popupError.code === 'auth/cancelled-popup-request') {
+                    setIsLoading(false);
+                    if (onAuthStart) onAuthStart(null);
+                    return;
+                }
+
                 if (popupError.code === 'auth/unauthorized-domain') {
                     setError(`Domain not authorized. Please add '${window.location.hostname}' to Firebase Console > Auth > Settings > Authorized Domains.`);
                     setIsLoading(false);
@@ -130,7 +137,7 @@ export default function Oauth({ pageType, disabled = false, onAuthStart = null, 
 
                 console.log('Trying redirect method...');
 
-                // If popup fails due to CORS or other issues, use redirect
+                // If popup fails due to CORS or other technical issues, use redirect
                 const provider = new GoogleAuthProvider();
                 provider.addScope('email');
                 provider.addScope('profile');
