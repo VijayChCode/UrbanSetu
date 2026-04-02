@@ -380,6 +380,15 @@ function NormalizeRoute({ children }) {
     return <NotFound />;
   }
   if (normalized !== location.pathname) {
+    // When redirecting away from auth pages (sign-in, sign-up), respect the redirect param
+    const isAuthPage = ['/sign-in', '/sign-up', '/forgot-password', '/oauth'].includes(location.pathname);
+    if (isAuthPage && location.search) {
+      const searchParams = new URLSearchParams(location.search);
+      const redirectUrl = searchParams.get('redirect');
+      if (redirectUrl && redirectUrl.startsWith('/')) {
+        return <Navigate to={redirectUrl} replace />;
+      }
+    }
     // Redirect to normalized route
     return <Navigate to={normalized} replace />;
   }

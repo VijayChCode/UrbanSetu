@@ -74,7 +74,7 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
     // Premium Loader State
     const [showLoader, setShowLoader] = useState(false);
     const [pendingLoginData, setPendingLoginData] = useState(null);
-    const [pendingRedirectUrl, setPendingRedirectUrl] = useState(null);
+    const pendingRedirectRef = useRef(null); // useRef to avoid closure staleness in PremiumLoader
 
     const { loading, error, currentUser } = useSelector((state) => state.user);
     const navigate = useNavigate();
@@ -552,9 +552,9 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
                 return;
             }
 
-            // Capture redirect URL BEFORE showing loader (to avoid race condition)
+            // Capture redirect URL BEFORE showing loader (ref avoids closure issues)
             const otpSearchParams = new URLSearchParams(location.search);
-            setPendingRedirectUrl(otpSearchParams.get('redirect'));
+            pendingRedirectRef.current = otpSearchParams.get('redirect');
 
             // Trigger Loading Animation
             setPendingLoginData(data);
@@ -662,9 +662,9 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
             setRecaptchaToken(null);
             setRecaptchaError("");
 
-            // Capture redirect URL BEFORE showing loader (to avoid race condition)
+            // Capture redirect URL BEFORE showing loader (ref avoids closure issues)
             const pwSearchParams = new URLSearchParams(location.search);
-            setPendingRedirectUrl(pwSearchParams.get('redirect'));
+            pendingRedirectRef.current = pwSearchParams.get('redirect');
 
             // Trigger Loading Animation
             setPendingLoginData(data);
@@ -695,8 +695,13 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
         // Reconnect socket with new token
         reconnectSocket();
 
-        // Use the captured redirect URL (saved before PremiumLoader was shown)
-        const redirectUrl = pendingRedirectUrl;
+        // Use the captured redirect URL (ref is always up-to-date, no closure issues)
+        // Fallback chain: ref → window.location.search (belt-and-suspenders)
+        let redirectUrl = pendingRedirectRef.current;
+        if (!redirectUrl) {
+            const fallbackParams = new URLSearchParams(window.location.search);
+            redirectUrl = fallbackParams.get('redirect');
+        }
 
         if (redirectUrl && redirectUrl.startsWith('/')) {
             // Specific fix for shared chat redirection to enforce role-based paths
@@ -1128,9 +1133,9 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
                                 disabled={authInProgress !== null || otpSent}
                                 onAuthStart={setAuthInProgress}
                             onAuthSuccess={(data) => {
-                                    // Capture redirect URL BEFORE showing loader
+                                    // Capture redirect URL BEFORE showing loader (ref avoids closure issues)
                                     const googleSearchParams = new URLSearchParams(location.search);
-                                    setPendingRedirectUrl(googleSearchParams.get('redirect'));
+                                    pendingRedirectRef.current = googleSearchParams.get('redirect');
                                     setPendingLoginData(data);
                                     setShowLoader(true);
                                 }}

@@ -81,7 +81,7 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
   const [authInProgress, setAuthInProgress] = useState(null); // null, 'form', 'google'
   const [showLoader, setShowLoader] = useState(false);
   const [pendingLoginData, setPendingLoginData] = useState(null);
-  const [pendingRedirectUrl, setPendingRedirectUrl] = useState(null);
+  const pendingRedirectRef = useRef(null); // useRef to avoid closure staleness in PremiumLoader
   const dispatch = useDispatch();
 
   const checkPasswordStrength = (password) => {
@@ -423,9 +423,9 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
             if (loginRes.ok) {
               setSuccess("Account created! Logging you in...");
 
-              // Capture redirect URL BEFORE showing loader
+              // Capture redirect URL BEFORE showing loader (ref avoids closure issues)
               const signupSearchParams = new URLSearchParams(location.search);
-              setPendingRedirectUrl(signupSearchParams.get('redirect'));
+              pendingRedirectRef.current = signupSearchParams.get('redirect');
 
               setPendingLoginData(loginData);
               setShowLoader(true);
@@ -462,8 +462,13 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
       // Reconnect socket with new token
       reconnectSocket();
 
-      // Use the captured redirect URL (saved before PremiumLoader was shown)
-      const redirectUrl = pendingRedirectUrl;
+      // Use the captured redirect URL (ref is always up-to-date, no closure issues)
+      // Fallback chain: ref → window.location.search (belt-and-suspenders)
+      let redirectUrl = pendingRedirectRef.current;
+      if (!redirectUrl) {
+          const fallbackParams = new URLSearchParams(window.location.search);
+          redirectUrl = fallbackParams.get('redirect');
+      }
 
       if (redirectUrl && redirectUrl.startsWith('/')) {
         navigate(redirectUrl, { replace: true });
@@ -1080,9 +1085,9 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                       disabled={authInProgress !== null}
                       onAuthStart={setAuthInProgress}
                       onAuthSuccess={(data) => {
-                        // Capture redirect URL BEFORE showing loader
+                        // Capture redirect URL BEFORE showing loader (ref avoids closure issues)
                         const googleSearchParams = new URLSearchParams(location.search);
-                        setPendingRedirectUrl(googleSearchParams.get('redirect'));
+                        pendingRedirectRef.current = googleSearchParams.get('redirect');
                         setPendingLoginData(data);
                         setShowLoader(true);
                       }}
