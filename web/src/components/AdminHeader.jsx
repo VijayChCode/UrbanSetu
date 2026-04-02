@@ -70,7 +70,7 @@ const THEME_DECORATIONS = {
   'turkey': { icon: '🦃', animate: 'animate-bounce', size: 'text-xl', pos: '-top-3 -right-2' },
   'dragon': { icon: '🐉', animate: 'animate-sway', size: 'text-xl', pos: '-top-3 -right-2' },
   'trident': { icon: '🔱', animate: 'animate-pulse', size: 'text-xl', pos: '-top-3 -right-2' },
-  'mace': { icon: '🙏', animate: 'animate-wiggle', size: 'text-xl', pos: '-top-3 -right-2' },
+  'mace': { icon: '🙏', animate: '', size: 'text-xl', pos: '-top-3 -right-2' },
   'cross': { icon: '✝️', animate: 'animate-pulse', size: 'text-xl', pos: '-top-3 -right-2' },
   'egg': { icon: '🥚', animate: 'animate-bounce', size: 'text-xl', pos: '-top-3 -right-2' },
   'lantern': { icon: '🕌', animate: 'animate-flicker', size: 'text-xl', pos: '-top-3 -right-2' },

@@ -550,7 +550,7 @@ function LogoDecoration({ decoration }) {
     'turkey': { icon: '🦃', animate: 'animate-bounce', size: 'text-xl' },
     'dragon': { icon: '🐉', animate: 'animate-sway', size: 'text-xl' },
     'trident': { icon: '🔱', animate: 'animate-pulse', size: 'text-xl' },
-    'mace': { icon: '🙏', animate: 'animate-wiggle', size: 'text-xl' },
+    'mace': { icon: '🙏', animate: '', size: 'text-xl' },
     'cross': { icon: '✝️', animate: 'animate-pulse', size: 'text-xl' },
     'egg': { icon: '🥚', animate: 'animate-bounce', size: 'text-xl' },
     'lantern': { icon: '🕌', animate: 'animate-flicker', size: 'text-xl' },
