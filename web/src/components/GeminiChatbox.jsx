@@ -478,8 +478,19 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     // Safety Policy Violation & Cooldown State
     const VIOLATION_LIMIT = 3;
     const COOLDOWN_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+    const VIOLATION_WINDOW = 24 * 60 * 60 * 1000; // 24-hour rolling window for all violations
+
+    // Initialize violations with 24-hour window check
     const [policyViolations, setPolicyViolations] = useState(() => {
-        return parseInt(localStorage.getItem(getUserKey('policy_violations')) || '0');
+        const stored = parseInt(localStorage.getItem(getUserKey('policy_violations')) || '0');
+        const windowStart = parseInt(localStorage.getItem(getUserKey('violation_window_start')) || '0');
+        // If the 24-hour window has passed, reset violations regardless of count
+        if (windowStart > 0 && Date.now() - windowStart >= VIOLATION_WINDOW) {
+            localStorage.setItem(getUserKey('policy_violations'), '0');
+            localStorage.removeItem(getUserKey('violation_window_start'));
+            return 0;
+        }
+        return stored;
     });
     const [cooldownEnd, setCooldownEnd] = useState(() => {
         return parseInt(localStorage.getItem(getUserKey('cooldown_end')) || '0');
@@ -488,10 +499,21 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [showViolationModal, setShowViolationModal] = useState(false);
     const [remainingCooldownText, setRemainingCooldownText] = useState('');
 
-    // Sync violation states and handle cooldown check
+    // Sync violation states and handle cooldown check + 24hr rolling window reset
     useEffect(() => {
         const checkCooldown = () => {
             const now = Date.now();
+
+            // --- 24-hour rolling window reset (applies to ALL violation counts) ---
+            const windowStart = parseInt(localStorage.getItem(getUserKey('violation_window_start')) || '0');
+            if (windowStart > 0 && now - windowStart >= VIOLATION_WINDOW && !isBlockedByPolicy) {
+                // Window expired and user is NOT in active cooldown — reset violations
+                setPolicyViolations(0);
+                localStorage.setItem(getUserKey('policy_violations'), '0');
+                localStorage.removeItem(getUserKey('violation_window_start'));
+            }
+
+            // --- Active 24hr block cooldown (when user hit 3/3) ---
             if (cooldownEnd > 0 && now < cooldownEnd) {
                 if (!isBlockedByPolicy) setIsBlockedByPolicy(true);
 
@@ -514,6 +536,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     setPolicyViolations(0);
                     localStorage.setItem(getUserKey('policy_violations'), '0');
                     localStorage.removeItem(getUserKey('cooldown_end'));
+                    localStorage.removeItem(getUserKey('violation_window_start'));
                     setRemainingCooldownText('');
                 }
             }
@@ -529,6 +552,12 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         const newCount = policyViolations + 1;
         setPolicyViolations(newCount);
         localStorage.setItem(getUserKey('policy_violations'), newCount.toString());
+
+        // Start (or keep) the 24-hour violation window from the FIRST violation
+        const existingWindow = localStorage.getItem(getUserKey('violation_window_start'));
+        if (!existingWindow || existingWindow === '0') {
+            localStorage.setItem(getUserKey('violation_window_start'), Date.now().toString());
+        }
 
         if (newCount >= VIOLATION_LIMIT) {
             const endTime = Date.now() + COOLDOWN_DURATION;

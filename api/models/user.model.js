@@ -376,6 +376,10 @@ const userSchema = new mongoose.Schema({
   cooldownEnd: {
     type: Date,
     default: null
+  },
+  lastViolationAt: {
+    type: Date,
+    default: null
   }
 }, { timestamps: true });
 
