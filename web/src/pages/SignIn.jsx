@@ -74,6 +74,7 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
     // Premium Loader State
     const [showLoader, setShowLoader] = useState(false);
     const [pendingLoginData, setPendingLoginData] = useState(null);
+    const [pendingRedirectUrl, setPendingRedirectUrl] = useState(null);
 
     const { loading, error, currentUser } = useSelector((state) => state.user);
     const navigate = useNavigate();
@@ -125,8 +126,9 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
         }
     }, [location.search]);
 
-    // Redirect if already logged in
+    // Redirect if already logged in (but NOT during PremiumLoader — finalizeLogin handles that)
     useEffect(() => {
+        if (showLoader) return; // Don't interfere while PremiumLoader is active
         if (currentUser && sessionChecked) {
             const searchParams = new URLSearchParams(location.search);
             const redirectUrl = searchParams.get('redirect');
@@ -140,7 +142,7 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
                 }
             }
         }
-    }, [currentUser, sessionChecked, navigate, location.search]);
+    }, [currentUser, sessionChecked, navigate, location.search, showLoader]);
 
     // Sync state with URL parameters
     useEffect(() => {
@@ -550,6 +552,10 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
                 return;
             }
 
+            // Capture redirect URL BEFORE showing loader (to avoid race condition)
+            const otpSearchParams = new URLSearchParams(location.search);
+            setPendingRedirectUrl(otpSearchParams.get('redirect'));
+
             // Trigger Loading Animation
             setPendingLoginData(data);
             setShowLoader(true);
@@ -656,6 +662,10 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
             setRecaptchaToken(null);
             setRecaptchaError("");
 
+            // Capture redirect URL BEFORE showing loader (to avoid race condition)
+            const pwSearchParams = new URLSearchParams(location.search);
+            setPendingRedirectUrl(pwSearchParams.get('redirect'));
+
             // Trigger Loading Animation
             setPendingLoginData(data);
             setShowLoader(true);
@@ -685,9 +695,8 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
         // Reconnect socket with new token
         reconnectSocket();
 
-        // Check for redirect URL in query params
-        const searchParams = new URLSearchParams(location.search);
-        const redirectUrl = searchParams.get('redirect');
+        // Use the captured redirect URL (saved before PremiumLoader was shown)
+        const redirectUrl = pendingRedirectUrl;
 
         if (redirectUrl && redirectUrl.startsWith('/')) {
             // Specific fix for shared chat redirection to enforce role-based paths
@@ -1118,7 +1127,10 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
                                 pageType="signIn"
                                 disabled={authInProgress !== null || otpSent}
                                 onAuthStart={setAuthInProgress}
-                                onAuthSuccess={(data) => {
+                            onAuthSuccess={(data) => {
+                                    // Capture redirect URL BEFORE showing loader
+                                    const googleSearchParams = new URLSearchParams(location.search);
+                                    setPendingRedirectUrl(googleSearchParams.get('redirect'));
                                     setPendingLoginData(data);
                                     setShowLoader(true);
                                 }}

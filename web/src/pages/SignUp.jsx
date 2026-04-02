@@ -81,6 +81,7 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
   const [authInProgress, setAuthInProgress] = useState(null); // null, 'form', 'google'
   const [showLoader, setShowLoader] = useState(false);
   const [pendingLoginData, setPendingLoginData] = useState(null);
+  const [pendingRedirectUrl, setPendingRedirectUrl] = useState(null);
   const dispatch = useDispatch();
 
   const checkPasswordStrength = (password) => {
@@ -191,16 +192,21 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
     }
   }, [location]);
 
-  // Redirect if already logged in
+  // Redirect if already logged in (but NOT during PremiumLoader — finalizeLogin handles that)
   useEffect(() => {
+    if (showLoader) return; // Don't interfere while PremiumLoader is active
     if (currentUser && sessionChecked) {
-      if (currentUser.role === 'admin' || currentUser.role === 'rootadmin') {
+      const searchParams = new URLSearchParams(location.search);
+      const redirectUrl = searchParams.get('redirect');
+      if (redirectUrl && redirectUrl.startsWith('/')) {
+        navigate(redirectUrl, { replace: true });
+      } else if (currentUser.role === 'admin' || currentUser.role === 'rootadmin') {
         navigate('/admin', { replace: true });
       } else {
         navigate('/user', { replace: true });
       }
     }
-  }, [currentUser, sessionChecked, navigate]);
+  }, [currentUser, sessionChecked, navigate, location.search, showLoader]);
 
   const handleChange = (e) => {
     const { id, value } = e.target;
@@ -416,6 +422,11 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
 
             if (loginRes.ok) {
               setSuccess("Account created! Logging you in...");
+
+              // Capture redirect URL BEFORE showing loader
+              const signupSearchParams = new URLSearchParams(location.search);
+              setPendingRedirectUrl(signupSearchParams.get('redirect'));
+
               setPendingLoginData(loginData);
               setShowLoader(true);
             } else {
@@ -451,9 +462,8 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
       // Reconnect socket with new token
       reconnectSocket();
 
-      // Check for redirect URL in query params
-      const searchParams = new URLSearchParams(location.search);
-      const redirectUrl = searchParams.get('redirect');
+      // Use the captured redirect URL (saved before PremiumLoader was shown)
+      const redirectUrl = pendingRedirectUrl;
 
       if (redirectUrl && redirectUrl.startsWith('/')) {
         navigate(redirectUrl, { replace: true });
@@ -1070,6 +1080,9 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                       disabled={authInProgress !== null}
                       onAuthStart={setAuthInProgress}
                       onAuthSuccess={(data) => {
+                        // Capture redirect URL BEFORE showing loader
+                        const googleSearchParams = new URLSearchParams(location.search);
+                        setPendingRedirectUrl(googleSearchParams.get('redirect'));
                         setPendingLoginData(data);
                         setShowLoader(true);
                       }}
