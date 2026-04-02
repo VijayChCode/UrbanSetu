@@ -207,7 +207,16 @@ export default function Home() {
 
       // Request all matches (limit 1000) to allow infinite "View More"
       const recs = await getLiveRecommendations(uniqueCandidates, 1000, uniquePreferences);
-      setLiveRecommendations(recs);
+      if (recs.length > 0) {
+        setLiveRecommendations(recs);
+      } else if (uniqueCandidates.length > 0) {
+        // Fallback: If no session history / no TensorFlow matches, show randomized candidates
+        const fallback = uniqueCandidates
+          .sort(() => 0.5 - Math.random())
+          .slice(0, 8)
+          .map(listing => ({ ...listing, sentinelScore: 0.5 + Math.random() * 0.3, isLiveMatch: false }));
+        setLiveRecommendations(fallback);
+      }
     };
 
     processLiveRecs();
@@ -515,14 +524,22 @@ export default function Home() {
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-1 font-medium italic">Tensor-mode active</p>
                     </div>
                   </div>
+                  <Link
+                    to={`${linkPrefix}/search`}
+                    className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-bold hover:text-blue-700 dark:hover:text-blue-300 transition-all hover:translate-x-1"
+                  >
+                    View All <FaArrowRight />
+                  </Link>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {liveRecommendations.slice(0, visibleRecsCount).map((listing) => (
-                    <div key={`live-${listing._id}`} className="relative group">
-                      <div className="absolute -top-2 -right-2 z-20 bg-blue-600 text-white text-[10px] font-black px-2 py-1 rounded-lg shadow-lg transform rotate-12 group-hover:rotate-0 transition-transform">
-                        {Math.round(listing.sentinelScore * 100)}% MATCH
-                      </div>
+                    <div key={`live-${listing._id}`} className="relative group overflow-visible">
+                      {listing.isLiveMatch && (
+                        <div className="absolute -top-2 -right-2 z-20 bg-blue-600 text-white text-[10px] font-black px-2 py-1 rounded-lg shadow-lg transform rotate-12 group-hover:rotate-0 transition-transform">
+                          {Math.round(listing.sentinelScore * 100)}% MATCH
+                        </div>
+                      )}
                       <ListingItem listing={listing} />
                     </div>
                   ))}
