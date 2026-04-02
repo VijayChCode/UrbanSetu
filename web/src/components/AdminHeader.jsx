@@ -390,7 +390,7 @@ export default function AdminHeader() {
             <Link to="/admin" className="flex-shrink-0 group relative">
               <div className="flex items-center gap-3">
                 <div className="relative">
-                  <div className="p-2 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+                  <div className="p-2 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 shadow-lg transition-all duration-300">
                     <FaUserCheck className={`text-xl sm:text-2xl drop-shadow-lg ${theme?.id === 'christmas' ? 'text-green-500' : 'text-yellow-400'}`} />
                   </div>
 
