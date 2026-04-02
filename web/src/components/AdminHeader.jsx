@@ -390,9 +390,10 @@ export default function AdminHeader() {
             <Link to="/admin" className="flex-shrink-0 group relative">
               <div className="flex items-center gap-3">
                 <div className="relative">
-                  <div className="p-2 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 shadow-lg transition-all duration-300">
+                  <div className="p-2 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
                     <FaUserCheck className={`text-xl sm:text-2xl drop-shadow-lg ${theme?.id === 'christmas' ? 'text-green-500' : 'text-yellow-400'}`} />
                   </div>
+                  <div className={`absolute -inset-1 bg-gradient-to-r ${theme?.textGradient ? theme.textGradient.replace('bg-clip-text text-transparent', '') : 'from-yellow-400 to-orange-500'} rounded-xl blur opacity-30 group-hover:opacity-50 transition-opacity duration-300`}></div>
 
                   {/* Seasonal Logo Interaction - Animated Icons */}
                   <div className="absolute -top-3 -right-2 flex pointer-events-none">
