@@ -180,8 +180,8 @@ export default function Oauth({ pageType, disabled = false, onAuthStart = null, 
             >
                 {isLoading ? (
                     <>
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-600 dark:border-gray-300"></div>
-                        {error ? 'Retrying...' : 'Signing In...'}
+                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 dark:border-gray-600 border-t-blue-600 dark:border-t-blue-400"></div>
+                        {error ? 'Retrying...' : (pageType === "signIn" ? 'Signing In...' : 'Signing Up...')}
                     </>
                 ) : (
                     <>
