@@ -166,7 +166,10 @@ export default function Oauth({ pageType, disabled = false, onAuthStart = null, 
         }
     };
 
-    return (
+    // Detect if rendered as a standalone page (at /oauth) vs embedded component
+    const isStandalonePage = !onAuthSuccess && !onAuthStart && location.pathname === '/oauth';
+
+    const buttonContent = (
         <div className="w-full">
             <button
                 type="button"
@@ -193,6 +196,100 @@ export default function Oauth({ pageType, disabled = false, onAuthStart = null, 
                     {error}
                 </div>
             )}
+        </div>
+    );
+
+    // When used as an embedded component in SignIn/SignUp, return just the button
+    if (!isStandalonePage) {
+        return buttonContent;
+    }
+
+    // Standalone page layout for /oauth (Firebase redirect callback landing page)
+    return (
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-6 relative overflow-hidden">
+            {/* Animated background */}
+            <div className="fixed inset-0 pointer-events-none z-0">
+                <div className="absolute top-[15%] left-[25%] w-72 h-72 bg-blue-400/15 dark:bg-blue-600/10 rounded-full blur-[100px] animate-pulse"></div>
+                <div className="absolute bottom-[20%] right-[20%] w-80 h-80 bg-purple-400/15 dark:bg-purple-600/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1s' }}></div>
+            </div>
+
+            <div className="relative z-10 w-full max-w-md">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 p-8 md:p-10">
+                    {/* Branding */}
+                    <div className="text-center mb-8">
+                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-purple-700 mb-4 shadow-lg">
+                            <FcGoogle className="text-3xl" />
+                        </div>
+                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                            Continue with Google
+                        </h1>
+                        <p className="text-gray-500 dark:text-gray-400 text-sm">
+                            Sign in or create your UrbanSetu account using your Google account
+                        </p>
+                    </div>
+
+                    {/* Google Button */}
+                    <div className="space-y-4">
+                        <button
+                            type="button"
+                            onClick={handleGoogleClick}
+                            disabled={isLoading || disabled}
+                            className="flex items-center justify-center w-full gap-3 px-6 py-3.5 text-base font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-blue-300 dark:hover:border-blue-500 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            aria-label="Continue with Google"
+                        >
+                            {isLoading ? (
+                                <>
+                                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-blue-600"></div>
+                                    <span>Authenticating...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <FcGoogle className="text-2xl" />
+                                    <span>Continue with Google</span>
+                                </>
+                            )}
+                        </button>
+
+                        {error && (
+                            <div className="p-3 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl text-center">
+                                {error}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Divider */}
+                    <div className="relative my-8">
+                        <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-gray-200 dark:border-gray-700"></div>
+                        </div>
+                        <div className="relative flex justify-center text-sm">
+                            <span className="px-3 bg-white dark:bg-gray-800 text-gray-400 dark:text-gray-500 font-medium">OR</span>
+                        </div>
+                    </div>
+
+                    {/* Alternative Actions */}
+                    <div className="space-y-3">
+                        <a
+                            href="/sign-in"
+                            className="flex items-center justify-center w-full px-4 py-3 text-sm font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-all duration-200"
+                        >
+                            Sign In with Email
+                        </a>
+                        <a
+                            href="/sign-up"
+                            className="flex items-center justify-center w-full px-4 py-3 text-sm font-semibold text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200"
+                        >
+                            Create New Account
+                        </a>
+                    </div>
+                </div>
+
+                {/* Security badge */}
+                <div className="mt-6 flex items-center justify-center gap-2 text-xs text-gray-400 dark:text-gray-500">
+                    <svg className="w-3.5 h-3.5 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" /></svg>
+                    <span className="font-medium">Secure & Encrypted Authentication</span>
+                </div>
+            </div>
         </div>
     );
 }
