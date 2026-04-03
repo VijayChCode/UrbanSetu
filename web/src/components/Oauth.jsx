@@ -4,6 +4,7 @@ import { signInSuccess } from '../redux/user/userSlice.js';
 import { useDispatch } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FcGoogle } from 'react-icons/fc';
+import { Link2 } from 'lucide-react';
 import { authenticatedFetch } from '../utils/csrf';
 import React, { useEffect, useState } from 'react';
 
@@ -217,8 +218,32 @@ export default function Oauth({ pageType, disabled = false, onAuthStart = null, 
                 <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 p-8 md:p-10">
                     {/* Branding */}
                     <div className="text-center mb-8">
-                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-purple-700 mb-4 shadow-lg">
-                            <FcGoogle className="text-3xl" />
+                        <div className="flex items-center justify-center gap-4 mb-8">
+                            {/* UrbanSetu Logo */}
+                            <div className="flex items-center gap-2.5 p-2 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 transform transition-transform hover:scale-105 duration-300">
+                                <img 
+                                    src="/favicon.png" 
+                                    alt="UrbanSetu Logo" 
+                                    className="w-10 h-10 rounded-lg object-contain"
+                                />
+                                <div className="flex flex-col items-start leading-none pr-1">
+                                    <span className="text-lg font-black text-gray-900 dark:text-white tracking-tighter">UrbanSetu</span>
+                                    <span className="text-[7px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest mt-0.5">Real Estate Excellence</span>
+                                </div>
+                            </div>
+
+                            {/* Connection Link */}
+                            <div className="relative flex items-center">
+                                <div className="absolute w-8 h-px bg-gradient-to-r from-blue-500 to-purple-500 opacity-30"></div>
+                                <div className="relative z-10 p-1.5 bg-gray-50 dark:bg-gray-900 rounded-full border border-gray-100 dark:border-gray-800 text-gray-400">
+                                    <Link2 className="w-3.5 h-3.5 animate-pulse" />
+                                </div>
+                            </div>
+
+                            {/* Google Logo */}
+                            <div className="w-14 h-14 rounded-2xl bg-white dark:bg-gray-800 shadow-lg border border-gray-100 dark:border-gray-700 flex items-center justify-center transform transition-transform hover:scale-105 duration-300">
+                                <FcGoogle className="text-3xl" />
+                            </div>
                         </div>
                         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                             Continue with Google
