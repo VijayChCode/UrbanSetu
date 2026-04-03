@@ -2,20 +2,36 @@ import React, { useState } from 'react';
 import UrbanSetuSpinner from './UrbanSetuSpinner';
 
 const AdvancedImage = ({ src, alt, className, ...props }) => {
-    // Robust check for missing or empty source
-    const isSourceEmpty = !src || (Array.isArray(src) && src.length === 0) || (typeof src === 'string' && src.trim() === '');
-
+    const imgRef = React.useRef(null);
+    
+    // Check if source is truly missing or invalid
+    const isSourceEmpty = !src || 
+                         (Array.isArray(src) && src.length === 0) || 
+                         (typeof src === 'string' && (src.trim() === '' || src === 'undefined' || src === 'null'));
+    
     const [isLoading, setIsLoading] = useState(!isSourceEmpty);
     const [hasError, setHasError] = useState(isSourceEmpty);
 
+    // Immediate check for cached images
     React.useEffect(() => {
-        const sourceEmpty = !src || (Array.isArray(src) && src.length === 0) || (typeof src === 'string' && src.trim() === '');
+        if (imgRef.current?.complete && !isSourceEmpty) {
+            setIsLoading(false);
+            setHasError(false);
+        }
+    }, [src, isSourceEmpty]);
+
+    React.useEffect(() => {
+        const sourceEmpty = !src || 
+                           (Array.isArray(src) && src.length === 0) || 
+                           (typeof src === 'string' && (src.trim() === '' || src === 'undefined' || src === 'null'));
+        
         setIsLoading(!sourceEmpty);
         setHasError(sourceEmpty);
     }, [src]);
 
     const handleLoad = () => {
         setIsLoading(false);
+        setHasError(false);
     };
 
     const handleError = () => {
@@ -38,6 +54,7 @@ const AdvancedImage = ({ src, alt, className, ...props }) => {
                 </div>
             ) : (
                 <img
+                    ref={imgRef}
                     src={src}
                     alt={alt}
                     onLoad={handleLoad}
