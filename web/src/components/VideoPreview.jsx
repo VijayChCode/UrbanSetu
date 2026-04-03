@@ -2473,26 +2473,28 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
 
                 {/* Speed Menu Overlay */}
                 {showSpeedMenu && (
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-[#1a1a1a]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl py-2 w-32 animate-slideUp z-[110]">
-                    <div className="px-3 py-1.5 mb-1 border-b border-white/5">
-                      <span className="text-[10px] font-black text-white/30 uppercase tracking-widest leading-none">Playback Speed</span>
-                    </div>
-                    <div className="max-h-48 overflow-y-auto custom-scrollbar">
-                      {[0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2].map((speed) => (
-                        <button
-                          key={speed}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setPlaybackRate(speed);
-                            setShowSpeedMenu(false);
-                            showFeedback(`${speed}x Speed`);
-                          }}
-                          className={`w-full px-4 py-2 text-left text-xs font-bold transition-colors flex items-center justify-between group ${playbackRate === speed ? 'text-blue-400 bg-blue-400/10' : 'text-white/70 hover:bg-white/10 hover:text-white'}`}
-                        >
-                          <span>{speed === 1 ? 'Normal' : `${speed}x`}</span>
-                          {playbackRate === speed && <div className="w-1.5 h-1.5 rounded-full bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.6)]" />}
-                        </button>
-                      ))}
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-[110]">
+                    <div className="bg-[#1a1a1a]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl py-2 w-32 animate-slideUp overflow-hidden">
+                      <div className="px-3 py-1.5 mb-1 border-b border-white/5">
+                        <span className="text-[10px] font-black text-white/30 uppercase tracking-widest leading-none">Speed</span>
+                      </div>
+                      <div className="max-h-48 overflow-y-auto custom-scrollbar">
+                        {[0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2].map((speed) => (
+                          <button
+                            key={speed}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPlaybackRate(speed);
+                              setShowSpeedMenu(false);
+                              showFeedback(`${speed}x Speed`);
+                            }}
+                            className={`w-full px-4 py-2 text-left text-xs font-bold transition-colors flex items-center justify-between group ${playbackRate === speed ? 'text-blue-400 bg-blue-400/10' : 'text-white/70 hover:bg-white/10 hover:text-white'}`}
+                          >
+                            <span>{speed === 1 ? 'Normal' : `${speed}x`}</span>
+                            {playbackRate === speed && <div className="w-1.5 h-1.5 rounded-full bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.6)]" />}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}
