@@ -38,6 +38,7 @@ import PreBookingChatWrapper from "../components/PreBookingChatWrapper";
 import { authenticatedFetch } from "../utils/auth";
 import { trackInteraction, getLiveRecommendations } from "../utils/sentinelLiveEngine";
 import AdvancedImage from "../components/AdvancedImage";
+import UrbanSetuSpinner from "../components/UrbanSetuSpinner";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const UNAVAILABLE_STATUSES = ['reserved', 'under_contract', 'rented', 'sold', 'suspended'];
@@ -2365,7 +2366,7 @@ export default function Listing() {
                     style={{ lineHeight: 0 }}
                   >
                     {watchlistLoading ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                      <UrbanSetuSpinner size="sm" isBright={isInWatchlist} />
                     ) : (
                       <FaEye className="text-base sm:text-lg" />
                     )}
@@ -4787,7 +4788,7 @@ export default function Listing() {
                     />
                     {searchLoading && (
                       <div className="absolute right-4 top-4">
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
+                        <UrbanSetuSpinner size="sm" isBright={true} />
                       </div>
                     )}
                     {searchQuery && !searchLoading && (

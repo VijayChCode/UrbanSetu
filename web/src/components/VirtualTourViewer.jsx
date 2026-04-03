@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { FaCompass, FaExpand, FaCompress, FaSearchPlus, FaSearchMinus, FaPlay, FaPause, FaTimes, FaRedo, FaMagic } from 'react-icons/fa';
+import UrbanSetuSpinner from './UrbanSetuSpinner';
 
 const VirtualTourViewer = ({ imageUrl, autoLoad = true, className = "" }) => {
     const viewerRef = useRef(null);
@@ -175,7 +176,7 @@ const VirtualTourViewer = ({ imageUrl, autoLoad = true, className = "" }) => {
         >
             {!isLoaded && (
                 <div className="absolute inset-0 flex items-center justify-center text-white z-0">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+                    <UrbanSetuSpinner size="lg" isBright={true} />
                 </div>
             )}
 

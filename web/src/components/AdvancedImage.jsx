@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { ImageOff, Loader2 } from 'lucide-react';
+import { ImageOff } from 'lucide-react';
+import UrbanSetuSpinner from './UrbanSetuSpinner';
 
 const AdvancedImage = ({ src, alt, className, ...props }) => {
     const [isLoading, setIsLoading] = useState(!!src);
@@ -22,8 +23,8 @@ const AdvancedImage = ({ src, alt, className, ...props }) => {
     return (
         <div className={`relative overflow-hidden ${className}`}>
             {isLoading && !hasError && (
-                <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800 animate-pulse">
-                    <Loader2 className="w-8 h-8 text-blue-500 animate-spin opacity-40" />
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-100/10 dark:bg-gray-800/10 backdrop-blur-sm">
+                    <UrbanSetuSpinner size="md" isBright={true} />
                 </div>
             )}
 

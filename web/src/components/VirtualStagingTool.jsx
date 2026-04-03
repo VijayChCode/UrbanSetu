@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { authenticatedFetch } from '../utils/auth';
 import { Sparkles, Upload, ArrowRight, RefreshCw, Download } from 'lucide-react';
+import UrbanSetuSpinner from './UrbanSetuSpinner';
 import html2canvas from 'html2canvas';
 
 const INITIAL_STYLES = [
@@ -228,8 +229,8 @@ const VirtualStagingTool = ({ originalImage, listingImages = [] }) => {
 
                             {/* Loading state for upload */}
                             {isUploading && (
-                                <div className="flex-shrink-0 w-24 h-24 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center border-2 border-dashed border-violet-300 animate-pulse">
-                                    <RefreshCw className="w-6 h-6 text-violet-400 animate-spin" />
+                                <div className="flex-shrink-0 w-24 h-24 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center border-2 border-dashed border-violet-300">
+                                    <UrbanSetuSpinner size="sm" isBright={true} />
                                 </div>
                             )}
                         </div>
@@ -299,7 +300,7 @@ const VirtualStagingTool = ({ originalImage, listingImages = [] }) => {
 
                         {isGenerating ? (
                             <div className="text-center px-4">
-                                <div className="w-12 h-12 border-4 border-violet-200 border-t-violet-600 rounded-full animate-spin mx-auto mb-4"></div>
+                                <UrbanSetuSpinner size="lg" isBright={true} className="mx-auto mb-4" />
                                 <p className="text-sm font-medium text-gray-600 dark:text-gray-300 animate-pulse">Designing your room...</p>
                                 <p className="text-xs text-gray-400 mt-1">Applying {availableStyles.find(s => s.id === selectedStyle)?.name || 'Custom'} style</p>
                             </div>
