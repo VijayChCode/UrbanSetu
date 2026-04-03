@@ -24,10 +24,10 @@ const SETTINGS_KEYS = [
 
 // Default values for settings (matches Settings.jsx defaults)
 const SETTING_DEFAULTS = {
-  theme: 'light',
+  theme: 'system',
   fontSize: 'medium',
   language: 'en',
-  timezone: 'Asia/Kolkata',
+  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   dateFormat: 'MM/DD/YYYY',
   emailNotifications: true,
   inAppNotifications: true,
