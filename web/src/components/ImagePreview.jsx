@@ -918,7 +918,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center p-8 bg-black/40 backdrop-blur-md rounded-2xl border border-white/10">
               <FaEyeSlash size={48} className="mx-auto mb-4 text-gray-500 opacity-60" />
-              <p className="text-sm font-bold uppercase tracking-widest text-gray-400 opacity-80">Failed to load content</p>
+              <p className="text-sm font-bold uppercase tracking-widest text-gray-400 opacity-80">Failed to load Image</p>
             </div>
           </div>
         )}
