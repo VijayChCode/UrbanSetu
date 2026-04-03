@@ -6,7 +6,7 @@ const VirtualTourViewer = ({ imageUrl, autoLoad = true, className = "" }) => {
     const viewerRef = useRef(null);
     const pannellumViewer = useRef(null); // Keep track of the viewer instance
     const [isLoaded, setIsLoaded] = useState(false);
-    const [isFullscreen, setIsFullscreen] = useState(false);
+    const [isFullscreen, setIsFullscreen] = useState(!!document.fullscreenElement);
     const [isAutoRotating, setIsAutoRotating] = useState(false);
 
     const [showControls, setShowControls] = useState(true);
@@ -116,6 +116,24 @@ const VirtualTourViewer = ({ imageUrl, autoLoad = true, className = "" }) => {
         }
     }, [isAutoRotating]);
 
+    useEffect(() => {
+        const handleFullscreenChange = () => {
+            setIsFullscreen(!!document.fullscreenElement);
+        };
+
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+        document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+        document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
+        return () => {
+            document.removeEventListener('fullscreenchange', handleFullscreenChange);
+            document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+            document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+            document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+        };
+    }, []);
+
     const toggleFullscreen = () => {
         if (!viewerRef.current) return;
 
@@ -123,10 +141,10 @@ const VirtualTourViewer = ({ imageUrl, autoLoad = true, className = "" }) => {
             viewerRef.current.requestFullscreen().catch(err => {
                 console.error(`Error attempting to enable fullscreen: ${err.message}`);
             });
-            setIsFullscreen(true);
         } else {
-            document.exitFullscreen();
-            setIsFullscreen(false);
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
         }
     };
 
