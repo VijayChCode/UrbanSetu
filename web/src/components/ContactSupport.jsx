@@ -651,7 +651,11 @@ export default function ContactSupport({ forceModalOpen = false, onModalClose = 
                       type="button"
                       onClick={handleAddLink}
                       disabled={attachments.length >= 3 || isSubmitting}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                      className="px-4 py-2 text-white rounded-lg text-xs font-bold uppercase tracking-wider transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed hover:opacity-90"
+                      style={{
+                        backgroundColor: getIconColor(),
+                        boxShadow: `0 2px 8px ${getIconColor()}30`
+                      }}
                     >
                       Add
                     </button>
