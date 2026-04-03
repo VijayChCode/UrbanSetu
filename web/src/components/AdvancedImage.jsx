@@ -4,7 +4,7 @@ import UrbanSetuSpinner from './UrbanSetuSpinner';
 const AdvancedImage = ({ src, alt, className, ...props }) => {
     // Robust check for missing or empty source
     const isSourceEmpty = !src || (Array.isArray(src) && src.length === 0) || (typeof src === 'string' && src.trim() === '');
-    
+
     const [isLoading, setIsLoading] = useState(!isSourceEmpty);
     const [hasError, setHasError] = useState(isSourceEmpty);
 
@@ -33,7 +33,7 @@ const AdvancedImage = ({ src, alt, className, ...props }) => {
 
             {hasError ? (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50/50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 text-gray-400 dark:text-gray-500 p-4 text-center transition-colors duration-300">
-                    <div className="text-4xl sm:text-5xl mb-3 opacity-60 grayscale-[0.2]">🏠</div>
+                    <div className="text-4xl sm:text-5xl mb-3 opacity-60 grayscale-[0.2]">🖼️</div>
                     <span className="text-[10px] sm:text-xs font-bold opacity-60 uppercase tracking-[0.2em] px-2 py-1 border border-current rounded-md">Image not available</span>
                 </div>
             ) : (

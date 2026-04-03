@@ -17,11 +17,11 @@ import {
   FaRegHeart,
   FaCog,
   FaEye,
-  FaEyeSlash,
   FaInfoCircle
 } from 'react-icons/fa';
 import { useImageFavorites } from '../contexts/ImageFavoritesContext';
 import SocialSharePanel from './SocialSharePanel';
+import UrbanSetuSpinner from './UrbanSetuSpinner';
 
 // Helper function to show toast messages
 const showToast = (message, type = 'info') => {
@@ -909,16 +909,16 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
       {/* Image Container */}
       <div ref={containerRef} className="relative w-full h-full flex items-center justify-center overflow-hidden p-4">
         {imageLoading && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+          <div className="absolute inset-0 flex items-center justify-center bg-black/10 backdrop-blur-[2px]">
+            <UrbanSetuSpinner size="lg" isBright={true} />
           </div>
         )}
 
         {imageError && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center p-8 bg-black/40 backdrop-blur-md rounded-2xl border border-white/10">
-              <FaEyeSlash size={48} className="mx-auto mb-4 text-gray-500 opacity-60" />
-              <p className="text-sm font-bold uppercase tracking-widest text-gray-400 opacity-80">Failed to load Image</p>
+          <div className="absolute inset-0 flex items-center justify-center p-6">
+            <div className="text-center p-10 bg-black/60 backdrop-blur-xl rounded-[2.5rem] border border-white/10 shadow-2xl transition-all duration-500 scale-100 hover:scale-105">
+              <div className="text-6xl sm:text-7xl mb-6 opacity-60 grayscale-[0.2] animate-pulse">🖼️</div>
+              <p className="text-sm font-bold uppercase tracking-[0.3em] text-gray-300 opacity-90 px-4 py-2 border border-white/20 rounded-xl bg-white/5 whitespace-nowrap">Failed to load Image</p>
             </div>
           </div>
         )}

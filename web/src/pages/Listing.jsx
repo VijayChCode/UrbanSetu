@@ -2220,7 +2220,7 @@ export default function Listing() {
                   <SwiperSlide>
                     <div className="w-full h-64 md:h-96 bg-gray-50 dark:bg-gray-900/40 flex items-center justify-center transition-colors duration-300">
                       <div className="text-center text-gray-400 dark:text-gray-500">
-                        <div className="text-6xl mb-4 opacity-80">🏠</div>
+                        <div className="text-6xl mb-4 opacity-80">🖼️</div>
                         <p className="text-xs font-bold uppercase tracking-widest text-center opacity-70">No images available</p>
                       </div>
                     </div>
