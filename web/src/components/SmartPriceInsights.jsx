@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { FaChartLine, FaArrowUp, FaCalculator, FaHome, FaBuilding, FaPercentage, FaClock, FaMapMarkerAlt, FaStar, FaInfoCircle } from 'react-icons/fa';
+import UrbanSetuSpinner from './UrbanSetuSpinner';
 
 const SmartPriceInsights = ({ listing, currentUser }) => {
   const [priceTrends, setPriceTrends] = useState([]);
@@ -235,9 +236,9 @@ const SmartPriceInsights = ({ listing, currentUser }) => {
   if (loading) {
     return (
       <div className="p-6 bg-white shadow-md rounded-lg mb-6">
-        <div className="flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
-          <p className="ml-3 text-lg font-semibold text-purple-600">Loading Smart Price Insights...</p>
+        <div className="flex flex-col items-center justify-center py-8">
+          <UrbanSetuSpinner size="lg" />
+          <p className="mt-4 text-lg font-semibold text-purple-600 animate-pulse">Analyzing Market Insights...</p>
         </div>
       </div>
     );

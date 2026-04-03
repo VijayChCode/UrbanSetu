@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
-import { FaChartLine, FaArrowUp, FaCalculator, FaHome, FaBuilding, FaPercentage, FaClock, FaMapMarkerAlt, FaStar, FaInfoCircle, FaShieldAlt, FaGraduationCap, FaBus, FaCloud, FaArrowDown, FaExclamationTriangle, FaCheckCircle, FaTimes, FaSpinner } from 'react-icons/fa';
+import { FaChartLine, FaArrowUp, FaCalculator, FaHome, FaBuilding, FaPercentage, FaClock, FaMapMarkerAlt, FaStar, FaInfoCircle, FaShieldAlt, FaGraduationCap, FaBus, FaCloud, FaArrowDown, FaExclamationTriangle, FaCheckCircle, FaTimes } from 'react-icons/fa';
+import UrbanSetuSpinner from './UrbanSetuSpinner';
 
 import { authenticatedFetch } from '../utils/auth';
 
@@ -69,10 +70,10 @@ const EnhancedSmartPriceInsights = ({ listing, currentUser }) => {
   if (loading) {
     return (
       <div className="p-6 bg-white dark:bg-gray-800 shadow-md rounded-lg mb-6">
-        <div className="flex items-center justify-center py-12">
-          <FaSpinner className="animate-spin text-4xl text-purple-600 dark:text-purple-400 mr-4" />
-          <div>
-            <h3 className="text-xl font-semibold text-gray-800 dark:text-white">Loading Real-Time Analytics</h3>
+        <div className="flex flex-col items-center justify-center py-12">
+          <UrbanSetuSpinner size="xl" />
+          <div className="mt-6 text-center">
+            <h3 className="text-xl font-semibold text-gray-800 dark:text-white animate-pulse">Analyzing Real-Time Analytics</h3>
             <p className="text-gray-600 dark:text-gray-400">Fetching latest market data and insights...</p>
           </div>
         </div>
