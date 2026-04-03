@@ -71,8 +71,10 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
   const [showSettings, setShowSettings] = useState(false);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const [showSharePanel, setShowSharePanel] = useState(false);
+  const [showSpeedMenu, setShowSpeedMenu] = useState(false);
   const [autoScale, setAutoScale] = useState(1);
   const [videoBlobUrl, setVideoBlobUrl] = useState(null); // State for Blob URL
+  const speedMenuRef = useRef(null);
 
   // Transform States
   const [scale, setScale] = useState(1);
@@ -510,6 +512,17 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
     window.addEventListener('click', handleClick);
     return () => window.removeEventListener('click', handleClick);
   }, [contextMenu]);
+
+  // Speed Menu Outside Click
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (showSpeedMenu && speedMenuRef.current && !speedMenuRef.current.contains(e.target)) {
+        setShowSpeedMenu(false);
+      }
+    };
+    window.addEventListener('click', handleClick);
+    return () => window.removeEventListener('click', handleClick);
+  }, [showSpeedMenu]);
 
   // Volume Effect
   useEffect(() => {
@@ -1224,7 +1237,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
 
   const toggleSpeed = (e) => {
     e?.stopPropagation();
-    speedUp();
+    setShowSpeedMenu(prev => !prev);
   };
 
   const changeVideo = (dir) => { // dir: 1 (Next), -1 (Prev)
@@ -2448,14 +2461,42 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
                 <span className="hidden sm:inline">Rotate</span>
               </button>
               <div className="w-px h-4 bg-white/15 mx-0.5" />
-              <button
-                onClick={toggleSpeed}
-                title="Playback Speed"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-all active:scale-95 text-xs font-semibold min-w-[52px]"
-              >
-                <FaTachometerAlt size={13} />
-                <span>{playbackRate}x</span>
-              </button>
+              <div className="relative" ref={speedMenuRef}>
+                <button
+                  onClick={toggleSpeed}
+                  title="Playback Speed"
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all active:scale-95 text-xs font-semibold min-w-[52px] ${showSpeedMenu ? 'bg-white/20 text-white' : 'text-white/70 hover:text-white hover:bg-white/10'}`}
+                >
+                  <FaTachometerAlt size={13} />
+                  <span>{playbackRate}x</span>
+                </button>
+
+                {/* Speed Menu Overlay */}
+                {showSpeedMenu && (
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-[#1a1a1a]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl py-2 w-32 animate-slideUp z-[110]">
+                    <div className="px-3 py-1.5 mb-1 border-b border-white/5">
+                      <span className="text-[10px] font-black text-white/30 uppercase tracking-widest leading-none">Speed</span>
+                    </div>
+                    <div className="max-h-48 overflow-y-auto custom-scrollbar">
+                      {[0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2].map((speed) => (
+                        <button
+                          key={speed}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setPlaybackRate(speed);
+                            setShowSpeedMenu(false);
+                            showFeedback(`${speed}x Speed`);
+                          }}
+                          className={`w-full px-4 py-2 text-left text-xs font-bold transition-colors flex items-center justify-between group ${playbackRate === speed ? 'text-blue-400 bg-blue-400/10' : 'text-white/70 hover:bg-white/10 hover:text-white'}`}
+                        >
+                          <span>{speed === 1 ? 'Normal' : `${speed}x`}</span>
+                          {playbackRate === speed && <div className="w-1.5 h-1.5 rounded-full bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.6)]" />}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
               <div className="w-px h-4 bg-white/15 mx-0.5" />
               {!isFullscreen && (
                 <>
