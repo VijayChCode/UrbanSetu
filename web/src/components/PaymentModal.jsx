@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { FaCreditCard, FaDollarSign, FaShieldAlt, FaDownload, FaCheckCircle, FaTimes, FaSpinner, FaCoins } from 'react-icons/fa';
+import { FaCreditCard, FaDollarSign, FaShieldAlt, FaDownload, FaCheckCircle, FaTimes, FaCoins } from 'react-icons/fa';
+import UrbanSetuSpinner from './UrbanSetuSpinner';
 import { toast } from 'react-toastify';
 import { authenticatedFetch } from '../utils/auth';
 
@@ -1076,8 +1077,8 @@ const PaymentModal = ({ isOpen, onClose, appointment, onPaymentSuccess, existing
       <div className="fixed inset-0 bg-gradient-to-br from-blue-900/40 to-purple-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
         <div className="rounded-xl shadow-2xl max-w-md w-full bg-gradient-to-br from-white to-blue-50 dark:from-gray-800 dark:to-gray-900 p-8">
           <div className="flex flex-col items-center justify-center">
-            <FaSpinner className="animate-spin text-4xl text-blue-600 dark:text-blue-400 mb-4" />
-            <p className="text-gray-700 dark:text-gray-300 font-medium">Checking payment session availability...</p>
+            <UrbanSetuSpinner size="xl" />
+            <p className="mt-4 text-gray-700 dark:text-gray-300 font-medium">Checking payment session availability...</p>
           </div>
         </div>
       </div>
@@ -1132,16 +1133,16 @@ const PaymentModal = ({ isOpen, onClose, appointment, onPaymentSuccess, existing
             <div className="p-6">
               {processingPayment ? (
                 <div className="flex flex-col items-center justify-center py-12">
-                  <FaSpinner className="animate-spin text-4xl text-blue-600 dark:text-blue-400 mb-4" />
+                  <UrbanSetuSpinner size="xl" />
                   <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">Processing Payment...</h3>
                   <p className="text-gray-600 dark:text-gray-300 text-center">
                     Please wait while we verify your payment. Do not close this window.
                   </p>
                 </div>
               ) : loading && !paymentData ? (
-                <div className="flex items-center justify-center py-8">
-                  <FaSpinner className="animate-spin text-2xl text-blue-600 dark:text-blue-400" />
-                  <span className="ml-2 text-gray-600 dark:text-gray-300">Preparing payment...</span>
+                <div className="flex flex-col items-center justify-center py-8">
+                  <UrbanSetuSpinner size="md" />
+                  <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Preparing Payment...</p>
                 </div>
               ) : paymentData ? (
                 <>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { FaArchive, FaBan, FaCalendar, FaCalendarAlt, FaCheck, FaCheckDouble, FaCheckSquare, FaCircle, FaCheckCircle, FaCog, FaCommentDots, FaCopy, FaCreditCard, FaDownload, FaEllipsisV, FaEnvelope, FaExclamationTriangle, FaFileContract, FaFileAlt, FaFlag, FaHandshake, FaHistory, FaInfoCircle, FaLightbulb, FaMoneyBillWave, FaPaperPlane, FaPen, FaPhone, FaRegStar, FaSearch, FaSpinner, FaStar, FaSync, FaThumbtack, FaTimes, FaTrash, FaUndo, FaUserShield, FaVideo, FaWallet, FaPlay } from 'react-icons/fa';
+import { FaArchive, FaBan, FaCalendar, FaCalendarAlt, FaCheck, FaCheckDouble, FaCheckSquare, FaCircle, FaCheckCircle, FaCog, FaCommentDots, FaCopy, FaCreditCard, FaDownload, FaEllipsisV, FaEnvelope, FaExclamationTriangle, FaFileContract, FaFileAlt, FaFlag, FaHandshake, FaHistory, FaInfoCircle, FaLightbulb, FaMoneyBillWave, FaPaperPlane, FaPen, FaPhone, FaRegStar, FaSearch, FaStar, FaSync, FaThumbtack, FaTimes, FaTrash, FaUndo, FaUserShield, FaVideo, FaWallet, FaPlay } from 'react-icons/fa';
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 import { EmojiButton } from '../components/EmojiPicker';
 import CustomEmojiPicker from '../components/EmojiPicker';
 import { useSoundEffects, SoundControl } from '../components/SoundEffects';
@@ -6662,7 +6663,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                             disabled={actionLoading === appt._id + 'token_paid'}
                             title="Mark Token Received (Lock Property)"
                           >
-                            {actionLoading === appt._id + 'token_paid' ? <FaSpinner className="animate-spin" /> : <FaMoneyBillWave />}
+                            {actionLoading === appt._id + 'token_paid' ? <UrbanSetuSpinner size="sm" isBright={true} /> : <FaMoneyBillWave />}
                           </button>
                         )}
 
@@ -6674,7 +6675,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                             disabled={actionLoading === appt._id + 'sold'}
                             title="Mark as Sold"
                           >
-                            {actionLoading === appt._id + 'sold' ? <FaSpinner className="animate-spin" /> : <FaHandshake />}
+                            {actionLoading === appt._id + 'sold' ? <UrbanSetuSpinner size="sm" isBright={true} /> : <FaHandshake />}
                           </button>
                         )}
                       </>
@@ -8044,9 +8045,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                       <div className="relative flex items-center gap-2">
                         {/* Loading icon when refreshing messages */}
                         {loadingComments && (
-                          <div className="text-white bg-white/10 rounded-full p-2 shadow">
-                            <FaSpinner className="text-sm animate-spin" />
-                          </div>
+                           <div className="text-white bg-white/10 rounded-full p-1.5 shadow-sm flex items-center justify-center">
+                             <UrbanSetuSpinner size="sm" isBright={true} />
+                           </div>
                         )}
 
                         <button
@@ -13236,7 +13237,7 @@ function PaymentStatusCell({ appointment, isBuyer }) {
             >
               {paying ? (
                 <>
-                  <FaSpinner className="animate-spin" /> Loading...
+                  <UrbanSetuSpinner size="sm" isBright={true} /> <span className="ml-1">Loading...</span>
                 </>
               ) : (
                 <>
@@ -13252,7 +13253,7 @@ function PaymentStatusCell({ appointment, isBuyer }) {
             >
               {paying ? (
                 <>
-                  <FaSpinner className="animate-spin" /> Loading...
+                  <UrbanSetuSpinner size="sm" isBright={true} /> <span className="ml-1">Loading...</span>
                 </>
               ) : (
                 <>
@@ -13530,8 +13531,8 @@ function PaymentStatusCell({ appointment, isBuyer }) {
                 >
                   {submittingRefundRequest ? (
                     <>
-                      <FaSpinner className="animate-spin" />
-                      Submitting...
+                      <UrbanSetuSpinner size="sm" isBright={true} />
+                      <span className="ml-2">Submitting...</span>
                     </>
                   ) : (
                     <>
@@ -13641,8 +13642,8 @@ function PaymentStatusCell({ appointment, isBuyer }) {
                 >
                   {submittingAppeal ? (
                     <>
-                      <FaSpinner className="animate-spin" />
-                      Submitting...
+                      <UrbanSetuSpinner size="sm" isBright={true} />
+                      <span className="ml-2">Submitting...</span>
                     </>
                   ) : (
                     <>
