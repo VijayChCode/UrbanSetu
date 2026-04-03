@@ -313,7 +313,7 @@ export default function PublicHome() {
                     ))}
                   </span>
                   <span className="flex flex-wrap items-center gap-x-1">
-                    <span className="text-white font-medium">
+                    <span className="text-gray-900 dark:text-white font-medium">
                       {(theme?.greeting || "#1 Real Estate Platform in India").split(' ')[0]} 
                     </span>
                     <span className="flex items-center">
@@ -323,20 +323,20 @@ export default function PublicHome() {
                           const festivalName = parts.slice(1).join(' '); 
                           return (
                             <span key={i} className="flex items-center">
-                              <span className="ml-1 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400 font-extrabold">
+                              <span className="ml-1 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 font-extrabold">
                                 {festivalName}
                               </span>
                               {i < allThemes.length - 2 ? (
-                                <span className="text-white/60 mx-1">,</span>
+                                <span className="text-gray-500 dark:text-white/60 mx-1">,</span>
                               ) : i === allThemes.length - 2 ? (
-                                <span className="text-white/60 mx-1.5">&</span>
+                                <span className="text-gray-500 dark:text-white/60 mx-1.5">&</span>
                               ) : null}
                             </span>
                           );
                         })
                       ) : (
                         theme?.greeting && (
-                          <span className="ml-1 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400 font-extrabold">
+                          <span className="ml-1 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 font-extrabold">
                             {theme.greeting.split(' ').slice(1).join(' ').replace(/[.!]$/, '')}
                           </span>
                         )
