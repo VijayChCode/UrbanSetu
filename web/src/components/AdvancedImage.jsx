@@ -3,12 +3,16 @@ import { ImageOff } from 'lucide-react';
 import UrbanSetuSpinner from './UrbanSetuSpinner';
 
 const AdvancedImage = ({ src, alt, className, ...props }) => {
-    const [isLoading, setIsLoading] = useState(!!src);
-    const [hasError, setHasError] = useState(!src);
+    // Robust check for missing or empty source
+    const isSourceEmpty = !src || (Array.isArray(src) && src.length === 0) || (typeof src === 'string' && src.trim() === '');
+    
+    const [isLoading, setIsLoading] = useState(!isSourceEmpty);
+    const [hasError, setHasError] = useState(isSourceEmpty);
 
     React.useEffect(() => {
-        setIsLoading(!!src);
-        setHasError(!src);
+        const sourceEmpty = !src || (Array.isArray(src) && src.length === 0) || (typeof src === 'string' && src.trim() === '');
+        setIsLoading(!sourceEmpty);
+        setHasError(sourceEmpty);
     }, [src]);
 
     const handleLoad = () => {
