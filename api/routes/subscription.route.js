@@ -18,13 +18,13 @@ import { otpRecaptchaMiddleware } from '../middleware/otpRecaptcha.js';
 const router = express.Router();
 
 // OTP-based Subscription Flow (PRIMARY FLOW - FIXED)
-router.post('/send-subscribe-otp', otpRateLimit, verifyCSRFToken, ...otpRecaptchaMiddleware, sendSubscriptionOtp); // Sends OTP email
-router.post('/verify-subscribe-otp', otpVerifyRateLimit, verifyCSRFToken, verifySubscriptionOtp); // Verifies OTP and creates subscription
+router.post('/send-subscribe-otp', otpRateLimit, ...otpRecaptchaMiddleware, sendSubscriptionOtp); // Sends OTP email (public - no CSRF needed, rate limited + reCAPTCHA protected)
+router.post('/verify-subscribe-otp', otpVerifyRateLimit, verifySubscriptionOtp); // Verifies OTP and creates subscription (public - no CSRF needed, rate limited)
 
 // 1. Send OTP for subscription
-router.post('/send-otp', otpRateLimit, verifyCSRFToken, ...otpRecaptchaMiddleware, sendSubscriptionOtp);
+router.post('/send-otp', otpRateLimit, ...otpRecaptchaMiddleware, sendSubscriptionOtp);
 // 2. Verify OTP and Subscribe
-router.post('/verify-otp', otpVerifyRateLimit, verifyCSRFToken, verifySubscriptionOtp);
+router.post('/verify-otp', otpVerifyRateLimit, verifySubscriptionOtp);
 
 // 3. Send OTP for Unsubscribe
 router.post('/send-unsubscribe-otp', verifyToken, otpRateLimit, verifyCSRFToken, ...otpRecaptchaMiddleware, sendUnsubscribeOtp);
