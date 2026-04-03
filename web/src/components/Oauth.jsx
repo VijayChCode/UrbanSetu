@@ -220,16 +220,12 @@ export default function Oauth({ pageType, disabled = false, onAuthStart = null, 
                     <div className="text-center mb-8">
                         <div className="flex items-center justify-center gap-4 mb-8">
                             {/* UrbanSetu Logo */}
-                            <div className="flex items-center gap-2.5 p-2 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 transform transition-transform hover:scale-105 duration-300">
+                            <div className="flex items-center justify-center w-14 h-14 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 transform transition-transform hover:scale-105 duration-300">
                                 <img 
                                     src="/favicon.png" 
                                     alt="UrbanSetu Logo" 
                                     className="w-10 h-10 rounded-lg object-contain"
                                 />
-                                <div className="flex flex-col items-start leading-none pr-1">
-                                    <span className="text-lg font-black text-gray-900 dark:text-white tracking-tighter">UrbanSetu</span>
-                                    <span className="text-[7px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest mt-0.5">Real Estate Excellence</span>
-                                </div>
                             </div>
 
                             {/* Connection Link */}
