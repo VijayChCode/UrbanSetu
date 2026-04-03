@@ -7,6 +7,7 @@ import { reconnectSocket } from '../utils/socket';
 import { socket } from '../utils/socket';
 import { toast } from 'react-toastify';
 import { authenticatedFetch } from '../utils/auth';
+import { resetSettingsToDefaults } from '../utils/settingsSync';
 
 export const useSignout = () => {
   const dispatch = useDispatch();
@@ -48,6 +49,9 @@ export const useSignout = () => {
       document.cookie = 'refresh_token=; Max-Age=0; path=/; SameSite=None; Secure';
       document.cookie = 'session_id=; Max-Age=0; path=/; SameSite=None; Secure';
 
+      // Reset user settings (theme, fontSize, etc.) to defaults
+      resetSettingsToDefaults();
+
       // Disconnect socket completely before reconnecting
       if (socket && socket.connected) {
         socket.disconnect();
@@ -79,6 +83,9 @@ export const useSignout = () => {
       document.cookie = 'access_token=; Max-Age=0; path=/; SameSite=None; Secure';
       document.cookie = 'refresh_token=; Max-Age=0; path=/; SameSite=None; Secure';
       document.cookie = 'session_id=; Max-Age=0; path=/; SameSite=None; Secure';
+
+      // Reset user settings (theme, fontSize, etc.) to defaults
+      resetSettingsToDefaults();
 
       // Disconnect socket completely before reconnecting
       if (socket && socket.connected) {

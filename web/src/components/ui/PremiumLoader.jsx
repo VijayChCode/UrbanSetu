@@ -8,6 +8,7 @@ const PremiumLoader = ({ onComplete, mode = 'signin' }) => {
     const signinSteps = [
         "Verifying credentials...",
         "Establishing secure connection...",
+        "Syncing your preferences...",
         "Activating SetuIntelligence...",
         "Loading your personalized dashboard...",
         "Welcome back to UrbanSetu."

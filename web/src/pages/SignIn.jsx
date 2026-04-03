@@ -18,6 +18,7 @@ import FormField from "../components/ui/FormField";
 import PrimaryButton from "../components/ui/PrimaryButton";
 import AuthFormLayout from "../components/ui/AuthFormLayout";
 import PremiumLoader from "../components/ui/PremiumLoader";
+import { syncSettingsFromUser } from "../utils/settingsSync";
 import SecureBadge from "../components/ui/SecureBadge";
 import ThirdPartyCookieBanner from "../components/ThirdPartyCookieBanner";
 
@@ -691,6 +692,9 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
             localStorage.setItem('login', Date.now()); // Notify other tabs
         }
         dispatch(signInSuccess(data));
+
+        // Sync user settings (theme, fontSize, language, etc.) from backend to localStorage
+        syncSettingsFromUser(data);
 
         // Reconnect socket with new token
         reconnectSocket();

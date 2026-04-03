@@ -16,6 +16,7 @@ import AuthFormLayout from "../components/ui/AuthFormLayout";
 import SelectField from "../components/ui/SelectField";
 import FormField from "../components/ui/FormField";
 import PremiumLoader from "../components/ui/PremiumLoader";
+import { syncSettingsFromUser } from "../utils/settingsSync";
 import SecureBadge from "../components/ui/SecureBadge";
 import ThirdPartyCookieBanner from "../components/ThirdPartyCookieBanner";
 import { useDispatch } from "react-redux";
@@ -458,6 +459,9 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
         localStorage.setItem('login', Date.now());
       }
       dispatch(signInSuccess(pendingLoginData));
+
+      // Sync user settings (theme, fontSize, language, etc.) from backend to localStorage
+      syncSettingsFromUser(pendingLoginData);
 
       // Reconnect socket with new token
       reconnectSocket();
