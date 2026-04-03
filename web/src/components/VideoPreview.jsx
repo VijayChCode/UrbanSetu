@@ -2475,7 +2475,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
                 {showSpeedMenu && (
                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-[#1a1a1a]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl py-2 w-32 animate-slideUp z-[110]">
                     <div className="px-3 py-1.5 mb-1 border-b border-white/5">
-                      <span className="text-[10px] font-black text-white/30 uppercase tracking-widest leading-none">Speed</span>
+                      <span className="text-[10px] font-black text-white/30 uppercase tracking-widest leading-none">Playback Speed</span>
                     </div>
                     <div className="max-h-48 overflow-y-auto custom-scrollbar">
                       {[0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2].map((speed) => (
