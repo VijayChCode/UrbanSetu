@@ -24,10 +24,10 @@ const SETTINGS_KEYS = [
 
 // Default values for settings (matches Settings.jsx defaults)
 const SETTING_DEFAULTS = {
-  theme: 'system',
+  theme: 'light',
   fontSize: 'medium',
   language: 'en',
-  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  timezone: 'Asia/Kolkata',
   dateFormat: 'MM/DD/YYYY',
   emailNotifications: true,
   inAppNotifications: true,
@@ -36,7 +36,7 @@ const SETTING_DEFAULTS = {
   showPhone: false,
   dataSharing: true,
   allowLocationAccess: false,
-  profileVisibility: 'friends',
+  profileVisibility: 'public',
 };
 
 /**
