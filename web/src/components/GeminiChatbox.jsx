@@ -9690,9 +9690,42 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                             {/* Advanced AI Settings - Only for logged-in users */}
                                             {currentUser && (
                                                 <div>
-                                                    <h4 className={`text-sm font-medium mb-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                                                    <h4 className={`text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                                                         Advanced AI Settings
                                                     </h4>
+                                                    {/* Info banner + Restore Defaults */}
+                                                    <div className={`mb-3 p-2.5 rounded-lg text-xs ${isDarkMode ? 'bg-amber-900/20 border border-amber-700/30' : 'bg-amber-50 border border-amber-200'}`}>
+                                                        <div className="flex items-start gap-2">
+                                                            <span className="text-amber-500 mt-0.5 flex-shrink-0">⚡</span>
+                                                            <div className="flex-1">
+                                                                <p className={`${isDarkMode ? 'text-amber-300/90' : 'text-amber-700'} leading-relaxed`}>
+                                                                    Higher values increase token usage per request. Lower values save tokens while maintaining quality responses.
+                                                                </p>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        updateTemperature('0.5');
+                                                                        updateTopP('0.7');
+                                                                        updateContextWindow('4');
+                                                                    }}
+                                                                    className={`mt-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all duration-200 flex items-center gap-1.5
+                                                                        ${isDarkMode
+                                                                            ? 'bg-amber-800/40 hover:bg-amber-700/50 text-amber-300 border border-amber-700/40'
+                                                                            : 'bg-amber-100 hover:bg-amber-200 text-amber-800 border border-amber-300'
+                                                                        }
+                                                                        ${temperature === '0.5' && topP === '0.7' && contextWindow === '4'
+                                                                            ? 'opacity-50 cursor-default'
+                                                                            : 'cursor-pointer hover:scale-[1.02]'
+                                                                        }`}
+                                                                    disabled={temperature === '0.5' && topP === '0.7' && contextWindow === '4'}
+                                                                >
+                                                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                                                    </svg>
+                                                                    Restore Optimal Defaults
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                     <div className="space-y-4">
                                                         {/* Temperature */}
                                                         <div>
@@ -9710,7 +9743,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                 onChange={(e) => updateTemperature(e.target.value)}
                                                                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                                                                 style={{
-                                                                    accentColor: '#2563eb' // Blue color for the range slider
+                                                                    accentColor: '#2563eb'
                                                                 }}
                                                             />
                                                         </div>
@@ -9731,7 +9764,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                 onChange={(e) => updateTopP(e.target.value)}
                                                                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                                                                 style={{
-                                                                    accentColor: '#2563eb' // Blue color for the range slider
+                                                                    accentColor: '#2563eb'
                                                                 }}
                                                             />
                                                         </div>
@@ -9745,14 +9778,14 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                             </div>
                                                             <input
                                                                 type="range"
-                                                                min="5"
+                                                                min="2"
                                                                 max="50"
-                                                                step="5"
+                                                                step="1"
                                                                 value={contextWindow}
                                                                 onChange={(e) => updateContextWindow(e.target.value)}
                                                                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                                                                 style={{
-                                                                    accentColor: '#2563eb' // Blue color for the range slider
+                                                                    accentColor: '#2563eb'
                                                                 }}
                                                             />
                                                         </div>
