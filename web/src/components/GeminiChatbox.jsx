@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { FaComments, FaTimes, FaWifi, FaPaperPlane, FaRobot, FaCopy, FaSync, FaUser, FaCheck, FaHome, FaFileAlt, FaDownload, FaUpload, FaPaperclip, FaCog, FaLightbulb, FaHistory, FaBookmark, FaShare, FaThumbsUp, FaThumbsDown, FaRegBookmark, FaBookmark as FaBookmarkSolid, FaMicrophone, FaStop, FaImage, FaMagic, FaStar, FaMoon, FaSun, FaPalette, FaVolumeUp, FaVolumeMute, FaExpand, FaCompress, FaSearch, FaFilter, FaSort, FaEye, FaEyeSlash, FaEdit, FaCheck as FaCheckCircle, FaTimes as FaTimesCircle, FaFlag, FaShieldAlt, FaClipboardList, FaCommentAlt, FaArrowDown, FaTrash, FaEllipsisH, FaEllipsisV, FaShareAlt, FaBan, FaChevronLeft, FaChevronRight, FaSave } from 'react-icons/fa';
 import EqualizerButton from './EqualizerButton';
 import ShareChatModal from './ShareChatModal';
@@ -10062,9 +10063,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
             {/* Ratings & Feedback modal (admin & user) */}
             {
-                showRatingsModal && (
+                showRatingsModal && createPortal(
                     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowRatingsModal(false)}>
-                        <div onClick={e => e.stopPropagation()} className={`relative w-full max-w-2xl rounded-xl shadow-2xl ${isDarkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-900'} border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} animate-scaleIn max-h-[85vh] overflow-y-auto`}>
+                        <div onClick={e => e.stopPropagation()} style={{ WebkitOverflowScrolling: 'touch' }} className={`relative w-full max-w-2xl rounded-xl shadow-2xl ${isDarkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-900'} border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} animate-scaleIn max-h-[85vh] overflow-y-auto`}>
                             <div className={`sticky top-0 z-10 p-6 border-b ${isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'} flex items-center justify-between rounded-t-xl`}>
                                 <div>
                                     <h3 className="text-xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">Ratings & Feedback</h3>
@@ -10256,7 +10257,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             </div>
                         </div>
                     </div>
-                )
+                    , document.body)
             }
 
             {/* Animation styles */}
@@ -10967,10 +10968,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             </style>
 
             {
-                showInfoModal && (
+                showInfoModal && createPortal(
                     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowInfoModal(false)}>
                         <div
                             onClick={e => e.stopPropagation()}
+                            style={{ WebkitOverflowScrolling: 'touch' }}
                             className={`w-11/12 max-w-2xl max-h-[85vh] overflow-y-auto rounded-xl shadow-xl relative ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
                         >
                             <div className={`sticky top-0 z-10 flex items-center justify-between p-6 border-b rounded-t-xl ${isDarkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-100 bg-white'}`}>
@@ -11079,14 +11081,15 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             </div>
                         </div>
                     </div>
-                )
+                    , document.body)
             }
 
             {
-                showTermsModal && (
+                showTermsModal && createPortal(
                     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowTermsModal(false)}>
                         <div
                             onClick={e => e.stopPropagation()}
+                            style={{ WebkitOverflowScrolling: 'touch' }}
                             className={`w-11/12 max-w-2xl max-h-[85vh] overflow-y-auto rounded-xl shadow-xl relative ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
                         >
                             {/* Header */}
@@ -11228,14 +11231,15 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             </p>
                         </div>
                     </div>
-                )
+                    , document.body)
             }
 
             {
-                showReportModal && (
+                showReportModal && createPortal(
                     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowReportModal(false)}>
                         <div
                             onClick={e => e.stopPropagation()}
+                            style={{ WebkitOverflowScrolling: 'touch' }}
                             className={`w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl shadow-2xl ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
                         >
                             {/* Header */}
@@ -11366,15 +11370,16 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             </div>
                         </div>
                     </div>
-                )
+                    , document.body)
             }
 
             {/* Admin Reports Management Modal */}
             {
-                showAdminReportsModal && (
+                showAdminReportsModal && createPortal(
                     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowAdminReportsModal(false)}>
                         <div
                             onClick={e => e.stopPropagation()}
+                            style={{ WebkitOverflowScrolling: 'touch' }}
                             className={`w-full max-w-5xl max-h-[85vh] overflow-y-auto rounded-2xl shadow-2xl ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
                         >
                             {/* Header */}
@@ -11570,16 +11575,17 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             </div>
                         </div>
                     </div>
-                )
+                    , document.body)
             }
 
 
             {/* Rating Detail Modal */}
             {
-                showRatingDetailModal && selectedRating && (
+                showRatingDetailModal && selectedRating && createPortal(
                     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowRatingDetailModal(false)}>
                         <div
                             onClick={e => e.stopPropagation()}
+                            style={{ WebkitOverflowScrolling: 'touch' }}
                             className={`w-full max-w-2xl overflow-y-auto rounded-2xl shadow-2xl max-h-[85vh] ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
                         >
                             {/* Header */}
@@ -11635,7 +11641,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             </div>
                         </div>
                     </div>
-                )
+                    , document.body)
             }
 
             {/* Report Delete Confirmation Modal */}

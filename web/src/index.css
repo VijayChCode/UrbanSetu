@@ -1837,6 +1837,15 @@ body.modal-open {
   overscroll-behavior: contain;
 }
 
+/* Fix mobile touch scrolling for chatbox portal modals */
+@media (max-width: 768px) {
+  .overflow-y-auto {
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    overscroll-behavior-y: contain;
+  }
+}
+
 @keyframes modalFadeIn {
   from {
     opacity: 0;
