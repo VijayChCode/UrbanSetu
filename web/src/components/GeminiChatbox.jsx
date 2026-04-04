@@ -798,8 +798,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [enablePerformanceMonitoring, setEnablePerformanceMonitoring] = useState(() => getUserSetting('gemini_performance_monitoring', 'true') !== 'false');
 
     // Advanced AI Settings
-    const [temperature, setTemperature] = useState(() => getUserSetting('gemini_temperature', '0.7'));
-    const [topP, setTopP] = useState(() => getUserSetting('gemini_top_p', '0.8'));
+    const [temperature, setTemperature] = useState(() => getUserSetting('gemini_temperature', '0.5'));
+    const [topP, setTopP] = useState(() => getUserSetting('gemini_top_p', '0.7'));
     const [topK, setTopK] = useState(() => getUserSetting('gemini_top_k', '40'));
     const [maxTokens, setMaxTokens] = useState(() => getUserSetting('gemini_max_tokens', '2048'));
     const [enableStreaming, setEnableStreaming] = useState(() => {
@@ -808,7 +808,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         return getUserSetting('gemini_streaming', 'true') !== 'false';
     });
     const [enableContextMemory, setEnableContextMemory] = useState(() => getUserSetting('gemini_context_memory', 'true') !== 'false');
-    const [contextWindow, setContextWindow] = useState(() => getUserSetting('gemini_context_window', '10'));
+    const [contextWindow, setContextWindow] = useState(() => getUserSetting('gemini_context_window', '4'));
     const [enableSystemPrompts, setEnableSystemPrompts] = useState(() => getUserSetting('gemini_system_prompts', 'true') !== 'false');
 
     // Image Auditing Hook (Extended from CreateListing)

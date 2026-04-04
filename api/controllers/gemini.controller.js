@@ -50,11 +50,11 @@ export const chatWithGemini = async (req, res) => {
         tone = 'neutral',
         responseLength = 'medium',
         creativity = 'balanced',
-        temperature = '0.7',
-        topP = '0.8',
+        temperature = '0.5',
+        topP = '0.7',
         maxTokens = '2048',
         enableStreaming = true,
-        contextWindow = '10',
+        contextWindow = '4',
         selectedProperties
     } = req.body;
     const userId = req.user?.id;
