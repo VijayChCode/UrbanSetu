@@ -7948,8 +7948,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                 </div>
                                                             )}
 
-                                                            {/* Retry buttons */}
-                                                            {message.role === 'assistant' && (
+                                                            {/* Retry buttons - hidden for policy violation and restricted messages */}
+                                                            {message.role === 'assistant' && !message.isViolation && !message.isRestricted && (
                                                                 <button
                                                                     onClick={() => {
                                                                         const previousUserMessage = (() => {
