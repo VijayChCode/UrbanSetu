@@ -2,12 +2,19 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaSun, FaMoon, FaDesktop, FaChevronDown } from 'react-icons/fa';
 import { useTranslation } from 'react-i18next';
+import { useSelector, useDispatch } from 'react-redux';
+import { updateUserStart, updateUserSuccess, updateUserFailure } from '../redux/user/userSlice';
+import { authenticatedFetch } from '../utils/auth';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const ThemeToggle = ({ mobile = false, variant = 'dropdown', className = '' }) => {
     const { t } = useTranslation();
     const [isOpen, setIsOpen] = useState(false);
     const [theme, setTheme] = useState(localStorage.getItem('theme') || 'system');
     const dropdownRef = useRef(null);
+    const { currentUser } = useSelector((state) => state.user);
+    const dispatch = useDispatch();
 
     useEffect(() => {
         const handleStorage = (e) => {
@@ -39,13 +46,13 @@ const ThemeToggle = ({ mobile = false, variant = 'dropdown', className = '' }) =
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const handleThemeChange = (newTheme) => {
+    const handleThemeChange = async (newTheme) => {
         setTheme(newTheme);
         localStorage.setItem('theme', newTheme);
         setIsOpen(false);
 
-        // Dispatch custom event for same-tab updates
-        window.dispatchEvent(new CustomEvent('theme-change', { detail: { theme: newTheme } }));
+        // Dispatch custom event for same-tab updates (Settings page listens for this)
+        window.dispatchEvent(new CustomEvent('theme-change', { detail: { theme: newTheme, source: 'themeToggle' } }));
 
         // Dispatch storage event manually for other listeners
         window.dispatchEvent(new Event('storage'));
@@ -60,6 +67,26 @@ const ThemeToggle = ({ mobile = false, variant = 'dropdown', className = '' }) =
                 document.documentElement.classList.add('dark');
             } else {
                 document.documentElement.classList.remove('dark');
+            }
+        }
+
+        // Persist to DB if user is logged in
+        if (currentUser?._id) {
+            try {
+                dispatch(updateUserStart());
+                const res = await authenticatedFetch(`${API_BASE_URL}/api/user/update/${currentUser._id}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ settings: { theme: newTheme } }),
+                });
+                const data = await res.json();
+                if (data.status !== 'error' && data.success !== false) {
+                    dispatch(updateUserSuccess(data.updatedUser));
+                } else {
+                    dispatch(updateUserFailure(data.message || 'Failed to save theme'));
+                }
+            } catch (error) {
+                dispatch(updateUserFailure(error.message));
             }
         }
     };

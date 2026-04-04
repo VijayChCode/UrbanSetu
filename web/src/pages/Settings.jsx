@@ -1105,7 +1105,7 @@ export default function Settings() {
     setTheme(value);
     localStorage.setItem('theme', value);
     await updateUserSetting({ theme: value });
-    window.dispatchEvent(new CustomEvent('theme-change', { detail: { theme: value } }));
+    window.dispatchEvent(new CustomEvent('theme-change', { detail: { theme: value, source: 'settings' } }));
 
     if (value === 'system') {
       const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
@@ -1232,6 +1232,7 @@ export default function Settings() {
   }, [theme]);
 
   // Listen for theme changes from other components (e.g., ThemeToggle)
+  // ThemeToggle now handles its own DB persistence, so we only sync local state here
   useEffect(() => {
     const handleThemeSync = (e) => {
       setTheme(e.detail.theme);
