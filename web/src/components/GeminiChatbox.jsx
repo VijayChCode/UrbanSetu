@@ -3528,7 +3528,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     // 2. Add the violation message bubble
                     const currentViolations = error.violationsCount || (policyViolations + 1);
                     const remaining = Math.max(0, VIOLATION_LIMIT - currentViolations);
-                    
+
                     let violationFooter = "";
                     if (currentViolations >= VIOLATION_LIMIT) {
                         violationFooter = `\n\n**Maximum violations reached (${currentViolations}/${VIOLATION_LIMIT}).** Your access to the AI assistant has been restricted for 24 hours.`;
@@ -6884,11 +6884,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 {policyViolations > 0 && (
                                     <button
                                         onClick={() => setShowViolationModal(true)}
-                                        className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-300 border ${
-                                            isBlockedByPolicy 
-                                                ? 'bg-red-500/20 text-red-100 hover:bg-red-500/30 animate-pulse border-red-500/30' 
+                                        className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-300 border ${isBlockedByPolicy
+                                                ? 'bg-red-500/20 text-red-100 hover:bg-red-500/30 animate-pulse border-red-500/30'
                                                 : 'text-white/70 hover:text-white hover:bg-white/10 border-transparent hover:border-white/20'
-                                        }`}
+                                            }`}
                                         title={isBlockedByPolicy ? "Policy Restriction Active - Click for Details" : `Safety Policy Status (${policyViolations}/${VIOLATION_LIMIT})`}
                                         aria-label="View Policy Status"
                                     >
@@ -11886,8 +11885,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 {isBlockedByPolicy ? 'Access Restricted' : 'Safety Policy Status'}
                             </h3>
                             <p className={`text-sm mb-6 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                                {isBlockedByPolicy 
-                                    ? 'Your access to the SetuAI chatbot has been temporarily restricted due to repeated safety policy violations.' 
+                                {isBlockedByPolicy
+                                    ? 'Your access to the SetuAI chatbot has been temporarily restricted due to repeated safety policy violations.'
                                     : 'Your account has recorded one or more safety policy violations. Please review our usage guidelines to avoid further restrictions.'
                                 }
                             </p>
@@ -11897,10 +11896,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     <span className={`text-xs font-bold uppercase tracking-widest ${isBlockedByPolicy ? 'text-red-500' : 'text-blue-500'}`}>
                                         {isBlockedByPolicy ? 'Cooldown Status' : 'Account Health'}
                                     </span>
-                                    <span className={`text-[10px] px-2 py-0.5 rounded-full ${isDarkMode 
+                                    <span className={`text-[10px] px-2 py-0.5 rounded-full ${isDarkMode
                                         ? (isBlockedByPolicy ? 'bg-red-900/50 text-red-300' : 'bg-blue-900/50 text-blue-300')
                                         : (isBlockedByPolicy ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700')
-                                    }`}>
+                                        }`}>
                                         {isBlockedByPolicy ? 'Active' : 'Warning'}
                                     </span>
                                 </div>
