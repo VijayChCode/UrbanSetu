@@ -1831,10 +1831,17 @@ body.modal-open {
   scrollbar-color: rgba(255, 255, 255, 0.25) rgba(255, 255, 255, 0.05);
 }
 
-/* Ensure modal scrollable areas prevent scroll chaining to body */
-.custom-scrollbar {
+/* Mobile touch scroll fix for fixed-position modals */
+.fixed.overflow-hidden {
+  touch-action: none;
+  -webkit-overflow-scrolling: auto;
+}
+
+.fixed .overflow-y-auto,
+.fixed .custom-scrollbar {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
+  touch-action: pan-y;
 }
 
 @keyframes modalFadeIn {
