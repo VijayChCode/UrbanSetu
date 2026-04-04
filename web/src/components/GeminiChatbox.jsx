@@ -10063,10 +10063,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             {/* Ratings & Feedback modal (admin & user) */}
             {
                 showRatingsModal && (
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-50 rounded-2xl animate-fadeIn">
-                        <div className="absolute inset-0" onClick={() => setShowRatingsModal(false)} />
-                        <div className={`relative w-full max-w-2xl rounded-xl shadow-2xl ${isDarkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-900'} border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} animate-scaleIn max-h-[80vh] flex flex-col`}>
-                            <div className={`p-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} flex items-center justify-between flex-shrink-0`}>
+                    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowRatingsModal(false)}>
+                        <div onClick={e => e.stopPropagation()} className={`relative w-full max-w-2xl rounded-xl shadow-2xl ${isDarkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-900'} border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} animate-scaleIn max-h-[85vh] overflow-y-auto`}>
+                            <div className={`sticky top-0 z-10 p-6 border-b ${isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'} flex items-center justify-between rounded-t-xl`}>
                                 <div>
                                     <h3 className="text-xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">Ratings & Feedback</h3>
                                     <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
@@ -10116,7 +10115,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             </div>
 
                             {/* Filters */}
-                            <div className={`px-6 py-3 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} flex gap-2 flex-shrink-0`}>
+                            <div className={`sticky top-[73px] z-[9] px-6 py-3 border-b ${isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'} flex gap-2`}>
                                 {['all', 'up', 'down'].map((filter) => (
                                     <button
                                         key={filter}
@@ -10131,7 +10130,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 ))}
                             </div>
 
-                            <div className="p-6 flex-1 overflow-y-auto">
+                            <div className="p-6">
                                 {(currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) ? (
                                     allRatingsLoading ? (
                                         <div className="flex flex-col items-center justify-center py-12 text-gray-500">
@@ -10247,7 +10246,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 )}
                             </div>
                             {/* Footer Action */}
-                            <div className={`p-4 border-t flex justify-end flex-shrink-0 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                            <div className={`sticky bottom-0 z-10 p-4 border-t flex justify-end ${isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'} rounded-b-xl`}>
                                 <button
                                     onClick={() => setShowRatingsModal(false)}
                                     className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
@@ -10969,11 +10968,12 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
             {
                 showInfoModal && (
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-50 rounded-2xl animate-fadeIn">
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowInfoModal(false)}>
                         <div
-                            className={`w-11/12 max-w-2xl max-h-[80vh] rounded-xl shadow-xl relative flex flex-col ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
+                            onClick={e => e.stopPropagation()}
+                            className={`w-11/12 max-w-2xl max-h-[85vh] overflow-y-auto rounded-xl shadow-xl relative ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
                         >
-                            <div className={`flex items-center justify-between p-6 border-b flex-shrink-0 ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+                            <div className={`sticky top-0 z-10 flex items-center justify-between p-6 border-b rounded-t-xl ${isDarkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-100 bg-white'}`}>
                                 <div className="flex items-center gap-4">
                                     <div className={`p-3 rounded-2xl ${isDarkMode ? 'bg-indigo-500/10' : 'bg-indigo-50'}`}>
                                         <FaRobot size={24} className="text-indigo-500" />
@@ -10991,7 +10991,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 </button>
                             </div>
 
-                            <div className="flex-1 overflow-y-auto p-6 space-y-8">
+                            <div className="p-6 space-y-8">
                                 {/* Core Technology */}
                                 <section>
                                     <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
@@ -11084,12 +11084,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
             {
                 showTermsModal && (
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-50 rounded-2xl animate-fadeIn">
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowTermsModal(false)}>
                         <div
-                            className={`w-11/12 max-w-2xl max-h-[80vh] rounded-xl shadow-xl relative flex flex-col ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
+                            onClick={e => e.stopPropagation()}
+                            className={`w-11/12 max-w-2xl max-h-[85vh] overflow-y-auto rounded-xl shadow-xl relative ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
                         >
                             {/* Header */}
-                            <div className={`flex items-center justify-between p-6 border-b flex-shrink-0 ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+                            <div className={`sticky top-0 z-10 flex items-center justify-between p-6 border-b rounded-t-xl ${isDarkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-100 bg-white'}`}>
                                 <div className="flex items-center gap-3">
                                     <FaFileAlt className="text-blue-500 text-xl" />
                                     <h2 className="text-xl font-bold">Terms of Service</h2>
@@ -11103,7 +11104,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             </div>
 
                             {/* Scrollable Content */}
-                            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                            <div className="p-6 space-y-6">
                                 <div className="text-sm leading-relaxed space-y-6">
                                     <section>
                                         <h3 className="font-bold text-lg mb-2 text-blue-500">1. Introduction</h3>
@@ -11232,13 +11233,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
             {
                 showReportModal && (
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-50 rounded-2xl animate-fadeIn" onClick={() => setShowReportModal(false)}>
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowReportModal(false)}>
                         <div
-                            className={`w-full max-w-lg max-h-[80vh] rounded-2xl shadow-2xl flex flex-col ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
                             onClick={e => e.stopPropagation()}
+                            className={`w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl shadow-2xl ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
                         >
                             {/* Header */}
-                            <div className={`flex items-center justify-between p-6 border-b flex-shrink-0 ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+                            <div className={`sticky top-0 z-10 flex items-center justify-between p-6 border-b rounded-t-2xl ${isDarkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-100 bg-white'}`}>
                                 <h2 className="text-xl font-bold flex items-center gap-2">
                                     <FaFlag className="text-red-500" />
                                     Report Message
@@ -11252,7 +11253,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             </div>
 
                             {/* Content */}
-                            <div className="flex-1 overflow-y-auto p-6">
+                            <div className="p-6">
                                 {reportStep === 1 && (
                                     <div className="space-y-4">
                                         <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Please select a problem to continue.</p>
@@ -11371,13 +11372,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             {/* Admin Reports Management Modal */}
             {
                 showAdminReportsModal && (
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-50 rounded-2xl animate-fadeIn" onClick={() => setShowAdminReportsModal(false)}>
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowAdminReportsModal(false)}>
                         <div
-                            className={`w-full max-w-5xl max-h-[80vh] rounded-2xl shadow-2xl flex flex-col ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
                             onClick={e => e.stopPropagation()}
+                            className={`w-full max-w-5xl max-h-[85vh] overflow-y-auto rounded-2xl shadow-2xl ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
                         >
                             {/* Header */}
-                            <div className={`flex items-center justify-between p-6 border-b flex-shrink-0 ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+                            <div className={`sticky top-0 z-10 flex items-center justify-between p-6 border-b rounded-t-2xl ${isDarkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-100 bg-white'}`}>
                                 <div className="flex items-center gap-3">
                                     <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-red-500/20' : 'bg-red-100'}`}>
                                         <FaClipboardList className="text-red-500 text-xl" />
@@ -11406,7 +11407,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             </div>
 
                             {/* Filters */}
-                            <div className={`p-4 border-b flex-shrink-0 ${isDarkMode ? 'border-gray-700' : 'border-gray-100'} flex gap-2 overflow-x-auto`}>
+                            <div className={`sticky top-[73px] z-[9] p-4 border-b ${isDarkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-100 bg-white'} flex gap-2 overflow-x-auto`}>
                                 {['pending', 'resolved', 'dismissed', 'all'].map(status => (
                                     <button
                                         key={status}
@@ -11422,7 +11423,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             </div>
 
                             {/* Content */}
-                            <div className="flex-1 overflow-y-auto p-6">
+                            <div className="p-6">
                                 {adminReportsLoading ? (
                                     <div className="flex justify-center items-center h-full">
                                         <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-red-500"></div>
@@ -11576,13 +11577,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             {/* Rating Detail Modal */}
             {
                 showRatingDetailModal && selectedRating && (
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-50 rounded-2xl animate-fadeIn" onClick={() => setShowRatingDetailModal(false)}>
+                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowRatingDetailModal(false)}>
                         <div
-                            className={`w-full max-w-2xl rounded-2xl shadow-2xl max-h-[80vh] flex flex-col ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
                             onClick={e => e.stopPropagation()}
+                            className={`w-full max-w-2xl overflow-y-auto rounded-2xl shadow-2xl max-h-[85vh] ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
                         >
                             {/* Header */}
-                            <div className={`flex items-center justify-between p-6 border-b flex-shrink-0 ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+                            <div className={`sticky top-0 z-10 flex items-center justify-between p-6 border-b rounded-t-2xl ${isDarkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-100 bg-white'}`}>
                                 <div className="flex items-center gap-3">
                                     <div className={`p-2 rounded-lg ${selectedRating.rating === 'up' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
                                         {selectedRating.rating === 'up' ? <FaThumbsUp size={20} /> : <FaThumbsDown size={20} />}
@@ -11605,7 +11606,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             </div>
 
                             {/* Content */}
-                            <div className="flex-1 overflow-y-auto p-6">
+                            <div className="p-6">
                                 {/* Feedback (if exists) */}
                                 {selectedRating.feedback && (
                                     <div className={`mb-6 p-4 rounded-xl border ${isDarkMode ? 'bg-red-900/10 border-red-900/30' : 'bg-red-50 border-red-100'}`}>
