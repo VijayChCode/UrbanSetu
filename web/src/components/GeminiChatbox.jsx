@@ -10064,7 +10064,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             {/* Ratings & Feedback modal (admin & user) */}
             {
                 showRatingsModal && (
-                    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 animate-fadeIn">
+                    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 animate-fadeIn overflow-hidden">
                         <div className="absolute inset-0 bg-black/50" onClick={() => setShowRatingsModal(false)} />
                         <div className={`relative w-full max-w-2xl rounded-xl shadow-2xl ${isDarkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-900'} border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} animate-scaleIn flex flex-col max-h-[80vh]`}>
                             <div className={`p-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} flex items-center justify-between flex-shrink-0`}>
@@ -10132,7 +10132,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 ))}
                             </div>
 
-                            <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
+                            <div className="p-6 overflow-y-auto custom-scrollbar flex-1" style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}>
                                 {(currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) ? (
                                     allRatingsLoading ? (
                                         <div className="flex flex-col items-center justify-center py-12 text-gray-500">
@@ -10970,7 +10970,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
             {
                 showInfoModal && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-hidden">
                         <div
                             className={`w-11/12 max-w-2xl max-h-[80vh] flex flex-col rounded-xl shadow-xl relative ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
                         >
@@ -11085,7 +11085,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
             {
                 showTermsModal && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-hidden">
                         <div
                             className={`w-11/12 max-w-2xl max-h-[80vh] flex flex-col rounded-xl shadow-xl relative ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
                         >
@@ -11233,7 +11233,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
             {
                 showReportModal && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowReportModal(false)}>
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-hidden" onClick={() => setShowReportModal(false)}>
                         <div
                             className={`w-full max-w-lg max-h-[80vh] flex flex-col rounded-2xl shadow-2xl overflow-hidden ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
                             onClick={e => e.stopPropagation()}
@@ -11253,7 +11253,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             </div>
 
                             {/* Content */}
-                            <div className="flex-1 overflow-y-auto p-6 max-h-[60vh] custom-scrollbar">
+                            <div className="flex-1 overflow-y-auto p-6 max-h-[60vh] custom-scrollbar" style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}>
                                 {reportStep === 1 && (
                                     <div className="space-y-4">
                                         <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Please select a problem to continue.</p>
@@ -11372,7 +11372,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             {/* Admin Reports Management Modal */}
             {
                 showAdminReportsModal && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowAdminReportsModal(false)}>
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-hidden" onClick={() => setShowAdminReportsModal(false)}>
                         <div
                             className={`w-full max-w-5xl max-h-[80vh] flex flex-col rounded-2xl shadow-2xl overflow-hidden ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
                             onClick={e => e.stopPropagation()}
@@ -11423,7 +11423,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             </div>
 
                             {/* Content */}
-                            <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+                            <div className="flex-1 overflow-y-auto p-6 custom-scrollbar" style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}>
                                 {adminReportsLoading ? (
                                     <div className="flex justify-center items-center h-full">
                                         <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-red-500"></div>
@@ -11577,7 +11577,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             {/* Rating Detail Modal */}
             {
                 showRatingDetailModal && selectedRating && (
-                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowRatingDetailModal(false)}>
+                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-hidden" onClick={() => setShowRatingDetailModal(false)}>
                         <div
                             className={`w-full max-w-2xl flex flex-col rounded-2xl shadow-2xl overflow-hidden max-h-[80vh] ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
                             onClick={e => e.stopPropagation()}
@@ -11606,7 +11606,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             </div>
 
                             {/* Content */}
-                            <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+                            <div className="flex-1 overflow-y-auto p-6 custom-scrollbar" style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}>
                                 {/* Feedback (if exists) */}
                                 {selectedRating.feedback && (
                                     <div className={`mb-6 p-4 rounded-xl border ${isDarkMode ? 'bg-red-900/10 border-red-900/30' : 'bg-red-50 border-red-100'}`}>
