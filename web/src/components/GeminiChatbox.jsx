@@ -11183,7 +11183,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             </div>
                         </div>
                     </div>
-                )
+                    , document.body)
             }
 
             {/* Mandatory Consent Modal */}
@@ -11231,7 +11231,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             </p>
                         </div>
                     </div>
-                    , document.body)
+                )
             }
 
             {
@@ -11541,7 +11541,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             </div>
                         </div>
                     </div>
-                )
+                    , document.body)
             }
 
             {/* Admin Note Modal (Nested) */}
@@ -11575,7 +11575,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             </div>
                         </div>
                     </div>
-                    , document.body)
+                )
             }
 
 
