@@ -10064,8 +10064,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             {/* Ratings & Feedback modal (admin & user) */}
             {
                 showRatingsModal && createPortal(
-                    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowRatingsModal(false)}>
-                        <div onClick={e => e.stopPropagation()} style={{ WebkitOverflowScrolling: 'touch' }} className={`relative w-full max-w-2xl rounded-xl shadow-2xl ${isDarkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-900'} border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} animate-scaleIn max-h-[85vh] overflow-y-auto`}>
+                    <div className="fixed inset-0 z-[60] overflow-y-auto bg-black/50 backdrop-blur-sm" onClick={() => setShowRatingsModal(false)}>
+                      <div className="flex min-h-full items-center justify-center p-4">
+                        <div onClick={e => e.stopPropagation()} className={`relative w-full max-w-2xl rounded-xl shadow-2xl ${isDarkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-900'} border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} animate-scaleIn`}>
                             <div className={`sticky top-0 z-10 p-6 border-b ${isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'} flex items-center justify-between rounded-t-xl`}>
                                 <div>
                                     <h3 className="text-xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">Ratings & Feedback</h3>
@@ -10256,6 +10257,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 </button>
                             </div>
                         </div>
+                      </div>
                     </div>
                     , document.body)
             }
@@ -10969,11 +10971,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
             {
                 showInfoModal && createPortal(
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowInfoModal(false)}>
+                    <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/50 backdrop-blur-sm" onClick={() => setShowInfoModal(false)}>
+                      <div className="flex min-h-full items-center justify-center p-4">
                         <div
                             onClick={e => e.stopPropagation()}
-                            style={{ WebkitOverflowScrolling: 'touch' }}
-                            className={`w-11/12 max-w-2xl max-h-[85vh] overflow-y-auto rounded-xl shadow-xl relative ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
+                            className={`w-11/12 max-w-2xl rounded-xl shadow-xl relative ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
                         >
                             <div className={`sticky top-0 z-10 flex items-center justify-between p-6 border-b rounded-t-xl ${isDarkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-100 bg-white'}`}>
                                 <div className="flex items-center gap-4">
@@ -11080,17 +11082,18 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 </div>
                             </div>
                         </div>
+                      </div>
                     </div>
                     , document.body)
             }
 
             {
                 showTermsModal && createPortal(
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowTermsModal(false)}>
+                    <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/50 backdrop-blur-sm" onClick={() => setShowTermsModal(false)}>
+                      <div className="flex min-h-full items-center justify-center p-4">
                         <div
                             onClick={e => e.stopPropagation()}
-                            style={{ WebkitOverflowScrolling: 'touch' }}
-                            className={`w-11/12 max-w-2xl max-h-[85vh] overflow-y-auto rounded-xl shadow-xl relative ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
+                            className={`w-11/12 max-w-2xl rounded-xl shadow-xl relative ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
                         >
                             {/* Header */}
                             <div className={`sticky top-0 z-10 flex items-center justify-between p-6 border-b rounded-t-xl ${isDarkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-100 bg-white'}`}>
@@ -11182,6 +11185,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 </div>
                             </div>
                         </div>
+                      </div>
                     </div>
                     , document.body)
             }
@@ -11236,11 +11240,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
             {
                 showReportModal && createPortal(
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowReportModal(false)}>
+                    <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/50 backdrop-blur-sm" onClick={() => setShowReportModal(false)}>
+                      <div className="flex min-h-full items-center justify-center p-4">
                         <div
                             onClick={e => e.stopPropagation()}
-                            style={{ WebkitOverflowScrolling: 'touch' }}
-                            className={`w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl shadow-2xl ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
+                            className={`w-full max-w-lg rounded-2xl shadow-2xl ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
                         >
                             {/* Header */}
                             <div className={`sticky top-0 z-10 flex items-center justify-between p-6 border-b rounded-t-2xl ${isDarkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-100 bg-white'}`}>
@@ -11369,6 +11373,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 )}
                             </div>
                         </div>
+                      </div>
                     </div>
                     , document.body)
             }
@@ -11376,11 +11381,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             {/* Admin Reports Management Modal */}
             {
                 showAdminReportsModal && createPortal(
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowAdminReportsModal(false)}>
+                    <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/50 backdrop-blur-sm" onClick={() => setShowAdminReportsModal(false)}>
+                      <div className="flex min-h-full items-center justify-center p-4">
                         <div
                             onClick={e => e.stopPropagation()}
-                            style={{ WebkitOverflowScrolling: 'touch' }}
-                            className={`w-full max-w-5xl max-h-[85vh] overflow-y-auto rounded-2xl shadow-2xl ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
+                            className={`w-full max-w-5xl rounded-2xl shadow-2xl ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
                         >
                             {/* Header */}
                             <div className={`sticky top-0 z-10 flex items-center justify-between p-6 border-b rounded-t-2xl ${isDarkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-100 bg-white'}`}>
@@ -11540,6 +11545,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 )}
                             </div>
                         </div>
+                      </div>
                     </div>
                     , document.body)
             }
@@ -11582,11 +11588,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             {/* Rating Detail Modal */}
             {
                 showRatingDetailModal && selectedRating && createPortal(
-                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowRatingDetailModal(false)}>
+                    <div className="fixed inset-0 z-[110] overflow-y-auto bg-black/50 backdrop-blur-sm" onClick={() => setShowRatingDetailModal(false)}>
+                      <div className="flex min-h-full items-center justify-center p-4">
                         <div
                             onClick={e => e.stopPropagation()}
-                            style={{ WebkitOverflowScrolling: 'touch' }}
-                            className={`w-full max-w-2xl overflow-y-auto rounded-2xl shadow-2xl max-h-[85vh] ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
+                            className={`w-full max-w-2xl rounded-2xl shadow-2xl ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
                         >
                             {/* Header */}
                             <div className={`sticky top-0 z-10 flex items-center justify-between p-6 border-b rounded-t-2xl ${isDarkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-100 bg-white'}`}>
@@ -11640,6 +11646,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 </div>
                             </div>
                         </div>
+                      </div>
                     </div>
                     , document.body)
             }
