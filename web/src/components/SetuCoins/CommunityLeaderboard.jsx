@@ -195,7 +195,7 @@ const CommunityLeaderboard = ({ limit = 10, showHeader = true, showYourStatus = 
                             <FaInfoCircle className="text-indigo-300 dark:text-gray-600" /> 
                             <span>
                                 <Link 
-                                    to="/user/leaderboard" 
+                                    to={isAdmin ? "/admin/leaderboard" : "/user/leaderboard"} 
                                     className="text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors underline decoration-dotted underline-offset-4 decoration-indigo-200 dark:decoration-indigo-900"
                                 >
                                     Leaderboard
