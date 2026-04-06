@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { FaDollarSign, FaCreditCard, FaChartLine, FaDownload, FaCheck, FaUndo, FaCheckCircle, FaTimes, FaExclamationTriangle, FaUsers, FaHome, FaCalendar, FaMoneyBill, FaLock, FaShare, FaEye, FaCopy, FaExternalLinkAlt, FaWallet } from 'react-icons/fa';
+import { FaDollarSign, FaCreditCard, FaChartLine, FaSync, FaDownload, FaCheck, FaUndo, FaCheckCircle, FaTimes, FaExclamationTriangle, FaUsers, FaHome, FaCalendar, FaMoneyBill, FaLock, FaShare, FaEye, FaCopy, FaExternalLinkAlt, FaWallet } from 'react-icons/fa';
 import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 import PaymentHistory from '../components/PaymentHistory';
 import RefundManagement from '../components/RefundManagement';
@@ -370,11 +370,16 @@ const PaymentDashboard = () => {
             </div>
             <button
               onClick={fetchPaymentStats}
-              className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+              disabled={loading}
+              className="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition-all flex items-center gap-2 shadow-lg shadow-blue-200 dark:shadow-none active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
               title="Refresh stats"
             >
-              <UrbanSetuSpinner size="sm" isBright={true} />
-              Refresh
+              {loading ? (
+                <UrbanSetuSpinner size="sm" isBright={true} />
+              ) : (
+                <FaSync className="text-xs" />
+              )}
+              <span className="font-bold text-sm tracking-wide">Refresh</span>
             </button>
           </div>
         </div>

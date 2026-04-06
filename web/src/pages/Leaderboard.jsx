@@ -3,8 +3,8 @@ import { FaTrophy } from "react-icons/fa";
 import { usePageTitle } from "../hooks/usePageTitle";
 import CommunityLeaderboard from "../components/SetuCoins/CommunityLeaderboard";
 
-export default function Leaderboard() {
-    usePageTitle("Community Leaderboard - Top Earners");
+export default function Leaderboard({ isAdmin = false }) {
+    usePageTitle(isAdmin ? "Admin - Community Leaderboard" : "Community Leaderboard - Top Earners");
 
     return (
         <div className="bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 min-h-screen py-10 px-4 md:px-8">
@@ -22,17 +22,20 @@ export default function Leaderboard() {
 
                 {/* Shared Reusable Component */}
                 <CommunityLeaderboard
-                    limit={10}
+                    limit={isAdmin ? 50 : 10}
                     showHeader={true}
-                    showYourStatus={true}
+                    showYourStatus={!isAdmin}
+                    isAdmin={isAdmin}
                 />
 
-                <div className="mt-12 text-center">
-                    <p className="text-slate-400 text-sm font-medium">
-                        Want to see your name here?
-                        <a href="/user/rewards" className="text-indigo-600 hover:underline ml-1 font-bold">Earn more SetuCoins</a>
-                    </p>
-                </div>
+                {!isAdmin && (
+                    <div className="mt-12 text-center">
+                        <p className="text-slate-400 text-sm font-medium">
+                            Want to see your name here?
+                            <a href="/user/rewards" className="text-indigo-600 hover:underline ml-1 font-bold">Earn more SetuCoins</a>
+                        </p>
+                    </div>
+                )}
 
             </div>
         </div>

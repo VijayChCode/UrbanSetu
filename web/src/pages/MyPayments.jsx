@@ -531,11 +531,16 @@ const MyPayments = () => {
             </div>
             <button
               onClick={fetchPayments}
-              className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-              title="Refresh stats"
+              disabled={loading}
+              className="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition-all flex items-center gap-2 shadow-lg shadow-blue-200 dark:shadow-none active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+              title="Refresh payments"
             >
-              <UrbanSetuSpinner size="sm" isBright={true} />
-              Refresh
+              {loading ? (
+                <UrbanSetuSpinner size="sm" isBright={true} />
+              ) : (
+                <FaSync className="text-xs" />
+              )}
+              <span className="font-bold text-sm tracking-wide">Refresh</span>
             </button>
           </div>
         </div>

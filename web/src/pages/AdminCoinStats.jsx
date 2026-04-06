@@ -250,12 +250,22 @@ export default function AdminCoinStats() {
     return (
         <div className="p-6 max-w-7xl mx-auto space-y-8 pb-20">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white flex items-center gap-3">
-                    <FaCoins className="text-indigo-600 dark:text-indigo-400" />
-                    <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                        SetuCoins Loyalty Management
-                    </span>
-                </h1>
+                <div className="flex flex-col gap-2">
+                    <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white flex items-center gap-3">
+                        <FaCoins className="text-indigo-600 dark:text-indigo-400" />
+                        <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent underline decoration-indigo-600/30 decoration-thickness-2 underline-offset-4">
+                            SetuCoins Loyalty Management
+                        </span>
+                    </h1>
+                    <a 
+                        href="/admin/leaderboard" 
+                        className="text-xs font-black text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 flex items-center gap-1 uppercase tracking-widest transition-all hover:translate-x-1 w-fit group"
+                    >
+                        <FaTrophy className="text-yellow-500 group-hover:scale-110 transition-transform" />
+                        View Community Leaderboard
+                        <FaChevronRight size={8} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </a>
+                </div>
 
                 {/* Search Bar */}
                 <div className="relative w-full md:w-96">

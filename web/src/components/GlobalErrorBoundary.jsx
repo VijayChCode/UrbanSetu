@@ -19,7 +19,8 @@ class GlobalErrorBoundary extends React.Component {
             isPersistentError: false,
             recommendations: [],
             loadingRecs: true,
-            visibleRecsCount: 4
+            visibleRecsCount: 4,
+            isReloading: false
         };
         this.timer = null;
     }
@@ -324,10 +325,19 @@ class GlobalErrorBoundary extends React.Component {
                                     )}
 
                                     <button
-                                        onClick={() => window.location.reload()}
-                                        className="w-full py-3 px-4 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 group"
+                                        onClick={() => {
+                                            this.setState({ isReloading: true });
+                                            setTimeout(() => window.location.reload(), 100);
+                                        }}
+                                        disabled={this.state.isReloading}
+                                        className="w-full py-3 px-4 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 group active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
                                     >
-                                        <UrbanSetuSpinner size="sm" className="group-hover:opacity-100 transition-opacity" /> Reload Page
+                                        {this.state.isReloading ? (
+                                            <UrbanSetuSpinner size="sm" />
+                                        ) : (
+                                            <FaSync className="text-xs text-gray-400 group-hover:text-blue-500 transition-colors" />
+                                        )}
+                                        <span>Reload Page</span>
                                     </button>
                                 </div>
                             </>

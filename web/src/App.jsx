@@ -1042,6 +1042,7 @@ function AppRoutes({ bootstrapped }) {
               <Route path="/admin/community" element={<AdminCommunity />} />
               <Route path="/admin/community/post/:postId" element={<AdminCommunity />} />
               <Route path="/admin/setu-coins" element={<AdminCoinStats />} />
+              <Route path="/admin/leaderboard" element={<Leaderboard isAdmin={true} />} />
               <Route path="/contact" element={<Navigate to="/admin/support" />} />
               <Route path="/support" element={<Navigate to="/admin/support" />} />
               <Route path="/user/contact" element={<Navigate to="/admin/support" />} />

@@ -6,7 +6,7 @@ import LeaderboardSkeleton from '../skeletons/LeaderboardSkeleton';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-const CommunityLeaderboard = ({ limit = 10, showHeader = true, showYourStatus = false }) => {
+const CommunityLeaderboard = ({ limit = 10, showHeader = true, showYourStatus = false, isAdmin = false }) => {
     const { currentUser } = useSelector((state) => state.user);
     const [leaderboard, setLeaderboard] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -14,7 +14,7 @@ const CommunityLeaderboard = ({ limit = 10, showHeader = true, showYourStatus = 
 
     useEffect(() => {
         fetchLeaderboard();
-    }, []);
+    }, [limit]);
 
     const fetchLeaderboard = async () => {
         try {
@@ -99,18 +99,21 @@ const CommunityLeaderboard = ({ limit = 10, showHeader = true, showYourStatus = 
             )}
 
             {/* Leaderboard Main Container */}
-            <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-gray-700 overflow-hidden">
+            <div className={`bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-gray-700 overflow-hidden ${isAdmin ? 'border-indigo-200 dark:border-indigo-900/50 shadow-indigo-100/50' : ''}`}>
                 {showHeader && (
-                    <div className="p-8 bg-gradient-to-br from-indigo-900 via-indigo-800 to-indigo-950 text-white flex justify-between items-center relative overflow-hidden">
+                    <div className={`p-8 ${isAdmin ? 'bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900' : 'bg-gradient-to-br from-indigo-900 via-indigo-800 to-indigo-950'} text-white flex justify-between items-center relative overflow-hidden`}>
                         <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl"></div>
                         <div className="relative z-10">
                             <h2 className="text-3xl font-black mb-1 flex items-center gap-3">
-                                <FaTrophy className="text-yellow-400" /> Top Earners
+                                {isAdmin ? <FaCrown className="text-indigo-400" /> : <FaTrophy className="text-yellow-400" />}
+                                {isAdmin ? 'Admin - Global Rankings' : 'Top Earners'}
                             </h2>
-                            <p className="text-indigo-200 text-sm font-medium">See who's leading the UrbanSetu community.</p>
+                            <p className="text-indigo-200 text-sm font-medium">
+                                {isAdmin ? `Managing top ${leaderboard.length} earners across the platform.` : "See who's leading the UrbanSetu community."}
+                            </p>
                         </div>
                         <div className="bg-white/10 p-4 rounded-2xl backdrop-blur-md border border-white/10 hidden sm:block">
-                            <FaTrophy className="text-5xl text-yellow-400 drop-shadow-lg" />
+                            <FaTrophy className={`text-5xl drop-shadow-lg ${isAdmin ? 'text-indigo-400' : 'text-yellow-400'}`} />
                         </div>
                     </div>
                 )}
@@ -148,19 +151,37 @@ const CommunityLeaderboard = ({ limit = 10, showHeader = true, showYourStatus = 
                                         <p className={`font-black tracking-tight ${user.userId === currentUser?._id ? 'text-indigo-800 dark:text-indigo-400' : 'text-slate-800 dark:text-white'}`}>
                                             {user.name} {user.userId === currentUser?._id && <span className="bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-[10px] px-2 py-0.5 rounded-full ml-1">YOU</span>}
                                         </p>
-                                        <div className="flex items-center gap-2 mt-1">
+                                        <div className="flex flex-wrap items-center gap-2 mt-1">
                                             <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-300 flex items-center gap-1 bg-indigo-50 dark:bg-indigo-900/50 px-2 py-0.5 rounded-md uppercase tracking-tighter">
                                                 <FaFire className="text-orange-500" /> {user.streak} Month Streak
                                             </span>
+                                            {isAdmin && (
+                                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest border border-slate-200 dark:border-gray-700 px-2 py-0.5 rounded-md">
+                                                    ID: {user.userId.slice(-6)}
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
-                                <div className="text-right">
-                                    <p className="font-black text-slate-800 dark:text-white text-xl flex items-center justify-end gap-1.5 tabular-nums">
-                                        {user.totalCoins.toLocaleString()}
-                                        <FaCoins className="text-yellow-500 text-sm" />
-                                    </p>
-                                    <span className="text-[10px] uppercase font-black text-slate-300 tracking-[0.1em]">Total Earned</span>
+                                <div className="flex items-center gap-6">
+                                    <div className="text-right">
+                                        <p className="font-black text-slate-800 dark:text-white text-xl flex items-center justify-end gap-1.5 tabular-nums">
+                                            {user.totalCoins.toLocaleString()}
+                                            <FaCoins className="text-yellow-500 text-sm" />
+                                        </p>
+                                        <span className="text-[10px] uppercase font-black text-slate-300 tracking-[0.1em]">Total Earned</span>
+                                    </div>
+                                    {isAdmin && (
+                                        <div className="hidden sm:block">
+                                            <a 
+                                                href={`/admin/setu-coins?search=${encodeURIComponent(user.name)}`}
+                                                className="bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-xl shadow-lg shadow-indigo-200 dark:shadow-none transition-all active:scale-95 block"
+                                                title="Manage user coins"
+                                            >
+                                                <FaCoins />
+                                            </a>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         ))
