@@ -341,10 +341,10 @@ export function* getActiveThemes(dateInput = new Date()) {
         { id: 'holi', year: 2026, month: 2, day: 4, window: 1, name: 'Holi', icon: '🎨', sec: '🌈', greet: 'Happy Holi!', desc: 'Splash of colors, joy, and happiness! Have a vibrant Holi.', deco: 'colors' },
         { id: 'ugadi', year: 2026, month: 2, day: 19, window: 1, name: 'Ugadi', icon: '🥭', sec: '🌿', greet: 'Happy Ugadi!', desc: 'New beginnings and new hopes. Happy New Year!', deco: 'mango' },
         { id: 'eidfitr', year: 2026, month: 2, day: 20, window: 2, name: 'Eid al-Fitr', icon: '🌙', sec: '🤲', greet: 'Eid Mubarak!', desc: 'May this Eid bring joy and peace to your heart and home.', deco: 'moon' },
-        { id: 'ramnavami', year: 2026, month: 2, day: 27, window: 1, name: 'Sri Rama Navami', icon: '🏹', sec: '🚩', greet: 'Jai Shri Ram!', desc: 'Celebrating the birth of Lord Rama. May righteousness prevail.', deco: 'bow' },
+        { id: 'ramnavami', year: 2026, month: 2, day: 27, window: 0, name: 'Sri Rama Navami', icon: '🏹', sec: '🚩', greet: 'Jai Shri Ram!', desc: 'Celebrating the birth of Lord Rama. May righteousness prevail.', deco: 'bow' },
         { id: 'hanuman', year: 2026, month: 3, day: 2, window: 1, name: 'Hanuman Jayanti', icon: '🙏', sec: '💪', greet: 'Jai Bajrangbali!', desc: 'Strength, devotion, and courage. Happy Hanuman Jayanti!', deco: 'mace' },
         { id: 'goodfriday', year: 2026, month: 3, day: 3, window: 0, name: 'Good Friday', icon: '✝️', sec: '🕯️', greet: 'Blessed Good Friday', desc: 'Remembering the sacrifice and love. Have a blessed day.', deco: 'cross' },
-        { id: 'easter', year: 2026, month: 3, day: 5, window: 1, name: 'Easter', icon: '🥚', sec: '🐰', greet: 'Happy Easter!', desc: 'New life and new hope. Happy Easter!', deco: 'egg' },
+        { id: 'easter', year: 2026, month: 3, day: 5, window: 0, name: 'Easter', icon: '🥚', sec: '🐰', greet: 'Happy Easter!', desc: 'New life and new hope. Happy Easter!', deco: 'egg' },
         { id: 'eidadha', year: 2026, month: 4, day: 27, window: 2, name: 'Eid al-Adha', icon: '🕌', sec: '🐑', greet: 'Eid Mubarak!', desc: 'Wishing you a blessed Eid al-Adha filled with sacrifice and faith.', deco: 'lantern' },
         { id: 'rathyatra', year: 2026, month: 6, day: 16, window: 1, name: 'Rath Yatra', icon: '🎡', sec: '🚩', greet: 'Jai Jagannath!', desc: 'May the divine chariot bring you good fortune.', deco: 'chariot' },
         { id: 'muharram', year: 2026, month: 6, day: 16, window: 1, name: 'Islamic New Year', icon: '☪️', sec: '📅', greet: 'Blessed Muharram', desc: 'Reflecting on the New Year with faith and hope.', deco: 'moon' },
@@ -392,11 +392,11 @@ export const getSeasonalTheme = (dateInput = new Date()) => {
     // Array.from(getActiveThemes) evaluates the generator to get all matches
     const themes = Array.from(getActiveThemes(dateInput)).filter(Boolean);
     if (themes.length === 0) return null;
-    
+
     // Priority 1: Exact day match where email sending is designated
     const exact = themes.find(t => t.shouldSendEmail);
     if (exact) return exact;
-    
+
     // Fallback: Just return the first active theme found
     return themes[0];
 };
