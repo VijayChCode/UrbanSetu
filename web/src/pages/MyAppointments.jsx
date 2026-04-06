@@ -6858,7 +6858,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
             {/* Show lock icon if chat is locked or loading */}
             {(chatLocked || chatLockStatusLoading) && !chatAccessGranted && (
               <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-bold border-2 border-white">
-                {chatLockStatusLoading ? '⏳' : '🔒'}
+                {chatLockStatusLoading ? <UrbanSetuSpinner size="sm" isBright={true} /> : '🔒'}
               </span>
             )}
             {/* Typing indicator - highest priority (hide if locked, loading, or status hidden) */}
