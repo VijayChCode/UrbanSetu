@@ -125,22 +125,36 @@ export default function AdminCoinStats() {
 
     const selectUser = async (user) => {
         // Set basic info first so UI updates immediately
-        setSelectedUser(user);
+        setSelectedUser({ ...user, rank: null }); // Use basic info first
         setSearchQuery(user.email);
         setSearchResults([]);
 
         // Fetch history
         fetchUserHistory(user._id);
 
-        // Fetch full user details (including gamification)
+        // Fetch full user details and rank concurrently
         try {
-            const res = await authenticatedFetch(`${API_BASE_URL}/api/user/id/${user._id}`);
-            const fullUserData = await res.json();
+            const [userRes, balanceRes] = await Promise.all([
+                authenticatedFetch(`${API_BASE_URL}/api/user/id/${user._id}`),
+                authenticatedFetch(`${API_BASE_URL}/api/coins/user/${user._id}/balance`)
+            ]);
+
+            const fullUserData = await userRes.json();
+            const balanceData = await balanceRes.json();
+
             if (fullUserData) {
-                setSelectedUser(fullUserData);
+                setSelectedUser({
+                    ...fullUserData,
+                    rank: balanceData.success ? balanceData.rank : null,
+                    // Ensure balance is also up to date from the balance endpoint if possible
+                    gamification: {
+                        ...(fullUserData.gamification || {}),
+                        setuCoinsBalance: balanceData.success ? balanceData.balance : (fullUserData.gamification?.setuCoinsBalance || 0)
+                    }
+                });
             }
         } catch (error) {
-            console.error("Error fetching full user details:", error);
+            console.error("Error fetching full user details and balance:", error);
         }
     };
 
@@ -335,8 +349,15 @@ export default function AdminCoinStats() {
                                         <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 text-xs font-bold">
                                             {user.username?.[0]?.toUpperCase() || 'U'}
                                         </div>
-                                        <div>
-                                            <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{user.username}</p>
+                                        <div className="flex-1">
+                                            <div className="flex justify-between items-center">
+                                                <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{user.username}</p>
+                                                {user.rank && (
+                                                    <span className={`text-[9px] font-black px-1.5 py-0.5 rounded border ${user.rank <= 10 ? 'bg-yellow-400/10 text-yellow-600 border-yellow-400/20' : 'bg-gray-100 text-gray-500 border-gray-200'}`}>
+                                                        RANK #{user.rank}
+                                                    </span>
+                                                )}
+                                            </div>
                                             <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
                                         </div>
                                     </button>
@@ -423,7 +444,26 @@ export default function AdminCoinStats() {
                                     {selectedUser.username?.[0]?.toUpperCase()}
                                 </div>
                                 <div>
-                                    <h2 className="text-2xl font-black">{selectedUser.username}</h2>
+                                    <h2 className="text-2xl font-black flex items-center gap-2">
+                                        {selectedUser.username}
+                                        {selectedUser.rank && (
+                                            <a
+                                                href="/admin/leaderboard"
+                                                title={`View Rank #${selectedUser.rank} in Leaderboard`}
+                                                className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black backdrop-blur-md border transition-all hover:scale-105 active:scale-95 ${selectedUser.rank <= 10
+                                                    ? 'bg-yellow-400/20 text-yellow-100 border-yellow-400/30'
+                                                    : 'bg-white/10 text-indigo-100 border-white/20'
+                                                    }`}
+                                            >
+                                                {selectedUser.rank <= 10 ? (
+                                                    <FaTrophy className="text-yellow-400 animate-pulse" />
+                                                ) : (
+                                                    <FaChartLine className="text-indigo-200" />
+                                                )}
+                                                RANK #{selectedUser.rank}
+                                            </a>
+                                        )}
+                                    </h2>
                                     <p className="text-indigo-100 flex items-center gap-2 text-sm">
                                         <FaUser className="text-xs" /> {selectedUser.email}
                                     </p>
@@ -628,7 +668,15 @@ export default function AdminCoinStats() {
                                                         {tx.userId?.username?.[0]?.toUpperCase() || 'U'}
                                                     </div>
                                                     <div>
-                                                        <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{tx.userId?.username || 'Unknown'}</p>
+                                                        <div className="flex items-center gap-2">
+                                                            <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{tx.userId?.username || 'Unknown'}</p>
+                                                            {tx.userId?.rank && (
+                                                                <span className={`text-[8px] font-black px-1 rounded shadow-sm flex items-center gap-0.5 ${tx.userId.rank <= 10 ? 'bg-yellow-400 text-yellow-900' : 'bg-indigo-100 text-indigo-700'}`}>
+                                                                    {tx.userId.rank <= 10 && <FaTrophy size={6} />}
+                                                                    #{tx.userId.rank}
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                         <p className="text-[10px] text-gray-400 dark:text-gray-500">{tx.userId?.email}</p>
                                                     </div>
                                                 </div>

@@ -1265,10 +1265,23 @@ export const searchUsers = async (req, res, next) => {
             ],
             role: { $nin: ['admin', 'rootadmin'] }
         })
-            .select('username email _id avatar')
+            .select('username email _id avatar gamification.totalCoinsEarned')
             .limit(10);
 
-        res.status(200).json({ success: true, users });
+        // Add rank to each user in the results
+        const usersWithRank = await Promise.all(users.map(async (user) => {
+            const userObj = user.toObject();
+            if (userObj.gamification?.totalCoinsEarned > 0) {
+                userObj.rank = await User.countDocuments({
+                    'gamification.totalCoinsEarned': { $gt: userObj.gamification.totalCoinsEarned }
+                }) + 1;
+            } else {
+                userObj.rank = null;
+            }
+            return userObj;
+        }));
+
+        res.status(200).json({ success: true, users: usersWithRank });
     } catch (error) {
         next(error);
     }

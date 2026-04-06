@@ -259,7 +259,8 @@ const userSchema = new mongoose.Schema({
     },
     totalCoinsEarned: { // Lifetime earnings
       type: Number,
-      default: 0
+      default: 0,
+      index: true
     },
     currentStreak: { // Consecutive months of rent payments
       type: Number,

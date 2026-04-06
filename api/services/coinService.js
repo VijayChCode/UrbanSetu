@@ -316,11 +316,24 @@ class CoinService {
 
         const skip = (page - 1) * limit;
 
-        const transactions = await CoinTransaction.find(query)
+        const transactionsRaw = await CoinTransaction.find(query)
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit)
-            .populate('userId', 'username email');
+            .populate('userId', 'username email gamification.totalCoinsEarned');
+
+        // Add rank to each transaction's user
+        const transactions = await Promise.all(transactionsRaw.map(async (tx) => {
+            const txObj = tx.toObject();
+            if (txObj.userId && txObj.userId.gamification?.totalCoinsEarned > 0) {
+                txObj.userId.rank = await User.countDocuments({
+                    'gamification.totalCoinsEarned': { $gt: txObj.userId.gamification.totalCoinsEarned }
+                }) + 1;
+            } else if (txObj.userId) {
+                txObj.userId.rank = null;
+            }
+            return txObj;
+        }));
 
         const total = await CoinTransaction.countDocuments(query);
 
