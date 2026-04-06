@@ -328,7 +328,7 @@ const ClientErrorMonitoring = () => {
                                             disabled={isVisitorLoading}
                                             className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 dark:text-blue-400 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 rounded-lg transition-colors border border-blue-200 dark:border-blue-800"
                                         >
-                                            {isVisitorLoading ? <UrbanSetuSpinner size="xs" /> : <FaHistory />}
+                                            {isVisitorLoading ? <UrbanSetuSpinner size="sm" isBright={true} /> : <FaHistory />}
                                             View Session
                                         </button>
                                     </div>

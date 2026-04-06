@@ -399,9 +399,9 @@ export default function AdminUpdates() {
             {/* Table List */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden transition-colors">
                 {loading ? (
-                    <div className="p-10 text-center">
-                        <UrbanSetuSpinner size="lg" />
-                        <p className="text-gray-500 dark:text-gray-400 mt-4">Loading updates...</p>
+                    <div className="p-20 flex flex-col items-center justify-center gap-4">
+                        <UrbanSetuSpinner size="lg" isBright={false} />
+                        <p className="text-gray-500 dark:text-gray-400 font-medium animate-pulse">Loading updates...</p>
                     </div>
                 ) : filteredUpdates.length === 0 ? (
                     <div className="p-10 text-center text-gray-500 dark:text-gray-400">
