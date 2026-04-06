@@ -87,13 +87,8 @@ const AdminCoinCard = ({ loading: parentLoading }) => {
                         </div>
                     </div>
 
-                    {/* Active Holders Badge & Admin Leaderboard Link */}
+                    {/* Leaderboard Management & Holders Badge */}
                     <div className="flex flex-col items-end gap-2">
-                        <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-2xl border border-white/10 shadow-lg" title="Total Active Holders">
-                            <FaUsers className="text-indigo-300" />
-                            <span className="font-black text-sm tabular-nums">{holdersCount.toLocaleString()} <span className="text-[10px] text-indigo-300 uppercase ml-0.5">Holders</span></span>
-                        </div>
-
                         <Link
                             to="/admin/leaderboard"
                             className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-2 rounded-2xl border border-white/10 shadow-lg transition-all"
@@ -102,6 +97,11 @@ const AdminCoinCard = ({ loading: parentLoading }) => {
                             <FaTrophy className="text-yellow-400 text-sm" />
                             <span className="text-xs font-black text-white uppercase tracking-wider">Leaderboard</span>
                         </Link>
+
+                        <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-2xl border border-white/10 shadow-lg" title="Total Active Holders">
+                            <FaUsers className="text-indigo-300" />
+                            <span className="font-black text-sm tabular-nums">{holdersCount.toLocaleString()} <span className="text-[10px] text-indigo-300 uppercase ml-0.5">Holders</span></span>
+                        </div>
                     </div>
                 </div>
 

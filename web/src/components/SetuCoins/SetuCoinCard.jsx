@@ -66,13 +66,8 @@ const SetuCoinCard = ({ balance = 0, streak = 0, expiryDate = null, rank = null,
                         <p className="text-xs text-white/70 mt-1">Loyalty Rewards Program</p>
                     </div>
 
-                    {/* Streak & Rank Badges */}
+                    {/* Rank & Streak Badges */}
                     <div className="flex flex-col items-end gap-2">
-                        <div className="flex items-center gap-1 bg-black/20 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10 shadow-sm" title="Current Rent Streak">
-                            <FaFire className={`text-orange-400 ${streak > 0 ? 'animate-pulse' : ''}`} />
-                            <span className="font-bold text-sm text-white shrink-0">{streak} Month Streak</span>
-                        </div>
-
                         {/* Rank Badge */}
                         <Link 
                             to="/user/leaderboard"
@@ -91,6 +86,11 @@ const SetuCoinCard = ({ balance = 0, streak = 0, expiryDate = null, rank = null,
                                 {rank ? `#${rank}` : 'Top Up'}
                             </span>
                         </Link>
+
+                        <div className="flex items-center gap-1 bg-black/20 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10 shadow-sm" title="Current Rent Streak">
+                            <FaFire className={`text-orange-400 ${streak > 0 ? 'animate-pulse' : ''}`} />
+                            <span className="font-bold text-sm text-white shrink-0">{streak} Month Streak</span>
+                        </div>
                     </div>
                 </div>
 
