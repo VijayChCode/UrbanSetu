@@ -403,10 +403,12 @@ const YearInReview = ({ isAdmin = false }) => {
 
     if (loading) {
         return (
-            <div className="fixed inset-0 bg-[#0f172a] flex items-center justify-center text-white">
-                <div className="text-center">
+            <div className="fixed inset-0 bg-[#0f172a] flex items-center justify-center text-white p-6">
+                <div className="flex flex-col items-center justify-center gap-6 max-w-md w-full">
                     <UrbanSetuSpinner size="xl" isBright={true} />
-                    <h2 className="mt-8 text-2xl font-black tracking-widest uppercase bg-gradient-to-r from-indigo-400 to-blue-400 bg-clip-text text-transparent animate-pulse">Reliving {year}</h2>
+                    <h2 className="text-2xl md:text-3xl font-black tracking-[0.2em] uppercase bg-gradient-to-r from-indigo-400 via-blue-400 to-purple-400 bg-clip-text text-transparent animate-pulse text-center">
+                        Reliving {year}
+                    </h2>
                 </div>
             </div>
         );

@@ -196,25 +196,25 @@ const LoadingSpinner = () => (
     <div className="absolute top-0 right-0 w-96 h-96 bg-purple-200 dark:bg-purple-900/20 rounded-full mix-blend-multiply dark:mix-blend-overlay filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
     <div className="absolute -bottom-32 left-20 w-96 h-96 bg-pink-200 dark:bg-pink-900/20 rounded-full mix-blend-multiply dark:mix-blend-overlay filter blur-3xl opacity-30 animate-blob animation-delay-4000"></div>
 
-    <div className="relative flex flex-col items-center z-10">
+    <div className="relative flex flex-col items-center z-10 scale-95 sm:scale-100">
       {/* Central Logo with standardized UrbanSetuSpinner */}
-      <div className="relative w-32 h-32 flex items-center justify-center mb-12">
-        <UrbanSetuSpinner size="xl" />
+      <div className="relative w-28 h-28 flex items-center justify-center mb-8">
+        <UrbanSetuSpinner size="xl" className="!w-full !h-full" isBright={true} />
         <div className="absolute inset-0 flex items-center justify-center">
-             <div className="p-4 bg-white/10 backdrop-blur-md rounded-full shadow-inner border border-white/20">
+             <div className="p-3.5 bg-white/10 backdrop-blur-md rounded-full shadow-inner border border-white/20">
                 <FaHome className="text-4xl text-blue-600 dark:text-blue-400 animate-pulse" />
              </div>
         </div>
       </div>
 
       {/* Text Info */}
-      <div className="text-center space-y-4">
+      <div className="text-center space-y-3">
         <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 dark:from-blue-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-transparent drop-shadow-sm">
           UrbanSetu
         </h1>
-        <div className="flex flex-col items-center justify-center gap-2">
-          <span className="text-gray-500 dark:text-gray-400 font-medium tracking-[0.2em] text-sm uppercase">Initializing Platform</span>
-          <div className="flex gap-1.5 mt-1">
+        <div className="flex flex-col items-center justify-center gap-1.5">
+          <span className="text-gray-500 dark:text-gray-400 font-bold tracking-[0.25em] text-xs uppercase opacity-80">Initializing Platform</span>
+          <div className="flex gap-1.5 mt-0.5">
             <span className="w-1.5 h-1.5 bg-blue-500 dark:bg-blue-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
             <span className="w-1.5 h-1.5 bg-purple-500 dark:bg-purple-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
             <span className="w-1.5 h-1.5 bg-pink-500 dark:bg-pink-400 rounded-full animate-bounce"></span>
