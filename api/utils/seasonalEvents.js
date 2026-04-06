@@ -363,6 +363,8 @@ export function* getActiveThemes(dateInput = new Date()) {
         { id: 'mahavir', year: 2026, month: 2, day: 31, window: 0, name: 'Mahavir Jayanti', icon: '🕉️', sec: '🙏', greet: 'Happy Mahavir Jayanti', desc: 'Celebrating peace and non-violence.', deco: 'peace' },
         { id: 'buddha', year: 2026, month: 4, day: 31, window: 0, name: 'Buddha Purnima', icon: '🏵️', sec: '🧘', greet: 'Happy Buddha Purnima', desc: 'Enlightenment and peace to all.', deco: 'lotus' },
         { id: 'gurunanak', year: 2026, month: 10, day: 24, window: 0, name: 'Guru Nanak Jayanti', icon: 'ੴ', sec: '🕯️', greet: 'Happy Gurpurab!', desc: 'Spreading the light of oneness and service.', deco: 'khanda' },
+
+        //2027
     ];
 
     for (const f of festivals) {

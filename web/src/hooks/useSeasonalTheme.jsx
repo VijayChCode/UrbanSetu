@@ -461,6 +461,8 @@ export function* getActiveThemes() {
         { id: 'buddha', year: 2026, month: 4, day: 31, window: 0, name: 'Buddha Purnima', icon: '🏵️', sec: '🧘', greet: 'Happy Buddha Purnima', effect: 'flower', grad: 'bg-gradient-to-r from-orange-300 via-yellow-200 to-orange-500', deco: 'lotus' },
         { id: 'fathers', year: 2026, month: 5, day: 21, window: 0, name: 'Father\'s Day', icon: '👨‍👧‍👦', sec: '👔', greet: 'Happy Father\'s Day!', effect: 'none', grad: 'bg-gradient-to-r from-blue-500 via-indigo-500 to-blue-700', deco: 'tie' },
         { id: 'gurunanak', year: 2026, month: 10, day: 24, window: 0, name: 'Guru Nanak Jayanti', icon: 'ੴ', sec: '🕯️', greet: 'Happy Gurpurab!', effect: 'flower', grad: 'bg-gradient-to-r from-orange-500 via-yellow-400 to-orange-600', deco: 'khanda' },
+
+        //2027
     ];
 
     for (const f of festivals) {
