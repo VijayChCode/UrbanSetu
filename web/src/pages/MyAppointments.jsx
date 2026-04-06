@@ -1268,10 +1268,14 @@ export default function MyAppointments() {
       <div className={`min-h-screen bg-gradient-to-br from-purple-50 to-blue-100 dark:from-gray-900 dark:to-slate-900 py-10 px-2 md:px-8 ${isDarkMode ? 'dark' : ''}`}>
         <div className="max-w-4xl mx-auto bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 border border-purple-100 dark:border-slate-700 transform transition-all duration-300">
           <div className="flex flex-col items-center justify-center space-y-6">
-            <div className="relative mb-2">
-              <div className={`absolute inset-0 blur-2xl opacity-20 bg-gradient-to-r ${themeColors.primary}`}></div>
-              <FaCalendarAlt className="text-7xl text-slate-300 dark:text-slate-600 relative z-10" />
-              <div className="absolute -bottom-1 -right-1 bg-white dark:bg-slate-800 p-1 rounded-full z-20">
+            <div className="relative mb-4 group scale-110">
+              <div className={`absolute inset-0 blur-3xl opacity-40 bg-gradient-to-r ${themeColors.primary} animate-pulse`}></div>
+              <div className={`relative z-10 w-24 h-24 rounded-3xl bg-gradient-to-br ${themeColors.primary} flex items-center justify-center shadow-2xl overflow-hidden`}>
+                {/* Subtle internal patterns for "premium" look */}
+                <div className="absolute top-0 left-0 w-full h-full opacity-20 bg-[radial-gradient(circle_at_top_left,_white,_transparent)]"></div>
+                <FaCalendarAlt className="text-5xl text-white relative z-20 drop-shadow-xl" />
+              </div>
+              <div className="absolute -bottom-2 -right-2 bg-white dark:bg-slate-800 p-2 rounded-2xl z-30 shadow-2xl border-2 border-purple-100 dark:border-slate-700 transform -rotate-12 transition-transform duration-300 group-hover:rotate-0">
                 <FaExclamationTriangle className="text-2xl text-red-500" />
               </div>
             </div>
