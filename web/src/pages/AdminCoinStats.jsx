@@ -146,10 +146,10 @@ export default function AdminCoinStats() {
                 setSelectedUser({
                     ...fullUserData,
                     rank: balanceData.success ? balanceData.rank : null,
-                    // Ensure balance is also up to date from the balance endpoint if possible
+                    // Fix: Use setuCoinsBalance from API response
                     gamification: {
                         ...(fullUserData.gamification || {}),
-                        setuCoinsBalance: balanceData.success ? balanceData.balance : (fullUserData.gamification?.setuCoinsBalance || 0)
+                        setuCoinsBalance: balanceData.success ? balanceData.setuCoinsBalance : (fullUserData.gamification?.setuCoinsBalance || 0)
                     }
                 });
             }
