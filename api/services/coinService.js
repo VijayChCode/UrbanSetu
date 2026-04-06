@@ -17,11 +17,25 @@ class CoinService {
         if (!user) {
             throw new Error('User not found');
         }
-        return user.gamification || {
+
+        const stats = user.gamification || {
             setuCoinsBalance: 0,
             totalCoinsEarned: 0,
             currentStreak: 0,
             lastRentPaymentDate: null
+        };
+
+        // Calculate Rank
+        let rank = null;
+        if (stats.totalCoinsEarned > 0) {
+            rank = await User.countDocuments({
+                'gamification.totalCoinsEarned': { $gt: stats.totalCoinsEarned }
+            }) + 1;
+        }
+
+        return {
+            ...stats.toObject ? stats.toObject() : stats,
+            rank
         };
     }
 

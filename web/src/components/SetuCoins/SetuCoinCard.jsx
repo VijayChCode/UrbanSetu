@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { FaCoins, FaFire, FaHistory, FaGift, FaQuestionCircle, FaInfoCircle } from 'react-icons/fa';
+import { FaCoins, FaFire, FaHistory, FaGift, FaQuestionCircle, FaInfoCircle, FaMedal, FaTrophy, FaChartLine } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import SetuCoinInfoModal from './SetuCoinInfoModal';
 import { getCoinValue, COIN_CONFIG } from '../../utils/coinUtils';
 
-const SetuCoinCard = ({ balance = 0, streak = 0, expiryDate = null, loading = false, onViewHistory }) => {
+const SetuCoinCard = ({ balance = 0, streak = 0, expiryDate = null, rank = null, loading = false, onViewHistory }) => {
     const [showInfo, setShowInfo] = useState(false);
 
     const inrValue = getCoinValue(balance, 'INR').toFixed(2);
@@ -66,10 +66,31 @@ const SetuCoinCard = ({ balance = 0, streak = 0, expiryDate = null, loading = fa
                         <p className="text-xs text-white/70 mt-1">Loyalty Rewards Program</p>
                     </div>
 
-                    {/* Streak Badge */}
-                    <div className="flex items-center gap-1 bg-black/20 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10 shadow-sm" title="Current Rent Streak">
-                        <FaFire className={`text-orange-400 ${streak > 0 ? 'animate-pulse' : ''}`} />
-                        <span className="font-bold text-sm">{streak} Month Streak</span>
+                    {/* Streak & Rank Badges */}
+                    <div className="flex flex-col items-end gap-2">
+                        <div className="flex items-center gap-1 bg-black/20 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10 shadow-sm" title="Current Rent Streak">
+                            <FaFire className={`text-orange-400 ${streak > 0 ? 'animate-pulse' : ''}`} />
+                            <span className="font-bold text-sm text-white shrink-0">{streak} Month Streak</span>
+                        </div>
+
+                        {/* Rank Badge */}
+                        <Link 
+                            to="/user/leaderboard"
+                            className="group flex items-center gap-1 bg-white/10 hover:bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10 shadow-sm transition-all"
+                            title={rank ? `Your Global Rank: #${rank}` : 'View Leaderboard'}
+                        >
+                            {rank && rank <= 10 ? (
+                                <div className="relative flex items-center justify-center">
+                                    <FaMedal className={`text-xl ${rank === 1 ? 'text-yellow-400' : rank === 2 ? 'text-gray-300' : rank === 3 ? 'text-amber-600' : 'text-blue-200'}`} />
+                                    <span className="absolute inset-0 flex items-center justify-center text-[8px] font-black text-gray-900 mt-0.5">{rank}</span>
+                                </div>
+                            ) : (
+                                <FaTrophy className={`text-sm ${rank ? 'text-yellow-200' : 'text-white/60'}`} />
+                            )}
+                            <span className="font-bold text-xs text-white shrink-0">
+                                {rank ? `#${rank}` : 'Top Up'}
+                            </span>
+                        </Link>
                     </div>
                 </div>
 

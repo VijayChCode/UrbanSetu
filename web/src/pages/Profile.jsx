@@ -402,7 +402,7 @@ export default function Profile() {
   const [showThemeInfo, setShowThemeInfo] = useState(false);
 
   // SetuCoins State
-  const [coinData, setCoinData] = useState({ balance: 0, streak: 0, expiryDate: null, frozenCoins: 0, loading: true });
+  const [coinData, setCoinData] = useState({ balance: 0, streak: 0, expiryDate: null, frozenCoins: 0, rank: null, loading: true });
   const [showCoinHistory, setShowCoinHistory] = useState(false);
   const [showReferralModal, setShowReferralModal] = useState(false);
   const [historyRefreshTrigger, setHistoryRefreshTrigger] = useState(0);
@@ -438,6 +438,7 @@ export default function Profile() {
             streak: data.currentStreak || 0,
             expiryDate: data.coinsExpiryDate || null,
             frozenCoins: data.frozenCoins || 0,
+            rank: data.rank || null,
             loading: false
           });
         }
@@ -2248,6 +2249,7 @@ export default function Profile() {
                 streak={coinData.streak}
                 expiryDate={coinData.expiryDate}
                 frozenCoins={coinData.frozenCoins}
+                rank={coinData.rank}
                 loading={coinData.loading}
                 onViewHistory={() => {
                   setShowCoinHistory(!showCoinHistory);
