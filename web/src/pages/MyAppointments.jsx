@@ -1268,9 +1268,16 @@ export default function MyAppointments() {
       <div className={`min-h-screen bg-gradient-to-br from-purple-50 to-blue-100 dark:from-gray-900 dark:to-slate-900 py-10 px-2 md:px-8 ${isDarkMode ? 'dark' : ''}`}>
         <div className="max-w-4xl mx-auto bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 border border-purple-100 dark:border-slate-700 transform transition-all duration-300">
           <div className="flex flex-col items-center justify-center space-y-6">
+            <div className="relative mb-2">
+              <div className={`absolute inset-0 blur-2xl opacity-20 bg-gradient-to-r ${themeColors.primary}`}></div>
+              <FaCalendarAlt className="text-7xl text-slate-300 dark:text-slate-600 relative z-10" />
+              <div className="absolute -bottom-1 -right-1 bg-white dark:bg-slate-800 p-1 rounded-full z-20">
+                <FaExclamationTriangle className="text-2xl text-red-500" />
+              </div>
+            </div>
+
             <div className={`p-4 rounded-xl ${isDarkMode ? themeColors.messageBgDark : themeColors.messageBg} border ${isDarkMode ? 'border-red-900/20' : 'border-red-100'} w-full text-center shadow-sm`}>
               <div className="text-red-600 dark:text-red-400 text-lg font-semibold flex items-center justify-center gap-2">
-                <FaExclamationTriangle className="text-xl shrink-0" />
                 {error}
               </div>
             </div>
