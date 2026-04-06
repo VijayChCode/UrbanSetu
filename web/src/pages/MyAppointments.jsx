@@ -1266,15 +1266,24 @@ export default function MyAppointments() {
 
     return (
       <div className={`min-h-screen bg-gradient-to-br from-purple-50 to-blue-100 dark:from-gray-900 dark:to-slate-900 py-10 px-2 md:px-8 ${isDarkMode ? 'dark' : ''}`}>
-        <div className="max-w-4xl mx-auto bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 border border-purple-100 dark:border-slate-700">
-          <div className="text-center text-red-600 dark:text-red-400 text-lg mb-4 font-medium">{error}</div>
-          <div className="text-center">
-            <button
-              onClick={handleRetry}
-              className={`px-6 py-2 ${themeColors.bg} hover:${themeColors.hover} text-white rounded-lg shadow-md transition-all duration-200 active:scale-95`}
-            >
-              Retry
-            </button>
+        <div className="max-w-4xl mx-auto bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 border border-purple-100 dark:border-slate-700 transform transition-all duration-300">
+          <div className="flex flex-col items-center justify-center space-y-6">
+            <div className={`p-4 rounded-xl ${isDarkMode ? themeColors.messageBgDark : themeColors.messageBg} border ${isDarkMode ? 'border-red-900/20' : 'border-red-100'} w-full text-center shadow-sm`}>
+              <div className="text-red-600 dark:text-red-400 text-lg font-semibold flex items-center justify-center gap-2">
+                <FaExclamationTriangle className="text-xl shrink-0" />
+                {error}
+              </div>
+            </div>
+            
+            <div className="text-center">
+              <button
+                onClick={handleRetry}
+                className={`px-10 py-3 bg-gradient-to-r ${themeColors.primary} ${themeColors.primaryHover} text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 active:scale-95 font-bold uppercase tracking-wider text-sm flex items-center justify-center gap-3`}
+              >
+                <FaSync className={loading ? 'animate-spin' : ''} />
+                Retry
+              </button>
+            </div>
           </div>
         </div>
       </div>
