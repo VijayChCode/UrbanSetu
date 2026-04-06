@@ -123,11 +123,13 @@ export default function AdminCoinStats() {
         }
     };
 
-    const selectUser = async (user) => {
+    const selectUser = async (user, isRefresh = false) => {
         // Set basic info first so UI updates immediately
-        setSelectedUser({ ...user, rank: null }); // Use basic info first
-        setSearchQuery(user.email);
-        setSearchResults([]);
+        if (!isRefresh) {
+            setSelectedUser({ ...user, rank: null }); // Use basic info first
+            setSearchQuery(user.email);
+            setSearchResults([]);
+        }
 
         // Fetch history
         fetchUserHistory(user._id);
@@ -199,7 +201,7 @@ export default function AdminCoinStats() {
                 fetchStats();
 
                 // Refresh user data to show updated balance and rank
-                selectUser(selectedUser);
+                selectUser(selectedUser, true);
             } else {
                 toast.error(data.message || "Adjustment failed");
             }

@@ -88,7 +88,7 @@ const AdminCoinCard = ({ loading: parentLoading }) => {
                     </div>
 
                     {/* Leaderboard Management & Holders Badge */}
-                    <div className="flex flex-col items-end gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                         <Link
                             to="/admin/leaderboard"
                             className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-2 rounded-2xl border border-white/10 shadow-lg transition-all"

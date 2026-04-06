@@ -67,7 +67,7 @@ const SetuCoinCard = ({ balance = 0, streak = 0, expiryDate = null, rank = null,
                     </div>
 
                     {/* Rank & Streak Badges */}
-                    <div className="flex flex-col items-end gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                         {/* Rank Badge */}
                         <Link 
                             to="/user/leaderboard"
