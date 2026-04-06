@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { FaCoins, FaTrophy, FaFire, FaCrown, FaMedal, FaStar, FaInfoCircle } from 'react-icons/fa';
 import { useSelector } from 'react-redux';
 import { authenticatedFetch } from '../../utils/auth';
@@ -191,7 +192,15 @@ const CommunityLeaderboard = ({ limit = 10, showHeader = true, showYourStatus = 
                 {leaderboard.length > 0 && (
                     <div className="bg-slate-50 dark:bg-gray-800/50 p-4 text-center border-t border-slate-100 dark:border-gray-700">
                         <p className="text-[11px] text-slate-400 dark:text-gray-500 font-bold uppercase tracking-widest flex items-center justify-center gap-2">
-                            <FaInfoCircle className="text-indigo-300 dark:text-gray-600" /> Leaderboard resets every month. Keep earning!
+                            <FaInfoCircle className="text-indigo-300 dark:text-gray-600" /> 
+                            <span>
+                                <Link 
+                                    to="/user/leaderboard" 
+                                    className="text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors underline decoration-dotted underline-offset-4 decoration-indigo-200 dark:decoration-indigo-900"
+                                >
+                                    Leaderboard
+                                </Link> resets every month. Keep earning!
+                            </span>
                         </p>
                     </div>
                 )}

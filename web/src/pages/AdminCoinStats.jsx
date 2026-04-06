@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FaCoins, FaFire, FaUsers, FaChartLine, FaHistory, FaArrowUp, FaArrowDown, FaSearch, FaUser, FaCheck, FaExclamationTriangle, FaTimes, FaFilter, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { FaCoins, FaFire, FaUsers, FaChartLine, FaHistory, FaArrowUp, FaArrowDown, FaSearch, FaTrophy, FaUser, FaCheck, FaExclamationTriangle, FaTimes, FaFilter, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import UrbanSetuSpinner from "../components/UrbanSetuSpinner";
 import { usePageTitle } from '../hooks/usePageTitle';
@@ -257,8 +257,8 @@ export default function AdminCoinStats() {
                             SetuCoins Loyalty Management
                         </span>
                     </h1>
-                    <a 
-                        href="/admin/leaderboard" 
+                    <a
+                        href="/admin/leaderboard"
                         className="text-xs font-black text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 flex items-center gap-1 uppercase tracking-widest transition-all hover:translate-x-1 w-fit group"
                     >
                         <FaTrophy className="text-yellow-500 group-hover:scale-110 transition-transform" />

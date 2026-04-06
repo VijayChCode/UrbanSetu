@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { FaTrophy } from "react-icons/fa";
 import { usePageTitle } from "../hooks/usePageTitle";
 import CommunityLeaderboard from "../components/SetuCoins/CommunityLeaderboard";
@@ -32,7 +33,7 @@ export default function Leaderboard({ isAdmin = false }) {
                     <div className="mt-12 text-center">
                         <p className="text-slate-400 text-sm font-medium">
                             Want to see your name here?
-                            <a href="/user/rewards" className="text-indigo-600 hover:underline ml-1 font-bold">Earn more SetuCoins</a>
+                            <Link to="/user/rewards?tab=referrals" className="text-indigo-600 hover:underline ml-1 font-bold">Earn more SetuCoins</Link>
                         </p>
                     </div>
                 )}

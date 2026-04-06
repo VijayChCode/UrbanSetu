@@ -6887,8 +6887,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     <button
                                         onClick={() => setShowViolationModal(true)}
                                         className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-300 border ${isBlockedByPolicy
-                                                ? 'bg-red-500/20 text-red-100 hover:bg-red-500/30 animate-pulse border-red-500/30'
-                                                : 'text-white/70 hover:text-white hover:bg-white/10 border-transparent hover:border-white/20'
+                                            ? 'bg-red-500/20 text-red-100 hover:bg-red-500/30 animate-pulse border-red-500/30'
+                                            : 'text-white/70 hover:text-white hover:bg-white/10 border-transparent hover:border-white/20'
                                             }`}
                                         title={isBlockedByPolicy ? "Policy Restriction Active - Click for Details" : `Safety Policy Status (${policyViolations}/${VIOLATION_LIMIT})`}
                                         aria-label="View Policy Status"
@@ -10066,199 +10066,199 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             {
                 showRatingsModal && createPortal(
                     <div className="fixed inset-0 z-[60] overflow-y-auto bg-black/50 backdrop-blur-sm" onClick={() => setShowRatingsModal(false)}>
-                      <div className="flex min-h-full items-center justify-center p-4">
-                        <div onClick={e => e.stopPropagation()} className={`relative w-full max-w-2xl rounded-xl shadow-2xl ${isDarkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-900'} border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} animate-scaleIn`}>
-                            <div className={`sticky top-0 z-10 p-6 border-b ${isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'} flex items-center justify-between rounded-t-xl`}>
-                                <div>
-                                    <h3 className="text-xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">Ratings & Feedback</h3>
-                                    <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                        {(currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) ? 'All System Ratings' : 'Your Session Ratings'}
-                                    </p>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={async () => {
-                                            loadRatingMeta();
-                                            // For admins, refresh the global ratings list from API
-                                            if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) {
-                                                try {
-                                                    setAllRatingsLoading(true);
-                                                    const resp = await authenticatedFetch(`${API_BASE_URL}/api/gemini/ratings-all?limit=500&days=90`);
-                                                    if (resp.ok) {
-                                                        const data = await resp.json();
-                                                        setAllRatings(Array.isArray(data.ratings) ? data.ratings : []);
-                                                    } else {
+                        <div className="flex min-h-full items-center justify-center p-4">
+                            <div onClick={e => e.stopPropagation()} className={`relative w-full max-w-2xl rounded-xl shadow-2xl ${isDarkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-900'} border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} animate-scaleIn`}>
+                                <div className={`sticky top-0 z-10 p-6 border-b ${isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'} flex items-center justify-between rounded-t-xl`}>
+                                    <div>
+                                        <h3 className="text-xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">Ratings & Feedback</h3>
+                                        <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                            {(currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) ? 'All System Ratings' : 'Your Session Ratings'}
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={async () => {
+                                                loadRatingMeta();
+                                                // For admins, refresh the global ratings list from API
+                                                if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) {
+                                                    try {
+                                                        setAllRatingsLoading(true);
+                                                        const resp = await authenticatedFetch(`${API_BASE_URL}/api/gemini/ratings-all?limit=500&days=90`);
+                                                        if (resp.ok) {
+                                                            const data = await resp.json();
+                                                            setAllRatings(Array.isArray(data.ratings) ? data.ratings : []);
+                                                        } else {
+                                                            setAllRatings([]);
+                                                        }
+                                                    } catch (_) {
                                                         setAllRatings([]);
+                                                    } finally {
+                                                        setAllRatingsLoading(false);
                                                     }
-                                                } catch (_) {
-                                                    setAllRatings([]);
-                                                } finally {
-                                                    setAllRatingsLoading(false);
+                                                } else {
+                                                    // For normal users, just refresh local storage state
+                                                    try {
+                                                        const rs = JSON.parse(localStorage.getItem('gemini_ratings') || '{}');
+                                                        setMessageRatings(rs);
+                                                    } catch (_) { }
                                                 }
-                                            } else {
-                                                // For normal users, just refresh local storage state
-                                                try {
-                                                    const rs = JSON.parse(localStorage.getItem('gemini_ratings') || '{}');
-                                                    setMessageRatings(rs);
-                                                } catch (_) { }
-                                            }
-                                        }}
-                                        className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-white' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-800'}`}
-                                        title="Refresh"
-                                    >
-                                        {allRatingsLoading ? <UrbanSetuSpinner size="sm" /> : <FaSync size={16} />}
-                                    </button>
-                                    <button
-                                        onClick={() => setShowRatingsModal(false)}
-                                        className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-white' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-800'}`}
-                                    >
-                                        <FaTimes size={20} />
-                                    </button>
+                                            }}
+                                            className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-white' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-800'}`}
+                                            title="Refresh"
+                                        >
+                                            {allRatingsLoading ? <UrbanSetuSpinner size="sm" /> : <FaSync size={16} />}
+                                        </button>
+                                        <button
+                                            onClick={() => setShowRatingsModal(false)}
+                                            className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-white' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-800'}`}
+                                        >
+                                            <FaTimes size={20} />
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
 
-                            {/* Filters */}
-                            <div className={`sticky top-[73px] z-[9] px-6 py-3 border-b ${isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'} flex gap-2`}>
-                                {['all', 'up', 'down'].map((filter) => (
-                                    <button
-                                        key={filter}
-                                        onClick={() => setRatingsFilter(filter)}
-                                        className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 whitespace-nowrap flex-shrink-0 ${ratingsFilter === filter
-                                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
-                                            : `${isDarkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`
-                                            }`}
-                                    >
-                                        {filter === 'all' ? 'All Reviews' : filter === 'up' ? 'Liked' : 'Disliked'}
-                                    </button>
-                                ))}
-                            </div>
+                                {/* Filters */}
+                                <div className={`sticky top-[73px] z-[9] px-6 py-3 border-b ${isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'} flex gap-2`}>
+                                    {['all', 'up', 'down'].map((filter) => (
+                                        <button
+                                            key={filter}
+                                            onClick={() => setRatingsFilter(filter)}
+                                            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 whitespace-nowrap flex-shrink-0 ${ratingsFilter === filter
+                                                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+                                                : `${isDarkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`
+                                                }`}
+                                        >
+                                            {filter === 'all' ? 'All Reviews' : filter === 'up' ? 'Liked' : 'Disliked'}
+                                        </button>
+                                    ))}
+                                </div>
 
-                            <div className="p-6">
-                                {(currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) ? (
-                                    allRatingsLoading ? (
-                                        <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-                                            <UrbanSetuSpinner size="md" />
-                                            <p className="mt-3">Loading ratings...</p>
-                                        </div>
+                                <div className="p-6">
+                                    {(currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) ? (
+                                        allRatingsLoading ? (
+                                            <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+                                                <UrbanSetuSpinner size="md" />
+                                                <p className="mt-3">Loading ratings...</p>
+                                            </div>
+                                        ) : (
+                                            (() => {
+                                                const filteredRatings = allRatings.filter(r => ratingsFilter === 'all' || r.rating === ratingsFilter);
+                                                return filteredRatings.length === 0 ? (
+                                                    <div className="text-center py-12 text-gray-500">
+                                                        <FaSearch size={32} className="mx-auto mb-3 opacity-20" />
+                                                        <p>No ratings found matching your filter.</p>
+                                                    </div>
+                                                ) : (
+                                                    <div className="space-y-4">
+                                                        {filteredRatings.map((r) => (
+                                                            <div key={r.id} className={`p-4 rounded-xl border transition-all hover:shadow-md ${isDarkMode ? 'bg-gray-800/50 border-gray-700 hover:border-gray-600' : 'bg-white border-gray-200 hover:border-blue-200'}`}>
+                                                                <div className="flex items-start justify-between gap-4">
+                                                                    <div className="flex items-center gap-3">
+                                                                        <div className={`p-2 rounded-lg ${r.rating === 'up' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+                                                                            {r.rating === 'up' ? <FaThumbsUp size={16} /> : <FaThumbsDown size={16} />}
+                                                                        </div>
+                                                                        <div>
+                                                                            <div className={`font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>{r.user?.username || r.user?.email || 'Unknown User'}</div>
+                                                                            <div className="text-xs text-gray-400">{r.user?.role || 'user'} • {r.createdAt ? new Date(r.createdAt).toLocaleString() : ''}</div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div className={`mt-3 p-3 rounded-lg text-sm mb-3 ${isDarkMode ? 'bg-gray-900/50 text-gray-300' : 'bg-gray-50 text-gray-600'}`}>
+                                                                    <div className="line-clamp-2 italic opacity-80">
+                                                                        "{r.messageContent || ''}"
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="flex justify-end gap-2">
+                                                                    <button
+                                                                        onClick={() => handleRatingDelete(r.id)}
+                                                                        className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all flex items-center gap-1 ${isDarkMode
+                                                                            ? 'border-red-900/30 text-red-400 hover:bg-red-900/20'
+                                                                            : 'border-red-100 text-red-600 hover:bg-red-50'
+                                                                            }`}
+                                                                        title="Delete Rating"
+                                                                    >
+                                                                        <FaTrash size={10} />
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => { setSelectedRating(r); setShowRatingDetailModal(true); }}
+                                                                        className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all flex items-center gap-1 ${isDarkMode
+                                                                            ? 'border-gray-700 text-blue-400 hover:bg-gray-700'
+                                                                            : 'border-gray-200 text-blue-600 hover:bg-blue-50'
+                                                                            }`}
+                                                                    >
+                                                                        <FaExpand size={10} /> Read Details
+                                                                    </button>
+                                                                </div>
+                                                                {r.rating === 'down' && r.feedback && (
+                                                                    <div className="mt-3 text-sm flex gap-2">
+                                                                        <span className="font-semibold text-red-400 whitespace-nowrap">Feedback:</span>
+                                                                        <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>{r.feedback}</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                );
+                                            })()
+                                        )
                                     ) : (
-                                        (() => {
-                                            const filteredRatings = allRatings.filter(r => ratingsFilter === 'all' || r.rating === ratingsFilter);
-                                            return filteredRatings.length === 0 ? (
-                                                <div className="text-center py-12 text-gray-500">
-                                                    <FaSearch size={32} className="mx-auto mb-3 opacity-20" />
-                                                    <p>No ratings found matching your filter.</p>
-                                                </div>
-                                            ) : (
-                                                <div className="space-y-4">
-                                                    {filteredRatings.map((r) => (
-                                                        <div key={r.id} className={`p-4 rounded-xl border transition-all hover:shadow-md ${isDarkMode ? 'bg-gray-800/50 border-gray-700 hover:border-gray-600' : 'bg-white border-gray-200 hover:border-blue-200'}`}>
+                                        Object.keys(messageRatings || {}).length === 0 ? (
+                                            <div className="text-center py-12 text-gray-500">
+                                                <FaRegSmile size={32} className="mx-auto mb-3 opacity-20" />
+                                                <p>No ratings yet in this session.</p>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-4">
+                                                {messages.map((msg, idx) => {
+                                                    const key = `${idx}_${msg.timestamp}`;
+                                                    const r = messageRatings[key];
+                                                    if (!r) return null;
+                                                    if (ratingsFilter !== 'all' && r !== ratingsFilter) return null;
+
+                                                    const meta = ratingMeta[key] || {};
+                                                    return (
+                                                        <div key={key} className={`p-4 rounded-xl border transition-all hover:shadow-md ${isDarkMode ? 'bg-gray-800/50 border-gray-700 hover:border-gray-600' : 'bg-white border-gray-200 hover:border-blue-200'}`}>
                                                             <div className="flex items-start justify-between gap-4">
                                                                 <div className="flex items-center gap-3">
-                                                                    <div className={`p-2 rounded-lg ${r.rating === 'up' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
-                                                                        {r.rating === 'up' ? <FaThumbsUp size={16} /> : <FaThumbsDown size={16} />}
+                                                                    <div className={`p-2 rounded-lg ${r === 'up' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+                                                                        {r === 'up' ? <FaThumbsUp size={16} /> : <FaThumbsDown size={16} />}
                                                                     </div>
                                                                     <div>
-                                                                        <div className={`font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>{r.user?.username || r.user?.email || 'Unknown User'}</div>
-                                                                        <div className="text-xs text-gray-400">{r.user?.role || 'user'} • {r.createdAt ? new Date(r.createdAt).toLocaleString() : ''}</div>
+                                                                        <div className={`font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>{meta.user || 'You'}</div>
+                                                                        <div className="text-xs text-gray-400">{meta.time ? new Date(meta.time).toLocaleString() : ''}</div>
                                                                     </div>
                                                                 </div>
                                                             </div>
-                                                            <div className={`mt-3 p-3 rounded-lg text-sm mb-3 ${isDarkMode ? 'bg-gray-900/50 text-gray-300' : 'bg-gray-50 text-gray-600'}`}>
-                                                                <div className="line-clamp-2 italic opacity-80">
-                                                                    "{r.messageContent || ''}"
+                                                            <div className={`mt-3 p-3 rounded-lg text-sm transition-all duration-300 group hover:max-h-[500px] hover:overflow-y-auto ${isDarkMode ? 'bg-gray-900/50 text-gray-300' : 'bg-gray-50 text-gray-600'}`}>
+                                                                <div className="line-clamp-3 group-hover:line-clamp-none">
+                                                                    "{meta.messagePreview || msg.content || ''}"
                                                                 </div>
                                                             </div>
-
-                                                            <div className="flex justify-end gap-2">
-                                                                <button
-                                                                    onClick={() => handleRatingDelete(r.id)}
-                                                                    className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all flex items-center gap-1 ${isDarkMode
-                                                                        ? 'border-red-900/30 text-red-400 hover:bg-red-900/20'
-                                                                        : 'border-red-100 text-red-600 hover:bg-red-50'
-                                                                        }`}
-                                                                    title="Delete Rating"
-                                                                >
-                                                                    <FaTrash size={10} />
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => { setSelectedRating(r); setShowRatingDetailModal(true); }}
-                                                                    className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all flex items-center gap-1 ${isDarkMode
-                                                                        ? 'border-gray-700 text-blue-400 hover:bg-gray-700'
-                                                                        : 'border-gray-200 text-blue-600 hover:bg-blue-50'
-                                                                        }`}
-                                                                >
-                                                                    <FaExpand size={10} /> Read Details
-                                                                </button>
-                                                            </div>
-                                                            {r.rating === 'down' && r.feedback && (
+                                                            {r === 'down' && meta.feedback && (
                                                                 <div className="mt-3 text-sm flex gap-2">
                                                                     <span className="font-semibold text-red-400 whitespace-nowrap">Feedback:</span>
-                                                                    <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>{r.feedback}</span>
+                                                                    <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>{meta.feedback}</span>
                                                                 </div>
                                                             )}
                                                         </div>
-                                                    ))}
-                                                </div>
-                                            );
-                                        })()
-                                    )
-                                ) : (
-                                    Object.keys(messageRatings || {}).length === 0 ? (
-                                        <div className="text-center py-12 text-gray-500">
-                                            <FaRegSmile size={32} className="mx-auto mb-3 opacity-20" />
-                                            <p>No ratings yet in this session.</p>
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-4">
-                                            {messages.map((msg, idx) => {
-                                                const key = `${idx}_${msg.timestamp}`;
-                                                const r = messageRatings[key];
-                                                if (!r) return null;
-                                                if (ratingsFilter !== 'all' && r !== ratingsFilter) return null;
-
-                                                const meta = ratingMeta[key] || {};
-                                                return (
-                                                    <div key={key} className={`p-4 rounded-xl border transition-all hover:shadow-md ${isDarkMode ? 'bg-gray-800/50 border-gray-700 hover:border-gray-600' : 'bg-white border-gray-200 hover:border-blue-200'}`}>
-                                                        <div className="flex items-start justify-between gap-4">
-                                                            <div className="flex items-center gap-3">
-                                                                <div className={`p-2 rounded-lg ${r === 'up' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
-                                                                    {r === 'up' ? <FaThumbsUp size={16} /> : <FaThumbsDown size={16} />}
-                                                                </div>
-                                                                <div>
-                                                                    <div className={`font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>{meta.user || 'You'}</div>
-                                                                    <div className="text-xs text-gray-400">{meta.time ? new Date(meta.time).toLocaleString() : ''}</div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div className={`mt-3 p-3 rounded-lg text-sm transition-all duration-300 group hover:max-h-[500px] hover:overflow-y-auto ${isDarkMode ? 'bg-gray-900/50 text-gray-300' : 'bg-gray-50 text-gray-600'}`}>
-                                                            <div className="line-clamp-3 group-hover:line-clamp-none">
-                                                                "{meta.messagePreview || msg.content || ''}"
-                                                            </div>
-                                                        </div>
-                                                        {r === 'down' && meta.feedback && (
-                                                            <div className="mt-3 text-sm flex gap-2">
-                                                                <span className="font-semibold text-red-400 whitespace-nowrap">Feedback:</span>
-                                                                <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>{meta.feedback}</span>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    )
-                                )}
-                            </div>
-                            {/* Footer Action */}
-                            <div className={`sticky bottom-0 z-10 p-4 border-t flex justify-end ${isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'} rounded-b-xl`}>
-                                <button
-                                    onClick={() => setShowRatingsModal(false)}
-                                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
-                                >
-                                    Close
-                                </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        )
+                                    )}
+                                </div>
+                                {/* Footer Action */}
+                                <div className={`sticky bottom-0 z-10 p-4 border-t flex justify-end ${isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'} rounded-b-xl`}>
+                                    <button
+                                        onClick={() => setShowRatingsModal(false)}
+                                        className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                                    >
+                                        Close
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                      </div>
                     </div>
                     , document.body)
             }
@@ -10973,117 +10973,117 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             {
                 showInfoModal && createPortal(
                     <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/50 backdrop-blur-sm" onClick={() => setShowInfoModal(false)}>
-                      <div className="flex min-h-full items-center justify-center p-4">
-                        <div
-                            onClick={e => e.stopPropagation()}
-                            className={`w-11/12 max-w-2xl rounded-xl shadow-xl relative ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
-                        >
-                            <div className={`sticky top-0 z-10 flex items-center justify-between p-6 border-b rounded-t-xl ${isDarkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-100 bg-white'}`}>
-                                <div className="flex items-center gap-4">
-                                    <div className={`p-3 rounded-2xl ${isDarkMode ? 'bg-indigo-500/10' : 'bg-indigo-50'}`}>
-                                        <FaRobot size={24} className="text-indigo-500" />
-                                    </div>
-                                    <div>
-                                        <h2 className="text-2xl font-bold bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent">SetuAI</h2>
-                                        <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Advanced Real Estate Assistant</p>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={() => setShowInfoModal(false)}
-                                    className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-gray-800 text-gray-400 hover:text-white' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-800'}`}
-                                >
-                                    <FaTimes size={20} />
-                                </button>
-                            </div>
-
-                            <div className="p-6 space-y-8">
-                                {/* Core Technology */}
-                                <section>
-                                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                                        <FaCog className="text-indigo-500" />
-                                        Powered By
-                                    </h3>
-                                    <div className={`p-6 rounded-2xl ${isDarkMode ? 'bg-gray-800/50' : 'bg-gray-50'}`}>
-                                        <div className="grid md:grid-cols-3 gap-6">
-                                            <div className="space-y-2">
-                                                <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">Inference</div>
-                                                <div className="text-xl font-bold font-mono text-orange-500">Groq LPU™</div>
-                                                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                                                    Ultra-low latency for instant chat responses.
-                                                </p>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">Intelligence</div>
-                                                <div className="text-xl font-bold font-mono text-blue-500">Sentinel v2.0</div>
-                                                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                                                    Neural engine & ESG scoring models.
-                                                </p>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">Real-time</div>
-                                                <div className="text-xl font-bold font-mono text-green-500">TensorFlow.js</div>
-                                                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                                                    On-device recommendations & image auditing.
-                                                </p>
-                                            </div>
+                        <div className="flex min-h-full items-center justify-center p-4">
+                            <div
+                                onClick={e => e.stopPropagation()}
+                                className={`w-11/12 max-w-2xl rounded-xl shadow-xl relative ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
+                            >
+                                <div className={`sticky top-0 z-10 flex items-center justify-between p-6 border-b rounded-t-xl ${isDarkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-100 bg-white'}`}>
+                                    <div className="flex items-center gap-4">
+                                        <div className={`p-3 rounded-2xl ${isDarkMode ? 'bg-indigo-500/10' : 'bg-indigo-50'}`}>
+                                            <FaRobot size={24} className="text-indigo-500" />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-2xl font-bold bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent">SetuAI</h2>
+                                            <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Advanced Real Estate Assistant</p>
                                         </div>
                                     </div>
-                                </section>
+                                    <button
+                                        onClick={() => setShowInfoModal(false)}
+                                        className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-gray-800 text-gray-400 hover:text-white' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-800'}`}
+                                    >
+                                        <FaTimes size={20} />
+                                    </button>
+                                </div>
 
-                                {/* Features */}
-                                <section>
-                                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                                        <FaMagic className="text-purple-500" />
-                                        Capabilities
-                                    </h3>
-                                    <div className="grid md:grid-cols-2 gap-4">
-                                        {[
-                                            { title: 'Real Estate Expertise', desc: 'Deep knowledge of property trends, pricing, and legal processes.', icon: '🏢' },
-                                            { title: 'Live Property Search', desc: 'Can search and recommend local listings from UrbanSetu database.', icon: '🔍' },
-                                            { title: 'Smart Context', desc: 'Remembers conversation history and user preferences.', icon: '🧠' },
-                                            { title: 'Multi-Modal', desc: 'Supports text, voice input, and image analysis.', icon: '🎤' },
-                                            { title: 'Code & Math', desc: 'Capable of calculating mortgage EMIs and formatting code.', icon: '🔢' },
-                                            { title: 'Instant Translation', desc: 'Communicates fluently in multiple languages.', icon: '🌐' }
-                                        ].map((feat, i) => (
-                                            <div key={i} className={`p-4 rounded-xl border ${isDarkMode ? 'border-gray-700 hover:bg-gray-800' : 'border-gray-100 hover:bg-gray-50'} transition-colors`}>
-                                                <div className="text-2xl mb-2">{feat.icon}</div>
-                                                <h4 className="font-semibold mb-1">{feat.title}</h4>
-                                                <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>{feat.desc}</p>
+                                <div className="p-6 space-y-8">
+                                    {/* Core Technology */}
+                                    <section>
+                                        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                                            <FaCog className="text-indigo-500" />
+                                            Powered By
+                                        </h3>
+                                        <div className={`p-6 rounded-2xl ${isDarkMode ? 'bg-gray-800/50' : 'bg-gray-50'}`}>
+                                            <div className="grid md:grid-cols-3 gap-6">
+                                                <div className="space-y-2">
+                                                    <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">Inference</div>
+                                                    <div className="text-xl font-bold font-mono text-orange-500">Groq LPU™</div>
+                                                    <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                                        Ultra-low latency for instant chat responses.
+                                                    </p>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">Intelligence</div>
+                                                    <div className="text-xl font-bold font-mono text-blue-500">Sentinel v2.0</div>
+                                                    <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                                        Neural engine & ESG scoring models.
+                                                    </p>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">Real-time</div>
+                                                    <div className="text-xl font-bold font-mono text-green-500">TensorFlow.js</div>
+                                                    <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                                        On-device recommendations & image auditing.
+                                                    </p>
+                                                </div>
                                             </div>
-                                        ))}
+                                        </div>
+                                    </section>
+
+                                    {/* Features */}
+                                    <section>
+                                        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                                            <FaMagic className="text-purple-500" />
+                                            Capabilities
+                                        </h3>
+                                        <div className="grid md:grid-cols-2 gap-4">
+                                            {[
+                                                { title: 'Real Estate Expertise', desc: 'Deep knowledge of property trends, pricing, and legal processes.', icon: '🏢' },
+                                                { title: 'Live Property Search', desc: 'Can search and recommend local listings from UrbanSetu database.', icon: '🔍' },
+                                                { title: 'Smart Context', desc: 'Remembers conversation history and user preferences.', icon: '🧠' },
+                                                { title: 'Multi-Modal', desc: 'Supports text, voice input, and image analysis.', icon: '🎤' },
+                                                { title: 'Code & Math', desc: 'Capable of calculating mortgage EMIs and formatting code.', icon: '🔢' },
+                                                { title: 'Instant Translation', desc: 'Communicates fluently in multiple languages.', icon: '🌐' }
+                                            ].map((feat, i) => (
+                                                <div key={i} className={`p-4 rounded-xl border ${isDarkMode ? 'border-gray-700 hover:bg-gray-800' : 'border-gray-100 hover:bg-gray-50'} transition-colors`}>
+                                                    <div className="text-2xl mb-2">{feat.icon}</div>
+                                                    <h4 className="font-semibold mb-1">{feat.title}</h4>
+                                                    <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>{feat.desc}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </section>
+
+                                    {/* Security */}
+                                    <section>
+                                        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                                            <FaCheckCircle className="text-green-500" />
+                                            Security & Privacy
+                                        </h3>
+                                        <ul className={`space-y-3 p-5 rounded-2xl ${isDarkMode ? 'bg-gray-800/30' : 'bg-gray-50'}`}>
+                                            {[
+                                                'End-to-End Encryption for all data in transit',
+                                                'No personal data training - your chats are private',
+                                                'Auto-deletion options for chat history',
+                                                'Enterprise-grade rate limiting and abuse protection'
+                                            ].map((item, i) => (
+                                                <li key={i} className="flex items-start gap-3 text-sm">
+                                                    <FaCheck className="text-green-500 mt-1 flex-shrink-0" size={12} />
+                                                    <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>{item}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </section>
+
+                                    {/* Footer Info */}
+                                    <div className={`text-center pt-6 pb-2 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+                                        <p className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                                            SetuAI v2.5.0 • Build 2024.12 • Powered by Sentinel UrbanSetu Tech Labs
+                                        </p>
                                     </div>
-                                </section>
-
-                                {/* Security */}
-                                <section>
-                                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                                        <FaCheckCircle className="text-green-500" />
-                                        Security & Privacy
-                                    </h3>
-                                    <ul className={`space-y-3 p-5 rounded-2xl ${isDarkMode ? 'bg-gray-800/30' : 'bg-gray-50'}`}>
-                                        {[
-                                            'End-to-End Encryption for all data in transit',
-                                            'No personal data training - your chats are private',
-                                            'Auto-deletion options for chat history',
-                                            'Enterprise-grade rate limiting and abuse protection'
-                                        ].map((item, i) => (
-                                            <li key={i} className="flex items-start gap-3 text-sm">
-                                                <FaCheck className="text-green-500 mt-1 flex-shrink-0" size={12} />
-                                                <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>{item}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </section>
-
-                                {/* Footer Info */}
-                                <div className={`text-center pt-6 pb-2 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
-                                    <p className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-                                        SetuAI v2.5.0 • Build 2024.12 • Powered by Sentinel UrbanSetu Tech Labs
-                                    </p>
                                 </div>
                             </div>
                         </div>
-                      </div>
                     </div>
                     , document.body)
             }
@@ -11091,102 +11091,102 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             {
                 showTermsModal && createPortal(
                     <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/50 backdrop-blur-sm" onClick={() => setShowTermsModal(false)}>
-                      <div className="flex min-h-full items-center justify-center p-4">
-                        <div
-                            onClick={e => e.stopPropagation()}
-                            className={`w-11/12 max-w-2xl rounded-xl shadow-xl relative ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
-                        >
-                            {/* Header */}
-                            <div className={`sticky top-0 z-10 flex items-center justify-between p-6 border-b rounded-t-xl ${isDarkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-100 bg-white'}`}>
-                                <div className="flex items-center gap-3">
-                                    <FaFileAlt className="text-blue-500 text-xl" />
-                                    <h2 className="text-xl font-bold">Terms of Service</h2>
+                        <div className="flex min-h-full items-center justify-center p-4">
+                            <div
+                                onClick={e => e.stopPropagation()}
+                                className={`w-11/12 max-w-2xl rounded-xl shadow-xl relative ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
+                            >
+                                {/* Header */}
+                                <div className={`sticky top-0 z-10 flex items-center justify-between p-6 border-b rounded-t-xl ${isDarkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-100 bg-white'}`}>
+                                    <div className="flex items-center gap-3">
+                                        <FaFileAlt className="text-blue-500 text-xl" />
+                                        <h2 className="text-xl font-bold">Terms of Service</h2>
+                                    </div>
+                                    <button
+                                        onClick={() => setShowTermsModal(false)}
+                                        className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
+                                    >
+                                        <FaTimes size={20} />
+                                    </button>
                                 </div>
-                                <button
-                                    onClick={() => setShowTermsModal(false)}
-                                    className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
-                                >
-                                    <FaTimes size={20} />
-                                </button>
-                            </div>
 
-                            {/* Scrollable Content */}
-                            <div className="p-6 space-y-6">
-                                <div className="text-sm leading-relaxed space-y-6">
-                                    <section>
-                                        <h3 className="font-bold text-lg mb-2 text-blue-500">1. Introduction</h3>
-                                        <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>
-                                            Welcome to SetuAI. By accessing or using this AI chatbot service, you agree to be bound by these Terms and Conditions.
-                                            This service utilizes advanced artificial intelligence technology powered by Groq and Meta Llama 3 models.
-                                        </p>
-                                    </section>
-
-                                    <section>
-                                        <h3 className="font-bold text-lg mb-2 text-blue-500">2. Usage Guidelines</h3>
-                                        <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>
-                                            You agree to use SetuAI only for lawful purposes. You must not:
-                                        </p>
-                                        <ul className={`list-disc pl-5 mt-2 space-y-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                                            <li>Generate harmful, abusive, or illegal content.</li>
-                                            <li>Attempt to bypass security filters or jailbreak the AI.</li>
-                                            <li>Upload malicious files or code.</li>
-                                            <li>Use the service to harass others or violate privacy rights.</li>
-                                        </ul>
-                                    </section>
-
-                                    <section>
-                                        <h3 className="font-bold text-lg mb-2 text-blue-500">3. AI Limitations & Disclaimers</h3>
-                                        <div className={`p-4 rounded-xl border ${isDarkMode ? 'bg-amber-900/20 border-amber-700/50' : 'bg-amber-50 border-amber-200'}`}>
-                                            <p className={`font-semibold mb-1 ${isDarkMode ? 'text-amber-400' : 'text-amber-800'}`}>Important Notice:</p>
-                                            <p className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>
-                                                SetuAI is an artificial intelligence. While we strive for accuracy, the AI may occasionally generate incorrect or misleading information ("hallucinations").
-                                                Always verify critical real estate, financial, or legal information with qualified human professionals.
+                                {/* Scrollable Content */}
+                                <div className="p-6 space-y-6">
+                                    <div className="text-sm leading-relaxed space-y-6">
+                                        <section>
+                                            <h3 className="font-bold text-lg mb-2 text-blue-500">1. Introduction</h3>
+                                            <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>
+                                                Welcome to SetuAI. By accessing or using this AI chatbot service, you agree to be bound by these Terms and Conditions.
+                                                This service utilizes advanced artificial intelligence technology powered by Groq and Meta Llama 3 models.
                                             </p>
-                                        </div>
-                                    </section>
+                                        </section>
 
-                                    <section>
-                                        <h3 className="font-bold text-lg mb-2 text-blue-500">4. Data Privacy</h3>
-                                        <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>
-                                            We value your privacy. Your conversation history is stored securely and encrypted in transit.
-                                            We do not use your personal chat data to train our public models. However, for quality assurance, anonymized interactions may be reviewed.
-                                        </p>
-                                    </section>
-
-                                    <section>
-                                        <h3 className="font-bold text-lg mb-2 text-blue-500">5. Safety Policy & Cooldown</h3>
-                                        <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>
-                                            To ensure a safe environment for all users, we strictly enforce our safety policies.
-                                            Repeated violations (3 or more) of our content guidelines will result in an automatic temporary block.
-                                        </p>
-                                        <div className={`mt-3 p-3 rounded-lg border ${isDarkMode ? 'bg-red-900/10 border-red-900/30 text-red-400' : 'bg-red-50 border-red-100 text-red-700'}`}>
-                                            <p className="font-bold mb-1">Cooldown Rules:</p>
-                                            <ul className="list-disc pl-5 text-sm space-y-1">
-                                                <li>Violation limit: 3 incidents.</li>
-                                                <li>Suspension duration: 24 hours per block.</li>
-                                                <li>During suspension: Chat input, editing, retry options, and smart suggestions will be completely disabled.</li>
-                                                <li>Status is tracked per user (or per device for public visitors).</li>
+                                        <section>
+                                            <h3 className="font-bold text-lg mb-2 text-blue-500">2. Usage Guidelines</h3>
+                                            <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>
+                                                You agree to use SetuAI only for lawful purposes. You must not:
+                                            </p>
+                                            <ul className={`list-disc pl-5 mt-2 space-y-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                                                <li>Generate harmful, abusive, or illegal content.</li>
+                                                <li>Attempt to bypass security filters or jailbreak the AI.</li>
+                                                <li>Upload malicious files or code.</li>
+                                                <li>Use the service to harass others or violate privacy rights.</li>
                                             </ul>
-                                        </div>
-                                    </section>
+                                        </section>
 
-                                    <section>
-                                        <h3 className="font-bold text-lg mb-2 text-blue-500">6. Changes to Terms</h3>
-                                        <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>
-                                            We reserve the right to modify these terms at any time. Continued use of the service constitutes acceptance of updated terms.
+                                        <section>
+                                            <h3 className="font-bold text-lg mb-2 text-blue-500">3. AI Limitations & Disclaimers</h3>
+                                            <div className={`p-4 rounded-xl border ${isDarkMode ? 'bg-amber-900/20 border-amber-700/50' : 'bg-amber-50 border-amber-200'}`}>
+                                                <p className={`font-semibold mb-1 ${isDarkMode ? 'text-amber-400' : 'text-amber-800'}`}>Important Notice:</p>
+                                                <p className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>
+                                                    SetuAI is an artificial intelligence. While we strive for accuracy, the AI may occasionally generate incorrect or misleading information ("hallucinations").
+                                                    Always verify critical real estate, financial, or legal information with qualified human professionals.
+                                                </p>
+                                            </div>
+                                        </section>
+
+                                        <section>
+                                            <h3 className="font-bold text-lg mb-2 text-blue-500">4. Data Privacy</h3>
+                                            <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>
+                                                We value your privacy. Your conversation history is stored securely and encrypted in transit.
+                                                We do not use your personal chat data to train our public models. However, for quality assurance, anonymized interactions may be reviewed.
+                                            </p>
+                                        </section>
+
+                                        <section>
+                                            <h3 className="font-bold text-lg mb-2 text-blue-500">5. Safety Policy & Cooldown</h3>
+                                            <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>
+                                                To ensure a safe environment for all users, we strictly enforce our safety policies.
+                                                Repeated violations (3 or more) of our content guidelines will result in an automatic temporary block.
+                                            </p>
+                                            <div className={`mt-3 p-3 rounded-lg border ${isDarkMode ? 'bg-red-900/10 border-red-900/30 text-red-400' : 'bg-red-50 border-red-100 text-red-700'}`}>
+                                                <p className="font-bold mb-1">Cooldown Rules:</p>
+                                                <ul className="list-disc pl-5 text-sm space-y-1">
+                                                    <li>Violation limit: 3 incidents.</li>
+                                                    <li>Suspension duration: 24 hours per block.</li>
+                                                    <li>During suspension: Chat input, editing, retry options, and smart suggestions will be completely disabled.</li>
+                                                    <li>Status is tracked per user (or per device for public visitors).</li>
+                                                </ul>
+                                            </div>
+                                        </section>
+
+                                        <section>
+                                            <h3 className="font-bold text-lg mb-2 text-blue-500">6. Changes to Terms</h3>
+                                            <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>
+                                                We reserve the right to modify these terms at any time. Continued use of the service constitutes acceptance of updated terms.
+                                            </p>
+                                        </section>
+                                    </div>
+
+                                    {/* Footer Action (If viewing from consent modal, this effectively returns to it) */}
+                                    <div className={`p-4 border-t flex justify-center items-center ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+                                        <p className={`text-xs sm:text-sm text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                            For comprehensive platform policies, please read our full <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600 hover:underline font-medium transition-colors">Terms & Conditions</a>.
                                         </p>
-                                    </section>
-                                </div>
-
-                                {/* Footer Action (If viewing from consent modal, this effectively returns to it) */}
-                                <div className={`p-4 border-t flex justify-center items-center ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
-                                    <p className={`text-xs sm:text-sm text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                        For comprehensive platform policies, please read our full <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600 hover:underline font-medium transition-colors">Terms & Conditions</a>.
-                                    </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                      </div>
                     </div>
                     , document.body)
             }
@@ -11242,139 +11242,139 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             {
                 showReportModal && createPortal(
                     <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/50 backdrop-blur-sm" onClick={() => setShowReportModal(false)}>
-                      <div className="flex min-h-full items-center justify-center p-4">
-                        <div
-                            onClick={e => e.stopPropagation()}
-                            className={`w-full max-w-lg rounded-2xl shadow-2xl ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
-                        >
-                            {/* Header */}
-                            <div className={`sticky top-0 z-10 flex items-center justify-between p-6 border-b rounded-t-2xl ${isDarkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-100 bg-white'}`}>
-                                <h2 className="text-xl font-bold flex items-center gap-2">
-                                    <FaFlag className="text-red-500" />
-                                    Report Message
-                                </h2>
-                                <button
-                                    onClick={() => setShowReportModal(false)}
-                                    className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-gray-800 text-gray-400 hover:text-white' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-800'}`}
-                                >
-                                    <FaTimes size={20} />
-                                </button>
-                            </div>
+                        <div className="flex min-h-full items-center justify-center p-4">
+                            <div
+                                onClick={e => e.stopPropagation()}
+                                className={`w-full max-w-lg rounded-2xl shadow-2xl ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
+                            >
+                                {/* Header */}
+                                <div className={`sticky top-0 z-10 flex items-center justify-between p-6 border-b rounded-t-2xl ${isDarkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-100 bg-white'}`}>
+                                    <h2 className="text-xl font-bold flex items-center gap-2">
+                                        <FaFlag className="text-red-500" />
+                                        Report Message
+                                    </h2>
+                                    <button
+                                        onClick={() => setShowReportModal(false)}
+                                        className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-gray-800 text-gray-400 hover:text-white' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-800'}`}
+                                    >
+                                        <FaTimes size={20} />
+                                    </button>
+                                </div>
 
-                            {/* Content */}
-                            <div className="p-6">
-                                {reportStep === 1 && (
-                                    <div className="space-y-4">
-                                        <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Please select a problem to continue.</p>
-                                        <div className="space-y-2">
-                                            {Object.keys(REPORT_OPTIONS).map((category) => (
-                                                <button
-                                                    key={category}
-                                                    onClick={() => { setSelectedCategory(category); setReportStep(2); }}
-                                                    className={`w-full text-left p-3 rounded-xl border transition-all duration-200 flex items-center justify-between group ${isDarkMode
-                                                        ? 'border-gray-700 hover:bg-gray-800 hover:border-gray-600'
-                                                        : 'border-gray-200 hover:bg-gray-50 hover:border-gray-300'}`}
-                                                >
-                                                    <span className="font-medium">{category}</span>
-                                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`text-gray-400 group-hover:translate-x-1 transition-transform`}>
-                                                        <path d="M9 18l6-6-6-6" />
-                                                    </svg>
-                                                </button>
-                                            ))}
+                                {/* Content */}
+                                <div className="p-6">
+                                    {reportStep === 1 && (
+                                        <div className="space-y-4">
+                                            <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Please select a problem to continue.</p>
+                                            <div className="space-y-2">
+                                                {Object.keys(REPORT_OPTIONS).map((category) => (
+                                                    <button
+                                                        key={category}
+                                                        onClick={() => { setSelectedCategory(category); setReportStep(2); }}
+                                                        className={`w-full text-left p-3 rounded-xl border transition-all duration-200 flex items-center justify-between group ${isDarkMode
+                                                            ? 'border-gray-700 hover:bg-gray-800 hover:border-gray-600'
+                                                            : 'border-gray-200 hover:bg-gray-50 hover:border-gray-300'}`}
+                                                    >
+                                                        <span className="font-medium">{category}</span>
+                                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`text-gray-400 group-hover:translate-x-1 transition-transform`}>
+                                                            <path d="M9 18l6-6-6-6" />
+                                                        </svg>
+                                                    </button>
+                                                ))}
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
+                                    )}
 
-                                {reportStep === 2 && (
-                                    <div className="space-y-4 animate-fadeIn">
-                                        <button
-                                            onClick={() => setReportStep(1)}
-                                            className="text-sm text-blue-500 hover:underline flex items-center gap-1 mb-2"
-                                        >
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
-                                            Back to categories
-                                        </button>
-                                        <h3 className="font-semibold text-lg">{selectedCategory}</h3>
-                                        <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Select a specific issue.</p>
-                                        <div className="space-y-2">
-                                            {REPORT_OPTIONS[selectedCategory].map((subCat) => (
-                                                <button
-                                                    key={subCat}
-                                                    onClick={() => { setSelectedSubCategory(subCat); setReportStep(3); }}
-                                                    className={`w-full text-left p-3 rounded-xl border transition-all duration-200 flex items-center justify-between group ${isDarkMode
-                                                        ? 'border-gray-700 hover:bg-gray-800 hover:border-gray-600'
-                                                        : 'border-gray-200 hover:bg-gray-50 hover:border-gray-300'}`}
-                                                >
-                                                    <span className="font-medium">{subCat}</span>
-                                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`text-gray-400 group-hover:translate-x-1 transition-transform`}>
-                                                        <path d="M9 18l6-6-6-6" />
-                                                    </svg>
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {reportStep === 3 && (
-                                    <div className="space-y-4 animate-fadeIn">
-                                        <button
-                                            onClick={() => setReportStep(2)}
-                                            className="text-sm text-blue-500 hover:underline flex items-center gap-1 mb-2"
-                                        >
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
-                                            Back to options
-                                        </button>
-                                        <div>
-                                            <h3 className="font-semibold text-lg mb-1">{selectedSubCategory}</h3>
-                                            <span className="text-xs text-gray-500 uppercase tracking-wider">{selectedCategory}</span>
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <label className="block text-sm font-medium">Please tell us more (Optional)</label>
-                                            <textarea
-                                                value={reportDescription}
-                                                onChange={(e) => setReportDescription(e.target.value)}
-                                                className={`w-full p-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all ${isDarkMode
-                                                    ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-500'
-                                                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'}`}
-                                                rows={4}
-                                                placeholder="Provide additional details about this issue..."
-                                            />
-                                        </div>
-
-                                        <div className="flex justify-end pt-2">
+                                    {reportStep === 2 && (
+                                        <div className="space-y-4 animate-fadeIn">
                                             <button
-                                                onClick={handleReportSubmit}
-                                                disabled={isReporting}
-                                                className={`px-6 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white font-medium transition-all shadow-lg hover:shadow-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2`}
+                                                onClick={() => setReportStep(1)}
+                                                className="text-sm text-blue-500 hover:underline flex items-center gap-1 mb-2"
                                             >
-                                                {isReporting ? (
-                                                    <>
-                                                        <UrbanSetuSpinner size="sm" isBright={true} />
-                                                        Submitting...
-                                                    </>
-                                                ) : (
-                                                    'Submit Report'
-                                                )}
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
+                                                Back to categories
                                             </button>
+                                            <h3 className="font-semibold text-lg">{selectedCategory}</h3>
+                                            <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Select a specific issue.</p>
+                                            <div className="space-y-2">
+                                                {REPORT_OPTIONS[selectedCategory].map((subCat) => (
+                                                    <button
+                                                        key={subCat}
+                                                        onClick={() => { setSelectedSubCategory(subCat); setReportStep(3); }}
+                                                        className={`w-full text-left p-3 rounded-xl border transition-all duration-200 flex items-center justify-between group ${isDarkMode
+                                                            ? 'border-gray-700 hover:bg-gray-800 hover:border-gray-600'
+                                                            : 'border-gray-200 hover:bg-gray-50 hover:border-gray-300'}`}
+                                                    >
+                                                        <span className="font-medium">{subCat}</span>
+                                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`text-gray-400 group-hover:translate-x-1 transition-transform`}>
+                                                            <path d="M9 18l6-6-6-6" />
+                                                        </svg>
+                                                    </button>
+                                                ))}
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
+                                    )}
 
-                                {reportStep === 4 && (
-                                    <div className="flex flex-col items-center justify-center space-y-4 py-8 animate-fadeIn">
-                                        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-2">
-                                            <FaCheckCircle className="text-green-600 text-3xl" />
+                                    {reportStep === 3 && (
+                                        <div className="space-y-4 animate-fadeIn">
+                                            <button
+                                                onClick={() => setReportStep(2)}
+                                                className="text-sm text-blue-500 hover:underline flex items-center gap-1 mb-2"
+                                            >
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
+                                                Back to options
+                                            </button>
+                                            <div>
+                                                <h3 className="font-semibold text-lg mb-1">{selectedSubCategory}</h3>
+                                                <span className="text-xs text-gray-500 uppercase tracking-wider">{selectedCategory}</span>
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <label className="block text-sm font-medium">Please tell us more (Optional)</label>
+                                                <textarea
+                                                    value={reportDescription}
+                                                    onChange={(e) => setReportDescription(e.target.value)}
+                                                    className={`w-full p-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all ${isDarkMode
+                                                        ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-500'
+                                                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'}`}
+                                                    rows={4}
+                                                    placeholder="Provide additional details about this issue..."
+                                                />
+                                            </div>
+
+                                            <div className="flex justify-end pt-2">
+                                                <button
+                                                    onClick={handleReportSubmit}
+                                                    disabled={isReporting}
+                                                    className={`px-6 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white font-medium transition-all shadow-lg hover:shadow-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2`}
+                                                >
+                                                    {isReporting ? (
+                                                        <>
+                                                            <UrbanSetuSpinner size="sm" isBright={true} />
+                                                            Submitting...
+                                                        </>
+                                                    ) : (
+                                                        'Submit Report'
+                                                    )}
+                                                </button>
+                                            </div>
                                         </div>
-                                        <h3 className="font-bold text-2xl text-center">Thank You!</h3>
-                                        <p className={`text-center text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                                            Your report has been successfully submitted. Our team will review this shortly to ensure a safe environment.
-                                        </p>
-                                    </div>
-                                )}
+                                    )}
+
+                                    {reportStep === 4 && (
+                                        <div className="flex flex-col items-center justify-center space-y-4 py-8 animate-fadeIn">
+                                            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-2">
+                                                <FaCheckCircle className="text-green-600 text-3xl" />
+                                            </div>
+                                            <h3 className="font-bold text-2xl text-center">Thank You!</h3>
+                                            <p className={`text-center text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                                Your report has been successfully submitted. Our team will review this shortly to ensure a safe environment.
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
-                      </div>
                     </div>
                     , document.body)
             }
@@ -11383,170 +11383,170 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             {
                 showAdminReportsModal && createPortal(
                     <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/50 backdrop-blur-sm" onClick={() => setShowAdminReportsModal(false)}>
-                      <div className="flex min-h-full items-center justify-center p-4">
-                        <div
-                            onClick={e => e.stopPropagation()}
-                            className={`w-full max-w-5xl rounded-2xl shadow-2xl ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
-                        >
-                            {/* Header */}
-                            <div className={`sticky top-0 z-10 flex items-center justify-between p-6 border-b rounded-t-2xl ${isDarkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-100 bg-white'}`}>
-                                <div className="flex items-center gap-3">
-                                    <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-red-500/20' : 'bg-red-100'}`}>
-                                        <FaClipboardList className="text-red-500 text-xl" />
-                                    </div>
-                                    <div>
-                                        <h2 className="text-xl font-bold">Message Reports</h2>
-                                        <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Manage and resolve reported content</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={fetchAdminReports}
-                                        title="Refresh Reports"
-                                        disabled={adminReportsLoading}
-                                        className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-gray-800 text-gray-400 hover:text-white' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-800'} flex items-center justify-center`}
-                                    >
-                                        {adminReportsLoading ? <UrbanSetuSpinner size="sm" /> : <FaSync size={16} />}
-                                    </button>
-                                    <button
-                                        onClick={() => setShowAdminReportsModal(false)}
-                                        className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-gray-800 text-gray-400 hover:text-white' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-800'}`}
-                                    >
-                                        <FaTimes size={20} />
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Filters */}
-                            <div className={`sticky top-[73px] z-[9] p-4 border-b ${isDarkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-100 bg-white'} flex gap-2 overflow-x-auto`}>
-                                {['pending', 'resolved', 'dismissed', 'all'].map(status => (
-                                    <button
-                                        key={status}
-                                        onClick={() => setAdminReportsFilter(status)}
-                                        className={`px-4 py-2 rounded-full text-sm font-medium capitalize transition-all ${adminReportsFilter === status
-                                            ? 'bg-red-500 text-white shadow-lg shadow-red-500/20'
-                                            : `${isDarkMode ? 'bg-gray-800 text-gray-300 hover:bg-gray-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`
-                                            }`}
-                                    >
-                                        {status}
-                                    </button>
-                                ))}
-                            </div>
-
-                            {/* Content */}
-                            <div className="p-6">
-                                {adminReportsLoading ? (
-                                    <div className="flex justify-center items-center h-full">
-                                        <UrbanSetuSpinner size="xl" />
-                                    </div>
-                                ) : adminReports.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center h-full text-center p-8">
-                                        <div className={`p-6 rounded-full mb-4 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
-                                            <FaCheckCircle className="text-green-500 text-4xl" />
+                        <div className="flex min-h-full items-center justify-center p-4">
+                            <div
+                                onClick={e => e.stopPropagation()}
+                                className={`w-full max-w-5xl rounded-2xl shadow-2xl ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
+                            >
+                                {/* Header */}
+                                <div className={`sticky top-0 z-10 flex items-center justify-between p-6 border-b rounded-t-2xl ${isDarkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-100 bg-white'}`}>
+                                    <div className="flex items-center gap-3">
+                                        <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-red-500/20' : 'bg-red-100'}`}>
+                                            <FaClipboardList className="text-red-500 text-xl" />
                                         </div>
-                                        <h3 className="text-xl font-semibold mb-2">No Reports Found</h3>
-                                        <p className={isDarkMode ? 'text-gray-400' : 'text-gray-500'}>
-                                            There are no {adminReportsFilter !== 'all' ? adminReportsFilter : ''} reports to review at this time.
-                                        </p>
+                                        <div>
+                                            <h2 className="text-xl font-bold">Message Reports</h2>
+                                            <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Manage and resolve reported content</p>
+                                        </div>
                                     </div>
-                                ) : (
-                                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
-                                        {adminReports.map(report => (
-                                            <div key={report._id} className={`rounded-xl p-5 border transition-all hover:shadow-lg ${isDarkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-white border-gray-200 shadow-sm'}`}>
-                                                <div className="flex justify-between items-start mb-3">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${report.status === 'pending' ? 'bg-yellow-100 text-yellow-700 border border-yellow-200' :
-                                                            report.status === 'resolved' ? 'bg-green-100 text-green-700 border border-green-200' :
-                                                                'bg-gray-100 text-gray-700 border border-gray-200'
-                                                            }`}>
-                                                            {report.status}
-                                                        </span>
-                                                        <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                                            {new Date(report.createdAt).toLocaleDateString()}
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={fetchAdminReports}
+                                            title="Refresh Reports"
+                                            disabled={adminReportsLoading}
+                                            className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-gray-800 text-gray-400 hover:text-white' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-800'} flex items-center justify-center`}
+                                        >
+                                            {adminReportsLoading ? <UrbanSetuSpinner size="sm" /> : <FaSync size={16} />}
+                                        </button>
+                                        <button
+                                            onClick={() => setShowAdminReportsModal(false)}
+                                            className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-gray-800 text-gray-400 hover:text-white' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-800'}`}
+                                        >
+                                            <FaTimes size={20} />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Filters */}
+                                <div className={`sticky top-[73px] z-[9] p-4 border-b ${isDarkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-100 bg-white'} flex gap-2 overflow-x-auto`}>
+                                    {['pending', 'resolved', 'dismissed', 'all'].map(status => (
+                                        <button
+                                            key={status}
+                                            onClick={() => setAdminReportsFilter(status)}
+                                            className={`px-4 py-2 rounded-full text-sm font-medium capitalize transition-all ${adminReportsFilter === status
+                                                ? 'bg-red-500 text-white shadow-lg shadow-red-500/20'
+                                                : `${isDarkMode ? 'bg-gray-800 text-gray-300 hover:bg-gray-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`
+                                                }`}
+                                        >
+                                            {status}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {/* Content */}
+                                <div className="p-6">
+                                    {adminReportsLoading ? (
+                                        <div className="flex justify-center items-center h-full">
+                                            <UrbanSetuSpinner size="xl" />
+                                        </div>
+                                    ) : adminReports.length === 0 ? (
+                                        <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                                            <div className={`p-6 rounded-full mb-4 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                                                <FaCheckCircle className="text-green-500 text-4xl" />
+                                            </div>
+                                            <h3 className="text-xl font-semibold mb-2">No Reports Found</h3>
+                                            <p className={isDarkMode ? 'text-gray-400' : 'text-gray-500'}>
+                                                There are no {adminReportsFilter !== 'all' ? adminReportsFilter : ''} reports to review at this time.
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
+                                            {adminReports.map(report => (
+                                                <div key={report._id} className={`rounded-xl p-5 border transition-all hover:shadow-lg ${isDarkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-white border-gray-200 shadow-sm'}`}>
+                                                    <div className="flex justify-between items-start mb-3">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${report.status === 'pending' ? 'bg-yellow-100 text-yellow-700 border border-yellow-200' :
+                                                                report.status === 'resolved' ? 'bg-green-100 text-green-700 border border-green-200' :
+                                                                    'bg-gray-100 text-gray-700 border border-gray-200'
+                                                                }`}>
+                                                                {report.status}
+                                                            </span>
+                                                            <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                                                {new Date(report.createdAt).toLocaleDateString()}
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex gap-1">
+                                                            <button
+                                                                onClick={() => handleAdminReportDelete(report._id)}
+                                                                className={`p-1.5 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-red-900/30 text-red-400' : 'hover:bg-red-50 text-red-500'}`}
+                                                                title="Delete Report"
+                                                            >
+                                                                <FaTrash size={14} />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="mb-3">
+                                                        <h3 className="font-semibold text-base mb-1">{report.category}</h3>
+                                                        <span className={`text-xs px-2 py-0.5 rounded border inline-block ${isDarkMode ? 'bg-indigo-900/30 text-indigo-300 border-indigo-800' : 'bg-indigo-50 text-indigo-600 border-indigo-100'}`}>
+                                                            {report.subCategory}
                                                         </span>
                                                     </div>
-                                                    <div className="flex gap-1">
+
+                                                    {/* Summary Info */}
+                                                    <div className="mb-4">
+                                                        <div className={`text-sm font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                                                            {report.category} <span className="opacity-50 mx-1">•</span> <span className="text-xs font-normal opacity-80">{report.subCategory}</span>
+                                                        </div>
+                                                        <div className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                                            Reported by: <span className="font-medium">{report.reportedBy?.username || report.reportedBy?.email || 'Public Guest'}</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex items-center gap-2 mb-4">
                                                         <button
-                                                            onClick={() => handleAdminReportDelete(report._id)}
-                                                            className={`p-1.5 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-red-900/30 text-red-400' : 'hover:bg-red-50 text-red-500'}`}
-                                                            title="Delete Report"
+                                                            onClick={() => { setSelectedReportDetail(report); setShowReportDetailModal(true); }}
+                                                            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-colors border ${isDarkMode ? 'border-gray-600 hover:bg-gray-700 text-gray-300' : 'border-gray-200 hover:bg-gray-50 text-gray-600'}`}
                                                         >
-                                                            <FaTrash size={14} />
+                                                            <FaExpand size={12} /> View Full Details
+                                                        </button>
+                                                    </div>
+
+                                                    <div className="mb-4">
+                                                        <p className={`text-xs font-semibold uppercase mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Reporter's Description:</p>
+                                                        <p className={`text-sm ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>{report.description}</p>
+                                                    </div>
+
+                                                    {report.adminNotes && (
+                                                        <div className={`mb-4 p-3 rounded-lg border ${isDarkMode ? 'bg-blue-900/20 border-blue-800 text-blue-200' : 'bg-blue-50 border-blue-100 text-blue-800'}`}>
+                                                            <p className="text-xs font-bold uppercase mb-1 opacity-70">Admin Notes:</p>
+                                                            <p className="text-sm">{report.adminNotes}</p>
+                                                        </div>
+                                                    )}
+
+                                                    <div className="flex items-center justify-between pt-3 border-t border-dashed border-gray-600/30">
+                                                        <div className="flex gap-2">
+                                                            {report.status === 'pending' && (
+                                                                <>
+                                                                    <button
+                                                                        onClick={() => handleAdminReportUpdate(report._id, 'resolved')}
+                                                                        className="px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-sm rounded-lg flex items-center gap-1 transition-colors shadow-sm"
+                                                                    >
+                                                                        <FaCheck size={12} /> Resolve
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => handleAdminReportUpdate(report._id, 'dismissed')}
+                                                                        className={`px-3 py-1.5 text-sm rounded-lg flex items-center gap-1 transition-colors border ${isDarkMode ? 'bg-transparent border-gray-600 text-gray-300 hover:bg-gray-700' : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'}`}
+                                                                    >
+                                                                        <FaTimes size={12} /> Dismiss
+                                                                    </button>
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                        <button
+                                                            onClick={() => { setSelectedAdminReport(report); setAdminNoteText(report.adminNotes || ''); setShowAdminNoteModal(true); }}
+                                                            className={`px-3 py-1.5 text-sm rounded-lg flex items-center gap-1 transition-colors ${isDarkMode ? 'text-blue-400 hover:bg-blue-900/20' : 'text-blue-600 hover:bg-blue-50'}`}
+                                                        >
+                                                            <FaCommentAlt size={12} /> {report.adminNotes ? 'Edit Note' : 'Add Note'}
                                                         </button>
                                                     </div>
                                                 </div>
-
-                                                <div className="mb-3">
-                                                    <h3 className="font-semibold text-base mb-1">{report.category}</h3>
-                                                    <span className={`text-xs px-2 py-0.5 rounded border inline-block ${isDarkMode ? 'bg-indigo-900/30 text-indigo-300 border-indigo-800' : 'bg-indigo-50 text-indigo-600 border-indigo-100'}`}>
-                                                        {report.subCategory}
-                                                    </span>
-                                                </div>
-
-                                                {/* Summary Info */}
-                                                <div className="mb-4">
-                                                    <div className={`text-sm font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
-                                                        {report.category} <span className="opacity-50 mx-1">•</span> <span className="text-xs font-normal opacity-80">{report.subCategory}</span>
-                                                    </div>
-                                                    <div className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                                        Reported by: <span className="font-medium">{report.reportedBy?.username || report.reportedBy?.email || 'Public Guest'}</span>
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex items-center gap-2 mb-4">
-                                                    <button
-                                                        onClick={() => { setSelectedReportDetail(report); setShowReportDetailModal(true); }}
-                                                        className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-colors border ${isDarkMode ? 'border-gray-600 hover:bg-gray-700 text-gray-300' : 'border-gray-200 hover:bg-gray-50 text-gray-600'}`}
-                                                    >
-                                                        <FaExpand size={12} /> View Full Details
-                                                    </button>
-                                                </div>
-
-                                                <div className="mb-4">
-                                                    <p className={`text-xs font-semibold uppercase mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Reporter's Description:</p>
-                                                    <p className={`text-sm ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>{report.description}</p>
-                                                </div>
-
-                                                {report.adminNotes && (
-                                                    <div className={`mb-4 p-3 rounded-lg border ${isDarkMode ? 'bg-blue-900/20 border-blue-800 text-blue-200' : 'bg-blue-50 border-blue-100 text-blue-800'}`}>
-                                                        <p className="text-xs font-bold uppercase mb-1 opacity-70">Admin Notes:</p>
-                                                        <p className="text-sm">{report.adminNotes}</p>
-                                                    </div>
-                                                )}
-
-                                                <div className="flex items-center justify-between pt-3 border-t border-dashed border-gray-600/30">
-                                                    <div className="flex gap-2">
-                                                        {report.status === 'pending' && (
-                                                            <>
-                                                                <button
-                                                                    onClick={() => handleAdminReportUpdate(report._id, 'resolved')}
-                                                                    className="px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-sm rounded-lg flex items-center gap-1 transition-colors shadow-sm"
-                                                                >
-                                                                    <FaCheck size={12} /> Resolve
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => handleAdminReportUpdate(report._id, 'dismissed')}
-                                                                    className={`px-3 py-1.5 text-sm rounded-lg flex items-center gap-1 transition-colors border ${isDarkMode ? 'bg-transparent border-gray-600 text-gray-300 hover:bg-gray-700' : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'}`}
-                                                                >
-                                                                    <FaTimes size={12} /> Dismiss
-                                                                </button>
-                                                            </>
-                                                        )}
-                                                    </div>
-                                                    <button
-                                                        onClick={() => { setSelectedAdminReport(report); setAdminNoteText(report.adminNotes || ''); setShowAdminNoteModal(true); }}
-                                                        className={`px-3 py-1.5 text-sm rounded-lg flex items-center gap-1 transition-colors ${isDarkMode ? 'text-blue-400 hover:bg-blue-900/20' : 'text-blue-600 hover:bg-blue-50'}`}
-                                                    >
-                                                        <FaCommentAlt size={12} /> {report.adminNotes ? 'Edit Note' : 'Add Note'}
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
-                      </div>
                     </div>
                     , document.body)
             }
@@ -11590,64 +11590,64 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             {
                 showRatingDetailModal && selectedRating && createPortal(
                     <div className="fixed inset-0 z-[110] overflow-y-auto bg-black/50 backdrop-blur-sm" onClick={() => setShowRatingDetailModal(false)}>
-                      <div className="flex min-h-full items-center justify-center p-4">
-                        <div
-                            onClick={e => e.stopPropagation()}
-                            className={`w-full max-w-2xl rounded-2xl shadow-2xl ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
-                        >
-                            {/* Header */}
-                            <div className={`sticky top-0 z-10 flex items-center justify-between p-6 border-b rounded-t-2xl ${isDarkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-100 bg-white'}`}>
-                                <div className="flex items-center gap-3">
-                                    <div className={`p-2 rounded-lg ${selectedRating.rating === 'up' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
-                                        {selectedRating.rating === 'up' ? <FaThumbsUp size={20} /> : <FaThumbsDown size={20} />}
-                                    </div>
-                                    <div>
-                                        <h2 className="text-xl font-bold">Feedback Details</h2>
-                                        <div className="flex items-center gap-2 text-xs opacity-70">
-                                            <span>{selectedRating.user?.username || 'Public Guest'}</span>
-                                            <span>•</span>
-                                            <span>{new Date(selectedRating.createdAt).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                        <div className="flex min-h-full items-center justify-center p-4">
+                            <div
+                                onClick={e => e.stopPropagation()}
+                                className={`w-full max-w-2xl rounded-2xl shadow-2xl ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
+                            >
+                                {/* Header */}
+                                <div className={`sticky top-0 z-10 flex items-center justify-between p-6 border-b rounded-t-2xl ${isDarkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-100 bg-white'}`}>
+                                    <div className="flex items-center gap-3">
+                                        <div className={`p-2 rounded-lg ${selectedRating.rating === 'up' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+                                            {selectedRating.rating === 'up' ? <FaThumbsUp size={20} /> : <FaThumbsDown size={20} />}
+                                        </div>
+                                        <div>
+                                            <h2 className="text-xl font-bold">Feedback Details</h2>
+                                            <div className="flex items-center gap-2 text-xs opacity-70">
+                                                <span>{selectedRating.user?.username || 'Public Guest'}</span>
+                                                <span>•</span>
+                                                <span>{new Date(selectedRating.createdAt).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                                            </div>
                                         </div>
                                     </div>
+                                    <button
+                                        onClick={() => setShowRatingDetailModal(false)}
+                                        className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-gray-800 text-gray-400 hover:text-white' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-800'}`}
+                                    >
+                                        <FaTimes size={20} />
+                                    </button>
                                 </div>
-                                <button
-                                    onClick={() => setShowRatingDetailModal(false)}
-                                    className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-gray-800 text-gray-400 hover:text-white' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-800'}`}
-                                >
-                                    <FaTimes size={20} />
-                                </button>
-                            </div>
 
-                            {/* Content */}
-                            <div className="p-6">
-                                {/* Feedback (if exists) */}
-                                {selectedRating.feedback && (
-                                    <div className={`mb-6 p-4 rounded-xl border ${isDarkMode ? 'bg-red-900/10 border-red-900/30' : 'bg-red-50 border-red-100'}`}>
-                                        <div className="text-xs font-bold uppercase tracking-wider text-red-500 mb-2">User Feedback</div>
-                                        <p className="whitespace-pre-wrap">{selectedRating.feedback}</p>
-                                    </div>
-                                )}
-
-                                {/* User Prompt */}
-                                {selectedRating.prompt && (
-                                    <div className="mb-6">
-                                        <div className="text-xs font-bold uppercase tracking-wider opacity-60 mb-2 border-b border-dashed border-gray-500/30 pb-1 inline-block">User Prompt</div>
-                                        <div className={`p-4 rounded-xl text-sm leading-relaxed ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
-                                            <p className="whitespace-pre-wrap font-mono text-opacity-90">{selectedRating.prompt}</p>
+                                {/* Content */}
+                                <div className="p-6">
+                                    {/* Feedback (if exists) */}
+                                    {selectedRating.feedback && (
+                                        <div className={`mb-6 p-4 rounded-xl border ${isDarkMode ? 'bg-red-900/10 border-red-900/30' : 'bg-red-50 border-red-100'}`}>
+                                            <div className="text-xs font-bold uppercase tracking-wider text-red-500 mb-2">User Feedback</div>
+                                            <p className="whitespace-pre-wrap">{selectedRating.feedback}</p>
                                         </div>
-                                    </div>
-                                )}
+                                    )}
 
-                                {/* AI Response */}
-                                <div>
-                                    <div className="text-xs font-bold uppercase tracking-wider opacity-60 mb-2 border-b border-dashed border-gray-500/30 pb-1 inline-block">AI Response</div>
-                                    <div className={`p-4 rounded-xl text-sm leading-relaxed ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
-                                        <p className="whitespace-pre-wrap text-opacity-90">{selectedRating.messageContent}</p>
+                                    {/* User Prompt */}
+                                    {selectedRating.prompt && (
+                                        <div className="mb-6">
+                                            <div className="text-xs font-bold uppercase tracking-wider opacity-60 mb-2 border-b border-dashed border-gray-500/30 pb-1 inline-block">User Prompt</div>
+                                            <div className={`p-4 rounded-xl text-sm leading-relaxed ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                                                <p className="whitespace-pre-wrap font-mono text-opacity-90">{selectedRating.prompt}</p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* AI Response */}
+                                    <div>
+                                        <div className="text-xs font-bold uppercase tracking-wider opacity-60 mb-2 border-b border-dashed border-gray-500/30 pb-1 inline-block">AI Response</div>
+                                        <div className={`p-4 rounded-xl text-sm leading-relaxed ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                                            <p className="whitespace-pre-wrap text-opacity-90">{selectedRating.messageContent}</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                      </div>
                     </div>
                     , document.body)
             }
