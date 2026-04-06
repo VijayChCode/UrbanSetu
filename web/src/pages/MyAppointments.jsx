@@ -1265,13 +1265,13 @@ export default function MyAppointments() {
     };
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-100 py-10 px-2 md:px-8">
-        <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-6">
-          <div className="text-center text-red-600 text-lg mb-4">{error}</div>
+      <div className={`min-h-screen bg-gradient-to-br from-purple-50 to-blue-100 dark:from-gray-900 dark:to-slate-900 py-10 px-2 md:px-8 ${isDarkMode ? 'dark' : ''}`}>
+        <div className="max-w-4xl mx-auto bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 border border-purple-100 dark:border-slate-700">
+          <div className="text-center text-red-600 dark:text-red-400 text-lg mb-4 font-medium">{error}</div>
           <div className="text-center">
             <button
               onClick={handleRetry}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className={`px-6 py-2 ${themeColors.bg} hover:${themeColors.hover} text-white rounded-lg shadow-md transition-all duration-200 active:scale-95`}
             >
               Retry
             </button>
@@ -1282,7 +1282,7 @@ export default function MyAppointments() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-100 dark:from-gray-900 dark:to-slate-900 py-10 px-2 md:px-8">
+    <div className={`min-h-screen bg-gradient-to-br from-purple-50 to-blue-100 dark:from-gray-900 dark:to-slate-900 py-10 px-2 md:px-8 ${isDarkMode ? 'dark' : ''}`}>
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(10px); }
