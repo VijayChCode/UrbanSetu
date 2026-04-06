@@ -20,7 +20,9 @@ const SeasonalEffects = ({ className }) => {
                                 : theme.effect === 'ramnavami' ? 30
                                     : theme.effect === 'shivaratri' ? 28
                                         : theme.effect === 'hanuman' ? 25
-                                            : 20;
+                                            : (theme.effect === 'sparkle' || theme.effect === 'sun') ? 35
+                                                : (theme.effect === 'bonfire' || theme.effect === 'candle' || theme.effect === 'peacock' || theme.effect === 'rakhi') ? 22
+                                                    : 20;
 
         const kiteColors = ['#FF2D55', '#5856D6', '#FF9500', '#FFCC00', '#4CD964', '#5AC8FA', '#007AFF', '#FF3B30', '#8E44AD', '#E74C3C', '#2ECC71', '#F1C40F'];
         const holiColors = ['#FF1493', '#FF6B35', '#FFEB3B', '#4CAF50', '#2196F3', '#9C27B0', '#E91E63', '#FF5722', '#00BCD4', '#FF4081', '#7C4DFF', '#F44336'];
@@ -596,6 +598,12 @@ const SeasonalEffects = ({ className }) => {
                 else if (theme.effect === 'moon') content = '🌙';
                 else if (theme.effect === 'lantern') content = '🏮';
                 else if (theme.effect === 'mango') content = '🥭';
+                else if (theme.effect === 'sun') content = '☀️';
+                else if (theme.effect === 'bonfire') content = '🔥';
+                else if (theme.effect === 'candle') content = '🕯️';
+                else if (theme.effect === 'rakhi') content = '🧵';
+                else if (theme.effect === 'peacock') content = '🦚';
+                else if (theme.effect === 'sparkle') content = '✨';
 
                 const isKite = theme.effect === 'kite';
 
