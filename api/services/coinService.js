@@ -244,7 +244,7 @@ class CoinService {
     /**
      * Get Leaderboard
      */
-    async getLeaderboard(limit = 10) {
+    async getLeaderboard(limit = 10, isAdmin = false) {
         const users = await User.find({ 'gamification.totalCoinsEarned': { $gt: 0 } })
             .select('username firstName lastName avatar gamification.totalCoinsEarned gamification.currentStreak')
             .sort({ 'gamification.totalCoinsEarned': -1 })
@@ -256,14 +256,20 @@ class CoinService {
                 ? `${name.substring(0, 3)}***`
                 : `${name}***`;
 
-            return {
+            const entry = {
                 rank: index + 1,
-                userId: u._id, // Ideally shouldn't expose ID, but rank tracking might need it. Masking name is key.
+                userId: u._id,
                 name: maskedName,
                 avatar: u.avatar,
                 totalCoins: u.gamification?.totalCoinsEarned || 0,
                 streak: u.gamification?.currentStreak || 0
             };
+
+            if (isAdmin) {
+                entry.fullName = name; // Full unmasked name for admin lookup
+            }
+
+            return entry;
         });
     }
 

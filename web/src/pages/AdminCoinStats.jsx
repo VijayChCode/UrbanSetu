@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { FaCoins, FaFire, FaUsers, FaChartLine, FaHistory, FaArrowUp, FaArrowDown, FaSearch, FaTrophy, FaUser, FaCheck, FaExclamationTriangle, FaTimes, FaFilter, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import UrbanSetuSpinner from "../components/UrbanSetuSpinner";
@@ -197,9 +198,44 @@ export default function AdminCoinStats() {
         }
     };
 
+    const location = useLocation();
+
     useEffect(() => {
         fetchStats();
-    }, []);
+
+        // Handle auto-search from query param
+        const queryParams = new URLSearchParams(location.search);
+        const searchParam = queryParams.get('search');
+        if (searchParam) {
+            setSearchQuery(searchParam);
+            // We need to trigger the search logic
+            const triggerAutoSearch = async () => {
+                try {
+                    setSearching(true);
+                    const res = await authenticatedFetch(`${API_BASE_URL}/api/user/search?q=${encodeURIComponent(searchParam)}`);
+                    const data = await res.json();
+                    if (res.ok) {
+                        const filteredUsers = (data.users || []).filter(user => user.role !== 'admin' && user.role !== 'rootadmin');
+                        setSearchResults(filteredUsers);
+                        
+                        // If exact match found or only one user, select them
+                        if (filteredUsers.length === 1) {
+                            selectUser(filteredUsers[0]);
+                        } else if (filteredUsers.length > 1) {
+                            // Check for exact username match
+                            const exactMatch = filteredUsers.find(u => u.username.toLowerCase() === searchParam.toLowerCase());
+                            if (exactMatch) selectUser(exactMatch);
+                        }
+                    }
+                } catch (error) {
+                    console.error("Auto-search error:", error);
+                } finally {
+                    setSearching(false);
+                }
+            };
+            triggerAutoSearch();
+        }
+    }, [location.search]);
 
     useEffect(() => {
         fetchTransactions();

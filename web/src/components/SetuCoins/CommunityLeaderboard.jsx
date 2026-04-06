@@ -174,13 +174,13 @@ const CommunityLeaderboard = ({ limit = 10, showHeader = true, showYourStatus = 
                                     </div>
                                     {isAdmin && (
                                         <div className="hidden sm:block">
-                                            <a 
-                                                href={`/admin/setu-coins?search=${encodeURIComponent(user.name)}`}
+                                            <Link 
+                                                to={`/admin/setu-coins?search=${encodeURIComponent(user.fullName || user.name)}`}
                                                 className="bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-xl shadow-lg shadow-indigo-200 dark:shadow-none transition-all active:scale-95 block"
                                                 title="Manage user coins"
                                             >
                                                 <FaCoins />
-                                            </a>
+                                            </Link>
                                         </div>
                                     )}
                                 </div>

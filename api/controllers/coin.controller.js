@@ -56,7 +56,8 @@ export const getReferralStats = async (req, res, next) => {
 export const getLeaderboard = async (req, res, next) => {
     try {
         const limit = parseInt(req.query.limit) || 10;
-        const leaderboard = await CoinService.getLeaderboard(limit);
+        const isAdmin = req.user && (req.user.role === 'admin' || req.user.role === 'rootadmin');
+        const leaderboard = await CoinService.getLeaderboard(limit, isAdmin);
         res.status(200).json({ success: true, leaderboard });
     } catch (error) {
         next(error);
