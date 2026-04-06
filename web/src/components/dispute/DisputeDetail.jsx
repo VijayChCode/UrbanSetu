@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
-import { FaUser, FaClock, FaFileAlt, FaComments, FaCheckCircle, FaTimes, FaPaperPlane, FaSpinner, FaUpload, FaImage, FaVideo, FaFile, FaDownload, FaGavel, FaExclamationTriangle, FaEdit, FaSync } from 'react-icons/fa';
+import { FaUser, FaClock, FaFileAlt, FaComments, FaCheckCircle, FaTimes, FaPaperPlane, FaUpload, FaImage, FaVideo, FaFile, FaDownload, FaGavel, FaExclamationTriangle, FaEdit, FaSync } from 'react-icons/fa';
+import UrbanSetuSpinner from '../UrbanSetuSpinner';
 import ImagePreview from '../ImagePreview';
 import VideoPreview from '../VideoPreview';
 import UserAvatar from '../UserAvatar';
@@ -579,7 +580,7 @@ export default function DisputeDetail({
             <div className="flex items-center gap-2 mb-3">
               <label className={`flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-300 dark:border-blue-700 rounded-lg text-sm ${uploading.image ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/40'
                 }`}>
-                {uploading.image ? <FaSpinner className="animate-spin text-blue-700 dark:text-blue-400" /> : <FaImage className="text-blue-700 dark:text-blue-400" />}
+                {uploading.image ? <UrbanSetuSpinner size="sm" isBright={true} /> : <FaImage className="text-blue-700 dark:text-blue-400" />}
                 <span className="text-blue-700 dark:text-blue-400">Image</span>
                 <input
                   type="file"
@@ -592,7 +593,7 @@ export default function DisputeDetail({
               </label>
               <label className={`flex items-center gap-2 px-3 py-2 bg-purple-50 dark:bg-purple-900/20 border border-purple-300 dark:border-purple-700 rounded-lg text-sm ${uploading.video ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:bg-purple-100 dark:hover:bg-purple-900/40'
                 }`}>
-                {uploading.video ? <FaSpinner className="animate-spin text-purple-700 dark:text-purple-400" /> : <FaVideo className="text-purple-700 dark:text-purple-400" />}
+                {uploading.video ? <UrbanSetuSpinner size="sm" isBright={true} /> : <FaVideo className="text-purple-700 dark:text-purple-400" />}
                 <span className="text-purple-700 dark:text-purple-400">Video</span>
                 <input
                   type="file"
@@ -605,7 +606,7 @@ export default function DisputeDetail({
               </label>
               <label className={`flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 border border-green-300 dark:border-green-700 rounded-lg text-sm ${uploading.document ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:bg-green-100 dark:hover:bg-green-900/40'
                 }`}>
-                {uploading.document ? <FaSpinner className="animate-spin text-green-700 dark:text-green-400" /> : <FaFile className="text-green-700 dark:text-green-400" />}
+                {uploading.document ? <UrbanSetuSpinner size="sm" isBright={true} /> : <FaFile className="text-green-700 dark:text-green-400" />}
                 <span className="text-green-700 dark:text-green-400">Document</span>
                 <input
                   type="file"
@@ -623,7 +624,7 @@ export default function DisputeDetail({
               disabled={sending || (!newMessage.trim() && attachments.length === 0)}
               className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {sending ? <FaSpinner className="animate-spin" /> : <FaPaperPlane />}
+              {sending ? <UrbanSetuSpinner size="sm" isBright={true} /> : <FaPaperPlane />}
               {sending ? 'Sending...' : 'Send Message'}
             </button>
           </div>
@@ -661,7 +662,7 @@ export default function DisputeDetail({
               disabled={republishing}
               className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 flex items-center gap-2 disabled:opacity-50"
             >
-              {republishing ? <FaSpinner className="animate-spin" /> : <FaSync />}
+              {republishing ? <UrbanSetuSpinner size="sm" isBright={true} /> : <FaSync />}
               Republish Property
             </button>
           </div>

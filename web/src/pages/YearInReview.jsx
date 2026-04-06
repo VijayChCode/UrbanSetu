@@ -13,6 +13,7 @@ import {
 import { toast } from 'react-toastify';
 import html2canvas from 'html2canvas';
 import SocialSharePanel from '../components/SocialSharePanel';
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { authenticatedFetch } from '../utils/auth';
 
@@ -404,11 +405,7 @@ const YearInReview = ({ isAdmin = false }) => {
         return (
             <div className="fixed inset-0 bg-[#0f172a] flex items-center justify-center text-white">
                 <div className="text-center">
-                    <motion.div
-                        animate={{ rotate: 360, scale: [1, 1.2, 1] }}
-                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                        className="w-24 h-24 border-t-4 border-indigo-500 border-r-4 border-indigo-500/20 rounded-full mx-auto"
-                    />
+                    <UrbanSetuSpinner size="xl" isBright={true} />
                     <h2 className="mt-8 text-2xl font-black tracking-widest uppercase bg-gradient-to-r from-indigo-400 to-blue-400 bg-clip-text text-transparent animate-pulse">Reliving {year}</h2>
                 </div>
             </div>
@@ -583,7 +580,7 @@ const YearInReview = ({ isAdmin = false }) => {
                                 >
                                     {isUploading ? (
                                         <>
-                                            <div className="w-5 h-5 border-3 border-gray-900 border-t-transparent rounded-full animate-spin" />
+                                            <UrbanSetuSpinner size="sm" />
                                             Preparing...
                                         </>
                                     ) : (

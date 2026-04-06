@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { toast } from 'react-toastify';
-import { FaMoneyBillWave, FaCheckCircle, FaCheck, FaChevronRight, FaChevronLeft, FaCalendarAlt, FaFileContract, FaCreditCard, FaHome, FaLock, FaSpinner, FaTimesCircle, FaDownload, FaCoins, FaMapMarkerAlt } from "react-icons/fa";
+import { FaMoneyBillWave, FaCheckCircle, FaCheck, FaChevronRight, FaChevronLeft, FaCalendarAlt, FaFileContract, FaCreditCard, FaHome, FaLock, FaTimesCircle, FaDownload, FaCoins, FaMapMarkerAlt } from "react-icons/fa";
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 import { usePageTitle } from '../hooks/usePageTitle';
 import PaymentModal from '../components/PaymentModal';
 import ContractPreview from '../components/rental/ContractPreview';
@@ -783,7 +784,7 @@ export default function PayMonthlyRent() {
               >
                 {creatingPayment ? (
                   <>
-                    <FaSpinner className="animate-spin" /> Processing...
+                    <UrbanSetuSpinner size="xs" isBright={true} /> Processing...
                   </>
                 ) : (
                   <>

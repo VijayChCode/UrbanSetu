@@ -13,6 +13,7 @@ import ImagePreview from "../components/ImagePreview.jsx";
 import SmartPriceInsights from "../components/SmartPriceInsights.jsx";
 import { usePageTitle } from '../hooks/usePageTitle';
 import { authenticatedFetch } from '../utils/auth';
+import UrbanSetuSpinner from "../components/UrbanSetuSpinner.jsx";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -182,9 +183,9 @@ export default function AdminListing() {
     return (
       <div className="bg-gradient-to-br from-blue-50 to-purple-100 dark:from-slate-900 dark:to-slate-800 min-h-screen py-10 px-2 md:px-8 transition-colors duration-300">
         <div className="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 relative">
-          <div className="flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400"></div>
-            <p className="ml-3 text-lg font-semibold text-blue-600 dark:text-blue-400">Loading property details...</p>
+          <div className="flex flex-col items-center justify-center gap-4 py-8">
+            <UrbanSetuSpinner size="lg" />
+            <p className="text-lg font-bold text-blue-600 dark:text-blue-400 animate-pulse uppercase tracking-wider">Loading property details...</p>
           </div>
         </div>
       </div>
@@ -687,7 +688,7 @@ export default function AdminListing() {
               >
                 {deassignLoading ? (
                   <div className="flex items-center gap-2">
-                    <span className="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full"></span>
+                    <UrbanSetuSpinner size="sm" isBright={true} />
                     Processing...
                   </div>
                 ) : 'Confirm & Deassign'}

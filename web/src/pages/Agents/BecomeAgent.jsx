@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { FaUserShield, FaCheckCircle, FaBuilding, FaIdCard, FaSpinner, FaArrowLeft } from 'react-icons/fa';
+import { FaUserShield, FaCheckCircle, FaBuilding, FaIdCard, FaArrowLeft } from 'react-icons/fa';
+import UrbanSetuSpinner from '../../components/UrbanSetuSpinner';
 import { API_BASE_URL } from '../../config/api';
 import { authenticatedFetch } from '../../utils/auth';
 import { usePageTitle } from '../../hooks/usePageTitle';
@@ -218,7 +219,7 @@ const BecomeAgent = () => {
                                         disabled={loading}
                                         className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
                                     >
-                                        {loading ? <FaSpinner className="animate-spin" /> : 'Submit Application'}
+                                        {loading ? <UrbanSetuSpinner size="xs" isBright={true} /> : 'Submit Application'}
                                     </button>
                                     <p className="text-xs text-gray-500 mt-4 text-center">
                                         By submitting, you agree to our <a href="/user/terms" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Terms and Conditions for Partners</a>.

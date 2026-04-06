@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { authenticatedFetch } from '../utils/auth';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { FaHeadset, FaTimes, FaPaperPlane, FaEnvelope, FaUser, FaFileAlt, FaClock, FaTrash, FaImage, FaPaperclip, FaSpinner, FaSearch, FaFilter, FaSortAmountDown, FaSortAmountUp } from 'react-icons/fa';
+import { FaHeadset, FaTimes, FaPaperPlane, FaEnvelope, FaUser, FaFileAlt, FaClock, FaTrash, FaImage, FaPaperclip, FaSearch, FaFilter, FaSortAmountDown, FaSortAmountUp } from 'react-icons/fa';
+import UrbanSetuSpinner from './UrbanSetuSpinner';
 import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import ConfirmationModal from './ConfirmationModal';
@@ -685,7 +686,7 @@ export default function ContactSupport({ forceModalOpen = false, onModalClose = 
                     {attachments.length < 3 && (
                       <label className={`w-20 h-20 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg transition-colors ${uploadingImage || isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
                         {uploadingImage ? (
-                          <FaSpinner className="w-5 h-5 text-blue-500 animate-spin" />
+                          <UrbanSetuSpinner size="sm" />
                         ) : (
                           <>
                             <FaImage className="w-5 h-5 text-gray-400 mb-1" />
@@ -728,7 +729,7 @@ export default function ContactSupport({ forceModalOpen = false, onModalClose = 
                   >
                     {isSubmitting ? (
                       <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <UrbanSetuSpinner size="sm" isBright={true} />
                         Sending...
                       </>
                     ) : (
@@ -745,7 +746,7 @@ export default function ContactSupport({ forceModalOpen = false, onModalClose = 
               <div className="p-6">
                 {loadingMessages ? (
                   <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400 mx-auto mb-4"></div>
+                    <UrbanSetuSpinner size="lg" className="mx-auto mb-4" />
                     <p className="text-gray-500 dark:text-gray-400 font-medium transition-colors">Loading your messages...</p>
                   </div>
                 ) : userMessages.length === 0 ? (

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { FaCog, FaToggleOn, FaToggleOff, FaCreditCard, FaCalendarAlt, FaCheckCircle, FaExclamationTriangle, FaTimes, FaSave, FaUniversity, FaMobileAlt, FaTrash, FaShieldAlt, FaLock, FaTrashAlt, FaExclamationCircle, FaStopCircle, FaPaypal } from "react-icons/fa";
 import { toast } from 'react-toastify';
 import { authenticatedFetch } from '../../utils/auth';
+import UrbanSetuSpinner from '../UrbanSetuSpinner';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -467,7 +468,7 @@ export default function AutoDebitSettings({ wallet, contract, onUpdate }) {
                 className="flex-[2] py-4 px-6 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {loading ? (
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <UrbanSetuSpinner size="sm" isBright={true} />
                 ) : (
                   <><FaSave /> Secure Link & Enable</>
                 )}

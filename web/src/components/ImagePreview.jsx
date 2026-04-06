@@ -1013,7 +1013,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
           aria-label={isDownloading ? "Downloading image" : "Download image"}
         >
           {isDownloading ? (
-            <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
+            <UrbanSetuSpinner size="sm" isBright={true} />
           ) : (
             <FaDownload size={16} />
           )}
@@ -1103,7 +1103,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
           aria-label={isDownloading ? "Downloading image" : "Download image"}
         >
           {isDownloading ? (
-            <div className="animate-spin w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full"></div>
+            <UrbanSetuSpinner size="sm" isBright={true} />
           ) : (
             <FaDownload size={14} />
           )}

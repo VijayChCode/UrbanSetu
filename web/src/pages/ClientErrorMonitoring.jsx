@@ -5,13 +5,14 @@ import { usePageTitle } from '../hooks/usePageTitle';
 import {
     FaExclamationTriangle, FaSearch, FaFilter, FaBug, FaDesktop,
     FaMapMarkerAlt, FaGlobe, FaClock, FaTrash, FaCheckCircle,
-    FaUserShield, FaCode, FaSpinner, FaChevronLeft, FaChevronRight, FaMobileAlt,
+    FaUserShield, FaCode, FaChevronLeft, FaChevronRight, FaMobileAlt,
     FaHistory, FaCloud, FaFileAlt, FaHeadset
 } from 'react-icons/fa';
 import ClientErrorSkeleton from '../components/skeletons/ClientErrorSkeleton';
 import VisitorDetailsModal from '../components/VisitorDetailsModal';
 import { toast } from 'react-toastify';
 import { authenticatedFetch } from '../utils/auth';
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 
 const calculateDuration = (start, end) => {
     if (!start || !end) return 'N/A';
@@ -327,7 +328,7 @@ const ClientErrorMonitoring = () => {
                                             disabled={isVisitorLoading}
                                             className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 dark:text-blue-400 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 rounded-lg transition-colors border border-blue-200 dark:border-blue-800"
                                         >
-                                            {isVisitorLoading ? <FaSpinner className="animate-spin" /> : <FaHistory />}
+                                            {isVisitorLoading ? <UrbanSetuSpinner size="xs" /> : <FaHistory />}
                                             View Session
                                         </button>
                                     </div>

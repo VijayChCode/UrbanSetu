@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { toast } from 'react-toastify';
-import { FaWallet, FaCalendarAlt, FaHistory, FaCog, FaMoneyBillWave, FaExclamationTriangle, FaCheckCircle, FaClock, FaSpinner, FaDownload, FaTrophy, FaArrowRight } from "react-icons/fa";
+import { FaWallet, FaCalendarAlt, FaHistory, FaCog, FaMoneyBillWave, FaExclamationTriangle, FaCheckCircle, FaClock, FaDownload, FaTrophy, FaArrowRight } from "react-icons/fa";
 import { usePageTitle } from '../hooks/usePageTitle';
 import PaymentSchedule from '../components/rental/PaymentSchedule';
 import AutoDebitSettings from '../components/rental/AutoDebitSettings';

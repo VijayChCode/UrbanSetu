@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useParams, Link, useNavigate } from 'react-router-dom';
@@ -21,6 +21,7 @@ import SocialSharePanel from '../components/SocialSharePanel';
 import SEO from '../components/SEO';
 import { authenticatedFetch } from '../utils/auth';
 import AdvancedImage from '../components/AdvancedImage';
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 
 const PublicBlogDetail = () => {
 
@@ -558,7 +559,7 @@ const PublicBlogDetail = () => {
                   className="absolute right-3 bottom-3 p-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:hover:bg-blue-600 transition-colors flex items-center justify-center min-w-[36px] min-h-[36px]"
                 >
                   {commentLoading ? (
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    <UrbanSetuSpinner size="sm" isBright={true} />
                   ) : (
                     <Send className="w-4 h-4" />
                   )}
@@ -626,7 +627,7 @@ const PublicBlogDetail = () => {
                                   disabled={isEditingLoading}
                                 >
                                   {isEditingLoading ? (
-                                    <div className="w-3.5 h-3.5 border-2 border-green-500/30 border-t-green-500 rounded-full animate-spin"></div>
+                                    <UrbanSetuSpinner size="sm" />
                                   ) : (
                                     <Check className="w-4 h-4" />
                                   )}

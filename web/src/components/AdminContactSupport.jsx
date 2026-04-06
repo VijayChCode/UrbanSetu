@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { FaHeadset, FaTimes, FaCheck, FaReply, FaEnvelope, FaClock, FaUser, FaEye, FaTrash, FaPaperPlane, FaSearch, FaFilter, FaSortAmountDown, FaSortAmountUp } from 'react-icons/fa';
+import UrbanSetuSpinner from './UrbanSetuSpinner';
 import { toast } from 'react-toastify';
 import ConfirmationModal from './ConfirmationModal';
 import ImagePreview from './ImagePreview';
@@ -607,7 +608,7 @@ export default function AdminContactSupport({ forceModalOpen = false, onModalClo
               )}
               {loading ? (
                 <div className="p-12 text-center">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                  <UrbanSetuSpinner size="lg" className="mx-auto mb-4" />
                   <p className="text-gray-500 font-medium">Loading messages...</p>
                 </div>
               ) : messages.length === 0 ? (
@@ -834,7 +835,7 @@ export default function AdminContactSupport({ forceModalOpen = false, onModalClo
                                     >
                                       {replyLoading ? (
                                         <>
-                                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                          <UrbanSetuSpinner size="sm" isBright={true} />
                                           Sending...
                                         </>
                                       ) : (

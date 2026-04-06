@@ -4,7 +4,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import LocationSelector from "../components/LocationSelector";
 import ESGManagement from "../components/ESGManagement";
 import { toast } from 'react-toastify';
-import { FaCompass, FaPlay, FaSpinner } from "react-icons/fa";
+import { FaCompass, FaPlay } from "react-icons/fa";
+import UrbanSetuSpinner from "../components/UrbanSetuSpinner";
 import VideoPreview from '../components/VideoPreview';
 
 import { usePageTitle } from '../hooks/usePageTitle';
@@ -816,8 +817,8 @@ export default function AdminCreateListing() {
                 <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-48 overflow-y-auto">
                   {loadingUsers ? (
                     <div className="flex items-center justify-center p-4 text-blue-600">
-                      <FaSpinner className="animate-spin mr-2" />
-                      <span className="text-sm font-medium">Loading users...</span>
+                      <UrbanSetuSpinner size="sm" />
+                      <span className="text-sm font-medium ml-2">Loading users...</span>
                     </div>
                   ) : emailSuggestions.length > 0 ? (
                     emailSuggestions.map((user) => (
@@ -1318,7 +1319,7 @@ export default function AdminCreateListing() {
                         title="AI Audit this URL"
                         disabled={isAuditing[`main_${index}`]}
                       >
-                        <FaBrain className={isAuditing[`main_${index}`] ? 'animate-spin' : ''} />
+                        {isAuditing[`main_${index}`] ? <UrbanSetuSpinner size="sm" isBright={true} /> : <FaBrain />}
                       </button>
                       <button
                         type="button"
@@ -1334,7 +1335,10 @@ export default function AdminCreateListing() {
                     <p className="text-red-500 text-sm">{imageErrors[index]}</p>
                   )}
                   {uploadingImages[index] && (
-                    <p className="text-blue-500 dark:text-blue-400 text-sm">⏳ Uploading image...</p>
+                    <div className="flex items-center gap-2 text-blue-500 dark:text-blue-400 text-sm">
+                      <UrbanSetuSpinner size="sm" />
+                      <span>Uploading image...</span>
+                    </div>
                   )}
                 </div>
               ))}
@@ -1477,7 +1481,10 @@ export default function AdminCreateListing() {
                     <p className="text-red-500 text-sm">{videoErrors[index]}</p>
                   )}
                   {uploadingVideos[index] && (
-                    <p className="text-blue-500 dark:text-blue-400 text-sm">⏳ Uploading video...</p>
+                    <div className="flex items-center gap-2 text-blue-500 dark:text-blue-400 text-sm">
+                      <UrbanSetuSpinner size="sm" />
+                      <span>Uploading video...</span>
+                    </div>
                   )}
                   {url && (
                     <div className="w-full rounded-lg overflow-hidden bg-black">
@@ -1543,7 +1550,7 @@ export default function AdminCreateListing() {
                         />
                         {uploadingVirtualTour[index] ? (
                           <>
-                            <div className="animate-spin w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full"></div>
+                            <UrbanSetuSpinner size="sm" isBright={false} />
                             <span className="text-sm text-indigo-600 dark:text-indigo-400">Uploading...</span>
                           </>
                         ) : (
@@ -1563,7 +1570,7 @@ export default function AdminCreateListing() {
                         title="AI Audit this 360 URL"
                         disabled={isAuditing[`tour_${index}`]}
                       >
-                        <FaBrain className={isAuditing[`tour_${index}`] ? 'animate-spin' : ''} />
+                        {isAuditing[`tour_${index}`] ? <UrbanSetuSpinner size="sm" isBright={true} /> : <FaBrain />}
                       </button>
                       <button
                         type="button"

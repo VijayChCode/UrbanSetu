@@ -341,7 +341,7 @@ const VirtualStagingTool = ({ originalImage, listingImages = [] }) => {
                             disabled={isGenerating || !selectedImage}
                             className="bg-white p-3 rounded-full shadow-lg hover:scale-110 transition-transform text-violet-600 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {isGenerating ? <RefreshCw className="w-6 h-6 animate-spin" /> : <ArrowRight className="w-6 h-6" />}
+                            {isGenerating ? <UrbanSetuSpinner size="sm" /> : <ArrowRight className="w-6 h-6" />}
                         </button>
                     </div>
                 </div>
@@ -352,7 +352,7 @@ const VirtualStagingTool = ({ originalImage, listingImages = [] }) => {
                     disabled={isGenerating || !selectedImage}
                     className="w-full mt-6 bg-violet-600 text-white py-3 rounded-xl font-semibold shadow-lg shadow-violet-200 hover:bg-violet-700 transition-colors flex items-center justify-center gap-2 md:hidden"
                 >
-                    {isGenerating ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
+                    {isGenerating ? <UrbanSetuSpinner size="sm" isBright={true} /> : <Sparkles className="w-5 h-5" />}
                     Generate {availableStyles.find(s => s.id === selectedStyle)?.name || 'Selected'} Design
                 </button>
 

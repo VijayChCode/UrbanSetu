@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { FaPlay, FaSpinner, FaVideo } from 'react-icons/fa';
+import { FaPlay, FaVideo } from 'react-icons/fa';
+import UrbanSetuSpinner from './UrbanSetuSpinner';
 
 const VideoMessageBubble = ({ videoUrl, onClick }) => {
     const [isLoading, setIsLoading] = useState(true);
@@ -13,7 +14,7 @@ const VideoMessageBubble = ({ videoUrl, onClick }) => {
                 {/* Loading State */}
                 {isLoading && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-800 text-gray-400 z-10">
-                        <FaSpinner className="animate-spin text-3xl mb-2 text-blue-400" />
+                        <UrbanSetuSpinner size="md" className="mb-2" />
                         <span className="text-xs font-medium tracking-wide">Loading Preview...</span>
                     </div>
                 )}

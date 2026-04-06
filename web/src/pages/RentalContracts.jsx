@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { FaFileContract, FaDownload, FaEye, FaCalendarAlt, FaMoneyBillWave, FaLock, FaCheckCircle, FaTimesCircle, FaSpinner, FaHome, FaUser, FaChevronRight, FaSignInAlt, FaSignOutAlt, FaGavel, FaStar, FaCreditCard, FaPlayCircle, FaCheck, FaTimes, FaPen, FaEraser, FaUndo, FaClock, FaWallet, FaExternalLinkAlt, FaTools, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { FaFileContract, FaDownload, FaEye, FaCalendarAlt, FaMoneyBillWave, FaLock, FaCheckCircle, FaTimesCircle, FaHome, FaUser, FaChevronRight, FaSignInAlt, FaSignOutAlt, FaGavel, FaStar, FaCreditCard, FaPlayCircle, FaCheck, FaTimes, FaPen, FaEraser, FaUndo, FaClock, FaWallet, FaExternalLinkAlt, FaTools, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePageTitle } from '../hooks/usePageTitle';
 import ContractPreview from '../components/rental/ContractPreview';
@@ -543,7 +544,7 @@ export default function RentalContracts() {
                                   >
                                     {payment.status === 'completed' && <FaCheckCircle className="text-xs" />}
                                     {payment.status === 'overdue' && <FaTimesCircle className="text-xs" />}
-                                    {payment.status === 'processing' && <FaSpinner className="text-xs animate-spin" />}
+                                    {payment.status === 'processing' && <UrbanSetuSpinner size="xs" />}
                                     {(!payment.status || payment.status === 'pending') && <FaClock className="text-xs" />}
                                     <span>{label}</span>
                                   </div>
@@ -586,7 +587,7 @@ export default function RentalContracts() {
                                         >
                                           {payment.status === 'completed' && <FaCheckCircle className="text-xs" />}
                                           {payment.status === 'overdue' && <FaTimesCircle className="text-xs" />}
-                                          {payment.status === 'processing' && <FaSpinner className="text-xs animate-spin" />}
+                                          {payment.status === 'processing' && <UrbanSetuSpinner size="xs" />}
                                           {(!payment.status || payment.status === 'pending') && <FaClock className="text-xs" />}
                                           <span>{label}</span>
                                         </div>
@@ -692,7 +693,7 @@ export default function RentalContracts() {
                                   >
                                     {actionLoading === `accept-${contract._id}` ? (
                                       <>
-                                        <FaSpinner className="animate-spin" /> Accepting...
+                                        <UrbanSetuSpinner size="xs" isBright={true} /> Accepting...
                                       </>
                                     ) : (
                                       <>
@@ -712,7 +713,7 @@ export default function RentalContracts() {
                                   >
                                     {actionLoading === `reject-${contract._id}` ? (
                                       <>
-                                        <FaSpinner className="animate-spin" /> Rejecting...
+                                        <UrbanSetuSpinner size="xs" isBright={true} /> Rejecting...
                                       </>
                                     ) : (
                                       <>
@@ -1069,7 +1070,7 @@ export default function RentalContracts() {
                   className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2 disabled:opacity-50"
                 >
                   {actionLoading === `reject-${contractToReject._id}` ? (
-                    <><FaSpinner className="animate-spin" /> Rejecting...</>
+                    <><UrbanSetuSpinner size="xs" isBright={true} /> Rejecting...</>
                   ) : (
                     'Reject Appointment'
                   )}

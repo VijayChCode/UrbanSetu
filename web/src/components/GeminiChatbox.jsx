@@ -20,6 +20,7 @@ import { useImageAuditor } from '../hooks/useImageAuditor';
 import Prism from 'prismjs';
 import ConfirmationModal from './ConfirmationModal';
 import SetuCoinParticles from './SetuCoins/SetuCoinParticles';
+import UrbanSetuSpinner from './UrbanSetuSpinner';
 import 'prismjs/themes/prism-tomorrow.css';
 import 'prismjs/components/prism-javascript';
 import 'prismjs/components/prism-python';
@@ -7307,7 +7308,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             {isLoadingPreviousMessages && (
                                 <div className="flex justify-center py-4 animate-fadeIn">
                                     <div className={`flex items-center gap-2 px-4 py-2 rounded-full border shadow-lg ${isDarkMode ? 'bg-gray-800/90 border-gray-700 text-blue-400' : 'bg-white/90 border-blue-100 text-blue-600'} backdrop-blur-md transform transition-all hover:scale-105`}>
-                                        <FaSync className="animate-spin" size={12} />
+                                        <UrbanSetuSpinner size="sm" />
                                         <span className="text-[10px] font-bold uppercase tracking-widest">Loading History</span>
                                     </div>
                                 </div>
@@ -8210,10 +8211,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                     disabled={isBlockedByPolicy || isLoadingMoreSuggestions || !canLoadMoreSuggestions}
                                                     className={`p-1 rounded-full transition-all duration-200 ${isDarkMode
                                                         ? 'hover:bg-gray-700 text-gray-500'
-                                                        : `hover:bg-white text-gray-400 shadow-sm border border-transparent hover:border-blue-100`} hover:text-blue-500 ${isBlockedByPolicy || !canLoadMoreSuggestions ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                        : `hover:bg-white text-gray-400 shadow-sm border border-transparent hover:border-blue-100`} hover:text-blue-500 ${isBlockedByPolicy || !canLoadMoreSuggestions ? 'opacity-50 cursor-not-allowed' : ''} flex items-center justify-center`}
                                                     title={isBlockedByPolicy ? "Disabled during cooldown" : !canLoadMoreSuggestions ? "Refresh limit reached. Please wait." : "Load More Suggestions"}
                                                 >
-                                                    <FaSync size={10} className={isLoadingMoreSuggestions ? 'animate-spin' : ''} />
+                                                    {isLoadingMoreSuggestions ? <UrbanSetuSpinner size="sm" /> : <FaSync size={10} />}
                                                 </button>
                                                 <button
                                                     onClick={() => setShowSmartSuggestions(false)}
@@ -8365,7 +8366,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                             <div key={img.id || index} className="relative group w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm backdrop-blur-md bg-white/40 dark:bg-gray-800/40 transform transition-all hover:scale-105">
                                                                 {img.uploading ? (
                                                                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-500/10">
-                                                                        <div className={`w-6 h-6 border-2 ${themeColors.accent.replace('text-', 'border-').replace('-600', '-500')} border-t-transparent rounded-full animate-spin`} />
+                                                                        <UrbanSetuSpinner size="sm" />
                                                                         <span className="text-[8px] mt-1 font-bold text-gray-500 uppercase tracking-tighter">Uploading</span>
                                                                         <button
                                                                             onClick={() => {
@@ -8392,8 +8393,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                         />
                                                                         {isAuditing[`chat_${img.id}`] && (
                                                                             <div className="absolute inset-0 flex flex-col items-center justify-center bg-blue-500/20 backdrop-blur-[1px]">
-                                                                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mb-1" />
-                                                                                <span className="text-[7px] font-bold text-white uppercase tracking-widest animate-pulse">Sentinel Auditing</span>
+                                                                                <UrbanSetuSpinner size="sm" isBright={true} />
+                                                                                <span className="text-[7px] font-bold text-white uppercase tracking-widest animate-pulse mt-1">Sentinel Auditing</span>
                                                                             </div>
                                                                         )}
                                                                         <button
@@ -8507,7 +8508,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                             <div className={`p-3 text-sm font-medium ${isDarkMode ? 'text-blue-400 border-gray-600 bg-blue-900/20' : 'text-blue-600 border-gray-200 bg-blue-50'} border-b`}>
                                                 <div className="flex items-center gap-2">
                                                     {(isLoadingSuggestions || isLoadingBlogSuggestions) ? (
-                                                        <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                                        <UrbanSetuSpinner size="sm" />
                                                     ) : (
                                                         <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
                                                     )}
@@ -8691,7 +8692,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                             aria-label={refreshingBookmarks ? "Refreshing bookmarks" : "Refresh bookmarks"}
                                         >
                                             {refreshingBookmarks ? (
-                                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                                                <UrbanSetuSpinner size="sm" />
                                             ) : (
                                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -8789,7 +8790,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     <div className="flex-1 overflow-y-auto p-4">
                                         {isLoadingSessions ? (
                                             <div className="flex flex-col items-center justify-center py-10 space-y-3 animate-fadeIn">
-                                                <FaSync className={`animate-spin text-2xl ${themeColors.accent}`} />
+                                                <UrbanSetuSpinner size="md" />
                                                 <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Loading chat history...</p>
                                             </div>
                                         ) : chatSessions.length === 0 ? (
@@ -9223,11 +9224,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                     disabled={isSyncingSettings}
                                                     title="Sync with latest preferences"
                                                     className={`p-1.5 rounded-lg transition-all ${isSyncingSettings
-                                                        ? 'bg-blue-100 text-blue-600 animate-spin'
+                                                        ? 'bg-blue-100 text-blue-600'
                                                         : isDarkMode ? 'bg-gray-800 text-gray-400 hover:text-blue-400 hover:bg-gray-700' : 'bg-gray-100 text-gray-500 hover:text-blue-600 hover:bg-blue-50'
                                                         }`}
                                                 >
-                                                    <FaSync size={14} className={isSyncingSettings ? 'animate-spin' : ''} />
+                                                    {isSyncingSettings ? <UrbanSetuSpinner size="sm" /> : <FaSync size={14} />}
                                                 </button>
                                             )}
                                         </div>
@@ -9876,7 +9877,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                     } flex items-center gap-2`}
                                             >
                                                 {isSavingSettings ? (
-                                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                    <UrbanSetuSpinner size="sm" isBright={true} />
                                                 ) : <FaSave size={14} />}
                                                 {isSavingSettings ? 'Saving...' : 'Save Settings'}
                                             </button>
@@ -9908,7 +9909,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         {uploadingFile && (
                                             <div className="mb-4">
                                                 <div className="flex items-center justify-center gap-2 text-sm text-blue-600 mb-2">
-                                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                                                    <UrbanSetuSpinner size="sm" />
                                                     Uploading files...
                                                 </div>
                                                 <div className="w-full bg-gray-200 rounded-full h-2">
@@ -10102,10 +10103,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                 } catch (_) { }
                                             }
                                         }}
-                                        className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-white' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-800'} ${allRatingsLoading ? 'animate-spin' : ''}`}
+                                        className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-white' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-800'}`}
                                         title="Refresh"
                                     >
-                                        <FaSync size={16} />
+                                        {allRatingsLoading ? <UrbanSetuSpinner size="sm" /> : <FaSync size={16} />}
                                     </button>
                                     <button
                                         onClick={() => setShowRatingsModal(false)}
@@ -10136,8 +10137,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 {(currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) ? (
                                     allRatingsLoading ? (
                                         <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-                                            <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-                                            <p>Loading ratings...</p>
+                                            <UrbanSetuSpinner size="md" />
+                                            <p className="mt-3">Loading ratings...</p>
                                         </div>
                                     ) : (
                                         (() => {
@@ -11345,11 +11346,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                             <button
                                                 onClick={handleReportSubmit}
                                                 disabled={isReporting}
-                                                className={`px-6 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white font-medium transition-all shadow-lg hover:shadow-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2`}
+                                                className={`px-6 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white font-medium transition-all shadow-lg hover:shadow-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2`}
                                             >
                                                 {isReporting ? (
                                                     <>
-                                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                        <UrbanSetuSpinner size="sm" isBright={true} />
                                                         Submitting...
                                                     </>
                                                 ) : (
@@ -11403,9 +11404,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         onClick={fetchAdminReports}
                                         title="Refresh Reports"
                                         disabled={adminReportsLoading}
-                                        className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-gray-800 text-gray-400 hover:text-white' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-800'} ${adminReportsLoading ? 'animate-spin' : ''}`}
+                                        className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-gray-800 text-gray-400 hover:text-white' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-800'} flex items-center justify-center`}
                                     >
-                                        <FaSync size={16} />
+                                        {adminReportsLoading ? <UrbanSetuSpinner size="sm" /> : <FaSync size={16} />}
                                     </button>
                                     <button
                                         onClick={() => setShowAdminReportsModal(false)}
@@ -11436,7 +11437,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             <div className="p-6">
                                 {adminReportsLoading ? (
                                     <div className="flex justify-center items-center h-full">
-                                        <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-red-500"></div>
+                                        <UrbanSetuSpinner size="xl" />
                                     </div>
                                 ) : adminReports.length === 0 ? (
                                     <div className="flex flex-col items-center justify-center h-full text-center p-8">

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { FaDollarSign, FaCreditCard, FaDownload, FaCheck, FaClock, FaCheckCircle, FaTimes, FaExclamationTriangle, FaSpinner, FaMoneyBill, FaLock, FaShare, FaCopy, FaEye, FaExternalLinkAlt, FaCalendar, FaSync, FaWallet, FaHome, FaKey } from 'react-icons/fa';
+import { FaDollarSign, FaCreditCard, FaDownload, FaCheck, FaClock, FaCheckCircle, FaTimes, FaExclamationTriangle, FaMoneyBill, FaLock, FaShare, FaCopy, FaEye, FaExternalLinkAlt, FaCalendar, FaSync, FaWallet, FaHome, FaKey } from 'react-icons/fa';
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 import { signoutUserStart, signoutUserSuccess, signoutUserFailure } from '../redux/user/userSlice';
 import { toast } from 'react-toastify';
 // import axios from 'axios'; // Removed as authenticatedFetch is used
@@ -533,7 +534,7 @@ const MyPayments = () => {
               className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
               title="Refresh stats"
             >
-              <FaSpinner className="animate-spin" />
+              <UrbanSetuSpinner size="sm" isBright={true} />
               Refresh
             </button>
           </div>
@@ -710,7 +711,7 @@ const MyPayments = () => {
                       >
                         {loadingPaymentId === p._id ? (
                           <>
-                            <FaSpinner className="text-xs animate-spin" /> Loading...
+                            <UrbanSetuSpinner size="sm" isBright={true} /> Loading...
                           </>
                         ) : (
                           <>
@@ -957,7 +958,7 @@ const MyPayments = () => {
                   >
                     {loadingPaymentId === selectedPayment._id ? (
                       <>
-                        <FaSpinner className="animate-spin" /> Loading...
+                        <UrbanSetuSpinner size="xs" isBright={true} /> Loading...
                       </>
                     ) : (
                       <>
@@ -1143,7 +1144,7 @@ const MyPayments = () => {
                 className="px-4 py-2 rounded bg-blue-700 text-white font-semibold"
                 disabled={exportPasswordLoading}
               >
-                {exportPasswordLoading ? 'Verifying...' : 'Confirm'}
+                {exportPasswordLoading ? <UrbanSetuSpinner size="xs" isBright={true} /> : 'Confirm'}
               </button>
             </div>
           </form>

@@ -13,6 +13,7 @@ import { useImageAuditor } from '../hooks/useImageAuditor';
 import { FaBrain, FaExclamationTriangle, FaCheckCircle, FaLightbulb } from 'react-icons/fa';
 import ImagePreview from '../components/ImagePreview';
 import ConfirmationModal from '../components/ConfirmationModal';
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function AdminEditListing() {
@@ -1189,10 +1190,10 @@ export default function AdminEditListing() {
                           disabled={uploadingImages[index]}
                         />
                         {uploadingImages[index] ? (
-                          <>
-                            <div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
-                            <span className="text-sm text-gray-600 dark:text-gray-400">Uploading...</span>
-                          </>
+                          <div className="flex items-center gap-2">
+                             <UrbanSetuSpinner size="sm" />
+                             <span className="text-sm text-gray-600 dark:text-gray-400">Uploading...</span>
+                          </div>
                         ) : (
                           <>
                             <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1215,7 +1216,7 @@ export default function AdminEditListing() {
                         title="AI Audit this URL"
                         disabled={isAuditing[`main_${index}`]}
                       >
-                        <FaBrain className={isAuditing[`main_${index}`] ? 'animate-spin' : ''} />
+                        <UrbanSetuSpinner size="sm" isBright={true} />
                       </button>
                       <button
                         type="button"
@@ -1357,10 +1358,10 @@ export default function AdminEditListing() {
                         disabled={uploadingVideos[index]}
                       />
                       {uploadingVideos[index] ? (
-                        <>
-                          <div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
-                          <span className="text-sm text-gray-600 dark:text-gray-400">Uploading...</span>
-                        </>
+                        <div className="flex items-center gap-2">
+                           <UrbanSetuSpinner size="sm" />
+                           <span className="text-sm text-gray-600 dark:text-gray-400">Uploading...</span>
+                        </div>
                       ) : (
                         <>
                           <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1383,7 +1384,10 @@ export default function AdminEditListing() {
                     <p className="text-red-500 text-sm">{videoErrors[index]}</p>
                   )}
                   {uploadingVideos[index] && (
-                    <p className="text-blue-500 dark:text-blue-400 text-sm">⏳ Uploading video...</p>
+                    <div className="flex items-center gap-2 text-blue-500 dark:text-blue-400 text-sm">
+                      <UrbanSetuSpinner size="sm" />
+                      <span>Uploading video...</span>
+                    </div>
                   )}
                   {url && (
                     <div className="w-full rounded-lg overflow-hidden bg-black">
@@ -1449,10 +1453,10 @@ export default function AdminEditListing() {
                           disabled={uploadingVirtualTour[index]}
                         />
                         {uploadingVirtualTour[index] ? (
-                          <>
-                            <div className="animate-spin w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full"></div>
-                            <span className="text-sm text-indigo-600 dark:text-indigo-400">Uploading...</span>
-                          </>
+                          <div className="flex items-center gap-2">
+                             <UrbanSetuSpinner size="sm" />
+                             <span className="text-sm text-indigo-600 dark:text-indigo-400">Uploading...</span>
+                          </div>
                         ) : (
                           <span className="text-sm text-indigo-600 dark:text-indigo-400 font-medium">Upload 360°</span>
                         )}
@@ -1470,7 +1474,7 @@ export default function AdminEditListing() {
                         title="AI Audit this 360 URL"
                         disabled={isAuditing[`tour_${index}`]}
                       >
-                        <FaBrain className={isAuditing[`tour_${index}`] ? 'animate-spin' : ''} />
+                        <UrbanSetuSpinner size="sm" isBright={true} />
                       </button>
                       <button
                         type="button"

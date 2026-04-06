@@ -247,7 +247,7 @@ export default function AdminDisputeResolution() {
               className="p-3 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-full transition-colors duration-200 self-end md:self-auto dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/40"
               title="Refresh Disputes"
             >
-              <FaSync className={loading ? 'animate-spin' : ''} />
+              {loading ? <UrbanSetuSpinner size="sm" /> : <FaSync />}
             </button>
           </div>
 

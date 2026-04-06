@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { FaFileContract, FaDownload, FaEye, FaCalendarAlt, FaMoneyBillWave, FaLock, FaCheckCircle, FaTimesCircle, FaSpinner, FaSearch, FaBan, FaCheck, FaUser, FaHome, FaGavel, FaWallet, FaCreditCard, FaExclamationTriangle, FaClock, FaTimes, FaHistory } from 'react-icons/fa';
+import { FaFileContract, FaDownload, FaEye, FaCalendarAlt, FaMoneyBillWave, FaLock, FaCheckCircle, FaTimesCircle, FaSearch, FaBan, FaCheck, FaUser, FaHome, FaGavel, FaWallet, FaCreditCard, FaExclamationTriangle, FaClock, FaTimes, FaHistory } from 'react-icons/fa';
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 import { usePageTitle } from '../hooks/usePageTitle';
 import ContractPreview from '../components/rental/ContractPreview';
 import AdminRentalContractsSkeleton from '../components/skeletons/AdminRentalContractsSkeleton';
@@ -458,7 +459,7 @@ export default function AdminRentalContracts() {
                                 >
                                   {payment.status === 'completed' && <FaCheckCircle className="text-xs" />}
                                   {payment.status === 'overdue' && <FaTimesCircle className="text-xs" />}
-                                  {payment.status === 'processing' && <FaSpinner className="text-xs animate-spin" />}
+                                  {payment.status === 'processing' && <UrbanSetuSpinner size="xs" />}
                                   {!payment.status || payment.status === 'pending' ? (
                                     <>
                                       <FaClock className="text-xs" />
@@ -666,7 +667,7 @@ export default function AdminRentalContracts() {
                 >
                   {actionLoading === statusAction ? (
                     <>
-                      <FaSpinner className="animate-spin" /> Processing...
+                      <UrbanSetuSpinner size="xs" isBright={true} /> Processing...
                     </>
                   ) : (
                     <>

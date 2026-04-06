@@ -1,9 +1,10 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { FaPlus, FaEdit, FaTrash, FaSearch, FaFilter, FaGlobe, FaHome, FaEye, FaEyeSlash, FaTimes, FaExternalLinkAlt, FaThumbsUp, FaThumbsDown, FaQuestionCircle } from 'react-icons/fa';
 import { authenticatedFetch } from '../utils/auth';
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 
 import { usePageTitle } from '../hooks/usePageTitle';
 
@@ -469,12 +470,14 @@ const AdminFAQs = () => {
         {/* FAQs Table/Grid */}
         <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden animate-slide-up-slow">
           {loading ? (
-            <div className="p-32 text-center">
-              <div className="relative inline-block">
-                <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-orange-600 mx-auto"></div>
-                <FaQuestionCircle className="absolute inset-0 m-auto text-orange-600 opacity-50" />
+            <div className="p-32 text-center flex flex-col items-center justify-center">
+              <div className="relative inline-block mb-6">
+                <UrbanSetuSpinner size="xl" />
+                <div className="absolute inset-0 flex items-center justify-center pt-1 animate-pulse">
+                  <FaQuestionCircle className="text-orange-600/30 text-3xl" />
+                </div>
               </div>
-              <p className="mt-6 text-gray-500 dark:text-gray-400 font-bold tracking-widest animate-pulse">SYNCHRONIZING KNOWLEDGE...</p>
+              <p className="text-gray-500 dark:text-gray-400 font-black tracking-widest animate-pulse uppercase">SYNCHRONIZING KNOWLEDGE...</p>
             </div>
           ) : (
             <>

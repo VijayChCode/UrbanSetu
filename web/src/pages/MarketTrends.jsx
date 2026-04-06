@@ -12,6 +12,7 @@ import { toast } from 'react-toastify';
 import { FaFileExport, FaDownload } from 'react-icons/fa';
 import MarketTrendsSkeleton from '../components/skeletons/MarketTrendsSkeleton';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 import SEO from '../components/SEO';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
@@ -256,7 +257,7 @@ const MarketTrends = () => {
 
                 {loadingCity ? (
                     <div className="flex flex-col justify-center items-center py-32 gap-4">
-                        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-blue-600"></div>
+                        <UrbanSetuSpinner size="lg" />
                         <p className="text-gray-500 animate-pulse font-medium">Analyzing {selectedCity} Market Data...</p>
                     </div>
                 ) : cityData ? (

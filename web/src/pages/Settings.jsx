@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
-import { FaKey, FaTrash, FaSignOutAlt, FaUser, FaTools, FaCloudUploadAlt, FaClipboardList, FaMobileAlt, FaCrown, FaTimes, FaCheck, FaBell, FaEnvelope, FaLock, FaGlobe, FaPalette, FaDownload, FaHistory, FaCode, FaShieldAlt, FaEye, FaEyeSlash, FaMoon, FaSun, FaLanguage, FaClock, FaFileDownload, FaDatabase, FaExclamationTriangle, FaPhone, FaVideo, FaInfoCircle, FaUsers, FaSpinner, FaBullhorn, FaDesktop, FaLocationArrow, FaChartLine, FaComments, FaMapMarkedAlt, FaRocket } from "react-icons/fa";
+import { FaKey, FaTrash, FaSignOutAlt, FaUser, FaTools, FaCloudUploadAlt, FaClipboardList, FaMobileAlt, FaCrown, FaTimes, FaCheck, FaBell, FaEnvelope, FaLock, FaGlobe, FaPalette, FaDownload, FaHistory, FaCode, FaShieldAlt, FaEye, FaEyeSlash, FaMoon, FaSun, FaLanguage, FaClock, FaFileDownload, FaDatabase, FaExclamationTriangle, FaPhone, FaVideo, FaInfoCircle, FaUsers, FaBullhorn, FaDesktop, FaLocationArrow, FaChartLine, FaComments, FaMapMarkedAlt, FaRocket } from "react-icons/fa";
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 import { authenticatedFetch } from '../utils/auth';
 import {
   deleteUserStart,
@@ -88,7 +89,7 @@ const ToggleSwitch = ({ label, checked, onChange, description, isLoading }) => {
         <div className="flex items-center gap-2">
           <p className="font-medium text-gray-800 dark:text-gray-200">{label}</p>
           {isLoading && (
-            <FaSpinner className="animate-spin text-blue-500 dark:text-blue-400 text-sm" />
+            <UrbanSetuSpinner size="sm" />
           )}
         </div>
         {description && <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{description}</p>}
@@ -128,7 +129,7 @@ const SelectOption = ({ label, value, options, onChange, description, onInfoClic
             </button>
           )}
           {isLoading && (
-            <FaSpinner className="animate-spin text-blue-500 dark:text-blue-400" />
+            <UrbanSetuSpinner size="sm" />
           )}
         </div>
         {description && <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{description}</p>}
@@ -1541,7 +1542,7 @@ export default function Settings() {
             >
               {exportingData ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  <UrbanSetuSpinner size="sm" isBright={true} className="mr-2" />
                   Exporting...
                 </>
               ) : (
@@ -1768,7 +1769,7 @@ export default function Settings() {
 
                 {loadingAdmins ? (
                   <div className="flex justify-center py-4">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400"></div>
+                    <UrbanSetuSpinner size="lg" />
                   </div>
                 ) : admins.length === 0 ? (
                   <div className="text-center py-4">
@@ -1813,7 +1814,7 @@ export default function Settings() {
                 >
                   {transferLoading ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      <UrbanSetuSpinner size="sm" isBright={true} className="mr-2" />
                       Processing...
                     </>
                   ) : (
@@ -2000,7 +2001,7 @@ export default function Settings() {
                   >
                     {transferDeleteDeleting ? (
                       <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2 inline-block"></div>
+                        <UrbanSetuSpinner size="sm" isBright={true} className="mr-2" />
                         Deleting...
                       </>
                     ) : transferOtpSent ? 'Transfer & Delete' : (transferLoading ? 'Processing...' : 'Verify & Send OTP')}
@@ -2032,7 +2033,7 @@ export default function Settings() {
                 </p>
                 {loadingAdmins ? (
                   <div className="flex justify-center py-4">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400"></div>
+                    <UrbanSetuSpinner size="lg" />
                   </div>
                 ) : transferAdmins.length === 0 ? (
                   <div className="text-center py-4">
@@ -2116,12 +2117,12 @@ export default function Settings() {
                     >
                       {transferTransferring ? (
                         <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          <UrbanSetuSpinner size="sm" isBright={true} className="mr-2" />
                           Transferring...
                         </>
                       ) : transferSubmitting ? (
                         <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          <UrbanSetuSpinner size="sm" isBright={true} className="mr-2" />
                           Processing...
                         </>
                       ) : (
@@ -2269,7 +2270,7 @@ export default function Settings() {
                   >
                     {exportPasswordVerifying ? (
                       <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        <UrbanSetuSpinner size="sm" isBright={true} className="mr-2" />
                         Verifying...
                       </>
                     ) : (

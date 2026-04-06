@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { FaCreditCard, FaFileUpload, FaSpinner, FaSearch, FaTimes, FaCheckCircle, FaClock, FaTimesCircle, FaHome, FaUser, FaMoneyBillWave } from 'react-icons/fa';
+import { FaCreditCard, FaFileUpload, FaSearch, FaTimes, FaCheckCircle, FaClock, FaTimesCircle, FaHome, FaUser, FaMoneyBillWave } from 'react-icons/fa';
 import { usePageTitle } from '../hooks/usePageTitle';
 import LoanApplicationForm from '../components/loans/LoanApplicationForm';
 import LoanStatusDisplay from '../components/loans/LoanStatusDisplay';

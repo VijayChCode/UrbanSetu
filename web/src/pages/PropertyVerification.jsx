@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { FaShieldAlt, FaCheckCircle, FaTimesCircle, FaClock, FaFileUpload, FaSpinner, FaSearch, FaHome } from 'react-icons/fa';
+import { FaShieldAlt, FaCheckCircle, FaTimesCircle, FaClock, FaFileUpload, FaSearch, FaHome } from 'react-icons/fa';
 import { usePageTitle } from '../hooks/usePageTitle';
 import VerificationForm from '../components/verification/VerificationForm';
 import VerificationStatus from '../components/verification/VerificationStatus';

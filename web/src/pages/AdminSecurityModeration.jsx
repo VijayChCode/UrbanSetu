@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { FaUnlockAlt, FaShieldAlt, FaLock, FaEye, FaEyeSlash, FaFilter, FaSearch, FaRedo, FaExclamationTriangle, FaCheckCircle, FaClock, FaUser, FaGlobe, FaEnvelope, FaKey } from 'react-icons/fa';
 import { authenticatedFetch } from '../utils/auth';
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 
 import { usePageTitle } from '../hooks/usePageTitle';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -292,7 +293,7 @@ export default function AdminSecurityModeration() {
               >
                 {otpRefreshing ? (
                   <>
-                    <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
+                    <UrbanSetuSpinner size="sm" isBright={true} />
                     Refreshing...
                   </>
                 ) : (
@@ -512,7 +513,7 @@ export default function AdminSecurityModeration() {
               >
                 {passwordRefreshing ? (
                   <>
-                    <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
+                    <UrbanSetuSpinner size="sm" isBright={true} />
                     Refreshing...
                   </>
                 ) : (
@@ -745,7 +746,7 @@ export default function AdminSecurityModeration() {
                 >
                   {actionLoading ? (
                     <>
-                      <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
+                      <UrbanSetuSpinner size="sm" isBright={true} />
                       Processing...
                     </>
                   ) : (

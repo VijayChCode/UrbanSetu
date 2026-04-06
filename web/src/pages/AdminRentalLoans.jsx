@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { FaCreditCard, FaSpinner, FaSearch, FaTimes, FaCheckCircle, FaClock, FaTimesCircle, FaHome, FaUser, FaMoneyBillWave, FaCheck, FaBan, FaDownload, FaFile, FaSync } from 'react-icons/fa';
+import { FaCreditCard, FaSearch, FaTimes, FaCheckCircle, FaClock, FaTimesCircle, FaHome, FaUser, FaMoneyBillWave, FaCheck, FaBan, FaDownload, FaFile, FaSync } from 'react-icons/fa';
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 import { usePageTitle } from '../hooks/usePageTitle';
 import LoanStatusDisplay from '../components/loans/LoanStatusDisplay';
 import AdminRentalLoansSkeleton from '../components/skeletons/AdminRentalLoansSkeleton';
@@ -406,9 +407,10 @@ export default function AdminRentalLoans() {
             </div>
             <button
               onClick={() => fetchAllLoans()}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 transition-colors self-end md:self-auto shadow-lg"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2 transition-all self-end md:self-auto shadow-lg min-w-[120px]"
+              disabled={loading}
             >
-              <FaSync className={loading ? "animate-spin" : ""} />
+              {loading ? <UrbanSetuSpinner size="xs" isBright={true} /> : <FaSync />}
               Refresh
             </button>
           </div>
@@ -810,7 +812,7 @@ export default function AdminRentalLoans() {
                   >
                     {actionLoading === 'approve' ? (
                       <>
-                        <FaSpinner className="animate-spin" /> Approving...
+                      <UrbanSetuSpinner size="xs" isBright={true} /> Approving...
                       </>
                     ) : (
                       <>
@@ -889,7 +891,7 @@ export default function AdminRentalLoans() {
                   >
                     {actionLoading === 'reject' ? (
                       <>
-                        <FaSpinner className="animate-spin" /> Rejecting...
+                        <UrbanSetuSpinner size="xs" isBright={true} /> Rejecting...
                       </>
                     ) : (
                       <>
@@ -973,7 +975,7 @@ export default function AdminRentalLoans() {
                   >
                     {actionLoading === 'disburse' ? (
                       <>
-                        <FaSpinner className="animate-spin" /> Disbursing...
+                        <UrbanSetuSpinner size="xs" isBright={true} /> Disbursing...
                       </>
                     ) : (
                       <>
@@ -1010,7 +1012,7 @@ export default function AdminRentalLoans() {
                   disabled={actionLoading === 'legal_notice'}
                   className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 flex items-center gap-2 disabled:opacity-50"
                 >
-                  {actionLoading === 'legal_notice' ? <FaSpinner className="animate-spin" /> : 'Send Notice'}
+                  {actionLoading === 'legal_notice' ? <UrbanSetuSpinner size="xs" isBright={true} /> : 'Send Notice'}
                 </button>
               </div>
             </div>
@@ -1073,7 +1075,7 @@ export default function AdminRentalLoans() {
                     disabled={actionLoading === 'write_off'}
                     className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2 disabled:opacity-50"
                   >
-                    {actionLoading === 'write_off' ? <FaSpinner className="animate-spin" /> : 'Confirm'}
+                    {actionLoading === 'write_off' ? <UrbanSetuSpinner size="xs" isBright={true} /> : 'Confirm'}
                   </button>
                 </div>
               </div>
@@ -1104,7 +1106,7 @@ export default function AdminRentalLoans() {
                   disabled={actionLoading === 'block_user'}
                   className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-2 disabled:opacity-50"
                 >
-                  {actionLoading === 'block_user' ? <FaSpinner className="animate-spin" /> : 'Block User'}
+                  {actionLoading === 'block_user' ? <UrbanSetuSpinner size="xs" isBright={true} /> : 'Block User'}
                 </button>
               </div>
             </div>

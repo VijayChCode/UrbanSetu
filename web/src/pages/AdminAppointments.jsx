@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { createPortal } from 'react-dom';
-import { FaTrash, FaSearch, FaPen, FaPaperPlane, FaUser, FaEnvelope, FaCalendar, FaPhone, FaVideo, FaUserShield, FaArchive, FaUndo, FaCommentDots, FaCheck, FaCheckDouble, FaBan, FaTimes, FaLightbulb, FaCopy, FaEllipsisV, FaInfoCircle, FaSync, FaStar, FaRegStar, FaFlag, FaCalendarAlt, FaCheckSquare, FaDownload, FaSpinner, FaDollarSign, FaHistory, FaCircle, FaVolumeUp, FaVolumeMute, FaEye, FaEyeSlash, FaExpand, FaCompress, FaPowerOff, FaCog, FaFileAlt, FaPlay } from "react-icons/fa";
+import { FaTrash, FaSearch, FaPen, FaPaperPlane, FaUser, FaEnvelope, FaCalendar, FaPhone, FaVideo, FaUserShield, FaArchive, FaUndo, FaCommentDots, FaCheck, FaCheckDouble, FaBan, FaTimes, FaLightbulb, FaCopy, FaEllipsisV, FaFlag, FaCalendarAlt, FaCheckSquare, FaDownload, FaDollarSign, FaHistory, FaCircle, FaVolumeUp, FaVolumeMute, FaEye, FaEyeSlash, FaExpand, FaCompress, FaPowerOff, FaCog, FaFileAlt, FaPlay } from "react-icons/fa";
+import UrbanSetuSpinner from "../components/UrbanSetuSpinner";
 import { FormattedTextWithLinks, FormattedTextWithLinksAndSearch, FormattedTextWithReadMore } from '../utils/linkFormatter.jsx';
 import UserAvatar from '../components/UserAvatar';
 import { focusWithoutKeyboard, focusWithKeyboard } from '../utils/mobileUtils';
@@ -2157,7 +2158,7 @@ export default function AdminAppointments() {
                     title="Refresh reports"
                   >
                     {adminReportsLoading ? (
-                      <div className="w-4 h-4 border-2 border-red-600 border-top-transparent rounded-full animate-spin"></div>
+                      <UrbanSetuSpinner size="sm" />
                     ) : (
                       <FaSync className="w-4 h-4" />
                     )}
@@ -2282,7 +2283,7 @@ export default function AdminAppointments() {
               <div className="flex-1 overflow-y-auto p-3 sm:p-6">
                 {adminReportsLoading ? (
                   <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
+                    <UrbanSetuSpinner size="md" />
                     <span className="ml-3 text-gray-600 dark:text-gray-300">Loading reports...</span>
                   </div>
                 ) : adminReportsError ? (
@@ -2378,7 +2379,7 @@ export default function AdminAppointments() {
 
             {userLoading ? (
               <div className="flex items-center justify-center p-8">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                <UrbanSetuSpinner size="md" />
                 <p className="ml-4 text-gray-600 dark:text-gray-300">Loading user details...</p>
               </div>
             ) : selectedUser ? (
@@ -6575,7 +6576,7 @@ function AdminAppointmentRow({
                                       disabled={multiSelectActions.starring}
                                     >
                                       {multiSelectActions.starring ? (
-                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                        <UrbanSetuSpinner size="sm" isBright={true} />
                                       ) : selectedMsg.starredBy?.includes(currentUser._id) ? (
                                         <FaStar size={18} />
                                       ) : (
@@ -6707,7 +6708,7 @@ function AdminAppointmentRow({
                             disabled={multiSelectActions.starring}
                           >
                             {multiSelectActions.starring ? (
-                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                              <UrbanSetuSpinner size="sm" isBright={true} />
                             ) : (
                               <FaStar size={18} />
                             )}
@@ -6885,7 +6886,7 @@ function AdminAppointmentRow({
                             disabled={starringSaving}
                           >
                             {starringSaving ? (
-                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                              <UrbanSetuSpinner size="sm" isBright={true} />
                             ) : selectedMessageForHeaderOptions && selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id) ? (
                               <FaStar size={18} />
                             ) : (
@@ -6972,7 +6973,7 @@ function AdminAppointmentRow({
                             disabled={starringSaving}
                           >
                             {starringSaving ? (
-                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                              <UrbanSetuSpinner size="sm" isBright={true} />
                             ) : selectedMessageForHeaderOptions && selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id) ? (
                               <FaStar size={18} />
                             ) : (
@@ -7266,7 +7267,7 @@ function AdminAppointmentRow({
                         {/* Loading icon when refreshing messages */}
                         {loadingComments && (
                           <div className="text-white bg-white/10 rounded-full p-2 shadow">
-                            <FaSpinner className="text-sm animate-spin" />
+                            <UrbanSetuSpinner size="xs" isBright={true} />
                           </div>
                         )}
 
@@ -9210,7 +9211,7 @@ function AdminAppointmentRow({
                       <div className="p-3 text-sm font-medium text-blue-600 dark:text-blue-400 border-b border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900/30">
                         <div className="flex items-center gap-2">
                           {(!propertiesLoaded || isLoadingBlogSuggestions) ? (
-                            <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                            <UrbanSetuSpinner size="sm" />
                           ) : (
                             <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
                           )}
@@ -9526,7 +9527,7 @@ function AdminAppointmentRow({
                       title="Attach"
                     >
                       {uploadingFile ? (
-                        <div className="animate-spin w-4 h-4 border-2 border-gray-600 dark:border-gray-400 border-t-transparent rounded-full"></div>
+                        <UrbanSetuSpinner size="sm" />
                       ) : (
                         <svg className="w-4 h-4 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
@@ -10530,7 +10531,7 @@ function AdminAppointmentRow({
                   title="Refresh starred messages"
                 >
                   {loadingStarredMessages ? (
-                    <div className="w-4 h-4 border-2 border-yellow-600 dark:border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
+                    <UrbanSetuSpinner size="sm" />
                   ) : (
                     <FaSync className="w-4 h-4" />
                   )}
@@ -10541,7 +10542,7 @@ function AdminAppointmentRow({
               <div className="flex-1 overflow-y-auto p-6">
                 {loadingStarredMessages ? (
                   <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-500"></div>
+                    <UrbanSetuSpinner size="md" />
                     <span className="ml-3 text-gray-600 dark:text-gray-400">Loading starred messages...</span>
                   </div>
                 ) : starredMessages.length === 0 ? (
@@ -10622,7 +10623,7 @@ function AdminAppointmentRow({
                                 disabled={unstarringMessageId === message._id}
                               >
                                 {unstarringMessageId === message._id ? (
-                                  <div className="w-3 h-3 border border-red-500 border-t-transparent rounded-full animate-spin"></div>
+                                  <UrbanSetuSpinner size="sm" />
                                 ) : (
                                   <FaTimes className="w-3 h-3" />
                                 )}
@@ -10949,7 +10950,7 @@ function AdminAppointmentRow({
                       >
                         {removingAllStarred ? (
                           <>
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            <UrbanSetuSpinner size="sm" isBright={true} />
                             Removing...
                           </>
                         ) : (
@@ -11004,7 +11005,7 @@ function AdminAppointmentRow({
                     title="Refresh reports"
                   >
                     {reportsLoading ? (
-                      <div className="w-4 h-4 border-2 border-red-600 dark:border-red-300 border-top-transparent rounded-full animate-spin"></div>
+                      <UrbanSetuSpinner size="sm" />
                     ) : (
                       <FaSync className="w-4 h-4" />
                     )}
@@ -11131,7 +11132,7 @@ function AdminAppointmentRow({
               <div className="flex-1 overflow-y-auto p-3 sm:p-6 bg-white dark:bg-gray-800">
                 {reportsLoading ? (
                   <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
+                    <UrbanSetuSpinner size="md" />
                     <span className="ml-3 text-gray-600 dark:text-gray-400">Loading reports...</span>
                   </div>
                 ) : reportsError ? (
@@ -11804,7 +11805,7 @@ function AdminAppointmentRow({
                 >
                   {forceTerminateLoading ? (
                     <>
-                      <FaSpinner className="animate-spin" /> Terminating...
+                      <UrbanSetuSpinner size="sm" isBright={true} /> Terminating...
                     </>
                   ) : (
                     <>

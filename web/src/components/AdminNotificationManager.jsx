@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import UrbanSetuSpinner from './UrbanSetuSpinner';
 import { FaBell, FaTimes, FaPaperPlane, FaUsers, FaEnvelope } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 
@@ -138,7 +139,7 @@ export default function AdminNotificationManager() {
                   </select>
                   {fetchingUsers && (
                     <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-500"></div>
+                      <UrbanSetuSpinner size="sm" isBright={false} />
                     </div>
                   )}
                 </div>
@@ -187,7 +188,7 @@ export default function AdminNotificationManager() {
               >
                 {loading ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <UrbanSetuSpinner size="sm" isBright={true} />
                     Sending...
                   </>
                 ) : (

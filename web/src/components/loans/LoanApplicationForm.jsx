@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
-import { FaUpload, FaSpinner, FaCheckCircle, FaFile } from 'react-icons/fa';
+import { FaUpload, FaCheckCircle, FaFile } from 'react-icons/fa';
+import UrbanSetuSpinner from '../UrbanSetuSpinner';
 import { authenticatedFetch } from '../../utils/auth';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -373,7 +374,7 @@ export default function LoanApplicationForm({ contract, currentUser, onSuccess, 
               </label>
               <label className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border-2 border-dashed border-blue-300 dark:border-blue-800 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors">
                 {uploading[docType] ? (
-                  <FaSpinner className="animate-spin text-blue-600" />
+                  <UrbanSetuSpinner size="md" />
                 ) : (
                   <FaUpload className="text-blue-600" />
                 )}
@@ -444,7 +445,7 @@ export default function LoanApplicationForm({ contract, currentUser, onSuccess, 
           disabled={loading}
           className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
         >
-          {loading ? <FaSpinner className="animate-spin" /> : <FaCheckCircle />}
+          {loading ? <UrbanSetuSpinner size="sm" isBright={true} /> : <FaCheckCircle />}
           {loading ? 'Submitting...' : 'Submit Application'}
         </button>
       </div>

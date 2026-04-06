@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { FaUpload, FaTrash, FaImage, FaVideo, FaSpinner, FaExpand, FaPlay } from 'react-icons/fa';
+import { FaUpload, FaTrash, FaImage, FaVideo, FaExpand, FaPlay } from 'react-icons/fa';
+import UrbanSetuSpinner from '../UrbanSetuSpinner';
 import { toast } from 'react-toastify';
 import { authenticatedFetch } from '../../utils/auth';
 import ImagePreview from '../ImagePreview';
@@ -173,7 +174,7 @@ export default function ConditionImageUpload({
         {!readOnly && (
           <label className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-300 dark:border-blue-700 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/30 mb-4 transition-colors">
             {uploadingImage ? (
-              <FaSpinner className="animate-spin text-blue-700 dark:text-blue-300" />
+              <UrbanSetuSpinner size="sm" isBright={true} />
             ) : (
               <FaUpload className="text-blue-700 dark:text-blue-300" />
             )}
@@ -274,7 +275,7 @@ export default function ConditionImageUpload({
         {!readOnly && (
           <label className="inline-flex items-center gap-2 px-4 py-2 bg-purple-50 dark:bg-purple-900/20 border border-purple-300 dark:border-purple-700 rounded-lg cursor-pointer hover:bg-purple-100 dark:hover:bg-purple-900/30 mb-4 transition-colors">
             {uploadingVideo ? (
-              <FaSpinner className="animate-spin text-purple-700 dark:text-purple-300" />
+              <UrbanSetuSpinner size="sm" isBright={true} />
             ) : (
               <FaUpload className="text-purple-700 dark:text-purple-300" />
             )}

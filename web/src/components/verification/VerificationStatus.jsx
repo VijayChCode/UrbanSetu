@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { FaCheckCircle, FaTimesCircle, FaClock, FaShieldAlt, FaFileAlt, FaMapMarkerAlt, FaImage, FaHome, FaTimes, FaDownload, FaSpinner } from 'react-icons/fa';
+import { FaCheckCircle, FaTimesCircle, FaClock, FaShieldAlt, FaFileAlt, FaMapMarkerAlt, FaImage, FaHome, FaTimes, FaDownload } from 'react-icons/fa';
+import UrbanSetuSpinner from '../UrbanSetuSpinner';
 import { toast } from 'react-toastify';
 import ImagePreview from '../ImagePreview';
 import { authenticatedFetch } from '../../utils/auth';
@@ -507,7 +508,7 @@ export default function VerificationStatus({ verification, listing, currentUser,
               >
                 {loading ? (
                   <>
-                    <FaSpinner className="animate-spin" />
+                    <UrbanSetuSpinner size="sm" isBright={true} />
                     Processing...
                   </>
                 ) : (
@@ -567,7 +568,7 @@ export default function VerificationStatus({ verification, listing, currentUser,
                 >
                   {loading ? (
                     <>
-                      <FaSpinner className="animate-spin" />
+                      <UrbanSetuSpinner size="sm" isBright={true} />
                       Processing...
                     </>
                   ) : (

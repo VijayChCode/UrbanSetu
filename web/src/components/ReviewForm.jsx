@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { EmojiButton } from './EmojiPicker';
 import { authenticatedFetch } from '../utils/auth';
+import UrbanSetuSpinner from './UrbanSetuSpinner';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -252,7 +253,7 @@ export default function ReviewForm({ listingId, existingReview, onReviewSubmitte
         >
           {loading ? (
             <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              <UrbanSetuSpinner size="sm" isBright={true} className="mr-2" />
               {isEditing ? 'Updating...' : 'Submitting...'}
             </>
           ) : (

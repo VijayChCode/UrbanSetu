@@ -7,6 +7,7 @@ import SocialSharePanel from '../components/SocialSharePanel';
 import { toast } from 'react-toastify';
 import { socket } from '../utils/socket.js';
 import { FaEye, FaTrash, FaSearch, FaFilter, FaSort, FaPlus, FaTimes, FaFire, FaArrowDown, FaArrowUp, FaExclamationTriangle, FaCheckCircle, FaDownload, FaShare, FaBookmark, FaCalendarAlt, FaChartLine, FaBars, FaCheck, FaTimes as FaX } from 'react-icons/fa';
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 
 import { usePageTitle } from '../hooks/usePageTitle';
 import { authenticatedFetch } from '../utils/auth';
@@ -538,7 +539,7 @@ export default function Watchlist() {
                   <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
                     {suggestionLoading ? (
                       <div className="p-3 text-center text-gray-500">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600 mx-auto"></div>
+                        <UrbanSetuSpinner size="sm" className="mx-auto" />
                         <p className="mt-1 text-sm">Searching...</p>
                       </div>
                     ) : (
@@ -589,7 +590,7 @@ export default function Watchlist() {
               >
                 {searching ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <UrbanSetuSpinner size="sm" isBright={true} />
                     Searching...
                   </>
                 ) : (

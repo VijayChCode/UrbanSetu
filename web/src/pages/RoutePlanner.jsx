@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ConfirmationModal from '../components/ConfirmationModal';
 import SocialSharePanel from '../components/SocialSharePanel';
 import { authenticatedFetch } from '../utils/auth';
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 
 const MAPBOX_ACCESS_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
@@ -1359,7 +1360,7 @@ export default function RoutePlanner() {
                 >
                   {optimizing ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      <UrbanSetuSpinner size="sm" isBright={true} />
                       Finding the best route...
                     </>
                   ) : (
@@ -1400,7 +1401,7 @@ export default function RoutePlanner() {
                       >
                         {isSavingRoute ? (
                           <>
-                            <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                            <UrbanSetuSpinner size="sm" />
                             Saving...
                           </>
                         ) : isRouteSaved ? (

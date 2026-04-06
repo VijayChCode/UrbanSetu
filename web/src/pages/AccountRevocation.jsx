@@ -5,6 +5,7 @@ import { CheckCircle2, XCircle, Clock, User, Shield, AlertTriangle, ArrowRight, 
 import { useSelector } from 'react-redux';
 import { usePageTitle } from '../hooks/usePageTitle';
 import ContactSupportWrapper from '../components/ContactSupportWrapper';
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function AccountRevocation() {
@@ -144,7 +145,9 @@ export default function AccountRevocation() {
             <div className="text-center py-6 sm:py-8">
               <div className="relative w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-6">
                 <div className="absolute inset-0 border-4 border-blue-100 dark:border-blue-900/30 rounded-full"></div>
-                <div className="absolute inset-0 border-4 border-blue-600 rounded-full border-t-transparent animate-spin"></div>
+                <div className="absolute inset-0 rounded-full flex items-center justify-center">
+                  <UrbanSetuSpinner size="xl" />
+                </div>
               </div>
               <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-2">Verifying Token</h3>
               <p className="text-gray-500 dark:text-gray-400 text-sm">Please wait while we validate your restoration link...</p>
@@ -293,7 +296,7 @@ export default function AccountRevocation() {
               >
                 {restoring ? (
                   <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    <UrbanSetuSpinner size="sm" isBright={true} className="mr-2" />
                     Restoring Account...
                   </>
                 ) : (

@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { FaComments, FaTimes, FaPaperPlane, FaUser, FaCircle, FaCheck, FaTrash, FaEdit, FaCheckSquare, FaSquare } from 'react-icons/fa';
 import { toast } from 'react-toastify';
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 import { authenticatedFetch } from '../utils/auth';
 import { socket } from '../utils/socket';
 
@@ -402,7 +403,7 @@ export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle
             <div className="flex-1 overflow-y-auto p-2 space-y-2">
                 {isLoading ? (
                     <div className="flex flex-col justify-center items-center h-full gap-2">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                        <UrbanSetuSpinner size="lg" />
                         <p className="text-gray-500 dark:text-gray-400 text-sm animate-pulse">Loading inquiries...</p>
                     </div>
                 ) : inboxChats.length === 0 ? (
@@ -544,7 +545,7 @@ export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle
                 <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-100 dark:bg-gray-900">
                     {isLoading ? (
                         <div className="flex flex-col justify-center items-center h-full gap-2">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                            <UrbanSetuSpinner size="lg" />
                             <p className="text-gray-500 dark:text-gray-400 text-sm animate-pulse">Loading conversation...</p>
                         </div>
                     ) : messages.length === 0 ? (

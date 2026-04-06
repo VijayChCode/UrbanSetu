@@ -6,6 +6,7 @@ import ReviewForm from './ReviewForm.jsx';
 import ReplyForm from './ReplyForm.jsx';
 import { socket } from '../utils/socket';
 import { toast } from 'react-toastify';
+import UrbanSetuSpinner from './UrbanSetuSpinner';
 import { authenticatedFetch } from '../utils/auth';
 import UserAvatar from './UserAvatar';
 
@@ -741,7 +742,7 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
   if (loading) {
     return (
       <div className="text-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+        <UrbanSetuSpinner size="md" className="mx-auto" />
         <p className="mt-2 text-gray-600">Loading reviews...</p>
       </div>
     );
@@ -1399,7 +1400,7 @@ export default function ReviewList({ listingId, onReviewDeleted, listingOwnerId 
                 >
                   {replyDeleteLoading ? (
                     <span className="flex items-center gap-2">
-                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                      <UrbanSetuSpinner size="sm" isBright={true} />
                       Deleting...
                     </span>
                   ) : (

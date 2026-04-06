@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import UrbanSetuSpinner from './UrbanSetuSpinner';
 import { FaLeaf, FaUsers, FaShieldAlt, FaSave, FaCalculator, FaInfoCircle } from 'react-icons/fa';
 
 const ESGManagement = ({ esgData, onESGChange, isEditing = false }) => {
@@ -285,7 +286,7 @@ const ESGManagement = ({ esgData, onESGChange, isEditing = false }) => {
                 <div className="flex items-center gap-2">
                     {saving && (
                         <div className="flex items-center gap-2 px-3 py-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-lg transition-colors">
-                            <FaSave className="animate-spin" />
+                            <UrbanSetuSpinner size="sm" isBright={false} />
                             Saving ESG...
                         </div>
                     )}
@@ -625,7 +626,7 @@ const ESGManagement = ({ esgData, onESGChange, isEditing = false }) => {
                 >
                     {saveButtonLoading ? (
                         <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            <UrbanSetuSpinner size="sm" isBright={true} />
                             Saving...
                         </>
                     ) : (

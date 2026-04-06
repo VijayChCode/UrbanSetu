@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
-import { FaStar, FaSpinner, FaCheckCircle } from 'react-icons/fa';
+import { FaStar, FaCheckCircle } from 'react-icons/fa';
+import UrbanSetuSpinner from '../UrbanSetuSpinner';
 import { authenticatedFetch } from '../../utils/auth';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -208,7 +209,7 @@ export default function RatingForm({ contract, role, currentUser, onSuccess, onC
           disabled={loading || !ratings.overallRating}
           className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
         >
-          {loading ? <FaSpinner className="animate-spin" /> : <FaCheckCircle />}
+          {loading ? <UrbanSetuSpinner size="sm" isBright={true} /> : <FaCheckCircle />}
           {loading ? 'Submitting...' : 'Submit Rating'}
         </button>
       </div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { FaDollarSign, FaDownload, FaEye, FaClock, FaCheckCircle, FaTimes, FaExclamationTriangle, FaSpinner } from 'react-icons/fa';
+import { FaDollarSign, FaDownload, FaEye, FaClock, FaCheckCircle, FaTimes, FaExclamationTriangle } from 'react-icons/fa';
+import UrbanSetuSpinner from './UrbanSetuSpinner';
 import { toast } from 'react-toastify';
 import { authenticatedFetch } from '../utils/auth';
 
@@ -117,7 +118,7 @@ const PaymentHistory = ({ userId }) => {
   if (loading && payments.length === 0) {
     return (
       <div className="flex items-center justify-center py-8">
-        <FaSpinner className="animate-spin text-2xl text-blue-600" />
+        <UrbanSetuSpinner size="md" />
         <span className="ml-2 text-gray-600">Loading payment history...</span>
       </div>
     );

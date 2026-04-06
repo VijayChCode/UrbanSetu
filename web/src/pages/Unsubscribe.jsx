@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import { FaEnvelopeOpenText, FaCheckCircle, FaExclamationCircle, FaArrowLeft, FaHome, FaPaperPlane, FaInfoCircle } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -156,7 +157,7 @@ export default function Unsubscribe() {
                                     className="group relative flex items-center justify-center gap-3 w-full py-5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-2xl transition-all duration-300 shadow-xl shadow-emerald-500/20 active:scale-[0.98] disabled:opacity-50"
                                 >
                                     {loading ? (
-                                        <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                        <UrbanSetuSpinner size="xs" isBright={true} />
                                     ) : (
                                         <>
                                             Unsubscribe Me

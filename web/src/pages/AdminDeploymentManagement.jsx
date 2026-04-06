@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { Navigate, Link } from 'react-router-dom';
-import { FaUpload, FaTrash, FaDownload, FaCheck, FaTimes, FaMobile, FaDesktop, FaApple, FaAndroid, FaWindows, FaSpinner, FaCloudUploadAlt, FaHistory, FaInfoCircle, FaRocket, FaFileCode } from 'react-icons/fa';
+import { FaUpload, FaTrash, FaDownload, FaCheck, FaTimes, FaMobile, FaDesktop, FaApple, FaAndroid, FaWindows, FaCloudUploadAlt, FaHistory, FaInfoCircle, FaRocket, FaFileCode } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 
 import { usePageTitle } from '../hooks/usePageTitle';
 import { resetAndroidDownloadCache } from '../utils/androidDownload';
 import AdminDeploymentManagementSkeleton from '../components/skeletons/AdminDeploymentManagementSkeleton';
 import { authenticatedFetch } from '../utils/auth';
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function AdminDeploymentManagement() {
@@ -718,7 +719,7 @@ export default function AdminDeploymentManagement() {
                   >
                     {uploading ? (
                       <>
-                        <FaSpinner className="animate-spin" />
+                        <UrbanSetuSpinner size="xs" isBright={true} />
                         Processing...
                       </>
                     ) : (

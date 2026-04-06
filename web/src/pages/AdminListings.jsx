@@ -11,6 +11,7 @@ import { toast } from 'react-toastify';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { isMobileDevice } from '../utils/mobileUtils';
 import AdminListingsSkeleton from "../components/skeletons/AdminListingsSkeleton";
+import UrbanSetuSpinner from "../components/UrbanSetuSpinner";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function AdminListings() {
@@ -903,10 +904,10 @@ export default function AdminListings() {
                       className="px-2 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm bg-red-600 text-white rounded-md hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 sm:gap-2"
                     >
                       {propertyReportsLoading ? (
-                        <>
-                          <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-b-2 border-white"></div>
+                        <div className="flex items-center gap-2">
+                          <UrbanSetuSpinner size="sm" isBright={true} />
                           <span className="hidden sm:inline">Loading...</span>
-                        </>
+                        </div>
                       ) : (
                         <>
                           <FaSync className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -919,11 +920,10 @@ export default function AdminListings() {
               </div>
             </div>
 
-            {/* Reports List */}
             <div className="flex-1 overflow-y-auto p-2 sm:p-4 lg:p-6 min-h-0 bg-white dark:bg-gray-800 transition-colors duration-300">
               {propertyReportsLoading ? (
                 <div className="flex items-center justify-center py-20">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+                  <UrbanSetuSpinner size="md" />
                   <span className="ml-2 text-gray-600 dark:text-gray-400">Loading property reports...</span>
                 </div>
               ) : propertyReportsError ? (
@@ -1040,7 +1040,7 @@ export default function AdminListings() {
             <div className="p-6 overflow-y-auto max-h-[75vh]">
               {statsLoading ? (
                 <div className="flex flex-col items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+                  <UrbanSetuSpinner size="md" />
                   <p className="mt-4 text-gray-500 dark:text-gray-400">Loading statistics...</p>
                 </div>
               ) : listingStats ? (

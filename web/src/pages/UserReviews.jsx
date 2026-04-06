@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { FaStar, FaEdit, FaTrash, FaSearch, FaCheck, FaTimes, FaSync, FaClock, FaChartLine, FaChartBar, FaChartPie, FaArrowUp, FaArrowDown, FaUsers, FaComments, FaExclamationTriangle, FaHome, FaFilter, FaSort, FaBars, FaEye, FaHeart, FaDownload, FaShare, FaPlus, FaTimes as FaX } from 'react-icons/fa';
 import ReviewForm from '../components/ReviewForm.jsx';
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 import UserReviewsSkeleton from '../components/skeletons/UserReviewsSkeleton';
 import { socket } from '../utils/socket.js';
 import { toast } from 'react-toastify';
@@ -519,7 +520,7 @@ export default function UserReviews() {
                 disabled={loading}
                 className="px-2 sm:px-3 py-2 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors flex items-center gap-1 sm:gap-2 text-xs sm:text-sm disabled:opacity-50"
               >
-                <FaSync className={`text-xs sm:text-sm ${loading ? 'animate-spin' : ''}`} />
+                {loading ? <UrbanSetuSpinner size="sm" /> : <FaSync className="text-xs sm:text-sm" />}
                 <span className="hidden sm:inline">Refresh</span>
               </button>
 

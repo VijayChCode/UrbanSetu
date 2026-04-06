@@ -1,9 +1,10 @@
-﻿import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { FaTrash, FaUndo, FaSearch, FaFilter, FaUser, FaUserShield, FaCalendarAlt, FaExclamationTriangle, FaArrowLeft, FaArrowRight } from "react-icons/fa";
 import { toast } from "react-toastify"; // Using toast directly if ToastContainer is at App level
 import ContactSupportWrapper from "../components/ContactSupportWrapper";
 import AdminDeletedListingsSkeleton from "../components/skeletons/AdminDeletedListingsSkeleton";
+import UrbanSetuSpinner from "../components/UrbanSetuSpinner";
 
 import { usePageTitle } from "../hooks/usePageTitle";
 import { authenticatedFetch } from '../utils/auth';
@@ -309,7 +310,7 @@ export default function AdminDeletedListings() {
                                                     className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/40 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
                                                 >
                                                     {restoringId === item._id ? (
-                                                        <span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
+                                                        <UrbanSetuSpinner size="sm" isBright={false} />
                                                     ) : (
                                                         <FaUndo />
                                                     )}
@@ -382,7 +383,7 @@ export default function AdminDeletedListings() {
                                     className="flex-1 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white font-medium rounded-xl transition-colors shadow-lg shadow-green-200 dark:shadow-none flex justify-center items-center gap-2"
                                 >
                                     {restoringId !== null ? (
-                                        <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                                        <UrbanSetuSpinner size="sm" isBright={true} />
                                     ) : (
                                         <>Restore Property</>
                                     )}

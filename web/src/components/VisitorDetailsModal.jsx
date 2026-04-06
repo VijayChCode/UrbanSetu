@@ -3,6 +3,7 @@ import {
     FaTimes, FaSync, FaFingerprint, FaClock, FaMapMarkerAlt, FaHistory, FaArrowDown, FaExclamationTriangle
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
+import UrbanSetuSpinner from './UrbanSetuSpinner';
 
 const calculateDuration = (start, lastActive) => {
     if (!start || !lastActive) return '0s';
@@ -51,7 +52,7 @@ const VisitorDetailsModal = ({ visitor, onClose, onRefresh, isRefreshing }) => {
                                 className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-full transition-colors"
                                 title="Refresh details"
                             >
-                                <FaSync className={isRefreshing ? 'animate-spin' : ''} />
+                                {isRefreshing ? <UrbanSetuSpinner size="sm" /> : <FaSync />}
                             </button>
                         )}
                         <button

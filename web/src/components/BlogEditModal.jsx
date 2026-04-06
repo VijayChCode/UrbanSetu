@@ -1,10 +1,11 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaTimes, FaImage, FaVideo, FaTags, FaPencilAlt, FaPlus, FaCloudUploadAlt, FaPlay } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import ImagePreview from './ImagePreview';
 import VideoPreview from './VideoPreview';
 import MarkdownEditor from './MarkdownEditor';
 import { authenticatedFetch } from '../utils/auth';
+import UrbanSetuSpinner from './UrbanSetuSpinner';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://urbansetu-pvt4.onrender.com';
 
@@ -295,7 +296,7 @@ const BlogEditModal = ({
                       htmlFor="thumbnail-upload"
                       className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-xl cursor-pointer transition-colors shadow-sm flex items-center gap-2"
                     >
-                      {uploading ? <span className="animate-spin">⏳</span> : <FaCloudUploadAlt />}
+                      {uploading ? <UrbanSetuSpinner size="sm" isBright={true} /> : <FaCloudUploadAlt />}
                       <span className="hidden sm:inline text-xs font-bold uppercase">Upload</span>
                     </label>
                     {formData.thumbnail && (
@@ -361,7 +362,7 @@ const BlogEditModal = ({
                             className={`flex-1 px-4 py-3 border dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors text-sm font-medium ${mediaErrors[`img-${index}`] ? 'border-red-500' : 'border-gray-200'}`}
                           />
                           <label className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-xl cursor-pointer transition-colors shadow-sm flex items-center gap-2">
-                            {uploadingMedia[`img-${index}`] ? <span className="animate-spin">⏳</span> : <FaCloudUploadAlt />}
+                            {uploadingMedia[`img-${index}`] ? <UrbanSetuSpinner size="sm" isBright={true} /> : <FaCloudUploadAlt />}
                             <span className="hidden sm:inline text-xs font-bold uppercase">Upload</span>
                             <input
                               type="file"
@@ -429,7 +430,7 @@ const BlogEditModal = ({
                             className={`flex-1 px-4 py-3 border dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 transition-colors text-sm font-medium ${mediaErrors[`vid-${index}`] ? 'border-red-500' : 'border-gray-200'}`}
                           />
                           <label className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-xl cursor-pointer transition-colors shadow-sm flex items-center gap-2">
-                            {uploadingMedia[`vid-${index}`] ? <span className="animate-spin">⏳</span> : <FaCloudUploadAlt />}
+                            {uploadingMedia[`vid-${index}`] ? <UrbanSetuSpinner size="sm" isBright={true} /> : <FaCloudUploadAlt />}
                             <span className="hidden sm:inline text-xs font-bold uppercase">Upload</span>
                             <input
                               type="file"

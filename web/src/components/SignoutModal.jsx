@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { LogOut } from 'lucide-react';
+import UrbanSetuSpinner from './UrbanSetuSpinner';
 
 export default function SignoutModal() {
     const [index, setIndex] = useState(0);
@@ -34,7 +35,7 @@ export default function SignoutModal() {
             `}</style>
             <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-8 flex flex-col items-center gap-6 max-w-sm w-full mx-4 transform scale-100 animate-bounce-small transition-colors">
                 <div className="relative">
-                    <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-100 dark:border-blue-900 border-t-blue-600 dark:border-t-blue-500"></div>
+                    <UrbanSetuSpinner size="xl" />
                     <div className="absolute inset-0 flex items-center justify-center">
                         <LogOut className="text-blue-600 dark:text-blue-400 text-lg" />
                     </div>

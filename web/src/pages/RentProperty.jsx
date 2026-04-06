@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { toast } from 'react-toastify';
-import { FaLock, FaCalendarAlt, FaMoneyBillWave, FaCheckCircle, FaCheck, FaChevronRight, FaHome, FaShieldAlt, FaFileContract, FaTimesCircle, FaCreditCard, FaChevronLeft, FaMapMarkerAlt, FaReceipt, FaDownload, FaCoins, FaSpinner } from "react-icons/fa";
+import { FaLock, FaCalendarAlt, FaMoneyBillWave, FaCheckCircle, FaCheck, FaChevronRight, FaHome, FaShieldAlt, FaFileContract, FaTimesCircle, FaCreditCard, FaChevronLeft, FaMapMarkerAlt, FaReceipt, FaDownload, FaCoins } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePageTitle } from '../hooks/usePageTitle';
 import PaymentModal from '../components/PaymentModal';
@@ -11,6 +11,7 @@ import DigitalSignature from '../components/rental/DigitalSignature';
 import RentPropertySkeleton from '../components/skeletons/RentPropertySkeleton';
 import SetuCoinParticles from '../components/SetuCoins/SetuCoinParticles';
 import { authenticatedFetch } from '../utils/auth';
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -1354,12 +1355,12 @@ export default function RentProperty() {
                     disabled={draftingClause || !newClauseInput.trim() || !!contract}
                     className="bg-purple-600 text-white px-4 py-3 sm:py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-medium w-full sm:w-auto"
                   >
-                    {draftingClause ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                        Drafting...
-                      </>
-                    ) : (
+                      {draftingClause ? (
+                        <>
+                          <UrbanSetuSpinner size="sm" isBright={true} />
+                          Drafting...
+                        </>
+                      ) : (
                       <>
                         <span>✨ Draft</span>
                       </>
@@ -1912,7 +1913,7 @@ export default function RentProperty() {
                   >
                     {otpVerifying ? (
                       <>
-                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                        <UrbanSetuSpinner size="sm" isBright={true} />
                         Verifying...
                       </>
                     ) : (

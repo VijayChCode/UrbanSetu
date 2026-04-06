@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { authenticatedFetch } from '../utils/auth';
+import UrbanSetuSpinner from './UrbanSetuSpinner';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -1112,10 +1113,10 @@ export default function NotificationBell({ mobile = false }) {
                             className="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                           >
                             {sendingAllNotification ? (
-                              <>
-                                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                              <div className="flex items-center gap-2">
+                                <UrbanSetuSpinner size="sm" isBright={true} />
                                 Sending...
-                              </>
+                              </div>
                             ) : (
                               <>
                                 <FaUsers className="w-3 h-3" />
@@ -1215,7 +1216,7 @@ export default function NotificationBell({ mobile = false }) {
                               </select>
                               {fetchingUsers && (
                                 <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-500"></div>
+                                  <UrbanSetuSpinner size="sm" />
                                 </div>
                               )}
                             </div>
@@ -1288,10 +1289,10 @@ export default function NotificationBell({ mobile = false }) {
                             className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                           >
                             {sendingUserNotification ? (
-                              <>
-                                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                              <div className="flex items-center gap-2">
+                                <UrbanSetuSpinner size="sm" isBright={true} />
                                 Sending...
-                              </>
+                              </div>
                             ) : (
                               <>
                                 <FaPaperPlane className="w-3 h-3" />
@@ -1713,10 +1714,10 @@ export default function NotificationBell({ mobile = false }) {
                             className="w-full py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-green-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                           >
                             {sendingAllNotification ? (
-                              <>
-                                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                              <div className="flex items-center gap-2">
+                                <UrbanSetuSpinner size="sm" isBright={true} />
                                 Sending...
-                              </>
+                              </div>
                             ) : (
                               <>
                                 <FaUsers className="w-3 h-3" />
@@ -1770,7 +1771,7 @@ export default function NotificationBell({ mobile = false }) {
                             </select>
                             {fetchingUsers && (
                               <div className="absolute right-3 top-10 transform">
-                                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-500"></div>
+                                <UrbanSetuSpinner size="sm" />
                               </div>
                             )}
                             <div className="flex items-center justify-between mt-1.5">
@@ -1823,10 +1824,10 @@ export default function NotificationBell({ mobile = false }) {
                             className="w-full py-3 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                           >
                             {sendingUserNotification ? (
-                              <>
-                                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                              <div className="flex items-center gap-2">
+                                <UrbanSetuSpinner size="sm" isBright={true} />
                                 Sending...
-                              </>
+                              </div>
                             ) : (
                               <>
                                 <FaPaperPlane className="w-3 h-3" />

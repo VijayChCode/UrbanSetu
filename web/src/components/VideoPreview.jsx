@@ -22,7 +22,7 @@ import {
   FaDownload,
   FaCog,
   FaTachometerAlt,
-  FaSpinner,
+  FaTimesCircle,
   FaSun,
   FaClone,
   FaWindowRestore,
@@ -2330,7 +2330,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
                     )}
                     {/* Tiny loading overlay if neither is ready */}
                     <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <UrbanSetuSpinner size="sm" isBright={true} />
                     </div>
                   </div>
                   <span className="text-white text-sm font-bold font-mono drop-shadow-[0_2px_4px_rgba(0,0,0,1)] tracking-wider">

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FaSearch, FaMapMarkerAlt, FaHome, FaRupeeSign } from 'react-icons/fa';
 import { authenticatedFetch } from '../utils/auth';
+import UrbanSetuSpinner from './UrbanSetuSpinner';
 
 const SearchSuggestions = ({
   searchTerm,
@@ -113,7 +114,7 @@ const SearchSuggestions = ({
       {loading ? (
         <div className="p-4 text-center text-gray-500 dark:text-gray-400">
           <div className="flex items-center justify-center">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 dark:border-blue-400 mr-2"></div>
+            <UrbanSetuSpinner size="sm" className="mr-2" />
             Searching...
           </div>
         </div>

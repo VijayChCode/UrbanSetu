@@ -5,6 +5,7 @@ import { useDispatch } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FcGoogle } from 'react-icons/fc';
 import { Link2 } from 'lucide-react';
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 import { authenticatedFetch } from '../utils/csrf';
 import React, { useEffect, useState } from 'react';
 
@@ -181,7 +182,7 @@ export default function Oauth({ pageType, disabled = false, onAuthStart = null, 
             >
                 {isLoading ? (
                     <>
-                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 dark:border-gray-600 border-t-blue-600 dark:border-t-blue-400"></div>
+                        <UrbanSetuSpinner size="sm" />
                         {error ? 'Retrying...' : (pageType === "signIn" ? 'Signing In...' : 'Signing Up...')}
                     </>
                 ) : (
@@ -260,7 +261,7 @@ export default function Oauth({ pageType, disabled = false, onAuthStart = null, 
                         >
                             {isLoading ? (
                                 <>
-                                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-blue-600"></div>
+                                    <UrbanSetuSpinner size="sm" />
                                     <span>Authenticating...</span>
                                 </>
                             ) : (

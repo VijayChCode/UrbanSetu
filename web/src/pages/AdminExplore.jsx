@@ -12,6 +12,7 @@ import LocationSelector from "../components/LocationSelector";
 import { Search as SearchIcon, IndianRupee, MapPin, Grid, List, RefreshCw, XCircle } from "lucide-react";
 
 import { authenticatedFetch } from "../utils/auth";
+import UrbanSetuSpinner from "../components/UrbanSetuSpinner";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -271,7 +272,7 @@ export default function AdminExplore() {
           {isAiMode && (
             <div className="mb-6 flex justify-center animate-fade-in-down">
               <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-slate-900 px-6 py-2 rounded-full font-black uppercase text-[10px] tracking-widest flex items-center gap-2 shadow-xl">
-                <Grid className="animate-spin-slow" /> VECTOR SEARCH ACTIVE
+                <UrbanSetuSpinner size="sm" /> VECTOR SEARCH ACTIVE
                 <button onClick={clearAllFilters} className="ml-4 hover:text-white transition-colors"><FaTimes /></button>
               </div>
             </div>
@@ -689,7 +690,7 @@ export default function AdminExplore() {
                   disabled={deleteLoading}
                   className="flex-2 px-8 py-4 bg-red-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-red-600/30 flex items-center justify-center gap-2"
                 >
-                  {deleteLoading ? <span className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white"></span> : 'Eradicate Asset'}
+                  {deleteLoading ? <UrbanSetuSpinner size="sm" isBright={true} /> : 'Eradicate Asset'}
                 </button>
               </div>
             </form>

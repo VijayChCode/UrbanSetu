@@ -12,6 +12,7 @@ import { useImageAuditor } from '../hooks/useImageAuditor';
 import { FaBrain, FaExclamationTriangle, FaCheckCircle, FaLightbulb } from 'react-icons/fa';
 import ImagePreview from '../components/ImagePreview';
 import ConfirmationModal from '../components/ConfirmationModal';
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function EditListing() {
@@ -1240,7 +1241,7 @@ export default function EditListing() {
                         />
                         {uploadingImages[index] ? (
                           <>
-                            <div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+                            <UrbanSetuSpinner size="sm" />
                             <span className="text-sm text-gray-600">Uploading...</span>
                           </>
                         ) : (
@@ -1265,7 +1266,7 @@ export default function EditListing() {
                         title="AI Audit this URL"
                         disabled={isAuditing[`main_${index}`]}
                       >
-                        <FaBrain className={isAuditing[`main_${index}`] ? 'animate-spin' : ''} />
+                        {isAuditing[`main_${index}`] ? <UrbanSetuSpinner size="sm" isBright={true} /> : <FaBrain />}
                       </button>
                       <button
                         type="button"
@@ -1408,7 +1409,7 @@ export default function EditListing() {
                       />
                       {uploadingVideos[index] ? (
                         <>
-                          <div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+                          <UrbanSetuSpinner size="sm" />
                           <span className="text-sm text-gray-600">Uploading...</span>
                         </>
                       ) : (
@@ -1515,7 +1516,7 @@ export default function EditListing() {
                           />
                           {uploadingVirtualTour[index] ? (
                             <>
-                              <div className="animate-spin w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full"></div>
+                              <UrbanSetuSpinner size="sm" />
                               <span className="text-sm text-indigo-600 dark:text-indigo-400">Uploading...</span>
                             </>
                           ) : (
@@ -1535,7 +1536,7 @@ export default function EditListing() {
                           title="AI Audit this 360 URL"
                           disabled={isAuditing[`tour_${index}`]}
                         >
-                          <FaBrain className={isAuditing[`tour_${index}`] ? 'animate-spin text-blue-500' : 'text-blue-500'} />
+                          {isAuditing[`tour_${index}`] ? <UrbanSetuSpinner size="sm" isBright={true} /> : <FaBrain className="text-blue-500" />}
                         </button>
                         <button
                           type="button"

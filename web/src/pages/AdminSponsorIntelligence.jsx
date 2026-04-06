@@ -15,6 +15,7 @@ import {
 import { authenticatedFetch } from '../utils/auth';
 import { toast } from 'react-toastify';
 import { usePageTitle } from '../hooks/usePageTitle';
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 import AdminDashboardSkeleton from '../components/skeletons/AdminDashboardSkeleton';
 import VisitorDetailsModal from '../components/VisitorDetailsModal';
 
@@ -222,10 +223,10 @@ const AdminSponsorIntelligence = () => {
                             </div>
                             <button
                                 onClick={() => fetchMarketingStats(true)}
-                                className="p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl transition-all hover:scale-110 active:scale-95 shadow-lg shadow-blue-600/20 disabled:opacity-50"
+                                className="p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl transition-all hover:scale-110 active:scale-95 shadow-lg shadow-blue-600/20 disabled:opacity-50 flex items-center justify-center min-w-[48px]"
                                 disabled={refreshing}
                             >
-                                <FaSync className={refreshing ? 'animate-spin' : ''} />
+                                {refreshing ? <UrbanSetuSpinner size="xs" isBright={true} /> : <FaSync />}
                             </button>
                         </div>
                     </div>
@@ -478,9 +479,9 @@ const AdminSponsorIntelligence = () => {
                         <div className="p-8 overflow-y-auto custom-scrollbar flex-1">
                             {referrerVisitorsLoading ? (
                                 <div className="flex flex-col items-center justify-center py-20 space-y-4">
-                                    <div className="w-12 h-12 border-4 border-indigo-600/20 border-t-indigo-600 rounded-full animate-spin"></div>
-                                    <p className="text-gray-500 font-bold animate-pulse">Analyzing Referrer Data...</p>
-                                </div>
+                                     <UrbanSetuSpinner size="lg" />
+                                     <p className="text-gray-500 font-bold animate-pulse">Analyzing Referrer Data...</p>
+                                 </div>
                             ) : referrerVisitors.length === 0 ? (
                                 <div className="text-center py-20">
                                     <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">

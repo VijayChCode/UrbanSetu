@@ -5,6 +5,7 @@ import { isMobileDevice } from '../utils/mobileUtils';
 import { FaEdit, FaUser, FaEnvelope, FaPhone, FaKey, FaTrash, FaSignOutAlt, FaHome, FaCalendarAlt, FaHeart, FaEye, FaCrown, FaTimes, FaCheck, FaStar, FaRoute, FaUserFriends, FaCreditCard, FaShieldAlt, FaTools, FaTruck, FaExclamationTriangle, FaCloudUploadAlt, FaClipboardList, FaMobileAlt, FaBookOpen, FaQuestionCircle, FaChartLine, FaInfoCircle, FaCog, FaFileContract, FaGavel, FaMoneyCheckAlt, FaUserTie, FaHeadset, FaMapSigns } from "react-icons/fa";
 import UserAvatar from "../components/UserAvatar";
 import EncryptedText from "../components/ui/EncryptedText";
+import UrbanSetuSpinner from "../components/UrbanSetuSpinner";
 import ContactSupportWrapper from "../components/ContactSupportWrapper";
 import SetuCoinCard from "../components/SetuCoins/SetuCoinCard";
 import AdminCoinCard from "../components/SetuCoins/AdminCoinCard";
@@ -1258,9 +1259,8 @@ export default function Profile() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-100">
         <div className="text-center">
-          <div className="relative">
-            <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-200 mx-auto"></div>
-            <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-600 border-t-transparent absolute top-0 left-1/2 transform -translate-x-1/2"></div>
+          <div className="relative flex justify-center">
+            <UrbanSetuSpinner size="xl" />
             <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${animationClasses.pulse}`}>
               <FaUser className="w-6 h-6 text-blue-600" />
             </div>
@@ -1357,7 +1357,7 @@ export default function Profile() {
       {isSigningOut && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999]">
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 flex flex-col items-center gap-4 max-w-sm">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-600"></div>
+            <UrbanSetuSpinner size="lg" />
             <p className="text-lg font-semibold text-gray-800 dark:text-gray-200">Signing out...</p>
           </div>
         </div>
@@ -1607,7 +1607,7 @@ export default function Profile() {
                           disabled={uploadingAvatar}
                         />
                         {uploadingAvatar ? (
-                          <div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+                          <UrbanSetuSpinner size="sm" />
                         ) : (
                           <FaEdit className={`text-gray-500 group-hover:text-blue-500 transition-colors duration-300 group-hover:${animationClasses.wiggle}`} title="Upload custom avatar" />
                         )}
@@ -1776,10 +1776,7 @@ export default function Profile() {
                     />
                     {emailValidation.loading && (
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                        <svg className="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
-                        </svg>
+                        <UrbanSetuSpinner size="sm" />
                       </div>
                     )}
                     {/* Show blue tick when email is available in DB but not yet verified */}
@@ -1838,7 +1835,12 @@ export default function Profile() {
                         disabled={otpLoading || !canResend || !formData.email || (profileRequiresCaptcha && !profileRecaptchaToken)}
                         className="absolute right-16 top-1/2 transform -translate-y-1/2 px-3 py-1 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap z-10"
                       >
-                        {otpLoading ? "Sending..." : "Send OTP"}
+                        {otpLoading ? (
+                          <div className="flex items-center gap-2">
+                            <UrbanSetuSpinner size="sm" isBright={true} />
+                            <span>Sending...</span>
+                          </div>
+                        ) : "Send OTP"}
                       </button>
                     )}
                     {/* Show green tick and edit icon after successful email verification */}
@@ -1939,7 +1941,12 @@ export default function Profile() {
                           disabled={verifyLoading || otp.length !== 6}
                           className="px-3 py-2 sm:px-4 sm:py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 text-sm sm:text-base whitespace-nowrap"
                         >
-                          {verifyLoading ? "Verifying..." : "Verify"}
+                          {verifyLoading ? (
+                            <div className="flex items-center gap-2">
+                              <UrbanSetuSpinner size="sm" isBright={true} />
+                              <span>Verifying...</span>
+                            </div>
+                          ) : "Verify"}
                         </button>
                       </div>
                       <div className="flex items-center justify-between mt-2">
@@ -1958,7 +1965,12 @@ export default function Profile() {
                               disabled={otpLoading || verifyLoading || (profileRequiresCaptcha && !profileRecaptchaToken)}
                               className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                             >
-                              {otpLoading ? "Sending..." : "Resend OTP"}
+                              {otpLoading ? (
+                                <div className="flex items-center gap-2">
+                                  <UrbanSetuSpinner size="sm" isBright={false} />
+                                  <span>Sending...</span>
+                                </div>
+                              ) : "Resend OTP"}
                             </button>
                           )}
                         </div>
@@ -2021,10 +2033,7 @@ export default function Profile() {
                     />
                     {mobileValidation.loading && (
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                        <svg className="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
-                        </svg>
+                        <UrbanSetuSpinner size="sm" />
                       </div>
                     )}
                     {mobileValidation.available === true && !mobileValidation.loading && (
@@ -2208,7 +2217,10 @@ export default function Profile() {
                   }
                 >
                   {loading ? (
-                    <span className="flex items-center gap-2"><svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>Saving...</span>
+                    <span className="flex items-center gap-2">
+                      <UrbanSetuSpinner size="sm" isBright={true} />
+                      Saving...
+                    </span>
                   ) : (
                     'Save Changes'
                   )}
@@ -2667,7 +2679,7 @@ export default function Profile() {
                 >
                   {loading ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      <UrbanSetuSpinner size="sm" isBright={true} className="mr-2" />
                       Updating...
                     </>
                   ) : (

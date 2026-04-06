@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { getCurrentCaptchaConfig, validateCaptchaConfig } from '../config/recaptcha';
+import UrbanSetuSpinner from './UrbanSetuSpinner';
 
 const RecaptchaWidget = ({
   onVerify,
@@ -102,7 +103,7 @@ const RecaptchaWidget = ({
     return (
       <div className={`flex flex-col items-center justify-center p-6 border border-gray-100 dark:border-gray-700 rounded-xl bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm animate-pulse ${className}`}>
         <div className="relative">
-          <div className="w-10 h-10 rounded-full border-4 border-blue-600/20 dark:border-blue-400/20 border-t-blue-600 dark:border-t-blue-400 animate-spin"></div>
+          <UrbanSetuSpinner size="lg" />
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="w-2 h-2 bg-blue-600 dark:bg-blue-400 rounded-full animate-ping"></div>
           </div>

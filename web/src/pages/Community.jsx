@@ -13,6 +13,7 @@ import ReportModal from '../components/ReportModal';
 import UserAvatar from '../components/UserAvatar';
 import SocialSharePanel from '../components/SocialSharePanel';
 import { authenticatedFetch } from '../utils/auth';
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 
 export default function Community() {
     usePageTitle("Community Hub - Neighborhood Forum");
@@ -584,7 +585,7 @@ export default function Community() {
             <div className="absolute bottom-full left-0 w-64 bg-white dark:bg-gray-900 shadow-xl rounded-lg border border-gray-200 dark:border-gray-700 mb-2 z-[100] overflow-hidden animate-fade-in-up" style={{ opacity: 1 }}>
                 <div className="bg-gray-50 dark:bg-gray-800 px-3 py-2 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Mention Property</span>
-                    {mentionSearchLoading && <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>}
+                    {mentionSearchLoading && <UrbanSetuSpinner size="sm" />}
                 </div>
                 <div className="max-h-48 overflow-y-auto">
                     {propertySuggestions.map((prop, idx) => (

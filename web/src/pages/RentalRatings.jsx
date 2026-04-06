@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { FaStar, FaUser, FaHome, FaSpinner, FaSearch, FaTimes, FaCheckCircle, FaClock } from 'react-icons/fa';
+import { FaStar, FaUser, FaHome, FaSearch, FaTimes, FaCheckCircle, FaClock } from 'react-icons/fa';
 import { usePageTitle } from '../hooks/usePageTitle';
 import RatingForm from '../components/ratings/RatingForm';
 import RatingDisplay from '../components/ratings/RatingDisplay';

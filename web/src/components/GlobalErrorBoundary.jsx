@@ -1,5 +1,6 @@
 import React from 'react';
 import { FaServer, FaExclamationTriangle, FaSync, FaArrowRight, FaRobot, FaRocket } from 'react-icons/fa';
+import UrbanSetuSpinner from './UrbanSetuSpinner';
 import ListingItem from './ListingItem';
 import { getLiveRecommendations } from '../utils/sentinelLiveEngine';
 import { authenticatedFetch } from '../utils/auth';
@@ -324,9 +325,9 @@ class GlobalErrorBoundary extends React.Component {
 
                                     <button
                                         onClick={() => window.location.reload()}
-                                        className="w-full py-3 px-4 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
+                                        className="w-full py-3 px-4 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 group"
                                     >
-                                        <FaSync className="group-hover:animate-spin" /> Reload Page
+                                        <UrbanSetuSpinner size="sm" className="group-hover:opacity-100 transition-opacity" /> Reload Page
                                     </button>
                                 </div>
                             </>

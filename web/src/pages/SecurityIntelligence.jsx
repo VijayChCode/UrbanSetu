@@ -14,6 +14,7 @@ import {
 import { authenticatedFetch } from '../utils/auth';
 import { API_BASE_URL } from '../config/api';
 import { usePageTitle } from '../hooks/usePageTitle';
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 import SecurityIntelligenceSkeleton from '../components/skeletons/SecurityIntelligenceSkeleton';
 
 const SecurityIntelligence = () => {
@@ -118,10 +119,10 @@ const SecurityIntelligence = () => {
                         </span>
                         <button
                             onClick={fetchStats}
-                            className="p-2 bg-white dark:bg-gray-800 rounded-full shadow-md hover:shadow-lg transition-all text-blue-600 dark:text-blue-400 group"
+                            className="p-2 bg-white dark:bg-gray-800 rounded-full shadow-md hover:shadow-lg transition-all text-blue-600 dark:text-blue-400 group flex items-center justify-center min-w-[40px] min-h-[40px]"
                             title="Refresh Data"
                         >
-                            <FaSync className={`w-5 h-5 ${loading ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'}`} />
+                            {loading ? <UrbanSetuSpinner size="sm" /> : <FaSync className="w-5 h-5 group-hover:rotate-180 transition-transform duration-500" />}
                         </button>
                     </div>
                 </div>
@@ -361,7 +362,7 @@ const SecurityIntelligence = () => {
                         <div className="p-6 max-h-[70vh] overflow-y-auto">
                             {detailLoading ? (
                                 <div className="py-20 flex flex-col items-center justify-center gap-4">
-                                    <FaSync className="text-4xl text-blue-500 animate-spin" />
+                                    <UrbanSetuSpinner size="lg" />
                                     <p className="text-gray-500 dark:text-gray-400 animate-pulse">Analyzing device footprints...</p>
                                 </div>
                             ) : selectedInstallation ? (

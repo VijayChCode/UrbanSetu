@@ -1,12 +1,13 @@
 import React from 'react';
-import { FaChartLine, FaDollarSign, FaEquals, FaInfoCircle, FaSpinner } from 'react-icons/fa';
+import { FaChartLine, FaDollarSign, FaEquals, FaInfoCircle } from 'react-icons/fa';
+import UrbanSetuSpinner from '../UrbanSetuSpinner';
 import { TrendingUp, TrendingDown } from "lucide-react";
 
 export default function RentPredictionDisplay({ prediction, loading, onGenerate }) {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <FaSpinner className="animate-spin text-2xl text-blue-600 dark:text-blue-400 mr-3" />
+        <UrbanSetuSpinner size="md" className="mr-3" />
         <span className="text-gray-600 dark:text-gray-300">Generating prediction...</span>
       </div>
     );

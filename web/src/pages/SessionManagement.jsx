@@ -11,6 +11,7 @@ import { usePageTitle } from '../hooks/usePageTitle';
 import { socket } from '../utils/socket';
 import AdminSessionManagementSkeleton from '../components/skeletons/AdminSessionManagementSkeleton';
 import { authenticatedFetch, clearAuthData } from '../utils/auth';
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 
 
 const SessionManagement = () => {
@@ -341,7 +342,11 @@ const SessionManagement = () => {
                   className="flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-600 hover:shadow-sm transition-all focus:outline-none"
                   title="Refresh sessions"
                 >
-                  <FaSync className={`mr-2 ${loading || isRefreshing ? 'animate-spin text-blue-600' : 'text-gray-500'}`} />
+                  {isRefreshing ? (
+                    <UrbanSetuSpinner size="sm" className="mr-2" />
+                  ) : (
+                    <FaSync className="mr-2 text-gray-500" />
+                  )}
                   Refresh
                 </button>
                 <div className="w-px bg-gray-200 dark:bg-gray-600 my-1 mx-1"></div>
@@ -375,7 +380,7 @@ const SessionManagement = () => {
           <div className="flex flex-col md:flex-row gap-4 mb-6">
             <div className="flex-1 relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                {isSearching ? <div className="animate-spin h-5 w-5 border-2 border-blue-500 rounded-full border-t-transparent"></div> : <FaSearch className="text-gray-400 dark:text-gray-500" />}
+                {isSearching ? <UrbanSetuSpinner size="sm" /> : <FaSearch className="text-gray-400 dark:text-gray-500" />}
               </div>
               <input
                 type="text"
@@ -578,7 +583,7 @@ const SessionManagement = () => {
                                 className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 disabled:opacity-50 hover:bg-red-50 dark:hover:bg-red-900/20 p-2 rounded-lg transition-colors"
                                 title="Force Logout"
                               >
-                                {revokingSession === session.sessionId ? <FaSync className="animate-spin" /> : <FaSignOutAlt />}
+                                {revokingSession === session.sessionId ? <UrbanSetuSpinner size="sm" /> : <FaSignOutAlt />}
                               </button>
                               <button
                                 onClick={() => openLogoutAllModal(session)}

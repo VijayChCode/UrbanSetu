@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import { FaLeaf, FaUsers, FaShieldAlt, FaChartLine, FaArrowUp, FaTrendingDown, FaStar, FaGlobe, FaRecycle, FaSolarPanel, FaWater, FaTrash, FaAccessibleIcon, FaHeart, FaBuilding, FaGavel, FaEye, FaInfoCircle } from 'react-icons/fa';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { authenticatedFetch } from '../utils/auth';
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -59,11 +60,9 @@ export default function AdminESGAnalytics() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                    <p className="mt-2 text-gray-600">Loading ESG Analytics...</p>
-                </div>
+            <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-gray-50 dark:bg-gray-900 transition-colors">
+                <UrbanSetuSpinner size="xl" />
+                <p className="text-gray-600 dark:text-gray-400 font-bold tracking-widest animate-pulse uppercase">Calculating ESG Metrics...</p>
             </div>
         );
     }

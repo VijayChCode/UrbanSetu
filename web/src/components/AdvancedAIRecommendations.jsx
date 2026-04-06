@@ -3,7 +3,8 @@ import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import ListingItem from './ListingItem';
 import AdvancedESGRecommendations from './AdvancedESGRecommendations';
-import { FaRobot, FaBrain, FaChartLine, FaCogs, FaLightbulb, FaSpinner, FaTimesCircle, FaInfoCircle, FaEye, FaThumbsUp, FaArrowUp, FaShieldAlt, FaRocket, FaLeaf } from 'react-icons/fa';
+import { FaRobot, FaBrain, FaChartLine, FaCogs, FaLightbulb, FaTimesCircle, FaInfoCircle, FaEye, FaThumbsUp, FaArrowUp, FaShieldAlt, FaRocket, FaLeaf } from 'react-icons/fa';
+import UrbanSetuSpinner from './UrbanSetuSpinner';
 import { toast } from 'react-toastify';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -224,11 +225,10 @@ const AdvancedAIRecommendations = ({
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_2px,3px_100%]"></div>
 
         <div className="relative flex flex-col items-center gap-10">
-          <div className="relative">
-            <div className="w-32 h-32 border-4 border-blue-100 rounded-full animate-pulse"></div>
-            <div className="absolute inset-0 border-t-4 border-blue-600 rounded-full animate-spin"></div>
+          <div className="relative flex items-center justify-center">
+            <UrbanSetuSpinner size="xl" className="w-32 h-32" />
             <div className="absolute inset-0 flex items-center justify-center">
-              <FaBrain className="text-blue-600 text-5xl animate-bounce" />
+              <FaBrain className="text-blue-600 text-5xl animate-pulse" />
             </div>
           </div>
 
@@ -531,7 +531,7 @@ const AdvancedAIRecommendations = ({
                   </div>
                 ) : (
                   <div className="p-10 text-center flex flex-col items-center gap-4">
-                    <FaSpinner className="animate-spin text-slate-300 text-3xl" />
+                    <UrbanSetuSpinner size="md" />
                     <span className="text-xs text-slate-400 font-mono">RECONSTRUCTING_VECTORS...</span>
                   </div>
                 )}

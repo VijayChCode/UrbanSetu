@@ -12,6 +12,7 @@ import { useImageAuditor } from '../hooks/useImageAuditor';
 import { FaBrain, FaExclamationTriangle, FaCheckCircle, FaLightbulb } from 'react-icons/fa';
 import ImagePreview from '../components/ImagePreview';
 import ConfirmationModal from "../components/ConfirmationModal";
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function CreateListing() {
@@ -1202,8 +1203,15 @@ export default function CreateListing() {
                       className="w-full md:flex-1 p-3 border dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
                     />
                     <div className="flex items-center gap-2 w-full md:w-auto">
-                      <label className="flex-1 md:flex-none justify-center bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 transition cursor-pointer flex items-center">
-                        {uploadingImages[index] ? 'Uploading...' : 'Upload File'}
+                      <label className="flex-1 md:flex-none justify-center bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 transition cursor-pointer flex items-center gap-2">
+                        {uploadingImages[index] ? (
+                          <>
+                            <UrbanSetuSpinner size="sm" isBright={true} />
+                            <span>Uploading...</span>
+                          </>
+                        ) : (
+                          'Upload File'
+                        )}
                         <input
                           type="file"
                           accept="image/*"
@@ -1225,7 +1233,7 @@ export default function CreateListing() {
                         title="AI Audit this URL"
                         disabled={isAuditing[`main_${index}`]}
                       >
-                        <FaBrain className={isAuditing[`main_${index}`] ? 'animate-spin' : ''} />
+                        {isAuditing[`main_${index}`] ? <UrbanSetuSpinner size="sm" isBright={true} /> : <FaBrain />}
                       </button>
                       <button
                         type="button"
@@ -1241,7 +1249,10 @@ export default function CreateListing() {
                     <p className="text-red-500 text-sm">{imageErrors[index]}</p>
                   )}
                   {uploadingImages[index] && (
-                    <p className="text-blue-500 text-sm">⏳ Uploading image...</p>
+                    <div className="flex items-center gap-2 text-blue-500 text-sm">
+                      <UrbanSetuSpinner size="sm" />
+                      <span>Uploading image...</span>
+                    </div>
                   )}
                 </div>
               ))}
@@ -1361,8 +1372,15 @@ export default function CreateListing() {
                       className={`flex-1 p-3 border dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors ${videoErrors[index] ? 'border-red-500' : ''
                         }`}
                     />
-                    <label className="bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 transition cursor-pointer">
-                      {uploadingVideos[index] ? 'Uploading...' : 'Upload File'}
+                    <label className="bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 transition cursor-pointer flex items-center gap-2">
+                      {uploadingVideos[index] ? (
+                        <>
+                          <UrbanSetuSpinner size="sm" isBright={true} />
+                          <span>Uploading...</span>
+                        </>
+                      ) : (
+                        'Upload File'
+                      )}
                       <input
                         type="file"
                         accept="video/*"
@@ -1384,7 +1402,10 @@ export default function CreateListing() {
                     <p className="text-red-500 text-sm">{videoErrors[index]}</p>
                   )}
                   {uploadingVideos[index] && (
-                    <p className="text-blue-500 text-sm">⏳ Uploading video...</p>
+                    <div className="flex items-center gap-2 text-blue-500 text-sm">
+                      <UrbanSetuSpinner size="sm" />
+                      <span>Uploading video...</span>
+                    </div>
                   )}
                   {url && (
                     <div className="w-full rounded-lg overflow-hidden bg-black">

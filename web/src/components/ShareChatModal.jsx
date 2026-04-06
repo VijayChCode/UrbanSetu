@@ -3,6 +3,7 @@ import { FaShareAlt, FaCopy, FaTrash, FaClock, FaCheck, FaTimes, FaGlobe, FaSync
 import { toast } from 'react-toastify';
 import { authenticatedFetch } from '../utils/auth';
 import SocialSharePanel from './SocialSharePanel';
+import UrbanSetuSpinner from './UrbanSetuSpinner';
 
 export default function ShareChatModal({ isOpen, onClose, sessionId, currentChatName, themeColors, onShareStatusChange }) {
     const [loadingType, setLoadingType] = useState(null); // 'fetch', 'create', 'update', 'revoke', null
@@ -182,7 +183,9 @@ export default function ShareChatModal({ isOpen, onClose, sessionId, currentChat
                     </h3>
                     <div className="flex items-center gap-2">
                         <button onClick={fetchShareInfo} disabled={loadingType === 'fetch'} className="hover:bg-white/20 p-2 rounded-full transition-colors flex items-center justify-center" title="Refresh Views">
-                            <FaSync className={loadingType === 'fetch' ? 'animate-spin' : ''} />
+                            <div className="flex items-center justify-center">
+                                {loadingType === 'fetch' ? <UrbanSetuSpinner size="sm" isBright={true} /> : <FaSync />}
+                            </div>
                         </button>
                         <button onClick={onClose} className="hover:bg-white/20 p-2 rounded-full transition-colors">
                             <FaTimes />
@@ -193,7 +196,7 @@ export default function ShareChatModal({ isOpen, onClose, sessionId, currentChat
                 <div className="p-6 space-y-6">
                     {loadingType === 'fetch' && !shareData && (
                         <div className="flex flex-col items-center justify-center py-8 gap-3">
-                            <div className={`animate-spin rounded-full h-8 w-8 border-b-2 ${themeColors ? themeColors.accent.replace('text-', 'border-') : 'border-blue-600'}`}></div>
+                            <UrbanSetuSpinner size="md" />
                             <span className="text-gray-500 text-sm font-medium">Verifying Link Status...</span>
                         </div>
                     )}
@@ -249,7 +252,7 @@ export default function ShareChatModal({ isOpen, onClose, sessionId, currentChat
                                 >
                                     {loadingType === 'create' ? (
                                         <>
-                                            <FaSync className="animate-spin" /> Creating Link...
+                                            <UrbanSetuSpinner size="sm" isBright={true} /> Creating Link...
                                         </>
                                     ) : 'Create Public Link'}
                                 </button>
@@ -329,7 +332,7 @@ export default function ShareChatModal({ isOpen, onClose, sessionId, currentChat
                                 >
                                     {loadingType === 'update' ? (
                                         <>
-                                            <FaSync className="animate-spin text-sm" /> Updating...
+                                            <UrbanSetuSpinner size="sm" /> Updating...
                                         </>
                                     ) : 'Update Link'}
                                 </button>
@@ -371,7 +374,7 @@ export default function ShareChatModal({ isOpen, onClose, sessionId, currentChat
                                 >
                                     {loadingType === 'revoke' ? (
                                         <>
-                                            <FaSync className="animate-spin text-sm" /> Revoking...
+                                            <UrbanSetuSpinner size="sm" isBright={true} /> Revoking...
                                         </>
                                     ) : 'Yes, Revoke Link'}
                                 </button>

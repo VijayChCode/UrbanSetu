@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import ListingItem from './ListingItem';
-import { FaLeaf, FaUsers, FaShieldAlt, FaChartLine, FaCogs, FaLightbulb, FaSpinner, FaTimesCircle, FaInfoCircle, FaEye, FaThumbsUp, FaArrowUp, FaRecycle, FaGlobe, FaStar } from 'react-icons/fa';
+import { FaLeaf, FaUsers, FaShieldAlt, FaChartLine, FaCogs, FaLightbulb, FaTimesCircle, FaInfoCircle, FaEye, FaThumbsUp, FaArrowUp, FaRecycle, FaGlobe, FaStar } from 'react-icons/fa';
+import UrbanSetuSpinner from './UrbanSetuSpinner';
 import { toast } from 'react-toastify';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -224,7 +225,7 @@ To maintain a balanced portfolio, we suggest investigating more Global Impact pr
       <div className={`relative min-h-[500px] flex items-center justify-center bg-gradient-to-br from-[#f0fdf4] to-white dark:from-slate-900 dark:to-slate-950 rounded-[40px] border border-green-100 dark:border-green-900/30 shadow-inner ${className}`}>
         <div className="flex flex-col items-center gap-8">
           <div className="relative">
-            <div className="w-24 h-24 border-b-4 border-emerald-500 rounded-full animate-spin"></div>
+            <UrbanSetuSpinner size="xl" />
             <FaLeaf className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-emerald-600 text-4xl" />
           </div>
           <div className="text-center animate-pulse">
@@ -388,7 +389,7 @@ To maintain a balanced portfolio, we suggest investigating more Global Impact pr
                         </div>
                       </div>
                     ) : (
-                      <div className="p-20 text-center"><FaSpinner className="animate-spin text-emerald-300" /></div>
+                      <div className="p-20 text-center"><UrbanSetuSpinner size="lg" /></div>
                     )}
                   </div>
                 ))}

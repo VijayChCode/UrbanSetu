@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import ListingItem from '../../components/ListingItem';
-import { FaMapMarkerAlt, FaStar, FaBuilding, FaUserTie, FaCheckCircle, FaCommentDots, FaCalendarCheck, FaIdCard, FaArrowLeft, FaEdit, FaEnvelope, FaTimes, FaSpinner, FaTrash, FaCheck, FaExclamationTriangle, FaInfoCircle } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaStar, FaBuilding, FaUserTie, FaCheckCircle, FaCommentDots, FaCalendarCheck, FaIdCard, FaArrowLeft, FaEdit, FaEnvelope, FaTimes, FaTrash, FaCheck, FaExclamationTriangle, FaInfoCircle } from 'react-icons/fa';
+import UrbanSetuSpinner from '../../components/UrbanSetuSpinner';
 import { useSelector } from 'react-redux';
 import { API_BASE_URL } from '../../config/api';
 import { authenticatedFetch } from '../../utils/auth';
@@ -713,7 +714,7 @@ const AgentProfile = () => {
                                                     disabled={submittingReview}
                                                     className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition-colors disabled:opacity-70"
                                                 >
-                                                    {submittingReview ? 'Submitting...' : 'Submit Review'}
+                                                    {submittingReview ? <UrbanSetuSpinner size="xs" isBright={true} /> : 'Submit Review'}
                                                 </button>
                                             </form>
                                         </div>
@@ -853,7 +854,7 @@ const AgentProfile = () => {
                                             disabled={updating}
                                             className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition-transform hover:scale-105 disabled:opacity-70 disabled:scale-100 flex justify-center items-center gap-2"
                                         >
-                                            {updating ? <FaSpinner className="animate-spin" /> : 'Save Changes'}
+                                            {updating ? <UrbanSetuSpinner size="xs" isBright={true} /> : 'Save Changes'}
                                         </button>
                                     </div>
                                     <p className="text-xs text-gray-500 mt-4 text-center">

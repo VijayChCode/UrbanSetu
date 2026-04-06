@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { FaCoins, FaFire, FaUsers, FaChartLine, FaHistory, FaArrowUp, FaArrowDown, FaSearch, FaUser, FaCheck, FaExclamationTriangle, FaTimes, FaFilter, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { toast } from 'react-toastify';
+import UrbanSetuSpinner from "../components/UrbanSetuSpinner";
 import { usePageTitle } from '../hooks/usePageTitle';
 import { authenticatedFetch } from '../utils/auth';
 
@@ -271,7 +272,7 @@ export default function AdminCoinStats() {
 
                     {searching && (
                         <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 shadow-2xl rounded-xl border border-gray-100 dark:border-gray-700 p-4 flex items-center justify-center">
-                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-indigo-600 dark:border-indigo-400"></div>
+                            <UrbanSetuSpinner size="sm" />
                             <span className="ml-2 text-sm text-gray-500 dark:text-gray-300 font-medium">Searching users...</span>
                         </div>
                     )}

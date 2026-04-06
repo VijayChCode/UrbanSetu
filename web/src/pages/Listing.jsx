@@ -3859,7 +3859,7 @@ export default function Listing() {
                 <div className="space-y-4">
                   {faqLoading ? (
                     <div className="text-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                      <UrbanSetuSpinner size="md" />
                       <p className="mt-2 text-gray-600">Loading FAQs...</p>
                     </div>
                   ) : (
@@ -3955,7 +3955,7 @@ export default function Listing() {
                 </h3>
                 {blogLoading ? (
                   <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
+                    <UrbanSetuSpinner size="md" />
                     <p className="mt-2 text-gray-600 dark:text-gray-400">Loading articles...</p>
                   </div>
                 ) : (
@@ -4230,7 +4230,7 @@ export default function Listing() {
               >
                 {reportLoading ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <UrbanSetuSpinner size="sm" isBright={true} />
                     Reporting...
                   </>
                 ) : (
@@ -4285,7 +4285,7 @@ export default function Listing() {
                 >
                   {deassignLoading ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <UrbanSetuSpinner size="sm" isBright={true} />
                       Removing...
                     </>
                   ) : (

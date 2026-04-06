@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import UrbanSetuSpinner from './UrbanSetuSpinner';
 import { FaPhone, FaVideo, FaMicrophone, FaMicrophoneSlash, FaVideoSlash, FaSync, FaExpand, FaCompress, FaDesktop, FaSignLanguage, FaWifi, FaVolumeUp, FaWaveSquare, FaVolumeMute, FaChevronDown } from 'react-icons/fa';
 import UserAvatar from './UserAvatar';
 import { useAudioActivity } from '../hooks/useAudioActivity';
@@ -462,7 +463,7 @@ const ActiveCallModal = ({
         {presentationLoading && (
           <div className="absolute inset-0 z-40 bg-black flex flex-col items-center justify-center animate-fadeIn">
             <div className="relative">
-              <div className="w-16 h-16 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
+              <UrbanSetuSpinner size="xl" isBright={false} />
               <FaDesktop className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-blue-500 text-xl animate-pulse" />
             </div>
             <h3 className="mt-4 text-white text-xl font-medium tracking-wide">Starting presentation...</h3>

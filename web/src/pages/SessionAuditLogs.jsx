@@ -12,6 +12,7 @@ import { socket } from '../utils/socket';
 
 import { usePageTitle } from '../hooks/usePageTitle';
 import AdminSessionAuditLogsSkeleton from '../components/skeletons/AdminSessionAuditLogsSkeleton';
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 import { authenticatedFetch } from '../utils/auth';
 
 const SessionAuditLogs = () => {
@@ -584,7 +585,11 @@ const SessionAuditLogs = () => {
                   className="flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-600 hover:shadow-sm transition-all focus:outline-none"
                   title={activeTab === 'audit' ? 'Refresh logs' : 'Refresh visitors'}
                 >
-                  <FaSync className={`mr-2 ${loading || visitorsLoading ? 'animate-spin text-blue-600' : 'text-gray-500 dark:text-gray-400'}`} />
+                  {loading || visitorsLoading ? (
+                    <UrbanSetuSpinner size="sm" />
+                  ) : (
+                    <FaSync className="mr-2 text-gray-500 dark:text-gray-400" />
+                  )}
                   Refresh
                 </button>
                 <div className="w-px bg-gray-200 dark:bg-gray-600 my-1 mx-1"></div>
@@ -712,7 +717,7 @@ const SessionAuditLogs = () => {
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     {isSearching ? (
-                      <FaSync className="animate-spin text-blue-500" />
+                      <UrbanSetuSpinner size="sm" />
                     ) : (
                       <FaSearch className="text-gray-400 dark:text-gray-500 group-hover:text-blue-500 transition-colors" />
                     )}
@@ -1395,9 +1400,9 @@ const SessionAuditLogs = () => {
               </div>
 
               {visitorsLoading ? (
-                <div className="px-6 py-16 text-center">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
-                  <p className="mt-4 text-gray-600 dark:text-gray-400 font-medium">Loading visitors data...</p>
+                <div className="px-6 py-16 text-center flex flex-col items-center gap-4">
+                  <UrbanSetuSpinner size="lg" />
+                  <p className="text-gray-600 dark:text-gray-400 font-medium">Loading visitors data...</p>
                 </div>
               ) : visitors.length === 0 ? (
                 <div className="px-6 py-16 text-center bg-gray-50/50 dark:bg-gray-700/50">
@@ -1626,7 +1631,7 @@ const SessionAuditLogs = () => {
                     disabled={isClearing}
                     className="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center"
                   >
-                    {isClearing ? <FaSync className="animate-spin mr-2" /> : null}
+                    {isClearing ? <UrbanSetuSpinner size="sm" isBright={true} className="mr-2" /> : null}
                     {isClearing ? 'Clearing...' : 'Yes, Delete All'}
                   </button>
                 </div>
@@ -1841,7 +1846,7 @@ const SessionAuditLogs = () => {
                     disabled={isExporting}
                     className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
                   >
-                    {isExporting ? <FaSync className="animate-spin mr-2" /> : <FaFileExport className="mr-2" />}
+                    {isExporting ? <UrbanSetuSpinner size="sm" isBright={true} className="mr-2" /> : <FaFileExport className="mr-2" />}
                     {isExporting ? 'Exporting...' : 'Export CSV'}
                   </button>
                 </div>
@@ -1876,7 +1881,11 @@ const SessionAuditLogs = () => {
                     className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-full transition-colors"
                     title="Refresh details"
                   >
-                    <FaSync className={isRefreshingVisitor ? 'animate-spin' : ''} />
+                    {isRefreshingVisitor ? (
+                      <UrbanSetuSpinner size="sm" />
+                    ) : (
+                      <FaSync />
+                    )}
                   </button>
                   <button
                     onClick={() => setShowVisitorDetailsModal(false)}

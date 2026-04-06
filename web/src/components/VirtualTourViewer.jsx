@@ -261,7 +261,7 @@ const VirtualTourViewer = ({ imageUrl, autoLoad = true, className = "" }) => {
                         title={isEnhanced ? "Disable AI Enhancer" : "Enable AI Enhancer"}
                         disabled={isEnhancing}
                     >
-                        <FaMagic size={14} className={isEnhanced ? "animate-pulse" : isEnhancing ? "animate-spin" : ""} />
+                        {isEnhancing ? <UrbanSetuSpinner size="sm" isBright={true} /> : <FaMagic size={14} className={isEnhanced ? "animate-pulse" : ""} />}
                     </button>
 
                     <div className="w-px h-6 bg-white/20 mx-1"></div>

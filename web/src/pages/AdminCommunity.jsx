@@ -14,6 +14,7 @@ import ConfirmationModal from '../components/ConfirmationModal';
 import { socket } from '../utils/socket';
 import { authenticatedFetch } from '../utils/auth';
 import SocialSharePanel from '../components/SocialSharePanel';
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 
 export default function AdminCommunity() {
     usePageTitle("Admin Dashboard - Community Moderation");
@@ -1001,7 +1002,7 @@ export default function AdminCommunity() {
             <div className={`absolute z-50 w-72 bg-white dark:bg-gray-800 shadow-2xl rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden animate-fade-in-up transition-colors duration-300 ${customClass}`}>
                 <div className="bg-blue-50 dark:bg-blue-900/30 px-4 py-2 border-b border-blue-100 dark:border-blue-800 flex items-center justify-between">
                     <span className="text-[10px] font-bold text-blue-600 dark:text-blue-300 uppercase tracking-widest">Mention Property</span>
-                    {mentionSearchLoading && <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>}
+                    {mentionSearchLoading && <UrbanSetuSpinner size="sm" />}
                 </div>
                 <div className="max-h-48 overflow-y-auto">
                     {propertySuggestions.map((prop, idx) => (

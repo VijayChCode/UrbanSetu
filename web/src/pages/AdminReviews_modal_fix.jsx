@@ -1,3 +1,7 @@
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
+import { FaFlag, FaTimes, FaSync } from 'react-icons/fa';
+import { toast } from 'react-toastify';
+
       {/* Review Reports Modal */}
       {showReportsModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
@@ -102,7 +106,7 @@
                   >
                     {reportsLoading ? (
                       <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <UrbanSetuSpinner size="sm" isBright={true} />
                         Loading...
                       </>
                     ) : (
@@ -123,9 +127,9 @@
                 Debug: Loading={reportsLoading.toString()}, Error={reportsError}, Reports={reports.length}
               </div>
               {reportsLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
-                  <span className="ml-2 text-gray-600">Loading reports...</span>
+                <div className="flex flex-col items-center justify-center py-12 gap-4">
+                  <UrbanSetuSpinner size="lg" />
+                  <span className="text-gray-600 font-medium animate-pulse">Fetching latest reports...</span>
                 </div>
               ) : reportsError ? (
                 <div className="text-center py-8">

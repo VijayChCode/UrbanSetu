@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { FaDownload, FaTimes, FaImage, FaFile, FaSpinner } from 'react-icons/fa';
+import { FaDownload, FaTimes, FaImage, FaFile } from 'react-icons/fa';
+import UrbanSetuSpinner from './UrbanSetuSpinner';
 
 const ExportChatModal = ({
   isOpen,
@@ -137,7 +138,7 @@ const ExportChatModal = ({
           >
             {isExporting ? (
               <>
-                <FaSpinner className="animate-spin mr-2" />
+                <UrbanSetuSpinner size="sm" className="mr-2" />
                 Exporting...
               </>
             ) : (

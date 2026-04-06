@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FaUndo, FaDollarSign, FaRupeeSign, FaExclamationTriangle, FaCheckCircle, FaTimes, FaSpinner, FaSearch, FaFilter, FaRedo, FaInfo } from 'react-icons/fa';
+import { FaUndo, FaDollarSign, FaRupeeSign, FaExclamationTriangle, FaCheckCircle, FaTimes, FaSearch, FaFilter, FaRedo, FaInfo } from 'react-icons/fa';
+import UrbanSetuSpinner from './UrbanSetuSpinner';
 import { toast } from 'react-toastify';
 import { authenticatedFetch } from '../utils/auth';
 
@@ -386,7 +387,7 @@ const RefundManagement = ({ onRefundProcessed }) => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <FaSpinner className="animate-spin text-2xl text-blue-600 dark:text-blue-400" />
+        <UrbanSetuSpinner size="md" />
         <span className="ml-2 text-gray-600 dark:text-gray-400">Loading payments...</span>
       </div>
     );
@@ -654,7 +655,7 @@ const RefundManagement = ({ onRefundProcessed }) => {
                     >
                       {processingRefund ? (
                         <>
-                          <FaSpinner className="animate-spin" />
+                          <UrbanSetuSpinner size="sm" isBright={true} />
                           Processing...
                         </>
                       ) : (
@@ -1131,7 +1132,7 @@ const RefundManagement = ({ onRefundProcessed }) => {
                   className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {processingReject ? (
-                    <FaSpinner className="animate-spin" />
+                    <UrbanSetuSpinner size="sm" isBright={true} />
                   ) : (
                     <FaTimes />
                   )}
@@ -1143,7 +1144,7 @@ const RefundManagement = ({ onRefundProcessed }) => {
                   className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {processingApprove ? (
-                    <FaSpinner className="animate-spin" />
+                    <UrbanSetuSpinner size="sm" isBright={true} />
                   ) : (
                     <FaCheckCircle />
                   )}

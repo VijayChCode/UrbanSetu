@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { FaSpinner, FaDownload, FaArrowLeft, FaFilePdf, FaImage, FaFileAlt, FaLock } from 'react-icons/fa';
+import { FaDownload, FaArrowLeft, FaFilePdf, FaImage, FaFileAlt, FaLock } from 'react-icons/fa';
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { authenticatedFetch } from '../utils/auth';
 
@@ -241,7 +242,7 @@ export default function ViewDocument() {
     if (loading) {
         return (
             <div className="min-h-screen flex flex-col gap-4 items-center justify-center bg-gray-100 dark:bg-gray-950 transition-colors duration-300">
-                <FaSpinner className="animate-spin text-4xl text-blue-600 dark:text-blue-400" />
+                <UrbanSetuSpinner size="lg" />
                 <p className="text-gray-600 dark:text-gray-400 font-medium">Loading document...</p>
             </div>
         );
@@ -324,7 +325,7 @@ export default function ViewDocument() {
                             />
                         ) : !pdfBlobUrl ? (
                             <div className="flex flex-col items-center justify-center">
-                                <FaSpinner className="animate-spin text-4xl text-blue-600 dark:text-blue-400 mb-4" />
+                                <UrbanSetuSpinner size="lg" className="mb-4" />
                                 <p className="text-gray-600 dark:text-gray-400">Loading PDF...</p>
                             </div>
                         ) : (

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
-import { FaUpload, FaTimes, FaSpinner, FaFile, FaCheckCircle } from 'react-icons/fa';
+import { FaUpload, FaTimes, FaFile, FaCheckCircle } from 'react-icons/fa';
+import UrbanSetuSpinner from '../UrbanSetuSpinner';
 import ImagePreview from '../ImagePreview';
 import { authenticatedFetch } from '../../utils/auth';
 
@@ -185,7 +186,7 @@ export default function VerificationForm({ listing, onSuccess, onCancel }) {
           {!hasDocument ? (
             <label className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-50 dark:bg-blue-900/10 border-2 border-dashed border-blue-300 dark:border-blue-800 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/20 transaction-colors">
               {isUploading ? (
-                <FaSpinner className="animate-spin text-blue-600 dark:text-blue-400" />
+                <UrbanSetuSpinner size="sm" isBright={true} />
               ) : (
                 <FaUpload className="text-blue-600 dark:text-blue-400" />
               )}
@@ -291,7 +292,7 @@ export default function VerificationForm({ listing, onSuccess, onCancel }) {
           disabled={loading}
           className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
         >
-          {loading ? <FaSpinner className="animate-spin" /> : <FaCheckCircle />}
+          {loading ? <UrbanSetuSpinner size="sm" isBright={true} /> : <FaCheckCircle />}
           {loading ? 'Submitting...' : 'Submit Verification Request'}
         </button>
       </div>

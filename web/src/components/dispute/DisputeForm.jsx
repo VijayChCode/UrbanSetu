@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { FaUpload, FaTimes, FaSpinner, FaImage, FaVideo, FaFile, FaPaperclip, FaDownload } from 'react-icons/fa';
+import { FaUpload, FaTimes, FaImage, FaVideo, FaFile, FaPaperclip, FaDownload } from 'react-icons/fa';
+import UrbanSetuSpinner from '../UrbanSetuSpinner';
 import ImagePreview from '../ImagePreview';
 import VideoPreview from '../VideoPreview';
 
@@ -330,7 +331,7 @@ export default function DisputeForm({ contract, onSuccess, onCancel }) {
         </label>
         <div className="grid grid-cols-3 gap-2 mb-4">
           <label className={`flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-300 dark:border-blue-700 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/40 ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
-            {uploading === 'image' ? <FaSpinner className="animate-spin text-blue-700 dark:text-blue-300" /> : <FaImage className="text-blue-700 dark:text-blue-300" />}
+            {uploading === 'image' ? <UrbanSetuSpinner size="sm" isBright={true} /> : <FaImage className="text-blue-700 dark:text-blue-300" />}
             <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Upload Images</span>
             <input
               type="file"
@@ -342,7 +343,7 @@ export default function DisputeForm({ contract, onSuccess, onCancel }) {
             />
           </label>
           <label className={`flex items-center justify-center gap-2 px-4 py-2 bg-purple-50 dark:bg-purple-900/20 border border-purple-300 dark:border-purple-700 rounded-lg cursor-pointer hover:bg-purple-100 dark:hover:bg-purple-900/40 ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
-            {uploading === 'video' ? <FaSpinner className="animate-spin text-purple-700 dark:text-purple-300" /> : <FaVideo className="text-purple-700 dark:text-purple-300" />}
+            {uploading === 'video' ? <UrbanSetuSpinner size="sm" isBright={true} /> : <FaVideo className="text-purple-700 dark:text-purple-300" />}
             <span className="text-sm font-medium text-purple-700 dark:text-purple-300">Upload Videos</span>
             <input
               type="file"
@@ -354,7 +355,7 @@ export default function DisputeForm({ contract, onSuccess, onCancel }) {
             />
           </label>
           <label className={`flex items-center justify-center gap-2 px-4 py-2 bg-green-50 dark:bg-green-900/20 border border-green-300 dark:border-green-700 rounded-lg cursor-pointer hover:bg-green-100 dark:hover:bg-green-900/40 ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
-            {uploading === 'document' ? <FaSpinner className="animate-spin text-green-700 dark:text-green-300" /> : <FaFile className="text-green-700 dark:text-green-300" />}
+            {uploading === 'document' ? <UrbanSetuSpinner size="sm" isBright={true} /> : <FaFile className="text-green-700 dark:text-green-300" />}
             <span className="text-sm font-medium text-green-700 dark:text-green-300">Upload Documents</span>
             <input
               type="file"
@@ -442,7 +443,7 @@ export default function DisputeForm({ contract, onSuccess, onCancel }) {
           disabled={loading}
           className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
         >
-          {loading ? <FaSpinner className="animate-spin" /> : <FaPaperclip />}
+          {loading ? <UrbanSetuSpinner size="sm" isBright={true} /> : <FaPaperclip />}
           {loading ? 'Creating...' : 'Raise Dispute'}
         </button>
       </div>

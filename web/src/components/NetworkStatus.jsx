@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Wifi, WifiOff, RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
+import UrbanSetuSpinner from './UrbanSetuSpinner';
 
 const NetworkStatus = () => {
   const { isOnline, wasOffline } = useNetworkStatus();
@@ -57,7 +58,7 @@ const NetworkStatus = () => {
         <div className="pl-3 border-l border-gray-500/20">
           {!isOnline ? (
             <div className="flex items-center gap-2">
-              <RefreshCw className="w-4 h-4 text-gray-400 animate-spin" style={{ animationDuration: '2s' }} />
+              <UrbanSetuSpinner size="sm" />
             </div>
           ) : (
             <CheckCircle2 className="w-5 h-5 text-green-500" />

@@ -1,4 +1,5 @@
 import React from 'react';
+import UrbanSetuSpinner from './UrbanSetuSpinner';
 import { FaTimes, FaExclamationTriangle, FaCheck, FaTrash } from 'react-icons/fa';
 
 export default function ConfirmationModal({
@@ -71,7 +72,7 @@ export default function ConfirmationModal({
           >
             {isLoading ? (
               <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                <UrbanSetuSpinner size="sm" isBright={true} />
                 Processing...
               </>
             ) : (

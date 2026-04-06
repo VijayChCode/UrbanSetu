@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
@@ -11,6 +11,7 @@ import {
 import BlogEditModal from '../components/BlogEditModal';
 import BlogAnalytics from '../components/BlogAnalytics';
 import ConfirmationModal from '../components/ConfirmationModal';
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { authenticatedFetch } from '../utils/auth';
 import AdvancedImage from '../components/AdvancedImage';
@@ -827,7 +828,7 @@ const AdminBlogs = ({ type }) => {
                                     : 'bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800'
                                   }`}
                               >
-                                {blog.published ? <Eye className="w-3 h-3" /> : (blog.scheduledAt ? <RefreshCw className="w-3 h-3 animate-spin-slow" /> : <EyeOff className="w-3 h-3" />)}
+                                {blog.published ? <Eye className="w-3 h-3" /> : (blog.scheduledAt ? <UrbanSetuSpinner size="sm" className="inline-block" /> : <EyeOff className="w-3 h-3" />)}
                                 {blog.published ? 'Published' : (blog.scheduledAt ? 'Scheduled' : 'Draft')}
                               </button>
                             </td>

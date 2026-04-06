@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import PublicBlogsSkeleton from '../components/skeletons/PublicBlogsSkeleton';
@@ -14,6 +14,7 @@ import { authenticatedFetch } from '../utils/auth';
 import RecaptchaWidget from '../components/RecaptchaWidget';
 import { useRef } from 'react';
 import AdvancedImage from '../components/AdvancedImage';
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 
 const PublicBlogs = () => {
   // SEO Dynamic Tags
@@ -1002,9 +1003,14 @@ const PublicBlogs = () => {
                         <button
                           onClick={handleSendSubscribeOtp}
                           disabled={sendingOtp}
-                          className="px-8 py-4 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all transform hover:scale-105 shadow-lg shadow-blue-900/40 disabled:opacity-70 disabled:cursor-not-allowed whitespace-nowrap"
+                          className="px-8 py-4 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all transform hover:scale-105 shadow-lg shadow-blue-900/40 disabled:opacity-70 disabled:cursor-not-allowed whitespace-nowrap min-w-[140px] flex items-center justify-center gap-2"
                         >
-                          {sendingOtp ? 'Sending...' : 'Subscribe'}
+                          {sendingOtp ? (
+                            <>
+                              <UrbanSetuSpinner size="sm" isBright={true} />
+                              <span>Sending...</span>
+                            </>
+                          ) : 'Subscribe'}
                         </button>
                       </div>
 
@@ -1049,9 +1055,14 @@ const PublicBlogs = () => {
                         <button
                           onClick={handleVerifySubscribeOtp}
                           disabled={verifyingOtp || sendingOtp}
-                          className="px-8 py-4 bg-white text-blue-600 font-bold rounded-xl hover:bg-blue-50 transition-all transform hover:scale-105 shadow-lg shadow-blue-900/20 disabled:opacity-70 disabled:cursor-not-allowed whitespace-nowrap"
+                          className="px-8 py-4 bg-white text-blue-600 font-bold rounded-xl hover:bg-blue-50 transition-all transform hover:scale-105 shadow-lg shadow-blue-900/20 disabled:opacity-70 disabled:cursor-not-allowed whitespace-nowrap min-w-[120px] flex items-center justify-center gap-2"
                         >
-                          {verifyingOtp ? 'Verifying...' : 'Verify'}
+                          {verifyingOtp ? (
+                            <>
+                              <UrbanSetuSpinner size="sm" />
+                              <span>Verifying...</span>
+                            </>
+                          ) : 'Verify'}
                         </button>
                       </div>
                       {otpError && <p className="text-red-300 text-sm mt-2 text-center font-medium animate-pulse">{otpError}</p>}
@@ -1068,7 +1079,12 @@ const PublicBlogs = () => {
                               disabled={sendingOtp || verifyingOtp || !canResend}
                               className="text-sm text-white hover:text-blue-100 font-bold underline transition-colors disabled:opacity-50 flex items-center gap-1.5"
                             >
-                              <RotateCcw className={`w-4 h-4 ${sendingOtp ? 'animate-spin' : ''}`} /> {sendingOtp ? 'Sending...' : 'Resend OTP'}
+                              {sendingOtp ? (
+                                <UrbanSetuSpinner size="sm" isBright={true} />
+                              ) : (
+                                <RotateCcw className="w-4 h-4" />
+                              )}
+                              {sendingOtp ? 'Sending...' : 'Resend OTP'}
                             </button>
                           )}
                         </div>
@@ -1155,9 +1171,14 @@ const PublicBlogs = () => {
                       <button
                         onClick={handleSendUnsubscribeOtp}
                         disabled={sendingOtp}
-                        className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors disabled:opacity-70"
+                        className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors disabled:opacity-70 flex items-center justify-center gap-2 min-w-[80px]"
                       >
-                        {sendingOtp ? 'Sending OTP...' : 'Next'}
+                        {sendingOtp ? (
+                          <>
+                            <UrbanSetuSpinner size="sm" isBright={true} />
+                            <span>Sending...</span>
+                          </>
+                        ) : 'Next'}
                       </button>
                     </div>
                   </>
@@ -1188,9 +1209,14 @@ const PublicBlogs = () => {
                       <button
                         onClick={handleVerifyUnsubscribeOtp}
                         disabled={verifyingOtp || !unsubscribeOtp || unsubscribeOtp.length !== 6}
-                        className="w-full py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+                        className="w-full py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-colors disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                       >
-                        {verifyingOtp ? 'Verifying...' : 'Confirm Unsubscribe'}
+                        {verifyingOtp ? (
+                          <>
+                            <UrbanSetuSpinner size="sm" isBright={true} />
+                            <span>Verifying...</span>
+                          </>
+                        ) : 'Confirm Unsubscribe'}
                       </button>
 
                       <div className="flex items-center justify-between">
@@ -1206,7 +1232,12 @@ const PublicBlogs = () => {
                               disabled={sendingOtp || verifyingOtp || !canResend}
                               className="text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-bold underline transition-colors disabled:opacity-50 flex items-center gap-1"
                             >
-                              <RotateCcw className={`w-3 h-3 ${sendingOtp ? 'animate-spin' : ''}`} /> {sendingOtp ? 'Sending...' : 'Resend'}
+                              {sendingOtp ? (
+                                <UrbanSetuSpinner size="sm" />
+                              ) : (
+                                <RotateCcw className="w-3 h-3" />
+                              )}
+                              {sendingOtp ? 'Sending...' : 'Resend'}
                             </button>
                           )}
                         </div>

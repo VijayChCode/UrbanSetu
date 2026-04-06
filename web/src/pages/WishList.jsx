@@ -7,6 +7,7 @@ import SavedPropertiesSkeleton from '../components/skeletons/SavedPropertiesSkel
 import SocialSharePanel from '../components/SocialSharePanel';
 import { toast } from 'react-toastify';
 import { FaEye, FaTrash, FaSearch, FaFilter, FaSort, FaPlus, FaTimes, FaArrowDown, FaArrowUp, FaCheckCircle, FaDownload, FaShare, FaBookmark, FaCalendarAlt, FaChartLine, FaBars, FaCheck, FaTimes as FaX, FaRobot } from 'react-icons/fa';
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 import { authenticatedFetch } from '../utils/auth';
 
 import { usePageTitle } from '../hooks/usePageTitle';
@@ -386,7 +387,7 @@ const WishList = () => {
                   <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
                     {suggestionLoading ? (
                       <div className="p-3 text-center text-gray-500">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600 mx-auto"></div>
+                        <UrbanSetuSpinner size="sm" className="mx-auto" />
                         <p className="mt-1 text-sm">Searching...</p>
                       </div>
                     ) : (
@@ -414,7 +415,7 @@ const WishList = () => {
                 )}
               </div>
               <button onClick={() => searchProperties()} disabled={searching} className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
-                {searching ? (<><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>Searching...</>) : (<><FaSearch />Search</>)}
+                {searching ? (<><UrbanSetuSpinner size="sm" isBright={true} />Searching...</>) : (<><FaSearch />Search</>)}
               </button>
             </div>
             {searchResults.length > 0 && (

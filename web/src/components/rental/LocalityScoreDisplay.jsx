@@ -1,11 +1,12 @@
 import React from 'react';
-import { FaShieldAlt, FaRoad, FaTint, FaGraduationCap, FaBuilding, FaTrafficLight, FaShoppingCart, FaHospital, FaStore, FaStar, FaSpinner } from 'react-icons/fa';
+import { FaShieldAlt, FaRoad, FaTint, FaGraduationCap, FaBuilding, FaTrafficLight, FaShoppingCart, FaHospital, FaStore, FaStar } from 'react-icons/fa';
+import UrbanSetuSpinner from '../UrbanSetuSpinner';
 
 export default function LocalityScoreDisplay({ localityScore, loading }) {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <FaSpinner className="animate-spin text-2xl text-blue-600 dark:text-blue-400 mr-3" />
+        <UrbanSetuSpinner size="md" className="mr-3" />
         <span className="text-gray-600 dark:text-gray-300">Calculating locality score...</span>
       </div>
     );

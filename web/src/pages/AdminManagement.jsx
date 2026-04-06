@@ -10,6 +10,7 @@ import { authenticatedFetch } from "../utils/auth";
 import { usePageTitle } from '../hooks/usePageTitle';
 import { isMobileDevice } from '../utils/mobileUtils';
 import AdminManagementSkeleton from '../components/skeletons/AdminManagementSkeleton';
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function AdminManagement() {
@@ -1366,8 +1367,8 @@ export default function AdminManagement() {
 
         {loading ? (
           <div className="flex flex-col items-center justify-center h-64 animate-fadeIn">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mb-4"></div>
-            <p className="text-lg text-gray-500 font-semibold">Loading accounts...</p>
+            <UrbanSetuSpinner size="xl" />
+            <p className="text-lg text-gray-500 font-semibold mt-4">Loading accounts...</p>
           </div>
         ) : (
           <>
@@ -1445,7 +1446,7 @@ export default function AdminManagement() {
                           >
                             {actionLoading.suspend[user._id] ? (
                               <>
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                <UrbanSetuSpinner size="sm" isBright={true} />
                                 {user.status === "active" ? "Suspending..." : "Activating..."}
                               </>
                             ) : (
@@ -1468,7 +1469,7 @@ export default function AdminManagement() {
                             >
                               {actionLoading.promote[user._id] ? (
                                 <>
-                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                  <UrbanSetuSpinner size="sm" isBright={true} />
                                   Promoting...
                                 </>
                               ) : (
@@ -1569,7 +1570,7 @@ export default function AdminManagement() {
                           >
                             {actionLoading.suspend[admin._id] ? (
                               <>
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                <UrbanSetuSpinner size="sm" isBright={true} />
                                 {admin.status === "active" ? "Suspending..." : "Activating..."}
                               </>
                             ) : (
@@ -1591,7 +1592,7 @@ export default function AdminManagement() {
                           >
                             {actionLoading.demote[admin._id] ? (
                               <>
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                <UrbanSetuSpinner size="sm" isBright={true} />
                                 Demoting...
                               </>
                             ) : (
@@ -1622,7 +1623,7 @@ export default function AdminManagement() {
               <div className="mt-6">
                 <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Softbanned Accounts ({softbannedAccounts.length})</h2>
                 {softbannedLoading ? (
-                  <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div><span className="ml-3 text-gray-600 dark:text-gray-400">Loading...</span></div>
+                  <div className="flex items-center justify-center p-8"><UrbanSetuSpinner size="md" /><span className="ml-3 text-gray-600 dark:text-gray-400">Loading...</span></div>
                 ) : softbannedAccounts.length === 0 ? (
                   <div className="p-6 text-center text-gray-500 dark:text-gray-400 border border-gray-100 dark:border-gray-700 rounded-xl bg-gray-50/50 dark:bg-gray-800/30">No softbanned accounts found</div>
                 ) : (
@@ -1688,7 +1689,7 @@ export default function AdminManagement() {
               <div className="mt-6">
                 <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Purged Accounts (Permanently Removed) ({purgedAccounts.length})</h2>
                 {purgedLoading ? (
-                  <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div><span className="ml-3 text-gray-600 dark:text-gray-400">Loading...</span></div>
+                  <div className="flex items-center justify-center p-8"><UrbanSetuSpinner size="md" /><span className="ml-3 text-gray-600 dark:text-gray-400">Loading...</span></div>
                 ) : purgedAccounts.length === 0 ? (
                   <div className="p-6 text-center text-gray-500 dark:text-gray-400 border border-gray-100 dark:border-gray-700 rounded-xl bg-gray-50/50 dark:bg-gray-800/30">No purged accounts found</div>
                 ) : (
@@ -1781,7 +1782,7 @@ export default function AdminManagement() {
             <div className="px-4 sm:px-8 py-4 space-y-4">
               {accountLoading ? (
                 <div className="flex justify-center items-center h-32">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  <UrbanSetuSpinner size="md" />
                 </div>
               ) : selectedAccount ? (
                 <>
@@ -1988,7 +1989,7 @@ export default function AdminManagement() {
                   >
                     {(actionLoading.promote[confirmModalData.userId] || actionLoading.demote[confirmModalData.userId] || actionLoading.restore || actionLoading.purge || actionLoading.suspend[confirmModalData.userId] || actionLoading.softban) ? (
                       <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <UrbanSetuSpinner size="sm" isBright={true} />
                         {actionLoading.promote[confirmModalData.userId] ? 'Promoting...' :
                           actionLoading.demote[confirmModalData.userId] ? 'Demoting...' :
                             actionLoading.suspend[confirmModalData.userId] ? 'Activating...' :
@@ -2119,7 +2120,7 @@ export default function AdminManagement() {
                 >
                   {actionLoading.softban ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <UrbanSetuSpinner size="sm" isBright={true} />
                       Processing...
                     </>
                   ) : (
@@ -2201,7 +2202,7 @@ export default function AdminManagement() {
                 >
                   {actionLoading.suspend[suspensionAccount?.id] ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <UrbanSetuSpinner size="sm" isBright={true} />
                       Suspending...
                     </>
                   ) : (
@@ -2271,7 +2272,7 @@ export default function AdminManagement() {
                 >
                   {actionLoading.demote[demoteAccount?.id] ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <UrbanSetuSpinner size="sm" isBright={true} />
                       Demoting...
                     </>
                   ) : (
@@ -2320,7 +2321,7 @@ export default function AdminManagement() {
                 >
                   {subscriptionLoading ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <UrbanSetuSpinner size="sm" isBright={true} />
                       Processing...
                     </>
                   ) : (

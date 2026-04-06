@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { FaPhone, FaVideo, FaTimes, FaClock, FaCheckCircle, FaTimesCircle, FaUser, FaSpinner, FaTrash, FaSync, FaFilter } from 'react-icons/fa';
+import { FaPhone, FaVideo, FaTimes, FaClock, FaCheckCircle, FaTimesCircle, FaUser, FaTrash, FaSync, FaFilter } from 'react-icons/fa';
+import UrbanSetuSpinner from './UrbanSetuSpinner';
 import { toast } from 'react-toastify';
 import axios from 'axios';
 
@@ -192,10 +193,10 @@ const CallHistoryModal = ({ appointmentId, isOpen, onClose, currentUser, isAdmin
             <button
               onClick={fetchCallHistory}
               disabled={loading}
-              className="text-white hover:text-gray-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="text-white hover:text-gray-200 bg-white/10 hover:bg-white/20 rounded-full p-1.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed group flex items-center justify-center min-w-[32px] min-h-[32px]"
               title="Refresh"
             >
-              <FaSync className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+              {loading ? <UrbanSetuSpinner size="sm" isBright={true} /> : <FaSync className="w-4 h-4" />}
             </button>
             {/* Delete All Button (users only) */}
             {!isAdmin && calls.length > 0 && (
@@ -260,9 +261,9 @@ const CallHistoryModal = ({ appointmentId, isOpen, onClose, currentUser, isAdmin
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 dark:bg-gray-800">
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <FaSpinner className="animate-spin text-blue-600 dark:text-blue-400 text-3xl mr-3" />
-              <span className="text-gray-600 dark:text-gray-400">Loading call history...</span>
+            <div className="flex flex-col items-center justify-center py-12 gap-4">
+              <UrbanSetuSpinner size="lg" />
+              <span className="text-gray-600 dark:text-gray-400 font-medium animate-pulse">Loading call history...</span>
             </div>
           ) : error ? (
             <div className="flex items-center justify-center py-12">

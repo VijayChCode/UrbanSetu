@@ -9,6 +9,7 @@ import {
 import ImagePreview from "../components/ImagePreview";
 import VideoPreview from "../components/VideoPreview";
 import { authenticatedFetch } from '../utils/auth';
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -399,7 +400,7 @@ export default function AdminUpdates() {
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden transition-colors">
                 {loading ? (
                     <div className="p-10 text-center">
-                        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto"></div>
+                        <UrbanSetuSpinner size="lg" />
                         <p className="text-gray-500 dark:text-gray-400 mt-4">Loading updates...</p>
                     </div>
                 ) : filteredUpdates.length === 0 ? (

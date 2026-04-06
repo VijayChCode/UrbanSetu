@@ -10,6 +10,7 @@ import { authenticatedFetch } from '../utils/auth';
 import axios from 'axios';
 
 import { usePageTitle } from '../hooks/usePageTitle';
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function AdminReviews() {
@@ -722,10 +723,14 @@ export default function AdminReviews() {
             <button
               onClick={handleRefresh}
               disabled={loading}
-              className="flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:from-blue-600 hover:to-purple-600 transition disabled:opacity-50 disabled:cursor-not-allowed shadow text-sm sm:text-base"
+              className="flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:from-blue-600 hover:to-purple-600 transition disabled:opacity-50 disabled:cursor-not-allowed shadow text-sm sm:text-base min-w-[100px]"
               title="Refresh reviews"
             >
-              <FaSync className={`${loading ? 'animate-spin' : ''}`} />
+              {loading ? (
+                <UrbanSetuSpinner size="sm" isBright={true} />
+              ) : (
+                <FaSync />
+              )}
               <span className="hidden sm:inline">Refresh</span>
             </button>
           </div>
@@ -1557,7 +1562,7 @@ export default function AdminReviews() {
                     >
                       {reportsLoading ? (
                         <>
-                          <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-b-2 border-white"></div>
+                          <UrbanSetuSpinner size="sm" />
                           <span className="hidden sm:inline">Loading...</span>
                         </>
                       ) : (
@@ -1577,7 +1582,7 @@ export default function AdminReviews() {
 
               {reportsLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+                  <UrbanSetuSpinner size="md" />
                   <span className="ml-2 text-gray-600">Loading reports...</span>
                 </div>
               ) : reportsError ? (

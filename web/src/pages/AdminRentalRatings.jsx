@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { FaStar, FaUser, FaHome, FaSpinner, FaSearch, FaCheckCircle, FaClock, FaFileAlt, FaTimes } from 'react-icons/fa';
+import { FaStar, FaUser, FaHome, FaSearch, FaCheckCircle, FaClock, FaFileAlt, FaTimes } from 'react-icons/fa';
 import { usePageTitle } from '../hooks/usePageTitle';
 import RatingDisplay from '../components/ratings/RatingDisplay';
 import AdminRentalRatingsSkeleton from '../components/skeletons/AdminRentalRatingsSkeleton';

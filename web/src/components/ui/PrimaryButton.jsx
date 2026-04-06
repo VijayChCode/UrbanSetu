@@ -1,4 +1,5 @@
 import React from "react";
+import UrbanSetuSpinner from '../UrbanSetuSpinner';
 
 const variants = {
   blue: "from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700",
@@ -30,7 +31,7 @@ export default function PrimaryButton({
     >
       {loading ? (
         <div className="flex items-center justify-center">
-          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+          <UrbanSetuSpinner size="sm" isBright={true} className="mr-2" />
           {loadingText || children}
         </div>
       ) : (

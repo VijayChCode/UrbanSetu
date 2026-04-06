@@ -1291,7 +1291,7 @@ export default function MyAppointments() {
                 onClick={handleRetry}
                 className={`px-10 py-3 bg-gradient-to-r ${themeColors.primary} ${themeColors.primaryHover} text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 active:scale-95 font-bold uppercase tracking-wider text-sm flex items-center justify-center gap-3`}
               >
-                <FaSync className={loading ? 'animate-spin' : ''} />
+                {loading ? <UrbanSetuSpinner size="sm" isBright={true} /> : <FaSync />}
                 Retry
               </button>
             </div>
@@ -7106,7 +7106,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                       disabled={multiSelectActions.starring}
                                     >
                                       {multiSelectActions.starring ? (
-                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                        <UrbanSetuSpinner size="sm" isBright={true} />
                                       ) : selectedMsg.starredBy?.includes(currentUser._id) ? (
                                         <FaStar size={18} />
                                       ) : (
@@ -7308,7 +7308,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                 disabled={multiSelectActions.starring}
                               >
                                 {multiSelectActions.starring ? (
-                                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                  <UrbanSetuSpinner size="sm" isBright={true} />
                                 ) : (
                                   <FaStar size={18} />
                                 )}
@@ -7332,7 +7332,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                 disabled={multiSelectActions.pinning || isChatSendBlocked}
                               >
                                 {multiSelectActions.pinning ? (
-                                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                  <UrbanSetuSpinner size="sm" isBright={true} />
                                 ) : (
                                   <FaThumbtack size={18} />
                                 )}
@@ -7570,7 +7570,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                           disabled={starringSaving}
                         >
                           {starringSaving ? (
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            <UrbanSetuSpinner size="sm" isBright={true} />
                           ) : selectedMessageForHeaderOptions.starredBy?.includes(currentUser._id) ? (
                             <FaStar size={18} />
                           ) : (
@@ -8000,7 +8000,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                       {(chatLocked || chatLockStatusLoading) && (
                         <div className="flex items-center gap-1 bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-bold flex-shrink-0">
                           {chatLockStatusLoading ? (
-                            <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            <UrbanSetuSpinner size="sm" isBright={true} />
                           ) : (
                             <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24">
                               <path d="M18 10v-4c0-3.313-2.687-6-6-6s-6 2.687-6 6v4H4v10h16V10h-2zM8 6c0-2.206 1.794-4 4-4s4 1.794 4 4v4H8V6z" />
@@ -8585,10 +8585,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                       {isLoadingOlderMessages && (
                         <div className="flex justify-center py-3 animate-fadeIn">
                           <div className="flex items-center gap-2 px-4 py-2 rounded-full border shadow-lg bg-gray-800/90 border-gray-700 text-blue-400 backdrop-blur-md">
-                            <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
+                            <UrbanSetuSpinner size="sm" />
                             <span className="text-[10px] font-bold uppercase tracking-widest">Loading History</span>
                           </div>
                         </div>
@@ -9839,7 +9836,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                       <div className="p-3 text-sm font-medium text-blue-600 dark:text-blue-300 border-b border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900/40">
                         <div className="flex items-center gap-2">
                           {!propertiesLoaded ? (
-                            <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                            <UrbanSetuSpinner size="sm" />
                           ) : (
                             <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
                           )}
@@ -10182,7 +10179,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                       aria-label="Attachments"
                     >
                       {uploadingFile ? (
-                        <div className="animate-spin w-4 h-4 border-2 border-gray-600 border-t-transparent rounded-full"></div>
+                        <UrbanSetuSpinner size="sm" />
                       ) : (
                         <svg className="w-4 h-4 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
@@ -11172,10 +11169,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                 className="px-4 py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-50"
               >
                 {lockingChat ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <div className="flex items-center gap-2">
+                    <UrbanSetuSpinner size="sm" isBright={true} />
                     Locking...
-                  </>
+                  </div>
                 ) : (
                   <>
                     <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
@@ -11262,10 +11259,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                 className="px-4 py-2 rounded bg-orange-600 text-white font-semibold hover:bg-orange-700 transition-colors flex items-center gap-2 disabled:opacity-50"
               >
                 {unlockingChat ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <div className="flex items-center gap-2">
+                    <UrbanSetuSpinner size="sm" isBright={true} />
                     Unlocking...
-                  </>
+                  </div>
                 ) : (
                   'Unlock Chat'
                 )}
@@ -11327,10 +11324,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                   className="px-4 py-2 rounded bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors flex items-center gap-2 disabled:opacity-50"
                 >
                   {forgotPasswordProcessing ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <div className="flex items-center gap-2">
+                      <UrbanSetuSpinner size="sm" isBright={true} />
                       Processing...
-                    </>
+                    </div>
                   ) : (
                     'Continue'
                   )}
@@ -11418,7 +11415,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                 >
                   {removingLock ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <UrbanSetuSpinner size="sm" isBright={true} />
                       Removing...
                     </>
                   ) : (
@@ -12210,7 +12207,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                   title="Refresh starred messages"
                 >
                   {loadingStarredMessages ? (
-                    <div className="w-4 h-4 border-2 border-yellow-600 border-t-transparent rounded-full animate-spin"></div>
+                    <UrbanSetuSpinner size="sm" />
                   ) : (
                     <FaSync className="w-4 h-4" />
                   )}
@@ -12220,9 +12217,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
               {/* Content */}
               <div className="flex-1 overflow-y-auto p-6">
                 {loadingStarredMessages ? (
-                  <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-500"></div>
-                    <span className="ml-3 text-gray-600">Loading starred messages...</span>
+                  <div className="flex flex-col items-center justify-center py-12 gap-3">
+                    <UrbanSetuSpinner size="lg" />
+                    <span className="text-gray-600 font-medium">Loading starred messages...</span>
                   </div>
                 ) : starredMessages.length === 0 ? (
                   <div className="text-center py-12">
@@ -12290,7 +12287,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                 disabled={unstarringMessageId === message._id}
                               >
                                 {unstarringMessageId === message._id ? (
-                                  <div className="w-3 h-3 border border-red-500 border-t-transparent rounded-full animate-spin"></div>
+                                  <UrbanSetuSpinner size="sm" />
                                 ) : (
                                   <FaTimes className="w-3 h-3" />
                                 )}
@@ -12423,7 +12420,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                       >
                         {removingAllStarred ? (
                           <>
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            <UrbanSetuSpinner size="sm" isBright={true} />
                             Removing...
                           </>
                         ) : (
@@ -12721,7 +12718,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                 >
                   {pinningSaving ? (
                     <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <UrbanSetuSpinner size="sm" isBright={true} />
                       Pinning...
                     </div>
                   ) : (

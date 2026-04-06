@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaLock, FaExclamationTriangle, FaCheckCircle, FaSpinner } from 'react-icons/fa';
+import { FaLock, FaExclamationTriangle, FaCheckCircle } from 'react-icons/fa';
+import UrbanSetuSpinner from '../../components/UrbanSetuSpinner';
 import ContactSupportWrapper from '../../components/ContactSupportWrapper';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
@@ -73,7 +74,7 @@ export default function LockAccount() {
 
                     {status === 'processing' && (
                         <div className="flex flex-col items-center">
-                            <FaSpinner className="h-10 w-10 text-red-600 dark:text-red-400 animate-spin mb-4" />
+                            <UrbanSetuSpinner size="lg" className="mb-4" />
                             <p className="text-lg font-medium text-gray-900 dark:text-white">Processing security request...</p>
                         </div>
                     )}
