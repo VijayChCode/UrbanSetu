@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaCoins, FaUsers, FaChartLine, FaArrowTrendUp, FaGear } from 'react-icons/fa6';
+import { FaCoins, FaUsers, FaChartLine, FaArrowTrendUp, FaGear, FaTrophy } from 'react-icons/fa6';
 import { Link } from 'react-router-dom';
 import { authenticatedFetch } from '../../utils/auth';
 
@@ -93,8 +93,8 @@ const AdminCoinCard = ({ loading: parentLoading }) => {
                             <FaUsers className="text-indigo-300" />
                             <span className="font-black text-sm tabular-nums">{holdersCount.toLocaleString()} <span className="text-[10px] text-indigo-300 uppercase ml-0.5">Holders</span></span>
                         </div>
-                        
-                        <Link 
+
+                        <Link
                             to="/admin/leaderboard"
                             className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-2 rounded-2xl border border-white/10 shadow-lg transition-all"
                             title="Global Leaderboard Management"
