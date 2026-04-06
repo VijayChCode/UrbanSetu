@@ -1265,7 +1265,7 @@ export const searchUsers = async (req, res, next) => {
             ],
             role: { $nin: ['admin', 'rootadmin'] }
         })
-            .select('username email _id avatar gamification.totalCoinsEarned')
+            .select('username email _id avatar gamification.totalCoinsEarned gamification.setuCoinsBalance')
             .limit(10);
 
         // Add rank to each user in the results

@@ -34,7 +34,9 @@ class CoinService {
         }
 
         return {
-            ...stats.toObject ? stats.toObject() : stats,
+            setuCoinsBalance: stats.setuCoinsBalance || 0,
+            totalCoinsEarned: stats.totalCoinsEarned || 0,
+            currentStreak: stats.currentStreak || 0,
             rank
         };
     }

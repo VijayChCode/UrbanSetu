@@ -143,13 +143,18 @@ export default function AdminCoinStats() {
             const balanceData = await balanceRes.json();
 
             if (fullUserData) {
+                // Determine the correct balance and rank
+                // We trust fullUserData.gamification.setuCoinsBalance since it's used successfully in refresh
+                const rank = balanceData.success ? (balanceData.rank || null) : null;
+                
                 setSelectedUser({
                     ...fullUserData,
-                    rank: balanceData.success ? balanceData.rank : null,
-                    // Fix: Use setuCoinsBalance from API response
+                    rank: rank,
+                    // Ensure gamification fields are fully populated and consistent
                     gamification: {
                         ...(fullUserData.gamification || {}),
-                        setuCoinsBalance: balanceData.success ? balanceData.setuCoinsBalance : (fullUserData.gamification?.setuCoinsBalance || 0)
+                        // Fallback to balanceData only if missing in fullUserData
+                        setuCoinsBalance: fullUserData.gamification?.setuCoinsBalance ?? (balanceData.success ? balanceData.setuCoinsBalance : 0)
                     }
                 });
             }
@@ -193,14 +198,8 @@ export default function AdminCoinStats() {
                 fetchUserHistory(selectedUser._id);
                 fetchStats();
 
-                // Refresh user data to show updated balance
-                try {
-                    const userRes = await authenticatedFetch(`${API_BASE_URL}/api/user/id/${selectedUser._id}`);
-                    const userData = await userRes.json();
-                    if (userData) setSelectedUser(userData);
-                } catch (e) {
-                    console.error("Failed to refresh user data", e);
-                }
+                // Refresh user data to show updated balance and rank
+                selectUser(selectedUser);
             } else {
                 toast.error(data.message || "Adjustment failed");
             }
