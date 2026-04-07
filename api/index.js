@@ -637,6 +637,11 @@ io.on('connection', (socket) => {
             isRecovered: true
           });
         } else {
+          // Get state for THIS user (for non-ringing or established calls)
+          const myState = role === 'caller' ? activeCall.callerState : activeCall.receiverState;
+          // Get state for the OTHER user
+          const otherState = role === 'caller' ? activeCall.receiverState : activeCall.callerState;
+
           // Notify client of their session metadata for UI recovery
           socket.emit('active-call-session', {
             callId,
@@ -648,10 +653,18 @@ io.on('connection', (socket) => {
             receiverId: activeCall.receiverId,
             callerName: activeCall.callerName,
             receiverName: activeCall.receiverName,
-            status: activeCall.status || 'active'
+            status: activeCall.status || 'active',
+            // Local state for this user to restore their hardware state
+            isMuted: myState?.isMuted || false,
+            isVideoEnabled: myState?.isVideoEnabled !== false,
+            isScreenSharing: myState?.isScreenSharing || false,
+            // Remote state to restore indicators for the other party
+            remoteIsMuted: otherState?.isMuted || false,
+            remoteIsVideoEnabled: otherState?.isVideoEnabled !== false,
+            remoteIsScreenSharing: otherState?.isScreenSharing || false
           });
         }
-        return; // Prioritize one active call
+        return; // Prioritize one active call from memory
       }
     }
 
@@ -863,7 +876,10 @@ io.on('connection', (socket) => {
         startTime: new Date(),
         callerName: caller?.username || 'Participant',
         receiverName: receiver?.username || 'Participant',
-        status: 'ringing'
+        status: 'ringing',
+        // Persist participant states for recovery
+        callerState: { isMuted: false, isVideoEnabled: true, isScreenSharing: false },
+        receiverState: { isMuted: false, isVideoEnabled: true, isScreenSharing: false }
       });
 
       // Send call invitation to receiver
@@ -1171,6 +1187,25 @@ io.on('connection', (socket) => {
   socket.on('call-status-update', ({ callId, isMuted, isVideoEnabled, isScreenSharing }) => {
     const activeCall = activeCalls.get(callId);
     if (activeCall) {
+      const role = socket.id === activeCall.callerSocketId ? 'caller' : 'receiver';
+      const participantState = role === 'caller' ? activeCall.callerState : activeCall.receiverState;
+
+      // Update the specific participant's state
+      if (participantState) {
+        if (isMuted !== undefined) participantState.isMuted = isMuted;
+        if (isVideoEnabled !== undefined) participantState.isVideoEnabled = isVideoEnabled;
+        if (isScreenSharing !== undefined) participantState.isScreenSharing = isScreenSharing;
+      } else {
+        // Fallback initialization if missing
+        activeCall[role + 'State'] = {
+          isMuted: isMuted || false,
+          isVideoEnabled: isVideoEnabled !== false,
+          isScreenSharing: isScreenSharing || false
+        };
+      }
+
+      activeCalls.set(callId, activeCall);
+
       // Forward status update to the other party
       const targetSocketId = socket.id === activeCall.callerSocketId
         ? activeCall.receiverSocketId
