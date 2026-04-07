@@ -513,7 +513,7 @@ export const useCall = () => {
         }
         // Show "Call ended" message when receiving call-ended event from other party
         toast.info('Call ended.');
-        endCall();
+        endCall(data.duration);
       }
     };
 
@@ -1027,7 +1027,7 @@ export const useCall = () => {
   };
 
   // End call
-  const endCall = async () => {
+  const endCall = async (finalDuration = null) => {
     // Check if we are already in the 'ended' state (showing summary)
     // In this case, simply clear the final states and return
     if (callStateRef.current === 'ended') {
@@ -1113,16 +1113,31 @@ export const useCall = () => {
     callStartTimeRef.current = null;
     lastSecondRef.current = null;
 
+    // Use server-provided duration if available, otherwise keep local for now
+    // If user ends call, we'll get final duration from API response below
+    if (finalDuration !== null) {
+      setCallDuration(finalDuration);
+    }
+
     // Notify backend if call was active (not just ringing)
     const wasActive = currentActiveCall?.callId && currentCallState === 'active';
 
     if (wasActive) {
       try {
-        await authenticatedFetch(`${API_BASE_URL}/api/calls/end`, {
+        const response = await authenticatedFetch(`${API_BASE_URL}/api/calls/end`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ callId: currentActiveCall.callId })
         });
+
+        // Get authoritative duration from server if we don't have it yet
+        if (response.ok && finalDuration === null) {
+          const data = await response.json();
+          if (data.call && typeof data.call.duration === 'number') {
+            console.log(`[Call] Received authoritative server duration: ${data.call.duration}s`);
+            setCallDuration(data.call.duration);
+          }
+        }
 
         // Ensure screen share is stopped if active
         if (screenShareStreamRef.current) {
