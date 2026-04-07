@@ -50,8 +50,8 @@ const ActiveCallModal = ({
   const navigate = useNavigate();
   const [isVisible, setIsVisible] = useState(false);
 
-  const [showCameraMenu, setShowCameraMenu] = useState(false);
   const [showAudioMenu, setShowAudioMenu] = useState(false);
+  const [isSwitchingCamera, setIsSwitchingCamera] = useState(false);
   const [controlsVisible, setControlsVisible] = useState(true);
   const [videoSwapped, setVideoSwapped] = useState(false); // Track if local/remote videos are swapped
   const controlsTimeoutRef = useRef(null);
@@ -445,12 +445,33 @@ const ActiveCallModal = ({
     }
   };
 
+  // Direct camera toggle logic with cycle switching
+  const handleCameraToggle = (e) => {
+    if (e) e.stopPropagation();
+    if (!availableCameras || availableCameras.length < 2) return;
+
+    setIsSwitchingCamera(true);
+
+    // Identify next camera in sequence
+    const currentIndex = availableCameras.findIndex(c => c.deviceId === currentCameraId);
+    const nextIndex = (currentIndex + 1) % availableCameras.length;
+    const nextCamera = availableCameras[nextIndex];
+
+    if (nextCamera) {
+      onSwitchCamera(nextCamera.deviceId);
+    }
+
+    // Reset animation state after rotation completes (600ms)
+    setTimeout(() => {
+      setIsSwitchingCamera(false);
+    }, 600);
+  };
+
   // Handle local video click to swap views
   const handleLocalVideoClick = (e) => {
     e.stopPropagation();
     if (callType === 'video') {
       setVideoSwapped(!videoSwapped);
-      setShowCameraMenu(false); // Close camera menu when swapping views
       setControlsVisible(true);
       // Hide again after 3 seconds
       if (controlsTimeoutRef.current) {
@@ -489,10 +510,18 @@ const ActiveCallModal = ({
           from { transform: translateY(100%); }
           to { transform: translateY(0); }
         }
+        @keyframes slideDown {
+          from { transform: translate(-50%, -20px); opacity: 0; }
+          to { transform: translate(-50%, 0); opacity: 1; }
+        }
         @keyframes popIn {
           0% { transform: scale(0.8); opacity: 0; }
           50% { transform: scale(1.1); opacity: 1; }
           100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes rotateSync {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
         }
       `}</style>
 
@@ -579,26 +608,30 @@ const ActiveCallModal = ({
           </div>
         )}
 
-        {/* Reconnecting Overlay */}
+        {/* Reconnecting Notification - Top Aligned */}
         {isReconnecting && (
-          <div className="absolute inset-0 z-[100] bg-black/80 backdrop-blur-md flex flex-col items-center justify-center animate-fadeIn">
-            <div className="bg-gray-800/80 p-8 rounded-3xl border border-white/20 shadow-2xl flex flex-col items-center text-center max-w-sm mx-auto transform animate-[popIn_0.5s_ease-out_forwards]">
-              <div className="relative mb-6">
-                <UrbanSetuSpinner size="xl" />
-                <FaWifi className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-2xl text-blue-400 animate-pulse" />
+          <div className="absolute top-6 left-1/2 transform -translate-x-1/2 z-[110]" style={{ animation: 'slideDown 0.4s cubic-bezier(0.17, 0.67, 0.83, 0.67) forwards' }}>
+            <div className="bg-gray-900/90 backdrop-blur-xl border border-white/20 px-6 py-2.5 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center gap-4 min-w-[320px]">
+              <div className="relative flex items-center justify-center flex-shrink-0">
+                 <UrbanSetuSpinner size="sm" />
+                 <FaWifi className="absolute text-blue-400 text-[10px] animate-pulse" />
               </div>
-              <h3 className="text-2xl font-bold text-white mb-2">Reconnecting...</h3>
-              <p className="text-gray-300">
-                {reconnectReason === 'local-offline'
-                  ? "Poor internet connection detected. Trying to restore your call."
-                  : reconnectReason === 'remote-disconnected'
-                    ? "The other party lost their connection. Waiting for them to return..."
-                    : "Trying to restore your call connection..."}
-              </p>
-              <div className="mt-6 flex gap-1">
-                <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
+              <div className="flex flex-col overflow-hidden">
+                 <div className="flex items-center gap-2">
+                   <span className="text-white text-sm font-bold tracking-tight">Reconnecting...</span>
+                   <div className="flex gap-1">
+                     <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                     <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                     <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce"></div>
+                   </div>
+                 </div>
+                 <span className="text-gray-400 text-[11px] leading-tight truncate">
+                    {reconnectReason === 'local-offline' 
+                      ? "Network issue detected. Restoring call..."
+                      : reconnectReason === 'remote-disconnected'
+                      ? `Waiting for ${participantName || otherPartyName || 'Participant'} to return...`
+                      : "Optimizing your connection..."}
+                 </span>
               </div>
             </div>
           </div>
@@ -761,46 +794,12 @@ const ActiveCallModal = ({
             {videoSwapped && availableCameras && availableCameras.length > 1 && (
               <div className="absolute top-4 right-24 z-30">
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowCameraMenu(!showCameraMenu);
-                  }}
-                  className="bg-black bg-opacity-70 hover:bg-opacity-90 rounded-full p-2 text-white transition-all"
+                  onClick={handleCameraToggle}
+                  className="bg-black bg-opacity-70 hover:bg-opacity-90 rounded-full p-2 text-white transition-all active:scale-90"
                   title="Switch camera"
                 >
-                  <FaSync className="text-sm" />
+                  <FaSync className={`text-sm ${isSwitchingCamera ? 'animate-[rotateSync_0.6s_ease-in-out]' : ''}`} />
                 </button>
-                {/* Camera selection menu - positioned below button when in large view */}
-                {showCameraMenu && availableCameras && availableCameras.length > 0 && (
-                  <div className="absolute top-full right-0 mt-2 bg-black bg-opacity-95 rounded-lg shadow-xl min-w-[220px] max-w-[280px] z-50 border border-white border-opacity-20">
-                    <div className="py-2">
-                      <div className="px-3 py-2 border-b border-white border-opacity-10">
-                        <p className="text-xs font-semibold text-white text-opacity-80 uppercase tracking-wide">Select Camera</p>
-                      </div>
-                      {availableCameras.map((camera) => (
-                        <button
-                          key={camera.deviceId}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onSwitchCamera(camera.deviceId);
-                            setShowCameraMenu(false);
-                          }}
-                          className={`w-full text-left px-4 py-3 text-sm text-white hover:bg-white hover:bg-opacity-20 transition-colors ${currentCameraId === camera.deviceId ? 'bg-white bg-opacity-20 font-medium' : ''
-                            }`}
-                        >
-                          <div className="flex items-center gap-2">
-                            {currentCameraId === camera.deviceId && (
-                              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                            )}
-                            <span className={currentCameraId === camera.deviceId ? '' : 'pl-4'}>
-                              {camera.label || `Camera ${camera.deviceId.substring(0, 8)}`}
-                            </span>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             )}
           </>
@@ -990,54 +989,18 @@ const ActiveCallModal = ({
               </>
             )}
             {/* Camera switch button (only show on local video in small view) */}
+            {/* Camera switch button (only show on local video in small view) */}
             {!videoSwapped && availableCameras && availableCameras.length > 1 && (
               <div className="absolute top-2 right-2 z-30">
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowCameraMenu(!showCameraMenu);
-                  }}
-                  className="bg-black bg-opacity-70 hover:bg-opacity-90 rounded-full p-2 text-white transition-all"
+                  onClick={handleCameraToggle}
+                  className="bg-black bg-opacity-70 hover:bg-opacity-90 rounded-full p-2 text-white transition-all active:scale-90"
                   title="Switch camera"
                 >
-                  <FaSync className="text-sm" />
+                  <FaSync className={`text-sm ${isSwitchingCamera ? 'animate-[rotateSync_0.6s_ease-in-out]' : ''}`} />
                 </button>
               </div>
             )}
-          </div>
-        )}
-        {/* Camera selection menu - positioned above small video window in green circled location */}
-        {callType === 'video' && !videoSwapped && showCameraMenu && availableCameras && availableCameras.length > 1 && (
-          <div
-            className={`absolute right-4 bg-black bg-opacity-95 rounded-lg shadow-xl min-w-[220px] max-w-[280px] z-50 border border-white border-opacity-20 ${controlsVisible ? 'bottom-[200px]' : 'bottom-[182px]'
-              }`}
-          >
-            <div className="py-2">
-              <div className="px-3 py-2 border-b border-white border-opacity-10">
-                <p className="text-xs font-semibold text-white text-opacity-80 uppercase tracking-wide">Select Camera</p>
-              </div>
-              {availableCameras.map((camera) => (
-                <button
-                  key={camera.deviceId}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onSwitchCamera(camera.deviceId);
-                    setShowCameraMenu(false);
-                  }}
-                  className={`w-full text-left px-4 py-3 text-sm text-white hover:bg-white hover:bg-opacity-20 transition-colors ${currentCameraId === camera.deviceId ? 'bg-white bg-opacity-20 font-medium' : ''
-                    }`}
-                >
-                  <div className="flex items-center gap-2">
-                    {currentCameraId === camera.deviceId && (
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    )}
-                    <span className={currentCameraId === camera.deviceId ? '' : 'pl-4'}>
-                      {camera.label || `Camera ${camera.deviceId.substring(0, 8)}`}
-                    </span>
-                  </div>
-                </button>
-              ))}
-            </div>
           </div>
         )}
       </div>
