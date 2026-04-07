@@ -16905,10 +16905,70 @@ export const sendAutoDebitRemovedEmail = async (email, details) => {
     `
   };
 
-  try {
+    try {
     const result = await sendEmailWithRetry(mailOptions);
     return result.success ? createSuccessResponse(result.messageId, 'autodebit_removed') : createErrorResponse(new Error(result.error), 'autodebit_removed');
   } catch (error) {
     return createErrorResponse(error, 'autodebit_removed');
+  }
+};
+
+// --------------------------------------------------------------------------
+// GAMIFICATION EMAILS
+// --------------------------------------------------------------------------
+
+// Send Badge Earned Email
+export const sendBadgeEarnedEmail = async (email, username, badgeName, coinsEarned) => {
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: `Congratulations! You've earned the ${badgeName} Badge 🏆 - UrbanSetu`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;">
+        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #6366f1; margin: 0; font-size: 28px;">New Achievement! ✨</h1>
+            <p style="color: #6b7280; margin: 10px 0 0 0;">You're making great progress on UrbanSetu</p>
+          </div>
+          
+          <div style="background-color: #eef2ff; padding: 25px; border-radius: 12px; margin-bottom: 25px; border-left: 5px solid #6366f1; position: relative; overflow: hidden;">
+            <div style="position: absolute; top: -10px; right: -10px; opacity: 0.1; font-size: 100px;">🏆</div>
+            <h2 style="color: #1e1b4b; margin: 0 0 15px 0; font-size: 20px;">Congratulations, <strong>${username}</strong>!</h2>
+            <p style="color: #312e81; margin: 0 0 15px 0; line-height: 1.6; font-size: 16px;">
+              You've officially earned the <strong style="color: #4338ca;">${badgeName}</strong> badge! 
+              This is a testament to your consistency and reliability on our platform.
+            </p>
+            
+            <div style="background-color: white; padding: 15px; border-radius: 10px; text-align: center; margin: 20px 0; border: 1px dashed #6366f1;">
+              <span style="font-size: 14px; color: #6b7280; display:block; margin-bottom:5px;">Your Milestone Bonus</span>
+              <span style="font-size: 32px; font-weight: bold; color: #4338ca;">+${coinsEarned} SetuCoins 🪙</span>
+            </div>
+            
+            <p style="color: #4b5563; margin: 0; font-size: 14px; font-style: italic;">
+              Your milestone reward has been credited to your wallet and can be used for platform discounts.
+            </p>
+          </div>
+
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}/user/rewards" style="display: inline-block; background-color: #6366f1; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; box-shadow: 0 4px 6px rgba(99, 102, 241, 0.2);">
+              View My Badges & Rewards
+            </a>
+          </div>
+          
+          <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+            <p style="color: #9ca3af; margin: 0; font-size: 12px;">
+              © ${new Date().getFullYear()} UrbanSetu. Helping you build a better rental history.
+            </p>
+          </div>
+        </div>
+      </div>
+    `
+  };
+
+  try {
+    const result = await sendEmailWithRetry(mailOptions);
+    return result.success ? createSuccessResponse(result.messageId, 'badge_earned') : createErrorResponse(new Error(result.error), 'badge_earned');
+  } catch (error) {
+    return createErrorResponse(error, 'badge_earned');
   }
 };

@@ -1,7 +1,7 @@
 import User from "../models/user.model.js";
 import CoinTransaction from "../models/coinTransaction.model.js";
 import mongoose from "mongoose";
-import { sendLeaderboardBonusEmail } from "../utils/emailService.js";
+import { sendLeaderboardBonusEmail, sendBadgeEarnedEmail } from "../utils/emailService.js";
 
 /**
  * Service to handle SetuCoins operations
@@ -267,6 +267,8 @@ class CoinService {
                 earnedStreakBonus += 200;
                 if (!user.gamification.badges.includes('Elite Resident')) {
                     user.gamification.badges.push('Elite Resident');
+                    // Send celebratory email
+                    sendBadgeEarnedEmail(user.email, user.username || 'UrbanSetu User', 'Elite Resident', 200).catch(err => console.error("Error sending milestone email:", err));
                 }
             }
 
@@ -275,6 +277,8 @@ class CoinService {
                 earnedStreakBonus += 500;
                 if (!user.gamification.badges.includes('Perfect Payer')) {
                     user.gamification.badges.push('Perfect Payer');
+                    // Send celebratory email
+                    sendBadgeEarnedEmail(user.email, user.username || 'UrbanSetu User', 'Perfect Payer', 500).catch(err => console.error("Error sending milestone email:", err));
                 }
             }
 
@@ -289,6 +293,8 @@ class CoinService {
                     earnedStreakBonus += 50; 
                     if (!user.gamification.badges.includes('Early Bird')) {
                         user.gamification.badges.push('Early Bird');
+                        // Send celebratory email
+                        sendBadgeEarnedEmail(user.email, user.username || 'UrbanSetu User', 'Early Bird', 50).catch(err => console.error("Error sending milestone email:", err));
                     }
                 }
             }
@@ -339,6 +345,10 @@ class CoinService {
         if (!user.gamification.badges.includes(badgeName)) {
             user.gamification.badges.push(badgeName);
             await user.save();
+            
+            // Send celebratory email for manual awards too
+            sendBadgeEarnedEmail(user.email, user.username || 'UrbanSetu User', badgeName, 0).catch(err => console.error("Error sending manual badge email:", err));
+            
             return true;
         }
         return false;
