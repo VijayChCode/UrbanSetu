@@ -1148,16 +1148,6 @@ const ActiveCallModal = ({
       {callState === 'ended' && (
         <div className="absolute inset-0 bg-gray-900 bg-opacity-95 z-[60] flex items-center justify-center animate-[fadeIn_0.4s_ease-out]">
           <div className="bg-white rounded-3xl p-8 max-w-md w-full mx-4 shadow-2xl transform animate-[popIn_0.5s_ease-out] relative">
-            <button 
-              onClick={() => {
-                onEndCall();
-                navigate(-1);
-              }}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <FaTimes className="text-xl" />
-            </button>
-
             <div className="text-center mb-8">
               <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-[popIn_0.6s_ease-out_delay-100ms]">
                 <FaCheckCircle className="text-4xl" />
