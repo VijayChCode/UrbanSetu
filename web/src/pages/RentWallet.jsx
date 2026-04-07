@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { toast } from 'react-toastify';
-import { FaWallet, FaCalendarAlt, FaHistory, FaCog, FaMoneyBillWave, FaExclamationTriangle, FaCheckCircle, FaClock, FaDownload, FaTrophy, FaArrowRight } from "react-icons/fa";
+import { FaWallet, FaCalendarAlt, FaHistory, FaCog, FaMoneyBillWave, FaExclamationTriangle, FaCheckCircle, FaClock, FaDownload, FaTrophy, FaArrowRight, FaAward, FaRegGem, FaShieldAlt, FaDove, FaHandshake, FaFire, FaCoins } from "react-icons/fa";
 import { usePageTitle } from '../hooks/usePageTitle';
 import PaymentSchedule from '../components/rental/PaymentSchedule';
 import AutoDebitSettings from '../components/rental/AutoDebitSettings';
@@ -29,6 +29,13 @@ export default function RentWallet() {
   const [contract, setContract] = useState(null);
   const [isTenant, setIsTenant] = useState(false);
   const [isLandlord, setIsLandlord] = useState(false);
+  const [gamification, setGamification] = useState({
+    setuCoinsBalance: 0,
+    totalCoinsEarned: 0,
+    currentStreak: 0,
+    rank: null,
+    badges: []
+  });
 
   const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'schedule', 'history', 'settings'
 
@@ -88,10 +95,43 @@ export default function RentWallet() {
     }
   }, [contractId, currentUser, navigate]);
 
+  const fetchGamification = useCallback(async () => {
+    try {
+      const res = await authenticatedFetch(`${API_BASE_URL}/api/coins/balance`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setGamification({
+            setuCoinsBalance: data.setuCoinsBalance,
+            totalCoinsEarned: data.totalCoinsEarned,
+            currentStreak: data.currentStreak,
+            rank: data.rank,
+            badges: data.badges || []
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching gamification:", error);
+    }
+  }, []);
+
+  const getBadgeIcon = (badge) => {
+    switch (badge) {
+      case 'Elite Resident': return <FaRegGem className="text-purple-300" />;
+      case 'Perfect Payer': return <FaHandshake className="text-green-300" />;
+      case 'Early Bird': return <FaDove className="text-blue-300" />;
+      case 'Trusted Tenant': return <FaShieldAlt className="text-indigo-300" />;
+      case 'Service Pro': return <FaTools className="text-orange-300" />;
+      case 'House Proud': return <FaHome className="text-pink-300" />;
+      default: return <FaAward className="text-yellow-300" />;
+    }
+  };
+
   // Fetch wallet details
   useEffect(() => {
     fetchWalletDetails(true); // Show loading initially
-  }, [fetchWalletDetails]);
+    fetchGamification();
+  }, [fetchWalletDetails, fetchGamification]);
 
   // Handle navigation state from payment page
   useEffect(() => {
@@ -108,7 +148,10 @@ export default function RentWallet() {
       const updatedId = event.detail?.contractId;
       if (!updatedId || !normalizedId || updatedId.toString() === normalizedId) {
         // Add a small delay to allow backend to process
-        setTimeout(() => fetchWalletDetails(false), 1000); // Silent refresh
+        setTimeout(() => {
+          fetchWalletDetails(false);
+          fetchGamification();
+        }, 1000); // Silent refresh
       }
     };
 
@@ -232,22 +275,78 @@ export default function RentWallet() {
           <div className="space-y-6">
 
             {/* Gamification Banner */}
-            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl shadow-lg p-6 text-white relative overflow-hidden">
-              <div className="absolute top-0 right-0 opacity-10 transform translate-x-10 -translate-y-10">
-                <FaTrophy className="text-9xl" />
+            <div className="bg-gradient-to-r from-indigo-700 via-purple-700 to-blue-800 rounded-2xl shadow-xl p-8 text-white relative overflow-hidden group hover:shadow-2xl transition-all duration-500">
+              {/* Background Decoration */}
+              <div className="absolute top-0 right-0 opacity-10 transform translate-x-12 -translate-y-12 rotate-12 group-hover:rotate-45 transition-transform duration-1000">
+                <FaTrophy className="text-[12rem]" />
               </div>
-              <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-4">
-                <div>
-                  <h2 className="text-2xl font-bold flex items-center gap-2 mb-2">
-                    <FaTrophy className="text-yellow-300" /> Community Leaderboard
+              <div className="absolute bottom-0 left-0 opacity-5 transform -translate-x-6 translate-y-6">
+                <FaCoins className="text-[8rem]" />
+              </div>
+
+              <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8">
+                <div className="flex-1 text-center lg:text-left">
+                  <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase mb-4 border border-white/30">
+                    <FaAward className="text-yellow-400" /> Member Rewards Program
+                  </div>
+                  <h2 className="text-3xl md:text-4xl font-extrabold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white to-indigo-100 italic">
+                    Level Up Your Living Experience
                   </h2>
-                  <p className="text-indigo-100 max-w-xl">
-                    Earn SetuCoins by paying rent on time and climb the leaderboard! Top rankers get exclusive rewards.
+                  <p className="text-indigo-100/90 max-w-xl text-lg leading-relaxed">
+                    Earn <span className="font-bold text-yellow-300">SetuCoins</span> with every on-time payment. Reach milestones to unlock exclusive badges and premium features.
                   </p>
+                  
+                  {/* Stats Counter */}
+                  <div className="flex flex-wrap justify-center lg:justify-start gap-6 mt-8">
+                    <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 min-w-[120px] hover:bg-white/20 transition-colors">
+                      <div className="text-white/60 text-xs font-bold uppercase mb-1">Balance</div>
+                      <div className="text-2xl font-black flex items-center justify-center lg:justify-start gap-2">
+                        <FaCoins className="text-yellow-400" /> {gamification.setuCoinsBalance}
+                      </div>
+                    </div>
+                    <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 min-w-[120px] hover:bg-white/20 transition-colors">
+                      <div className="text-white/60 text-xs font-bold uppercase mb-1">Rent Streak</div>
+                      <div className="text-2xl font-black flex items-center justify-center lg:justify-start gap-2">
+                        <FaFire className={gamification.currentStreak > 0 ? "text-orange-400" : "text-gray-400"} /> {gamification.currentStreak} Mo
+                      </div>
+                    </div>
+                    {gamification.rank && (
+                      <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 min-w-[120px] hover:bg-white/20 transition-colors">
+                        <div className="text-white/60 text-xs font-bold uppercase mb-1">Global Rank</div>
+                        <div className="text-2xl font-black italic">#{gamification.rank}</div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center gap-4">
-                  <Link to="/user/leaderboard" className="bg-white text-indigo-600 px-6 py-2.5 rounded-full font-bold shadow-md hover:bg-gray-50 hover:shadow-lg transition flex items-center gap-2">
-                    View Standings <FaArrowRight />
+
+                <div className="flex flex-col items-center lg:items-end gap-6 w-full lg:w-auto">
+                  {/* Badges Display */}
+                  {gamification.badges?.length > 0 ? (
+                    <div className="w-full lg:w-[400px]">
+                      <h4 className="text-right text-xs font-black text-indigo-200 uppercase tracking-widest mb-3 px-2">Earned Achievements</h4>
+                      <div className="flex flex-wrap justify-center lg:justify-end gap-3">
+                        {gamification.badges.map((badge, idx) => (
+                          <div
+                            key={idx}
+                            className="flex items-center gap-2 bg-black/30 backdrop-blur-xl border border-white/10 px-4 py-2.5 rounded-2xl hover:scale-105 hover:bg-black/40 transition-all cursor-default group/badge shadow-lg"
+                          >
+                            <span className="text-xl group-hover/badge:rotate-12 transition-transform">{getBadgeIcon(badge)}</span>
+                            <span className="font-bold text-sm whitespace-nowrap">{badge}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center lg:text-right text-indigo-100/60 italic text-sm">
+                      Pay 3 more times on time to unlock your first badge!
+                    </div>
+                  )}
+
+                  <Link 
+                    to="/user/leaderboard" 
+                    className="group flex items-center gap-3 bg-yellow-400 text-indigo-900 px-8 py-4 rounded-2xl font-black text-lg shadow-[0_0_20px_rgba(250,204,21,0.4)] hover:shadow-[0_0_30px_rgba(250,204,21,0.6)] hover:-translate-y-1 transition-all active:scale-95"
+                  >
+                    View Leaderboard <FaArrowRight className="group-hover:translate-x-2 transition-transform" />
                   </Link>
                 </div>
               </div>

@@ -37,7 +37,8 @@ class CoinService {
             setuCoinsBalance: stats.setuCoinsBalance || 0,
             totalCoinsEarned: stats.totalCoinsEarned || 0,
             currentStreak: stats.currentStreak || 0,
-            rank
+            rank,
+            badges: stats.badges || []
         };
     }
 
@@ -189,11 +190,26 @@ class CoinService {
 
     /**
      * Update rent streak logic
-     * @param {string} userId 
-     * @param {Date} paymentDate 
-     * @param {Object} session 
+     * @param {string|Object} params - userId or { userId, paymentDate, isLate, session }
+     * @param {Date} paymentDateArg 
+     * @param {Object} sessionArg 
      */
-    async updateRentStreak(userId, paymentDate = new Date(), session = null) {
+    async updateRentStreak(params, paymentDateArg = new Date(), sessionArg = null) {
+        let userId, paymentDate, session, isLate, dueDate;
+
+        if (params && typeof params === 'object' && !(params instanceof mongoose.Types.ObjectId)) {
+            userId = params.userId;
+            paymentDate = params.paymentDate || new Date();
+            session = params.session || null;
+            isLate = params.isLate || false;
+            dueDate = params.dueDate || null;
+        } else {
+            userId = params;
+            paymentDate = paymentDateArg;
+            session = sessionArg;
+            isLate = false;
+        }
+
         const user = await User.findById(userId).session(session);
         if (!user) return;
 
@@ -202,23 +218,27 @@ class CoinService {
                 setuCoinsBalance: 0,
                 totalCoinsEarned: 0,
                 currentStreak: 0,
-                lastRentPaymentDate: null
+                lastRentPaymentDate: null,
+                badges: []
             };
+        }
+
+        // Initialize badges if missing
+        if (!user.gamification.badges) {
+            user.gamification.badges = [];
         }
 
         const lastDate = user.gamification.lastRentPaymentDate ? new Date(user.gamification.lastRentPaymentDate) : null;
         const currentDate = new Date(paymentDate);
 
-        // Check if last payment was previous month
-        // Logic: If lastDate is null, streak = 1
-        // If lastDate is last month (any day), streak++
-        // If lastDate is current month, streak stays same (already count)
-        // If lastDate is > 1 month ago, streak = 1
-
         let streakIncreased = false;
         let earnedStreakBonus = 0;
 
-        if (!lastDate) {
+        // Reset streak if late
+        if (isLate) {
+            user.gamification.currentStreak = 0;
+            streakIncreased = false;
+        } else if (!lastDate) {
             user.gamification.currentStreak = 1;
             streakIncreased = true;
         } else {
@@ -238,13 +258,51 @@ class CoinService {
         }
 
         // Calculate Streak Bonus
-        // Rule: 20 coins per streak month, capped at 100 max bonus per month
         if (streakIncreased && user.gamification.currentStreak > 1) {
+            // Standard Bonus: 20 coins per month, capped at 100
             earnedStreakBonus = Math.min(user.gamification.currentStreak * 20, 100);
 
-            // Auto-credit streak bonus
-            // We need to call credit here, but carefully to avoid recursion or circular dependencies if logic expands
-            // Ideally returned to caller to process credit
+            // Milestone: 6 months = Elite Resident badge + 200 coins bonus
+            if (user.gamification.currentStreak === 6) {
+                earnedStreakBonus += 200;
+                if (!user.gamification.badges.includes('Elite Resident')) {
+                    user.gamification.badges.push('Elite Resident');
+                }
+            }
+
+            // Milestone: 12 months = Perfect Payer badge + 500 coins bonus
+            if (user.gamification.currentStreak === 12) {
+                earnedStreakBonus += 500;
+                if (!user.gamification.badges.includes('Perfect Payer')) {
+                    user.gamification.badges.push('Perfect Payer');
+                }
+            }
+
+            // Early Bird Bonus: 3+ days before due date
+            if (dueDate && !isLate) {
+                const due = new Date(dueDate);
+                const paid = new Date(paymentDate);
+                const diffTime = due.getTime() - paid.getTime();
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                if (diffDays >= 3) {
+                    earnedStreakBonus += 50; 
+                    if (!user.gamification.badges.includes('Early Bird')) {
+                        user.gamification.badges.push('Early Bird');
+                    }
+                }
+            }
+
+            // Auto-credit streak bonus if > 0
+            if (earnedStreakBonus > 0) {
+                await this.credit({
+                    userId: user._id,
+                    amount: earnedStreakBonus,
+                    source: 'rent_streak_bonus',
+                    description: `Rent payment streak bonus (Streak: ${user.gamification.currentStreak} months)`,
+                    session
+                });
+            }
         }
 
         user.gamification.lastRentPaymentDate = currentDate;
@@ -253,8 +311,33 @@ class CoinService {
         return {
             currentStreak: user.gamification.currentStreak,
             streakIncreased,
-            earnedStreakBonus
+            earnedStreakBonus,
+            isElite: user.gamification.badges.includes('Elite Resident'),
+            isPerfect: user.gamification.badges.includes('Perfect Payer'),
+            isEarlyBird: user.gamification.badges.includes('Early Bird')
         };
+    }
+
+    /**
+     * Award a badge manually or from other services
+     */
+    async awardBadge(userId, badgeName) {
+        const user = await User.findById(userId);
+        if (!user) return false;
+
+        if (!user.gamification) {
+            user.gamification = { badges: [] };
+        }
+        if (!user.gamification.badges) {
+            user.gamification.badges = [];
+        }
+
+        if (!user.gamification.badges.includes(badgeName)) {
+            user.gamification.badges.push(badgeName);
+            await user.save();
+            return true;
+        }
+        return false;
     }
 
     /**

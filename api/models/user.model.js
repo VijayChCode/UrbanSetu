@@ -279,6 +279,10 @@ const userSchema = new mongoose.Schema({
       type: Boolean,
       default: false
     },
+    badges: { // Unlocked loyalty badges (e.g., 'Elite Resident')
+      type: [String],
+      default: []
+    },
     // Expiry Tracking
     lastCoinTransaction: {
       type: Date,

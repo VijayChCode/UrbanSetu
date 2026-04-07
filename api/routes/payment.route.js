@@ -692,9 +692,10 @@ router.post("/verify", verifyToken, async (req, res) => {
 
               await CoinService.updateRentStreak({
                 userId: payingUser._id,
-                paymentDate: new Date(),
+                paymentDate: payment.completedAt || new Date(),
                 amountPaid: payment.amount,
-                isLate: isLate
+                isLate: isLate,
+                dueDate: (wallet && wallet.paymentSchedule) ? new Date(wallet.paymentSchedule.find(p => Number(p.month) === Number(payment.rentMonth || (payment.metadata instanceof Map ? payment.metadata.get('month') : payment.metadata?.month)) && Number(p.year) === Number(payment.rentYear || (payment.metadata instanceof Map ? payment.metadata.get('year') : payment.metadata?.year)))?.dueDate) : null
               });
               console.log(`🔥 Updated rent streak for user ${payingUser._id} (Late: ${isLate})`);
 
@@ -1290,9 +1291,42 @@ router.post('/razorpay/verify', verifyToken, async (req, res) => {
               referenceId: payment._id,
               referenceModel: 'Payment'
             });
-            // Update Streak
-            await CoinService.updateRentStreak(payment.userId, payment.completedAt || new Date());
-            console.log(`✅ Awarded ${earnedCoins} SetuCoins to user ${payment.userId}`);
+            // 2. Update Streak & Check for On-Time Bonus
+            let isLate = false;
+            try {
+              const RentWallet = (await import('../models/rentWallet.model.js')).default;
+              const wallet = await RentWallet.findOne({ contractId: payment.contractId });
+              
+              if (wallet && wallet.paymentSchedule) {
+                const getMeta = (key) => payment.metadata instanceof Map ? payment.metadata.get(key) : (payment.metadata ? payment.metadata[key] : undefined);
+                const targetMonth = Number(payment.rentMonth || getMeta('month'));
+                const targetYear = Number(payment.rentYear || getMeta('year'));
+
+                const scheduleEntry = wallet.paymentSchedule.find(p => Number(p.month) === targetMonth && Number(p.year) === targetYear);
+
+                if (scheduleEntry && scheduleEntry.dueDate) {
+                  const paymentDate = payment.completedAt || new Date();
+                  const dueDate = new Date(scheduleEntry.dueDate);
+                  if (paymentDate > dueDate) {
+                    isLate = true;
+                  }
+                }
+              }
+            } catch (err) {
+              console.error("Error calculating isLate for Razorpay:", err);
+            }
+
+            const streakResult = await CoinService.updateRentStreak({
+              userId: payment.userId,
+              paymentDate: payment.completedAt || new Date(),
+              amountPaid: payment.amount,
+              isLate: isLate,
+              dueDate: (wallet && wallet.paymentSchedule) ? new Date(wallet.paymentSchedule.find(p => Number(p.month) === Number(payment.rentMonth || (payment.metadata instanceof Map ? payment.metadata.get('month') : payment.metadata?.month)) && Number(p.year) === Number(payment.rentYear || (payment.metadata instanceof Map ? payment.metadata.get('year') : payment.metadata?.year)))?.dueDate) : null
+            });
+
+            if (streakResult?.isElite) {
+              console.log(`🏆 User ${payment.userId} is now an Elite Resident!`);
+            }
           } catch (coinError) {
             console.error("Error crediting SetuCoins:", coinError);
           }

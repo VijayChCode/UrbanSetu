@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import {
@@ -14,6 +14,7 @@ import SocialSharePanel from '../components/SocialSharePanel';
 import { getCoinValue, COIN_CONFIG } from '../utils/coinUtils';
 import RewardsSkeleton from '../components/skeletons/RewardsSkeleton';
 import { authenticatedFetch } from '../utils/auth';
+import { toast } from 'react-hot-toast';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -61,7 +62,7 @@ export default function Rewards() {
 
     const isProfileComplete = currentUser && currentUser.gender && currentUser.address && currentUser.mobileNumber;
 
-    const [coinData, setCoinData] = useState({ balance: 0, totalEarned: 0, streak: 0, expiryDate: null, frozenCoins: 0, loading: true });
+    const [coinData, setCoinData] = useState({ balance: 0, totalEarned: 0, streak: 0, expiryDate: null, frozenCoins: 0, badges: [], loading: true });
     const [history, setHistory] = useState([]);
     const [historyLoading, setHistoryLoading] = useState(false);
     const [showCoinBurst, setShowCoinBurst] = useState(false);
@@ -70,6 +71,7 @@ export default function Rewards() {
     const [currentFact, setCurrentFact] = useState(DID_YOU_KNOW_FACTS[0]);
     const [activeContractId, setActiveContractId] = useState(null);
     const [referralStats, setReferralStats] = useState({ referralsCount: 0, totalEarned: 0, referredUsers: [], loading: true });
+    const prevBadgesRef = useRef([]);
 
     useEffect(() => {
         // Pick a random fact on every mountain/visit
@@ -84,6 +86,29 @@ export default function Rewards() {
         if (activeTab === 'history') fetchHistory();
     }, [activeTab]);
 
+    useEffect(() => {
+        // Celebrate new badges logic
+        if (coinData.badges.length > prevBadgesRef.current.length) {
+            const newBadges = coinData.badges.filter(b => !prevBadgesRef.current.includes(b));
+            if (newBadges.length > 0) {
+                setShowCoinBurst(true);
+                newBadges.forEach(badge => {
+                    toast.success(`🏆 Milestone Unlocked: ${badge}!`, {
+                        duration: 6000,
+                        icon: '🔥',
+                        style: {
+                            borderRadius: '1rem',
+                            background: '#333',
+                            color: '#fff',
+                            fontWeight: 'bold'
+                        }
+                    });
+                });
+            }
+        }
+        prevBadgesRef.current = coinData.badges;
+    }, [coinData.badges]);
+
     const fetchUserInfo = async () => {
         try {
             const res = await authenticatedFetch(`${API_BASE_URL}/api/coins/balance`);
@@ -95,6 +120,7 @@ export default function Rewards() {
                     streak: data.currentStreak || 0,
                     expiryDate: data.coinsExpiryDate || null,
                     frozenCoins: data.frozenCoins || 0,
+                    badges: data.badges || [],
                     loading: false
                 });
             }
@@ -289,6 +315,31 @@ export default function Rewards() {
                                         <p className="text-indigo-100 text-sm leading-relaxed italic">"{currentFact}"</p>
                                     </div>
                                     <FaInfoCircle className="absolute -bottom-4 -right-4 text-8xl text-indigo-800 rotate-12" />
+                                </div>
+
+                                {/* Badges Section */}
+                                <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm border border-slate-100 dark:border-gray-700">
+                                    <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2">
+                                        <FaTrophy className="text-yellow-500" /> My Badges
+                                    </h2>
+                                    {coinData.badges && coinData.badges.length > 0 ? (
+                                        <div className="grid grid-cols-2 gap-4">
+                                            {coinData.badges.map((badge, idx) => (
+                                                <div key={idx} className="flex flex-col items-center bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-2xl border border-indigo-100 dark:border-indigo-800 text-center group hover:shadow-md transition-all">
+                                                    <div className="w-12 h-12 bg-indigo-600 text-white rounded-full flex items-center justify-center mb-2 shadow-lg group-hover:scale-110 transition-transform">
+                                                        <FaTrophy />
+                                                    </div>
+                                                    <span className="text-sm font-black text-indigo-900 dark:text-indigo-100">{badge}</span>
+                                                    <span className="text-[10px] font-bold text-indigo-400 uppercase mt-1">Unlocked</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-8 bg-slate-50 dark:bg-gray-700/30 rounded-2xl border border-dashed border-slate-200 dark:border-gray-700">
+                                            <FaLock className="mx-auto text-slate-300 mb-2" size={24} />
+                                            <p className="text-xs font-bold text-slate-400">No badges earned yet. <br/>Keep engaging to unlock titles!</p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 

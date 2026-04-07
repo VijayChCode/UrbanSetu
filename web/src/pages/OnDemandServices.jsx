@@ -631,31 +631,35 @@ export default function OnDemandServices() {
                       </div>
                       {/* Quick status */}
                       <div className="mt-3 flex gap-4 text-xs">
-                        {checklists.moveIn ? (
-                          <span className={`flex items-center gap-1 ${checklists.moveIn.status === 'approved' ? 'text-green-600' :
-                            checklists.moveIn.status === 'pending_approval' ? 'text-yellow-600' :
+                        {contract.moveInStatus ? (
+                          <span className={`flex items-center gap-1 ${contract.moveInStatus === 'approved' || contract.moveInStatus === 'completed' ? 'text-green-600' :
+                            contract.moveInStatus === 'pending_approval' ? 'text-yellow-600' :
                               'text-gray-600'
                             }`}>
-                            {checklists.moveIn.status === 'approved' ? <FaCheckCircle /> :
-                              checklists.moveIn.status === 'pending_approval' ? <FaClock /> :
+                            {contract.moveInStatus === 'approved' || contract.moveInStatus === 'completed' ? <FaCheckCircle /> :
+                              contract.moveInStatus === 'pending_approval' ? <FaClock /> :
                                 <FaTimesCircle />}
-                            Move-In: {checklists.moveIn.status}
+                            Move-In: {contract.moveInStatus.replace('_', ' ')}
                           </span>
                         ) : (
-                          <span className="text-gray-400">Move-In: Not started</span>
+                          <span className="flex items-center gap-1 text-gray-400 opacity-70 italic">
+                            <FaClock className="text-[10px]" /> Move-In: Not started
+                          </span>
                         )}
-                        {checklists.moveOut ? (
-                          <span className={`flex items-center gap-1 ${checklists.moveOut.status === 'completed' ? 'text-green-600' :
-                            checklists.moveOut.status === 'pending_approval' ? 'text-yellow-600' :
+                        {contract.moveOutStatus ? (
+                          <span className={`flex items-center gap-1 ${contract.moveOutStatus === 'completed' || contract.moveOutStatus === 'approved' ? 'text-green-600' :
+                            contract.moveOutStatus === 'pending_approval' ? 'text-yellow-600' :
                               'text-gray-600'
                             }`}>
-                            {checklists.moveOut.status === 'completed' ? <FaCheckCircle /> :
-                              checklists.moveOut.status === 'pending_approval' ? <FaClock /> :
+                            {contract.moveOutStatus === 'completed' || contract.moveOutStatus === 'approved' ? <FaCheckCircle /> :
+                              contract.moveOutStatus === 'pending_approval' ? <FaClock /> :
                                 <FaTimesCircle />}
-                            Move-Out: {checklists.moveOut.status}
+                            Move-Out: {contract.moveOutStatus.replace('_', ' ')}
                           </span>
                         ) : (
-                          <span className="text-gray-400">Move-Out: Not started</span>
+                          <span className="flex items-center gap-1 text-gray-400 opacity-70 italic">
+                            <FaClock className="text-[10px]" /> Move-Out: Not started
+                          </span>
                         )}
                       </div>
                     </div>

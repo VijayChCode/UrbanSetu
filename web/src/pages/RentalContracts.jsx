@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { FaFileContract, FaDownload, FaEye, FaCalendarAlt, FaMoneyBillWave, FaLock, FaCheckCircle, FaTimesCircle, FaHome, FaUser, FaChevronRight, FaSignInAlt, FaSignOutAlt, FaGavel, FaStar, FaCreditCard, FaPlayCircle, FaCheck, FaTimes, FaPen, FaEraser, FaUndo, FaClock, FaWallet, FaExternalLinkAlt, FaTools, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { FaFileContract, FaDownload, FaEye, FaCalendarAlt, FaMoneyBillWave, FaLock, FaCheckCircle, FaTimesCircle, FaHome, FaUser, FaChevronRight, FaSignInAlt, FaSignOutAlt, FaGavel, FaStar, FaCreditCard, FaPlayCircle, FaCheck, FaTimes, FaPen, FaEraser, FaUndo, FaClock, FaWallet, FaExternalLinkAlt, FaTools, FaChevronDown, FaChevronUp, FaAward, FaRegGem, FaShieldAlt, FaDove, FaHandshake, FaFire } from 'react-icons/fa';
 import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePageTitle } from '../hooks/usePageTitle';
@@ -186,6 +186,36 @@ export default function RentalContracts() {
     if (isTenant) return 'tenant';
     if (isLandlord) return 'landlord';
     return null;
+  };
+
+  const getBadgeIcon = (badge) => {
+    switch (badge) {
+      case 'Elite Resident': return <FaRegGem className="text-purple-500" />;
+      case 'Perfect Payer': return <FaHandshake className="text-green-500" />;
+      case 'Early Bird': return <FaDove className="text-blue-500" />;
+      case 'Trusted Tenant': return <FaShieldAlt className="text-indigo-500" />;
+      case 'Service Pro': return <FaTools className="text-orange-500" />;
+      case 'House Proud': return <FaHome className="text-pink-500" />;
+      default: return <FaAward className="text-gray-400" />;
+    }
+  };
+
+  const renderBadges = (badges) => {
+    if (!badges || badges.length === 0) return null;
+    return (
+      <div className="flex flex-wrap gap-1 mt-1">
+        {badges.map((badge, idx) => (
+          <span
+            key={idx}
+            className="flex items-center gap-1 text-[10px] bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full border border-gray-200 dark:border-gray-600 font-medium"
+            title={badge}
+          >
+            {getBadgeIcon(badge)}
+            {badge}
+          </span>
+        ))}
+      </div>
+    );
   };
 
   // Handle contract review (for seller/landlord)
@@ -454,6 +484,18 @@ export default function RentalContracts() {
                           <p className="text-sm text-gray-600 dark:text-gray-400 font-mono">
                             {contract.contractId}
                           </p>
+                          <div className="flex gap-2 mt-2">
+                            {contract.moveInStatus === 'completed' && (
+                              <span className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 px-2 py-0.5 rounded text-[10px] font-bold border border-green-200 dark:border-green-800 flex items-center gap-1">
+                                <FaSignInAlt /> CHECKED-IN
+                              </span>
+                            )}
+                            {contract.moveOutStatus === 'completed' && (
+                              <span className="bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300 px-2 py-0.5 rounded text-[10px] font-bold border border-orange-200 dark:border-orange-800 flex items-center gap-1">
+                                <FaSignOutAlt /> CHECKED-OUT
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
 
@@ -490,24 +532,47 @@ export default function RentalContracts() {
                         </div>
                       </div>
 
-                      {/* Signature Status */}
-                      <div className="mt-4 flex items-center gap-4">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-gray-600 dark:text-gray-400">Tenant:</span>
-                          {contract.tenantSignature?.signed ? (
-                            <FaCheckCircle className="text-green-600 dark:text-green-400" />
-                          ) : (
-                            <FaTimesCircle className="text-yellow-600 dark:text-yellow-400" />
-                          )}
+                      {/* Signature & Loyalty Status */}
+                      <div className="mt-4 flex flex-wrap items-center gap-6">
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-600 dark:text-gray-400">Tenant:</span>
+                            {contract.tenantSignature?.signed ? (
+                              <FaCheckCircle className="text-green-600 dark:text-green-400" title="Signed" />
+                            ) : (
+                              <FaTimesCircle className="text-yellow-600 dark:text-yellow-400" title="Not Signed" />
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-600 dark:text-gray-400">Landlord:</span>
+                            {contract.landlordSignature?.signed ? (
+                              <FaCheckCircle className="text-green-600 dark:text-green-400" title="Signed" />
+                            ) : (
+                              <FaTimesCircle className="text-yellow-600 dark:text-yellow-400" title="Not Signed" />
+                            )}
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-gray-600 dark:text-gray-400">Landlord:</span>
-                          {contract.landlordSignature?.signed ? (
-                            <FaCheckCircle className="text-green-600 dark:text-green-400" />
-                          ) : (
-                            <FaTimesCircle className="text-yellow-600 dark:text-yellow-400" />
-                          )}
-                        </div>
+
+                        {/* Badges Display for the other party */}
+                        {isTenant && contract.landlordId?.gamification?.badges?.length > 0 && (
+                          <div className="flex flex-col">
+                            <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Landlord Reputation</span>
+                            {renderBadges(contract.landlordId.gamification.badges)}
+                          </div>
+                        )}
+                        {isLandlord && contract.tenantId?.gamification?.badges?.length > 0 && (
+                          <div className="flex flex-col">
+                            <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Tenant Loyalty</span>
+                            <div className="flex items-center gap-3">
+                              {renderBadges(contract.tenantId.gamification.badges)}
+                              {contract.tenantId.gamification.currentStreak > 0 && (
+                                <span className="flex items-center gap-1 text-[10px] text-orange-600 dark:text-orange-400 font-bold bg-orange-50 dark:bg-orange-900/20 px-2 py-0.5 rounded-full border border-orange-100 dark:border-orange-800">
+                                  <FaFire /> {contract.tenantId.gamification.currentStreak} Mo Streak
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       {/* Payment Status - Show monthly payment status for active contracts */}

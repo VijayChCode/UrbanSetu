@@ -352,8 +352,8 @@ export const getContract = async (req, res, next) => {
     // Try to find by contractId string field first, then by _id (MongoDB ObjectId)
     let contract = await RentLockContract.findOne({ contractId: contractId })
       .populate('listingId', 'name propertyNumber address city state')
-      .populate('tenantId', 'username email avatar')
-      .populate('landlordId', 'username email avatar')
+      .populate('tenantId', 'username email avatar gamification')
+      .populate('landlordId', 'username email avatar gamification')
       .populate('bookingId');
 
     // If not found by contractId, try by _id (in case contractId param is actually an ObjectId)
@@ -363,8 +363,8 @@ export const getContract = async (req, res, next) => {
         if (mongoose.default.Types.ObjectId.isValid(contractId)) {
           contract = await RentLockContract.findById(contractId)
             .populate('listingId', 'name propertyNumber address city state')
-            .populate('tenantId', 'username email avatar')
-            .populate('landlordId', 'username email avatar')
+            .populate('tenantId', 'username email avatar gamification')
+            .populate('landlordId', 'username email avatar gamification')
             .populate('bookingId');
         }
       } catch (error) {
@@ -441,14 +441,25 @@ export const listContracts = async (req, res, next) => {
 
     const contracts = await RentLockContract.find(query)
       .populate('listingId', 'name propertyNumber address city state imageUrls')
-      .populate('tenantId', 'username email avatar')
-      .populate('landlordId', 'username email avatar')
+      .populate('tenantId', 'username email avatar gamification')
+      .populate('landlordId', 'username email avatar gamification')
       .populate('bookingId', 'status purpose propertyName')
       .sort({ createdAt: -1 });
 
-    // For active contracts, fetch wallet and payment schedule for payment status display
     const contractsWithPaymentStatus = await Promise.all(
       contracts.map(async (contract) => {
+        // Fetch checklist statuses
+        const contractObj = contract.toObject();
+        try {
+          const MoveInOutChecklist = (await import('../models/moveInOutChecklist.model.js')).default;
+          const checklists = await MoveInOutChecklist.find({ contractId: contract._id }).select('type status');
+          
+          contractObj.moveInStatus = checklists.find(c => c.type === 'move_in')?.status || null;
+          contractObj.moveOutStatus = checklists.find(c => c.type === 'move_out')?.status || null;
+        } catch (error) {
+          console.error(`Error fetching checklists for contract ${contract._id}:`, error);
+        }
+
         if (contract.status === 'active' && contract.walletId) {
           try {
             const wallet = await RentWallet.findById(contract.walletId)
@@ -456,19 +467,17 @@ export const listContracts = async (req, res, next) => {
 
             if (wallet) {
               // Add payment status summary to contract
-              const contractObj = contract.toObject();
               contractObj.wallet = {
                 paymentSchedule: wallet.paymentSchedule || [],
                 totalPaid: wallet.totalPaid || 0,
                 totalDue: wallet.totalDue || 0
               };
-              return contractObj;
             }
           } catch (error) {
             console.error(`Error fetching wallet for contract ${contract._id}:`, error);
           }
         }
-        return contract;
+        return contractObj;
       })
     );
 
