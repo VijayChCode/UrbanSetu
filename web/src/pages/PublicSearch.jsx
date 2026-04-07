@@ -11,6 +11,8 @@ import SEO from '../components/SEO';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { Search, Filter, MapPin, Home, DollarSign, GripVertical, ChevronDown, RefreshCw } from "lucide-react";
 import ListingSkeletonGrid from "../components/skeletons/ListingSkeletonGrid";
+import { motion, AnimatePresence } from "framer-motion";
+
 
 import { authenticatedFetch } from '../utils/auth';
 
@@ -382,104 +384,119 @@ export default function PublicSearch() {
             </div>
 
             {/* Mobile Filters Modal/Drawer */}
-            {isFiltersOpen && (
-                <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm md:hidden" onClick={() => setIsFiltersOpen(false)}>
-                    <div className="absolute right-0 top-0 h-full w-4/5 max-w-sm bg-white dark:bg-gray-900 shadow-2xl p-6 flex flex-col gap-4 overflow-y-auto animate-slide-in-right" onClick={e => e.stopPropagation()}>
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-bold text-gray-800 dark:text-white">Filters</h2>
-                            <button onClick={() => setIsFiltersOpen(false)} className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white transition-colors">Close</button>
-                        </div>
-
-                        {/* Mobile Filters Content */}
-
-                        {/* State Filter */}
-                        <div className="mb-4">
-                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Location</label>
-                            <div className="relative">
-                                <MapPin className="absolute left-3 top-3 h-5 w-5 text-gray-400 dark:text-gray-500" />
-                                <select
-                                    className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:bg-white dark:focus:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                                    value={locationFilter.state || ""}
-                                    onChange={(e) => handleLocationChange({ ...locationFilter, state: e.target.value, city: "" })}
-                                >
-                                    <option value="">Select State</option>
-                                    {(() => {
-                                        const india = data.find((country) => country.name === "India");
-                                        return india ? india.states.map((s) => (
-                                            <option key={s.state_code} value={s.name}>{s.name}</option>
-                                        )) : [];
-                                    })()}
-                                </select>
+            <AnimatePresence>
+                {isFiltersOpen && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm md:hidden"
+                        onClick={() => setIsFiltersOpen(false)}
+                    >
+                        <motion.div
+                            initial={{ x: "100%" }}
+                            animate={{ x: 0 }}
+                            exit={{ x: "100%" }}
+                            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                            className="absolute right-0 top-0 h-full w-4/5 max-w-sm bg-white dark:bg-gray-900 shadow-2xl p-6 flex flex-col gap-4 overflow-y-auto"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-xl font-bold text-gray-800 dark:text-white">Filters</h2>
+                                <button onClick={() => setIsFiltersOpen(false)} className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white transition-colors">Close</button>
                             </div>
-                        </div>
 
-                        {/* Type Filter */}
-                        <div className="mb-4">
-                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Property Type</label>
-                            <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl transition-colors">
-                                {['all', 'rent', 'sale'].map((t) => (
-                                    <button
-                                        key={t}
-                                        type="button"
-                                        onClick={() => setFormData(prev => ({ ...prev, type: t }))}
-                                        className={`flex-1 capitalize py-2 rounded-lg text-sm font-medium transition-all ${formData.type === t
-                                            ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
-                                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-                                            }`}
+                            {/* Mobile Filters Content */}
+
+                            {/* State Filter */}
+                            <div className="mb-4">
+                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Location</label>
+                                <div className="relative">
+                                    <MapPin className="absolute left-3 top-3 h-5 w-5 text-gray-400 dark:text-gray-500" />
+                                    <select
+                                        className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:bg-white dark:focus:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                        value={locationFilter.state || ""}
+                                        onChange={(e) => handleLocationChange({ ...locationFilter, state: e.target.value, city: "" })}
                                     >
-                                        {t}
-                                    </button>
+                                        <option value="">Select State</option>
+                                        {(() => {
+                                            const india = data.find((country) => country.name === "India");
+                                            return india ? india.states.map((s) => (
+                                                <option key={s.state_code} value={s.name}>{s.name}</option>
+                                            )) : [];
+                                        })()}
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* Type Filter */}
+                            <div className="mb-4">
+                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Property Type</label>
+                                <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl transition-colors">
+                                    {['all', 'rent', 'sale'].map((t) => (
+                                        <button
+                                            key={t}
+                                            type="button"
+                                            onClick={() => setFormData(prev => ({ ...prev, type: t }))}
+                                            className={`flex-1 capitalize py-2 rounded-lg text-sm font-medium transition-all ${formData.type === t
+                                                ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
+                                                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                                                }`}
+                                        >
+                                            {t}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Sort Filter */}
+                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Sort By</label>
+                            <select
+                                className="w-full p-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:bg-white dark:focus:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition-all mb-4"
+                                onChange={(e) => {
+                                    const [sort, order] = e.target.value.split("_");
+                                    setFormData((prev) => ({ ...prev, sort, order }));
+                                }}
+                                value={`${formData.sort}_${formData.order}`}
+                            >
+                                <option value="regularPrice_desc">Price: High to Low</option>
+                                <option value="regularPrice_asc">Price: Low to High</option>
+                                <option value="createdAt_desc">Newest First</option>
+                                <option value="createdAt_asc">Oldest First</option>
+                            </select>
+
+                            <div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700 transition-colors">
+                                <label className="block text-sm font-semibold dark:text-gray-200 mb-2">Detailed Filters</label>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <input type="number" name="minPrice" placeholder="Min ₹" value={formData.minPrice} onChange={handleChanges} className="p-2 border border-gray-200 dark:border-gray-700 rounded-lg w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" />
+                                    <input type="number" name="maxPrice" placeholder="Max ₹" value={formData.maxPrice} onChange={handleChanges} className="p-2 border border-gray-200 dark:border-gray-700 rounded-lg w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" />
+                                    <input type="number" name="bedrooms" placeholder="Beds" value={formData.bedrooms} onChange={handleChanges} className="p-2 border border-gray-200 dark:border-gray-700 rounded-lg w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" />
+                                    <input type="number" name="bathrooms" placeholder="Baths" value={formData.bathrooms} onChange={handleChanges} className="p-2 border border-gray-200 dark:border-gray-700 rounded-lg w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" />
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col gap-3">
+                                {['parking', 'furnished', 'offer'].map(item => (
+                                    <label key={item} className="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" name={item} checked={formData[item]} onChange={handleChanges} className="w-5 h-5 accent-blue-600 dark:accent-blue-400" />
+                                        <span className="capitalize text-gray-700 dark:text-gray-300">{item}</span>
+                                    </label>
                                 ))}
                             </div>
-                        </div>
 
-                        {/* Sort Filter */}
-                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Sort By</label>
-                        <select
-                            className="w-full p-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:bg-white dark:focus:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition-all mb-4"
-                            onChange={(e) => {
-                                const [sort, order] = e.target.value.split("_");
-                                setFormData((prev) => ({ ...prev, sort, order }));
-                            }}
-                            value={`${formData.sort}_${formData.order}`}
-                        >
-                            <option value="regularPrice_desc">Price: High to Low</option>
-                            <option value="regularPrice_asc">Price: Low to High</option>
-                            <option value="createdAt_desc">Newest First</option>
-                            <option value="createdAt_asc">Oldest First</option>
-                        </select>
-
-                        <div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700 transition-colors">
-                            <label className="block text-sm font-semibold dark:text-gray-200 mb-2">Detailed Filters</label>
-                            <div className="grid grid-cols-2 gap-4">
-                                <input type="number" name="minPrice" placeholder="Min ₹" value={formData.minPrice} onChange={handleChanges} className="p-2 border border-gray-200 dark:border-gray-700 rounded-lg w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" />
-                                <input type="number" name="maxPrice" placeholder="Max ₹" value={formData.maxPrice} onChange={handleChanges} className="p-2 border border-gray-200 dark:border-gray-700 rounded-lg w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" />
-                                <input type="number" name="bedrooms" placeholder="Beds" value={formData.bedrooms} onChange={handleChanges} className="p-2 border border-gray-200 dark:border-gray-700 rounded-lg w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" />
-                                <input type="number" name="bathrooms" placeholder="Baths" value={formData.bathrooms} onChange={handleChanges} className="p-2 border border-gray-200 dark:border-gray-700 rounded-lg w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" />
-                            </div>
-                        </div>
-
-                        <div className="flex flex-col gap-3">
-                            {['parking', 'furnished', 'offer'].map(item => (
-                                <label key={item} className="flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox" name={item} checked={formData[item]} onChange={handleChanges} className="w-5 h-5 accent-blue-600 dark:accent-blue-400" />
-                                    <span className="capitalize text-gray-700 dark:text-gray-300">{item}</span>
-                                </label>
-                            ))}
-                        </div>
-
-                        <button
-                            onClick={() => {
-                                handleSubmit({ preventDefault: () => { } });
-                                setIsFiltersOpen(false);
-                            }}
-                            className="w-full bg-blue-600 dark:bg-blue-700 text-white py-3 rounded-xl font-bold mt-4 shadow-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-all"
-                        >
-                            Apply Filters
-                        </button>
-                    </div>
-                </div>
-            )}
+                            <button
+                                onClick={() => {
+                                    handleSubmit({ preventDefault: () => { } });
+                                    setIsFiltersOpen(false);
+                                }}
+                                className="w-full bg-blue-600 dark:bg-blue-700 text-white py-3 rounded-xl font-bold mt-4 shadow-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-all"
+                            >
+                                Apply Filters
+                            </button>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* Main Content Area */}
             <main className="flex-grow max-w-7xl mx-auto px-4 w-full -mt-10 relative z-10 pb-20">
