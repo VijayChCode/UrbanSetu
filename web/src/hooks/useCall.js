@@ -252,11 +252,80 @@ export const useCall = () => {
 
   // Socket initialization and session recovery
   useEffect(() => {
-    const handleConnect = () => {
+    const handleConnect = async () => {
       // 1. If we ALREADY had an active call in this specific tab/state, try to resume WebRTC
       if (activeCallRef.current?.callId) {
         console.log('[Call] Socket reconnected, resuming call:', activeCallRef.current.callId);
-        socket.emit('call-resume', { callId: activeCallRef.current.callId });
+        const callId = activeCallRef.current.callId;
+        const currentStream = localStreamRef.current;
+
+        // Destroy old (likely dead) peer and create a fresh non-initiator peer
+        // so we're ready to accept the reoffer from the other side
+        if (currentStream) {
+          if (peerRef.current) {
+            peerRef.current.destroy();
+            peerRef.current = null;
+          }
+
+          // Clear stale remote stream so React re-renders when new stream arrives
+          setRemoteStream(null);
+          if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
+          if (remoteAudioRef.current) remoteAudioRef.current.srcObject = null;
+
+          try {
+            const iceServers = await fetchIceServers();
+            const peer = new SimplePeer({
+              initiator: false,
+              trickle: true,
+              stream: currentStream,
+              config: { iceServers }
+            });
+
+            if (peer._pc) {
+              peer._pc.addEventListener('track', (event) => {
+                if (event.streams && event.streams[0]) {
+                  setRemoteStream(event.streams[0]);
+                }
+              });
+            }
+
+            peer.on('signal', (data) => {
+              if (data.type === 'answer') {
+                socket.emit('webrtc-answer', { callId, answer: data });
+              } else if (data.type === 'candidate') {
+                socket.emit('ice-candidate', { callId, candidate: data });
+              }
+            });
+
+            peer.on('stream', (remoteStr) => {
+              setRemoteStream(remoteStr);
+            });
+
+            peer.on('connect', () => {
+              console.log('[Call Reconnect] Peer connected!');
+              setIsReconnecting(false);
+              setReconnectReason(null);
+            });
+
+            peer.on('error', (err) => {
+              if (isEndingCallRef.current || (err.message && (err.message.includes('Abort') || err.message.includes('Close called')))) return;
+              console.error('[Call Reconnect] Peer error:', err);
+            });
+
+            // If there's a pending offer that arrived before peer was created, signal it now
+            if (pendingOfferRef.current && pendingOfferRef.current.callId === callId) {
+              peer.signal(pendingOfferRef.current.offer);
+              pendingOfferRef.current = null;
+            }
+
+            peerRef.current = peer;
+            setupPeerConnectionMonitoring(peer);
+          } catch (err) {
+            console.error('[Call Reconnect] Error creating peer:', err);
+          }
+        }
+
+        socket.emit('call-resume', { callId });
       } else {
         // 2. If we just connected/refreshed, pull authoritative state from server
         console.log('[Call Recovery] Requesting call state pull...');
@@ -879,6 +948,11 @@ export const useCall = () => {
           peerRef.current.destroy();
           peerRef.current = null;
         }
+
+        // Clear stale remote stream so React re-renders when new stream arrives
+        setRemoteStream(null);
+        if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
+        if (remoteAudioRef.current) remoteAudioRef.current.srcObject = null;
 
         const iceServers = await fetchIceServers();
         const peer = new SimplePeer({

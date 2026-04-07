@@ -478,6 +478,11 @@ io.on('connection', (socket) => {
             isRecovered: true
           });
         } else {
+          // Get state for THIS user (for non-ringing or established calls)
+          const myState = role === 'caller' ? activeCall.callerState : activeCall.receiverState;
+          // Get state for the OTHER user
+          const otherState = role === 'caller' ? activeCall.receiverState : activeCall.callerState;
+
           // Notify the client about their active session
           socket.emit('active-call-session', {
             callId,
@@ -489,7 +494,15 @@ io.on('connection', (socket) => {
             receiverId: activeCall.receiverId,
             callerName: activeCall.callerName,
             receiverName: activeCall.receiverName,
-            status: activeCall.status || 'active'
+            status: activeCall.status || 'active',
+            // Local state for this user to restore their hardware state
+            isMuted: myState?.isMuted || false,
+            isVideoEnabled: myState?.isVideoEnabled !== false,
+            isScreenSharing: myState?.isScreenSharing || false,
+            // Remote state to restore indicators for the other party
+            remoteIsMuted: otherState?.isMuted || false,
+            remoteIsVideoEnabled: otherState?.isVideoEnabled !== false,
+            remoteIsScreenSharing: otherState?.isScreenSharing || false
           });
         }
 
