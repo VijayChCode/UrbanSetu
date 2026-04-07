@@ -1030,15 +1030,15 @@ export default function AdminDashboard() {
               {theme?.greeting ? (
                 <>
                   <span className="font-extrabold text-[#FACC15] drop-shadow-[0_0_12px_rgba(250,204,21,0.5)] tracking-wide">
-                    {theme.greeting.split(' ')[0]} 
+                    {theme.greeting.split(' ')[0]}
                   </span>
                   {allThemes.map((t, i) => {
                     const festivalName = t.greeting.replace(/[.!]$/, '').split(' ').slice(1).join(' ');
                     return (
-                        <span key={i} className="font-extrabold text-[#FACC15] drop-shadow-[0_0_12px_rgba(250,204,21,0.5)] tracking-wide">
-                          <span className="ml-1">{festivalName}</span>
-                          {i < allThemes.length - 2 ? <span>, </span> : i === allThemes.length - 2 ? <span className="mx-1">&</span> : ''}
-                        </span>
+                      <span key={i} className="font-extrabold text-[#FACC15] drop-shadow-[0_0_12px_rgba(250,204,21,0.5)] tracking-wide">
+                        <span className="ml-1">{festivalName}</span>
+                        {i < allThemes.length - 2 ? <span>, </span> : i === allThemes.length - 2 ? <span className="mx-1">&</span> : ''}
+                      </span>
                     );
                   })}
                 </>
