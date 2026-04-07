@@ -16696,3 +16696,219 @@ export const sendLoanSettlementEmail = async (email, details) => {
     return createErrorResponse(error, 'loan_settlement');
   }
 };
+
+// --------------------------------------------------------------------------
+// AUTO-DEBIT SYSTEM EMAILS
+// --------------------------------------------------------------------------
+
+// 1. Send Auto-Debit Enabled Email
+export const sendAutoDebitEnabledEmail = async (email, details) => {
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: `Auto-Debit Enabled Successfully - UrbanSetu`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;">
+        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #059669; margin: 0; font-size: 28px;">Auto-Debit Enabled</h1>
+            <p style="color: #6b7280; margin: 10px 0 0 0;">Secure Automated Payments</p>
+          </div>
+          
+          <div style="background-color: #f0fdf4; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #059669;">
+            <p style="color: #065f46; margin: 0 0 15px 0; line-height: 1.6;">
+              Hello <strong>${details.userName}</strong>,
+            </p>
+            <p style="color: #065f46; margin: 0 0 15px 0; line-height: 1.6;">
+              Congratulations! Your monthly rent auto-debit service has been successfully enabled for the property: <strong>${details.propertyName}</strong> (Contract ID: ${details.contractId}).
+            </p>
+            
+            <div style="background-color: white; padding: 20px; border-radius: 12px; border: 1px solid #d1fae5; margin: 20px 0;">
+              <h3 style="color: #047857; margin-top: 0; font-size: 16px;">System Configuration:</h3>
+              <p style="margin: 8px 0; font-size: 14px; color: #4b5563;"><strong>Payment Method:</strong> ${details.method === 'upi' ? 'UPI / VPA' : details.method.toUpperCase()}</p>
+              <p style="margin: 8px 0; font-size: 14px; color: #4b5563;"><strong>Monthly Schedule:</strong> Every ${details.day}${details.day === 1 ? 'st' : details.day === 2 ? 'nd' : details.day === 3 ? 'rd' : 'th'} day of month</p>
+              <p style="margin: 8px 0; font-size: 14px; color: #4b5563;"><strong>Linked Details:</strong> ${details.displayDetails}</p>
+            </div>
+            
+            <p style="color: #065f46; margin: 0 0 15px 0; line-height: 1.6;">
+              Starting next billing cycle, your rent will be automatically deducted on the scheduled date. Please ensure sufficient balance in your linked account to avoid penalties.
+            </p>
+            
+            <div style="text-align: center; margin-top: 30px;">
+              <a href="${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}/user/rent-wallet?contractId=${details.contractId}" style="display: inline-block; background-color: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">Manage Rent Wallet</a>
+            </div>
+          </div>
+          
+          <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+            <p style="color: #9ca3af; margin: 0; font-size: 12px;">
+              © ${new Date().getFullYear()} UrbanSetu. Secured Payments Worldwide.
+            </p>
+          </div>
+        </div>
+      </div>
+    `
+  };
+
+  try {
+    const result = await sendEmailWithRetry(mailOptions);
+    return result.success ? createSuccessResponse(result.messageId, 'autodebit_enabled') : createErrorResponse(new Error(result.error), 'autodebit_enabled');
+  } catch (error) {
+    return createErrorResponse(error, 'autodebit_enabled');
+  }
+};
+
+// 2. Send Auto-Debit Schedule Updated Email
+export const sendAutoDebitScheduleUpdatedEmail = async (email, details) => {
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: `Auto-Debit Schedule Updated - UrbanSetu`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;">
+        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #2563eb; margin: 0; font-size: 28px;">Schedule Updated</h1>
+            <p style="color: #6b7280; margin: 10px 0 0 0;">Automatic Payment Adjustment</p>
+          </div>
+          
+          <div style="background-color: #eff6ff; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #2563eb;">
+            <p style="color: #1e40af; margin: 0 0 15px 0; line-height: 1.6;">
+              Hello <strong>${details.userName}</strong>,
+            </p>
+            <p style="color: #1e40af; margin: 0 0 15px 0; line-height: 1.6;">
+              Your auto-debit schedule for <strong>${details.propertyName}</strong> has been updated as requested.
+            </p>
+            
+            <div style="background-color: white; padding: 20px; border-radius: 12px; border: 1px solid #bfdbfe; margin: 20px 0; text-align: center;">
+              <span style="font-size: 14px; color: #64748b; display: block; margin-bottom: 5px;">Your new monthly debit date:</span>
+              <span style="font-size: 32px; font-weight: 800; color: #2563eb;">Day ${details.day}</span>
+              <span style="font-size: 14px; color: #64748b; display: block; margin-top: 5px;">of every month</span>
+            </div>
+            
+            <p style="color: #1e40af; margin: 0 0 15px 0; line-height: 1.6;">
+              Any upcoming payments will now be processed according to this new schedule.
+            </p>
+          </div>
+          
+          <div style="text-align: center; margin-top: 30px;">
+            <a href="${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}/user/rent-wallet?contractId=${details.contractId}" style="display: inline-block; background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">View Details</a>
+          </div>
+          
+          <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+            <p style="color: #9ca3af; margin: 0; font-size: 12px;">
+              © ${new Date().getFullYear()} UrbanSetu. Flexible payments for simplified living.
+            </p>
+          </div>
+        </div>
+      </div>
+    `
+  };
+
+  try {
+    const result = await sendEmailWithRetry(mailOptions);
+    return result.success ? createSuccessResponse(result.messageId, 'autodebit_schedule_updated') : createErrorResponse(new Error(result.error), 'autodebit_schedule_updated');
+  } catch (error) {
+    return createErrorResponse(error, 'autodebit_schedule_updated');
+  }
+};
+
+// 3. Send Auto-Debit Edited (Source Updated) Email
+export const sendAutoDebitEditedEmail = async (email, details) => {
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: `Payment Source Updated - UrbanSetu`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;">
+        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #7c3aed; margin: 0; font-size: 28px;">Source Updated</h1>
+            <p style="color: #6b7280; margin: 10px 0 0 0;">Secure Payment Source Modification</p>
+          </div>
+          
+          <div style="background-color: #f5f3ff; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #7c3aed;">
+            <p style="color: #4c1d95; margin: 0 0 15px 0; line-height: 1.6;">
+              Hello <strong>${details.userName}</strong>,
+            </p>
+            <p style="color: #4c1d95; margin: 0 0 15px 0; line-height: 1.6;">
+              This is to confirm that the payment source for your auto-debit service has been successfully updated for <strong>${details.propertyName}</strong>.
+            </p>
+            
+            <div style="background-color: white; padding: 20px; border-radius: 12px; border: 1px solid #ddd6fe; margin: 20px 0;">
+              <h3 style="color: #6d28d9; margin-top: 0; font-size: 16px;">New Payment Details:</h3>
+              <p style="margin: 8px 0; font-size: 14px; color: #4b5563;"><strong>Method:</strong> ${details.method === 'upi' ? 'UPI / VPA' : details.method.toUpperCase()}</p>
+              <p style="margin: 8px 0; font-size: 14px; color: #4b5563;"><strong>Account:</strong> ${details.displayDetails}</p>
+            </div>
+            
+            <p style="color: #4b5563; font-size: 14px; line-height: 1.6;">
+              If you did not authorize this change, please contact our support team immediately.
+            </p>
+          </div>
+          
+          <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+            <p style="color: #9ca3af; margin: 0; font-size: 12px;">
+              © ${new Date().getFullYear()} UrbanSetu. Protecting your payments with edge encryption.
+            </p>
+          </div>
+        </div>
+      </div>
+    `
+  };
+
+  try {
+    const result = await sendEmailWithRetry(mailOptions);
+    return result.success ? createSuccessResponse(result.messageId, 'autodebit_edited') : createErrorResponse(new Error(result.error), 'autodebit_edited');
+  } catch (error) {
+    return createErrorResponse(error, 'autodebit_edited');
+  }
+};
+
+// 4. Send Auto-Debit Removed Email
+export const sendAutoDebitRemovedEmail = async (email, details) => {
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: `Auto-Debit Disabled & Source Removed - UrbanSetu`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;">
+        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #dc2626; margin: 0; font-size: 28px;">Auto-Debit Disabled</h1>
+            <p style="color: #6b7280; margin: 10px 0 0 0;">Manual Payment Mode Re-activated</p>
+          </div>
+          
+          <div style="background-color: #fef2f2; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #dc2626;">
+            <p style="color: #991b1b; margin: 0 0 15px 0; line-height: 1.6;">
+              Hello <strong>${details.userName}</strong>,
+            </p>
+            <p style="color: #991b1b; margin: 0 0 15px 0; line-height: 1.6;">
+              We are confirming that the auto-debit service for <strong>${details.propertyName}</strong> has been disabled and your payment source details have been permanently removed from our active billing system.
+            </p>
+            
+            <div style="background-color: white; padding: 15px; border-radius: 8px; border: 1px solid #fecaca; margin: 20px 0;">
+               <p style="margin: 0; color: #dc2626; font-size: 14px; font-weight: bold;">⚠️ Critical Reminder:</p>
+               <p style="margin: 5px 0 0 0; font-size: 14px; color: #7f1d1d;">Your rent will no longer be deducted automatically. Please ensure you make manual payments on or before the due date to avoid late fees.</p>
+            </div>
+          </div>
+          
+          <div style="text-align: center; margin-top: 30px;">
+            <a href="${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}/user/rent-wallet?contractId=${details.contractId}" style="display: inline-block; background-color: #dc2626; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">Make Manual Payment</a>
+          </div>
+          
+          <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+            <p style="color: #9ca3af; margin: 0; font-size: 12px;">
+              © ${new Date().getFullYear()} UrbanSetu. You can re-enable auto-debit anytime from your dashboard.
+            </p>
+          </div>
+        </div>
+      </div>
+    `
+  };
+
+  try {
+    const result = await sendEmailWithRetry(mailOptions);
+    return result.success ? createSuccessResponse(result.messageId, 'autodebit_removed') : createErrorResponse(new Error(result.error), 'autodebit_removed');
+  } catch (error) {
+    return createErrorResponse(error, 'autodebit_removed');
+  }
+};

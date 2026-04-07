@@ -34,7 +34,11 @@ import {
   sendMoveInChecklistApprovedEmail,
   sendMoveOutChecklistApprovedEmail,
   sendLoanLegalNoticeEmail,
-  sendLoanSettlementEmail
+  sendLoanSettlementEmail,
+  sendAutoDebitEnabledEmail,
+  sendAutoDebitScheduleUpdatedEmail,
+  sendAutoDebitEditedEmail,
+  sendAutoDebitRemovedEmail
 } from "../utils/emailService.js";
 import { markListingUnderContract, markListingAsRented, releaseListingLock } from "../utils/listingAvailability.js";
 
@@ -1144,13 +1148,13 @@ export const updateAutoDebit = async (req, res, next) => {
     const userId = req.user.id;
 
     // Verify contract and user access
-    let contract = await RentLockContract.findOne({ contractId });
+    let contract = await RentLockContract.findOne({ contractId }).populate('listingId', 'name');
 
     if (!contract) {
       try {
         const mongoose = await import('mongoose');
         if (mongoose.default.Types.ObjectId.isValid(contractId)) {
-          contract = await RentLockContract.findById(contractId);
+          contract = await RentLockContract.findById(contractId).populate('listingId', 'name');
         }
       } catch (error) {
         // Continue
@@ -1166,6 +1170,10 @@ export const updateAutoDebit = async (req, res, next) => {
       return res.status(404).json({ message: "Wallet not found." });
     }
 
+    const oldEnabled = wallet.autoDebitEnabled;
+    const oldDay = wallet.autoDebitDay;
+    const oldToken = wallet.paymentMethodToken;
+
     // Update auto-debit settings
     wallet.autoDebitEnabled = enabled !== undefined ? enabled : wallet.autoDebitEnabled;
     wallet.autoDebitMethod = method || wallet.autoDebitMethod;
@@ -1174,6 +1182,38 @@ export const updateAutoDebit = async (req, res, next) => {
     wallet.paymentMethodDetails = paymentMethodDetails !== undefined ? paymentMethodDetails : wallet.paymentMethodDetails;
 
     await wallet.save();
+
+    // Trigger emails for auto-debit lifecycle
+    try {
+      const user = await User.findById(userId);
+      if (user && user.email) {
+        const emailDetails = {
+          userName: user.firstName || user.username || "Tenant",
+          propertyName: contract.listingId?.name || "Property",
+          contractId: contract.contractId,
+          method: wallet.autoDebitMethod,
+          day: wallet.autoDebitDay,
+          displayDetails: wallet.paymentMethodDetails?.vpa || (wallet.paymentMethodDetails?.last4 ? `Card ending in ${wallet.paymentMethodDetails.last4}` : wallet.autoDebitMethod)
+        };
+
+        if (enabled === true && oldEnabled === false) {
+          // 1. Enabled (or added first source)
+          await sendAutoDebitEnabledEmail(user.email, emailDetails);
+        } else if (enabled === true && oldEnabled === true && day !== undefined && day !== oldDay) {
+          // 2. Schedule Updated
+          await sendAutoDebitScheduleUpdatedEmail(user.email, emailDetails);
+        } else if (paymentMethodToken === '' && oldToken !== '') {
+          // 3. Removed
+          await sendAutoDebitRemovedEmail(user.email, emailDetails);
+        } else if (paymentMethodToken && oldToken && paymentMethodToken !== oldToken) {
+          // 4. Edited
+          await sendAutoDebitEditedEmail(user.email, emailDetails);
+        }
+      }
+    } catch (emailError) {
+      console.error("Error sending auto-debit email:", emailError);
+      // Don't fail the request if email fails
+    }
 
     // Update user default settings if needed
     if (enabled && method) {
