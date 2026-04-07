@@ -173,7 +173,7 @@ export function* getActiveThemes() {
             greeting: 'Health is Wealth!',
             effect: 'hearts',
             textGradient: 'bg-gradient-to-r from-green-500 via-teal-500 to-blue-500',
-            logoDecoration: 'cross'
+            logoDecoration: 'caduceus'
         };
     }
 

@@ -571,6 +571,7 @@ function LogoDecoration({ decoration }) {
     'gudi': { icon: '🪁', animate: 'animate-sway', size: 'text-2xl' },
     'sun': { icon: '☀️', animate: 'animate-spin-slow', size: 'text-xl' },
     'venus': { icon: '👩', animate: 'animate-pulse', size: 'text-xl' },
+    'caduceus': { icon: '⚕️', animate: 'animate-pulse', size: 'text-xl' },
   };
 
   const config = decorations[decoration];
