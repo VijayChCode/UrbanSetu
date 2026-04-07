@@ -10,6 +10,7 @@ import ContractPreview from '../components/rental/ContractPreview';
 import DigitalSignature from '../components/rental/DigitalSignature';
 import RentPropertySkeleton from '../components/skeletons/RentPropertySkeleton';
 import SetuCoinParticles from '../components/SetuCoins/SetuCoinParticles';
+import MilestoneProgress from "../components/SetuCoins/MilestoneProgress";
 import { authenticatedFetch } from '../utils/auth';
 import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 
@@ -73,6 +74,10 @@ export default function RentProperty() {
   const [coinBalance, setCoinBalance] = useState(0);
   const [coinsToRedeem, setCoinsToRedeem] = useState(0);
   const [showCoinBurst, setShowCoinBurst] = useState(false);
+  const [gamification, setGamification] = useState({
+    currentStreak: 0,
+    badges: []
+  });
 
   // OTP Timer logic
   useEffect(() => {
@@ -88,18 +93,50 @@ export default function RentProperty() {
   }, [otpTimer]);
 
   useEffect(() => {
+    const fetchGamification = async () => {
+      try {
+        const res = await authenticatedFetch(`${API_BASE_URL}/api/coins/balance`);
+        const data = await res.json();
+        if (data.success) {
+          setCoinBalance(data.setuCoinsBalance || 0);
+          setGamification({
+            currentStreak: data.currentStreak || 0,
+            badges: data.badges || []
+          });
+        }
+      } catch (err) {
+        console.error("Error fetching gamification:", err);
+      }
+    };
+
     if (currentUser) {
-      // Fetch coin balance
-      authenticatedFetch(`${API_BASE_URL}/api/coins/balance`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            setCoinBalance(data.setuCoinsBalance || 0);
-          }
-        })
-        .catch(err => console.error("Error fetching coins:", err));
+      fetchGamification();
     }
   }, [currentUser]);
+
+  // Listen for payment status updates from other tabs/modals
+  useEffect(() => {
+    const handlePaymentUpdate = (event) => {
+      const { contractId, paymentConfirmed, gamification: updatedGamification } = event.detail || {};
+      
+      // If we have updated gamification data in the event, use it immediately
+      if (updatedGamification) {
+        setCoinBalance(updatedGamification.setuCoinsBalance ?? coinBalance);
+        setGamification({
+          currentStreak: updatedGamification.currentStreak ?? gamification.currentStreak,
+          badges: updatedGamification.badges ?? gamification.badges
+        });
+      }
+
+      // If this page is showing the contract being updated, refresh its state
+      if (contract?._id && String(contractId) === String(contract._id)) {
+        // We could trigger a full refresh here if needed
+      }
+    };
+
+    window.addEventListener('rentalPaymentStatusUpdated', handlePaymentUpdate);
+    return () => window.removeEventListener('rentalPaymentStatusUpdated', handlePaymentUpdate);
+  }, [contract?._id, coinBalance, gamification]);
 
   const getSubtotal = () => {
     if (!contract && !listing) return 0;
@@ -837,6 +874,17 @@ export default function RentProperty() {
   };
 
   const handlePaymentSuccess = async (payment) => {
+    const updatedGamification = payment?.gamification;
+
+    // Apply immediate gamification update if provided
+    if (updatedGamification) {
+      setCoinBalance(updatedGamification.setuCoinsBalance ?? coinBalance);
+      setGamification({
+        currentStreak: updatedGamification.currentStreak ?? gamification.currentStreak,
+        badges: updatedGamification.badges ?? gamification.badges
+      });
+    }
+
     // Make booking visible after payment succeeds
     if (booking?._id) {
       try {
@@ -1139,6 +1187,31 @@ export default function RentProperty() {
             </div>
           </div>
         </div>
+
+        {/* Milestone Progress for Tenants */}
+        {!isOwner && currentUser && (
+          <div className="mb-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-5 border border-blue-50 dark:border-blue-900/30">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/40 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-400 shadow-inner">
+                  <FaCoins className="text-2xl" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-800 dark:text-white flex items-center gap-2">Rent Achievement Tracking</h3>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-xs font-bold text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded uppercase tracking-wider">Active Streak</span>
+                    <span className="text-sm font-black text-orange-600 dark:text-orange-400 flex items-center gap-1">
+                      <FaFire className="text-orange-600" /> {gamification.currentStreak} Months
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div className="w-full sm:w-64">
+                <MilestoneProgress streak={gamification.currentStreak} />
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Progress Steps */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 md:p-8 mb-6">
