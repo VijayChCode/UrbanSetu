@@ -1007,35 +1007,35 @@ const ActiveCallModal = ({
 
       {/* Call Controls */}
       <div
-        className={`bg-black bg-opacity-70 backdrop-blur-sm p-6 transition-opacity duration-300 ${callType === 'video' && !controlsVisible ? 'opacity-0 pointer-events-none' : 'opacity-100'
+        className={`bg-black/60 backdrop-blur-md p-4 sm:p-6 transition-opacity duration-300 ${callType === 'video' && !controlsVisible ? 'opacity-0 pointer-events-none' : 'opacity-100'
           }`}
         style={{ animation: 'slideIn 0.4s ease-out' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-center gap-4">
+        <div className="flex items-center justify-center gap-3 sm:gap-6">
           {/* Combined Audio Controls (Mute Remote + Audio Options) */}
           <div className="relative">
-            <div className={`flex items-center rounded-full shadow-xl hover:scale-110 transition-transform duration-300 ${isRemoteAudioLocallyMuted ? 'bg-red-500' : 'bg-gray-700'}`}>
+            <div className={`flex items-center rounded-full shadow-2xl hover:scale-105 transition-transform duration-300 ${isRemoteAudioLocallyMuted ? 'bg-red-500' : 'bg-gray-800/80 ring-1 ring-white/10'}`}>
               <button
                 onClick={() => setIsRemoteAudioLocallyMuted(!isRemoteAudioLocallyMuted)}
-                className={`h-12 flex items-center justify-center ${((availableMicrophones && availableMicrophones.length > 1) || (availableSpeakers && availableSpeakers.length > 1)) ? 'w-10 rounded-l-full pl-2' : 'w-12 rounded-full'} hover:bg-white/10 text-white transition-colors`}
+                className={`h-10 sm:h-12 flex items-center justify-center ${((availableMicrophones && availableMicrophones.length > 1) || (availableSpeakers && availableSpeakers.length > 1)) ? 'w-8 sm:w-10 rounded-l-full pl-1 sm:pl-2' : 'w-10 sm:w-12 rounded-full'} hover:bg-white/10 text-white transition-colors`}
                 title={isRemoteAudioLocallyMuted ? 'Unmute Remote Audio' : 'Mute Remote Audio'}
               >
-                {isRemoteAudioLocallyMuted ? <FaVolumeMute className="text-xl" /> : <FaVolumeUp className="text-xl" />}
+                {isRemoteAudioLocallyMuted ? <FaVolumeMute className="text-lg sm:text-xl" /> : <FaVolumeUp className="text-lg sm:text-xl" />}
               </button>
 
               {((availableMicrophones && availableMicrophones.length > 1) || (supportsSetSinkId && availableSpeakers && availableSpeakers.length > 1)) && (
                 <>
-                  <div className="w-[1px] h-6 bg-white/20"></div>
+                  <div className="w-[1px] h-5 sm:h-6 bg-white/20"></div>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       setShowAudioMenu(!showAudioMenu);
                     }}
-                    className="w-8 h-12 flex items-center justify-center rounded-r-full hover:bg-white/10 text-white transition-colors"
+                    className="w-7 sm:w-8 h-10 sm:h-12 flex items-center justify-center rounded-r-full hover:bg-white/10 text-white transition-colors"
                     title="Audio options"
                   >
-                    <FaChevronDown size={10} />
+                    <FaChevronDown size={8} className="sm:size-[10px]" />
                   </button>
                 </>
               )}
@@ -1043,7 +1043,7 @@ const ActiveCallModal = ({
 
             {/* Audio Device Menu Dropdown */}
             {showAudioMenu && (
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-black bg-opacity-95 rounded-lg shadow-xl min-w-[220px] max-w-[280px] z-50 border border-white border-opacity-20 max-h-[50vh] overflow-y-auto scrollbar-thin scrollbar-thumb-white/20">
+              <div className="fixed sm:absolute bottom-28 sm:bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl w-[calc(100vw-2rem)] sm:min-w-[260px] sm:max-w-[320px] z-50 border border-white/10 max-h-[50vh] overflow-y-auto scrollbar-thin scrollbar-thumb-white/20 ring-1 ring-black/5">
                 <div className="py-2">
                   {/* Microphones */}
                   {availableMicrophones && availableMicrophones.length > 1 && (
@@ -1112,32 +1112,32 @@ const ActiveCallModal = ({
           {/* Mute/Unmute */}
           <button
             onClick={onToggleMute}
-            className={`w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 ${isMuted ? 'bg-red-500 hover:bg-red-600' : 'bg-gray-700 hover:bg-gray-600'
-              } text-white shadow-xl hover:scale-110 active:scale-95 transform`}
+            className={`w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center transition-all duration-300 ${isMuted ? 'bg-red-500 hover:bg-red-600' : 'bg-gray-800 hover:bg-gray-700'
+              } text-white shadow-2xl hover:scale-110 active:scale-90 transform ring-1 ring-white/10`}
             title={isMuted ? 'Unmute' : 'Mute'}
           >
-            {isMuted ? <FaMicrophoneSlash className="text-2xl" /> : <FaMicrophone className="text-2xl" />}
+            {isMuted ? <FaMicrophoneSlash className="text-xl sm:text-2xl" /> : <FaMicrophone className="text-xl sm:text-2xl" />}
           </button>
 
           {/* Video On/Off (only for video calls) */}
           {callType === 'video' && (
             <button
               onClick={onToggleVideo}
-              className={`w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 ${isVideoEnabled ? 'bg-gray-700 hover:bg-gray-600' : 'bg-red-500 hover:bg-red-600'
-                } text-white shadow-xl hover:scale-110 active:scale-95 transform`}
+              className={`w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center transition-all duration-300 ${isVideoEnabled ? 'bg-gray-800 hover:bg-gray-700' : 'bg-red-500 hover:bg-red-600'
+                } text-white shadow-2xl hover:scale-110 active:scale-90 transform ring-1 ring-white/10`}
               title={isVideoEnabled ? 'Turn off video' : 'Turn on video'}
             >
-              {isVideoEnabled ? <FaVideo className="text-2xl" /> : <FaVideoSlash className="text-2xl" />}
+              {isVideoEnabled ? <FaVideo className="text-xl sm:text-2xl" /> : <FaVideoSlash className="text-xl sm:text-2xl" />}
             </button>
           )}
 
           {/* End Call */}
           <button
             onClick={onEndCall}
-            className="w-16 h-16 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-all duration-300 shadow-xl hover:scale-110 active:scale-95 transform"
+            className="w-12 h-12 sm:w-16 sm:h-16 bg-red-600 text-white rounded-full flex items-center justify-center hover:bg-red-700 transition-all duration-300 shadow-2xl hover:scale-110 active:scale-90 transform ring-1 ring-white/10"
             title="End Call"
           >
-            <FaPhone className="text-2xl rotate-[135deg]" />
+            <FaPhone className="text-xl sm:text-2xl rotate-[135deg]" />
           </button>
         </div>
       </div>
