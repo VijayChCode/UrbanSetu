@@ -489,6 +489,10 @@ const ActiveCallModal = ({
           from { transform: translateY(100%); }
           to { transform: translateY(0); }
         }
+        @keyframes slideDown {
+          from { transform: translate(-50%, -20px); opacity: 0; }
+          to { transform: translate(-50%, 0); opacity: 1; }
+        }
         @keyframes popIn {
           0% { transform: scale(0.8); opacity: 0; }
           50% { transform: scale(1.1); opacity: 1; }
@@ -579,26 +583,30 @@ const ActiveCallModal = ({
           </div>
         )}
         
-        {/* Reconnecting Overlay */}
+        {/* Reconnecting Notification - Top Aligned */}
         {isReconnecting && (
-          <div className="absolute inset-0 z-[100] bg-black/80 backdrop-blur-md flex flex-col items-center justify-center animate-fadeIn">
-            <div className="bg-gray-800/80 p-8 rounded-3xl border border-white/20 shadow-2xl flex flex-col items-center text-center max-w-sm mx-auto transform animate-[popIn_0.5s_ease-out_forwards]">
-              <div className="relative mb-6">
-                <UrbanSetuSpinner size="xl" />
-                <FaWifi className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-2xl text-blue-400 animate-pulse" />
+          <div className="absolute top-6 left-1/2 transform -translate-x-1/2 z-[110]" style={{ animation: 'slideDown 0.4s cubic-bezier(0.17, 0.67, 0.83, 0.67) forwards' }}>
+            <div className="bg-gray-900/90 backdrop-blur-xl border border-white/20 px-6 py-2.5 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center gap-4 min-w-[320px]">
+              <div className="relative flex items-center justify-center flex-shrink-0">
+                 <UrbanSetuSpinner size="sm" />
+                 <FaWifi className="absolute text-blue-400 text-[10px] animate-pulse" />
               </div>
-              <h3 className="text-2xl font-bold text-white mb-2">Reconnecting...</h3>
-              <p className="text-gray-300">
-                {reconnectReason === 'local-offline' 
-                  ? "Poor internet connection detected. Trying to restore your call."
-                  : reconnectReason === 'remote-disconnected'
-                  ? "The other party lost their connection. Waiting for them to return..."
-                  : "Trying to restore your call connection..."}
-              </p>
-              <div className="mt-6 flex gap-1">
-                <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
+              <div className="flex flex-col overflow-hidden">
+                 <div className="flex items-center gap-2">
+                   <span className="text-white text-sm font-bold tracking-tight">Reconnecting...</span>
+                   <div className="flex gap-1">
+                     <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                     <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                     <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce"></div>
+                   </div>
+                 </div>
+                 <span className="text-gray-400 text-[11px] leading-tight truncate">
+                    {reconnectReason === 'local-offline' 
+                      ? "Network issue detected. Restoring call..."
+                      : reconnectReason === 'remote-disconnected'
+                      ? `Waiting for ${otherPartyName || 'Participant'} to return...`
+                      : "Optimizing your connection..."}
+                 </span>
               </div>
             </div>
           </div>
