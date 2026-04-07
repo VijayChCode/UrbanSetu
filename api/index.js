@@ -444,6 +444,48 @@ io.on('connection', (socket) => {
 
     io.emit('userOnlineUpdate', { userId, online: true });
 
+    // CHECK FOR EXISTING ACTIVE CALLS (Persistence/Recovery)
+    for (const [callId, activeCall] of activeCalls.entries()) {
+      if (activeCall.callerId === userIdStr || activeCall.receiverId === userIdStr) {
+        const role = activeCall.callerId === userIdStr ? 'caller' : 'receiver';
+        
+        // Clear any pending termination timeout if it exists
+        if (activeCall.terminationTimeout) {
+          clearTimeout(activeCall.terminationTimeout);
+          activeCall.terminationTimeout = null;
+        }
+
+        // Update the socket ID to the new one
+        if (role === 'caller') {
+          activeCall.callerSocketId = socket.id;
+        } else {
+          activeCall.receiverSocketId = socket.id;
+        }
+        
+        activeCalls.set(callId, activeCall);
+
+        console.log(`[Call Recovery] User ${userIdStr} re-joined active call ${callId} as ${role}`);
+        
+        // Notify the client about their active session
+        socket.emit('active-call-session', {
+          callId,
+          appointmentId: activeCall.appointmentId,
+          role,
+          callType: activeCall.callType,
+          startTime: activeCall.startTime.getTime(),
+          callerId: activeCall.callerId,
+          receiverId: activeCall.receiverId
+        });
+
+        // Notify other party that peer is back
+        const otherSocketId = role === 'caller' ? activeCall.receiverSocketId : activeCall.callerSocketId;
+        if (otherSocketId) {
+          io.to(otherSocketId).emit('peer-resumed', { callId, role });
+        }
+        break; // Assume one active call at a time
+      }
+    }
+
     // If user was offline and just came online, mark all pending messages as delivered
     if (wasOffline) {
       try {
@@ -722,6 +764,7 @@ io.on('connection', (socket) => {
       // Store active call
       activeCalls.set(callId, {
         callerSocketId: socket.id,
+        callerId,
         receiverId: actualReceiverId,
         appointmentId,
         callType,

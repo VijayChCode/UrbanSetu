@@ -43,7 +43,8 @@ const ActiveCallModal = ({
   onSwitchSpeaker,
   containerRef: containerRefProp,
   isSyncingSummary,
-  isReconnecting
+  isReconnecting,
+  onMinimize
 }) => {
   const navigate = useNavigate();
   const [isVisible, setIsVisible] = useState(false);
@@ -532,6 +533,18 @@ const ActiveCallModal = ({
             title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
           >
             {isFullscreen ? <FaCompress className="text-lg" /> : <FaExpand className="text-lg" />}
+          </button>
+
+          {/* Minimize Button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onMinimize?.();
+            }}
+            className="p-2 rounded-full bg-black bg-opacity-70 hover:bg-opacity-90 text-white transition-all duration-300"
+            title="Minimize to sticky bar"
+          >
+            <FaChevronDown className="text-lg" />
           </button>
         </div>
       )}

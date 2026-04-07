@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { useBlocker } from 'react-router-dom';
 import { socket, reconnectSocket } from '../utils/socket';
 import SimplePeer from 'simple-peer';
 import { API_BASE_URL } from '../config/api';
@@ -58,6 +59,7 @@ export const useCall = () => {
   const [currentSpeakerId, setCurrentSpeakerId] = useState(null);
   const [isSyncingSummary, setIsSyncingSummary] = useState(false); // Waiting for authoritative duration
   const [isReconnecting, setIsReconnecting] = useState(false); // Internet drop/WebRTC disconnect
+  const [isMinimized, setIsMinimized] = useState(false); // Whether to show full modal or just the bar
 
   const peerRef = useRef(null);
   const localVideoRef = useRef(null);
@@ -133,7 +135,63 @@ export const useCall = () => {
     };
   }, []);
 
-  // Socket reconnection sync
+  // --- Navigation & Refresh Blocking ---
+  
+  // 1. react-router-dom blocker to prevent navigation away during call modal
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      (callState === 'active' || callState === 'ringing') &&
+      !isMinimized &&
+      currentLocation.pathname !== nextLocation.pathname
+  );
+
+  // Auto-handle confirmation if blocker is active
+  useEffect(() => {
+    if (blocker.state === 'blocked') {
+      toast.warning("You cannot go back at this stage. Please minimize to browse other pages or end the call.", {
+        toastId: 'call-nav-blocked',
+        position: "top-center"
+      });
+      blocker.reset(); // Stay on page
+    }
+  }, [blocker.state]);
+
+  // 2. window.onbeforeunload to prevent page refresh/close
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (callState === 'active' || callState === 'ringing') {
+        const message = 'You have an active call. Refreshing will disconnect you.';
+        e.preventDefault();
+        e.returnValue = message;
+        return message;
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [callState]);
+
+  // 3. BroadcastChannel for cross-tab session management
+  useEffect(() => {
+    const bc = new BroadcastChannel('urbansetu_call_sync');
+    
+    bc.onmessage = (event) => {
+      if (event.data.type === 'CALL_TAKEN_OVER' && event.data.callId === activeCall?.callId) {
+        // Another tab has taken over this call
+        toast.info('Call moved to another tab.');
+        // Don't emit 'call-end' to server, just cleanup local state
+        cleanupCall(); 
+        setCallState(null);
+        setActiveCall(null);
+      }
+    };
+
+    return () => bc.close();
+  }, [activeCall?.callId]);
+
+  // Socket initialization and session recovery
   useEffect(() => {
     const handleConnect = () => {
       if (activeCallRef.current?.callId) {
@@ -142,9 +200,41 @@ export const useCall = () => {
       }
     };
 
+    // AUTHORITATIVE SESSION RECOVERY: Triggered after login/refresh
+    const handleActiveSession = (session) => {
+      console.log('[Call Recovery] Server sent active session:', session);
+      
+      // Notify other tabs that WE are taking over this call
+      const bc = new BroadcastChannel('urbansetu_call_sync');
+      bc.postMessage({ type: 'CALL_TAKEN_OVER', callId: session.callId });
+      bc.close();
+
+      setActiveCall({
+        callId: session.callId,
+        appointmentId: session.appointmentId,
+        receiverId: session.role === 'caller' ? session.receiverId : session.callerId,
+        callType: session.callType,
+        isRecovered: true
+      });
+
+      // authStart timestamp sync
+      if (session.startTime) {
+        callStartTimeRef.current = new Date(session.startTime);
+      }
+
+      setCallState('active'); // Directly enter active state
+      setIsReconnecting(true); // Will sync streams on next connect/offer
+      setIsMinimized(true); // Show the sticky bar by default on recovery
+      
+      toast.info('Resuming ongoing call...');
+    };
+
     socket.on('connect', handleConnect);
+    socket.on('active-call-session', handleActiveSession);
+
     return () => {
       socket.off('connect', handleConnect);
+      socket.off('active-call-session', handleActiveSession);
     };
   }, []);
 
@@ -1962,7 +2052,9 @@ export const useCall = () => {
     enumerateCameras,
     enumerateAudioDevices,
     switchMicrophone,
-    switchSpeaker
+    switchSpeaker,
+    isMinimized,
+    setIsMinimized
   }; // End of return
 }; // End of useCall
 

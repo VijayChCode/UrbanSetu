@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import { useCallContext } from '../contexts/CallContext';
 import IncomingCallModal from './IncomingCallModal';
 import ActiveCallModal from './ActiveCallModal';
+import OngoingCallBar from './OngoingCallBar';
 import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -48,7 +49,9 @@ const GlobalCallModals = () => {
     toggleFullscreen,
     switchMicrophone,
     switchSpeaker,
-    enumerateCameras
+    enumerateCameras,
+    isMinimized,
+    setIsMinimized
   } = useCallContext();
 
   const { currentUser } = useSelector((state) => state.user);
@@ -141,13 +144,12 @@ const GlobalCallModals = () => {
         onReject={rejectCall}
       />
 
-      {/* Active Call Modal - Shows on any page */}
-      {(callState === 'active' || callState === 'ended') && activeCall && (
+      {/* Active Call Modal - Only shows when not minimized */}
+      {(callState === 'active' || callState === 'ended') && activeCall && !isMinimized && (
         <ActiveCallModal
           callState={callState}
           callType={activeCall.callType}
           otherPartyName={getOtherPartyName()}
-
           otherPartyData={getOtherPartyData()}
           isMuted={isMuted}
           isVideoEnabled={isVideoEnabled}
@@ -182,11 +184,24 @@ const GlobalCallModals = () => {
           onToggleFullscreen={toggleFullscreen}
           onSwitchMicrophone={switchMicrophone}
           onSwitchSpeaker={switchSpeaker}
+          onMinimize={() => setIsMinimized(true)}
         />
       )}
 
-      {/* Waiting Screen for Caller - Shows when ringing */}
-      {callState === 'ringing' && activeCall && (
+      {/* Sticky Bar for ongoing/ringing calls when minimized */}
+      {(callState === 'active' || callState === 'ringing') && isMinimized && (
+        <OngoingCallBar
+          otherPartyName={getOtherPartyName() || 'Participant'}
+          callType={activeCall?.callType || incomingCall?.callType || 'audio'}
+          callDuration={callDuration}
+          onReturn={() => setIsMinimized(false)}
+          onEndCall={endCall}
+          isReconnecting={isReconnecting}
+        />
+      )}
+
+      {/* Waiting Screen for Caller - Shows when ringing AND NOT minimized */}
+      {callState === 'ringing' && activeCall && !isMinimized && (
         <div className="fixed inset-0 bg-black bg-opacity-90 flex flex-col items-center justify-center z-[9998]">
           <div className="text-center text-white animate-fade-in flex-1 flex flex-col items-center justify-center">
             <div className={`w-32 h-32 rounded-full mx-auto mb-6 flex items-center justify-center ${
