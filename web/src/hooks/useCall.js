@@ -88,6 +88,82 @@ export const useCall = () => {
   // Admin monitor peers: Map of adminSocketId -> SimplePeer instance
   const monitorPeersRef = useRef(new Map());
 
+  // Helper to STOP all media tracks and reset peer (used by endCall and Tab Switching)
+  const cleanupCall = useCallback(() => {
+    // 1. Stop all sounds
+    stopCalling();
+    stopRingtone();
+    callingSoundRef.current = null;
+    ringtoneSoundRef.current = null;
+
+    // 2. Reset reconnection state
+    setIsReconnecting(false);
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+
+    // 3. Stop media streams
+    const streamToStop = localStreamRef.current;
+    if (streamToStop) {
+      streamToStop.getTracks().forEach(track => {
+        track.stop();
+        track.enabled = false;
+      });
+      setLocalStream(null);
+      localStreamRef.current = null;
+    }
+
+    if (remoteStream) {
+      remoteStream.getTracks().forEach(track => track.stop());
+      setRemoteStream(null);
+    }
+
+    if (screenShareStreamRef.current) {
+      screenShareStreamRef.current.getTracks().forEach(track => track.stop());
+      screenShareStreamRef.current = null;
+    }
+
+    if (cameraStreamDuringScreenShare) {
+      cameraStreamDuringScreenShare.getTracks().forEach(track => track.stop());
+      setCameraStreamDuringScreenShare(null);
+    }
+
+    // 4. Destroy peer connections
+    if (peerRef.current) {
+      peerRef.current.destroy();
+      peerRef.current = null;
+    }
+
+    if (monitorPeersRef.current.size > 0) {
+      monitorPeersRef.current.forEach(peer => {
+        try { peer.destroy(); } catch (err) { console.error('Error destroying monitor peer:', err); }
+      });
+      monitorPeersRef.current.clear();
+    }
+
+    // 5. Clear visuals
+    if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
+    if (remoteAudioRef.current) remoteAudioRef.current.srcObject = null;
+    if (localVideoRef.current) localVideoRef.current.srcObject = null;
+
+    // 6. Stop timers
+    if (durationIntervalRef.current) {
+      clearInterval(durationIntervalRef.current);
+      durationIntervalRef.current = null;
+    }
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+    callStartTimeRef.current = null;
+    lastSecondRef.current = null;
+    setIsScreenSharing(false);
+    setRemoteIsMuted(false);
+    setRemoteVideoEnabled(true);
+    setRemoteIsScreenSharing(false);
+  }, [localStream, remoteStream, stopCalling, stopRingtone, callType]);
+
   // Update refs when state changes (so handlers can access current values)
   useEffect(() => {
     incomingCallRef.current = incomingCall;
@@ -161,11 +237,11 @@ export const useCall = () => {
     const bc = new BroadcastChannel('urbansetu_call_sync');
     
     bc.onmessage = (event) => {
-      if (event.data.type === 'CALL_TAKEN_OVER' && event.data.callId === activeCall?.callId) {
+      if (event.data.type === 'CALL_TAKEN_OVER' && event.data.callId === activeCallRef.current?.callId) {
         // Another tab has taken over this call
         toast.info('Call moved to another tab.');
         // Don't emit 'call-end' to server, just cleanup local state
-        cleanupCall(); 
+        cleanupCall();
         setCallState(null);
         setActiveCall(null);
       }
@@ -1304,18 +1380,8 @@ export const useCall = () => {
     const wasEndingCall = isEndingCallRef.current;
     isEndingCallRef.current = true;
 
-    // Stop all sounds first
-    stopCalling();
-    stopRingtone();
-    callingSoundRef.current = null;
-    ringtoneSoundRef.current = null;
-
-    // Reset reconnection state
-    setIsReconnecting(false);
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current);
-      reconnectTimeoutRef.current = null;
-    }
+    // Use our helper to stop all local tracks and destroy peer
+    cleanupCall();
 
     // Cancel call first if still initiating/ringing (before clearing state)
     // Use refs to get most current values for conditionals
@@ -1325,77 +1391,6 @@ export const useCall = () => {
     if (currentActiveCall?.callId && (currentCallState === 'initiating' || currentCallState === 'ringing')) {
       socket.emit('call-cancel', { callId: currentActiveCall.callId });
     }
-
-    // Stop local stream
-    // Check both state variable and ref to ensure we catch stream even if state update is pending
-    const streamToStop = localStream || localStreamRef.current;
-    if (streamToStop) {
-      streamToStop.getTracks().forEach(track => {
-        track.stop();
-        track.enabled = false; // Explicitly disable to ensure indicator goes off
-      });
-      setLocalStream(null);
-      localStreamRef.current = null;
-    }
-
-    // Stop remote stream
-    if (remoteStream) {
-      remoteStream.getTracks().forEach(track => track.stop());
-      setRemoteStream(null);
-    }
-
-    // Stop screen share stream if active
-    if (screenShareStreamRef.current) {
-      screenShareStreamRef.current.getTracks().forEach(track => track.stop());
-      screenShareStreamRef.current = null;
-    }
-    if (isScreenSharing) {
-      setIsScreenSharing(false);
-    }
-
-    // Stop camera stream used during screen share
-    if (cameraStreamDuringScreenShare) {
-      cameraStreamDuringScreenShare.getTracks().forEach(track => track.stop());
-      setCameraStreamDuringScreenShare(null);
-    }
-
-    // Clear remote audio/video refs
-    if (remoteVideoRef.current) {
-      remoteVideoRef.current.srcObject = null;
-    }
-    if (remoteAudioRef.current) {
-      remoteAudioRef.current.srcObject = null;
-    }
-
-    // Destroy peer connection
-    if (peerRef.current) {
-      peerRef.current.destroy();
-      peerRef.current = null;
-    }
-
-    // Destroy all monitor peers
-    if (monitorPeersRef.current.size > 0) {
-      monitorPeersRef.current.forEach((peer) => {
-        try {
-          peer.destroy();
-        } catch (err) {
-          console.error('[Monitor] Error destroying monitor peer:', err);
-        }
-      });
-      monitorPeersRef.current.clear();
-    }
-
-    // Stop all timers
-    if (durationIntervalRef.current) {
-      clearInterval(durationIntervalRef.current);
-      durationIntervalRef.current = null;
-    }
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
-      animationFrameRef.current = null;
-    }
-    callStartTimeRef.current = null;
-    lastSecondRef.current = null;
 
     // If user ends call, we'll get final duration from API response below
     if (finalDuration !== null) {
