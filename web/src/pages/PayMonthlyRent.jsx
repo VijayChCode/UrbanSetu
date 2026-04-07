@@ -45,6 +45,7 @@ export default function PayMonthlyRent() {
     badges: []
   });
   const [newBadges, setNewBadges] = useState([]);
+  const [isTenant, setIsTenant] = useState(false);
 
   useEffect(() => {
     if (currentUser) {
@@ -95,8 +96,10 @@ export default function PayMonthlyRent() {
       const contractObj = contractData.contract || contractData;
 
       // Verify user is tenant
-      const isTenant = contractObj.tenantId?._id === currentUser._id || contractObj.tenantId === currentUser._id;
-      if (!isTenant) {
+      const isUserTenant = contractObj.tenantId?._id === currentUser._id || contractObj.tenantId === currentUser._id;
+      setIsTenant(isUserTenant);
+      
+      if (!isUserTenant) {
         toast.error("Only tenants can pay rent.");
         navigate("/user/rental-contracts");
         return;
