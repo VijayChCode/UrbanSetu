@@ -177,14 +177,25 @@ export const useCall = () => {
   // Socket initialization and session recovery
   useEffect(() => {
     const handleConnect = () => {
+      // 1. If we ALREADY had an active call in this specific tab/state, try to resume WebRTC
       if (activeCallRef.current?.callId) {
         console.log('[Call] Socket reconnected, resuming call:', activeCallRef.current.callId);
         socket.emit('call-resume', { callId: activeCallRef.current.callId });
+      } else {
+        // 2. If we just connected/refreshed, pull authoritative state from server
+        console.log('[Call Recovery] Requesting call state pull...');
+        socket.emit('check-active-call');
       }
     };
 
-    // AUTHORITATIVE SESSION RECOVERY: Triggered after login/refresh
+    // AUTHORITATIVE SESSION RECOVERY: Triggered after login/refresh/explicit pull
     const handleActiveSession = (session) => {
+      // If we are already in THIS call, don't re-trigger recovery UI logic but ensure state is sync'd
+      if (activeCallRef.current?.callId === session.callId && callStateRef.current === 'active') {
+        console.log('[Call Recovery] Already in call, skipping UI re-trigger');
+        return;
+      }
+
       console.log('[Call Recovery] Server sent active session:', session);
       
       // Notify other tabs that WE are taking over this call
@@ -197,7 +208,9 @@ export const useCall = () => {
         appointmentId: session.appointmentId,
         receiverId: session.role === 'caller' ? session.receiverId : session.callerId,
         callType: session.callType,
-        isRecovered: true
+        isRecovered: true,
+        callerName: session.callerName,
+        receiverName: session.receiverName
       });
 
       // authStart timestamp sync
@@ -205,7 +218,7 @@ export const useCall = () => {
         callStartTimeRef.current = new Date(session.startTime);
       }
 
-      setCallState('active'); // Directly enter active state
+      setCallState(session.status || 'active'); // Directly enter authoritative state (ringing or active)
       
       // Only set reconnecting if peer connection isn't already healthy
       const pc = peerRef.current?._pc;
@@ -220,6 +233,11 @@ export const useCall = () => {
 
     socket.on('connect', handleConnect);
     socket.on('active-call-session', handleActiveSession);
+
+    // CRITICAL: Immediate check if socket is ALREADY connected when effect runs
+    if (socket.connected) {
+      handleConnect();
+    }
 
     return () => {
       socket.off('connect', handleConnect);

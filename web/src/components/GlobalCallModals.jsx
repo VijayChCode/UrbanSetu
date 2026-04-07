@@ -97,9 +97,16 @@ const GlobalCallModals = () => {
       return incomingCall.callerName;
     }
     
+    // Use names from activeCall as immediate fallback if recovered/active
+    if (activeCall && !appointmentData) {
+      const isCaller = currentUser?._id?.toString() === activeCall.callerId;
+      const recoveredName = isCaller ? activeCall.receiverName : activeCall.callerName;
+      if (recoveredName) return recoveredName;
+    }
+
     if (!appointmentData || !currentUser) {
       // Return callerName from incomingCall if available
-      return incomingCall?.callerName || null;
+      return incomingCall?.callerName || activeCall?.callerName || activeCall?.receiverName || null;
     }
     
     // Handle both string and ObjectId comparisons

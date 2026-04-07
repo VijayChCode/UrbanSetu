@@ -388,7 +388,111 @@ io.use(async (socket, next) => {
 });
 
 io.on('connection', (socket) => {
-  console.log('A user connected:', socket.id, 'UserID:', socket.user?._id?.toString());
+  const socketUserId = socket.user?._id?.toString();
+  console.log('A user connected:', socket.id, 'UserID:', socketUserId || 'Guest');
+
+  // AUTHORITATIVE CALL RECOVERY & PENDING CALLS: Triggered as soon as any socket connects
+  if (socketUserId) {
+    const userIdStr = socketUserId;
+    const wasOffline = !onlineUsers.has(userIdStr);
+    onlineUsers.add(userIdStr);
+    lastSeenTimes.delete(userIdStr);
+
+    // Join rooms (already handled in io.use, but ensuring consistency)
+    socket.join(userIdStr);
+    socket.join(`user_${userIdStr}`);
+
+    io.emit('userOnlineUpdate', { userId: userIdStr, online: true });
+
+    // 1. CHECK FOR EXISTING ACTIVE CALLS (Session Resume/Refresh)
+    for (const [callId, activeCall] of activeCalls.entries()) {
+      if (activeCall.callerId === userIdStr || activeCall.receiverId === userIdStr) {
+        const role = activeCall.callerId === userIdStr ? 'caller' : 'receiver';
+        
+        if (activeCall.terminationTimeout) {
+          clearTimeout(activeCall.terminationTimeout);
+          activeCall.terminationTimeout = null;
+        }
+
+        if (role === 'caller') {
+          activeCall.callerSocketId = socket.id;
+        } else {
+          activeCall.receiverSocketId = socket.id;
+        }
+        
+        activeCalls.set(callId, activeCall);
+        console.log(`[Call Recovery] User ${userIdStr} re-joined active call ${callId} as ${role} via global connection`);
+        
+        socket.emit('active-call-session', {
+          callId,
+          appointmentId: activeCall.appointmentId,
+          role,
+          callType: activeCall.callType,
+          startTime: activeCall.startTime.getTime(),
+          callerId: activeCall.callerId,
+          receiverId: activeCall.receiverId,
+          callerName: activeCall.callerName,
+          receiverName: activeCall.receiverName,
+          status: activeCall.status || 'active'
+        });
+
+        const otherSocketId = role === 'caller' ? activeCall.receiverSocketId : activeCall.callerSocketId;
+        if (otherSocketId) {
+          io.to(otherSocketId).emit('peer-resumed', { callId, role });
+        }
+        break;
+      }
+    }
+
+    // 2. CHECK FOR PENDING CALLS (Missed while offline, now online)
+    // Runs even if not "wasOffline" to ensure refresh doesn't miss transient ringing states
+    (async () => {
+      try {
+        const pendingCalls = await CallHistory.find({
+          receiverId: userIdStr,
+          status: { $in: ['initiated', 'ringing'] },
+          startTime: { $gte: new Date(Date.now() - 5 * 60 * 1000) }
+        }).populate('callerId', 'username').populate('appointmentId', 'propertyName').limit(1);
+
+        if (pendingCalls.length > 0) {
+          const pendingCall = pendingCalls[0];
+          const activeCall = activeCalls.get(pendingCall.callId);
+          if (activeCall || pendingCall.status === 'initiated' || pendingCall.status === 'ringing') {
+            socket.emit('incoming-call', {
+              callId: pendingCall.callId,
+              appointmentId: pendingCall.appointmentId._id.toString(),
+              callerId: pendingCall.callerId._id.toString(),
+              callType: pendingCall.callType,
+              callerName: pendingCall.callerId?.username || 'Unknown'
+            });
+          }
+        }
+
+        // 3. MARK MESSAGES AS DELIVERED (If just came back online)
+        if (wasOffline) {
+          const bookings = await Booking.find({
+            $or: [{ buyerId: userIdStr }, { sellerId: userIdStr }]
+          });
+
+          for (const appt of bookings) {
+            let updated = false;
+            for (const comment of appt.comments) {
+              if (comment.sender.toString() !== userIdStr && comment.status === 'sent') {
+                comment.status = 'delivered';
+                comment.deliveredAt = new Date();
+                updated = true;
+                io.emit('commentDelivered', { appointmentId: appt._id.toString(), commentId: comment._id.toString() });
+              }
+            }
+            if (updated) await appt.save();
+          }
+        }
+      } catch (err) {
+        console.error('Error during global connection presence checks:', err);
+      }
+    })();
+  }
+
   // Auto-join session room using session_id from cookies if available
   try {
     const cookieHeader = socket.handshake.headers && socket.handshake.headers.cookie;
@@ -408,154 +512,32 @@ io.on('connection', (socket) => {
   socket.on('registerUser', ({ userId }) => {
     if (userId) {
       const userIdStr = userId.toString();
-      // Join both room formats for compatibility (userId and user_${userId})
       socket.join(userIdStr);
       socket.join(`user_${userIdStr}`);
     }
   });
-  // Broadcast forced logout to a specific session
-  socket.on('forceLogoutSession', ({ userId, sessionId }) => {
-    // Server-originated event: admins will not emit this; backend emits to room directly below
-  });
-
-  // Allow server to emit to a particular session room for immediate logout
-  // Clients should join a room named by their session id after login
-  socket.on('registerSession', ({ sessionId }) => {
-    if (sessionId) {
-      socket.join(`session_${sessionId}`);
-    }
-  });
 
   // Track which user this socket belongs to
-  let thisUserId = null;
+  let thisUserId = socketUserId || null;
 
   // Listen for presence pings
   socket.on('userAppointmentsActive', async ({ userId }) => {
     thisUserId = userId;
-    const wasOffline = !onlineUsers.has(userId);
-    onlineUsers.add(userId);
-    lastSeenTimes.delete(userId); // Remove last seen when user comes online
-
-    // IMPORTANT: Join user to their personal room for direct messaging
     const userIdStr = userId.toString();
-    // Join both room formats for compatibility (userId and user_${userId})
+    onlineUsers.add(userIdStr);
+    lastSeenTimes.delete(userIdStr);
+
     socket.join(userIdStr);
     socket.join(`user_${userIdStr}`);
 
-    io.emit('userOnlineUpdate', { userId, online: true });
-
-    // CHECK FOR EXISTING ACTIVE CALLS (Persistence/Recovery)
-    for (const [callId, activeCall] of activeCalls.entries()) {
-      if (activeCall.callerId === userIdStr || activeCall.receiverId === userIdStr) {
-        const role = activeCall.callerId === userIdStr ? 'caller' : 'receiver';
-        
-        // Clear any pending termination timeout if it exists
-        if (activeCall.terminationTimeout) {
-          clearTimeout(activeCall.terminationTimeout);
-          activeCall.terminationTimeout = null;
-        }
-
-        // Update the socket ID to the new one
-        if (role === 'caller') {
-          activeCall.callerSocketId = socket.id;
-        } else {
-          activeCall.receiverSocketId = socket.id;
-        }
-        
-        activeCalls.set(callId, activeCall);
-
-        console.log(`[Call Recovery] User ${userIdStr} re-joined active call ${callId} as ${role}`);
-        
-        // Notify the client about their active session
-        socket.emit('active-call-session', {
-          callId,
-          appointmentId: activeCall.appointmentId,
-          role,
-          callType: activeCall.callType,
-          startTime: activeCall.startTime.getTime(),
-          callerId: activeCall.callerId,
-          receiverId: activeCall.receiverId
-        });
-
-        // Notify other party that peer is back
-        const otherSocketId = role === 'caller' ? activeCall.receiverSocketId : activeCall.callerSocketId;
-        if (otherSocketId) {
-          io.to(otherSocketId).emit('peer-resumed', { callId, role });
-        }
-        break; // Assume one active call at a time
-      }
-    }
-
-    // If user was offline and just came online, mark all pending messages as delivered
-    if (wasOffline) {
-      try {
-        // Find all bookings where this user is buyer or seller
-        const bookings = await Booking.find({
-          $or: [{ buyerId: userId }, { sellerId: userId }]
-        });
-
-        for (const appt of bookings) {
-          let updated = false;
-          for (const comment of appt.comments) {
-            // Only mark as delivered if:
-            // 1. Comment is not from this user 
-            // 2. Comment status is "sent" (meaning it was sent while recipient was offline)
-            // 3. Comment is not already delivered or read
-            if (comment.sender.toString() !== userId &&
-              comment.status === 'sent' &&
-              !comment.readBy?.includes(userId)) {
-              comment.status = 'delivered';
-              comment.deliveredAt = new Date();
-              updated = true;
-              io.emit('commentDelivered', { appointmentId: appt._id.toString(), commentId: comment._id.toString() });
-            }
-          }
-          if (updated) await appt.save();
-        }
-
-        // Check for pending calls (initiated or ringing) where user is the receiver
-        try {
-          const pendingCalls = await CallHistory.find({
-            receiverId: userId,
-            status: { $in: ['initiated', 'ringing'] },
-            // Only show calls from last 5 minutes (to avoid showing very old calls)
-            startTime: { $gte: new Date(Date.now() - 5 * 60 * 1000) }
-          })
-            .populate('callerId', 'username')
-            .populate('appointmentId', 'propertyName')
-            .sort({ startTime: -1 })
-            .limit(1); // Only show the most recent pending call
-
-          if (pendingCalls.length > 0) {
-            const pendingCall = pendingCalls[0];
-
-            // Check if call is still active
-            const activeCall = activeCalls.get(pendingCall.callId);
-            if (activeCall || pendingCall.status === 'initiated' || pendingCall.status === 'ringing') {
-              // Emit incoming call to the user who just came online
-              socket.emit('incoming-call', {
-                callId: pendingCall.callId,
-                appointmentId: pendingCall.appointmentId._id.toString(),
-                callerId: pendingCall.callerId._id.toString(),
-                callType: pendingCall.callType,
-                callerName: pendingCall.callerId?.username || 'Unknown'
-              });
-            }
-          }
-        } catch (callErr) {
-          console.error('Error checking pending calls when user came online:', callErr);
-        }
-      } catch (err) {
-        console.error('Error marking comments as delivered when user came online:', err);
-      }
-    }
+    io.emit('userOnlineUpdate', { userId: userIdStr, online: true });
 
     if (socket.onlineTimeout) clearTimeout(socket.onlineTimeout);
     socket.onlineTimeout = setTimeout(() => {
-      onlineUsers.delete(userId);
-      lastSeenTimes.set(userId, new Date().toISOString()); // Store last seen time
-      io.emit('userOnlineUpdate', { userId, online: false, lastSeen: lastSeenTimes.get(userId) });
-    }, 5000); // 5 seconds of inactivity = offline
+      onlineUsers.delete(userIdStr);
+      lastSeenTimes.set(userIdStr, new Date().toISOString());
+      io.emit('userOnlineUpdate', { userId: userIdStr, online: false, lastSeen: lastSeenTimes.get(userIdStr) });
+    }, 5000); 
   });
 
   // Listen for admin appointments active
@@ -595,6 +577,78 @@ io.on('connection', (socket) => {
 
   socket.on('typing', ({ toUserId, fromUserId, appointmentId }) => {
     io.to(toUserId).emit('typing', { fromUserId, appointmentId });
+  });
+
+  // EXPLICIT CALL STATE PULL: Clients call this on mount/refresh to resolve race conditions
+  socket.on('check-active-call', async () => {
+    const userIdStr = socket.user?._id?.toString();
+    if (!userIdStr) return;
+
+    console.log(`[Call Pull] User ${userIdStr} explicitly checking for active calls...`);
+
+    // 1. Check active calls (Recovery)
+    for (const [callId, activeCall] of activeCalls.entries()) {
+      if (activeCall.callerId === userIdStr || activeCall.receiverId === userIdStr) {
+        const role = activeCall.callerId === userIdStr ? 'caller' : 'receiver';
+        
+        if (activeCall.terminationTimeout) {
+          clearTimeout(activeCall.terminationTimeout);
+          activeCall.terminationTimeout = null;
+        }
+
+        if (role === 'caller') {
+          activeCall.callerSocketId = socket.id;
+        } else {
+          activeCall.receiverSocketId = socket.id;
+        }
+        
+        activeCalls.set(callId, activeCall);
+        
+        socket.emit('active-call-session', {
+          callId,
+          appointmentId: activeCall.appointmentId,
+          role,
+          callType: activeCall.callType,
+          startTime: activeCall.startTime.getTime(),
+          callerId: activeCall.callerId,
+          receiverId: activeCall.receiverId,
+          callerName: activeCall.callerName,
+          receiverName: activeCall.receiverName,
+          status: activeCall.status || 'active'
+        });
+
+        const otherSocketId = role === 'caller' ? activeCall.receiverSocketId : activeCall.callerSocketId;
+        if (otherSocketId) {
+          io.to(otherSocketId).emit('peer-resumed', { callId, role });
+        }
+        return; // Found an active call, no need to check pending
+      }
+    }
+
+    // 2. Check pending incoming calls
+    try {
+      const pendingCalls = await CallHistory.find({
+        receiverId: userIdStr,
+        status: { $in: ['initiated', 'ringing'] },
+        startTime: { $gte: new Date(Date.now() - 5 * 60 * 1000) }
+      }).populate('callerId', 'username').populate('appointmentId', 'propertyName').limit(1);
+
+      if (pendingCalls.length > 0) {
+        const pendingCall = pendingCalls[0];
+        const activeCall = activeCalls.get(pendingCall.callId);
+        if (activeCall || pendingCall.status === 'initiated' || pendingCall.status === 'ringing') {
+          socket.emit('incoming-call', {
+            callId: pendingCall.callId,
+            appointmentId: pendingCall.appointmentId._id.toString(),
+            callerId: pendingCall.callerId._id.toString(),
+            callType: pendingCall.callType,
+            callerName: pendingCall.callerId?.username || 'Unknown'
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Error during explicit call pull check:', err);
+    }
   });
 
   socket.on('disconnect', () => {
@@ -761,6 +815,12 @@ io.on('connection', (socket) => {
       });
       await callHistory.save();
 
+      // Fetch participant names for better session recovery
+      const [caller, receiver] = await Promise.all([
+        User.findById(callerId).select('username'),
+        User.findById(actualReceiverId).select('username')
+      ]);
+
       // Store active call
       activeCalls.set(callId, {
         callerSocketId: socket.id,
@@ -768,7 +828,10 @@ io.on('connection', (socket) => {
         receiverId: actualReceiverId,
         appointmentId,
         callType,
-        startTime: new Date()
+        startTime: new Date(),
+        callerName: caller?.username || 'Unknown',
+        receiverName: receiver?.username || 'Unknown',
+        status: 'ringing'
       });
 
       // Send call invitation to receiver
@@ -879,6 +942,7 @@ io.on('connection', (socket) => {
       if (activeCall) {
         activeCall.receiverSocketId = socket.id;
         activeCall.startTime = startTime; // Store synchronized start time
+        activeCall.status = 'active';
         activeCalls.set(callId, activeCall);
 
         // Forward any pending WebRTC offers and ICE candidates
