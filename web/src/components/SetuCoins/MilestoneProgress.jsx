@@ -75,6 +75,13 @@ const MilestoneProgress = ({ streak = 0, variant = "default", className = "" }) 
         <span>{Math.round(progressPercent)}% Complete</span>
         <span>{remaining} more {remaining === 1 ? 'payment' : 'payments'}</span>
       </div>
+
+      <p className="text-[9px] text-indigo-600/60 dark:text-indigo-400/60 mt-2 italic border-t border-indigo-100/50 dark:border-indigo-800/50 pt-1.5 translate-y-0.5">
+        * {streak < 6 
+            ? <>Reach a 6-month streak for the <strong className="text-indigo-700 dark:text-indigo-300">Elite Resident</strong> badge & 200 SC bonus!</>
+            : <>Reach a 12-month streak for the <strong className="text-indigo-700 dark:text-indigo-300">Perfect Payer</strong> badge & 500 SC bonus!</>
+          }
+      </p>
     </div>
   );
 };

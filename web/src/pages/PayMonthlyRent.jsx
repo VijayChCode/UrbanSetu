@@ -8,6 +8,7 @@ import { usePageTitle } from '../hooks/usePageTitle';
 import PaymentModal from '../components/PaymentModal';
 import ContractPreview from '../components/rental/ContractPreview';
 import SetuCoinParticles from '../components/SetuCoins/SetuCoinParticles';
+import MilestoneProgress from "../components/SetuCoins/MilestoneProgress";
 import PayMonthlyRentSkeleton from '../components/skeletons/PayMonthlyRentSkeleton';
 import { authenticatedFetch } from '../utils/auth';
 
@@ -738,56 +739,11 @@ export default function PayMonthlyRent() {
             )}
 
             {/* Badge Progress Tracker */}
-            {gamification.currentStreak < 12 && (
-              <div className="bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-800 rounded-lg p-5 mb-6 relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-2 opacity-10">
-                  <FaAward size={60} />
-                </div>
-                <div className="relative z-10">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-bold text-indigo-900 dark:text-indigo-300 flex items-center gap-2">
-                      <FaAward className="text-indigo-600 dark:text-indigo-400" />
-                      Next Milestone Progress
-                    </h4>
-                    <span className="text-xs font-black bg-indigo-600 text-white px-2 py-0.5 rounded-full">
-                      STREAK: {gamification.currentStreak} MO
-                    </span>
-                  </div>
-
-                  {gamification.currentStreak < 6 ? (
-                    <>
-                      <div className="flex justify-between text-xs text-indigo-700 dark:text-indigo-400 mb-1.5 font-bold">
-                        <span>Elite Resident</span>
-                        <span>{6 - gamification.currentStreak} payments left</span>
-                      </div>
-                      <div className="w-full h-2.5 bg-indigo-200 dark:bg-indigo-800 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-indigo-600 rounded-full transition-all duration-1000 shadow-[0_0_8px_rgba(79,70,229,0.5)]"
-                          style={{ width: `${(gamification.currentStreak / 6) * 100}%` }}
-                        ></div>
-                      </div>
-                      <p className="text-[10px] text-indigo-600/70 dark:text-indigo-400/70 mt-2 italic">
-                        * Reach a 6-month streak to unlock the <strong>Elite Resident</strong> badge & 200 bonus coins!
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <div className="flex justify-between text-xs text-indigo-700 dark:text-indigo-400 mb-1.5 font-bold">
-                        <span>Perfect Payer</span>
-                        <span>{12 - gamification.currentStreak} payments left</span>
-                      </div>
-                      <div className="w-full h-2.5 bg-indigo-200 dark:bg-indigo-800 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-indigo-600 rounded-full transition-all duration-1000 shadow-[0_0_8px_rgba(79,70,229,0.5)]"
-                          style={{ width: `${(gamification.currentStreak / 12) * 100}%` }}
-                        ></div>
-                      </div>
-                      <p className="text-[10px] text-indigo-600/70 dark:text-indigo-400/70 mt-2 italic">
-                        * Reach a 12-month streak for the <strong>Perfect Payer</strong> badge & 500 bonus coins!
-                      </p>
-                    </>
-                  )}
-                </div>
+            {isTenant && gamification.currentStreak < 12 && (
+              <div className="mb-6">
+                <MilestoneProgress 
+                  streak={gamification.currentStreak} 
+                />
               </div>
             )}
 
