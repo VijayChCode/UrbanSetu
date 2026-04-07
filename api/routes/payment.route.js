@@ -900,10 +900,21 @@ router.post("/verify", verifyToken, async (req, res) => {
       });
     }
 
+    // --- Get Updated Gamification Stats ---
+    let gamification = null;
+    try {
+      const CoinService = (await import('../services/coinService.js')).default;
+      gamification = await CoinService.getBalance(user._id);
+    } catch (err) {
+      console.error("Error fetching updated gamification for PayPal response:", err);
+    }
+    // -------------------------------------
+
     res.status(200).json({
       message: "Payment verified successfully",
       payment: payment,
-      receiptUrl: receiptUrl
+      receiptUrl: receiptUrl,
+      gamification: gamification
     });
   } catch (err) {
     console.error("Error verifying payment:", err);
@@ -1634,7 +1645,17 @@ router.post('/razorpay/verify', verifyToken, async (req, res) => {
       }
     }
 
-    return res.json({ message: 'Payment verified successfully', payment, receiptUrl });
+    // --- Get Updated Gamification Stats ---
+    let gamification = null;
+    try {
+      const CoinService = (await import('../services/coinService.js')).default;
+      gamification = await CoinService.getBalance(user._id);
+    } catch (err) {
+      console.error("Error fetching updated gamification for Razorpay response:", err);
+    }
+    // -------------------------------------
+
+    return res.json({ message: 'Payment verified successfully', payment, receiptUrl, gamification });
   } catch (err) {
     console.error('Razorpay verify error:', err);
     return res.status(500).json({ message: 'Server error' });

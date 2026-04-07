@@ -9,6 +9,7 @@ import { usePageTitle } from '../hooks/usePageTitle';
 import ContractPreview from '../components/rental/ContractPreview';
 import DigitalSignature from '../components/rental/DigitalSignature';
 import UserRentalContractsSkeleton from '../components/skeletons/UserRentalContractsSkeleton';
+import MilestoneProgress from "../components/SetuCoins/MilestoneProgress";
 import axios from 'axios';
 import { authenticatedFetch } from '../utils/auth';
 
@@ -61,22 +62,42 @@ export default function RentalContracts() {
   const [contractToReject, setContractToReject] = useState(null);
   const [rejectionReason, setRejectionReason] = useState('');
   const [expandedStatus, setExpandedStatus] = useState({}); // Track expanded payment status per contract
+  const [gamification, setGamification] = useState({
+    setuCoinsBalance: 0,
+    currentStreak: 0,
+    badges: []
+  });
 
   useEffect(() => {
     // Only fetch on initial load, not on filter changes
     if (contracts.length === 0) {
       fetchContracts();
       fetchLoans();
+      fetchGamification();
     }
   }, [currentUser]);
 
   // Listen for payment status updates
   useEffect(() => {
     const handlePaymentUpdate = (event) => {
-      const { contractId, paymentId, paymentConfirmed } = event.detail || {};
+      const { contractId, paymentId, paymentConfirmed, gamification: updatedGamification } = event.detail || {};
+      
+      // If we have updated gamification data in the event, use it immediately
+      if (updatedGamification) {
+        setGamification(prev => ({
+          ...prev,
+          setuCoinsBalance: updatedGamification.setuCoinsBalance ?? prev.setuCoinsBalance,
+          currentStreak: updatedGamification.currentStreak ?? prev.currentStreak,
+          badges: updatedGamification.badges ?? prev.badges
+        }));
+      }
+
       if (contractId || paymentConfirmed) {
         // Refresh contracts when payment status is updated
-        fetchContracts();
+        fetchContracts(false); // Silent refresh
+        if (!updatedGamification) {
+          fetchGamification();
+        }
       }
     };
 
@@ -89,6 +110,24 @@ export default function RentalContracts() {
       window.removeEventListener('rentalPaymentStatusUpdated', handlePaymentUpdate);
     };
   }, []);
+
+  const fetchGamification = async () => {
+    try {
+      const res = await authenticatedFetch(`${API_BASE_URL}/api/coins/balance`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setGamification({
+            setuCoinsBalance: data.setuCoinsBalance,
+            currentStreak: data.currentStreak,
+            badges: data.badges || []
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching gamification:", error);
+    }
+  };
 
   const fetchContracts = async (showLoading = true) => {
     try {
@@ -399,19 +438,34 @@ export default function RentalContracts() {
           </div>
 
           {/* Filters */}
-          <div className="flex gap-2 flex-wrap">
-            {['all', 'active', 'pending_signature', 'expired', 'terminated', 'rejected'].map((status) => (
-              <button
-                key={status}
-                onClick={() => setFilter(status)}
-                className={`px-4 py-2 rounded-lg font-medium transition ${filter === status
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
-                  }`}
-              >
-                {status === 'all' ? 'All Contracts' : getStatusLabel(status)}
-              </button>
-            ))}
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex gap-2 flex-wrap">
+              {['all', 'active', 'pending_signature', 'expired', 'terminated', 'rejected'].map((status) => (
+                <button
+                  key={status}
+                  onClick={() => setFilter(status)}
+                  className={`px-4 py-2 rounded-lg font-medium transition ${filter === status
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                    }`}
+                >
+                  {status === 'all' ? 'All Contracts' : getStatusLabel(status)}
+                </button>
+              ))}
+            </div>
+
+            {/* Compact Milestone Summary for Tenant */}
+            {contracts.some(c => getUserRole(c) === 'tenant') && (
+              <div className="w-full md:w-64">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Active Rent Milestone</span>
+                  <div className="flex items-center gap-1 text-[10px] text-orange-600 dark:text-orange-400 font-bold">
+                    <FaFire /> {gamification.currentStreak} Mo
+                  </div>
+                </div>
+                <MilestoneProgress streak={gamification.currentStreak} />
+              </div>
+            )}
           </div>
         </div>
 

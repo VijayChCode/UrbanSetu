@@ -9,6 +9,7 @@ import AutoDebitSettings from '../components/rental/AutoDebitSettings';
 import RentPaymentHistory from '../components/rental/RentPaymentHistory';
 import RentWalletSkeleton from '../components/skeletons/RentWalletSkeleton';
 import SetuCoinInfoModal from "../components/SetuCoins/SetuCoinInfoModal";
+import MilestoneProgress from "../components/SetuCoins/MilestoneProgress";
 import { authenticatedFetch } from '../utils/auth';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -148,11 +149,25 @@ export default function RentWallet() {
     const normalizedId = contractId?.toString();
     const handlePaymentUpdate = (event) => {
       const updatedId = event.detail?.contractId;
+      const updatedGamification = event.detail?.gamification;
+
       if (!updatedId || !normalizedId || updatedId.toString() === normalizedId) {
-        // Add a small delay to allow backend to process
+        // If we have updated gamification data in the event, use it immediately
+        if (updatedGamification) {
+          setGamification(prev => ({
+            ...prev,
+            setuCoinsBalance: updatedGamification.setuCoinsBalance ?? prev.setuCoinsBalance,
+            currentStreak: updatedGamification.currentStreak ?? prev.currentStreak,
+            badges: updatedGamification.badges ?? prev.badges
+          }));
+        }
+
+        // Add a small delay to allow backend to process for full refresh
         setTimeout(() => {
           fetchWalletDetails(false);
-          fetchGamification();
+          if (!updatedGamification) {
+            fetchGamification();
+          }
         }, 1000); // Silent refresh
       }
     };
@@ -318,6 +333,16 @@ export default function RentWallet() {
                       <div className="text-2xl font-black flex items-center justify-center lg:justify-start gap-2">
                         <FaFire className={gamification.currentStreak > 0 ? "text-orange-400" : "text-gray-400"} /> {gamification.currentStreak} Mo
                       </div>
+                      
+                      {/* Milestone Progress Bar */}
+                      {isTenant && gamification.currentStreak < 12 && (
+                        <div className="mt-3">
+                          <MilestoneProgress 
+                            streak={gamification.currentStreak} 
+                            className="bg-white/5 border-white/10" 
+                          />
+                        </div>
+                      )}
                     </div>
                     {gamification.rank && (
                       <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 min-w-[120px] hover:bg-white/20 transition-colors">

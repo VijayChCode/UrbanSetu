@@ -388,7 +388,7 @@ const PaymentModal = ({ isOpen, onClose, appointment, onPaymentSuccess, existing
             // Check if it's already completed
             if (existingPayment.status === 'completed' || existingPayment.status === 'paid') {
               toast.success('Payment already completed!');
-              onPaymentSuccess(existingPayment);
+              onPaymentSuccess(existingPayment, existingPayment.gamification);
               setLockAcquired(false);
               setLoading(false);
               onClose();
@@ -776,7 +776,7 @@ const PaymentModal = ({ isOpen, onClose, appointment, onPaymentSuccess, existing
           toast.success('Payment already completed!');
           // Call onPaymentSuccess with the existing payment
           if (data.payment) {
-            onPaymentSuccess(data.payment);
+            onPaymentSuccess(data.payment, data.gamification);
           }
           // Payment already completed, no need to cancel
           setPaymentData(null);
@@ -1012,7 +1012,7 @@ const PaymentModal = ({ isOpen, onClose, appointment, onPaymentSuccess, existing
         setPaymentSuccess(true);
         setReceiptUrl(verifyData.receiptUrl);
         toast.success('Payment successful!');
-        onPaymentSuccess(verifyData.payment);
+        onPaymentSuccess(verifyData.payment, verifyData.gamification);
       } else {
         toast.error(verifyData.message || 'Payment verification failed');
         if (verifyData.message && verifyData.message.toLowerCase().includes('signature')) {
@@ -1046,7 +1046,7 @@ const PaymentModal = ({ isOpen, onClose, appointment, onPaymentSuccess, existing
         setPaymentSuccess(true);
         setReceiptUrl(verifyData.receiptUrl);
         toast.success('Payment successful!');
-        onPaymentSuccess(verifyData.payment);
+        onPaymentSuccess(verifyData.payment, verifyData.gamification);
       } else {
         toast.error(verifyData.message || 'Payment verification failed');
         // If verification failed, mark payment as failed

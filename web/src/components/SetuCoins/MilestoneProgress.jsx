@@ -1,0 +1,56 @@
+import React from 'react';
+import { FaAward, FaTrophy } from 'react-icons/fa';
+
+/**
+ * A compact milestone progress tracker for SetuCoins rent streaks.
+ * Shows progress towards the next badge (Elite Resident or Perfect Payer).
+ * 
+ * @param {Object} props
+ * @param {number} props.streak - Current monthly rent streak
+ * @param {string} props.className - Optional extra classes
+ */
+const MilestoneProgress = ({ streak = 0, className = "" }) => {
+  if (streak >= 12) {
+    return (
+      <div className={`flex items-center gap-2 px-3 py-1.5 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg ${className}`}>
+        <FaTrophy className="text-yellow-500 text-sm" />
+        <span className="text-xs font-bold text-green-700 dark:text-green-400">Perfect Payer (12mo)</span>
+      </div>
+    );
+  }
+
+  const nextMilestone = streak < 6 ? 6 : 12;
+  const milestoneName = streak < 6 ? 'Elite Resident' : 'Perfect Payer';
+  const progressPercent = (streak / nextMilestone) * 100;
+  const remaining = nextMilestone - streak;
+
+  return (
+    <div className={`p-3 bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-800 rounded-lg ${className}`}>
+      <div className="flex items-center justify-between mb-1.5">
+        <div className="flex items-center gap-1.5">
+          <FaAward className="text-indigo-600 dark:text-indigo-400 text-xs" />
+          <span className="text-[10px] font-bold text-indigo-900 dark:text-indigo-300 uppercase tracking-wider">
+            {milestoneName} Milestone
+          </span>
+        </div>
+        <span className="text-[10px] font-black bg-indigo-600 text-white px-1.5 py-0.5 rounded-full">
+          {streak} MO STREAK
+        </span>
+      </div>
+      
+      <div className="w-full h-1.5 bg-indigo-100 dark:bg-indigo-800/50 rounded-full overflow-hidden">
+        <div 
+          className="h-full bg-indigo-600 rounded-full transition-all duration-1000 shadow-[0_0_5px_rgba(79,70,229,0.3)]"
+          style={{ width: `${progressPercent}%` }}
+        />
+      </div>
+      
+      <div className="flex justify-between mt-1 text-[9px] font-medium text-indigo-700/70 dark:text-indigo-400/70">
+        <span>{Math.round(progressPercent)}% Complete</span>
+        <span>{remaining} more {remaining === 1 ? 'payment' : 'payments'}</span>
+      </div>
+    </div>
+  );
+};
+
+export default MilestoneProgress;

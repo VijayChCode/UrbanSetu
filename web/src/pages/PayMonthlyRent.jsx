@@ -169,7 +169,14 @@ export default function PayMonthlyRent() {
     }
   };
 
-  const handlePaymentSuccess = () => {
+  const handlePaymentSuccess = (payment, updatedGamification) => {
+    if (updatedGamification) {
+      setGamification({
+        setuCoinsBalance: updatedGamification.setuCoinsBalance || 0,
+        currentStreak: updatedGamification.currentStreak || 0,
+        badges: updatedGamification.badges || []
+      });
+    }
     setPaymentCompleted(true);
     setStep(5);
     setShowPaymentModal(false);
@@ -179,28 +186,46 @@ export default function PayMonthlyRent() {
     setTimeout(async () => {
       fetchContractAndWallet();
 
-      // Fetch fresh gamification data to check for new badges
-      try {
-        const res = await authenticatedFetch(`${API_BASE_URL}/api/coins/balance`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.success) {
-            const freshBadges = data.badges || [];
-            // Compare with old badges
-            const earned = freshBadges.filter(b => !gamification.badges.includes(b));
-            if (earned.length > 0) {
-              setNewBadges(earned);
+      // If we didn't receive updated gamification from payment modal, fetch fresh data now
+      if (!updatedGamification) {
+        try {
+          const res = await authenticatedFetch(`${API_BASE_URL}/api/coins/balance`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.success) {
+              const freshBadges = data.badges || [];
+              // Compare with old badges
+              const earned = freshBadges.filter(b => !gamification.badges.includes(b));
+              if (earned.length > 0) {
+                setNewBadges(earned);
+              }
+              // Update state anyway just in case
+              setGamification({
+                setuCoinsBalance: data.setuCoinsBalance || 0,
+                currentStreak: data.currentStreak || 0,
+                badges: data.badges || []
+              });
             }
           }
+        } catch (err) {
+          console.error("Error checking for earned badges:", err);
         }
-      } catch (err) {
-        console.error("Error checking for earned badges:", err);
+      } else {
+        // We already have fresh data, check for new badges
+        const earned = (updatedGamification.badges || []).filter(b => !gamification.badges.includes(b));
+        if (earned.length > 0) {
+          setNewBadges(earned);
+        }
       }
     }, 2000);
 
-    // Dispatch event for other pages to refresh
+    // Dispatch event for other pages (like RentalContracts and RentWallet) to refresh
     window.dispatchEvent(new CustomEvent('rentalPaymentStatusUpdated', {
-      detail: { contractId: contract._id, paymentConfirmed: true }
+      detail: { 
+        contractId: contract._id, 
+        paymentConfirmed: true,
+        gamification: updatedGamification
+      }
     }));
   };
 
