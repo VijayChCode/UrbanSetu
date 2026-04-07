@@ -206,7 +206,13 @@ export const useCall = () => {
       }
 
       setCallState('active'); // Directly enter active state
-      setIsReconnecting(true); // Will sync streams on next connect/offer
+      
+      // Only set reconnecting if peer connection isn't already healthy
+      const pc = peerRef.current?._pc;
+      if (!pc || (pc.iceConnectionState !== 'connected' && pc.iceConnectionState !== 'completed')) {
+        setIsReconnecting(true); // Will sync streams on next connect/offer
+      }
+      
       setIsMinimized(true); // Show the sticky bar by default on recovery
       
       toast.info('Resuming ongoing call...');
@@ -226,6 +232,12 @@ export const useCall = () => {
     if (!peer || !peer._pc) return;
 
     const pc = peer._pc;
+
+    // Immediate check: if already connected, clear any stale reconnecting state
+    if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed' || pc.connectionState === 'connected') {
+      setIsReconnecting(false);
+      setReconnectReason(null);
+    }
 
     pc.oniceconnectionstatechange = () => {
       console.log(`ICE Connection: ${pc.iceConnectionState}`);
@@ -273,7 +285,15 @@ export const useCall = () => {
     };
 
     pc.onconnectionstatechange = () => {
-      if (pc.connectionState === 'failed') {
+      console.log(`Connection State: ${pc.connectionState}`);
+      if (pc.connectionState === 'connected') {
+        setIsReconnecting(false);
+        setReconnectReason(null);
+        if (reconnectTimeoutRef.current) {
+          clearTimeout(reconnectTimeoutRef.current);
+          reconnectTimeoutRef.current = null;
+        }
+      } else if (pc.connectionState === 'failed') {
         setIsReconnecting(true);
         if (navigator.onLine) {
           setReconnectReason('remote-disconnected');
@@ -645,6 +665,7 @@ export const useCall = () => {
       if ((activeCallRef.current && activeCallRef.current.callId === callId) ||
         (incomingCallRef.current && incomingCallRef.current.callId === callId)) {
         setIsReconnecting(true);
+        setReconnectReason('remote-disconnected');
       }
     };
 
@@ -1972,6 +1993,13 @@ export const useCall = () => {
         }
 
         setConnectionQuality(quality);
+        
+        // Safety net: if we have good connection quality, the 'Reconnecting' overlay should NOT be visible
+        if (quality !== 'poor' && isReconnecting) {
+          console.log(`[Call Quality] Auto-clearing Reconnecting state (Quality: ${quality})`);
+          setIsReconnecting(false);
+          setReconnectReason(null);
+        }
       } catch (error) {
         // Silently ignore errors during teardown
         if (!isEndingCallRef.current && peerRef.current?._pc) {
