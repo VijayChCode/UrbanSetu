@@ -27,7 +27,7 @@ import AccountRevocation from './pages/AccountRevocation';
 import RestoreProperty from './pages/RestoreProperty';
 import NotFound from './pages/NotFound';
 import Terms from "./pages/Terms";
-import Offers from "./pages/Offers";
+
 
 // Blog redirect component for logged-in users
 const BlogRedirect = () => {
@@ -891,7 +891,7 @@ function AppRoutes({ bootstrapped }) {
             <Route path="/community-guidelines" element={currentUser ? <NotFound /> : <CommunityGuidelines />} />
             <Route path="/restore-account/:token" element={<AccountRevocation />} />
             <Route path="/restore-property" element={<RestoreProperty />} />
-            <Route path="/offers" element={<Offers />} />
+
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="/updates" element={<Updates />} />
             <Route path="/ai/share/:shareToken" element={<SharedChatView />} />

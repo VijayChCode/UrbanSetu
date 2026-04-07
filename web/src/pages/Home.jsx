@@ -19,7 +19,6 @@ import {
   FaQuoteLeft, FaQuoteRight, FaCheckCircle, FaClock, FaHandshake, FaGlobe,
   FaMobile, FaDesktop, FaTablet, FaInfoCircle, FaArrowRight, FaRobot
 } from "react-icons/fa";
-import AdsterraBanner from "../components/AdsterraBanner";
 import SeasonalEffects from "../components/SeasonalEffects";
 import DailyQuote from "../components/DailyQuote";
 import { useSeasonalTheme, useAllSeasonalThemes } from "../hooks/useSeasonalTheme";
@@ -805,7 +804,6 @@ export default function Home() {
           {/* Ads Section */}
           <div className="text-center py-6">
             <p className="text-xs text-gray-400 mb-2 font-mono">SPONSORED CONTENT Coming Soon...</p>
-            {/* <AdsterraBanner /> */}
           </div>
         </div>
 

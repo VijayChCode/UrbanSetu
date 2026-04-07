@@ -18,8 +18,6 @@ import {
   FaQuoteLeft, FaQuoteRight, FaCheckCircle, FaClock, FaHandshake, FaGlobe,
   FaMobile, FaDesktop, FaTablet, FaInfoCircle, FaArrowRight
 } from "react-icons/fa";
-import AdsterraBanner from "../components/AdsterraBanner";
-import AdHighperformanceBanner from "../components/AdHighperformanceBanner";
 import SeasonalEffects from "../components/SeasonalEffects";
 import DailyQuote from "../components/DailyQuote";
 import { useSeasonalTheme, useAllSeasonalThemes } from "../hooks/useSeasonalTheme.jsx";
@@ -314,13 +312,13 @@ export default function PublicHome() {
                   </span>
                   <span className="flex flex-wrap items-center gap-x-1">
                     <span className="text-gray-900 dark:text-white font-medium">
-                      {(theme?.greeting || "#1 Real Estate Platform in India").split(' ')[0]} 
+                      {(theme?.greeting || "#1 Real Estate Platform in India").split(' ')[0]}
                     </span>
                     <span className="flex items-center">
                       {allThemes.length > 1 ? (
                         allThemes.map((t, i) => {
                           const parts = t.greeting.replace(/[.!]$/, '').split(' ');
-                          const festivalName = parts.slice(1).join(' '); 
+                          const festivalName = parts.slice(1).join(' ');
                           return (
                             <span key={i} className="flex items-center">
                               <span className="ml-1 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 font-extrabold">
@@ -672,9 +670,7 @@ export default function PublicHome() {
           {/* Ads Section */}
           <div className="text-center py-6">
             <p className="text-xs text-gray-400 mb-2 font-mono">SPONSORED CONTENT Coming Soon...</p>
-            {/* <AdsterraBanner /> */}
           </div>
-
 
         </div>
       </div>
