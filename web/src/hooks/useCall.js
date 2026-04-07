@@ -162,7 +162,7 @@ export const useCall = () => {
     setRemoteIsMuted(false);
     setRemoteVideoEnabled(true);
     setRemoteIsScreenSharing(false);
-  }, [localStream, remoteStream, stopCalling, stopRingtone, callType]);
+  }, [localStream, remoteStream, stopCalling, stopRingtone]);
 
   // Update refs when state changes (so handlers can access current values)
   useEffect(() => {
