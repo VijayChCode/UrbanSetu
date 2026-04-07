@@ -69,6 +69,7 @@ const ActiveCallModal = ({
   const [pipPos, setPipPos] = useState({ x: 0, y: 0 }); // Offset from initial position
   const [isDraggingPip, setIsDraggingPip] = useState(false);
   const pipDragStartRef = useRef({ x: 0, y: 0 });
+  const lastPipPosRef = useRef({ x: 0, y: 0 }); // Track latest position for snapping
 
   // Audio activity detection
   const isLocalSpeaking = useAudioActivity(localStream);
@@ -268,16 +269,50 @@ const ActiveCallModal = ({
         // Boundaries check (keep it inside the modal)
         if (containerRef.current) {
           const rect = containerRef.current.getBoundingClientRect();
-          // We can add constraints if needed, but "anywhere" usually implies freedom
+          // Keep it inside the modal roughly
+          const boundedX = Math.max(-(rect.width - 100), Math.min(100, newX));
+          const boundedY = Math.max(-(rect.height - 100), Math.min(100, newY));
+          
           setPipPos({ x: newX, y: newY });
+          lastPipPosRef.current = { x: newX, y: newY };
         } else {
           setPipPos({ x: newX, y: newY });
+          lastPipPosRef.current = { x: newX, y: newY };
         }
       }
     };
 
-    const handleGlobalMouseUp = () => {
+    const handleGlobalMouseUp = (e) => {
       setIsDraggingPip(false);
+      
+      // Snapping logic if we were dragging
+      if (containerRef.current) {
+        const containerRect = containerRef.current.getBoundingClientRect();
+        const pipWidth = 192; // w-48
+        const pipHeight = 144; // h-36
+        const padding = 16;   // 4 units (right-4)
+        
+        // Final position relative to container
+        // Note: pipPos is offset from initial bottom-right
+        // Get the latest values from the state (or better, use the ones from the move event)
+        // Since we are in the effect, we might need a ref for current session pos
+        const currentX = lastPipPosRef.current.x;
+        const currentY = lastPipPosRef.current.y;
+
+        const containerWidth = containerRect.width;
+        const containerHeight = containerRect.height;
+        
+        // Available space for offset
+        const maxOffsetLeft = -(containerWidth - pipWidth - (padding * 2));
+        const bottomOffset = controlsVisible ? 96 : 24; // bottom-24=96px, bottom-6=24px
+        const maxOffsetTop = -(containerHeight - pipHeight - bottomOffset - padding);
+        
+        // Snapping thresholds (midpoints)
+        const snapX = currentX < maxOffsetLeft / 2 ? maxOffsetLeft : 0;
+        const snapY = currentY < maxOffsetTop / 2 ? maxOffsetTop : 0;
+        
+        setPipPos({ x: snapX, y: snapY });
+      }
     };
 
     if (isDraggingPip) {
@@ -291,7 +326,7 @@ const ActiveCallModal = ({
       window.removeEventListener('mousemove', handleGlobalMouseMove);
       window.removeEventListener('mouseup', handleGlobalMouseUp);
     };
-  }, [isDraggingPip, containerRef]);
+  }, [isDraggingPip, containerRef, controlsVisible]);
 
   const handlePipMouseDown = (e) => {
     if (callType !== 'video') return;
@@ -307,6 +342,7 @@ const ActiveCallModal = ({
       x: clientX - pipPos.x,
       y: clientY - pipPos.y
     };
+    lastPipPosRef.current = { x: pipPos.x, y: pipPos.y };
     e.stopPropagation();
   };
 
