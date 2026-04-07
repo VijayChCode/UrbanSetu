@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { toast } from 'react-toastify';
-import { FaLock, FaCalendarAlt, FaMoneyBillWave, FaCheckCircle, FaCheck, FaChevronRight, FaHome, FaShieldAlt, FaFileContract, FaTimesCircle, FaCreditCard, FaChevronLeft, FaMapMarkerAlt, FaReceipt, FaDownload, FaCoins } from "react-icons/fa";
+import { FaLock, FaCalendarAlt, FaMoneyBillWave, FaCheckCircle, FaCheck, FaChevronRight, FaHome, FaShieldAlt, FaFileContract, FaTimesCircle, FaCreditCard, FaChevronLeft, FaMapMarkerAlt, FaReceipt, FaDownload, FaCoins, FaFire, FaAward, FaTrophy } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePageTitle } from '../hooks/usePageTitle';
 import PaymentModal from '../components/PaymentModal';
@@ -118,7 +118,7 @@ export default function RentProperty() {
   useEffect(() => {
     const handlePaymentUpdate = (event) => {
       const { contractId, paymentConfirmed, gamification: updatedGamification } = event.detail || {};
-      
+
       // If we have updated gamification data in the event, use it immediately
       if (updatedGamification) {
         setCoinBalance(updatedGamification.setuCoinsBalance ?? coinBalance);
@@ -225,7 +225,7 @@ export default function RentProperty() {
         }
 
         setListing(listingData);
-        
+
         const ownerId = listingData?.userRef?._id || listingData?.userRef;
         if (listingData && currentUser && String(ownerId) === String(currentUser._id)) {
           setIsOwner(true);
@@ -950,7 +950,7 @@ export default function RentProperty() {
           setBooking(refreshedBooking);
         }
       } catch (error) {
-      console.error("Error refreshing booking:", error);
+        console.error("Error refreshing booking:", error);
       }
     }
   };
@@ -968,7 +968,7 @@ export default function RentProperty() {
           </div>
           <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-4">Ownership Restriction</h2>
           <p className="text-gray-600 dark:text-gray-400 text-lg mb-8">
-            You are the owner of <span className="font-bold text-blue-600 dark:text-blue-400">{listing?.name}</span>. 
+            You are the owner of <span className="font-bold text-blue-600 dark:text-blue-400">{listing?.name}</span>.
             The rent-lock agreement and property booking are reserved for potential tenants.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -1428,12 +1428,12 @@ export default function RentProperty() {
                     disabled={draftingClause || !newClauseInput.trim() || !!contract}
                     className="bg-purple-600 text-white px-4 py-3 sm:py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-medium w-full sm:w-auto"
                   >
-                      {draftingClause ? (
-                        <>
-                          <UrbanSetuSpinner size="sm" isBright={true} />
-                          Drafting...
-                        </>
-                      ) : (
+                    {draftingClause ? (
+                      <>
+                        <UrbanSetuSpinner size="sm" isBright={true} />
+                        Drafting...
+                      </>
+                    ) : (
                       <>
                         <span>✨ Draft</span>
                       </>

@@ -292,95 +292,92 @@ export default function RentWallet() {
           <div className="space-y-6">
 
             {/* Gamification Banner */}
-            <div className="bg-gradient-to-r from-indigo-700 via-purple-700 to-blue-800 rounded-2xl shadow-xl p-8 text-white relative overflow-hidden group hover:shadow-2xl transition-all duration-500">
+            <div className="bg-gradient-to-r from-indigo-700 via-purple-700 to-blue-800 rounded-2xl shadow-lg p-5 text-white relative overflow-hidden group hover:shadow-xl transition-all duration-500">
               {/* Background Decoration */}
               <div className="absolute top-0 right-0 opacity-10 transform translate-x-12 -translate-y-12 rotate-12 group-hover:rotate-45 transition-transform duration-1000">
-                <FaTrophy className="text-[12rem]" />
-              </div>
-              <div className="absolute bottom-0 left-0 opacity-5 transform -translate-x-6 translate-y-6">
-                <FaCoins className="text-[8rem]" />
+                <FaTrophy className="text-[10rem]" />
               </div>
 
-              <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8">
+              <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-4">
                 <div className="flex-1 text-center lg:text-left">
-                  <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase mb-4 border border-white/30">
+                  <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase mb-2 border border-white/30">
                     <FaAward className="text-yellow-400" /> Member Rewards Program
                     <button 
                       onClick={() => setShowSetuCoinInfo(true)}
-                      className="ml-1 hover:text-yellow-200 transition-colors cursor-pointer"
+                      className="ml-0.5 hover:text-yellow-200 transition-colors cursor-pointer"
                       title="What are SetuCoins?"
                     >
-                      <FaInfoCircle size={14} />
+                      <FaInfoCircle size={12} />
                     </button>
                   </div>
-                  <h2 className="text-3xl md:text-4xl font-extrabold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white to-indigo-100 italic">
+                  <h2 className="text-2xl md:text-3xl font-extrabold mb-1 bg-clip-text text-transparent bg-gradient-to-r from-white to-indigo-100 italic">
                     Level Up Your Living Experience
                   </h2>
-                  <p className="text-indigo-100/90 max-w-xl text-lg leading-relaxed">
-                    Earn <span className="font-bold text-yellow-300">SetuCoins</span> with every on-time payment. Reach milestones to unlock exclusive badges and premium features.
+                  <p className="text-indigo-100/90 max-w-xl text-sm leading-relaxed mb-4">
+                    Earn <span className="font-bold text-yellow-300">SetuCoins</span> with every on-time payment.
                   </p>
                   
                   {/* Stats Counter */}
-                  <div className="flex flex-wrap justify-center lg:justify-start gap-6 mt-8">
-                    <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 min-w-[120px] hover:bg-white/20 transition-colors">
-                      <div className="text-white/60 text-xs font-bold uppercase mb-1">Balance</div>
-                      <div className="text-2xl font-black flex items-center justify-center lg:justify-start gap-2">
+                  <div className="flex flex-wrap justify-center lg:justify-start gap-3 mt-2">
+                    <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-3 min-w-[100px] hover:bg-white/20 transition-colors">
+                      <div className="text-white/60 text-[9px] font-bold uppercase mb-0.5">Balance</div>
+                      <div className="text-xl font-black flex items-center justify-center lg:justify-start gap-1.5">
                         <FaCoins className="text-yellow-400" /> {gamification.setuCoinsBalance}
                       </div>
                     </div>
-                    <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 min-w-[120px] hover:bg-white/20 transition-colors">
-                      <div className="text-white/60 text-xs font-bold uppercase mb-1">Rent Streak</div>
-                      <div className="text-2xl font-black flex items-center justify-center lg:justify-start gap-2">
+                    <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-3 min-w-[140px] hover:bg-white/20 transition-colors">
+                      <div className="text-white/60 text-[9px] font-bold uppercase mb-0.5">Rent Streak</div>
+                      <div className="text-xl font-black flex items-center justify-center lg:justify-start gap-1.5">
                         <FaFire className={gamification.currentStreak > 0 ? "text-orange-400" : "text-gray-400"} /> {gamification.currentStreak} Mo
                       </div>
                       
                       {/* Milestone Progress Bar */}
                       {isTenant && gamification.currentStreak < 12 && (
-                        <div className="mt-3">
+                        <div className="mt-2 pt-2 border-t border-white/10">
                           <MilestoneProgress 
                             streak={gamification.currentStreak} 
-                            className="bg-white/5 border-white/10" 
+                            variant="minimal"
                           />
                         </div>
                       )}
                     </div>
                     {gamification.rank && (
-                      <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 min-w-[120px] hover:bg-white/20 transition-colors">
-                        <div className="text-white/60 text-xs font-bold uppercase mb-1">Global Rank</div>
-                        <div className="text-2xl font-black italic">#{gamification.rank}</div>
+                      <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-3 min-w-[100px] hover:bg-white/20 transition-colors">
+                        <div className="text-white/60 text-[9px] font-bold uppercase mb-0.5">Global Rank</div>
+                        <div className="text-xl font-black italic">#{gamification.rank}</div>
                       </div>
                     )}
                   </div>
                 </div>
 
-                <div className="flex flex-col items-center lg:items-end gap-6 w-full lg:w-auto">
+                <div className="flex flex-col items-center lg:items-end gap-3 w-full lg:w-auto">
                   {/* Badges Display */}
                   {gamification.badges?.length > 0 ? (
-                    <div className="w-full lg:w-[400px]">
-                      <h4 className="text-right text-xs font-black text-indigo-200 uppercase tracking-widest mb-3 px-2">Earned Achievements</h4>
-                      <div className="flex flex-wrap justify-center lg:justify-end gap-3">
+                    <div className="w-full lg:w-[350px]">
+                      <h4 className="text-right text-[10px] font-black text-indigo-200 uppercase tracking-widest mb-2 px-2">Achievements</h4>
+                      <div className="flex flex-wrap justify-center lg:justify-end gap-2">
                         {gamification.badges.map((badge, idx) => (
                           <div
                             key={idx}
-                            className="flex items-center gap-2 bg-black/30 backdrop-blur-xl border border-white/10 px-4 py-2.5 rounded-2xl hover:scale-105 hover:bg-black/40 transition-all cursor-default group/badge shadow-lg"
+                            className="flex items-center gap-1.5 bg-black/30 backdrop-blur-xl border border-white/10 px-3 py-1.5 rounded-xl hover:scale-105 hover:bg-black/40 transition-all cursor-default group/badge shadow-md"
                           >
-                            <span className="text-xl group-hover/badge:rotate-12 transition-transform">{getBadgeIcon(badge)}</span>
-                            <span className="font-bold text-sm whitespace-nowrap">{badge}</span>
+                            <span className="text-base group-hover/badge:rotate-12 transition-transform">{getBadgeIcon(badge)}</span>
+                            <span className="font-bold text-xs whitespace-nowrap">{badge}</span>
                           </div>
                         ))}
                       </div>
                     </div>
                   ) : (
-                    <div className="text-center lg:text-right text-indigo-100/60 italic text-sm">
+                    <div className="text-center lg:text-right text-indigo-100/60 italic text-xs mb-1">
                       Pay 3 more times on time to unlock your first badge!
                     </div>
                   )}
 
                   <Link 
                     to="/user/leaderboard" 
-                    className="group flex items-center gap-3 bg-yellow-400 text-indigo-900 px-8 py-4 rounded-2xl font-black text-lg shadow-[0_0_20px_rgba(250,204,21,0.4)] hover:shadow-[0_0_30px_rgba(250,204,21,0.6)] hover:-translate-y-1 transition-all active:scale-95"
+                    className="group flex items-center gap-2 bg-yellow-400 text-indigo-900 px-5 py-2.5 rounded-xl font-black text-sm shadow-[0_0_15px_rgba(250,204,21,0.3)] hover:shadow-[0_0_25px_rgba(250,204,21,0.5)] hover:-translate-y-0.5 transition-all active:scale-95"
                   >
-                    View Leaderboard <FaArrowRight className="group-hover:translate-x-2 transition-transform" />
+                    View Leaderboard <FaArrowRight className="text-xs group-hover:translate-x-1 transition-transform" />
                   </Link>
                 </div>
               </div>
