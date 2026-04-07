@@ -41,7 +41,8 @@ const ActiveCallModal = ({
   currentSpeakerId,
   onSwitchMicrophone,
   onSwitchSpeaker,
-  containerRef: containerRefProp
+  containerRef: containerRefProp,
+  isSyncingSummary
 }) => {
   const navigate = useNavigate();
   const [isVisible, setIsVisible] = useState(false);
@@ -1151,17 +1152,31 @@ const ActiveCallModal = ({
                   </div>
                   <span className="text-gray-600 font-medium">Duration</span>
                 </div>
-                <span className="text-gray-900 font-bold">{formatDuration(callDuration)}</span>
+                <span className="text-gray-900 font-bold">
+                  {isSyncingSummary ? (
+                    <span className="flex items-center gap-2 text-blue-600 animate-pulse">
+                      <FaSync className="animate-spin text-xs" />
+                      Syncing...
+                    </span>
+                  ) : (
+                    formatDuration(callDuration)
+                  )}
+                </span>
               </div>
             </div>
 
             <button
               onClick={() => {
-                onEndCall();
+                if (!isSyncingSummary) onEndCall();
               }}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl transition-all active:scale-95 shadow-lg shadow-blue-200"
+              disabled={isSyncingSummary}
+              className={`w-full font-bold py-4 rounded-2xl transition-all active:scale-95 shadow-lg ${
+                isSyncingSummary 
+                  ? 'bg-gray-400 cursor-not-allowed text-gray-200' 
+                  : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-200'
+              }`}
             >
-              Close Summary
+              {isSyncingSummary ? 'Syncing final details...' : 'Close Summary'}
             </button>
           </div>
         </div>

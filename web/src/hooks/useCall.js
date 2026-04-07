@@ -56,6 +56,7 @@ export const useCall = () => {
   const [availableSpeakers, setAvailableSpeakers] = useState([]);
   const [currentMicrophoneId, setCurrentMicrophoneId] = useState(null);
   const [currentSpeakerId, setCurrentSpeakerId] = useState(null);
+  const [isSyncingSummary, setIsSyncingSummary] = useState(false); // Waiting for authoritative duration
 
   const peerRef = useRef(null);
   const localVideoRef = useRef(null);
@@ -1113,10 +1114,12 @@ export const useCall = () => {
     callStartTimeRef.current = null;
     lastSecondRef.current = null;
 
-    // Use server-provided duration if available, otherwise keep local for now
     // If user ends call, we'll get final duration from API response below
     if (finalDuration !== null) {
       setCallDuration(finalDuration);
+      setIsSyncingSummary(false); // We already have it from socket
+    } else if (currentCallState === 'active') {
+      setIsSyncingSummary(true); // Need to wait for API response or socket broadcast
     }
 
     // Notify backend if call was active (not just ringing)
@@ -1131,11 +1134,12 @@ export const useCall = () => {
         });
 
         // Get authoritative duration from server if we don't have it yet
-        if (response.ok && finalDuration === null) {
+        if (response.ok) {
           const data = await response.json();
           if (data.call && typeof data.call.duration === 'number') {
             console.log(`[Call] Received authoritative server duration: ${data.call.duration}s`);
             setCallDuration(data.call.duration);
+            setIsSyncingSummary(false); // Sync finished
           }
         }
 
@@ -1170,6 +1174,8 @@ export const useCall = () => {
         playEndCall();
       }
       toast.info('Call ended.');
+      // Cleanup syncing state if call failed to properly start or ends in ringing
+      setIsSyncingSummary(false);
     }
 
     // Transition to 'ended' state for summary instead of null if it was active
