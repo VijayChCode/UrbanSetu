@@ -37,6 +37,7 @@ const GlobalCallModals = () => {
     currentMicrophoneId,
     currentSpeakerId,
     isSyncingSummary,
+    isReconnecting,
     acceptCall,
     rejectCall,
     endCall,
@@ -154,6 +155,7 @@ const GlobalCallModals = () => {
           remoteVideoEnabled={remoteVideoEnabled}
           callDuration={callDuration}
           isSyncingSummary={isSyncingSummary}
+          isReconnecting={isReconnecting}
           localStream={localStream}
           remoteStream={remoteStream}
           localVideoRef={localVideoRef}

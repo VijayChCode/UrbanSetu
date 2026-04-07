@@ -578,34 +578,59 @@ io.on('connection', (socket) => {
       socket.leave(`admin_${socket.adminId}`);
     }
 
-    // Cleanup calls on disconnect - end any active calls for this socket
+    // Cleanup calls on disconnect - WAIT before ending calls to allow for reconnection
     for (const [callId, activeCall] of activeCalls.entries()) {
       if (activeCall.callerSocketId === socket.id ||
         activeCall.receiverSocketId === socket.id) {
-        // Mark call as ended
-        CallHistory.findOne({ callId }).then(call => {
-          if (call && call.status !== 'ended') {
-            const endTime = new Date();
-            const duration = Math.floor((endTime - call.startTime) / 1000);
-            call.status = 'ended';
-            call.endTime = endTime;
-            call.duration = duration;
-            call.endedBy = socket.user?._id || call.callerId;
-            call.save();
-          }
-        }).catch(err => {
-          console.error('Error ending call on disconnect:', err);
-        });
-
-        // Notify other party
-        const otherSocketId = activeCall.callerSocketId === socket.id
-          ? activeCall.receiverSocketId
-          : activeCall.callerSocketId;
+        
+        const role = activeCall.callerSocketId === socket.id ? 'caller' : 'receiver';
+        const otherSocketId = role === 'caller' ? activeCall.receiverSocketId : activeCall.callerSocketId;
+        
+        // Notify other party that peer is reconnecting
         if (otherSocketId) {
-          io.to(otherSocketId).emit('call-ended', { callId });
+          io.to(otherSocketId).emit('peer-reconnecting', { callId, role });
         }
 
-        activeCalls.delete(callId);
+        // Clear any existing termination timeout for this call
+        if (activeCall.terminationTimeout) {
+          clearTimeout(activeCall.terminationTimeout);
+        }
+
+        // Set a timeout to end the call if not resumed within 60 seconds
+        activeCall.terminationTimeout = setTimeout(async () => {
+          const checkCall = activeCalls.get(callId);
+          // Only end if the peer that disconnected hasn't resumed (socket ID hasn't been updated)
+          if (checkCall && ((role === 'caller' && checkCall.callerSocketId === socket.id) || 
+                            (role === 'receiver' && checkCall.receiverSocketId === socket.id))) {
+            
+            console.log(`Ending call ${callId} due to reconnection timeout for ${role}`);
+            
+            try {
+              const call = await CallHistory.findOne({ callId });
+              if (call && call.status !== 'ended') {
+                const endTime = new Date();
+                const duration = Math.floor((endTime - call.startTime) / 1000);
+                call.status = 'ended';
+                call.endTime = endTime;
+                call.duration = duration;
+                call.endedBy = socket.user?._id || call.callerId;
+                await call.save();
+              }
+            } catch (err) {
+              console.error('Error ending call on reconnection timeout:', err);
+            }
+
+            // Notify other party call has finally ended
+            const currentOtherSocketId = role === 'caller' ? checkCall.receiverSocketId : checkCall.callerSocketId;
+            if (currentOtherSocketId) {
+              io.to(currentOtherSocketId).emit('call-ended', { callId });
+            }
+
+            activeCalls.delete(callId);
+          }
+        }, 60000); // 60 seconds grace period
+
+        activeCalls.set(callId, activeCall);
       }
     }
 
@@ -846,6 +871,54 @@ io.on('connection', (socket) => {
     } catch (err) {
       console.error("Error accepting call:", err);
       socket.emit('call-error', { message: 'Failed to accept call' });
+    }
+  });
+
+  // Call resume handler - allows reconnected socket to take over an existing active call
+  socket.on('call-resume', async ({ callId }) => {
+    try {
+      const userId = socket.user?._id?.toString();
+      if (!userId) return;
+
+      const activeCall = activeCalls.get(callId);
+      if (activeCall) {
+        let resumed = false;
+        let role = '';
+
+        // Determine if user was caller or receiver and update their socket ID
+        const call = await CallHistory.findOne({ callId });
+        if (call) {
+          if (call.callerId.toString() === userId) {
+            activeCall.callerSocketId = socket.id;
+            resumed = true;
+            role = 'caller';
+          } else if (call.receiverId.toString() === userId) {
+            activeCall.receiverSocketId = socket.id;
+            resumed = true;
+            role = 'receiver';
+          }
+        }
+
+        if (resumed) {
+          // Clear termination timeout since user has reconnected
+          if (activeCall.terminationTimeout) {
+            clearTimeout(activeCall.terminationTimeout);
+            activeCall.terminationTimeout = null;
+          }
+
+          activeCalls.set(callId, activeCall);
+          
+          console.log(`Call ${callId} resumed by ${role} with new socket ${socket.id}`);
+
+          // Notify other party that peer is back
+          const otherSocketId = role === 'caller' ? activeCall.receiverSocketId : activeCall.callerSocketId;
+          if (otherSocketId) {
+            io.to(otherSocketId).emit('peer-resumed', { callId, role });
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Error resuming call:", err);
     }
   });
 

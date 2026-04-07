@@ -57,6 +57,7 @@ export const useCall = () => {
   const [currentMicrophoneId, setCurrentMicrophoneId] = useState(null);
   const [currentSpeakerId, setCurrentSpeakerId] = useState(null);
   const [isSyncingSummary, setIsSyncingSummary] = useState(false); // Waiting for authoritative duration
+  const [isReconnecting, setIsReconnecting] = useState(false); // Internet drop/WebRTC disconnect
 
   const peerRef = useRef(null);
   const localVideoRef = useRef(null);
@@ -73,6 +74,7 @@ export const useCall = () => {
   const callingSoundRef = useRef(null); // Reference to calling sound audio element
   const ringtoneSoundRef = useRef(null); // Reference to ringtone sound audio element
   const isEndingCallRef = useRef(false); // Flag to prevent double end call sound
+  const reconnectTimeoutRef = useRef(null); // Timer for internet dropout reconnection
 
   // Refs to store current state for event handlers (to avoid stale closures)
   const incomingCallRef = useRef(null);
@@ -92,6 +94,103 @@ export const useCall = () => {
     localStreamRef.current = localStream;
     remoteIsScreenSharingRef.current = remoteIsScreenSharing;
   }, [incomingCall, activeCall, callState, localStream, remoteIsScreenSharing]);
+
+  // Connection monitoring (Window level)
+  useEffect(() => {
+    const handleOffline = () => {
+      if (!activeCallRef.current) return;
+      
+      setIsReconnecting(true);
+      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+      
+      // Give 60 seconds to reconnect before ending
+      reconnectTimeoutRef.current = setTimeout(() => {
+        if (!navigator.onLine && activeCallRef.current) {
+          toast.error('No internet connection. Call ended.');
+          endCall();
+        }
+      }, 60000);
+    };
+
+    const handleOnline = () => {
+      if (!activeCallRef.current) return;
+      
+      setIsReconnecting(false);
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+      // Force socket reconnection
+      reconnectSocket();
+    };
+
+    window.addEventListener('offline', handleOffline);
+    window.addEventListener('online', handleOnline);
+
+    return () => {
+      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('online', handleOnline);
+    };
+  }, []);
+
+  // Socket reconnection sync
+  useEffect(() => {
+    const handleConnect = () => {
+      if (activeCallRef.current?.callId) {
+        console.log('[Call] Socket reconnected, resuming call:', activeCallRef.current.callId);
+        socket.emit('call-resume', { callId: activeCallRef.current.callId });
+      }
+    };
+
+    socket.on('connect', handleConnect);
+    return () => {
+      socket.off('connect', handleConnect);
+    };
+  }, []);
+
+  // Helper to monitor WebRTC connection health
+  const setupPeerConnectionMonitoring = useCallback((peer) => {
+    if (!peer || !peer._pc) return;
+
+    const pc = peer._pc;
+
+    pc.oniceconnectionstatechange = () => {
+      console.log(`ICE Connection: ${pc.iceConnectionState}`);
+      
+      if (pc.iceConnectionState === 'disconnected') {
+        setIsReconnecting(true);
+        // Start a graceful recovery timer
+        if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = setTimeout(() => {
+          if ((pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed') && activeCallRef.current) {
+            toast.error('Connection timeout. Call ended.');
+            endCall();
+          }
+        }, 45000);
+      } else if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
+        setIsReconnecting(false);
+        if (reconnectTimeoutRef.current) {
+          clearTimeout(reconnectTimeoutRef.current);
+          reconnectTimeoutRef.current = null;
+        }
+      } else if (pc.iceConnectionState === 'failed') {
+        setIsReconnecting(true);
+        if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = setTimeout(() => {
+          if (pc.iceConnectionState === 'failed' && activeCallRef.current) {
+            toast.error('Call connection failed.');
+            endCall();
+          }
+        }, 30000);
+      }
+    };
+
+    pc.onconnectionstatechange = () => {
+      if (pc.connectionState === 'failed') {
+        setIsReconnecting(true);
+      }
+    };
+  }, []);
 
   // Handle WebRTC offer
   const handleWebRTCOffer = useCallback(({ callId, offer }) => {
@@ -450,6 +549,21 @@ export const useCall = () => {
       ringtoneSoundRef.current = playRingtone();
     };
 
+    const handlePeerReconnecting = ({ callId, role }) => {
+      if ((activeCallRef.current && activeCallRef.current.callId === callId) ||
+        (incomingCallRef.current && incomingCallRef.current.callId === callId)) {
+        setIsReconnecting(true);
+      }
+    };
+
+    const handlePeerResumed = ({ callId, role }) => {
+      if ((activeCallRef.current && activeCallRef.current.callId === callId) ||
+        (incomingCallRef.current && incomingCallRef.current.callId === callId)) {
+        setIsReconnecting(false);
+        // If we were the one waiting for ICE, it should recover naturally now
+      }
+    };
+
     const handleCallAccepted = (data) => {
       // Server provides the exact timestamp when call was accepted on the server
       // Both caller and receiver receive this same timestamp, ensuring perfect synchronization
@@ -571,6 +685,8 @@ export const useCall = () => {
     };
 
     socket.on('incoming-call', handleIncomingCall);
+    socket.on('peer-reconnecting', handlePeerReconnecting);
+    socket.on('peer-resumed', handlePeerResumed);
     socket.on('call-accepted', handleCallAccepted);
     socket.on('call-rejected', handleCallRejected);
     socket.on('call-ended', handleCallEnded);
@@ -678,6 +794,8 @@ export const useCall = () => {
 
     return () => {
       socket.off('incoming-call', handleIncomingCall);
+      socket.off('peer-reconnecting', handlePeerReconnecting);
+      socket.off('peer-resumed', handlePeerResumed);
       socket.off('call-accepted', handleCallAccepted);
       socket.off('call-rejected', handleCallRejected);
       socket.off('call-ended', handleCallEnded);
@@ -878,6 +996,7 @@ export const useCall = () => {
             });
 
             peerRef.current = peer;
+            setupPeerConnectionMonitoring(peer);
           });
         }
       };
@@ -990,6 +1109,7 @@ export const useCall = () => {
         }
 
         peerRef.current = peer;
+        setupPeerConnectionMonitoring(peer);
 
         // Emit call accept AFTER peer is created
         socket.emit('call-accept', { callId: incomingCall.callId });
@@ -1058,6 +1178,13 @@ export const useCall = () => {
     stopRingtone();
     callingSoundRef.current = null;
     ringtoneSoundRef.current = null;
+
+    // Reset reconnection state
+    setIsReconnecting(false);
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
 
     // Cancel call first if still initiating/ringing (before clearing state)
     // Use refs to get most current values for conditionals
@@ -1822,6 +1949,7 @@ export const useCall = () => {
     currentMicrophoneId,
     currentSpeakerId,
     isSyncingSummary,
+    isReconnecting,
     initiateCall,
     acceptCall,
     rejectCall,

@@ -42,7 +42,8 @@ const ActiveCallModal = ({
   onSwitchMicrophone,
   onSwitchSpeaker,
   containerRef: containerRefProp,
-  isSyncingSummary
+  isSyncingSummary,
+  isReconnecting
 }) => {
   const navigate = useNavigate();
   const [isVisible, setIsVisible] = useState(false);
@@ -551,6 +552,25 @@ const ActiveCallModal = ({
               <FaDesktop className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-blue-500 text-xl animate-pulse" />
             </div>
             <h3 className="mt-4 text-white text-xl font-medium tracking-wide">Starting presentation...</h3>
+          </div>
+        )}
+        
+        {/* Reconnecting Overlay */}
+        {isReconnecting && (
+          <div className="absolute inset-0 z-[100] bg-black bg-opacity-70 backdrop-blur-md flex flex-col items-center justify-center animate-fadeIn">
+            <div className="bg-gray-800/80 p-8 rounded-3xl border border-white/20 shadow-2xl flex flex-col items-center text-center max-w-sm mx-auto transform animate-[popIn_0.5s_ease-out_forwards]">
+              <div className="relative mb-6">
+                <div className="w-20 h-20 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
+                <FaWifi className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-2xl text-blue-400 animate-pulse" />
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-2">Reconnecting...</h3>
+              <p className="text-gray-300">Poor internet connection detected. Trying to restore your call.</p>
+              <div className="mt-6 flex gap-1">
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
+              </div>
+            </div>
           </div>
         )}
 
