@@ -1,11 +1,14 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import UrbanSetuSpinner from './UrbanSetuSpinner';
-import { FaPhone, FaVideo, FaMicrophone, FaMicrophoneSlash, FaVideoSlash, FaSync, FaExpand, FaCompress, FaDesktop, FaSignLanguage, FaWifi, FaVolumeUp, FaWaveSquare, FaVolumeMute, FaChevronDown } from 'react-icons/fa';
+import { FaPhone, FaVideo, FaMicrophone, FaMicrophoneSlash, FaVideoSlash, FaSync, FaExpand, FaCompress, FaDesktop, FaSignLanguage, FaWifi, FaVolumeUp, FaWaveSquare, FaVolumeMute, FaChevronDown, FaHistory, FaClock, FaCheckCircle, FaUser, FaTimes } from 'react-icons/fa';
 import UserAvatar from './UserAvatar';
 import { useAudioActivity } from '../hooks/useAudioActivity';
 
 const ActiveCallModal = ({
+  callState,
   callType,
+
   otherPartyName,
   otherPartyData, // Add other party data for avatar
   isMuted,
@@ -40,7 +43,9 @@ const ActiveCallModal = ({
   onSwitchSpeaker,
   containerRef: containerRefProp
 }) => {
+  const navigate = useNavigate();
   const [isVisible, setIsVisible] = useState(false);
+
   const [showCameraMenu, setShowCameraMenu] = useState(false);
   const [showAudioMenu, setShowAudioMenu] = useState(false);
   const [controlsVisible, setControlsVisible] = useState(true);
@@ -1101,15 +1106,76 @@ const ActiveCallModal = ({
             <FaPhone className="text-2xl rotate-[135deg]" />
           </button>
         </div>
-
-        {/* Call Duration for video calls (also shown at top) */}
-        {callType === 'video' && (
-          <div className="text-center mt-4 text-white">
-            <p className="text-lg font-semibold">{formatDuration(callDuration)}</p>
-          </div>
-        )}
       </div>
+
+      {/* Call Summary Overlay - Shows when callState is 'ended' */}
+      {callState === 'ended' && (
+        <div className="absolute inset-0 bg-gray-900 bg-opacity-95 z-[60] flex items-center justify-center animate-[fadeIn_0.4s_ease-out]">
+          <div className="bg-white rounded-3xl p-8 max-w-md w-full mx-4 shadow-2xl transform animate-[popIn_0.5s_ease-out] relative">
+            <button 
+              onClick={() => {
+                onEndCall();
+                navigate(-1);
+              }}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <FaTimes className="text-xl" />
+            </button>
+
+            <div className="text-center mb-8">
+              <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-[popIn_0.6s_ease-out_delay-100ms]">
+                <FaCheckCircle className="text-4xl" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900">Call Session Summary</h2>
+              <p className="text-gray-500">Your conversation has concluded</p>
+            </div>
+
+            <div className="space-y-4 mb-8">
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
+                    {callType === 'video' ? <FaVideo /> : <FaPhone />}
+                  </div>
+                  <span className="text-gray-600 font-medium">Call Type</span>
+                </div>
+                <span className="text-gray-900 font-bold capitalize">{callType}</span>
+              </div>
+
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-purple-100 text-purple-600 rounded-lg">
+                    <FaUser />
+                  </div>
+                  <span className="text-gray-600 font-medium">Participant</span>
+                </div>
+                <span className="text-gray-900 font-bold">{otherPartyName || 'Other Person'}</span>
+              </div>
+
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-yellow-100 text-yellow-600 rounded-lg">
+                    <FaClock />
+                  </div>
+                  <span className="text-gray-600 font-medium">Duration</span>
+                </div>
+                <span className="text-gray-900 font-bold">{formatDuration(callDuration)}</span>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                onEndCall();
+                navigate(-1);
+              }}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl transition-all active:scale-95 shadow-lg shadow-blue-200"
+            >
+              Close and Return
+            </button>
+          </div>
+        </div>
+      )}
     </div>
+
   );
 };
 

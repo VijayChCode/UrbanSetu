@@ -1028,6 +1028,16 @@ export const useCall = () => {
 
   // End call
   const endCall = async () => {
+    // Check if we are already in the 'ended' state (showing summary)
+    // In this case, simply clear the final states and return
+    if (callStateRef.current === 'ended') {
+      setCallState(null);
+      setActiveCall(null);
+      setCallDuration(0);
+      activeCallRef.current = null;
+      return;
+    }
+
     // Set flag to prevent double end call sound
     const wasEndingCall = isEndingCallRef.current;
     isEndingCallRef.current = true;
@@ -1039,11 +1049,14 @@ export const useCall = () => {
     ringtoneSoundRef.current = null;
 
     // Cancel call first if still initiating/ringing (before clearing state)
-    if (activeCall?.callId && (callState === 'initiating' || callState === 'ringing')) {
-      socket.emit('call-cancel', { callId: activeCall.callId });
+    // Use refs to get most current values for conditionals
+    const currentActiveCall = activeCallRef.current;
+    const currentCallState = callStateRef.current;
+
+    if (currentActiveCall?.callId && (currentCallState === 'initiating' || currentCallState === 'ringing')) {
+      socket.emit('call-cancel', { callId: currentActiveCall.callId });
     }
 
-    // Stop local stream
     // Stop local stream
     // Check both state variable and ref to ensure we catch stream even if state update is pending
     const streamToStop = localStream || localStreamRef.current;
@@ -1101,12 +1114,14 @@ export const useCall = () => {
     lastSecondRef.current = null;
 
     // Notify backend if call was active (not just ringing)
-    if (activeCall?.callId && callState === 'active') {
+    const wasActive = currentActiveCall?.callId && currentCallState === 'active';
+
+    if (wasActive) {
       try {
         await authenticatedFetch(`${API_BASE_URL}/api/calls/end`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ callId: activeCall.callId })
+          body: JSON.stringify({ callId: currentActiveCall.callId })
         });
 
         // Ensure screen share is stopped if active
@@ -1134,7 +1149,7 @@ export const useCall = () => {
         }
         toast.info('Call ended.');
       }
-    } else if (activeCall?.callId || incomingCall?.callId) {
+    } else if (currentActiveCall?.callId || incomingCallRef.current?.callId) {
       // Play end call sound even if call wasn't active yet (ringing/incoming state)
       if (!wasEndingCall) {
         playEndCall();
@@ -1142,28 +1157,33 @@ export const useCall = () => {
       toast.info('Call ended.');
     }
 
-    // Force clear all call-related state immediately
-    setCallState(null);
-    setCallDuration(0);
-    callStartTimeRef.current = null;
-    setActiveCall(null);
+    // Transition to 'ended' state for summary instead of null if it was active
+    if (wasActive) {
+      setCallState('ended');
+      // Keep activeCall for summary display
+    } else {
+      setCallState(null);
+      setActiveCall(null);
+      activeCallRef.current = null;
+    }
+
+    // Final cleanups
     setIncomingCall(null);
     pendingOfferRef.current = null;
-
     setRemoteIsMuted(false);
     setRemoteVideoEnabled(true);
     setIsScreenSharing(false);
     setRemoteIsScreenSharing(false);
 
     // Sync refs immediately to prevent race conditions
-    activeCallRef.current = null;
     incomingCallRef.current = null;
-    callStateRef.current = null;
+    callStateRef.current = wasActive ? 'ended' : null;
 
     // Reset flag after a short delay to allow for cleanup
     setTimeout(() => {
       isEndingCallRef.current = false;
     }, 1000);
+
   };
 
   // Toggle mute

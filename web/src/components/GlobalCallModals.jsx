@@ -140,10 +140,12 @@ const GlobalCallModals = () => {
       />
 
       {/* Active Call Modal - Shows on any page */}
-      {callState === 'active' && activeCall && (
+      {(callState === 'active' || callState === 'ended') && activeCall && (
         <ActiveCallModal
+          callState={callState}
           callType={activeCall.callType}
           otherPartyName={getOtherPartyName()}
+
           otherPartyData={getOtherPartyData()}
           isMuted={isMuted}
           isVideoEnabled={isVideoEnabled}
