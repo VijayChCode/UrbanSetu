@@ -1069,6 +1069,9 @@ io.on('connection', (socket) => {
           const otherSocketId = role === 'caller' ? activeCall.receiverSocketId : activeCall.callerSocketId;
           if (otherSocketId) {
             io.to(otherSocketId).emit('peer-resumed', { callId, role });
+            // CRITICAL: Tell the other user to destroy their old peer and create a new offer
+            // This is what actually re-establishes the WebRTC connection
+            io.to(otherSocketId).emit('request-reoffer', { callId });
           }
         }
       }

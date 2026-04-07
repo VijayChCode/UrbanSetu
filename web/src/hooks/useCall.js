@@ -265,7 +265,7 @@ export const useCall = () => {
     };
 
     // AUTHORITATIVE SESSION RECOVERY: Triggered after login/refresh/explicit pull
-    const handleActiveSession = (session) => {
+    const handleActiveSession = async (session) => {
       // If we are already in THIS call, don't re-trigger recovery UI logic but ensure state is sync'd
       if (activeCallRef.current?.callId === session.callId && callStateRef.current === 'active') {
         console.log('[Call Recovery] Already in call, skipping UI re-trigger');
@@ -279,32 +279,123 @@ export const useCall = () => {
       bc.postMessage({ type: 'CALL_TAKEN_OVER', callId: session.callId });
       bc.close();
 
+      const recoveredCallType = session.callType;
+      const recoveredCallId = session.callId;
+
       setActiveCall({
-        callId: session.callId,
+        callId: recoveredCallId,
         appointmentId: session.appointmentId,
         receiverId: session.role === 'caller' ? session.receiverId : session.callerId,
-        callType: session.callType,
+        callType: recoveredCallType,
         isRecovered: true,
         callerName: session.callerName,
         receiverName: session.receiverName
       });
 
-      // authStart timestamp sync
-      if (session.startTime) {
-        callStartTimeRef.current = new Date(session.startTime);
-      }
+      setCallState(session.status || 'active');
+      setIsReconnecting(true);
+      setReconnectReason('local-offline');
+      setIsMinimized(false); // Show full modal so user sees reconnection happening
 
-      setCallState(session.status || 'active'); // Directly enter authoritative state (ringing or active)
-      
-      // Only set reconnecting if peer connection isn't already healthy
-      const pc = peerRef.current?._pc;
-      if (!pc || (pc.iceConnectionState !== 'connected' && pc.iceConnectionState !== 'completed')) {
-        setIsReconnecting(true); // Will sync streams on next connect/offer
+      // --- CRITICAL: Actually acquire media and create a new peer ---
+      try {
+        console.log('[Call Recovery] Requesting media permissions...');
+        const constraints = {
+          audio: true,
+          video: recoveredCallType === 'video' ? (currentCameraId ? { deviceId: { exact: currentCameraId } } : true) : false
+        };
+
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        console.log('[Call Recovery] Media acquired successfully');
+
+        setLocalStream(stream);
+        localStreamRef.current = stream;
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = stream;
+        }
+
+        // Restore mute/video state from server session
+        if (session.isMuted) {
+          stream.getAudioTracks().forEach(track => { track.enabled = false; });
+          setIsMuted(true);
+        }
+        if (session.isVideoEnabled === false && recoveredCallType === 'video') {
+          stream.getVideoTracks().forEach(track => { track.enabled = false; });
+          setIsVideoEnabled(false);
+        }
+
+        // Restore remote state indicators
+        if (session.remoteIsMuted !== undefined) setRemoteIsMuted(session.remoteIsMuted);
+        if (session.remoteIsVideoEnabled !== undefined) setRemoteVideoEnabled(session.remoteIsVideoEnabled);
+
+        // Create a new SimplePeer as NON-initiator (the other user will send a fresh offer)
+        const iceServers = await fetchIceServers();
+        const peer = new SimplePeer({
+          initiator: false,
+          trickle: true,
+          stream: stream,
+          config: { iceServers }
+        });
+
+        if (peer._pc) {
+          peer._pc.addEventListener('track', (event) => {
+            if (event.streams && event.streams[0]) {
+              setRemoteStream(event.streams[0]);
+            }
+          });
+        }
+
+        peer.on('signal', (data) => {
+          if (data.type === 'answer') {
+            socket.emit('webrtc-answer', { callId: recoveredCallId, answer: data });
+          } else if (data.type === 'candidate') {
+            socket.emit('ice-candidate', { callId: recoveredCallId, candidate: data });
+          }
+        });
+
+        peer.on('stream', (remoteStr) => {
+          setRemoteStream(remoteStr);
+        });
+
+        peer.on('connect', () => {
+          console.log('[Call Recovery] Peer connected!');
+        });
+
+        peer.on('error', (err) => {
+          if (isEndingCallRef.current || (err.message && (err.message.includes('Abort') || err.message.includes('Close called')))) return;
+          console.error('[Call Recovery] Peer error:', err);
+        });
+
+        // If there's a pending offer that arrived before peer was created, signal it now
+        if (pendingOfferRef.current && pendingOfferRef.current.callId === recoveredCallId) {
+          console.log('[Call Recovery] Signaling pending offer');
+          peer.signal(pendingOfferRef.current.offer);
+          pendingOfferRef.current = null;
+        }
+
+        peerRef.current = peer;
+        setupPeerConnectionMonitoring(peer);
+
+        // Sync timer from server's startTime
+        if (session.startTime) {
+          startCallTimer(new Date(session.startTime));
+        }
+
+        // Tell server we're back — server will tell the other user to send a new offer
+        socket.emit('call-resume', { callId: recoveredCallId });
+
+        toast.info('Resuming ongoing call...');
+      } catch (error) {
+        console.error('[Call Recovery] Failed to acquire media:', error);
+        setIsReconnecting(false);
+        if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+          toast.error('Camera/Microphone permission denied. Cannot rejoin call.');
+        } else {
+          toast.error('Failed to access camera/microphone for call recovery.');
+        }
+        // End call since we can't recover without media
+        endCall();
       }
-      
-      setIsMinimized(true); // Show the sticky bar by default on recovery
-      
-      toast.info('Resuming ongoing call...');
     };
 
     socket.on('connect', handleConnect);
@@ -766,8 +857,72 @@ export const useCall = () => {
     const handlePeerResumed = ({ callId, role }) => {
       if ((activeCallRef.current && activeCallRef.current.callId === callId) ||
         (incomingCallRef.current && incomingCallRef.current.callId === callId)) {
-        setIsReconnecting(false);
-        // If we were the one waiting for ICE, it should recover naturally now
+        // Don't clear isReconnecting here — it will be cleared when ICE connects
+        console.log(`[Call] Peer ${role} has resumed for call ${callId}`);
+      }
+    };
+
+    // Handle request-reoffer: the OTHER user (who didn't refresh) must create a new offer
+    const handleRequestReoffer = async ({ callId }) => {
+      if (!activeCallRef.current || activeCallRef.current.callId !== callId) return;
+      console.log('[Call Recovery] Other user rejoined, creating new offer...');
+
+      try {
+        const currentStream = localStreamRef.current;
+        if (!currentStream) {
+          console.warn('[Call Recovery] No local stream available for reoffer');
+          return;
+        }
+
+        // Destroy old peer if exists
+        if (peerRef.current) {
+          peerRef.current.destroy();
+          peerRef.current = null;
+        }
+
+        const iceServers = await fetchIceServers();
+        const peer = new SimplePeer({
+          initiator: true,
+          trickle: true,
+          stream: currentStream,
+          config: { iceServers }
+        });
+
+        if (peer._pc) {
+          peer._pc.addEventListener('track', (event) => {
+            if (event.streams && event.streams[0]) {
+              setRemoteStream(event.streams[0]);
+            }
+          });
+        }
+
+        peer.on('signal', (data) => {
+          if (data.type === 'offer') {
+            socket.emit('webrtc-offer', { callId, offer: data });
+          } else if (data.type === 'candidate') {
+            socket.emit('ice-candidate', { callId, candidate: data });
+          }
+        });
+
+        peer.on('stream', (remoteStr) => {
+          setRemoteStream(remoteStr);
+        });
+
+        peer.on('connect', () => {
+          console.log('[Call Recovery] Reoffer peer connected!');
+          setIsReconnecting(false);
+          setReconnectReason(null);
+        });
+
+        peer.on('error', (err) => {
+          if (isEndingCallRef.current || (err.message && (err.message.includes('Abort') || err.message.includes('Close called')))) return;
+          console.error('[Call Recovery] Reoffer peer error:', err);
+        });
+
+        peerRef.current = peer;
+        setupPeerConnectionMonitoring(peer);
+      } catch (err) {
+        console.error('[Call Recovery] Error creating reoffer:', err);
       }
     };
 
@@ -904,6 +1059,7 @@ export const useCall = () => {
     socket.on('ice-candidate', handleICECandidate);
     socket.on('remote-status-update', handleRemoteStatusUpdate);
     socket.on('stop-remote-screen-share', handleStopRemoteScreenShare);
+    socket.on('request-reoffer', handleRequestReoffer);
     socket.on('call-error', (error) => {
       console.error('Call error:', error);
       toast.error(error.message || 'Call error occurred');
@@ -1013,6 +1169,7 @@ export const useCall = () => {
       socket.off('ice-candidate', handleICECandidate);
       socket.off('remote-status-update', handleRemoteStatusUpdate);
       socket.off('stop-remote-screen-share', handleStopRemoteScreenShare);
+      socket.off('request-reoffer', handleRequestReoffer);
       socket.off('call-error');
       socket.off('admin-monitor-request', handleAdminMonitorRequest);
       socket.off('webrtc-answer-monitor', handleWebRTCAnswerMonitor);
