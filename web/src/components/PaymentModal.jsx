@@ -1136,7 +1136,7 @@ const PaymentModal = ({ isOpen, onClose, appointment, onPaymentSuccess, existing
                   <UrbanSetuSpinner size="xl" />
                   <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">Processing Payment...</h3>
                   <p className="text-gray-600 dark:text-gray-300 text-center">
-                    Please wait while we verify your payment. Do not close this window.
+                    Please wait while we verify your payment. Do not refresh or close this window.
                   </p>
                 </div>
               ) : loading && !paymentData ? (
