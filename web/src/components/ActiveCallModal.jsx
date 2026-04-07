@@ -59,6 +59,11 @@ const ActiveCallModal = ({
   const [presentationLoading, setPresentationLoading] = useState(false); // Loading state for presentation switching
   const isPanningRef = useRef(false); // Track if user is panning
   const lastPanPosRef = useRef({ x: 0, y: 0 }); // Last pan position
+  
+  // PiP Draggability state
+  const [pipPos, setPipPos] = useState({ x: 0, y: 0 }); // Offset from initial position
+  const [isDraggingPip, setIsDraggingPip] = useState(false);
+  const pipDragStartRef = useRef({ x: 0, y: 0 });
 
   // Audio activity detection
   const isLocalSpeaking = useAudioActivity(localStream);
@@ -247,6 +252,58 @@ const ActiveCallModal = ({
       };
     }
   }, [videoZoom]);
+
+  // Handle PiP dragging
+  useEffect(() => {
+    const handleGlobalMouseMove = (e) => {
+      if (isDraggingPip) {
+        const newX = e.clientX - pipDragStartRef.current.x;
+        const newY = e.clientY - pipDragStartRef.current.y;
+        
+        // Boundaries check (keep it inside the modal)
+        if (containerRef.current) {
+          const rect = containerRef.current.getBoundingClientRect();
+          // We can add constraints if needed, but "anywhere" usually implies freedom
+          setPipPos({ x: newX, y: newY });
+        } else {
+          setPipPos({ x: newX, y: newY });
+        }
+      }
+    };
+
+    const handleGlobalMouseUp = () => {
+      setIsDraggingPip(false);
+    };
+
+    if (isDraggingPip) {
+      window.addEventListener('mousemove', handleGlobalMouseMove);
+      window.addEventListener('mouseup', handleGlobalMouseUp);
+      window.addEventListener('touchmove', (e) => handleGlobalMouseMove(e.touches[0]));
+      window.addEventListener('touchend', handleGlobalMouseUp);
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleGlobalMouseMove);
+      window.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+  }, [isDraggingPip, containerRef]);
+
+  const handlePipMouseDown = (e) => {
+    if (callType !== 'video') return;
+    
+    // Check if it's a touch event or mouse left click
+    if (e.type === 'mousedown' && e.button !== 0) return;
+    
+    const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+    const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+
+    setIsDraggingPip(true);
+    pipDragStartRef.current = {
+      x: clientX - pipPos.x,
+      y: clientY - pipPos.y
+    };
+    e.stopPropagation();
+  };
 
   // Maintain video streams when views are swapped
   useEffect(() => {
@@ -717,10 +774,18 @@ const ActiveCallModal = ({
         {/* Local Video (Picture-in-Picture) - Shows remote when swapped, local when not swapped */}
         {callType === 'video' && (
           <div
-            className={`absolute right-4 w-48 h-36 rounded-lg overflow-hidden border-2 border-white shadow-lg bg-black z-20 cursor-pointer hover:border-blue-400 transition-all duration-300 ${controlsVisible ? 'bottom-24' : 'bottom-6'
-              }`}
+            className={`absolute right-4 w-48 h-36 rounded-lg overflow-hidden border-2 border-white shadow-lg bg-black z-20 cursor-pointer hover:border-blue-400 transition-all ${
+              isDraggingPip ? 'scale-105 shadow-2xl opacity-90' : 'duration-300'
+            } ${controlsVisible ? 'bottom-24' : 'bottom-6'}`}
+            style={{ 
+              transform: `translate(${pipPos.x}px, ${pipPos.y}px)`,
+              cursor: isDraggingPip ? 'grabbing' : 'grab',
+              touchAction: 'none'
+            }}
             onClick={handleLocalVideoClick}
-            title="Click to swap video views"
+            onMouseDown={handlePipMouseDown}
+            onTouchStart={handlePipMouseDown}
+            title="Click to swap, drag to move"
           >
             {/* Small window logic:
                 1. If person is sharing: show remote (other party) in small window
@@ -939,7 +1004,7 @@ const ActiveCallModal = ({
 
             {/* Audio Device Menu Dropdown */}
             {showAudioMenu && (
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-black bg-opacity-95 rounded-lg shadow-xl min-w-[220px] max-w-[280px] z-50 border border-white border-opacity-20">
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-black bg-opacity-95 rounded-lg shadow-xl min-w-[220px] max-w-[280px] z-50 border border-white border-opacity-20 max-h-[50vh] overflow-y-auto scrollbar-thin scrollbar-thumb-white/20">
                 <div className="py-2">
                   {/* Microphones */}
                   {availableMicrophones && availableMicrophones.length > 1 && (
