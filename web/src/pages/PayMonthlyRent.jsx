@@ -36,9 +36,14 @@ export default function PayMonthlyRent() {
   const [booking, setBooking] = useState(null);
   const [createdPayment, setCreatedPayment] = useState(null);
   const [selectedGateway, setSelectedGateway] = useState('razorpay');
-  const [coinBalance, setCoinBalance] = useState(0);
   const [coinsToRedeem, setCoinsToRedeem] = useState(0);
   const [showCoinBurst, setShowCoinBurst] = useState(false);
+  const [gamification, setGamification] = useState({
+    setuCoinsBalance: 0,
+    currentStreak: 0,
+    badges: []
+  });
+  const [newBadges, setNewBadges] = useState([]);
 
   useEffect(() => {
     if (currentUser) {
@@ -47,7 +52,11 @@ export default function PayMonthlyRent() {
         .then(res => res.json())
         .then(data => {
           if (data.success) {
-            setCoinBalance(data.setuCoinsBalance || 0);
+            setGamification({
+              setuCoinsBalance: data.setuCoinsBalance || 0,
+              currentStreak: data.currentStreak || 0,
+              badges: data.badges || []
+            });
           }
         })
         .catch(err => console.error("Error fetching coins:", err));
@@ -166,9 +175,27 @@ export default function PayMonthlyRent() {
     setShowPaymentModal(false);
     setShowCoinBurst(true); // Celebration!
 
-    // Refresh contract and wallet
-    setTimeout(() => {
+    // Refresh contract and wallet, and check for new badges
+    setTimeout(async () => {
       fetchContractAndWallet();
+      
+      // Fetch fresh gamification data to check for new badges
+      try {
+        const res = await authenticatedFetch(`${API_BASE_URL}/api/coins/balance`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success) {
+            const freshBadges = data.badges || [];
+            // Compare with old badges
+            const earned = freshBadges.filter(b => !gamification.badges.includes(b));
+            if (earned.length > 0) {
+              setNewBadges(earned);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Error checking for earned badges:", err);
+      }
     }, 2000);
 
     // Dispatch event for other pages to refresh
@@ -685,8 +712,62 @@ export default function PayMonthlyRent() {
               </div>
             )}
 
+            {/* Badge Progress Tracker */}
+            {gamification.currentStreak < 12 && (
+              <div className="bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-800 rounded-lg p-5 mb-6 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-2 opacity-10">
+                  <FaAward size={60} />
+                </div>
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-bold text-indigo-900 dark:text-indigo-300 flex items-center gap-2">
+                       <FaAward className="text-indigo-600 dark:text-indigo-400" /> 
+                       Next Milestone Progress
+                    </h4>
+                    <span className="text-xs font-black bg-indigo-600 text-white px-2 py-0.5 rounded-full">
+                      STREAK: {gamification.currentStreak} MO
+                    </span>
+                  </div>
+                  
+                  {gamification.currentStreak < 6 ? (
+                    <>
+                      <div className="flex justify-between text-xs text-indigo-700 dark:text-indigo-400 mb-1.5 font-bold">
+                        <span>Elite Resident</span>
+                        <span>{6 - gamification.currentStreak} payments left</span>
+                      </div>
+                      <div className="w-full h-2.5 bg-indigo-200 dark:bg-indigo-800 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-indigo-600 rounded-full transition-all duration-1000 shadow-[0_0_8px_rgba(79,70,229,0.5)]" 
+                          style={{ width: `${(gamification.currentStreak / 6) * 100}%` }}
+                        ></div>
+                      </div>
+                      <p className="text-[10px] text-indigo-600/70 dark:text-indigo-400/70 mt-2 italic">
+                        * Reach a 6-month streak to unlock the <strong>Elite Resident</strong> badge & 200 bonus coins!
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex justify-between text-xs text-indigo-700 dark:text-indigo-400 mb-1.5 font-bold">
+                        <span>Perfect Payer</span>
+                        <span>{12 - gamification.currentStreak} payments left</span>
+                      </div>
+                      <div className="w-full h-2.5 bg-indigo-200 dark:bg-indigo-800 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-indigo-600 rounded-full transition-all duration-1000 shadow-[0_0_8px_rgba(79,70,229,0.5)]" 
+                          style={{ width: `${(gamification.currentStreak / 12) * 100}%` }}
+                        ></div>
+                      </div>
+                      <p className="text-[10px] text-indigo-600/70 dark:text-indigo-400/70 mt-2 italic">
+                        * Reach a 12-month streak for the <strong>Perfect Payer</strong> badge & 500 bonus coins!
+                      </p>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* SetuCoins Redemption */}
-            {coinBalance > 0 && (
+            {gamification.setuCoinsBalance > 0 && (
               <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-yellow-200 dark:border-yellow-700 mb-6 shadow-sm">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="font-semibold text-gray-800 dark:text-white flex items-center gap-2">
@@ -694,7 +775,7 @@ export default function PayMonthlyRent() {
                     Pay with SetuCoins
                   </h4>
                   <span className="text-xs font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 px-2 py-1 rounded-full">
-                    Available: {coinBalance}
+                    Available: {gamification.setuCoinsBalance}
                   </span>
                 </div>
 
@@ -704,7 +785,7 @@ export default function PayMonthlyRent() {
                     <input
                       type="range"
                       min="0"
-                      max={Math.min(coinBalance, getSubtotal() * 10)}
+                      max={Math.min(gamification.setuCoinsBalance, getSubtotal() * 10)}
                       step="10"
                       value={coinsToRedeem}
                       onChange={(e) => setCoinsToRedeem(Number(e.target.value))}
@@ -716,7 +797,7 @@ export default function PayMonthlyRent() {
                   </div>
                   <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
                     <span>0</span>
-                    <span>Max Redeemable: {Math.min(coinBalance, getSubtotal() * 10)}</span>
+                    <span>Max Redeemable: {Math.min(gamification.setuCoinsBalance, getSubtotal() * 10)}</span>
                   </div>
                 </div>
 
@@ -821,6 +902,49 @@ export default function PayMonthlyRent() {
                 </div>
               )}
 
+              {/* New Badge Celebration! */}
+              {newBadges.length > 0 && (
+                <div className="mt-8 mb-10">
+                  <div className="relative">
+                    {/* Background Shine */}
+                    <div className="absolute inset-x-0 top-1/2 -translate-y-12 h-64 bg-gradient-radial from-yellow-400/30 to-transparent animate-pulse rounded-full blur-3xl"></div>
+                    
+                    <div className="flex flex-col items-center gap-6 relative z-10">
+                      {newBadges.map((badge, idx) => (
+                        <div 
+                          key={idx} 
+                          className="flex flex-col items-center animate-[badgePop_0.8s_cubic-bezier(0.175,0.885,0.32,1.275)_backwards]"
+                          style={{ animationDelay: `${idx * 0.4}s` }}
+                        >
+                          <div className="relative mb-4">
+                            <div className="absolute inset-0 bg-yellow-400/20 blur-xl rounded-full scale-150 animate-ping"></div>
+                            <div className="w-24 h-24 md:w-32 md:h-32 bg-gradient-to-br from-yellow-300 via-amber-400 to-orange-500 rounded-3xl flex items-center justify-center p-0.5 shadow-[0_0_40px_rgba(251,191,36,0.5)] transform -rotate-3 hover:rotate-0 transition-transform">
+                              <div className="w-full h-full bg-white dark:bg-gray-800 rounded-[1.4rem] flex items-center justify-center text-4xl md:text-6xl text-amber-500">
+                                {badge === 'Elite Resident' ? <FaRegGem className="animate-[wiggle_2s_infinite]" /> : 
+                                 badge === 'Perfect Payer' ? <FaHandshake className="animate-[wiggle_2s_infinite]" /> :
+                                 badge === 'Early Bird' ? <FaDove className="animate-[wiggle_2s_infinite]" /> : <FaAward className="animate-[wiggle_2s_infinite]" />}
+                              </div>
+                            </div>
+                            <FaStar className="absolute -top-2 -right-2 text-yellow-300 text-2xl animate-[spin_4s_linear_infinite]" />
+                            <FaStar className="absolute -bottom-2 -left-2 text-yellow-300 text-xl animate-[spin_3s_linear_infinite_reverse]" />
+                          </div>
+                          
+                          <div className="text-center">
+                            <h3 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tighter mb-1">Badge Earned!</h3>
+                            <div className="px-4 py-1.5 bg-amber-500 text-white rounded-full font-bold text-lg shadow-lg">
+                              {badge}
+                            </div>
+                            <p className="text-gray-500 dark:text-gray-400 mt-3 max-w-xs font-medium">
+                              Congratulations! You've reached a significant milestone in your rental journey.
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="flex justify-center mb-6">
                 <button
                   onClick={() => window.open(`${API_BASE_URL}/api/payments/${createdPayment?.paymentId}/receipt`, '_blank')}
@@ -879,6 +1003,24 @@ export default function PayMonthlyRent() {
         onComplete={() => setShowCoinBurst(false)}
         count={25}
       />
+      <style>{`
+        @keyframes wiggle {
+          0%, 100% { transform: rotate(-5deg); }
+          50% { transform: rotate(5deg); }
+        }
+        @keyframes badgePop {
+          0% { transform: scale(0.5) translateY(40px) rotate(-20deg); opacity: 0; }
+          60% { transform: scale(1.1) translateY(-10px) rotate(5deg); opacity: 1; }
+          100% { transform: scale(1) translateY(0) rotate(-3deg); opacity: 1; }
+        }
+        .bg-gradient-radial {
+          background: radial-gradient(var(--tw-gradient-from), var(--tw-gradient-to));
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }

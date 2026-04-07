@@ -1872,7 +1872,7 @@ router.post("/monthly-rent", verifyToken, async (req, res) => {
       paymentId: generatePaymentId(),
       appointmentId: booking._id,
       userId,
-      listingId: contract.listingId._id,
+      listingId: contract.listingId?._id || contract.listingId,
       contractId: contract._id,
       walletId: wallet._id,
       amount: finalAmount,
