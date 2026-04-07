@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { useBlocker } from 'react-router-dom';
 import { socket, reconnectSocket } from '../utils/socket';
 import SimplePeer from 'simple-peer';
 import { API_BASE_URL } from '../config/api';
@@ -140,26 +139,7 @@ export const useCall = () => {
 
   // --- Navigation & Refresh Blocking ---
   
-  // 1. react-router-dom blocker to prevent navigation away during call modal
-  const blocker = useBlocker(
-    ({ currentLocation, nextLocation }) =>
-      (callState === 'active' || callState === 'ringing') &&
-      !isMinimized &&
-      currentLocation.pathname !== nextLocation.pathname
-  );
-
-  // Auto-handle confirmation if blocker is active
-  useEffect(() => {
-    if (blocker.state === 'blocked') {
-      toast.warning("You cannot go back at this stage. Please minimize to browse other pages or end the call.", {
-        toastId: 'call-nav-blocked',
-        position: "top-center"
-      });
-      blocker.reset(); // Stay on page
-    }
-  }, [blocker.state]);
-
-  // 2. window.onbeforeunload to prevent page refresh/close
+  // 1. window.onbeforeunload to prevent page refresh/close
   useEffect(() => {
     const handleBeforeUnload = (e) => {
       if (callState === 'active' || callState === 'ringing') {
