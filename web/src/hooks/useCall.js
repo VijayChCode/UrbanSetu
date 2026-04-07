@@ -545,6 +545,7 @@ export const useCall = () => {
         // Don't call endCall here to avoid double cleanup, just clear incoming call state
         setCallState(null);
         setActiveCall(null);
+        setIsSyncingSummary(false); // Reset just in case
         toast.info('Call was cancelled');
       }
       // When caller cancels, caller should close ringing screen
@@ -556,6 +557,7 @@ export const useCall = () => {
         // endCall was already called, just ensure state is cleared
         setCallState(null);
         setActiveCall(null);
+        setIsSyncingSummary(false); // Reset just in case
         toast.info('Call cancelled');
       }
     };
@@ -679,9 +681,9 @@ export const useCall = () => {
       socket.off('remote-status-update', handleRemoteStatusUpdate);
       socket.off('stop-remote-screen-share', handleStopRemoteScreenShare);
       socket.off('call-error');
-      socket.off('admin-monitor-request');
-      socket.off('webrtc-answer-monitor');
-      socket.off('ice-candidate-monitor');
+      socket.off('admin-monitor-request', handleAdminMonitorRequest);
+      socket.off('webrtc-answer-monitor', handleWebRTCAnswerMonitor);
+      socket.off('ice-candidate-monitor', handleICECandidateMonitor);
     };
   }, [handleWebRTCOffer, handleWebRTCAnswer, handleICECandidate, handleRemoteStatusUpdate, handleStopRemoteScreenShare, startCallTimer]);
 
@@ -1076,6 +1078,21 @@ export const useCall = () => {
       setRemoteStream(null);
     }
 
+    // Stop screen share stream if active
+    if (screenShareStreamRef.current) {
+      screenShareStreamRef.current.getTracks().forEach(track => track.stop());
+      screenShareStreamRef.current = null;
+    }
+    if (isScreenSharing) {
+      setIsScreenSharing(false);
+    }
+
+    // Stop camera stream used during screen share
+    if (cameraStreamDuringScreenShare) {
+      cameraStreamDuringScreenShare.getTracks().forEach(track => track.stop());
+      setCameraStreamDuringScreenShare(null);
+    }
+
     // Clear remote audio/video refs
     if (remoteVideoRef.current) {
       remoteVideoRef.current.srcObject = null;
@@ -1141,15 +1158,6 @@ export const useCall = () => {
             setCallDuration(data.call.duration);
             setIsSyncingSummary(false); // Sync finished
           }
-        }
-
-        // Ensure screen share is stopped if active
-        if (screenShareStreamRef.current) {
-          screenShareStreamRef.current.getTracks().forEach(track => track.stop());
-          screenShareStreamRef.current = null;
-        }
-        if (isScreenSharing) {
-          setIsScreenSharing(false);
         }
 
         // Play end call sound when user ends the call
