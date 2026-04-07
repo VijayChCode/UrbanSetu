@@ -1158,11 +1158,10 @@ const ActiveCallModal = ({
             <button
               onClick={() => {
                 onEndCall();
-                navigate(-1);
               }}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl transition-all active:scale-95 shadow-lg shadow-blue-200"
             >
-              Close and Return
+              Close Summary
             </button>
           </div>
         </div>
