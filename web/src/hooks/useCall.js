@@ -1161,6 +1161,7 @@ export const useCall = () => {
         toast.info('Call ended.');
       } catch (error) {
         console.error('Error ending call on server:', error);
+        setIsSyncingSummary(false); // Cleanup so UI doesn't get stuck
         // Still play sound and show message even if backend call fails
         // Only play if this is the first time ending (not from handleCallEnded)
         if (!wasEndingCall) {
