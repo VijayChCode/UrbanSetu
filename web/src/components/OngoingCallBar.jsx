@@ -8,7 +8,9 @@ const OngoingCallBar = ({
   onReturn, 
   onEndCall,
   isReconnecting,
-  reconnectReason 
+  reconnectReason,
+  callState,
+  onAccept
 }) => {
   const formatDuration = (seconds) => {
     const safeSeconds = Math.max(0, Math.floor(seconds || 0));
