@@ -295,11 +295,15 @@ class CoinService {
 
             // Auto-credit streak bonus if > 0
             if (earnedStreakBonus > 0) {
+                let bonusDescription = `Rent payment streak bonus (Streak: ${user.gamification.currentStreak} months)`;
+                if (user.gamification.currentStreak === 6) bonusDescription = `Elite Resident Badge Milestone - ${user.gamification.currentStreak}mo streak!`;
+                if (user.gamification.currentStreak === 12) bonusDescription = `Perfect Payer Badge Milestone - 12mo perfect streak!`;
+
                 await this.credit({
                     userId: user._id,
                     amount: earnedStreakBonus,
                     source: 'rent_streak_bonus',
-                    description: `Rent payment streak bonus (Streak: ${user.gamification.currentStreak} months)`,
+                    description: bonusDescription,
                     session
                 });
             }

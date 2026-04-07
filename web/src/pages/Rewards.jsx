@@ -357,11 +357,30 @@ export default function Rewards() {
                                         history.slice(0, 4).map(tx => (
                                             <div key={tx._id} className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-gray-700 transition-colors">
                                                 <div className="flex items-center gap-3">
-                                                    <div className={`p-2 rounded-lg ${tx.type === 'credit' ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'}`}>
-                                                        {tx.type === 'credit' ? <FaArrowUp /> : <FaArrowDown />}
+                                                    <div className={`p-2 rounded-lg ${tx.source === 'referral' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400' :
+                                                        tx.source === 'profile_completion' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' :
+                                                            tx.source === 'admin_adjustment' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400' :
+                                                                tx.source === 'rent_payment' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' :
+                                                                    tx.source === 'payment_reward' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400' :
+                                                                        tx.source === 'rent_streak_bonus' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400' :
+                                                                            tx.source === 'monthly_leaderboard_reward' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' :
+                                                                                tx.source === 'signup_bonus' ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' :
+                                                                                    tx.source === 'review_reward' ? 'bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400' :
+                                                                                        tx.type === 'credit' ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                                                        }`}>
+                                                        {tx.source === 'referral' ? <FaUserFriends size={14} /> :
+                                                            tx.source === 'profile_completion' ? <FaCheck size={14} /> :
+                                                                tx.source === 'admin_adjustment' ? <FaStar size={14} /> :
+                                                                    tx.source === 'rent_payment' ? <FaHome size={14} /> :
+                                                                        tx.source === 'payment_reward' ? <FaCoins size={14} /> :
+                                                                            tx.source === 'rent_streak_bonus' ? <FaFire size={14} /> :
+                                                                                tx.source === 'monthly_leaderboard_reward' ? <FaTrophy size={14} /> :
+                                                                                    tx.source === 'signup_bonus' ? <FaRocket size={14} /> :
+                                                                                        tx.source === 'review_reward' ? <FaStar size={14} /> :
+                                                                                            tx.type === 'credit' ? <FaArrowUp /> : <FaArrowDown />}
                                                     </div>
                                                     <div>
-                                                        <p className="font-bold text-slate-700 dark:text-gray-200 text-sm">{tx.description}</p>
+                                                        <p className="font-bold text-slate-700 dark:text-gray-200 text-sm truncate max-w-[150px] md:max-w-xs">{tx.description}</p>
                                                         <p className="text-[10px] text-slate-400 dark:text-gray-500 uppercase tracking-widest">{new Date(tx.createdAt).toLocaleDateString()}</p>
                                                     </div>
                                                 </div>
@@ -501,21 +520,33 @@ export default function Rewards() {
                                                                     tx.source === 'admin_adjustment' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400' :
                                                                         tx.source === 'rent_payment' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' :
                                                                             tx.source === 'payment_reward' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400' :
-                                                                                tx.type === 'credit' ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                                                                                tx.source === 'rent_streak_bonus' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400' :
+                                                                                    tx.source === 'monthly_leaderboard_reward' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' :
+                                                                                        tx.source === 'signup_bonus' ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' :
+                                                                                            tx.source === 'review_reward' ? 'bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400' :
+                                                                                                tx.type === 'credit' ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
                                                                 }`}>
                                                                 {tx.source === 'referral' ? <FaUserFriends /> :
                                                                     tx.source === 'profile_completion' ? <FaCheck /> :
                                                                         tx.source === 'admin_adjustment' ? <FaStar /> :
                                                                             tx.source === 'rent_payment' ? <FaHome /> :
                                                                                 tx.source === 'payment_reward' ? <FaCoins /> :
-                                                                                    tx.type === 'credit' ? <FaArrowUp /> : <FaArrowDown />}
+                                                                                    tx.source === 'rent_streak_bonus' ? <FaFire /> :
+                                                                                        tx.source === 'monthly_leaderboard_reward' ? <FaTrophy /> :
+                                                                                            tx.source === 'signup_bonus' ? <FaRocket /> :
+                                                                                                tx.source === 'review_reward' ? <FaStar /> :
+                                                                                                    tx.type === 'credit' ? <FaArrowUp /> : <FaArrowDown />}
                                                             </div>
                                                             <div>
                                                                 <p className="font-bold text-slate-800 dark:text-gray-200 text-sm">{tx.description}</p>
                                                                 <p className={`text-[10px] font-bold tracking-wide uppercase ${tx.source === 'referral' ? 'text-purple-600 dark:text-purple-400' :
                                                                     tx.source === 'rent_payment' ? 'text-indigo-600 dark:text-indigo-400' :
                                                                         tx.source === 'payment_reward' ? 'text-yellow-600 dark:text-yellow-400' :
-                                                                            'text-slate-400 dark:text-gray-500'
+                                                                            tx.source === 'rent_streak_bonus' ? 'text-orange-600 dark:text-orange-400' :
+                                                                                tx.source === 'monthly_leaderboard_reward' ? 'text-indigo-600 dark:text-indigo-400' :
+                                                                                    tx.source === 'signup_bonus' ? 'text-green-600 dark:text-green-400' :
+                                                                                        tx.source === 'review_reward' ? 'text-pink-600 dark:text-pink-400' :
+                                                                                            'text-slate-400 dark:text-gray-500'
                                                                     }`}>{tx.source.replace(/_/g, ' ')}</p>
                                                             </div>
                                                         </div>
