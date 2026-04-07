@@ -527,9 +527,9 @@ export default function AdminCoinStats() {
                                         <tr>
                                             <th className="px-6 py-4 text-[10px] font-black uppercase tracking-wider">Activity</th>
                                             <th className="px-6 py-4 text-[10px] font-black uppercase tracking-wider">Source</th>
-                                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-wider">Date</th>
+                                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-wider">Date & Time</th>
                                             <th className="px-6 py-4 text-[10px] font-black uppercase tracking-wider">Expiry</th>
-                                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-wider text-right">Amount</th>
+                                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-wider text-right">Coins</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-50 dark:divide-gray-700 bg-white dark:bg-gray-800">
@@ -558,8 +558,8 @@ export default function AdminCoinStats() {
                                                             {tx.source.replace(/_/g, ' ')}
                                                         </span>
                                                     </td>
-                                                    <td className="px-6 py-4 text-xs font-medium text-gray-500">
-                                                        {new Date(tx.createdAt).toLocaleDateString()}
+                                                    <td className="px-6 py-4 text-xs font-medium text-gray-500 whitespace-nowrap">
+                                                        {new Date(tx.createdAt).toLocaleDateString()} <span className="text-gray-300 mx-1">/</span> {new Date(tx.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                     </td>
                                                     <td className="px-6 py-4 text-xs font-medium text-gray-400">
                                                         {tx.expiryDate ? new Date(tx.expiryDate).toLocaleDateString() : '-'}
@@ -631,8 +631,8 @@ export default function AdminCoinStats() {
                                 <tr>
                                     <th className="px-6 py-4">User</th>
                                     <th className="px-6 py-4">Activity</th>
-                                    <th className="px-6 py-4">Date</th>
-                                    <th className="px-6 py-4 text-right">Balance Impact</th>
+                                    <th className="px-6 py-4">Date & Time</th>
+                                    <th className="px-6 py-4 text-right">Coins</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">

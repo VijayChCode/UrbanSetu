@@ -246,7 +246,7 @@ export default function Rewards() {
                             <p className="text-sm font-bold uppercase tracking-widest text-white/70 mb-2">Available Balance</p>
                             <div className="text-6xl font-black tracking-tighter mb-2 flex items-baseline gap-2">
                                 {coinData.balance.toLocaleString()}
-                                <span className="text-lg font-medium text-white/60">SC</span>
+                                <span className="text-lg font-medium text-white/60 cursor-help" title="SetuCoins">SC</span>
                             </div>
                             <div className="bg-yellow-400 text-indigo-900 px-3 py-1 rounded-full text-xs font-black shadow-lg">
                                 ≈ ₹{(coinData.balance / 10).toFixed(2)} VALUATION
@@ -481,7 +481,7 @@ export default function Rewards() {
                                             <th className="px-6 py-4">Status</th>
                                             <th className="px-6 py-4">Date & Time</th>
                                             <th className="px-6 py-4">Expiry</th>
-                                            <th className="px-6 py-4 text-right">Amount</th>
+                                            <th className="px-6 py-4 text-right">Coins</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-50 dark:divide-gray-700">

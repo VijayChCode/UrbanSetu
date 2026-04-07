@@ -100,7 +100,7 @@ const SetuCoinCard = ({ balance = 0, streak = 0, expiryDate = null, rank = null,
                             <span className="text-5xl font-extrabold tracking-tight drop-shadow-sm">
                                 {balance.toLocaleString()}
                             </span>
-                            <span className="text-lg font-medium text-white/80">Coins</span>
+                            <span className="text-lg font-medium text-white/80 cursor-help" title="SetuCoins">SC</span>
                         </div>
                         <div className="mt-2 flex flex-wrap gap-2">
                             <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-3 py-1 rounded-lg text-xs font-semibold border border-white/10">

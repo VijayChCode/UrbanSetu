@@ -1580,7 +1580,7 @@ export default function Profile() {
                           User
                         </span>
                         {renderBadges(coinData.badges.length > 0 ? coinData.badges : currentUser.gamification?.badges)}
-                        {currentUser.gamification?.currentStreak > 0 && (
+                        {currentUser.gamification?.currentStreak > 0 && !(coinData.badges.length > 0 || currentUser.gamification?.badges?.length > 0) && (
                           <span className="flex items-center gap-1 text-[11px] text-orange-600 dark:text-orange-400 font-bold bg-orange-50 dark:bg-orange-900/20 px-2.5 py-1 rounded-full border border-orange-100 dark:border-orange-800 shadow-sm animate-pulse">
                             <FaFire /> {currentUser.gamification.currentStreak} Mo Streak
                           </span>
