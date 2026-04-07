@@ -629,7 +629,7 @@ const ActiveCallModal = ({
                     {reconnectReason === 'local-offline' 
                       ? "Network issue detected. Restoring call..."
                       : reconnectReason === 'remote-disconnected'
-                      ? `Waiting for ${participantName || otherPartyName || 'Participant'} to return...`
+                      ? `Waiting for ${otherPartyName || 'Participant'} to return...`
                       : "Optimizing your connection..."}
                  </span>
               </div>
