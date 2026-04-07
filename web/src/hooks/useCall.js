@@ -1802,6 +1802,7 @@ export const useCall = () => {
     availableSpeakers,
     currentMicrophoneId,
     currentSpeakerId,
+    isSyncingSummary,
     initiateCall,
     acceptCall,
     rejectCall,
