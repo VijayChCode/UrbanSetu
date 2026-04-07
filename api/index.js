@@ -466,19 +466,32 @@ io.on('connection', (socket) => {
 
         console.log(`[Call Recovery] User ${userIdStr} re-joined active call ${callId} as ${role}`);
 
-        // Notify the client about their active session
-        socket.emit('active-call-session', {
-          callId,
-          appointmentId: activeCall.appointmentId,
-          role,
-          callType: activeCall.callType,
-          startTime: activeCall.startTime.getTime(),
-          callerId: activeCall.callerId,
-          receiverId: activeCall.receiverId,
-          callerName: activeCall.callerName,
-          receiverName: activeCall.receiverName,
-          status: activeCall.status || 'active'
-        });
+        // If user is receiver and call is still ringing, they need IncomingCallModal (incoming-call event)
+        // If user is caller or call is already active, they need OngoingCallBar/Modal (active-call-session event)
+        if (role === 'receiver' && activeCall.status === 'ringing') {
+          socket.emit('incoming-call', {
+            callId,
+            appointmentId: activeCall.appointmentId,
+            callerId: activeCall.callerId,
+            callerName: activeCall.callerName,
+            callType: activeCall.callType,
+            isRecovered: true
+          });
+        } else {
+          // Notify the client about their active session
+          socket.emit('active-call-session', {
+            callId,
+            appointmentId: activeCall.appointmentId,
+            role,
+            callType: activeCall.callType,
+            startTime: activeCall.startTime.getTime(),
+            callerId: activeCall.callerId,
+            receiverId: activeCall.receiverId,
+            callerName: activeCall.callerName,
+            receiverName: activeCall.receiverName,
+            status: activeCall.status || 'active'
+          });
+        }
 
         // Notify other party that peer is back
         const otherSocketId = role === 'caller' ? activeCall.receiverSocketId : activeCall.callerSocketId;
@@ -516,41 +529,44 @@ io.on('connection', (socket) => {
           if (updated) await appt.save();
         }
 
-        // Check for pending calls (initiated or ringing) where user is the receiver
-        try {
-          const pendingCalls = await CallHistory.find({
-            receiverId: userId,
-            status: { $in: ['initiated', 'ringing'] },
-            // Only show calls from last 5 minutes (to avoid showing very old calls)
-            startTime: { $gte: new Date(Date.now() - 5 * 60 * 1000) }
-          })
-            .populate('callerId', 'username')
-            .populate('appointmentId', 'propertyName')
-            .sort({ startTime: -1 })
-            .limit(1); // Only show the most recent pending call
-
-          if (pendingCalls.length > 0) {
-            const pendingCall = pendingCalls[0];
-
-            // Check if call is still active
-            const activeCall = activeCalls.get(pendingCall.callId);
-            if (activeCall || pendingCall.status === 'initiated' || pendingCall.status === 'ringing') {
-              // Emit incoming call to the user who just came online
-              socket.emit('incoming-call', {
-                callId: pendingCall.callId,
-                appointmentId: pendingCall.appointmentId._id.toString(),
-                callerId: pendingCall.callerId._id.toString(),
-                callType: pendingCall.callType,
-                callerName: pendingCall.callerId?.username || 'Unknown'
-              });
-            }
-          }
-        } catch (callErr) {
-          console.error('Error checking pending calls when user came online:', callErr);
-        }
       } catch (err) {
         console.error('Error marking comments as delivered when user came online:', err);
       }
+    }
+
+    // [ALWAYS CHECK] pending calls (initiated or ringing) where user is the receiver
+    // This must be outside wasOffline because it also handles refreshes/reconnections
+    try {
+      const pendingCalls = await CallHistory.find({
+        receiverId: userId,
+        status: { $in: ['initiated', 'ringing'] },
+        // Only show calls from last 5 minutes (to avoid showing very old calls)
+        startTime: { $gte: new Date(Date.now() - 5 * 60 * 1000) }
+      })
+        .populate('callerId', 'username')
+        .populate('appointmentId', 'propertyName')
+        .sort({ startTime: -1 })
+        .limit(1); // Only show the most recent pending call
+
+      if (pendingCalls.length > 0) {
+        const pendingCall = pendingCalls[0];
+
+        // Check if call is already in memory activeCalls (handled above)
+        // If not in memory but in DB, it's a truly missed call
+        if (!activeCalls.has(pendingCall.callId)) {
+          // Emit incoming call to the user who just came online/refreshed
+          socket.emit('incoming-call', {
+            callId: pendingCall.callId,
+            appointmentId: pendingCall.appointmentId?._id || pendingCall.appointmentId,
+            callerId: pendingCall.callerId?._id || pendingCall.callerId,
+            callType: pendingCall.callType,
+            callerName: pendingCall.callerId?.username || 'Participant',
+            isRecovered: true
+          });
+        }
+      }
+    } catch (callErr) {
+      console.error('Error checking pending calls on user presence pulse:', callErr);
     }
 
     if (socket.onlineTimeout) clearTimeout(socket.onlineTimeout);
@@ -610,19 +626,31 @@ io.on('connection', (socket) => {
       if (activeCall.callerId === userIdStr || activeCall.receiverId === userIdStr) {
         const role = activeCall.callerId === userIdStr ? 'caller' : 'receiver';
 
-        // Notify client of their session metadata for UI recovery
-        socket.emit('active-call-session', {
-          callId,
-          appointmentId: activeCall.appointmentId,
-          role,
-          callType: activeCall.callType,
-          startTime: activeCall.startTime.getTime(),
-          callerId: activeCall.callerId,
-          receiverId: activeCall.receiverId,
-          callerName: activeCall.callerName,
-          receiverName: activeCall.receiverName,
-          status: activeCall.status || 'active'
-        });
+        // If user is receiver and call is still ringing, they need IncomingCallModal
+        if (role === 'receiver' && activeCall.status === 'ringing') {
+          socket.emit('incoming-call', {
+            callId,
+            appointmentId: activeCall.appointmentId,
+            callerId: activeCall.callerId,
+            callerName: activeCall.callerName,
+            callType: activeCall.callType,
+            isRecovered: true
+          });
+        } else {
+          // Notify client of their session metadata for UI recovery
+          socket.emit('active-call-session', {
+            callId,
+            appointmentId: activeCall.appointmentId,
+            role,
+            callType: activeCall.callType,
+            startTime: activeCall.startTime.getTime(),
+            callerId: activeCall.callerId,
+            receiverId: activeCall.receiverId,
+            callerName: activeCall.callerName,
+            receiverName: activeCall.receiverName,
+            status: activeCall.status || 'active'
+          });
+        }
         return; // Prioritize one active call
       }
     }
