@@ -740,7 +740,44 @@ io.on('connection', (socket) => {
         const role = activeCall.callerSocketId === socket.id ? 'caller' : 'receiver';
         const otherSocketId = role === 'caller' ? activeCall.receiverSocketId : activeCall.callerSocketId;
 
-        // Notify other party that peer is reconnecting
+        // Check if the OTHER user is also disconnected (not connected to any socket)
+        const otherSocket = otherSocketId ? io.sockets.sockets.get(otherSocketId) : null;
+        const otherIsAlsoGone = !otherSocket || !otherSocket.connected;
+
+        if (otherIsAlsoGone) {
+          // BOTH users are disconnected — end call immediately
+          console.log(`[Call Cleanup] BOTH users disconnected for call ${callId}, ending immediately.`);
+
+          // Clear any existing termination timeout
+          if (activeCall.terminationTimeout) {
+            clearTimeout(activeCall.terminationTimeout);
+            activeCall.terminationTimeout = null;
+          }
+
+          // End call in DB
+          (async () => {
+            try {
+              const call = await CallHistory.findOne({ callId });
+              if (call && call.status !== 'ended') {
+                const endTime = new Date();
+                const duration = call.startTime ? Math.floor((endTime - call.startTime) / 1000) : 0;
+                call.status = 'ended';
+                call.endTime = endTime;
+                call.duration = duration;
+                call.endedBy = 'system';
+                await call.save();
+                console.log(`[Call Cleanup] Call ${callId} ended by system (both disconnected). Duration: ${duration}s`);
+              }
+            } catch (err) {
+              console.error('Error auto-ending call:', err);
+            }
+          })();
+
+          activeCalls.delete(callId);
+          continue; // Skip the normal timeout logic
+        }
+
+        // Only ONE user disconnected — notify other party and set grace period
         if (otherSocketId) {
           io.to(otherSocketId).emit('peer-reconnecting', { callId, role });
         }

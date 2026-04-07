@@ -103,7 +103,7 @@ export const useCall = () => {
       reconnectTimeoutRef.current = null;
     }
 
-    // 3. Stop media streams
+    // 3. Stop media streams (use refs to avoid stale closures)
     const streamToStop = localStreamRef.current;
     if (streamToStop) {
       streamToStop.getTracks().forEach(track => {
@@ -114,9 +114,24 @@ export const useCall = () => {
       localStreamRef.current = null;
     }
 
+    // Stop remote stream - also check video/audio element refs for stale stream
     if (remoteStream) {
       remoteStream.getTracks().forEach(track => track.stop());
       setRemoteStream(null);
+    }
+    // Fallback: stop tracks directly from video/audio elements in case state was stale
+    if (remoteVideoRef.current?.srcObject) {
+      remoteVideoRef.current.srcObject.getTracks().forEach(track => track.stop());
+    }
+    if (remoteAudioRef.current?.srcObject) {
+      remoteAudioRef.current.srcObject.getTracks().forEach(track => track.stop());
+    }
+    // Also check localVideoRef
+    if (localVideoRef.current?.srcObject) {
+      localVideoRef.current.srcObject.getTracks().forEach(track => {
+        track.stop();
+        track.enabled = false;
+      });
     }
 
     if (screenShareStreamRef.current) {
@@ -127,6 +142,11 @@ export const useCall = () => {
     if (cameraStreamDuringScreenShare) {
       cameraStreamDuringScreenShare.getTracks().forEach(track => track.stop());
       setCameraStreamDuringScreenShare(null);
+    }
+    // Also check original camera stream ref
+    if (originalCameraStreamRef.current) {
+      originalCameraStreamRef.current.getTracks().forEach(track => track.stop());
+      originalCameraStreamRef.current = null;
     }
 
     // 4. Destroy peer connections
@@ -162,7 +182,7 @@ export const useCall = () => {
     setRemoteIsMuted(false);
     setRemoteVideoEnabled(true);
     setRemoteIsScreenSharing(false);
-  }, [localStream, remoteStream, stopCalling, stopRingtone]);
+  }, [localStream, remoteStream, cameraStreamDuringScreenShare, stopCalling, stopRingtone]);
 
   // Update refs when state changes (so handlers can access current values)
   useEffect(() => {
@@ -335,14 +355,19 @@ export const useCall = () => {
 
     // AUTHORITATIVE SESSION RECOVERY: Triggered after login/refresh/explicit pull
     const handleActiveSession = async (session) => {
-      // If we are already in THIS call, don't re-trigger recovery UI logic but ensure state is sync'd
-      if (activeCallRef.current?.callId === session.callId && callStateRef.current === 'active') {
+      // If we are already in THIS call, don't re-trigger recovery
+      // Use REFS for instant check (not state, which lags behind by one render)
+      if (activeCallRef.current?.callId === session.callId) {
         console.log('[Call Recovery] Already in call, skipping UI re-trigger');
         return;
       }
 
       console.log('[Call Recovery] Server sent active session:', session);
-      
+
+      // IMMEDIATELY update refs to prevent double-fire
+      // (The server sends active-call-session from BOTH initial connect AND check-active-call)
+      activeCallRef.current = { callId: session.callId };
+      callStateRef.current = session.status || 'active';      
       // Notify other tabs that WE are taking over this call
       const bc = new BroadcastChannel('urbansetu_call_sync');
       bc.postMessage({ type: 'CALL_TAKEN_OVER', callId: session.callId });
