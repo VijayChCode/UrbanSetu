@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { isMobileDevice } from '../utils/mobileUtils';
-import { FaEdit, FaUser, FaEnvelope, FaPhone, FaKey, FaTrash, FaSignOutAlt, FaHome, FaTrophy, FaCalendarAlt, FaHeart, FaEye, FaCrown, FaTimes, FaCheck, FaStar, FaRoute, FaUserFriends, FaCreditCard, FaShieldAlt, FaTools, FaTruck, FaExclamationTriangle, FaCloudUploadAlt, FaClipboardList, FaMobileAlt, FaBookOpen, FaQuestionCircle, FaChartLine, FaInfoCircle, FaCog, FaFileContract, FaGavel, FaMoneyCheckAlt, FaUserTie, FaHeadset, FaMapSigns } from "react-icons/fa";
+import { FaEdit, FaUser, FaEnvelope, FaPhone, FaKey, FaTrash, FaSignOutAlt, FaHome, FaTrophy, FaCalendarAlt, FaHeart, FaEye, FaCrown, FaTimes, FaCheck, FaStar, FaRoute, FaUserFriends, FaCreditCard, FaShieldAlt, FaTools, FaTruck, FaExclamationTriangle, FaCloudUploadAlt, FaClipboardList, FaMobileAlt, FaBookOpen, FaQuestionCircle, FaChartLine, FaInfoCircle, FaCog, FaFileContract, FaGavel, FaMoneyCheckAlt, FaUserTie, FaHeadset, FaMapSigns, FaAward, FaRegGem, FaDove, FaHandshake, FaFire } from "react-icons/fa";
+import { motion, AnimatePresence } from 'framer-motion';
 import UserAvatar from "../components/UserAvatar";
 import EncryptedText from "../components/ui/EncryptedText";
 import UrbanSetuSpinner from "../components/UrbanSetuSpinner";
@@ -322,6 +323,107 @@ const AnimatedCounter = ({ end, duration = 1000, delay = 0 }) => {
   );
 };
 
+// Gamification Badge Details
+const BADGE_DETAILS = {
+  'Elite Resident': {
+    description: 'Awarded for maintaining a 6-month rent payment streak. You are a pillar of the UrbanSetu community!',
+    icon: <FaRegGem />,
+    color: 'text-purple-500',
+    bgColor: 'bg-purple-100',
+    darkBgColor: 'dark:bg-purple-900/30'
+  },
+  'Perfect Payer': {
+    description: 'The ultimate honor! Awarded for a 12-month perfect payment streak without a single day of delay.',
+    icon: <FaHandshake />,
+    color: 'text-green-500',
+    bgColor: 'bg-green-100',
+    darkBgColor: 'dark:bg-green-900/30'
+  },
+  'Early Bird': {
+    description: 'Awarded for paying your rent at least 3 days before the due date. Proactive and responsible!',
+    icon: <FaDove />,
+    color: 'text-blue-500',
+    bgColor: 'bg-blue-100',
+    darkBgColor: 'dark:bg-blue-900/30'
+  },
+  'Trusted Tenant': {
+    description: 'Verified tenant with a high trust score from multiple landlords and completed identity verification.',
+    icon: <FaShieldAlt />,
+    color: 'text-indigo-500',
+    bgColor: 'bg-indigo-100',
+    darkBgColor: 'dark:bg-indigo-900/30'
+  },
+  'Service Pro': {
+    description: 'Awarded for maintaining your property in excellent condition and reporting issues proactively.',
+    icon: <FaTools />,
+    color: 'text-orange-500',
+    bgColor: 'bg-orange-100',
+    darkBgColor: 'dark:bg-orange-900/30'
+  },
+  'House Proud': {
+    description: 'Recognized for contributing to the community and participating in neighborhood initiatives.',
+    icon: <FaHome />,
+    color: 'text-pink-500',
+    bgColor: 'bg-pink-100',
+    darkBgColor: 'dark:bg-pink-900/30'
+  }
+};
+
+const BadgeDetailModal = ({ badge, isOpen, onClose }) => {
+  if (!badge) return null;
+  const details = BADGE_DETAILS[badge] || {
+    description: 'An achievement recognizing your contributions to the community.',
+    icon: <FaAward />,
+    color: 'text-gray-500',
+    bgColor: 'bg-gray-100',
+    darkBgColor: 'dark:bg-gray-700'
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+          />
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+            className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-8 max-w-sm w-full text-center overflow-hidden border border-white/10"
+          >
+            {/* Background Accent */}
+            <div className={`absolute top-0 left-0 w-full h-2 ${details.bgColor} dark:${details.darkBgColor}`} />
+            
+            <div className={`w-20 h-20 mx-auto rounded-full ${details.bgColor} ${details.darkBgColor} flex items-center justify-center text-4xl mb-6 shadow-inner`}>
+              <span className={details.color}>{details.icon}</span>
+            </div>
+            
+            <h3 className="text-2xl font-black text-gray-800 dark:text-white mb-3">
+              {badge}
+            </h3>
+            
+            <p className="text-gray-600 dark:text-gray-300 leading-relaxed mb-8">
+              {details.description}
+            </p>
+            
+            <button
+              onClick={onClose}
+              className={`w-full py-4 rounded-2xl font-bold text-white shadow-lg transition-transform active:scale-95 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700`}
+            >
+              Great, thanks!
+            </button>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
+};
+
 export default function Profile() {
   const theme = useSeasonalTheme();
   const allThemes = useAllSeasonalThemes();
@@ -404,10 +506,12 @@ export default function Profile() {
   const [showThemeInfo, setShowThemeInfo] = useState(false);
 
   // SetuCoins State
-  const [coinData, setCoinData] = useState({ balance: 0, streak: 0, expiryDate: null, frozenCoins: 0, rank: null, loading: true });
+  const [coinData, setCoinData] = useState({ balance: 0, streak: 0, expiryDate: null, frozenCoins: 0, rank: null, badges: [], loading: true });
   const [showCoinHistory, setShowCoinHistory] = useState(false);
   const [showReferralModal, setShowReferralModal] = useState(false);
   const [historyRefreshTrigger, setHistoryRefreshTrigger] = useState(0);
+  const [selectedBadge, setSelectedBadge] = useState(null);
+  const [showBadgeModal, setShowBadgeModal] = useState(false);
 
   // Handle mobile state updates
   useEffect(() => {
@@ -441,6 +545,7 @@ export default function Profile() {
             expiryDate: data.coinsExpiryDate || null,
             frozenCoins: data.frozenCoins || 0,
             rank: data.rank || null,
+            badges: data.badges || [],
             loading: false
           });
         }
@@ -451,6 +556,32 @@ export default function Profile() {
     };
     fetchCoins();
   }, [currentUser]);
+
+  const getBadgeIcon = (badge) => {
+    return BADGE_DETAILS[badge]?.icon || <FaAward className="text-gray-400" />;
+  };
+
+  const renderBadges = (badges) => {
+    if (!badges || badges.length === 0) return null;
+    return (
+      <div className="flex flex-wrap gap-1 items-center">
+        {badges.map((badge, idx) => (
+          <span
+            key={idx}
+            onClick={() => {
+              setSelectedBadge(badge);
+              setShowBadgeModal(true);
+            }}
+            className="flex items-center gap-1.5 text-[11px] bg-white dark:bg-gray-700 px-2.5 py-1 rounded-full border border-gray-200 dark:border-gray-600 font-bold shadow-sm hover:scale-105 hover:shadow-md transition-all cursor-pointer whitespace-nowrap"
+            title={`View Achievement: ${badge}`}
+          >
+            <span className="text-xs">{getBadgeIcon(badge)}</span>
+            <span className="text-gray-700 dark:text-gray-200">{badge}</span>
+          </span>
+        ))}
+      </div>
+    );
+  };
 
   // Hide My Appointments button in admin context
   const isAdminProfile = window.location.pathname.startsWith('/admin');
@@ -1426,21 +1557,35 @@ export default function Profile() {
                       </span>
                     )}
                     {currentUser.role === 'admin' && (
-                      <span className="bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 text-sm px-3 py-1 rounded-full font-medium transform transition-all duration-300 hover:scale-110 hover:bg-purple-200 dark:hover:bg-purple-800 flex items-center gap-1">
-                        <FaCrown className="w-3 h-3 text-blue-500" />
-                        Admin
-                      </span>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 text-sm px-3 py-1 rounded-full font-medium transform transition-all duration-300 hover:scale-110 hover:bg-purple-200 dark:hover:bg-purple-800 flex items-center gap-1">
+                          <FaCrown className="w-3 h-3 text-blue-500" />
+                          Admin
+                        </span>
+                        {renderBadges(coinData.badges.length > 0 ? coinData.badges : currentUser.gamification?.badges)}
+                      </div>
                     )}
                     {currentUser.isDefaultAdmin && (
-                      <span className="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 text-sm px-3 py-1 rounded-full font-medium transform transition-all duration-300 hover:scale-110 hover:bg-red-200 dark:hover:bg-red-800 animate-pulse flex items-center gap-1">
-                        <FaCrown className="w-3 h-3 text-red-500" />
-                        Default Admin
-                      </span>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 text-sm px-3 py-1 rounded-full font-medium transform transition-all duration-300 hover:scale-110 hover:bg-red-200 dark:hover:bg-red-800 animate-pulse flex items-center gap-1">
+                          <FaCrown className="w-3 h-3 text-red-500" />
+                          Default Admin
+                        </span>
+                        {renderBadges(coinData.badges.length > 0 ? coinData.badges : currentUser.gamification?.badges)}
+                      </div>
                     )}
                     {currentUser.role === 'user' && (
-                      <span className="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full font-medium transform transition-all duration-300 hover:scale-110 hover:bg-blue-200">
-                        User
-                      </span>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full font-medium transform transition-all duration-300 hover:scale-110 hover:bg-blue-200">
+                          User
+                        </span>
+                        {renderBadges(coinData.badges.length > 0 ? coinData.badges : currentUser.gamification?.badges)}
+                        {currentUser.gamification?.currentStreak > 0 && (
+                          <span className="flex items-center gap-1 text-[11px] text-orange-600 dark:text-orange-400 font-bold bg-orange-50 dark:bg-orange-900/20 px-2.5 py-1 rounded-full border border-orange-100 dark:border-orange-800 shadow-sm animate-pulse">
+                            <FaFire /> {currentUser.gamification.currentStreak} Mo Streak
+                          </span>
+                        )}
+                      </div>
                     )}
                   </h1>
                 </div>
@@ -2712,6 +2857,13 @@ export default function Profile() {
         themes={allThemes}
         isOpen={showThemeInfo}
         onClose={() => setShowThemeInfo(false)}
+      />
+
+      {/* Badge Detail Modal */}
+      <BadgeDetailModal
+        badge={selectedBadge}
+        isOpen={showBadgeModal}
+        onClose={() => setShowBadgeModal(false)}
       />
     </div>
   );
