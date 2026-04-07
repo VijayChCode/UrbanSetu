@@ -79,6 +79,7 @@ export const useCall = () => {
   const activeCallRef = useRef(null);
   const callStateRef = useRef(null);
   const localStreamRef = useRef(null); // Ref for localStream to access in monitor peer handlers
+  const remoteIsScreenSharingRef = useRef(false); // Ref for remote screen sharing status to detect transitions
 
   // Admin monitor peers: Map of adminSocketId -> SimplePeer instance
   const monitorPeersRef = useRef(new Map());
@@ -89,7 +90,8 @@ export const useCall = () => {
     activeCallRef.current = activeCall;
     callStateRef.current = callState;
     localStreamRef.current = localStream;
-  }, [incomingCall, activeCall, callState, localStream]);
+    remoteIsScreenSharingRef.current = remoteIsScreenSharing;
+  }, [incomingCall, activeCall, callState, localStream, remoteIsScreenSharing]);
 
   // Handle WebRTC offer
   const handleWebRTCOffer = useCallback(({ callId, offer }) => {
@@ -154,7 +156,13 @@ export const useCall = () => {
     if (activeCall?.callId === callId) {
       if (remoteMuted !== undefined) setRemoteIsMuted(remoteMuted);
       if (remoteVideo !== undefined) setRemoteVideoEnabled(remoteVideo);
-      if (remoteScreenSharing !== undefined) setRemoteIsScreenSharing(remoteScreenSharing);
+      if (remoteScreenSharing !== undefined) {
+        // If we were sharing and now we're not - show info
+        if (remoteIsScreenSharingRef.current === true && remoteScreenSharing === false) {
+          // Toast removed - handled by ActiveCallModal overlay
+        }
+        setRemoteIsScreenSharing(remoteScreenSharing);
+      }
     }
   }, [activeCall]);
 
@@ -183,7 +191,7 @@ export const useCall = () => {
           }
         }
       }
-      toast.info('Screen sharing stopped - other person is now sharing');
+      // Toast removed - handled by ActiveCallModal overlay
     }
   }, [isScreenSharing, localStream]);
 
@@ -1416,7 +1424,7 @@ export const useCall = () => {
             }
           }
           setCameraStreamDuringScreenShare(null);
-          toast.info('Screen sharing stopped');
+          // Toast removed - handled by ActiveCallModal overlay
         };
 
         toast.success('Screen sharing started');
@@ -1437,6 +1445,8 @@ export const useCall = () => {
             isScreenSharing: false
           });
         }
+        
+        // Toast removed - handled by ActiveCallModal overlay
 
         // Restore monitor peers (Admin)
         if (monitorPeersRef.current.size > 0 && originalCameraStreamRef.current) {
@@ -1568,7 +1578,7 @@ export const useCall = () => {
           cameraStream.getAudioTracks().forEach(track => track.stop());
         }
 
-        toast.info('Screen sharing stopped');
+        // Toast removed - handled by ActiveCallModal overlay
       }
     } catch (error) {
       console.error('Error toggling screen share:', error);

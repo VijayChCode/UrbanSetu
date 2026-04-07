@@ -81,15 +81,33 @@ const ActiveCallModal = ({
   // Check for SinkId support (audio output selection)
   const supportsSetSinkId = typeof HTMLMediaElement !== 'undefined' && 'setSinkId' in HTMLMediaElement.prototype;
 
-  // Handle screen share alerts
+  // Refs to track previous screen share states for transition detection
+  const prevIsScreenSharing = useRef(false);
+  const prevRemoteIsScreenSharing = useRef(false);
+
+  // Handle screen share alerts (Starts and Stops)
   useEffect(() => {
-    if (isScreenSharing) {
+    // Detect local screen sharing transitions
+    if (isScreenSharing && !prevIsScreenSharing.current) {
       setPresentationAlert({ text: 'You are presenting', color: 'bg-blue-600' });
-      setTimeout(() => setPresentationAlert(null), 3000);
-    } else if (remoteIsScreenSharing) {
-      setPresentationAlert({ text: `${otherPartyName || 'Caller'} is presenting`, color: 'bg-purple-600' });
-      setTimeout(() => setPresentationAlert(null), 3000);
+      setTimeout(() => setPresentationAlert(prev => prev?.text === 'You are presenting' ? null : prev), 3000);
+    } else if (!isScreenSharing && prevIsScreenSharing.current) {
+      setPresentationAlert({ text: 'Presentation stopped', color: 'bg-gray-700/80 backdrop-blur-md' });
+      setTimeout(() => setPresentationAlert(prev => prev?.text === 'Presentation stopped' ? null : prev), 3000);
     }
+
+    // Detect remote screen sharing transitions
+    if (remoteIsScreenSharing && !prevRemoteIsScreenSharing.current) {
+      setPresentationAlert({ text: `${otherPartyName || 'Caller'} is presenting`, color: 'bg-purple-600' });
+      setTimeout(() => setPresentationAlert(prev => prev?.text?.includes('is presenting') ? null : prev), 3000);
+    } else if (!remoteIsScreenSharing && prevRemoteIsScreenSharing.current) {
+      setPresentationAlert({ text: 'Presentation stopped', color: 'bg-gray-700/80 backdrop-blur-md' });
+      setTimeout(() => setPresentationAlert(prev => prev?.text === 'Presentation stopped' ? null : prev), 3000);
+    }
+
+    // Update refs for next render
+    prevIsScreenSharing.current = isScreenSharing;
+    prevRemoteIsScreenSharing.current = remoteIsScreenSharing;
   }, [isScreenSharing, remoteIsScreenSharing, otherPartyName]);
 
   // Apply local mute to remote streams whenever the state or refs change
