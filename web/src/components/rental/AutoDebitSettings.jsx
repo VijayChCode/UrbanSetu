@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaCog, FaToggleOn, FaToggleOff, FaCreditCard, FaCalendarAlt, FaCheckCircle, FaExclamationTriangle, FaTimes, FaSave, FaUniversity, FaMobileAlt, FaTrash, FaShieldAlt, FaLock, FaTrashAlt, FaExclamationCircle, FaStopCircle, FaPaypal } from "react-icons/fa";
 import { toast } from 'react-toastify';
 import { authenticatedFetch } from '../../utils/auth';
@@ -12,7 +12,8 @@ export default function AutoDebitSettings({ wallet, contract, onUpdate }) {
     enabled: wallet?.autoDebitEnabled || false,
     method: wallet?.autoDebitMethod || 'razorpay',
     day: wallet?.autoDebitDay || contract?.dueDate || 1,
-    paymentMethodToken: wallet?.paymentMethodToken || ''
+    paymentMethodToken: wallet?.paymentMethodToken || '',
+    paymentMethodDetails: wallet?.paymentMethodDetails || null
   });
 
   const [isAddingMethod, setIsAddingMethod] = useState(false);
@@ -29,9 +30,47 @@ export default function AutoDebitSettings({ wallet, contract, onUpdate }) {
   const [showScheduleConfirm, setShowScheduleConfirm] = useState(false);
   const [showDisableConfirm, setShowDisableConfirm] = useState(false);
 
+  const openAddMethod = () => {
+    if (settings.paymentMethodDetails) {
+      if (settings.method === 'upi') {
+        setNewMethodDetails({
+          gateway: 'razorpay',
+          type: 'upi',
+          cardCategory: 'debit',
+          cardNumber: '',
+          expiry: '',
+          cvv: '',
+          vpa: settings.paymentMethodDetails.vpa || ''
+        });
+      } else if (settings.method === 'razorpay' || settings.method === 'paypal' || settings.method === 'card') {
+        setNewMethodDetails({
+          gateway: (settings.method === 'upi' || settings.method === 'card') ? 'razorpay' : settings.method,
+          type: 'card',
+          cardCategory: settings.paymentMethodDetails.cardCategory || 'debit',
+          cardNumber: settings.paymentMethodDetails.last4 ? `**** **** **** ${settings.paymentMethodDetails.last4}` : '',
+          expiry: '',
+          cvv: '',
+          vpa: ''
+        });
+      }
+    } else {
+      setNewMethodDetails({
+        gateway: 'razorpay',
+        type: 'card',
+        cardCategory: 'debit',
+        cardNumber: '',
+        expiry: '',
+        cvv: '',
+        vpa: ''
+      });
+    }
+    setIsAddingMethod(true);
+  };
+
+
   const handleToggle = async () => {
     if (!settings.enabled && !settings.paymentMethodToken) {
-      setIsAddingMethod(true);
+      openAddMethod();
       return;
     }
 
@@ -124,7 +163,8 @@ export default function AutoDebitSettings({ wallet, contract, onUpdate }) {
           enabled: true,
           method: newMethodDetails.type === 'upi' ? 'upi' : newMethodDetails.gateway,
           day: settings.day,
-          paymentMethodToken: mockToken
+          paymentMethodToken: mockToken,
+          paymentMethodDetails: newMethodDetails.type === 'upi' ? { vpa: newMethodDetails.vpa } : { last4: newMethodDetails.cardNumber.slice(-4), type: newMethodDetails.type, cardCategory: newMethodDetails.cardCategory }
         })
       });
 
@@ -137,7 +177,8 @@ export default function AutoDebitSettings({ wallet, contract, onUpdate }) {
         ...prev,
         enabled: true,
         paymentMethodToken: mockToken,
-        method: newMethodDetails.type === 'upi' ? 'upi' : newMethodDetails.gateway
+        method: newMethodDetails.type === 'upi' ? 'upi' : newMethodDetails.gateway,
+        paymentMethodDetails: newMethodDetails.type === 'upi' ? { vpa: newMethodDetails.vpa } : { last4: newMethodDetails.cardNumber.slice(-4), type: newMethodDetails.type, cardCategory: newMethodDetails.cardCategory }
       }));
 
       if (onUpdate && data.wallet) {
@@ -168,7 +209,8 @@ export default function AutoDebitSettings({ wallet, contract, onUpdate }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           enabled: false,
-          paymentMethodToken: '' // Clear the token
+          paymentMethodToken: '', // Clear the token
+          paymentMethodDetails: null // Clear details
         })
       });
 
@@ -180,7 +222,8 @@ export default function AutoDebitSettings({ wallet, contract, onUpdate }) {
       setSettings(prev => ({
         ...prev,
         enabled: false,
-        paymentMethodToken: ''
+        paymentMethodToken: '',
+        paymentMethodDetails: null
       }));
 
       if (onUpdate && data.wallet) {
@@ -205,7 +248,8 @@ export default function AutoDebitSettings({ wallet, contract, onUpdate }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           enabled: false,
-          paymentMethodToken: '' // Clear token as per user requirement when disabling
+          paymentMethodToken: '', // Clear token as per user requirement when disabling
+          paymentMethodDetails: null
         })
       });
 
@@ -217,7 +261,8 @@ export default function AutoDebitSettings({ wallet, contract, onUpdate }) {
       setSettings(prev => ({
         ...prev,
         enabled: false,
-        paymentMethodToken: ''
+        paymentMethodToken: '',
+        paymentMethodDetails: null
       }));
 
       if (onUpdate && data.wallet) {
@@ -491,14 +536,14 @@ export default function AutoDebitSettings({ wallet, contract, onUpdate }) {
                 <div>
                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Authenticated Account</p>
                   <p className="font-bold text-gray-800 dark:text-white flex items-center gap-2">
-                    {settings.method === 'upi' ? 'UPI / VPA' : settings.method === 'paypal' ? 'Linked PayPal Account' : 'Secured Card Details'}
+                    {settings.method === 'upi' ? (settings.paymentMethodDetails?.vpa || 'UPI / VPA') : settings.method === 'paypal' ? 'Linked PayPal Account' : `Card ending in ${settings.paymentMethodDetails?.last4 || 'XXXX'}`}
                     <FaCheckCircle className="text-blue-600 text-sm" />
                   </p>
                 </div>
               </div>
               <div className="flex gap-2">
                 <button
-                  onClick={() => setIsAddingMethod(true)}
+                  onClick={openAddMethod}
                   className="text-xs font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 py-2 px-4 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/50 transition-all"
                 >
                   Manage Sources

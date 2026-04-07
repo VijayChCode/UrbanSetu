@@ -63,6 +63,10 @@ const rentWalletSchema = new mongoose.Schema({
     type: String, // Encrypted payment method token
     default: null
   },
+  paymentMethodDetails: {
+    type: Object, // Stores display info like UPI ID or Card Last 4
+    default: null
+  },
   
   // Payment Schedule
   paymentSchedule: [{

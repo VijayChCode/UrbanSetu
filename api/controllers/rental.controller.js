@@ -1140,7 +1140,7 @@ export const getWallet = async (req, res, next) => {
 export const updateAutoDebit = async (req, res, next) => {
   try {
     const { contractId } = req.params;
-    const { enabled, method, day, paymentMethodToken } = req.body;
+    const { enabled, method, day, paymentMethodToken, paymentMethodDetails } = req.body;
     const userId = req.user.id;
 
     // Verify contract and user access
@@ -1171,6 +1171,7 @@ export const updateAutoDebit = async (req, res, next) => {
     wallet.autoDebitMethod = method || wallet.autoDebitMethod;
     wallet.autoDebitDay = day || wallet.autoDebitDay;
     wallet.paymentMethodToken = paymentMethodToken !== undefined ? paymentMethodToken : wallet.paymentMethodToken;
+    wallet.paymentMethodDetails = paymentMethodDetails !== undefined ? paymentMethodDetails : wallet.paymentMethodDetails;
 
     await wallet.save();
 
