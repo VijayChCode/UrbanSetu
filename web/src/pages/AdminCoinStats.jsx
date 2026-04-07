@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { FaCoins, FaFire, FaUsers, FaChartLine, FaHistory, FaArrowUp, FaArrowDown, FaSearch, FaTrophy, FaUser, FaCheck, FaExclamationTriangle, FaTimes, FaFilter, FaChevronLeft, FaChevronRight, FaRocket, FaStar } from 'react-icons/fa';
+import TransactionThemedIcon, { GET_TRANSACTION_THEME } from '../components/SetuCoins/TransactionThemedIcon';
 import { toast } from 'react-toastify';
 import UrbanSetuSpinner from "../components/UrbanSetuSpinner";
 import { usePageTitle } from '../hooks/usePageTitle';
@@ -545,9 +546,7 @@ export default function AdminCoinStats() {
                                                 >
                                                     <td className="px-6 py-4">
                                                         <div className="flex items-center gap-3">
-                                                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${tx.type === 'credit' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                                                                {tx.type === 'credit' ? <FaArrowUp size={10} /> : <FaArrowDown size={10} />}
-                                                            </div>
+                                                            <TransactionThemedIcon source={tx.source} type={tx.type} containerClassName="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm" />
                                                             <div>
                                                                 <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{tx.description}</p>
                                                                 {tx.adminId && <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-tighter italic">By Administrator</p>}
@@ -555,15 +554,7 @@ export default function AdminCoinStats() {
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4">
-                                                        <span className={`px-2 py-0.5 rounded text-[10px] font-black tracking-widest uppercase ${tx.source === 'referral' ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300' :
-                                                            tx.source === 'rent_payment' ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300' :
-                                                                tx.source === 'payment_reward' ? 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300' :
-                                                                    tx.source === 'rent_streak_bonus' ? 'bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300' :
-                                                                        tx.source === 'monthly_leaderboard_reward' ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300' :
-                                                                            tx.source === 'signup_bonus' ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300' :
-                                                                                tx.source === 'review_reward' ? 'bg-pink-100 dark:bg-pink-900/40 text-pink-700 dark:text-pink-300' :
-                                                                                    'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-                                                            }`}>
+                                                        <span className={`px-2 py-0.5 rounded text-[10px] font-black tracking-widest uppercase ${GET_TRANSACTION_THEME(tx.source, tx.type).adminColor}`}>
                                                             {tx.source.replace(/_/g, ' ')}
                                                         </span>
                                                     </td>
@@ -687,15 +678,11 @@ export default function AdminCoinStats() {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
-                                                    {tx.source === 'rent_streak_bonus' ? <FaFire size={12} className="text-orange-500" /> :
-                                                        tx.source === 'monthly_leaderboard_reward' ? <FaTrophy size={12} className="text-indigo-500" /> :
-                                                            tx.source === 'signup_bonus' ? <FaRocket size={12} className="text-green-500" /> :
-                                                                tx.source === 'review_reward' ? <FaStar size={12} className="text-yellow-500" /> :
-                                                                    null}
+                                                <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                    <TransactionThemedIcon source={tx.source} type={tx.type} containerClassName="p-1 rounded-md" />
                                                     {tx.description}
-                                                </p>
-                                                <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-widest mt-0.5">{tx.source?.replace(/_/g, ' ')}</p>
+                                                </div>
+                                                <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-widest mt-0.5 pl-7">{tx.source?.replace(/_/g, ' ')}</p>
                                             </td>
                                             <td className="px-6 py-4 text-xs font-medium text-gray-500">
                                                 {new Date(tx.createdAt).toLocaleDateString()}

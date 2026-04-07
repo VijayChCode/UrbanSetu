@@ -2,12 +2,13 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { toast } from 'react-toastify';
-import { FaWallet, FaCalendarAlt, FaHistory, FaCog, FaMoneyBillWave, FaExclamationTriangle, FaCheckCircle, FaClock, FaDownload, FaTrophy, FaArrowRight, FaAward, FaRegGem, FaShieldAlt, FaDove, FaHandshake, FaFire, FaCoins } from "react-icons/fa";
+import { FaWallet, FaCalendarAlt, FaHistory, FaCog, FaMoneyBillWave, FaExclamationTriangle, FaCheckCircle, FaClock, FaDownload, FaTrophy, FaArrowRight, FaAward, FaRegGem, FaShieldAlt, FaDove, FaHandshake, FaFire, FaCoins, FaInfoCircle } from "react-icons/fa";
 import { usePageTitle } from '../hooks/usePageTitle';
 import PaymentSchedule from '../components/rental/PaymentSchedule';
 import AutoDebitSettings from '../components/rental/AutoDebitSettings';
 import RentPaymentHistory from '../components/rental/RentPaymentHistory';
 import RentWalletSkeleton from '../components/skeletons/RentWalletSkeleton';
+import SetuCoinInfoModal from "../components/SetuCoins/SetuCoinInfoModal";
 import { authenticatedFetch } from '../utils/auth';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -38,6 +39,7 @@ export default function RentWallet() {
   });
 
   const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'schedule', 'history', 'settings'
+  const [showSetuCoinInfo, setShowSetuCoinInfo] = useState(false);
 
   const fetchWalletDetails = useCallback(async (showLoading = true) => {
     if (!contractId) {
@@ -288,6 +290,13 @@ export default function RentWallet() {
                 <div className="flex-1 text-center lg:text-left">
                   <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase mb-4 border border-white/30">
                     <FaAward className="text-yellow-400" /> Member Rewards Program
+                    <button 
+                      onClick={() => setShowSetuCoinInfo(true)}
+                      className="ml-1 hover:text-yellow-200 transition-colors cursor-pointer"
+                      title="What are SetuCoins?"
+                    >
+                      <FaInfoCircle size={14} />
+                    </button>
                   </div>
                   <h2 className="text-3xl md:text-4xl font-extrabold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white to-indigo-100 italic">
                     Level Up Your Living Experience
@@ -506,6 +515,13 @@ export default function RentWallet() {
           <AutoDebitSettings wallet={wallet} contract={contract} onUpdate={setWallet} />
         )}
       </div>
+      
+      {/* SetuCoin Information Modal */}
+      <SetuCoinInfoModal 
+        isOpen={showSetuCoinInfo} 
+        onClose={() => setShowSetuCoinInfo(false)} 
+        headerClass="from-indigo-600 via-purple-600 to-blue-700"
+      />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { FaCoins, FaCheckCircle, FaStar, FaTrophy } from 'react-icons/fa';
+import { FaCoins, FaCheckCircle, FaStar, FaTrophy, FaAward, FaRegGem, FaHandshake, FaDove, FaShieldAlt, FaTools, FaHome, FaInfoCircle } from 'react-icons/fa';
 
 const SetuCoinInfoModal = ({ isOpen, onClose, headerClass = "from-orange-300 via-orange-400 to-orange-500" }) => {
     // Handle Esc key to close
@@ -36,6 +36,7 @@ const SetuCoinInfoModal = ({ isOpen, onClose, headerClass = "from-orange-300 via
                 {/* Modal Header */}
                 <div className={`bg-gradient-to-br ${headerClass} p-6 md:p-8 text-white relative shrink-0`}>
                     <FaCoins className="absolute bottom-[-10px] right-[-10px] text-8xl text-white/20 rotate-12" />
+                    <FaAward className="absolute top-4 right-4 text-4xl text-white/10" />
                     <h2 className="text-2xl md:text-3xl font-black mb-1 flex items-center gap-2 md:gap-3">
                         <FaTrophy className="text-yellow-200 animate-bounce" /> SetuCoins
                     </h2>
@@ -76,6 +77,31 @@ const SetuCoinInfoModal = ({ isOpen, onClose, headerClass = "from-orange-300 via
                             </div>
                         </div>
                     </section>
+                    <section>
+                        <h3 className="text-xs md:text-sm font-black text-slate-400 dark:text-gray-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                            <FaAward className="text-purple-500" /> Achievement Badges
+                        </h3>
+                        <div className="space-y-3">
+                            {[
+                                { name: 'Elite Resident', icon: <FaRegGem />, color: 'text-purple-500', desc: '6-month rent payment streak.' },
+                                { name: 'Perfect Payer', icon: <FaHandshake />, color: 'text-green-500', desc: '12-month perfect payment streak.' },
+                                { name: 'Early Bird', icon: <FaDove />, color: 'text-blue-500', desc: 'Pay 3 days before due date.' },
+                                { name: 'Trusted Tenant', icon: <FaShieldAlt />, color: 'text-indigo-500', desc: 'Verified profile & high trust score.' },
+                                { name: 'Service Pro', icon: <FaTools />, color: 'text-orange-500', desc: 'Property maintenance reporting.' },
+                                { name: 'House Proud', icon: <FaHome />, color: 'text-pink-500', desc: 'Community participation.' },
+                            ].map((badge, idx) => (
+                                <div key={idx} className="flex items-center gap-3 bg-slate-50 dark:bg-gray-700/50 p-3 rounded-xl border border-slate-100 dark:border-gray-600/50">
+                                    <div className={`w-8 h-8 rounded-lg bg-white dark:bg-gray-700 flex items-center justify-center ${badge.color} shadow-sm shrink-0`}>
+                                        {badge.icon}
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-slate-800 dark:text-white text-xs">{badge.name}</p>
+                                        <p className="text-[10px] text-slate-500 dark:text-gray-400">{badge.desc}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
 
                     <div className="bg-indigo-50 dark:bg-indigo-900/40 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/50 flex flex-col gap-3">
                         <div className="flex items-center gap-4">
@@ -100,7 +126,7 @@ const SetuCoinInfoModal = ({ isOpen, onClose, headerClass = "from-orange-300 via
 
                     <button
                         onClick={onClose}
-                        className="w-full py-3 md:py-4 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 active:scale-95 transition-all shadow-lg"
+                        className="w-full py-3 md:py-4 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 active:scale-95 transition-all shadow-lg shrink-0"
                     >
                         Got it, Thanks!
                     </button>

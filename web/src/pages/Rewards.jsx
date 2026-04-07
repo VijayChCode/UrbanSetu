@@ -15,6 +15,7 @@ import { getCoinValue, COIN_CONFIG } from '../utils/coinUtils';
 import RewardsSkeleton from '../components/skeletons/RewardsSkeleton';
 import { authenticatedFetch } from '../utils/auth';
 import { toast } from 'react-hot-toast';
+import TransactionThemedIcon, { GET_TRANSACTION_THEME } from '../components/SetuCoins/TransactionThemedIcon';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -357,28 +358,7 @@ export default function Rewards() {
                                         history.slice(0, 4).map(tx => (
                                             <div key={tx._id} className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-gray-700 transition-colors">
                                                 <div className="flex items-center gap-3">
-                                                    <div className={`p-2 rounded-lg ${tx.source === 'referral' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400' :
-                                                        tx.source === 'profile_completion' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' :
-                                                            tx.source === 'admin_adjustment' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400' :
-                                                                tx.source === 'rent_payment' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' :
-                                                                    tx.source === 'payment_reward' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400' :
-                                                                        tx.source === 'rent_streak_bonus' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400' :
-                                                                            tx.source === 'monthly_leaderboard_reward' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' :
-                                                                                tx.source === 'signup_bonus' ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' :
-                                                                                    tx.source === 'review_reward' ? 'bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400' :
-                                                                                        tx.type === 'credit' ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
-                                                        }`}>
-                                                        {tx.source === 'referral' ? <FaUserFriends size={14} /> :
-                                                            tx.source === 'profile_completion' ? <FaCheck size={14} /> :
-                                                                tx.source === 'admin_adjustment' ? <FaStar size={14} /> :
-                                                                    tx.source === 'rent_payment' ? <FaHome size={14} /> :
-                                                                        tx.source === 'payment_reward' ? <FaCoins size={14} /> :
-                                                                            tx.source === 'rent_streak_bonus' ? <FaFire size={14} /> :
-                                                                                tx.source === 'monthly_leaderboard_reward' ? <FaTrophy size={14} /> :
-                                                                                    tx.source === 'signup_bonus' ? <FaRocket size={14} /> :
-                                                                                        tx.source === 'review_reward' ? <FaStar size={14} /> :
-                                                                                            tx.type === 'credit' ? <FaArrowUp /> : <FaArrowDown />}
-                                                    </div>
+                                                    <TransactionThemedIcon source={tx.source} type={tx.type} containerClassName="p-2 rounded-lg" />
                                                     <div>
                                                         <p className="font-bold text-slate-700 dark:text-gray-200 text-sm truncate max-w-[150px] md:max-w-xs">{tx.description}</p>
                                                         <p className="text-[10px] text-slate-400 dark:text-gray-500 uppercase tracking-widest">{new Date(tx.createdAt).toLocaleDateString()}</p>
@@ -485,7 +465,6 @@ export default function Rewards() {
                                     </div>
                                 </div>
                             ))}
-                            {/* Removed coming soon message as new rewards are added */}
                         </div>
                     )}
 
@@ -507,68 +486,42 @@ export default function Rewards() {
                                     </thead>
                                     <tbody className="divide-y divide-slate-50 dark:divide-gray-700">
                                         {historyLoading ? (
-                                            <tr><td colSpan="4" className="text-center py-20 text-slate-400 dark:text-gray-500">Loading History...</td></tr>
+                                            <tr><td colSpan="5" className="text-center py-20 text-slate-400 dark:text-gray-500">Loading History...</td></tr>
                                         ) : history.length === 0 ? (
-                                            <tr><td colSpan="4" className="text-center py-20 text-slate-400 dark:text-gray-500">No records found.</td></tr>
+                                            <tr><td colSpan="5" className="text-center py-20 text-slate-400 dark:text-gray-500">No records found.</td></tr>
                                         ) : (
-                                            history.map(tx => (
-                                                <tr key={tx._id} className="hover:bg-slate-50 dark:hover:bg-gray-700/50 transition-colors">
-                                                    <td className="px-6 py-4">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${tx.source === 'referral' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400' :
-                                                                tx.source === 'profile_completion' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' :
-                                                                    tx.source === 'admin_adjustment' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400' :
-                                                                        tx.source === 'rent_payment' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' :
-                                                                            tx.source === 'payment_reward' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400' :
-                                                                                tx.source === 'rent_streak_bonus' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400' :
-                                                                                    tx.source === 'monthly_leaderboard_reward' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' :
-                                                                                        tx.source === 'signup_bonus' ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' :
-                                                                                            tx.source === 'review_reward' ? 'bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400' :
-                                                                                                tx.type === 'credit' ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
-                                                                }`}>
-                                                                {tx.source === 'referral' ? <FaUserFriends /> :
-                                                                    tx.source === 'profile_completion' ? <FaCheck /> :
-                                                                        tx.source === 'admin_adjustment' ? <FaStar /> :
-                                                                            tx.source === 'rent_payment' ? <FaHome /> :
-                                                                                tx.source === 'payment_reward' ? <FaCoins /> :
-                                                                                    tx.source === 'rent_streak_bonus' ? <FaFire /> :
-                                                                                        tx.source === 'monthly_leaderboard_reward' ? <FaTrophy /> :
-                                                                                            tx.source === 'signup_bonus' ? <FaRocket /> :
-                                                                                                tx.source === 'review_reward' ? <FaStar /> :
-                                                                                                    tx.type === 'credit' ? <FaArrowUp /> : <FaArrowDown />}
+                                            history.map(tx => {
+                                                const theme = GET_TRANSACTION_THEME(tx.source, tx.type);
+                                                return (
+                                                    <tr key={tx._id} className="hover:bg-slate-50 dark:hover:bg-gray-700/50 transition-colors">
+                                                        <td className="px-6 py-4">
+                                                            <div className="flex items-center gap-3">
+                                                                <TransactionThemedIcon source={tx.source} type={tx.type} containerClassName="w-10 h-10 rounded-xl flex items-center justify-center" />
+                                                                <div>
+                                                                    <p className="font-bold text-slate-800 dark:text-gray-200 text-sm">{tx.description}</p>
+                                                                    <p className={`text-[10px] font-bold tracking-wide uppercase ${theme.labelColor}`}>{tx.source.replace(/_/g, ' ')}</p>
+                                                                </div>
                                                             </div>
-                                                            <div>
-                                                                <p className="font-bold text-slate-800 dark:text-gray-200 text-sm">{tx.description}</p>
-                                                                <p className={`text-[10px] font-bold tracking-wide uppercase ${tx.source === 'referral' ? 'text-purple-600 dark:text-purple-400' :
-                                                                    tx.source === 'rent_payment' ? 'text-indigo-600 dark:text-indigo-400' :
-                                                                        tx.source === 'payment_reward' ? 'text-yellow-600 dark:text-yellow-400' :
-                                                                            tx.source === 'rent_streak_bonus' ? 'text-orange-600 dark:text-orange-400' :
-                                                                                tx.source === 'monthly_leaderboard_reward' ? 'text-indigo-600 dark:text-indigo-400' :
-                                                                                    tx.source === 'signup_bonus' ? 'text-green-600 dark:text-green-400' :
-                                                                                        tx.source === 'review_reward' ? 'text-pink-600 dark:text-pink-400' :
-                                                                                            'text-slate-400 dark:text-gray-500'
-                                                                    }`}>{tx.source.replace(/_/g, ' ')}</p>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <span className="flex items-center gap-1.5 text-xs font-bold text-green-600">
-                                                            <FaCheckCircle className="text-[10px]" /> Completed
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-6 py-4 text-xs font-medium text-slate-500 dark:text-gray-400">
-                                                        {new Date(tx.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
-                                                        <br />
-                                                        <span className="text-[10px] opacity-60 font-normal">{new Date(tx.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                                    </td>
-                                                    <td className="px-6 py-4 text-xs font-medium text-slate-400 dark:text-gray-500">
-                                                        {tx.expiryDate ? new Date(tx.expiryDate).toLocaleDateString() : '-'}
-                                                    </td>
-                                                    <td className={`px-6 py-4 text-right font-black text-lg ${tx.type === 'credit' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                                                        {tx.type === 'credit' ? '+' : '-'}{tx.amount}
-                                                    </td>
-                                                </tr>
-                                            ))
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <span className="flex items-center gap-1.5 text-xs font-bold text-green-600">
+                                                                <FaCheckCircle className="text-[10px]" /> Completed
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-6 py-4 text-xs font-medium text-slate-500 dark:text-gray-400">
+                                                            {new Date(tx.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                            <br />
+                                                            <span className="text-[10px] opacity-60 font-normal">{new Date(tx.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                        </td>
+                                                        <td className="px-6 py-4 text-xs font-medium text-slate-400 dark:text-gray-500">
+                                                            {tx.expiryDate ? new Date(tx.expiryDate).toLocaleDateString() : '-'}
+                                                        </td>
+                                                        <td className={`px-6 py-4 text-right font-black text-lg ${tx.type === 'credit' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                                                            {tx.type === 'credit' ? '+' : '-'}{tx.amount}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })
                                         )}
                                     </tbody>
                                 </table>
