@@ -564,7 +564,7 @@ export default function Profile() {
   const renderBadges = (badges) => {
     if (!badges || badges.length === 0) return null;
     return (
-      <div className="flex flex-wrap gap-1 items-center">
+      <div className="flex flex-wrap gap-2 items-center justify-center sm:justify-start">
         {badges.map((badge, idx) => (
           <span
             key={idx}
@@ -572,7 +572,7 @@ export default function Profile() {
               setSelectedBadge(badge);
               setShowBadgeModal(true);
             }}
-            className="flex items-center gap-1.5 text-[11px] bg-white dark:bg-gray-700 px-2.5 py-1 rounded-full border border-gray-200 dark:border-gray-600 font-bold shadow-sm hover:scale-105 hover:shadow-md transition-all cursor-pointer whitespace-nowrap"
+            className="flex items-center gap-1.5 text-[11px] bg-white dark:bg-gray-700 px-3 py-1.5 rounded-full border border-gray-200 dark:border-gray-600 font-bold shadow-sm hover:scale-105 hover:shadow-md transition-all cursor-pointer whitespace-nowrap"
             title={`View Achievement: ${badge}`}
           >
             <span className="text-xs">{getBadgeIcon(badge)}</span>
@@ -1557,7 +1557,7 @@ export default function Profile() {
                       </span>
                     )}
                     {currentUser.role === 'admin' && (
-                      <div className="flex flex-wrap items-center gap-2">
+                      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                         <span className="bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 text-sm px-3 py-1 rounded-full font-medium transform transition-all duration-300 hover:scale-110 hover:bg-purple-200 dark:hover:bg-purple-800 flex items-center gap-1">
                           <FaCrown className="w-3 h-3 text-blue-500" />
                           Admin
@@ -1566,7 +1566,7 @@ export default function Profile() {
                       </div>
                     )}
                     {currentUser.isDefaultAdmin && (
-                      <div className="flex flex-wrap items-center gap-2">
+                      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                         <span className="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 text-sm px-3 py-1 rounded-full font-medium transform transition-all duration-300 hover:scale-110 hover:bg-red-200 dark:hover:bg-red-800 animate-pulse flex items-center gap-1">
                           <FaCrown className="w-3 h-3 text-red-500" />
                           Default Admin
@@ -1575,7 +1575,7 @@ export default function Profile() {
                       </div>
                     )}
                     {currentUser.role === 'user' && (
-                      <div className="flex flex-wrap items-center gap-2">
+                      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                         <span className="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full font-medium transform transition-all duration-300 hover:scale-110 hover:bg-blue-200">
                           User
                         </span>

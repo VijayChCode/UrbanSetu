@@ -369,7 +369,10 @@ export default function RentWallet() {
                     </div>
                   ) : (
                     <div className="text-center lg:text-right text-indigo-100/60 italic text-xs mb-1">
-                      Pay 3 more times on time to unlock your first badge!
+                      {gamification.currentStreak < 6 
+                        ? `Pay ${6 - gamification.currentStreak} more ${6 - gamification.currentStreak === 1 ? 'time' : 'times'} on time to unlock your first badge!`
+                        : `Pay ${12 - gamification.currentStreak} more ${12 - gamification.currentStreak === 1 ? 'time' : 'times'} on time to unlock your next badge!`
+                      }
                     </div>
                   )}
 

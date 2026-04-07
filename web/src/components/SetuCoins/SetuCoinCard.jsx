@@ -48,48 +48,48 @@ const SetuCoinCard = ({ balance = 0, streak = 0, expiryDate = null, rank = null,
             <FaCoins className="absolute -bottom-8 -right-8 text-9xl text-white/10 rotate-12" />
 
             <div className="relative p-6 text-white">
-                <div className="flex justify-between items-start mb-4">
-                    <div>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <div className="flex flex-col">
                         <div className="flex items-center gap-2">
-                            <h3 className="text-lg font-semibold tracking-wide text-white/90 uppercase flex items-center gap-2">
+                            <h3 className="text-base sm:text-lg font-bold tracking-wide text-white/95 uppercase flex items-center gap-2">
                                 <FaCoins className="text-yellow-200" />
                                 SetuCoins Balance
                             </h3>
                             <button
                                 onClick={() => setShowInfo(true)}
-                                className="text-white/60 hover:text-white transition-colors cursor-pointer"
+                                className="text-white/60 hover:text-white transition-colors cursor-pointer p-1 rounded-full hover:bg-white/10"
                                 title="What are SetuCoins?"
                             >
-                                <FaInfoCircle size={16} />
+                                <FaInfoCircle size={14} />
                             </button>
                         </div>
-                        <p className="text-xs text-white/70 mt-1">Loyalty Rewards Program</p>
+                        <p className="text-[10px] sm:text-xs text-white/70 font-medium">Loyalty Rewards Program</p>
                     </div>
 
                     {/* Rank & Streak Badges */}
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                         {/* Rank Badge */}
                         <Link 
                             to="/user/leaderboard"
-                            className="group flex items-center gap-1 bg-white/10 hover:bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10 shadow-sm transition-all"
+                            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-white/20 hover:bg-white/30 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 shadow-lg transition-all active:scale-95"
                             title={rank ? `Your Global Rank: #${rank}` : 'View Leaderboard'}
                         >
                             {rank && rank <= 10 ? (
                                 <div className="relative flex items-center justify-center">
-                                    <FaMedal className={`text-xl ${rank === 1 ? 'text-yellow-400' : rank === 2 ? 'text-gray-300' : rank === 3 ? 'text-amber-600' : 'text-blue-200'}`} />
-                                    <span className="absolute inset-0 flex items-center justify-center text-[8px] font-black text-gray-900 mt-0.5">{rank}</span>
+                                    <FaMedal className={`text-lg ${rank === 1 ? 'text-yellow-400 font-bold drop-shadow-[0_0_5px_rgba(250,204,21,0.5)]' : rank === 2 ? 'text-gray-300' : rank === 3 ? 'text-amber-600' : 'text-blue-200'}`} />
+                                    <span className="absolute inset-0 flex items-center justify-center text-[7px] font-black text-gray-900 mt-0.5">{rank}</span>
                                 </div>
                             ) : (
-                                <FaTrophy className={`text-sm ${rank ? 'text-yellow-200' : 'text-white/60'}`} />
+                                <FaTrophy className={`text-xs ${rank ? 'text-yellow-200' : 'text-white/60'}`} />
                             )}
-                            <span className="font-bold text-xs text-white shrink-0">
-                                {rank ? `#${rank}` : 'Top Up'}
+                            <span className="font-black text-[10px] sm:text-xs text-white whitespace-nowrap">
+                                {rank ? `#${rank} RANK` : 'TOP UP'}
                             </span>
                         </Link>
 
-                        <div className="flex items-center gap-1 bg-black/20 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10 shadow-sm" title="Current Rent Streak">
-                            <FaFire className={`text-orange-400 ${streak > 0 ? 'animate-pulse' : ''}`} />
-                            <span className="font-bold text-sm text-white shrink-0">{streak} Month Streak</span>
+                        <div className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-orange-600/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-orange-400/30 shadow-lg" title="Current Rent Streak">
+                            <FaFire className={`text-orange-400 ${streak > 0 ? 'animate-[bounce_1s_infinite] drop-shadow-[0_0_5px_rgba(251,146,60,0.5)]' : 'opacity-50'}`} />
+                            <span className="font-black text-[10px] sm:text-xs text-white whitespace-nowrap">{streak} MO STREAK</span>
                         </div>
                     </div>
                 </div>
