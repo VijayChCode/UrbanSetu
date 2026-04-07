@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { toast } from 'react-toastify';
-import { FaMoneyBillWave, FaCheckCircle, FaCheck, FaChevronRight, FaChevronLeft, FaCalendarAlt, FaFileContract, FaCreditCard, FaHome, FaLock, FaTimesCircle, FaDownload, FaCoins, FaMapMarkerAlt } from "react-icons/fa";
+import { FaMoneyBillWave, FaCheckCircle, FaCheck, FaChevronRight, FaChevronLeft, FaCalendarAlt, FaFileContract, FaCreditCard, FaHome, FaLock, FaTimesCircle, FaDownload, FaCoins, FaMapMarkerAlt, FaAward, FaTrophy, FaStar, FaRegGem, FaHandshake, FaDove } from "react-icons/fa";
 import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 import { usePageTitle } from '../hooks/usePageTitle';
 import PaymentModal from '../components/PaymentModal';
@@ -178,7 +178,7 @@ export default function PayMonthlyRent() {
     // Refresh contract and wallet, and check for new badges
     setTimeout(async () => {
       fetchContractAndWallet();
-      
+
       // Fetch fresh gamification data to check for new badges
       try {
         const res = await authenticatedFetch(`${API_BASE_URL}/api/coins/balance`);
@@ -721,14 +721,14 @@ export default function PayMonthlyRent() {
                 <div className="relative z-10">
                   <div className="flex items-center justify-between mb-3">
                     <h4 className="font-bold text-indigo-900 dark:text-indigo-300 flex items-center gap-2">
-                       <FaAward className="text-indigo-600 dark:text-indigo-400" /> 
-                       Next Milestone Progress
+                      <FaAward className="text-indigo-600 dark:text-indigo-400" />
+                      Next Milestone Progress
                     </h4>
                     <span className="text-xs font-black bg-indigo-600 text-white px-2 py-0.5 rounded-full">
                       STREAK: {gamification.currentStreak} MO
                     </span>
                   </div>
-                  
+
                   {gamification.currentStreak < 6 ? (
                     <>
                       <div className="flex justify-between text-xs text-indigo-700 dark:text-indigo-400 mb-1.5 font-bold">
@@ -736,8 +736,8 @@ export default function PayMonthlyRent() {
                         <span>{6 - gamification.currentStreak} payments left</span>
                       </div>
                       <div className="w-full h-2.5 bg-indigo-200 dark:bg-indigo-800 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-indigo-600 rounded-full transition-all duration-1000 shadow-[0_0_8px_rgba(79,70,229,0.5)]" 
+                        <div
+                          className="h-full bg-indigo-600 rounded-full transition-all duration-1000 shadow-[0_0_8px_rgba(79,70,229,0.5)]"
                           style={{ width: `${(gamification.currentStreak / 6) * 100}%` }}
                         ></div>
                       </div>
@@ -752,8 +752,8 @@ export default function PayMonthlyRent() {
                         <span>{12 - gamification.currentStreak} payments left</span>
                       </div>
                       <div className="w-full h-2.5 bg-indigo-200 dark:bg-indigo-800 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-indigo-600 rounded-full transition-all duration-1000 shadow-[0_0_8px_rgba(79,70,229,0.5)]" 
+                        <div
+                          className="h-full bg-indigo-600 rounded-full transition-all duration-1000 shadow-[0_0_8px_rgba(79,70,229,0.5)]"
                           style={{ width: `${(gamification.currentStreak / 12) * 100}%` }}
                         ></div>
                       </div>
@@ -908,11 +908,11 @@ export default function PayMonthlyRent() {
                   <div className="relative">
                     {/* Background Shine */}
                     <div className="absolute inset-x-0 top-1/2 -translate-y-12 h-64 bg-gradient-radial from-yellow-400/30 to-transparent animate-pulse rounded-full blur-3xl"></div>
-                    
+
                     <div className="flex flex-col items-center gap-6 relative z-10">
                       {newBadges.map((badge, idx) => (
-                        <div 
-                          key={idx} 
+                        <div
+                          key={idx}
                           className="flex flex-col items-center animate-[badgePop_0.8s_cubic-bezier(0.175,0.885,0.32,1.275)_backwards]"
                           style={{ animationDelay: `${idx * 0.4}s` }}
                         >
@@ -920,15 +920,15 @@ export default function PayMonthlyRent() {
                             <div className="absolute inset-0 bg-yellow-400/20 blur-xl rounded-full scale-150 animate-ping"></div>
                             <div className="w-24 h-24 md:w-32 md:h-32 bg-gradient-to-br from-yellow-300 via-amber-400 to-orange-500 rounded-3xl flex items-center justify-center p-0.5 shadow-[0_0_40px_rgba(251,191,36,0.5)] transform -rotate-3 hover:rotate-0 transition-transform">
                               <div className="w-full h-full bg-white dark:bg-gray-800 rounded-[1.4rem] flex items-center justify-center text-4xl md:text-6xl text-amber-500">
-                                {badge === 'Elite Resident' ? <FaRegGem className="animate-[wiggle_2s_infinite]" /> : 
-                                 badge === 'Perfect Payer' ? <FaHandshake className="animate-[wiggle_2s_infinite]" /> :
-                                 badge === 'Early Bird' ? <FaDove className="animate-[wiggle_2s_infinite]" /> : <FaAward className="animate-[wiggle_2s_infinite]" />}
+                                {badge === 'Elite Resident' ? <FaRegGem className="animate-[wiggle_2s_infinite]" /> :
+                                  badge === 'Perfect Payer' ? <FaHandshake className="animate-[wiggle_2s_infinite]" /> :
+                                    badge === 'Early Bird' ? <FaDove className="animate-[wiggle_2s_infinite]" /> : <FaAward className="animate-[wiggle_2s_infinite]" />}
                               </div>
                             </div>
                             <FaStar className="absolute -top-2 -right-2 text-yellow-300 text-2xl animate-[spin_4s_linear_infinite]" />
                             <FaStar className="absolute -bottom-2 -left-2 text-yellow-300 text-xl animate-[spin_3s_linear_infinite_reverse]" />
                           </div>
-                          
+
                           <div className="text-center">
                             <h3 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tighter mb-1">Badge Earned!</h3>
                             <div className="px-4 py-1.5 bg-amber-500 text-white rounded-full font-bold text-lg shadow-lg">
