@@ -59,6 +59,7 @@ export const useCall = () => {
   const [currentSpeakerId, setCurrentSpeakerId] = useState(null);
   const [isSyncingSummary, setIsSyncingSummary] = useState(false); // Waiting for authoritative duration
   const [isReconnecting, setIsReconnecting] = useState(false); // Internet drop/WebRTC disconnect
+  const [reconnectReason, setReconnectReason] = useState(null); // 'local-offline' or 'remote-disconnected'
   const [isMinimized, setIsMinimized] = useState(false); // Whether to show full modal or just the bar
 
   const peerRef = useRef(null);
@@ -103,6 +104,7 @@ export const useCall = () => {
       if (!activeCallRef.current) return;
       
       setIsReconnecting(true);
+      setReconnectReason('local-offline');
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
       
       // Give 60 seconds to reconnect before ending
@@ -118,6 +120,7 @@ export const useCall = () => {
       if (!activeCallRef.current) return;
       
       setIsReconnecting(false);
+      setReconnectReason(null);
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = null;
@@ -249,6 +252,13 @@ export const useCall = () => {
       
       if (pc.iceConnectionState === 'disconnected') {
         setIsReconnecting(true);
+        // Only set remote-disconnected if we are actually online
+        if (navigator.onLine) {
+          setReconnectReason('remote-disconnected');
+        } else {
+          setReconnectReason('local-offline');
+        }
+        
         // Start a graceful recovery timer
         if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = setTimeout(() => {
@@ -259,12 +269,19 @@ export const useCall = () => {
         }, 45000);
       } else if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
         setIsReconnecting(false);
+        setReconnectReason(null);
         if (reconnectTimeoutRef.current) {
           clearTimeout(reconnectTimeoutRef.current);
           reconnectTimeoutRef.current = null;
         }
       } else if (pc.iceConnectionState === 'failed') {
         setIsReconnecting(true);
+        if (navigator.onLine) {
+          setReconnectReason('remote-disconnected');
+        } else {
+          setReconnectReason('local-offline');
+        }
+        
         if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = setTimeout(() => {
           if (pc.iceConnectionState === 'failed' && activeCallRef.current) {
@@ -278,6 +295,11 @@ export const useCall = () => {
     pc.onconnectionstatechange = () => {
       if (pc.connectionState === 'failed') {
         setIsReconnecting(true);
+        if (navigator.onLine) {
+          setReconnectReason('remote-disconnected');
+        } else {
+          setReconnectReason('local-offline');
+        }
       }
     };
   }, []);
@@ -2040,6 +2062,7 @@ export const useCall = () => {
     currentSpeakerId,
     isSyncingSummary,
     isReconnecting,
+    reconnectReason,
     initiateCall,
     acceptCall,
     rejectCall,

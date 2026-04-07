@@ -44,6 +44,7 @@ const ActiveCallModal = ({
   containerRef: containerRefProp,
   isSyncingSummary,
   isReconnecting,
+  reconnectReason,
   onMinimize
 }) => {
   const navigate = useNavigate();
@@ -125,6 +126,16 @@ const ActiveCallModal = ({
 
   useEffect(() => {
     setIsVisible(true);
+    
+    // Automatically launch fullscreen for video calls on accept/mount
+    if (callType === 'video' && !isFullscreen) {
+      // 1 second delay to ensure the click interaction (accept) is still within the browser's 
+      // temporal window for fullscreen authorization. 
+      const fsTimeout = setTimeout(() => {
+        onToggleFullscreen?.();
+      }, 1000);
+      return () => clearTimeout(fsTimeout);
+    }
   }, []);
 
   // Update streams ref when they change
@@ -570,14 +581,20 @@ const ActiveCallModal = ({
         
         {/* Reconnecting Overlay */}
         {isReconnecting && (
-          <div className="absolute inset-0 z-[100] bg-black bg-opacity-70 backdrop-blur-md flex flex-col items-center justify-center animate-fadeIn">
+          <div className="absolute inset-0 z-[100] bg-black/80 backdrop-blur-md flex flex-col items-center justify-center animate-fadeIn">
             <div className="bg-gray-800/80 p-8 rounded-3xl border border-white/20 shadow-2xl flex flex-col items-center text-center max-w-sm mx-auto transform animate-[popIn_0.5s_ease-out_forwards]">
               <div className="relative mb-6">
-                <div className="w-20 h-20 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
+                <UrbanSetuSpinner size="xl" />
                 <FaWifi className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-2xl text-blue-400 animate-pulse" />
               </div>
               <h3 className="text-2xl font-bold text-white mb-2">Reconnecting...</h3>
-              <p className="text-gray-300">Poor internet connection detected. Trying to restore your call.</p>
+              <p className="text-gray-300">
+                {reconnectReason === 'local-offline' 
+                  ? "Poor internet connection detected. Trying to restore your call."
+                  : reconnectReason === 'remote-disconnected'
+                  ? "The other party lost their connection. Waiting for them to return..."
+                  : "Trying to restore your call connection..."}
+              </p>
               <div className="mt-6 flex gap-1">
                 <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
                 <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.15s]"></div>

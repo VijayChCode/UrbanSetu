@@ -39,6 +39,7 @@ const GlobalCallModals = () => {
     currentSpeakerId,
     isSyncingSummary,
     isReconnecting,
+    reconnectReason,
     acceptCall,
     rejectCall,
     endCall,
@@ -158,6 +159,7 @@ const GlobalCallModals = () => {
           callDuration={callDuration}
           isSyncingSummary={isSyncingSummary}
           isReconnecting={isReconnecting}
+          reconnectReason={reconnectReason}
           localStream={localStream}
           remoteStream={remoteStream}
           localVideoRef={localVideoRef}
@@ -197,6 +199,7 @@ const GlobalCallModals = () => {
           onReturn={() => setIsMinimized(false)}
           onEndCall={endCall}
           isReconnecting={isReconnecting}
+          reconnectReason={reconnectReason}
         />
       )}
 

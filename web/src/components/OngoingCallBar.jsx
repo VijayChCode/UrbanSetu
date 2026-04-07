@@ -7,7 +7,8 @@ const OngoingCallBar = ({
   callDuration, 
   onReturn, 
   onEndCall,
-  isReconnecting 
+  isReconnecting,
+  reconnectReason 
 }) => {
   const formatDuration = (seconds) => {
     const safeSeconds = Math.max(0, Math.floor(seconds || 0));
@@ -40,7 +41,8 @@ const OngoingCallBar = ({
               <span className="text-white font-bold tracking-tight">Ongoing Call: {otherPartyName || 'Participant'}</span>
               {isReconnecting && (
                 <span className="text-[10px] bg-amber-500 text-black font-bold px-1.5 py-0.5 rounded uppercase animate-pulse">
-                  Reconnecting
+                  {reconnectReason === 'local-offline' ? 'Poor Connection' : 
+                   reconnectReason === 'remote-disconnected' ? 'Peer Offline' : 'Reconnecting'}
                 </span>
               )}
             </div>
