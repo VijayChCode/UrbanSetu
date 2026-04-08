@@ -6328,18 +6328,38 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
 
   useEffect(() => {
     if (!showChatModal || !otherParty?._id) return;
+    let offlineGraceTimer = null;
+
     // Ask backend if the other party is online
     socket.emit('checkUserOnline', { userId: otherParty._id });
-    // Listen for response
+
+    // Poll every 10 seconds to keep status fresh and stable
+    const pollInterval = setInterval(() => {
+      socket.emit('checkUserOnline', { userId: otherParty._id });
+    }, 10000);
+
+    // Listen for response with grace period for offline transitions
     function handleUserOnlineStatus(data) {
       if (data.userId === otherParty._id) {
-        setIsOtherPartyOnline(!!data.online);
-        setOtherPartyLastSeen(data.lastSeen || null);
+        if (data.online) {
+          // Coming online: apply immediately, cancel any pending offline timer
+          if (offlineGraceTimer) { clearTimeout(offlineGraceTimer); offlineGraceTimer = null; }
+          setIsOtherPartyOnline(true);
+        } else {
+          // Going offline: wait 12 seconds before marking offline (covers poll gaps)
+          if (offlineGraceTimer) clearTimeout(offlineGraceTimer);
+          offlineGraceTimer = setTimeout(() => {
+            setIsOtherPartyOnline(false);
+            setOtherPartyLastSeen(data.lastSeen || null);
+          }, 12000);
+        }
       }
     }
     socket.on('userOnlineStatus', handleUserOnlineStatus);
     socket.on('userOnlineUpdate', handleUserOnlineStatus);
     return () => {
+      clearInterval(pollInterval);
+      if (offlineGraceTimer) clearTimeout(offlineGraceTimer);
       socket.off('userOnlineStatus', handleUserOnlineStatus);
       socket.off('userOnlineUpdate', handleUserOnlineStatus);
     };
@@ -6348,15 +6368,29 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   // Check online status for table display (independent of chat modal)
   useEffect(() => {
     if (!otherParty?._id) return;
+    let tableOfflineGraceTimer = null;
 
     // Ask backend if the other party is online for table display
     socket.emit('checkUserOnline', { userId: otherParty._id });
 
-    // Listen for response
+    // Poll every 10 seconds
+    const tablePollInterval = setInterval(() => {
+      socket.emit('checkUserOnline', { userId: otherParty._id });
+    }, 10000);
+
+    // Listen for response with grace period
     function handleTableUserOnlineStatus(data) {
       if (data.userId === otherParty._id) {
-        setIsOtherPartyOnlineInTable(!!data.online);
-        setOtherPartyLastSeenInTable(data.lastSeen || null);
+        if (data.online) {
+          if (tableOfflineGraceTimer) { clearTimeout(tableOfflineGraceTimer); tableOfflineGraceTimer = null; }
+          setIsOtherPartyOnlineInTable(true);
+        } else {
+          if (tableOfflineGraceTimer) clearTimeout(tableOfflineGraceTimer);
+          tableOfflineGraceTimer = setTimeout(() => {
+            setIsOtherPartyOnlineInTable(false);
+            setOtherPartyLastSeenInTable(data.lastSeen || null);
+          }, 12000);
+        }
       }
     }
 
@@ -6364,6 +6398,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
     socket.on('userOnlineUpdate', handleTableUserOnlineStatus);
 
     return () => {
+      clearInterval(tablePollInterval);
+      if (tableOfflineGraceTimer) clearTimeout(tableOfflineGraceTimer);
       socket.off('userOnlineStatus', handleTableUserOnlineStatus);
       socket.off('userOnlineUpdate', handleTableUserOnlineStatus);
     };
@@ -8006,7 +8042,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                               <path d="M18 10v-4c0-3.313-2.687-6-6-6s-6 2.687-6 6v4H4v10h16V10h-2zM8 6c0-2.206 1.794-4 4-4s4 1.794 4 4v4H8V6z" />
                             </svg>
                           )}
-                          {chatLockStatusLoading ? 'Loading...' : 'Locked'}
+                          {chatLockStatusLoading ? <span className="hidden sm:inline">Loading...</span> : 'Locked'}
                         </div>
                       )}
 
