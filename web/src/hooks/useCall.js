@@ -88,6 +88,9 @@ export const useCall = () => {
   // Admin monitor peers: Map of adminSocketId -> SimplePeer instance
   const monitorPeersRef = useRef(new Map());
 
+  // Unique tab identifier to prevent BroadcastChannel self-reception
+  const tabIdRef = useRef(Math.random().toString(36).substr(2, 9));
+
   // Helper to STOP all media tracks and reset peer (used by endCall and Tab Switching)
   const cleanupCall = useCallback(() => {
     // 1. Stop all sounds
@@ -257,6 +260,9 @@ export const useCall = () => {
     const bc = new BroadcastChannel('urbansetu_call_sync');
     
     bc.onmessage = (event) => {
+      // Ignore messages from this same tab (tabId guard)
+      if (event.data.senderTabId === tabIdRef.current) return;
+
       if (event.data.type === 'CALL_TAKEN_OVER' && event.data.callId === activeCallRef.current?.callId) {
         // Another tab has taken over this call
         toast.info('Call moved to another tab.');
@@ -370,7 +376,7 @@ export const useCall = () => {
       callStateRef.current = session.status || 'active';      
       // Notify other tabs that WE are taking over this call
       const bc = new BroadcastChannel('urbansetu_call_sync');
-      bc.postMessage({ type: 'CALL_TAKEN_OVER', callId: session.callId });
+      bc.postMessage({ type: 'CALL_TAKEN_OVER', callId: session.callId, senderTabId: tabIdRef.current });
       bc.close();
 
       const recoveredCallType = session.callType;
