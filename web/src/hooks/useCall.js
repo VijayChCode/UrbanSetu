@@ -61,6 +61,10 @@ export const useCall = () => {
   const [reconnectReason, setReconnectReason] = useState(null); // 'local-offline' or 'remote-disconnected'
   const [isMinimized, setIsMinimized] = useState(false); // Whether to show full modal or just the bar
 
+  // Pre-call preferences (set before call is answered, applied when call connects)
+  const [preCallMuted, setPreCallMuted] = useState(false);
+  const [preCallVideoOff, setPreCallVideoOff] = useState(false);
+
   const peerRef = useRef(null);
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
@@ -185,6 +189,9 @@ export const useCall = () => {
     setRemoteIsMuted(false);
     setRemoteVideoEnabled(true);
     setRemoteIsScreenSharing(false);
+    // Reset pre-call preferences
+    setPreCallMuted(false);
+    setPreCallVideoOff(false);
   }, [localStream, remoteStream, cameraStreamDuringScreenShare, stopCalling, stopRingtone]);
 
   // Update refs when state changes (so handlers can access current values)
@@ -1063,6 +1070,18 @@ export const useCall = () => {
         stopCalling();
         callingSoundRef.current = null;
 
+        // Apply pre-call preferences to the caller's active state
+        if (preCallMuted) {
+          setIsMuted(true);
+          // Tracks were already muted in initiateCall, just sync state
+        }
+        if (preCallVideoOff) {
+          setIsVideoEnabled(false);
+        }
+        // Reset pre-call preferences
+        setPreCallMuted(false);
+        setPreCallVideoOff(false);
+
         // Force immediate state update
         setCallState('active');
 
@@ -1407,6 +1426,14 @@ export const useCall = () => {
           // Play calling sound when call is ringing
           callingSoundRef.current = playCalling();
 
+          // Apply pre-call mute to stream tracks immediately
+          if (preCallMuted) {
+            stream.getAudioTracks().forEach(track => { track.enabled = false; });
+          }
+          if (preCallVideoOff && callType === 'video') {
+            stream.getVideoTracks().forEach(track => { track.enabled = false; });
+          }
+
           // Create peer connection AFTER we have the callId
           // Fetch ICE servers first
           fetchIceServers().then((iceServers) => {
@@ -1591,12 +1618,25 @@ export const useCall = () => {
         callType: incomingCall.callType
       });
 
+      // Apply pre-call preferences to stream tracks
+      if (preCallMuted) {
+        stream.getAudioTracks().forEach(track => { track.enabled = false; });
+        setIsMuted(true);
+      }
+      if (preCallVideoOff && incomingCall.callType === 'video') {
+        stream.getVideoTracks().forEach(track => { track.enabled = false; });
+        setIsVideoEnabled(false);
+      }
+
       // Stop ringtone immediately when call is accepted (don't wait for server response)
       stopRingtone();
       ringtoneSoundRef.current = null;
 
       setCallState('active');
       setIncomingCall(null);
+      // Reset pre-call preferences
+      setPreCallMuted(false);
+      setPreCallVideoOff(false);
       // Timer will be started by handleCallAccepted with synchronized time from server
     } catch (error) {
       console.error('Error accepting call:', error);
@@ -2360,7 +2400,12 @@ export const useCall = () => {
     switchMicrophone,
     switchSpeaker,
     isMinimized,
-    setIsMinimized
+    setIsMinimized,
+    // Pre-call preferences
+    preCallMuted,
+    preCallVideoOff,
+    setPreCallMuted,
+    setPreCallVideoOff
   }; // End of return
 }; // End of useCall
 
