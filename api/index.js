@@ -777,7 +777,44 @@ io.on('connection', (socket) => {
           continue; // Skip the normal timeout logic
         }
 
-        // Only ONE user disconnected — notify other party and set grace period
+        // If call is still RINGING (not yet answered) and the CALLER disconnects,
+        // cancel the call immediately — no point waiting for reconnection
+        if (activeCall.status === 'ringing' && role === 'caller') {
+          console.log(`[Call Cleanup] Caller disconnected while call ${callId} was still ringing — cancelling immediately.`);
+
+          // Clear any existing termination timeout
+          if (activeCall.terminationTimeout) {
+            clearTimeout(activeCall.terminationTimeout);
+            activeCall.terminationTimeout = null;
+          }
+
+          // Notify receiver to dismiss incoming call modal
+          if (otherSocketId) {
+            io.to(otherSocketId).emit('call-ended', { callId, reason: 'caller-disconnected' });
+          }
+
+          // End call in DB as missed/cancelled
+          (async () => {
+            try {
+              const call = await CallHistory.findOne({ callId });
+              if (call && call.status !== 'ended') {
+                call.status = 'ended';
+                call.endTime = new Date();
+                call.duration = 0;
+                call.endedBy = 'caller-disconnected';
+                await call.save();
+                console.log(`[Call Cleanup] Ringing call ${callId} cancelled (caller disconnected before answer).`);
+              }
+            } catch (err) {
+              console.error('Error cancelling ringing call:', err);
+            }
+          })();
+
+          activeCalls.delete(callId);
+          continue; // Skip the normal timeout logic
+        }
+
+        // Only ONE user disconnected from an ACTIVE call — notify other party and set grace period
         if (otherSocketId) {
           io.to(otherSocketId).emit('peer-reconnecting', { callId, role });
         }

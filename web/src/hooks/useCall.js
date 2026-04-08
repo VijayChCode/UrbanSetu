@@ -194,6 +194,19 @@ export const useCall = () => {
     setPreCallVideoOff(false);
   }, [localStream, remoteStream, cameraStreamDuringScreenShare, stopCalling, stopRingtone]);
 
+  // Apply pre-call preferences to stream tracks in real-time during ringing/initiating phase
+  useEffect(() => {
+    if (!localStream || (callState !== 'ringing' && callState !== 'initiating')) return;
+    // Sync mic mute to actual audio tracks
+    localStream.getAudioTracks().forEach(track => {
+      track.enabled = !preCallMuted;
+    });
+    // Sync video off to actual video tracks
+    localStream.getVideoTracks().forEach(track => {
+      track.enabled = !preCallVideoOff;
+    });
+  }, [preCallMuted, preCallVideoOff, localStream, callState]);
+
   // Update refs when state changes (so handlers can access current values)
   useEffect(() => {
     incomingCallRef.current = incomingCall;
@@ -1071,11 +1084,12 @@ export const useCall = () => {
         callingSoundRef.current = null;
 
         // Apply pre-call preferences to the caller's active state
-        if (preCallMuted) {
+        const callerMuted = preCallMuted;
+        const callerVideoOff = preCallVideoOff;
+        if (callerMuted) {
           setIsMuted(true);
-          // Tracks were already muted in initiateCall, just sync state
         }
-        if (preCallVideoOff) {
+        if (callerVideoOff) {
           setIsVideoEnabled(false);
         }
         // Reset pre-call preferences
@@ -1087,6 +1101,17 @@ export const useCall = () => {
 
         // CRITICAL: Only start timer with server's startTime - never use local time
         startCallTimer(synchronizedStartTime);
+
+        // Notify remote side about initial media state if pre-call preferences were set
+        if (callerMuted || callerVideoOff) {
+          setTimeout(() => {
+            socket.emit('call-status-update', {
+              callId: data.callId,
+              isMuted: callerMuted,
+              isVideoEnabled: !callerVideoOff
+            });
+          }, 500);
+        }
       }
     };
 
@@ -1619,11 +1644,13 @@ export const useCall = () => {
       });
 
       // Apply pre-call preferences to stream tracks
-      if (preCallMuted) {
+      const receiverMuted = preCallMuted;
+      const receiverVideoOff = preCallVideoOff && incomingCall.callType === 'video';
+      if (receiverMuted) {
         stream.getAudioTracks().forEach(track => { track.enabled = false; });
         setIsMuted(true);
       }
-      if (preCallVideoOff && incomingCall.callType === 'video') {
+      if (receiverVideoOff) {
         stream.getVideoTracks().forEach(track => { track.enabled = false; });
         setIsVideoEnabled(false);
       }
@@ -1632,11 +1659,23 @@ export const useCall = () => {
       stopRingtone();
       ringtoneSoundRef.current = null;
 
+      const savedCallId = incomingCall.callId;
       setCallState('active');
       setIncomingCall(null);
       // Reset pre-call preferences
       setPreCallMuted(false);
       setPreCallVideoOff(false);
+
+      // Notify caller about receiver's initial media state if pre-call preferences were set
+      if (receiverMuted || receiverVideoOff) {
+        setTimeout(() => {
+          socket.emit('call-status-update', {
+            callId: savedCallId,
+            isMuted: receiverMuted,
+            isVideoEnabled: !receiverVideoOff
+          });
+        }, 500);
+      }
       // Timer will be started by handleCallAccepted with synchronized time from server
     } catch (error) {
       console.error('Error accepting call:', error);
