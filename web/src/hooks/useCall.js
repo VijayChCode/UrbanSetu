@@ -1140,6 +1140,21 @@ export const useCall = () => {
         stopRingtone();
         callingSoundRef.current = null;
         ringtoneSoundRef.current = null;
+
+        // If caller disconnected before call was actually connected,
+        // force state to non-active so endCall won't show the summary
+        if (data.reason === 'caller-disconnected' || data.reason === 'call-already-ended') {
+          // Force callState to 'ringing' so endCall treats it as never-connected
+          callStateRef.current = 'ringing';
+          setCallState('ringing');
+          // Clear incoming call state
+          incomingCallRef.current = null;
+          setIncomingCall(null);
+          toast.info('Call cancelled — the other party is no longer available.');
+          endCall();
+          return;
+        }
+
         // Only play end call sound if we didn't just end the call ourselves
         // (to prevent double playing when user clicks hang and server broadcasts back)
         if (!isEndingCallRef.current) {
