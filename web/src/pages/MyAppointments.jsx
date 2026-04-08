@@ -6333,6 +6333,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
     // Ask backend if the other party is online
     socket.emit('checkUserOnline', { userId: otherParty._id });
 
+    // Re-check immediately when OUR socket reconnects
+    function handleReconnect() {
+      socket.emit('checkUserOnline', { userId: otherParty._id });
+    }
+    socket.on('connect', handleReconnect);
+
     // Poll every 10 seconds to keep status fresh and stable
     const pollInterval = setInterval(() => {
       socket.emit('checkUserOnline', { userId: otherParty._id });
@@ -6360,6 +6366,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
     return () => {
       clearInterval(pollInterval);
       if (offlineGraceTimer) clearTimeout(offlineGraceTimer);
+      socket.off('connect', handleReconnect);
       socket.off('userOnlineStatus', handleUserOnlineStatus);
       socket.off('userOnlineUpdate', handleUserOnlineStatus);
     };
@@ -6372,6 +6379,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
 
     // Ask backend if the other party is online for table display
     socket.emit('checkUserOnline', { userId: otherParty._id });
+
+    // Re-check immediately when OUR socket reconnects
+    function handleTableReconnect() {
+      socket.emit('checkUserOnline', { userId: otherParty._id });
+    }
+    socket.on('connect', handleTableReconnect);
 
     // Poll every 10 seconds
     const tablePollInterval = setInterval(() => {
@@ -6400,6 +6413,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
     return () => {
       clearInterval(tablePollInterval);
       if (tableOfflineGraceTimer) clearTimeout(tableOfflineGraceTimer);
+      socket.off('connect', handleTableReconnect);
       socket.off('userOnlineStatus', handleTableUserOnlineStatus);
       socket.off('userOnlineUpdate', handleTableUserOnlineStatus);
     };
