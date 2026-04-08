@@ -1063,6 +1063,40 @@ io.on('connection', (socket) => {
         return socket.emit('call-error', { message: 'Unauthorized' });
       }
 
+      // Check if call is already ended/cancelled before accepting
+      if (call.status === 'ended') {
+        socket.emit('call-ended', { callId, reason: 'call-already-ended' });
+        return;
+      }
+
+      // CRITICAL: Verify the caller is still connected before allowing the call
+      const activeCall = activeCalls.get(callId);
+      if (!activeCall) {
+        // Call was already cleaned up (caller left)
+        console.log(`[Call Accept] Call ${callId} no longer exists in memory — caller likely disconnected.`);
+        call.status = 'ended';
+        call.endTime = new Date();
+        call.duration = 0;
+        call.endedBy = 'caller-disconnected';
+        await call.save();
+        socket.emit('call-ended', { callId, reason: 'caller-disconnected' });
+        return;
+      }
+
+      // Check if the caller's socket is still actually connected
+      const callerSocket = activeCall.callerSocketId ? io.sockets.sockets.get(activeCall.callerSocketId) : null;
+      if (!callerSocket || !callerSocket.connected) {
+        console.log(`[Call Accept] Caller socket ${activeCall.callerSocketId} is no longer connected for call ${callId}.`);
+        call.status = 'ended';
+        call.endTime = new Date();
+        call.duration = 0;
+        call.endedBy = 'caller-disconnected';
+        await call.save();
+        activeCalls.delete(callId);
+        socket.emit('call-ended', { callId, reason: 'caller-disconnected' });
+        return;
+      }
+
       // Update call status and set start time (synchronized)
       // CRITICAL: This timestamp is the authoritative start time for both caller and receiver
       // Both sides will use this exact timestamp to calculate call duration
@@ -1073,43 +1107,40 @@ io.on('connection', (socket) => {
       await call.save();
 
       // Update active call
-      const activeCall = activeCalls.get(callId);
-      if (activeCall) {
-        activeCall.receiverSocketId = socket.id;
-        activeCall.startTime = startTime; // Store synchronized start time
-        activeCall.status = 'active'; // Mark as stabilized active
-        activeCalls.set(callId, activeCall);
+      activeCall.receiverSocketId = socket.id;
+      activeCall.startTime = startTime; // Store synchronized start time
+      activeCall.status = 'active'; // Mark as stabilized active
+      activeCalls.set(callId, activeCall);
 
-        // Forward any pending WebRTC offers and ICE candidates
-        if (activeCall.pendingOffer) {
-          socket.emit('webrtc-offer', activeCall.pendingOffer);
-          delete activeCall.pendingOffer;
-        }
-
-        if (activeCall.pendingCandidates && activeCall.pendingCandidates.length > 0) {
-          activeCall.pendingCandidates.forEach(pendingCandidate => {
-            socket.emit('ice-candidate', pendingCandidate);
-          });
-          activeCall.pendingCandidates = [];
-        }
-
-        // Send the exact same timestamp to both caller and receiver
-        // This ensures perfect synchronization - both sides calculate from the same reference point
-        const startTimeTimestamp = startTime.getTime(); // Milliseconds since epoch
-
-        // Notify caller that call was accepted with synchronized start time
-        io.to(activeCall.callerSocketId).emit('call-accepted', {
-          callId,
-          receiverSocketId: socket.id,
-          startTime: startTimeTimestamp // Send exact timestamp for synchronization
-        });
-
-        // Notify receiver with synchronized start time (same timestamp)
-        socket.emit('call-accepted', {
-          callId,
-          startTime: startTimeTimestamp // Send exact timestamp for synchronization
-        });
+      // Forward any pending WebRTC offers and ICE candidates
+      if (activeCall.pendingOffer) {
+        socket.emit('webrtc-offer', activeCall.pendingOffer);
+        delete activeCall.pendingOffer;
       }
+
+      if (activeCall.pendingCandidates && activeCall.pendingCandidates.length > 0) {
+        activeCall.pendingCandidates.forEach(pendingCandidate => {
+          socket.emit('ice-candidate', pendingCandidate);
+        });
+        activeCall.pendingCandidates = [];
+      }
+
+      // Send the exact same timestamp to both caller and receiver
+      // This ensures perfect synchronization - both sides calculate from the same reference point
+      const startTimeTimestamp = startTime.getTime(); // Milliseconds since epoch
+
+      // Notify caller that call was accepted with synchronized start time
+      io.to(activeCall.callerSocketId).emit('call-accepted', {
+        callId,
+        receiverSocketId: socket.id,
+        startTime: startTimeTimestamp // Send exact timestamp for synchronization
+      });
+
+      // Notify receiver with synchronized start time (same timestamp)
+      socket.emit('call-accepted', {
+        callId,
+        startTime: startTimeTimestamp // Send exact timestamp for synchronization
+      });
     } catch (err) {
       console.error("Error accepting call:", err);
       socket.emit('call-error', { message: 'Failed to accept call' });
