@@ -186,9 +186,15 @@ export const useCall = () => {
     callStartTimeRef.current = null;
     lastSecondRef.current = null;
     setIsScreenSharing(false);
+    setIsMuted(false);
+    setIsVideoEnabled(true);
     setRemoteIsMuted(false);
     setRemoteVideoEnabled(true);
     setRemoteIsScreenSharing(false);
+    setIsFullscreen(false);
+    setIsMinimized(false);
+    setConnectionQuality('excellent');
+    setReconnectReason(null);
     // Reset pre-call preferences
     setPreCallMuted(false);
     setPreCallVideoOff(false);
