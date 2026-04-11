@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { FaArchive, FaBan, FaCalendar, FaCalendarAlt, FaCheck, FaCheckDouble, FaCheckSquare, FaCircle, FaCheckCircle, FaCog, FaCommentDots, FaCopy, FaCreditCard, FaDownload, FaEllipsisV, FaEnvelope, FaExclamationTriangle, FaFileContract, FaFileAlt, FaFlag, FaHandshake, FaHistory, FaInfoCircle, FaLightbulb, FaMoneyBillWave, FaPaperPlane, FaPen, FaPhone, FaRegStar, FaSearch, FaStar, FaSync, FaThumbtack, FaTimes, FaTrash, FaUndo, FaUserShield, FaVideo, FaWallet, FaPlay } from 'react-icons/fa';
+import { FaArchive, FaBan, FaCalendar, FaCalendarAlt, FaCheck, FaCheckDouble, FaCheckSquare, FaCircle, FaCheckCircle, FaClock, FaCog, FaCommentDots, FaCopy, FaCreditCard, FaDownload, FaEllipsisV, FaEnvelope, FaExclamationTriangle, FaFileContract, FaFileAlt, FaFlag, FaHandshake, FaHistory, FaInfoCircle, FaLightbulb, FaMoneyBillWave, FaPaperPlane, FaPen, FaPhone, FaRegStar, FaSearch, FaStar, FaSync, FaThumbtack, FaTimes, FaTrash, FaUndo, FaUserShield, FaVideo, FaWallet, FaPlay } from 'react-icons/fa';
 import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 import { EmojiButton } from '../components/EmojiPicker';
 import CustomEmojiPicker from '../components/EmojiPicker';
@@ -18,6 +18,7 @@ import { useCallContext } from '../contexts/CallContext';
 import CallHistoryModal from '../components/CallHistoryModal';
 import ChatSettingsModal from '../components/ChatSettingsModal';
 import { useChatSettings } from '../hooks/useChatSettings';
+import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import ImagePreview from '../components/ImagePreview';
 import VideoMessageBubble from '../components/VideoMessageBubble.jsx';
 import LinkPreview from '../components/LinkPreview';
@@ -2201,6 +2202,78 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   const scrollTimeoutRef = useRef(null);
   const inputRef = useRef(null); // Add inputRef here
 
+  // Network status for offline message queuing (WhatsApp-like behavior)
+  const { isOnline } = useNetworkStatus();
+  const messageQueueRef = useRef([]);
+
+  // Retry queued messages when internet comes back online
+  useEffect(() => {
+    if (!isOnline || messageQueueRef.current.length === 0) return;
+
+    const retryQueue = [...messageQueueRef.current];
+    messageQueueRef.current = [];
+
+    retryQueue.forEach(async (queuedItem) => {
+      const { tempId, type, payload, originalReplyToId } = queuedItem;
+
+      // Update status to 'sending'
+      setComments(prev => prev.map(msg =>
+        msg._id === tempId ? { ...msg, status: 'sending' } : msg
+      ));
+
+      try {
+        const res = await authenticatedFetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment`, {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          throw { response: { status: res.status, data: errorData } };
+        }
+
+        const data = await res.json();
+        const newComment = data.comments[data.comments.length - 1];
+
+        if (type === 'text') {
+          setComments(prev => prev.map(msg =>
+            msg._id === tempId
+              ? {
+                ...msg,
+                _id: newComment._id,
+                status: newComment.status,
+                readBy: newComment.readBy || msg.readBy,
+                timestamp: newComment.timestamp || msg.timestamp,
+                replyTo: originalReplyToId || newComment.replyTo || msg.replyTo
+              }
+              : msg
+          ));
+        } else {
+          // For media messages, replace with full server response
+          setComments(prev => prev.map(msg =>
+            msg._id === tempId ? { ...newComment } : msg
+          ));
+        }
+
+        if (settings.soundEnabled) {
+          playMessageSent();
+        }
+      } catch (err) {
+        if (!navigator.onLine) {
+          // Still offline, re-queue
+          setComments(prev => prev.map(msg =>
+            msg._id === tempId ? { ...msg, status: 'queued' } : msg
+          ));
+          messageQueueRef.current.push(queuedItem);
+        } else {
+          // Online but still failing, remove the message
+          setComments(prev => prev.filter(msg => msg._id !== tempId));
+          toast.error(err.response?.data?.message || 'Failed to send message. Please try again.');
+        }
+      }
+    });
+  }, [isOnline, appt._id, settings.soundEnabled, playMessageSent]);
+
   // Keyboard shortcut to focus input
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -3091,8 +3164,20 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
       ));
     } catch (error) {
       console.error('Send image error:', error);
-      setComments(prev => prev.filter(msg => msg._id !== tempId));
-      toast.error(error.response?.data?.message || "Failed to send image.");
+      if (!navigator.onLine) {
+        // Queue image message for retry when back online
+        setComments(prev => prev.map(msg =>
+          msg._id === tempId ? { ...msg, status: 'queued' } : msg
+        ));
+        messageQueueRef.current.push({
+          tempId,
+          type: 'image',
+          payload: { message: caption || '', imageUrl: imageUrl, type: 'image' }
+        });
+      } else {
+        setComments(prev => prev.filter(msg => msg._id !== tempId));
+        toast.error(error.response?.data?.message || "Failed to send image.");
+      }
     }
   };
 
@@ -3260,8 +3345,20 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
       const data = await res.json();
       setComments(data.comments || data.updated?.comments || data?.appointment?.comments || []);
     } catch (err) {
-      toast.error('Failed to send video');
-      setComments(prev => prev.filter(m => m._id !== tempId));
+      if (!navigator.onLine) {
+        // Queue video message for retry when back online
+        setComments(prev => prev.map(m =>
+          m._id === tempId ? { ...m, status: 'queued' } : m
+        ));
+        messageQueueRef.current.push({
+          tempId,
+          type: 'video',
+          payload: { message: caption || '', videoUrl, type: 'video' }
+        });
+      } else {
+        toast.error('Failed to send video');
+        setComments(prev => prev.filter(m => m._id !== tempId));
+      }
     }
   };
 
@@ -3323,8 +3420,20 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
       const data = await res.json();
       setComments(data.comments || data.updated?.comments || data?.appointment?.comments || []);
     } catch (err) {
-      toast.error('Failed to send audio');
-      setComments(prev => prev.filter(m => m._id !== tempId));
+      if (!navigator.onLine) {
+        // Queue audio message for retry when back online
+        setComments(prev => prev.map(m =>
+          m._id === tempId ? { ...m, status: 'queued' } : m
+        ));
+        messageQueueRef.current.push({
+          tempId,
+          type: 'audio',
+          payload: { message: caption || '', audioUrl, audioName: file.name, audioMimeType: file.type || null, type: 'audio' }
+        });
+      } else {
+        toast.error('Failed to send audio');
+        setComments(prev => prev.filter(m => m._id !== tempId));
+      }
     }
   };
 
@@ -3386,8 +3495,20 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
       const data = await res.json();
       setComments(data.comments || data.updated?.comments || data?.appointment?.comments || []);
     } catch (err) {
-      toast.error('Failed to send document');
-      setComments(prev => prev.filter(m => m._id !== tempId));
+      if (!navigator.onLine) {
+        // Queue document message for retry when back online
+        setComments(prev => prev.map(m =>
+          m._id === tempId ? { ...m, status: 'queued' } : m
+        ));
+        messageQueueRef.current.push({
+          tempId,
+          type: 'document',
+          payload: { message: caption || '', documentUrl, documentName: file.name, documentMimeType: file.type || null, type: 'document' }
+        });
+      } else {
+        toast.error('Failed to send document');
+        setComments(prev => prev.filter(m => m._id !== tempId));
+      }
     }
   };
 
@@ -4559,9 +4680,26 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
           playMessageSent(); // Play send sound
         }
       } catch (err) {
-        // Remove the temp message and show error
-        setComments(prev => prev.filter(msg => msg._id !== tempId));
-        toast.error(err.response?.data?.message || 'An error occurred. Please try again.');
+        if (!navigator.onLine) {
+          // Queue message for retry when back online (WhatsApp-like behavior)
+          setComments(prev => prev.map(msg =>
+            msg._id === tempId ? { ...msg, status: 'queued' } : msg
+          ));
+          messageQueueRef.current.push({
+            tempId,
+            type: 'text',
+            originalReplyToId,
+            payload: {
+              message: messageContent,
+              ...(replyToId ? { replyTo: replyToId } : {}),
+              ...(previewDismissed ? { previewDismissed: true } : {})
+            }
+          });
+        } else {
+          // Remove the temp message and show error
+          setComments(prev => prev.filter(msg => msg._id !== tempId));
+          toast.error(err.response?.data?.message || 'An error occurred. Please try again.');
+        }
         // Removed auto-focus: Don't automatically focus input on error
         // User can manually click to focus when needed
       }
@@ -9390,13 +9528,15 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                   )}
                                   {(c.senderEmail === currentUser.email) && !c.deleted && (
                                     <span className="flex items-center gap-1 ml-1">
-                                      {c.readBy?.includes(otherParty?._id)
-                                        ? <FaCheckDouble className="text-green-400 text-xs transition-all duration-300 animate-fadeIn" title="Read" />
-                                        : c.status === 'delivered'
-                                          ? <FaCheckDouble className="text-blue-200 text-xs transition-all duration-300 animate-fadeIn" title="Delivered" />
-                                          : c.status === 'sending'
-                                            ? <FaCheck className="text-blue-200 text-xs animate-pulse transition-all duration-300" title="Sending..." />
-                                            : <FaCheck className="text-blue-200 text-xs transition-all duration-300 animate-fadeIn" title="Sent" />}
+                                      {c.status === 'queued'
+                                        ? <FaClock className="text-yellow-300/80 text-xs animate-pulse transition-all duration-300" title="Waiting for internet connection..." />
+                                        : c.readBy?.includes(otherParty?._id)
+                                          ? <FaCheckDouble className="text-green-400 text-xs transition-all duration-300 animate-fadeIn" title="Read" />
+                                          : c.status === 'delivered'
+                                            ? <FaCheckDouble className="text-blue-200 text-xs transition-all duration-300 animate-fadeIn" title="Delivered" />
+                                            : c.status === 'sending'
+                                              ? <FaCheck className="text-blue-200 text-xs animate-pulse transition-all duration-300" title="Sending..." />
+                                              : <FaCheck className="text-blue-200 text-xs transition-all duration-300 animate-fadeIn" title="Sent" />}
                                     </span>
                                   )}
                                 </div>
