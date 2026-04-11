@@ -3163,7 +3163,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
       ));
     } catch (error) {
       console.error('Send image error:', error);
-      if (!navigator.onLine) {
+      const isNetworkError = !navigator.onLine || error.message === 'Failed to fetch' || error.name === 'TypeError';
+      if (isNetworkError) {
         // Queue image message for retry when back online
         setComments(prev => prev.map(msg =>
           msg._id === tempId ? { ...msg, status: 'queued' } : msg
@@ -3344,7 +3345,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
       const data = await res.json();
       setComments(data.comments || data.updated?.comments || data?.appointment?.comments || []);
     } catch (err) {
-      if (!navigator.onLine) {
+      const isNetworkError = !navigator.onLine || err.message === 'Failed to fetch' || err.name === 'TypeError';
+      if (isNetworkError) {
         // Queue video message for retry when back online
         setComments(prev => prev.map(m =>
           m._id === tempId ? { ...m, status: 'queued' } : m
@@ -3419,7 +3421,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
       const data = await res.json();
       setComments(data.comments || data.updated?.comments || data?.appointment?.comments || []);
     } catch (err) {
-      if (!navigator.onLine) {
+      const isNetworkError = !navigator.onLine || err.message === 'Failed to fetch' || err.name === 'TypeError';
+      if (isNetworkError) {
         // Queue audio message for retry when back online
         setComments(prev => prev.map(m =>
           m._id === tempId ? { ...m, status: 'queued' } : m
@@ -3494,7 +3497,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
       const data = await res.json();
       setComments(data.comments || data.updated?.comments || data?.appointment?.comments || []);
     } catch (err) {
-      if (!navigator.onLine) {
+      const isNetworkError = !navigator.onLine || err.message === 'Failed to fetch' || err.name === 'TypeError';
+      if (isNetworkError) {
         // Queue document message for retry when back online
         setComments(prev => prev.map(m =>
           m._id === tempId ? { ...m, status: 'queued' } : m
@@ -4679,8 +4683,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
           playMessageSent(); // Play send sound
         }
       } catch (err) {
-        if (!navigator.onLine) {
-          // Queue message for retry when back online (WhatsApp-like behavior)
+        // Queue message if it's a network error or offline
+        const isNetworkError = !navigator.onLine || err.message === 'Failed to fetch' || err.name === 'TypeError';
+        if (isNetworkError) {
+          // Keep message in UI but show as queued
           setComments(prev => prev.map(msg =>
             msg._id === tempId ? { ...msg, status: 'queued' } : msg
           ));
@@ -4695,12 +4701,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
             }
           });
         } else {
-          // Remove the temp message and show error
+          // For other errors (validation, blocked), remove and show error
           setComments(prev => prev.filter(msg => msg._id !== tempId));
           toast.error(err.response?.data?.message || 'An error occurred. Please try again.');
         }
-        // Removed auto-focus: Don't automatically focus input on error
-        // User can manually click to focus when needed
       }
     })();
   };
@@ -6459,7 +6463,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
     };
   }, [showChatModal, unreadCount]);
   // Filter out locally removed deleted messages
-  const filteredComments = comments.filter(c => new Date(c.timestamp).getTime() > clearTime && !locallyRemovedIds.includes(c._id) && !(c.removedFor?.includes?.(currentUser._id)));
+  const filteredComments = comments.filter(c => {
+    const isTemp = c._id && c._id.toString().startsWith('temp-');
+    if (isTemp) return true; // Always show temporary messages
+    return new Date(c.timestamp).getTime() > clearTime && !locallyRemovedIds.includes(c._id) && !(c.removedFor?.includes?.(currentUser._id));
+  });
 
 
 
