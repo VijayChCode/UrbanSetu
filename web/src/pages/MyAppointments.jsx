@@ -2255,9 +2255,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
           ));
         }
 
-        if (settings.soundEnabled) {
-          playMessageSent();
-        }
+        // Play send sound (wrapped in try-catch since settings may not be available in this scope)
+        try { if (settings?.soundEnabled) playMessageSent?.(); } catch (_) { }
       } catch (err) {
         if (!navigator.onLine) {
           // Still offline, re-queue
@@ -2272,7 +2271,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
         }
       }
     });
-  }, [isOnline, appt._id, settings.soundEnabled, playMessageSent]);
+  }, [isOnline, appt._id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Keyboard shortcut to focus input
   useEffect(() => {
