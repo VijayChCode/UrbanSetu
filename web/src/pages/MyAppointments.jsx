@@ -5193,47 +5193,43 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
     });
 
     if (firstMessageOfDate) {
-      // Enhanced animation for scrolling to the message
-      const messageElement = messageRefs.current[firstMessageOfDate._id];
-      if (messageElement) {
-        // Add a pre-animation class for better visual feedback
-        messageElement.classList.add('date-jump-preparing');
+      const messageId = firstMessageOfDate._id;
 
-        // Smooth scroll with enhanced timing
-        messageElement.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center',
-          inline: 'nearest'
-        });
-
-        // Enhanced highlight animation with multiple effects
-        setTimeout(() => {
-          messageElement.classList.remove('date-jump-preparing');
-          setHighlightedDateMessage(firstMessageOfDate._id);
-          messageElement.classList.add('date-highlight', 'date-jump-pulse');
-
-          // Add a ripple effect
-          const ripple = document.createElement('div');
-          ripple.className = 'date-jump-ripple';
-          messageElement.style.position = 'relative';
-          messageElement.appendChild(ripple);
-
-          // Remove ripple after animation
-          setTimeout(() => {
-            if (ripple.parentNode) {
-              ripple.parentNode.removeChild(ripple);
-            }
-          }, 1000);
-
-          // Remove highlight effects after enhanced duration
-          setTimeout(() => {
-            messageElement.classList.remove('date-highlight', 'date-jump-pulse');
-            setHighlightedDateMessage(null);
-          }, 4000);
-        }, 500);
+      // Auto-expand visibleCount if message is outside visible window
+      const totalItems = filteredComments.length;
+      const msgIndex = filteredComments.findIndex(c => c._id === messageId);
+      const fromEnd = totalItems - msgIndex;
+      if (fromEnd > visibleCount) {
+        setVisibleCount(Math.min(fromEnd + 10, totalItems));
       }
+
+      // Wait for DOM to update, then scroll and apply highlight
+      setTimeout(() => {
+        const messageElement = messageRefs.current[messageId] || document.querySelector(`[data-message-id="${messageId}"]`);
+        if (messageElement) {
+          messageElement.classList.add('date-jump-preparing');
+          messageElement.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+
+          setTimeout(() => {
+            messageElement.classList.remove('date-jump-preparing');
+            setHighlightedDateMessage(messageId);
+            messageElement.classList.add('date-highlight', 'date-jump-pulse');
+
+            const ripple = document.createElement('div');
+            ripple.className = 'date-jump-ripple';
+            messageElement.style.position = 'relative';
+            messageElement.appendChild(ripple);
+            setTimeout(() => { if (ripple.parentNode) ripple.parentNode.removeChild(ripple); }, 1000);
+
+            setTimeout(() => {
+              messageElement.classList.remove('date-highlight', 'date-jump-pulse');
+              setHighlightedDateMessage(null);
+            }, 4000);
+          }, 500);
+        }
+      }, 150);
     } else {
-      toast.info('No messages found for the selected date in visible chat', {
+      toast.info('No messages found for the selected date in this chat', {
         position: 'top-center',
         autoClose: 3000,
         hideProgressBar: false,
@@ -8792,14 +8788,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                           className={`bg-white dark:bg-gray-700 rounded-lg p-2 border-l-4 border-purple-500 cursor-pointer transition-all duration-200 hover:shadow-md ${highlightedPinnedMessage === pinnedMsg._id ? 'ring-2 ring-purple-400 shadow-lg' : ''
                             }`}
                           onClick={() => {
-                            // Highlight the pinned message and scroll to it
+                            // Highlight the pinned message and scroll to it (auto-loads if not visible)
                             setHighlightedPinnedMessage(pinnedMsg._id);
-                            const messageElement = document.getElementById(`message-${pinnedMsg._id}`);
-                            if (messageElement) {
-                              messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                              // Remove highlight after 3 seconds
-                              setTimeout(() => setHighlightedPinnedMessage(null), 3000);
-                            }
+                            scrollToMessageById(pinnedMsg._id, 'pinned-highlight');
+                            setTimeout(() => setHighlightedPinnedMessage(null), 3000);
                           }}
                         >
                           <div className="flex items-start justify-between">
