@@ -314,15 +314,7 @@ const ChatSettingsModal = ({ isOpen, onClose, settings, updateSetting }) => {
                     </section>
                 </div>
 
-                {/* Footer */}
-                <div className={`p-5 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} flex justify-end`}>
-                    <button
-                        onClick={onClose}
-                        className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors shadow-sm"
-                    >
-                        Done
-                    </button>
-                </div>
+
             </div>
         </div>
     );
