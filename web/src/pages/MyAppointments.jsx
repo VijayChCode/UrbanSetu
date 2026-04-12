@@ -2206,18 +2206,49 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   const { isOnline } = useNetworkStatus();
   const messageQueueRef = useRef([]);
   const recentlySentIdsRef = useRef(new Set()); // Track IDs sent via retry to prevent socket duplicates
+  const processingQueueRef = useRef(false); // Prevent concurrent queue processing
 
-  // Retry queued messages when internet comes back online
+  // localStorage persistence helpers for queue
+  const getQueueKey = () => `chatQueue_${appt._id}_${currentUser._id}`;
+  const persistQueue = (queue) => {
+    try { localStorage.setItem(getQueueKey(), JSON.stringify(queue)); } catch (_) {}
+  };
+  const loadPersistedQueue = () => {
+    try { return JSON.parse(localStorage.getItem(getQueueKey()) || '[]'); } catch (_) { return []; }
+  };
+
+  // Load persisted queue on mount — restores queued messages after page refresh
   useEffect(() => {
-    if (!isOnline || messageQueueRef.current.length === 0) return;
+    const saved = loadPersistedQueue();
+    if (saved.length > 0) {
+      messageQueueRef.current = saved;
+      // Inject the saved temp messages back into the chat
+      const tempMessages = saved.map(item => item.tempMessage).filter(Boolean);
+      if (tempMessages.length > 0) {
+        setComments(prev => {
+          // Avoid duplicates — only add temp messages not already present
+          const existingIds = new Set(prev.map(c => c._id));
+          const newTemps = tempMessages.filter(t => !existingIds.has(t._id));
+          return newTemps.length > 0 ? [...prev, ...newTemps] : prev;
+        });
+      }
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-    const retryQueue = [...messageQueueRef.current];
+  // Sequential queue processor — handles retry logic
+  const processRetryQueue = async () => {
+    if (processingQueueRef.current) return; // Already processing
+    if (!navigator.onLine || messageQueueRef.current.length === 0) return;
+
+    processingQueueRef.current = true;
+    const queue = [...messageQueueRef.current];
     messageQueueRef.current = [];
+    persistQueue([]);
 
-    retryQueue.forEach(async (queuedItem) => {
+    for (const queuedItem of queue) {
       const { tempId, type, payload, originalReplyToId } = queuedItem;
 
-      // Update status to 'sending'
+      // Update status to 'sending' (still shows clock icon)
       setComments(prev => prev.map(msg =>
         msg._id === tempId ? { ...msg, status: 'sending' } : msg
       ));
@@ -2238,7 +2269,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
 
         // Track this ID so socket handler won't add a duplicate
         recentlySentIdsRef.current.add(newComment._id);
-        // Auto-cleanup after 10 seconds
         setTimeout(() => recentlySentIdsRef.current.delete(newComment._id), 10000);
 
         // Replace the temp message with the server response
@@ -2246,29 +2276,59 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
           msg._id === tempId
             ? {
               ...newComment,
-              // Preserve original replyTo if it was a call (backend won't return it)
               replyTo: originalReplyToId || newComment.replyTo || msg.replyTo
             }
             : msg
         ));
 
-        // Play send sound (wrapped in try-catch since settings may not be available in this scope)
+        // Play send sound
         try { if (settings?.soundEnabled) playMessageSent?.(); } catch (_) { }
       } catch (err) {
-        if (!navigator.onLine) {
-          // Still offline, re-queue
+        const isNetworkError = !navigator.onLine || err.message === 'Failed to fetch' || err.name === 'TypeError';
+        if (isNetworkError) {
+          // Still offline, re-queue this and remaining items
           setComments(prev => prev.map(msg =>
             msg._id === tempId ? { ...msg, status: 'queued' } : msg
           ));
           messageQueueRef.current.push(queuedItem);
         } else {
-          // Online but still failing, remove the message
+          // Server error, remove the message
           setComments(prev => prev.filter(msg => msg._id !== tempId));
           toast.error(err.response?.data?.message || 'Failed to send message. Please try again.');
         }
       }
-    });
-  }, [isOnline, appt._id]); // eslint-disable-line react-hooks/exhaustive-deps
+    }
+
+    // Persist any items that were re-queued
+    persistQueue(messageQueueRef.current);
+    processingQueueRef.current = false;
+  };
+
+  // Trigger retry when internet comes back online
+  useEffect(() => {
+    if (isOnline) processRetryQueue();
+  }, [isOnline]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Periodic fallback retry (every 10s) — handles cases where isOnline detection is unreliable
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (navigator.onLine && messageQueueRef.current.length > 0) {
+        processRetryQueue();
+      }
+    }, 10000);
+    return () => clearInterval(interval);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Also trigger retry on socket reconnection (reliable internet indicator)
+  useEffect(() => {
+    const handleSocketReconnect = () => {
+      if (messageQueueRef.current.length > 0) {
+        setTimeout(() => processRetryQueue(), 1000); // Small delay to ensure connection is stable
+      }
+    };
+    socket.on('connect', handleSocketReconnect);
+    return () => socket.off('connect', handleSocketReconnect);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Keyboard shortcut to focus input
   useEffect(() => {
@@ -3173,8 +3233,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
         messageQueueRef.current.push({
           tempId,
           type: 'image',
-          payload: { message: caption || '', imageUrl: imageUrl, type: 'image' }
+          payload: { message: caption || '', imageUrl: imageUrl, type: 'image' },
+          tempMessage: { ...tempMessage, status: 'queued' }
         });
+        persistQueue(messageQueueRef.current);
       } else {
         setComments(prev => prev.filter(msg => msg._id !== tempId));
         toast.error(error.response?.data?.message || "Failed to send image.");
@@ -3355,8 +3417,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
         messageQueueRef.current.push({
           tempId,
           type: 'video',
-          payload: { message: caption || '', videoUrl, type: 'video' }
+          payload: { message: caption || '', videoUrl, type: 'video' },
+          tempMessage: { ...tempMessage, status: 'queued' }
         });
+        persistQueue(messageQueueRef.current);
       } else {
         toast.error('Failed to send video');
         setComments(prev => prev.filter(m => m._id !== tempId));
@@ -3431,8 +3495,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
         messageQueueRef.current.push({
           tempId,
           type: 'audio',
-          payload: { message: caption || '', audioUrl, audioName: file.name, audioMimeType: file.type || null, type: 'audio' }
+          payload: { message: caption || '', audioUrl, audioName: file.name, audioMimeType: file.type || null, type: 'audio' },
+          tempMessage: { ...tempMessage, status: 'queued' }
         });
+        persistQueue(messageQueueRef.current);
       } else {
         toast.error('Failed to send audio');
         setComments(prev => prev.filter(m => m._id !== tempId));
@@ -3507,8 +3573,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
         messageQueueRef.current.push({
           tempId,
           type: 'document',
-          payload: { message: caption || '', documentUrl, documentName: file.name, documentMimeType: file.type || null, type: 'document' }
+          payload: { message: caption || '', documentUrl, documentName: file.name, documentMimeType: file.type || null, type: 'document' },
+          tempMessage: { ...tempMessage, status: 'queued' }
         });
+        persistQueue(messageQueueRef.current);
       } else {
         toast.error('Failed to send document');
         setComments(prev => prev.filter(m => m._id !== tempId));
@@ -4693,11 +4761,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
         // Queue message if it's a network error or offline
         const isNetworkError = !navigator.onLine || err.message === 'Failed to fetch' || err.name === 'TypeError';
         if (isNetworkError) {
-          // Keep message in UI but show as queued
+           // Keep message in UI but show as queued
           setComments(prev => prev.map(msg =>
             msg._id === tempId ? { ...msg, status: 'queued' } : msg
           ));
-          messageQueueRef.current.push({
+          const queueItem = {
             tempId,
             type: 'text',
             originalReplyToId,
@@ -4705,8 +4773,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
               message: messageContent,
               ...(replyToId ? { replyTo: replyToId } : {}),
               ...(previewDismissed ? { previewDismissed: true } : {})
-            }
-          });
+            },
+            tempMessage: { ...tempMessage, status: 'queued' }
+          };
+          messageQueueRef.current.push(queueItem);
+          persistQueue(messageQueueRef.current);
         } else {
           // For other errors (validation, blocked), remove and show error
           setComments(prev => prev.filter(msg => msg._id !== tempId));
@@ -9575,15 +9646,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                   )}
                                   {(c.senderEmail === currentUser.email) && !c.deleted && (
                                     <span className="flex items-center gap-1 ml-1">
-                                      {c.status === 'queued'
-                                        ? <FaClock className="text-yellow-300/80 text-xs animate-pulse transition-all duration-300" title="Waiting for internet connection..." />
+                                      {(c.status === 'queued' || c.status === 'sending')
+                                        ? <FaClock className="text-yellow-300/80 text-xs animate-pulse transition-all duration-300" title={c.status === 'queued' ? "Waiting for internet connection..." : "Sending..."} />
                                         : c.readBy?.includes(otherParty?._id)
                                           ? <FaCheckDouble className="text-green-400 text-xs transition-all duration-300 animate-fadeIn" title="Read" />
                                           : c.status === 'delivered'
                                             ? <FaCheckDouble className="text-blue-200 text-xs transition-all duration-300 animate-fadeIn" title="Delivered" />
-                                            : c.status === 'sending'
-                                              ? <FaCheck className="text-blue-200 text-xs animate-pulse transition-all duration-300" title="Sending..." />
-                                              : <FaCheck className="text-blue-200 text-xs transition-all duration-300 animate-fadeIn" title="Sent" />}
+                                            : <FaCheck className="text-blue-200 text-xs transition-all duration-300 animate-fadeIn" title="Sent" />}
                                     </span>
                                   )}
                                 </div>
