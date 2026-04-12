@@ -2207,6 +2207,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   const messageQueueRef = useRef([]);
   const recentlySentIdsRef = useRef(new Set()); // Track IDs sent via retry to prevent socket duplicates
   const processingQueueRef = useRef(false); // Prevent concurrent queue processing
+  const processRetryQueueRef = useRef(null); // Ref to always hold the latest processRetryQueue function
 
   // localStorage persistence helpers for queue
   const getQueueKey = () => `chatQueue_${appt._id}_${currentUser._id}`;
@@ -2232,13 +2233,15 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
           return newTemps.length > 0 ? [...prev, ...newTemps] : prev;
         });
       }
+      // Try to send immediately if online
+      setTimeout(() => processRetryQueueRef.current?.(), 2000);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Sequential queue processor — handles retry logic
   const processRetryQueue = async () => {
     if (processingQueueRef.current) return; // Already processing
-    if (!navigator.onLine || messageQueueRef.current.length === 0) return;
+    if (messageQueueRef.current.length === 0) return; // Nothing to process
 
     processingQueueRef.current = true;
     const queue = [...messageQueueRef.current];
@@ -2284,18 +2287,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
         // Play send sound
         try { if (settings?.soundEnabled) playMessageSent?.(); } catch (_) { }
       } catch (err) {
-        const isNetworkError = !navigator.onLine || err.message === 'Failed to fetch' || err.name === 'TypeError';
-        if (isNetworkError) {
-          // Still offline, re-queue this and remaining items
-          setComments(prev => prev.map(msg =>
-            msg._id === tempId ? { ...msg, status: 'queued' } : msg
-          ));
-          messageQueueRef.current.push(queuedItem);
-        } else {
-          // Server error, remove the message
-          setComments(prev => prev.filter(msg => msg._id !== tempId));
-          toast.error(err.response?.data?.message || 'Failed to send message. Please try again.');
-        }
+        // On ANY error during retry, always re-queue the message
+        // This prevents messages from being permanently lost due to CSRF/token/transient errors
+        setComments(prev => prev.map(msg =>
+          msg._id === tempId ? { ...msg, status: 'queued' } : msg
+        ));
+        messageQueueRef.current.push(queuedItem);
       }
     }
 
@@ -2304,31 +2301,48 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
     processingQueueRef.current = false;
   };
 
-  // Trigger retry when internet comes back online
+  // Keep the ref updated so all callbacks always call the latest version
+  processRetryQueueRef.current = processRetryQueue;
+
+  // Trigger retry when isOnline hook detects reconnection
   useEffect(() => {
-    if (isOnline) processRetryQueue();
+    if (isOnline && messageQueueRef.current.length > 0) {
+      processRetryQueueRef.current?.();
+    }
   }, [isOnline]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Periodic fallback retry (every 10s) — handles cases where isOnline detection is unreliable
+  // Direct window 'online' event listener — more reliable than the hook for some browsers
+  useEffect(() => {
+    const handleOnline = () => {
+      if (messageQueueRef.current.length > 0) {
+        // Small delay to let the network stabilize
+        setTimeout(() => processRetryQueueRef.current?.(), 1500);
+      }
+    };
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, []);
+
+  // Periodic fallback retry (every 5s) — handles cases where network detection is unreliable
   useEffect(() => {
     const interval = setInterval(() => {
-      if (navigator.onLine && messageQueueRef.current.length > 0) {
-        processRetryQueue();
+      if (messageQueueRef.current.length > 0) {
+        processRetryQueueRef.current?.();
       }
-    }, 10000);
+    }, 5000);
     return () => clearInterval(interval);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   // Also trigger retry on socket reconnection (reliable internet indicator)
   useEffect(() => {
     const handleSocketReconnect = () => {
       if (messageQueueRef.current.length > 0) {
-        setTimeout(() => processRetryQueue(), 1000); // Small delay to ensure connection is stable
+        setTimeout(() => processRetryQueueRef.current?.(), 1000);
       }
     };
     socket.on('connect', handleSocketReconnect);
     return () => socket.off('connect', handleSocketReconnect);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   // Keyboard shortcut to focus input
   useEffect(() => {
