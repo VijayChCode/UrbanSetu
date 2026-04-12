@@ -4036,12 +4036,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
     }
   }, [comments]);
 
-  // Fetch pinned messages when comments are loaded and chat is open
+  // Fetch pinned messages when chat is opened (not on every message)
   useEffect(() => {
-    if (showChatModal && appt?._id && comments.length > 0) {
+    if (showChatModal && appt?._id && navigator.onLine) {
       fetchPinnedMessages();
     }
-  }, [showChatModal, appt._id, comments.length]);
+  }, [showChatModal, appt._id]);
 
   // Auto-close shortcut tip after 10 seconds
   useEffect(() => {
