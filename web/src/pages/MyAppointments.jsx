@@ -12740,6 +12740,15 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                         />
                                       </div>
                                     )}
+                                    {/* Document Message */}
+                                    {message.documentUrl && (
+                                      <div className="mb-2 flex items-center gap-2 py-1">
+                                        <FaFileAlt className={`text-sm ${isMe ? 'text-blue-200' : 'text-orange-500'}`} />
+                                        <span className={`text-sm truncate ${isMe ? 'text-blue-100' : 'text-gray-600 dark:text-gray-300'}`}>
+                                          {message.documentName || 'Document'}
+                                        </span>
+                                      </div>
+                                    )}
                                     <FormattedTextWithReadMore
                                       text={(message.message || '').replace(/\n+$/, '')}
                                       isSentMessage={isMe}
