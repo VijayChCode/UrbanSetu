@@ -2205,6 +2205,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   // Network status for offline message queuing (WhatsApp-like behavior)
   const { isOnline } = useNetworkStatus();
   const messageQueueRef = useRef([]);
+  const recentlySentIdsRef = useRef(new Set()); // Track IDs sent via retry to prevent socket duplicates
 
   // Retry queued messages when internet comes back online
   useEffect(() => {
@@ -2235,25 +2236,21 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
         const data = await res.json();
         const newComment = data.comments[data.comments.length - 1];
 
-        if (type === 'text') {
-          setComments(prev => prev.map(msg =>
-            msg._id === tempId
-              ? {
-                ...msg,
-                _id: newComment._id,
-                status: newComment.status,
-                readBy: newComment.readBy || msg.readBy,
-                timestamp: newComment.timestamp || msg.timestamp,
-                replyTo: originalReplyToId || newComment.replyTo || msg.replyTo
-              }
-              : msg
-          ));
-        } else {
-          // For media messages, replace with full server response
-          setComments(prev => prev.map(msg =>
-            msg._id === tempId ? { ...newComment } : msg
-          ));
-        }
+        // Track this ID so socket handler won't add a duplicate
+        recentlySentIdsRef.current.add(newComment._id);
+        // Auto-cleanup after 10 seconds
+        setTimeout(() => recentlySentIdsRef.current.delete(newComment._id), 10000);
+
+        // Replace the temp message with the server response
+        setComments(prev => prev.map(msg =>
+          msg._id === tempId
+            ? {
+              ...newComment,
+              // Preserve original replyTo if it was a call (backend won't return it)
+              replyTo: originalReplyToId || newComment.replyTo || msg.replyTo
+            }
+            : msg
+        ));
 
         // Play send sound (wrapped in try-catch since settings may not be available in this scope)
         try { if (settings?.soundEnabled) playMessageSent?.(); } catch (_) { }
@@ -3154,6 +3151,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
       const data = await res.json();
       // Find the new comment from the response
       const newComment = data.comments[data.comments.length - 1];
+
+      // Track this ID so socket handler won't add a duplicate
+      recentlySentIdsRef.current.add(newComment._id);
+      setTimeout(() => recentlySentIdsRef.current.delete(newComment._id), 10000);
 
       // Replace the temp message with the real one
       setComments(prev => prev.map(msg =>
@@ -4634,10 +4635,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
       inputRef.current.focus();
     }
 
-    // Scroll to bottom immediately after adding the message
-    if (chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
+    // Scroll to bottom after React renders the new message
+    setTimeout(() => {
+      if (chatEndRef.current) {
+        chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 50);
 
     // Send message in background without blocking UI
     (async () => {
@@ -4664,6 +4667,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
 
         // Update only the status and ID of the temp message, keeping it visible
         // Preserve replyTo if it was a call (not sent to backend but stored locally)
+        // Track this ID so socket handler won't add a duplicate
+        recentlySentIdsRef.current.add(newComment._id);
+        setTimeout(() => recentlySentIdsRef.current.delete(newComment._id), 10000);
+
         setComments(prev => prev.map(msg =>
           msg._id === tempId
             ? {
@@ -6242,6 +6249,24 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
     function handleCommentUpdate(data) {
       if (data.appointmentId === appt._id) {
         setComments((prev) => {
+          // Skip if this message was just sent via retry (prevents duplicate bubbles)
+          if (recentlySentIdsRef.current.has(data.comment._id)) {
+            // Still update the existing message in place if it exists
+            const existingIdx = prev.findIndex(c => c._id === data.comment._id);
+            if (existingIdx !== -1) {
+              const updated = [...prev];
+              const localComment = prev[existingIdx];
+              const incomingComment = data.comment;
+              let status = incomingComment.status;
+              if (localComment.status === 'read' && incomingComment.status !== 'read') {
+                status = 'read';
+              }
+              updated[existingIdx] = { ...incomingComment, status };
+              return updated;
+            }
+            return prev; // Already handled by retry, skip adding
+          }
+
           const idx = prev.findIndex(c => c._id === data.comment._id);
           if (idx !== -1) {
             // Update the existing comment in place, but do not downgrade 'read' to 'delivered'
@@ -6255,19 +6280,34 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
             updated[idx] = { ...incomingComment, status };
             return updated;
           } else {
-            // Only add if not present and not a temporary message
-            const isTemporaryMessage = prev.some(msg => msg._id.toString().startsWith('temp-'));
-            if (!isTemporaryMessage || data.comment.senderEmail !== currentUser.email) {
-              // If this is a new message from another user and chat is not open, increment unread count
-              if (data.comment.senderEmail !== currentUser.email && !showChatModal && !data.comment.readBy?.includes(currentUser._id)) {
-                setUnreadNewMessages(prev => prev + 1);
-                // Do not play notification sound here; App.jsx handles global notifications
-              } else {
-                playMessageReceived(); // Play receive sound
+            // Also check if we have a temp message for this sender — skip if so
+            const hasTempFromSender = prev.some(msg =>
+              msg._id.toString().startsWith('temp-') && msg.senderEmail === data.comment.senderEmail
+            );
+            if (hasTempFromSender && data.comment.senderEmail === currentUser.email) {
+              // This is our own message arriving via socket while we still have the temp — replace the temp
+              const tempMsg = prev.find(msg =>
+                msg._id.toString().startsWith('temp-') &&
+                msg.senderEmail === currentUser.email &&
+                msg.message === data.comment.message
+              );
+              if (tempMsg) {
+                return prev.map(msg =>
+                  msg._id === tempMsg._id ? { ...data.comment } : msg
+                );
               }
+              // No exact match, just add it
               return [...prev, data.comment];
             }
-            return prev;
+
+            // If this is a new message from another user and chat is not open, increment unread count
+            if (data.comment.senderEmail !== currentUser.email && !showChatModal && !data.comment.readBy?.includes(currentUser._id)) {
+              setUnreadNewMessages(prev => prev + 1);
+              // Do not play notification sound here; App.jsx handles global notifications
+            } else {
+              playMessageReceived(); // Play receive sound
+            }
+            return [...prev, data.comment];
           }
         });
       }
