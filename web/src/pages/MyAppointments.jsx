@@ -9984,14 +9984,14 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                   <div className="flex items-center bg-blue-50 dark:bg-blue-900/40 border-l-4 border-blue-400 px-2 py-1 rounded">
                     <span className="text-xs text-gray-700 dark:text-gray-300 font-semibold mr-2">Replying to:</span>
                     <span className="text-xs text-gray-600 dark:text-gray-400 truncate max-w-[200px] flex items-center gap-1">
-                      {replyTo.audioUrl ? (
-                        <><FaMicrophone className="text-xs inline" /> Voice message</>
-                      ) : replyTo.videoUrl ? (
-                        <><FaVideo className="text-xs inline" /> Video</>
-                      ) : replyTo.imageUrl ? (
-                        <>📷 Photo</>
-                      ) : replyTo.documentUrl ? (
-                        <><FaFileAlt className="text-xs inline" /> Document</>
+                      {(replyTo.audioUrl || replyTo.type === 'audio') ? (
+                        <span className="flex items-center gap-1"><FaMicrophone className="text-[10px] inline" /> Voice message</span>
+                      ) : (replyTo.videoUrl || replyTo.type === 'video') ? (
+                        <span className="flex items-center gap-1"><FaVideo className="text-[10px] inline" /> Video</span>
+                      ) : (replyTo.imageUrl || replyTo.type === 'image') ? (
+                        <span className="flex items-center gap-1">📷 Photo</span>
+                      ) : (replyTo.documentUrl || replyTo.type === 'document') ? (
+                        <span className="flex items-center gap-1"><FaFileAlt className="text-[10px] inline" /> Document</span>
                       ) : (
                         <>{replyTo.message?.substring(0, 40)}{replyTo.message?.length > 40 ? '...' : ''}</>
                       )}
