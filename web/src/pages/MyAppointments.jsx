@@ -2208,6 +2208,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   const recentlySentIdsRef = useRef(new Set()); // Track IDs sent via retry to prevent socket duplicates
   const processingQueueRef = useRef(false); // Prevent concurrent queue processing
   const processRetryQueueRef = useRef(null); // Ref to always hold the latest processRetryQueue function
+  const processingStartRef = useRef(null); // Timestamp when processing started (for stale lock recovery)
 
   // localStorage persistence helpers for queue
   const getQueueKey = () => `chatQueue_${appt._id}_${currentUser._id}`;
@@ -2244,61 +2245,75 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
     if (messageQueueRef.current.length === 0) return; // Nothing to process
 
     processingQueueRef.current = true;
-    const queue = [...messageQueueRef.current];
-    messageQueueRef.current = [];
-    persistQueue([]);
+    processingStartRef.current = Date.now();
 
-    for (const queuedItem of queue) {
-      const { tempId, type, payload, originalReplyToId } = queuedItem;
+    try {
+      const queue = [...messageQueueRef.current];
+      messageQueueRef.current = [];
+      persistQueue([]);
 
-      // Update status to 'sending' (still shows clock icon)
-      setComments(prev => prev.map(msg =>
-        msg._id === tempId ? { ...msg, status: 'sending' } : msg
-      ));
+      for (const queuedItem of queue) {
+        const { tempId, type, payload, originalReplyToId } = queuedItem;
 
-      try {
-        const res = await authenticatedFetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment`, {
-          method: 'POST',
-          body: JSON.stringify(payload)
-        });
+        // Update status to 'sending' (still shows clock icon)
+        setComments(prev => prev.map(msg =>
+          msg._id === tempId ? { ...msg, status: 'sending' } : msg
+        ));
 
-        if (!res.ok) {
-          const errorData = await res.json().catch(() => ({}));
-          throw { response: { status: res.status, data: errorData } };
+        // Use AbortController with 15s timeout to prevent hanging forever
+        const controller = new AbortController();
+        const fetchTimeout = setTimeout(() => controller.abort(), 15000);
+
+        try {
+          const res = await authenticatedFetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment`, {
+            method: 'POST',
+            body: JSON.stringify(payload),
+            signal: controller.signal
+          });
+          clearTimeout(fetchTimeout);
+
+          if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}));
+            throw { response: { status: res.status, data: errorData } };
+          }
+
+          const data = await res.json();
+          const newComment = data.comments[data.comments.length - 1];
+
+          // Track this ID so socket handler won't add a duplicate
+          recentlySentIdsRef.current.add(newComment._id);
+          setTimeout(() => recentlySentIdsRef.current.delete(newComment._id), 10000);
+
+          // Replace the temp message with the server response
+          setComments(prev => prev.map(msg =>
+            msg._id === tempId
+              ? {
+                ...newComment,
+                replyTo: originalReplyToId || newComment.replyTo || msg.replyTo
+              }
+              : msg
+          ));
+
+          // Play send sound
+          try { if (settings?.soundEnabled) playMessageSent?.(); } catch (_) { }
+        } catch (err) {
+          clearTimeout(fetchTimeout);
+          // On ANY error during retry, always re-queue the message
+          setComments(prev => prev.map(msg =>
+            msg._id === tempId ? { ...msg, status: 'queued' } : msg
+          ));
+          messageQueueRef.current.push(queuedItem);
         }
-
-        const data = await res.json();
-        const newComment = data.comments[data.comments.length - 1];
-
-        // Track this ID so socket handler won't add a duplicate
-        recentlySentIdsRef.current.add(newComment._id);
-        setTimeout(() => recentlySentIdsRef.current.delete(newComment._id), 10000);
-
-        // Replace the temp message with the server response
-        setComments(prev => prev.map(msg =>
-          msg._id === tempId
-            ? {
-              ...newComment,
-              replyTo: originalReplyToId || newComment.replyTo || msg.replyTo
-            }
-            : msg
-        ));
-
-        // Play send sound
-        try { if (settings?.soundEnabled) playMessageSent?.(); } catch (_) { }
-      } catch (err) {
-        // On ANY error during retry, always re-queue the message
-        // This prevents messages from being permanently lost due to CSRF/token/transient errors
-        setComments(prev => prev.map(msg =>
-          msg._id === tempId ? { ...msg, status: 'queued' } : msg
-        ));
-        messageQueueRef.current.push(queuedItem);
       }
+    } catch (outerErr) {
+      // Catch any completely unexpected errors in the processing loop
+      console.error('[ChatQueue] Unexpected error in processRetryQueue:', outerErr);
+    } finally {
+      // ALWAYS reset processing flag, even on unexpected errors
+      persistQueue(messageQueueRef.current);
+      processingQueueRef.current = false;
+      processingStartRef.current = null;
     }
-
-    // Persist any items that were re-queued
-    persistQueue(messageQueueRef.current);
-    processingQueueRef.current = false;
   };
 
   // Keep the ref updated so all callbacks always call the latest version
@@ -2315,7 +2330,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   useEffect(() => {
     const handleOnline = () => {
       if (messageQueueRef.current.length > 0) {
-        // Small delay to let the network stabilize
         setTimeout(() => processRetryQueueRef.current?.(), 1500);
       }
     };
@@ -2323,9 +2337,29 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
     return () => window.removeEventListener('online', handleOnline);
   }, []);
 
-  // Periodic fallback retry (every 5s) — handles cases where network detection is unreliable
+  // Tab visibility change — retry when user comes back to the tab
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && messageQueueRef.current.length > 0) {
+        setTimeout(() => processRetryQueueRef.current?.(), 1000);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
+  // Periodic fallback retry (every 5s) with stale lock recovery
   useEffect(() => {
     const interval = setInterval(() => {
+      // Stale lock recovery: if processing has been stuck for >30s, force reset
+      if (processingQueueRef.current && processingStartRef.current) {
+        const elapsed = Date.now() - processingStartRef.current;
+        if (elapsed > 30000) {
+          console.warn('[ChatQueue] Stale lock detected, force resetting after', elapsed, 'ms');
+          processingQueueRef.current = false;
+          processingStartRef.current = null;
+        }
+      }
       if (messageQueueRef.current.length > 0) {
         processRetryQueueRef.current?.();
       }
