@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { FaArchive, FaBan, FaCalendar, FaCalendarAlt, FaCheck, FaCheckDouble, FaCheckSquare, FaCircle, FaCheckCircle, FaClock, FaCog, FaCommentDots, FaCopy, FaCreditCard, FaDownload, FaEllipsisV, FaEnvelope, FaExclamationTriangle, FaFileContract, FaFileAlt, FaFlag, FaHandshake, FaHistory, FaInfoCircle, FaLightbulb, FaMoneyBillWave, FaPaperPlane, FaPen, FaPhone, FaRegStar, FaSearch, FaStar, FaSync, FaThumbtack, FaTimes, FaTrash, FaUndo, FaUserShield, FaVideo, FaWallet, FaPlay } from 'react-icons/fa';
+import { FaArchive, FaBan, FaCalendar, FaCalendarAlt, FaCheck, FaCheckDouble, FaCheckSquare, FaCircle, FaCheckCircle, FaClock, FaCog, FaCommentDots, FaCopy, FaCreditCard, FaDownload, FaEllipsisV, FaEnvelope, FaExclamationTriangle, FaFileContract, FaFileAlt, FaFlag, FaHandshake, FaHistory, FaInfoCircle, FaLightbulb, FaMicrophone, FaMoneyBillWave, FaPaperPlane, FaPen, FaPhone, FaRegStar, FaSearch, FaStar, FaSync, FaThumbtack, FaTimes, FaTrash, FaUndo, FaUserShield, FaVideo, FaWallet, FaPlay } from 'react-icons/fa';
 import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 import { EmojiButton } from '../components/EmojiPicker';
 import CustomEmojiPicker from '../components/EmojiPicker';
@@ -8812,7 +8812,15 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                 </span>
                               </div>
                               <div className="text-sm text-gray-800 dark:text-gray-200 line-clamp-2">
-                                {pinnedMsg.message}
+                                {pinnedMsg.audioUrl ? (
+                                  <span className="flex items-center gap-1 text-gray-500 dark:text-gray-400"><FaMicrophone className="text-xs" /> Voice message</span>
+                                ) : pinnedMsg.videoUrl ? (
+                                  <span className="flex items-center gap-1 text-gray-500 dark:text-gray-400"><FaVideo className="text-xs" /> Video</span>
+                                ) : pinnedMsg.imageUrl ? (
+                                  <span className="flex items-center gap-1 text-gray-500 dark:text-gray-400">📷 Photo</span>
+                                ) : pinnedMsg.documentUrl ? (
+                                  <span className="flex items-center gap-1 text-gray-500 dark:text-gray-400"><FaFileAlt className="text-xs" /> Document</span>
+                                ) : pinnedMsg.message || ''}
                               </div>
                             </div>
                             <button
@@ -9975,7 +9983,19 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                 <div className="px-4 mb-2">
                   <div className="flex items-center bg-blue-50 dark:bg-blue-900/40 border-l-4 border-blue-400 px-2 py-1 rounded">
                     <span className="text-xs text-gray-700 dark:text-gray-300 font-semibold mr-2">Replying to:</span>
-                    <span className="text-xs text-gray-600 dark:text-gray-400 truncate max-w-[200px]">{replyTo.message?.substring(0, 40)}{replyTo.message?.length > 40 ? '...' : ''}</span>
+                    <span className="text-xs text-gray-600 dark:text-gray-400 truncate max-w-[200px] flex items-center gap-1">
+                      {replyTo.audioUrl ? (
+                        <><FaMicrophone className="text-xs inline" /> Voice message</>
+                      ) : replyTo.videoUrl ? (
+                        <><FaVideo className="text-xs inline" /> Video</>
+                      ) : replyTo.imageUrl ? (
+                        <>📷 Photo</>
+                      ) : replyTo.documentUrl ? (
+                        <><FaFileAlt className="text-xs inline" /> Document</>
+                      ) : (
+                        <>{replyTo.message?.substring(0, 40)}{replyTo.message?.length > 40 ? '...' : ''}</>
+                      )}
+                    </span>
                     <button className="ml-auto text-gray-400 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full p-1 transition-colors" onClick={() => setReplyTo(null)} title="Cancel reply">
                       <FaTimes className="w-3 h-3" />
                     </button>
@@ -12661,6 +12681,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                   </span>
                                 ) : (
                                   <>
+                                    {/* Audio Message */}
+                                    {message.audioUrl && (
+                                      <div className="mb-2 flex items-center gap-2 py-1">
+                                        <FaMicrophone className={`text-sm ${isMe ? 'text-blue-200' : 'text-purple-500'}`} />
+                                        <span className={`text-sm ${isMe ? 'text-blue-100' : 'text-gray-600 dark:text-gray-300'}`}>Voice message</span>
+                                      </div>
+                                    )}
                                     {/* Video Message */}
                                     {message.videoUrl && (
                                       <div className="mb-2 relative group max-w-full inline-block">
