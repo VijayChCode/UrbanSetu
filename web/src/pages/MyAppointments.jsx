@@ -2213,7 +2213,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   // localStorage persistence helpers for queue
   const getQueueKey = () => `chatQueue_${appt._id}_${currentUser._id}`;
   const persistQueue = (queue) => {
-    try { localStorage.setItem(getQueueKey(), JSON.stringify(queue)); } catch (_) {}
+    try { localStorage.setItem(getQueueKey(), JSON.stringify(queue)); } catch (_) { }
   };
   const loadPersistedQueue = () => {
     try { return JSON.parse(localStorage.getItem(getQueueKey()) || '[]'); } catch (_) { return []; }
@@ -4811,7 +4811,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
         // Queue message if it's a network error or offline
         const isNetworkError = !navigator.onLine || err.message === 'Failed to fetch' || err.name === 'TypeError';
         if (isNetworkError) {
-           // Keep message in UI but show as queued
+          // Keep message in UI but show as queued
           setComments(prev => prev.map(msg =>
             msg._id === tempId ? { ...msg, status: 'queued' } : msg
           ));
