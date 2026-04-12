@@ -201,9 +201,9 @@ const LoadingSpinner = () => (
       <div className="relative w-28 h-28 flex items-center justify-center mb-8">
         <UrbanSetuSpinner size="xl" className="!w-full !h-full" isBright={true} />
         <div className="absolute inset-0 flex items-center justify-center">
-             <div className="p-3.5 bg-white/10 backdrop-blur-md rounded-full shadow-inner border border-white/20">
-                <FaHome className="text-4xl text-blue-600 dark:text-blue-400 animate-pulse" />
-             </div>
+          <div className="p-3.5 bg-white/10 backdrop-blur-md rounded-full shadow-inner border border-white/20">
+            <FaHome className="text-4xl text-blue-600 dark:text-blue-400 animate-pulse" />
+          </div>
         </div>
       </div>
 
@@ -213,7 +213,7 @@ const LoadingSpinner = () => (
           UrbanSetu
         </h1>
         <div className="flex flex-col items-center justify-center gap-1.5">
-          <span className="text-gray-500 dark:text-gray-400 font-bold tracking-[0.25em] text-xs uppercase opacity-80">Initializing Platform</span>
+          <span className="text-gray-500 dark:text-gray-400 font-bold tracking-[0.25em] text-xs uppercase opacity-80">LOADING</span>
           <div className="flex gap-1.5 mt-0.5">
             <span className="w-1.5 h-1.5 bg-blue-500 dark:bg-blue-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
             <span className="w-1.5 h-1.5 bg-purple-500 dark:bg-purple-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
