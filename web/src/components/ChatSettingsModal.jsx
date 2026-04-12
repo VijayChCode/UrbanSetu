@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaTimes, FaPalette, FaFont, FaExpandAlt, FaVolumeUp, FaKeyboard, FaClock, FaArrowDown, FaCog, FaChartBar, FaBug, FaUniversalAccess, FaEye, FaRunning, FaBlind, FaTextHeight } from 'react-icons/fa';
+import { FaPalette, FaFont, FaExpandAlt, FaVolumeUp, FaKeyboard, FaClock, FaArrowDown, FaCog, FaChartBar, FaBug, FaUniversalAccess, FaEye, FaRunning, FaBlind, FaTextHeight } from 'react-icons/fa';
 
 const ChatSettingsModal = ({ isOpen, onClose, settings, updateSetting }) => {
     if (!isOpen) return null;
@@ -20,12 +20,7 @@ const ChatSettingsModal = ({ isOpen, onClose, settings, updateSetting }) => {
                         <FaCog className="text-blue-500" />
                         Chat Settings
                     </h3>
-                    <button
-                        onClick={onClose}
-                        className={`p-2 rounded-full hover:bg-gray-100 transition-colors ${isDarkMode ? 'hover:bg-gray-700 text-gray-400' : 'text-gray-500'}`}
-                    >
-                        <FaTimes size={20} />
-                    </button>
+
                 </div>
 
                 {/* Content */}
@@ -314,7 +309,15 @@ const ChatSettingsModal = ({ isOpen, onClose, settings, updateSetting }) => {
                     </section>
                 </div>
 
-
+                {/* Footer */}
+                <div className={`p-5 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} flex justify-end`}>
+                    <button
+                        onClick={onClose}
+                        className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors shadow-sm"
+                    >
+                        Done
+                    </button>
+                </div>
             </div>
         </div>
     );
