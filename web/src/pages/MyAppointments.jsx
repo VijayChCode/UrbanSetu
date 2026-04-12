@@ -2360,7 +2360,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
           processingStartRef.current = null;
         }
       }
-      if (messageQueueRef.current.length > 0) {
+      if (navigator.onLine && messageQueueRef.current.length > 0) {
         processRetryQueueRef.current?.();
       }
     }, 5000);
@@ -4760,9 +4760,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
 
     // Send message in background without blocking UI
     (async () => {
+      // Check if replyTo is a call (starts with "call-") - if so, don't send replyTo as backend can't validate call IDs
+      // Declared OUTSIDE try so it's accessible in the catch block for queuing
+      const replyToId = replyToData && !replyToData._id?.startsWith('call-') ? replyToData._id : null;
+
       try {
-        // Check if replyTo is a call (starts with "call-") - if so, don't send replyTo as backend can't validate call IDs
-        const replyToId = replyToData && !replyToData._id?.startsWith('call-') ? replyToData._id : null;
 
         const res = await authenticatedFetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment`, {
           method: 'POST',
