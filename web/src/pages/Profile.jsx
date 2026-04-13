@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { isMobileDevice } from '../utils/mobileUtils';
-import { FaEdit, FaUser, FaEnvelope, FaPhone, FaKey, FaTrash, FaSignOutAlt, FaHome, FaTrophy, FaCalendarAlt, FaHeart, FaEye, FaCrown, FaTimes, FaCheck, FaStar, FaRoute, FaUserFriends, FaCreditCard, FaShieldAlt, FaTools, FaTruck, FaExclamationTriangle, FaCloudUploadAlt, FaClipboardList, FaMobileAlt, FaBookOpen, FaQuestionCircle, FaChartLine, FaInfoCircle, FaCog, FaFileContract, FaGavel, FaMoneyCheckAlt, FaUserTie, FaHeadset, FaMapSigns, FaAward, FaRegGem, FaDove, FaHandshake, FaFire } from "react-icons/fa";
+import { FaEdit, FaUser, FaEnvelope, FaPhone, FaKey, FaTrash, FaSignOutAlt, FaHome, FaTrophy, FaCalendarAlt, FaHeart, FaEye, FaCrown, FaTimes, FaCheck, FaStar, FaRoute, FaUserFriends, FaCreditCard, FaShieldAlt, FaTools, FaTruck, FaExclamationTriangle, FaCloudUploadAlt, FaClipboardList, FaMobileAlt, FaBookOpen, FaQuestionCircle, FaChartLine, FaInfoCircle, FaCog, FaFileContract, FaGavel, FaMoneyCheckAlt, FaUserTie, FaHeadset, FaMapSigns, FaAward, FaRegGem, FaDove, FaHandshake, FaFire, FaCopy } from "react-icons/fa";
 import { motion, AnimatePresence } from 'framer-motion';
 import UserAvatar from "../components/UserAvatar";
 import EncryptedText from "../components/ui/EncryptedText";
@@ -506,12 +506,13 @@ export default function Profile() {
   const [showThemeInfo, setShowThemeInfo] = useState(false);
 
   // SetuCoins State
-  const [coinData, setCoinData] = useState({ balance: 0, streak: 0, expiryDate: null, frozenCoins: 0, rank: null, badges: [], loading: true });
+  const [coinData, setCoinData] = useState({ balance: 0, streak: 0, expiryDate: null, frozenCoins: 0, rank: null, badges: [], referralCode: null, loading: true });
   const [showCoinHistory, setShowCoinHistory] = useState(false);
   const [showReferralModal, setShowReferralModal] = useState(false);
   const [historyRefreshTrigger, setHistoryRefreshTrigger] = useState(0);
   const [selectedBadge, setSelectedBadge] = useState(null);
   const [showBadgeModal, setShowBadgeModal] = useState(false);
+  const [referralCodeCopied, setReferralCodeCopied] = useState(false);
 
   // Handle mobile state updates
   useEffect(() => {
@@ -546,6 +547,7 @@ export default function Profile() {
             frozenCoins: data.frozenCoins || 0,
             rank: data.rank || null,
             badges: data.badges || [],
+            referralCode: data.referralCode || null,
             loading: false
           });
         }
@@ -1667,7 +1669,7 @@ export default function Profile() {
                           <FaStar className="w-4 h-4 mr-3 text-indigo-500 flex-shrink-0" />
                           <div className="min-w-0 flex-1">
                             <p className="text-xs text-indigo-500 font-bold mb-1 uppercase tracking-wider">Referral Program</p>
-                            <p className="text-gray-700 dark:text-gray-300 text-sm">Invite friends to <span className="font-bold">UrbanSetu</span> and earn <span className="font-bold">100 SetuCoins</span> when they join! Plus, they get <span className="font-bold">50 coins</span> as a welcome gift.</p>
+                            <p className="text-gray-700 dark:text-gray-300 text-sm">Invite friends to <span className="font-bold">UrbanSetu</span> using your link or code and earn <span className="font-bold">100 SetuCoins</span> when they join! Plus, they get <span className="font-bold">50 coins</span> too.</p>
                           </div>
                         </div>
                         <button
@@ -1676,6 +1678,41 @@ export default function Profile() {
                         >
                           Refer Now
                         </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Referral Code Card - Gold Premium Design */}
+                  {!isAdmin && coinData.referralCode && (
+                    <div
+                      className="sm:col-span-2 relative overflow-hidden rounded-xl p-4 cursor-pointer group transition-all duration-300 hover:shadow-lg hover:scale-[1.01] active:scale-[0.99]"
+                      style={{ background: 'linear-gradient(135deg, #f6d365 0%, #fda085 50%, #f6d365 100%)' }}
+                      onClick={() => {
+                        navigator.clipboard.writeText(coinData.referralCode);
+                        setReferralCodeCopied(true);
+                        setTimeout(() => setReferralCodeCopied(false), 2000);
+                      }}
+                      title="Click to copy referral code"
+                    >
+                      {/* Shimmer effect */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                      <div className="relative flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-white/30 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-inner">
+                            <FaUserFriends className="text-amber-800 text-lg" />
+                          </div>
+                          <div>
+                            <p className="text-[10px] uppercase tracking-[0.15em] text-amber-900/70 font-bold">Your Referral Code</p>
+                            <p className="text-xl font-black tracking-[0.3em] text-amber-900 font-mono">{coinData.referralCode}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {referralCodeCopied ? (
+                            <span className="text-xs font-bold text-amber-900 bg-white/40 px-3 py-1.5 rounded-full flex items-center gap-1.5"><FaCheck className="text-green-700" /> Copied!</span>
+                          ) : (
+                            <span className="text-xs font-bold text-amber-900/80 bg-white/30 px-3 py-1.5 rounded-full flex items-center gap-1.5 group-hover:bg-white/50 transition-colors"><FaCopy /> Tap to copy</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   )}
@@ -2845,9 +2882,10 @@ export default function Profile() {
       <SocialSharePanel
         isOpen={showReferralModal}
         onClose={() => setShowReferralModal(false)}
-        url={`${window.location.origin}/sign-up?ref=${currentUser._id}`}
+        url={coinData.referralCode ? `${window.location.origin}/sign-up?ref=${coinData.referralCode}` : `${window.location.origin}/sign-up?ref=${currentUser._id}`}
         title="Join me on UrbanSetu! 🏠"
         description="Sign up using my link to get started with the best real estate platform and earn exclusive rewards!"
+        referralCode={coinData.referralCode}
       />
 
       {/* Contact Support Wrapper */}

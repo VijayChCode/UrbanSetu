@@ -1,6 +1,26 @@
 import "../models/adminLog.model.js";
 import CoinService from "../services/coinService.js";
+import User from "../models/user.model.js";
 import { errorHandler } from "../utils/error.js";
+
+/**
+ * Resolve a referral code to a user ID (public, no auth needed)
+ */
+export const resolveReferralCode = async (req, res, next) => {
+    try {
+        const { code } = req.params;
+        if (!code || code.length < 4) {
+            return next(errorHandler(400, 'Invalid referral code'));
+        }
+        const user = await User.findOne({ 'gamification.referralCode': code.toUpperCase() }).select('_id username');
+        if (!user) {
+            return res.status(200).json({ success: false, message: 'Referral code not found' });
+        }
+        res.status(200).json({ success: true, referrerId: user._id, referrerName: user.username });
+    } catch (error) {
+        next(error);
+    }
+};
 
 /**
  * Get current coin balance and stats for logged-in user

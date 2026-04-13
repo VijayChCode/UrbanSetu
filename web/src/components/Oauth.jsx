@@ -42,6 +42,8 @@ export default function Oauth({ pageType, disabled = false, onAuthStart = null, 
             setIsLoading(true);
             setError(null);
 
+            const refParam = new URLSearchParams(location.search).get('ref') || localStorage.getItem('urbansetu_ref');
+            const isObjectId = refParam && /^[0-9a-fA-F]{24}$/.test(refParam);
             const apiUrl = "/api/auth/google";
             const res = await authenticatedFetch(`${API_BASE_URL}${apiUrl}`, {
                 method: "POST",
@@ -52,7 +54,8 @@ export default function Oauth({ pageType, disabled = false, onAuthStart = null, 
                     name: result.user.displayName,
                     email: result.user.email,
                     photo: result.user.photoURL,
-                    referredBy: new URLSearchParams(location.search).get('ref') || localStorage.getItem('urbansetu_ref')
+                    referredBy: isObjectId ? refParam : undefined,
+                    referralCode: (!isObjectId && refParam) ? refParam : undefined
                 })
             });
 

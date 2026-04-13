@@ -38,7 +38,8 @@ class CoinService {
             totalCoinsEarned: stats.totalCoinsEarned || 0,
             currentStreak: stats.currentStreak || 0,
             rank,
-            badges: stats.badges || []
+            badges: stats.badges || [],
+            referralCode: stats.referralCode || null
         };
     }
 

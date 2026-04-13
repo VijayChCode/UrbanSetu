@@ -133,6 +133,15 @@ export const SignUp = async (req, res, next) => {
         // Set admin approval status based on role
         const adminApprovalStatus = role === "admin" ? "pending" : "approved";
 
+        // Resolve referral code to referredBy userId if referralCode was sent
+        let resolvedReferredBy = req.body.referredBy || null;
+        if (!resolvedReferredBy && req.body.referralCode) {
+            const referrer = await User.findOne({ 'gamification.referralCode': req.body.referralCode.toUpperCase() }).select('_id');
+            if (referrer) {
+                resolvedReferredBy = referrer._id.toString();
+            }
+        }
+
         const newUser = new User({
             username,
             email: emailLower,
@@ -141,25 +150,25 @@ export const SignUp = async (req, res, next) => {
             address: address ? address.trim() : undefined,
             role,
             adminApprovalStatus,
-            'gamification.referredBy': req.body.referredBy || null
+            'gamification.referredBy': resolvedReferredBy
         })
 
         await newUser.save();
 
         // Handle Referral Reward (Both Sides)
-        if (req.body.referredBy) {
+        if (resolvedReferredBy) {
             try {
                 const CoinService = (await import("../services/coinService.js")).default;
                 const FraudDetectionService = (await import("../services/fraudDetectionService.js")).default;
 
                 // 🔍 Intelligent Fraud Detection Check
-                const fraudCheck = await FraudDetectionService.checkReferralFraud(req.body.referredBy, newUser._id);
+                const fraudCheck = await FraudDetectionService.checkReferralFraud(resolvedReferredBy, newUser._id);
 
                 if (fraudCheck.isFraud) {
                     console.log(`⛔ Referral reward BLOCKED due to fraud detection: ${fraudCheck.reason}`);
                     // We simply skip the reward. The service has already logged the event and admin alert.
                 } else {
-                    const referrer = await User.findById(req.body.referredBy);
+                    const referrer = await User.findById(resolvedReferredBy);
 
                     if (referrer) {
                         // Credit Referrer (100 Coins)
@@ -664,30 +673,39 @@ export const Google = async (req, res, next) => {
             const ip = req.ip || req.connection.remoteAddress;
             const location = getLocationFromIP(ip);
 
+            // Resolve referral code for Google signup
+            let resolvedGoogleReferredBy = req.body.referredBy || null;
+            if (!resolvedGoogleReferredBy && req.body.referralCode) {
+                const referrer = await User.findOne({ 'gamification.referralCode': req.body.referralCode.toUpperCase() }).select('_id');
+                if (referrer) {
+                    resolvedGoogleReferredBy = referrer._id.toString();
+                }
+            }
+
             const newUser = new User({
                 username: name.split(" ").join("").toLowerCase() + Math.random().toString(36).slice(-8),
                 email,
                 password: hashedPassword,
                 avatar: photo,
                 isGeneratedMobile: true,
-                'gamification.referredBy': req.body.referredBy || null,
+                'gamification.referredBy': resolvedGoogleReferredBy,
                 lastLoginLocation: location
             })
             await newUser.save()
 
             // Handle Referral Reward for Google Sign-up (Both Sides)
-            if (req.body.referredBy) {
+            if (resolvedGoogleReferredBy) {
                 try {
                     const CoinService = (await import("../services/coinService.js")).default;
                     const FraudDetectionService = (await import("../services/fraudDetectionService.js")).default;
 
                     // 🔍 Intelligent Fraud Detection Check
-                    const fraudCheck = await FraudDetectionService.checkReferralFraud(req.body.referredBy, newUser._id);
+                    const fraudCheck = await FraudDetectionService.checkReferralFraud(resolvedGoogleReferredBy, newUser._id);
 
                     if (fraudCheck.isFraud) {
                         console.log(`⛔ Referral reward BLOCKED due to fraud detection: ${fraudCheck.reason}`);
                     } else {
-                        const referrer = await User.findById(req.body.referredBy);
+                        const referrer = await User.findById(resolvedGoogleReferredBy);
 
                         if (referrer) {
                             // Credit Referrer (100 Coins)

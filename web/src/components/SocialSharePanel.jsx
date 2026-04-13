@@ -10,7 +10,11 @@ import { FaXTwitter } from 'react-icons/fa6';
 import { SiKakaotalk, SiMix, SiGmail } from 'react-icons/si';
 import { toast } from 'react-toastify';
 
-const SocialSharePanel = ({ isOpen, onClose, url, title = "Join UrbanSetu!", description = "Discover the future of real estate with UrbanSetu." }) => {
+const SocialSharePanel = ({ isOpen, onClose, url, title = "Join UrbanSetu!", description = "Discover the future of real estate with UrbanSetu.", referralCode = null }) => {
+  // Build share text that includes both referral code and link when available
+  const shareText = referralCode
+    ? `${title}\n${description}\n\n🎁 Use my referral code: ${referralCode}\nOr sign up via this link:`
+    : `${title}\n${description}`;
   const [copied, setCopied] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -77,7 +81,7 @@ const SocialSharePanel = ({ isOpen, onClose, url, title = "Join UrbanSetu!", des
       try {
         await navigator.share({
           title: title,
-          text: description,
+          text: referralCode ? `${description}\n\n🎁 Use my referral code: ${referralCode}\nOr sign up via this link:` : description,
           url: url,
         });
       } catch (err) {
@@ -96,28 +100,28 @@ const SocialSharePanel = ({ isOpen, onClose, url, title = "Join UrbanSetu!", des
       icon: <FaWhatsapp />,
       color: 'bg-[#25D366]',
       hover: 'hover:bg-[#128C7E]',
-      link: `https://wa.me/?text=${encodeURIComponent(`${title}\n${description}\n${url}`)}`
+      link: `https://wa.me/?text=${encodeURIComponent(`${shareText}\n${url}`)}`
     },
     {
       name: 'Telegram',
       icon: <FaTelegram />,
       color: 'bg-[#0088cc]',
       hover: 'hover:bg-[#006699]',
-      link: `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(`${title}\n${description}`)}`
+      link: `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(shareText)}`
     },
     {
       name: 'Gmail',
       icon: <SiGmail />,
       color: 'bg-white !text-[#ea4335] border border-gray-100 dark:border-gray-700',
       hover: 'hover:bg-gray-50',
-      link: `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(`${description}\n\n${url}`)}`
+      link: `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(`${shareText}\n${url}`)}`
     },
     {
       name: 'Messages',
       icon: <FaComments />,
       color: 'bg-[#007aff]',
       hover: 'hover:bg-[#0063d1]',
-      link: `sms:?body=${encodeURIComponent(`${title}\n${description}\n${url}`)}`
+      link: `sms:?body=${encodeURIComponent(`${shareText}\n${url}`)}`
     },
     {
       name: 'Facebook',
@@ -316,6 +320,15 @@ const SocialSharePanel = ({ isOpen, onClose, url, title = "Join UrbanSetu!", des
               <p className="text-[13px] text-blue-700 dark:text-blue-300 font-medium">
                 Invite friends to <span className="font-bold">UrbanSetu</span> and earn <span className="font-bold">100 SetuCoins</span> when they join! Plus, they get <span className="font-bold">50 coins</span> as a welcome gift.
               </p>
+              {referralCode && (
+                <div className="mt-3 flex items-center justify-center gap-2">
+                  <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">Your Referral Code:</span>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg font-mono font-black text-sm tracking-[0.2em] text-amber-900" style={{ background: 'linear-gradient(135deg, #f6d365, #fda085)' }}>
+                    {referralCode}
+                    <FaCopy className="text-[10px] text-amber-800/60" />
+                  </span>
+                </div>
+              )}
             </div>
           )}
         </div>

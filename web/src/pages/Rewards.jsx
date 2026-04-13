@@ -4,7 +4,7 @@ import { useLocation, useNavigate, Link } from 'react-router-dom';
 import {
     FaCoins, FaFire, FaHistory, FaGift, FaTrophy, FaArrowUp,
     FaArrowDown, FaRocket, FaStar, FaChevronRight, FaInfoCircle,
-    FaCalendarAlt, FaCheckCircle, FaUserFriends, FaHome, FaBolt, FaShoppingBag, FaReceipt, FaCheck, FaLock
+    FaCalendarAlt, FaCheckCircle, FaUserFriends, FaHome, FaBolt, FaShoppingBag, FaReceipt, FaCheck, FaLock, FaCopy
 } from 'react-icons/fa';
 import { usePageTitle } from '../hooks/usePageTitle';
 import SetuCoinParticles from '../components/SetuCoins/SetuCoinParticles';
@@ -73,6 +73,8 @@ export default function Rewards() {
     const [activeContractId, setActiveContractId] = useState(null);
     const [referralStats, setReferralStats] = useState({ referralsCount: 0, totalEarned: 0, referredUsers: [], loading: true });
     const prevBadgesRef = useRef([]);
+    const [referralCode, setReferralCode] = useState(null);
+    const [referralCodeCopied, setReferralCodeCopied] = useState(false);
 
     useEffect(() => {
         // Pick a random fact on every mountain/visit
@@ -124,6 +126,9 @@ export default function Rewards() {
                     badges: data.badges || [],
                     loading: false
                 });
+                if (data.referralCode) {
+                    setReferralCode(data.referralCode);
+                }
             }
         } catch (error) {
             console.error(error);
@@ -549,6 +554,41 @@ export default function Rewards() {
                                 </div>
                             </div>
 
+                            {/* Referral Code Card */}
+                            {referralCode && (
+                                <div
+                                    className="relative overflow-hidden rounded-3xl p-6 cursor-pointer group transition-all duration-300 hover:shadow-xl hover:scale-[1.01] active:scale-[0.99]"
+                                    style={{ background: 'linear-gradient(135deg, #f6d365 0%, #fda085 50%, #f6d365 100%)' }}
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(referralCode);
+                                        setReferralCodeCopied(true);
+                                        setTimeout(() => setReferralCodeCopied(false), 2000);
+                                    }}
+                                    title="Click to copy your referral code"
+                                >
+                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                                    <div className="relative flex flex-col sm:flex-row items-center justify-between gap-4">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-14 h-14 bg-white/30 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-inner">
+                                                <FaUserFriends className="text-amber-800 text-2xl" />
+                                            </div>
+                                            <div>
+                                                <p className="text-xs uppercase tracking-[0.15em] text-amber-900/70 font-bold">Your Referral Code</p>
+                                                <p className="text-2xl md:text-3xl font-black tracking-[0.35em] text-amber-900 font-mono">{referralCode}</p>
+                                                <p className="text-[10px] text-amber-800/60 mt-0.5">Share this code with friends to earn coins</p>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            {referralCodeCopied ? (
+                                                <span className="text-sm font-bold text-amber-900 bg-white/40 px-4 py-2 rounded-full flex items-center gap-2 shadow-sm"><FaCheck className="text-green-700" /> Copied!</span>
+                                            ) : (
+                                                <span className="text-sm font-bold text-amber-900/80 bg-white/30 px-4 py-2 rounded-full flex items-center gap-2 group-hover:bg-white/50 transition-colors shadow-sm"><FaCopy /> Copy Code</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Merged Invite & Network Section */}
                             <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-slate-100 dark:border-gray-700 overflow-hidden">
                                 {/* Header with Invite CTA */}
@@ -557,7 +597,7 @@ export default function Rewards() {
                                         <div>
                                             <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">Your Network</h3>
                                             <p className="text-slate-500 dark:text-gray-400 text-sm max-w-md">
-                                                Earn <span className="font-bold text-indigo-600 dark:text-indigo-400">100 coins</span> for every friend who joins. They get <span className="font-bold text-indigo-600 dark:text-indigo-400">50 coins</span> too!
+                                                Earn <span className="font-bold text-indigo-600 dark:text-indigo-400">100 coins</span> for every friend who joins using your link or code. They get <span className="font-bold text-indigo-600 dark:text-indigo-400">50 coins</span> too!
                                             </p>
                                         </div>
                                         <button
@@ -635,9 +675,10 @@ export default function Rewards() {
             <SocialSharePanel
                 isOpen={showReferral}
                 onClose={() => setShowReferral(false)}
-                url={`${window.location.origin}/sign-up?ref=${currentUser._id}`}
+                url={referralCode ? `${window.location.origin}/sign-up?ref=${referralCode}` : `${window.location.origin}/sign-up?ref=${currentUser._id}`}
                 title="Join me on UrbanSetu! 🏠"
                 description="Sign up using my link to get started with the best real estate platform and earn exclusive rewards!"
+                referralCode={referralCode}
             />
 
             <style>{`

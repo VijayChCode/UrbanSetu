@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { FaEye, FaEyeSlash, FaCheck, FaTimes, FaEdit } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaCheck, FaTimes, FaEdit, FaGift } from "react-icons/fa";
 import Oauth from "../components/Oauth";
 import ContactSupportWrapper from "../components/ContactSupportWrapper";
 import RecaptchaWidget from "../components/RecaptchaWidget";
@@ -56,6 +56,8 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [referredBy, setReferredBy] = useState(null);
+  const [referralCodeInput, setReferralCodeInput] = useState('');
+  const [referralCodeStatus, setReferralCodeStatus] = useState({ loading: false, valid: null, name: '' }); // { loading, valid: true/false/null, name }
   const { currentUser } = useSelector((state) => state.user);
   const [consent, setConsent] = useState(false);
   const [recaptchaToken, setRecaptchaToken] = useState(null);
@@ -153,10 +155,27 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
 
-    // 1. Referral Logic
+    // 1. Referral Logic - support both ?ref=userId and ?ref=REFERRALCODE
     const ref = params.get('ref') || localStorage.getItem('urbansetu_ref');
     if (ref) {
-      setReferredBy(ref);
+      // Check if it's a referral code (alphanumeric, 8 chars, no lowercase hex pattern) vs a MongoDB ObjectId
+      const isObjectId = /^[0-9a-fA-F]{24}$/.test(ref);
+      if (isObjectId) {
+        setReferredBy(ref);
+      } else {
+        // It's a referral code - resolve it
+        setReferralCodeInput(ref.toUpperCase());
+        (async () => {
+          try {
+            const res = await fetch(`${API_BASE_URL}/api/coins/resolve-referral/${ref}`);
+            const data = await res.json();
+            if (data.success && data.referrerId) {
+              setReferredBy(data.referrerId);
+              setReferralCodeStatus({ loading: false, valid: true, name: data.referrerName });
+            }
+          } catch (e) { console.error('Failed to resolve referral code from URL:', e); }
+        })();
+      }
       console.log("Referral detected:", ref);
 
       // Show referral bonus toast only if 'ref' is presently in URL
@@ -376,7 +395,8 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
           ...formData,
           emailVerified: true,
           recaptchaToken,
-          referredBy // Pass referral ID to backend
+          referredBy, // Pass referral ID to backend
+          referralCode: (!referredBy && referralCodeInput) ? referralCodeInput : undefined // Pass referral code if no ref link
         }),
       });
       const data = await res.json();
@@ -1014,6 +1034,55 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                         required
                       />
                     </div>
+
+                    {/* Referral Code Field (Optional) */}
+                    {!referredBy && (
+                      <div>
+                        <label htmlFor="referralCodeInput" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 ml-1">
+                          Referral Code <span className="text-xs text-gray-400 font-normal">(Optional)</span>
+                          {referralCodeStatus.valid === true && (
+                            <span className="ml-2 text-green-600 text-xs"><FaCheck className="inline" /> Referred by {referralCodeStatus.name}</span>
+                          )}
+                          {referralCodeStatus.valid === false && (
+                            <span className="ml-2 text-red-500 text-xs"><FaTimes className="inline" /> Invalid code</span>
+                          )}
+                        </label>
+                        <FormField
+                          label={undefined}
+                          id="referralCodeInput"
+                          type="text"
+                          placeholder="Enter referral code (e.g., ABCD1234)"
+                          value={referralCodeInput}
+                          onChange={(e) => {
+                            const val = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
+                            setReferralCodeInput(val);
+                            setReferralCodeStatus({ loading: false, valid: null, name: '' });
+                            // Auto-validate when 8 chars entered
+                            if (val.length === 8) {
+                              setReferralCodeStatus({ loading: true, valid: null, name: '' });
+                              fetch(`${API_BASE_URL}/api/coins/resolve-referral/${val}`)
+                                .then(r => r.json())
+                                .then(data => {
+                                  if (data.success && data.referrerId) {
+                                    setReferralCodeStatus({ loading: false, valid: true, name: data.referrerName });
+                                  } else {
+                                    setReferralCodeStatus({ loading: false, valid: false, name: '' });
+                                  }
+                                })
+                                .catch(() => setReferralCodeStatus({ loading: false, valid: false, name: '' }));
+                            }
+                          }}
+                          disabled={authInProgress === 'google'}
+                          startIcon={<FaGift className="w-4 h-4 text-amber-500" />}
+                          inputClassName={`transition-all duration-200 focus:ring-2 focus:ring-green-500/20 tracking-[0.2em] font-mono uppercase ${referralCodeStatus.valid === true ? 'border-green-500' : referralCodeStatus.valid === false ? 'border-red-500' : ''} ${authInProgress === 'google' ? 'bg-gray-100 cursor-not-allowed' : ''} hover:border-green-500`}
+                        />
+                      </div>
+                    )}
+                    {referredBy && (
+                      <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3 text-center">
+                        <p className="text-sm text-green-700 dark:text-green-300 font-medium">🎉 Referral link applied! You'll receive <strong>50 SetuCoins</strong> on signup.</p>
+                      </div>
+                    )}
 
                     <div className="flex items-start mb-2">
                       <input
