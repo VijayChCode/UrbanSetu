@@ -23,6 +23,29 @@ export const resolveReferralCode = async (req, res, next) => {
 };
 
 /**
+ * Get referral info by user ID (public, no auth needed)
+ */
+export const getReferralInfo = async (req, res, next) => {
+    try {
+        const { userId } = req.params;
+        if (!userId || !/^[0-9a-fA-F]{24}$/.test(userId)) {
+            return next(errorHandler(400, 'Invalid user ID'));
+        }
+        const user = await User.findById(userId).select('gamification.referralCode username');
+        if (!user || !user.gamification?.referralCode) {
+            return res.status(200).json({ success: false, message: 'User or referral code not found' });
+        }
+        res.status(200).json({ 
+            success: true, 
+            referralCode: user.gamification.referralCode, 
+            referrerName: user.username 
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
  * Get current coin balance and stats for logged-in user
  */
 export const getBalance = async (req, res, next) => {

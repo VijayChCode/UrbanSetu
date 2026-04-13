@@ -1,6 +1,6 @@
 import express from 'express';
 import { verifyToken } from '../utils/verify.js';
-import { getBalance, getHistory, getReferralStats, getUserBalance, adminAdjustCoins, getLeaderboard, getStats, getSystemTransactions, resolveReferralCode } from '../controllers/coin.controller.js';
+import { getBalance, getHistory, getReferralStats, getUserBalance, adminAdjustCoins, getLeaderboard, getStats, getSystemTransactions, resolveReferralCode, getReferralInfo } from '../controllers/coin.controller.js';
 
 const router = express.Router();
 
@@ -18,5 +18,6 @@ router.post('/admin/adjust', verifyToken, adminAdjustCoins); // Middleware check
 
 // Public routes (no auth)
 router.get('/resolve-referral/:code', resolveReferralCode);
+router.get('/referral-info/:userId', getReferralInfo);
 
 export default router;

@@ -162,12 +162,24 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
       const isObjectId = /^[0-9a-fA-F]{24}$/.test(ref);
       if (isObjectId) {
         setReferredBy(ref);
-      } else {
-        // It's a referral code - resolve it
-        setReferralCodeInput(ref.toUpperCase());
+        // Also fetch the referral code to populate the input field for visual consistency
         (async () => {
           try {
-            const res = await fetch(`${API_BASE_URL}/api/coins/resolve-referral/${ref}`);
+            const res = await fetch(`${API_BASE_URL}/api/coins/referral-info/${ref}`);
+            const data = await res.json();
+            if (data.success) {
+              setReferralCodeInput(data.referralCode);
+              setReferralCodeStatus({ loading: false, valid: true, name: data.referrerName });
+            }
+          } catch (e) { console.error('Failed to fetch referral info for ID:', e); }
+        })();
+      } else {
+        // It's a referral code - resolve it
+        const upperCode = ref.toUpperCase();
+        setReferralCodeInput(upperCode);
+        (async () => {
+          try {
+            const res = await fetch(`${API_BASE_URL}/api/coins/resolve-referral/${upperCode}`);
             const data = await res.json();
             if (data.success && data.referrerId) {
               setReferredBy(data.referrerId);
