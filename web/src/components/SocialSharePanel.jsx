@@ -15,7 +15,6 @@ const SocialSharePanel = ({ isOpen, onClose, url, title = "Join UrbanSetu!", des
   const shareText = referralCode
     ? `${title}\n${description}\n\n🎁 Use my referral code: ${referralCode}\nOr sign up via this link:`
     : `${title}\n${description}`;
-  const shareFooter = referralCode ? "\n(Get 50 SetuCoins Starter Bonus! ✨)" : "";
   const [copied, setCopied] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
@@ -97,7 +96,7 @@ const SocialSharePanel = ({ isOpen, onClose, url, title = "Join UrbanSetu!", des
         await navigator.share({
           title: title,
           text: referralCode ? `${description}\n\n🎁 Use my referral code: ${referralCode}\nOr sign up via this link:` : description,
-          url: url + shareFooter,
+          url: url,
         });
       } catch (err) {
         if (err.name !== 'AbortError') {
@@ -115,28 +114,28 @@ const SocialSharePanel = ({ isOpen, onClose, url, title = "Join UrbanSetu!", des
       icon: <FaWhatsapp />,
       color: 'bg-[#25D366]',
       hover: 'hover:bg-[#128C7E]',
-      link: `https://wa.me/?text=${encodeURIComponent(`${shareText}\n${url}${shareFooter}`)}`
+      link: `https://wa.me/?text=${encodeURIComponent(`${shareText}\n${url}`)}`
     },
     {
       name: 'Telegram',
       icon: <FaTelegram />,
       color: 'bg-[#0088cc]',
       hover: 'hover:bg-[#006699]',
-      link: `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(shareText + shareFooter)}`
+      link: `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(shareText)}`
     },
     {
       name: 'Gmail',
       icon: <SiGmail />,
       color: 'bg-white !text-[#ea4335] border border-gray-100 dark:border-gray-700',
       hover: 'hover:bg-gray-50',
-      link: `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(`${shareText}\n${url}${shareFooter}`)}`
+      link: `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(`${shareText}\n${url}`)}`
     },
     {
       name: 'Messages',
       icon: <FaComments />,
       color: 'bg-[#007aff]',
       hover: 'hover:bg-[#0063d1]',
-      link: `sms:?body=${encodeURIComponent(`${shareText}\n${url}${shareFooter}`)}`
+      link: `sms:?body=${encodeURIComponent(`${shareText}\n${url}`)}`
     },
     {
       name: 'Facebook',
@@ -338,13 +337,13 @@ const SocialSharePanel = ({ isOpen, onClose, url, title = "Join UrbanSetu!", des
               {referralCode && (
                 <div className="mt-3 flex items-center justify-center gap-2">
                   <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">Your Referral Code:</span>
-                  <span 
+                  <span
                     onClick={copyCodeToClipboard}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg font-mono font-black text-sm tracking-[0.2em] cursor-pointer hover:scale-105 active:scale-95 transition-all duration-500 shadow-sm group/code ${codeCopied ? 'text-white' : 'text-amber-900'}`} 
-                    style={{ 
-                      background: codeCopied 
-                        ? 'linear-gradient(135deg, #10b981, #059669)' 
-                        : 'linear-gradient(135deg, #f6d365, #fda085)' 
+                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg font-mono font-black text-sm tracking-[0.2em] cursor-pointer hover:scale-105 active:scale-95 transition-all duration-500 shadow-sm group/code ${codeCopied ? 'text-white' : 'text-amber-900'}`}
+                    style={{
+                      background: codeCopied
+                        ? 'linear-gradient(135deg, #10b981, #059669)'
+                        : 'linear-gradient(135deg, #f6d365, #fda085)'
                     }}
                     title="Click to copy code"
                   >
