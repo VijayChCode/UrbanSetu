@@ -12389,7 +12389,19 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
               <div className="space-y-4">
                 <div className="bg-gray-50 dark:bg-gray-700 rounded p-3 text-sm text-gray-700 dark:text-gray-300">
                   <div className="font-semibold mb-2">Message:</div>
-                  <div className="whitespace-pre-wrap break-words">{(selectedMessageForInfo.message || '').slice(0, 200)}{(selectedMessageForInfo.message || '').length > 200 ? '...' : ''}</div>
+                  <div className="whitespace-pre-wrap break-words">
+                    {(selectedMessageForInfo.audioUrl || selectedMessageForInfo.type === 'audio') ? (
+                      <span className="flex items-center gap-1 text-gray-500 dark:text-gray-400"><FaMicrophone className="text-xs" /> Voice message</span>
+                    ) : (selectedMessageForInfo.videoUrl || selectedMessageForInfo.type === 'video') ? (
+                      <span className="flex items-center gap-1 text-gray-500 dark:text-gray-400"><FaVideo className="text-xs" /> Video</span>
+                    ) : (selectedMessageForInfo.imageUrl || selectedMessageForInfo.type === 'image') ? (
+                      <span className="flex items-center gap-1 text-gray-500 dark:text-gray-400">📷 Photo</span>
+                    ) : (selectedMessageForInfo.documentUrl || selectedMessageForInfo.type === 'document') ? (
+                      <span className="flex items-center gap-1 text-gray-500 dark:text-gray-400"><FaFileAlt className="text-xs" /> {selectedMessageForInfo.documentName || 'Document'}</span>
+                    ) : (
+                      <>{(selectedMessageForInfo.message || '').slice(0, 200)}{(selectedMessageForInfo.message || '').length > 200 ? '...' : ''}</>
+                    )}
+                  </div>
                 </div>
 
                 <div className="space-y-3">
