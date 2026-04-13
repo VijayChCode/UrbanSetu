@@ -506,7 +506,7 @@ export default function Profile() {
   const [showThemeInfo, setShowThemeInfo] = useState(false);
 
   // SetuCoins State
-  const [coinData, setCoinData] = useState({ balance: 0, streak: 0, expiryDate: null, frozenCoins: 0, rank: null, badges: [], referralCode: null, loading: true });
+  const [coinData, setCoinData] = useState({ balance: 0, streak: 0, expiryDate: null, frozenCoins: 0, rank: null, badges: [], referralCode: null, loading: true, error: null });
   const [showCoinHistory, setShowCoinHistory] = useState(false);
   const [showReferralModal, setShowReferralModal] = useState(false);
   const [historyRefreshTrigger, setHistoryRefreshTrigger] = useState(0);
@@ -548,16 +548,19 @@ export default function Profile() {
             rank: data.rank || null,
             badges: data.badges || [],
             referralCode: data.referralCode || null,
-            loading: false
+            loading: false,
+            error: null
           });
+        } else {
+          setCoinData(prev => ({ ...prev, loading: false, error: data.message || 'Failed to fetch' }));
         }
       } catch (e) {
         console.error("Error fetching SetuCoins:", e);
-        setCoinData(prev => ({ ...prev, loading: false }));
+        setCoinData(prev => ({ ...prev, loading: false, error: 'Connection error' }));
       }
     };
     fetchCoins();
-  }, [currentUser]);
+  }, [currentUser, historyRefreshTrigger]); // Added historyRefreshTrigger as a dependency to allow retries
 
   const getBadgeIcon = (badge) => {
     return BADGE_DETAILS[badge]?.icon || <FaAward className="text-gray-400" />;
@@ -1672,55 +1675,64 @@ export default function Profile() {
                             <p className="text-gray-700 dark:text-gray-300 text-sm">Invite friends to <span className="font-bold">UrbanSetu</span> using your link or code and earn <span className="font-bold">100 SetuCoins</span> when they join! Plus, they get <span className="font-bold">50 coins</span> too.</p>
                           </div>
                         </div>
-                        <button
-                          onClick={() => setShowReferralModal(true)}
-                          className="text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
-                        >
-                          Refer Now
-                        </button>
+                          <button
+                            onClick={() => setShowReferralModal(true)}
+                            className="text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
+                          >
+                            Refer Now
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
                   {/* Referral Code Card - Gold Premium Design */}
-                  {!isAdmin && (coinData.loading || coinData.referralCode) && (
+                  {!isAdmin && (coinData.loading || coinData.referralCode || coinData.error) && (
                     <div
-                      className={`sm:col-span-2 relative overflow-hidden rounded-xl p-4 transition-all duration-300 ${!coinData.loading ? 'cursor-pointer group hover:shadow-lg hover:scale-[1.01] active:scale-[0.99]' : ''}`}
-                      style={{ background: 'linear-gradient(135deg, #f6d365 0%, #fda085 50%, #f6d365 100%)' }}
+                      className={`sm:col-span-2 relative overflow-hidden rounded-xl p-4 transition-all duration-300 ${(!coinData.loading && !coinData.error) ? 'cursor-pointer group hover:shadow-lg hover:scale-[1.01] active:scale-[0.99]' : ''}`}
+                      style={{ background: coinData.error ? 'linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)' : 'linear-gradient(135deg, #f6d365 0%, #fda085 50%, #f6d365 100%)' }}
                       onClick={() => {
+                        if (coinData.error) {
+                          setCoinData(prev => ({ ...prev, loading: true, error: null }));
+                          setHistoryRefreshTrigger(prev => prev + 1); // Trigger retry
+                          return;
+                        }
                         if (coinData.loading || !coinData.referralCode) return;
                         navigator.clipboard.writeText(coinData.referralCode);
                         setReferralCodeCopied(true);
                         setTimeout(() => setReferralCodeCopied(false), 2000);
                       }}
-                      title={coinData.loading ? "Loading referral code..." : "Click to copy referral code"}
+                      title={coinData.loading ? "Loading referral code..." : coinData.error ? "Click to retry" : "Click to copy referral code"}
                     >
                       {/* Shimmer effect */}
-                      {!coinData.loading && (
+                      {!coinData.loading && !coinData.error && (
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
                       )}
                       <div className="relative flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-white/30 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-inner">
-                            <FaUserFriends className="text-amber-800 text-lg" />
+                          <div className={`w-10 h-10 ${coinData.error ? 'bg-red-200' : 'bg-white/30'} backdrop-blur-sm rounded-xl flex items-center justify-center shadow-inner`}>
+                            {coinData.error ? <FaTimes className="text-red-700" /> : <FaUserFriends className="text-amber-800 text-lg" />}
                           </div>
                           <div>
-                            <p className="text-[10px] uppercase tracking-[0.15em] text-amber-900/70 font-bold">Your Referral Code</p>
+                            <p className={`text-[10px] uppercase tracking-[0.15em] ${coinData.error ? 'text-red-800' : 'text-amber-900/70'} font-bold`}>Your Referral Code</p>
                             {coinData.loading ? (
                               <div className="flex items-center gap-2 mt-1">
                                 <UrbanSetuSpinner size="sm" isBright={false} />
                                 <p className="text-xs sm:text-sm font-bold text-amber-900 animate-pulse">
-                                  {(!currentUser?.gamification?.referralCode && new Date(currentUser?.createdAt) < new Date('2026-04-12'))
-                                    ? 'Generating Your Referral code...'
+                                  {(!currentUser?.gamification?.referralCode && new Date(currentUser?.createdAt) < new Date('2026-04-12')) 
+                                    ? 'Generating Your Referral code...' 
                                     : 'Fetching Your referral code...'}
                                 </p>
                               </div>
+                            ) : coinData.error ? (
+                              <p className="text-xs sm:text-sm font-bold text-red-700 mt-1">
+                                {coinData.error}. <span className="underline cursor-pointer">Tap to retry</span>
+                              </p>
                             ) : (
                               <p className="text-xl font-black tracking-[0.3em] text-amber-900 font-mono">{coinData.referralCode}</p>
                             )}
                           </div>
                         </div>
-                        {!coinData.loading && (
+                        {!coinData.loading && !coinData.error && (
                           <div className="flex items-center gap-2">
                             {referralCodeCopied ? (
                               <span className="text-xs font-bold text-amber-900 bg-white/40 px-3 py-1.5 rounded-full flex items-center gap-1.5 transition-all"><FaCheck className="text-green-700" /> Copied!</span>
