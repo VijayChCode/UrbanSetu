@@ -15,6 +15,7 @@ const SocialSharePanel = ({ isOpen, onClose, url, title = "Join UrbanSetu!", des
   const shareText = referralCode
     ? `${title}\n${description}\n\n🎁 Use my referral code: ${referralCode}\nOr sign up via this link:`
     : `${title}\n${description}`;
+  const shareFooter = referralCode ? "\n(Get 50 SetuCoins Starter Bonus! ✨)" : "";
   const [copied, setCopied] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -81,8 +82,8 @@ const SocialSharePanel = ({ isOpen, onClose, url, title = "Join UrbanSetu!", des
       try {
         await navigator.share({
           title: title,
-          text: referralCode ? `${description}\n\n🎁 Use my referral code: ${referralCode}\nOr sign up via this link:` : description,
-          url: url,
+          text: referralCode ? `${description}\n\n🎁 Use my referral code: ${referralCode}\n Or sign up via this link:` : description,
+          url: url + shareFooter,
         });
       } catch (err) {
         if (err.name !== 'AbortError') {
@@ -100,28 +101,28 @@ const SocialSharePanel = ({ isOpen, onClose, url, title = "Join UrbanSetu!", des
       icon: <FaWhatsapp />,
       color: 'bg-[#25D366]',
       hover: 'hover:bg-[#128C7E]',
-      link: `https://wa.me/?text=${encodeURIComponent(`${shareText}\n${url}`)}`
+      link: `https://wa.me/?text=${encodeURIComponent(`${shareText}\n${url}${shareFooter}`)}`
     },
     {
       name: 'Telegram',
       icon: <FaTelegram />,
       color: 'bg-[#0088cc]',
       hover: 'hover:bg-[#006699]',
-      link: `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(shareText)}`
+      link: `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(shareText + shareFooter)}`
     },
     {
       name: 'Gmail',
       icon: <SiGmail />,
       color: 'bg-white !text-[#ea4335] border border-gray-100 dark:border-gray-700',
       hover: 'hover:bg-gray-50',
-      link: `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(`${shareText}\n${url}`)}`
+      link: `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(`${shareText}\n${url}${shareFooter}`)}`
     },
     {
       name: 'Messages',
       icon: <FaComments />,
       color: 'bg-[#007aff]',
       hover: 'hover:bg-[#0063d1]',
-      link: `sms:?body=${encodeURIComponent(`${shareText}\n${url}`)}`
+      link: `sms:?body=${encodeURIComponent(`${shareText}\n${url}${shareFooter}`)}`
     },
     {
       name: 'Facebook',
@@ -318,7 +319,7 @@ const SocialSharePanel = ({ isOpen, onClose, url, title = "Join UrbanSetu!", des
           {url.includes('ref=') && (
             <div className="mt-4 text-center bg-blue-50 dark:bg-blue-900/20 p-3 rounded-xl border border-blue-100 dark:border-blue-900/30">
               <p className="text-[13px] text-blue-700 dark:text-blue-300 font-medium">
-                Invite friends to <span className="font-bold">UrbanSetu</span> and earn <span className="font-bold">100 SetuCoins</span> when they join! Plus, they get <span className="font-bold">50 coins</span> as a welcome gift.
+                Invite friends to <span className="font-bold">UrbanSetu</span> and earn <span className="font-bold">100 SetuCoins</span> when they join! Plus, they get <span className="font-bold">50 coins</span> as a starter bonus.
               </p>
               {referralCode && (
                 <div className="mt-3 flex items-center justify-center gap-2">
