@@ -1501,7 +1501,7 @@ export default function Profile() {
       <div className="max-w-6xl mx-auto">
         {/* Header Section */}
         <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 mb-6 ${isVisible ? animationClasses.fadeInUp : 'opacity-0 translate-y-8'}`}>
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex flex-col items-start justify-between gap-6">
             <div className="flex flex-col sm:flex-row items-center sm:space-x-6 w-full md:flex-1 text-center sm:text-left mb-4 md:mb-0">
               <div className={`relative flex-shrink-0 mx-auto sm:mx-0 group ${isVisible ? animationClasses.scaleIn + ' animation-delay-150' : 'opacity-0 scale-95'}`}>
                 <div className="transform transition-all duration-300 group-hover:scale-110">
@@ -1736,7 +1736,7 @@ export default function Profile() {
                 </div>
               </div>
             </div>
-            <div className="mt-6 md:mt-0 flex justify-end">
+            <div className="mt-6 flex justify-end w-full">
               <button
                 onClick={() => setIsEditing(!isEditing)}
                 className={`bg-gradient-to-r ${!isEditing && isProfileIncomplete ? 'from-amber-400 to-yellow-600 shadow-yellow-500/50' : 'from-blue-500 to-purple-500'} text-white px-5 sm:px-4 py-4 sm:py-2 rounded-lg ${!isEditing && isProfileIncomplete ? 'hover:from-amber-500 hover:to-yellow-700' : 'hover:from-blue-600 hover:to-purple-600'} transition-all transform hover:scale-105 hover:rotate-1 shadow-lg font-semibold flex items-center gap-2 sm:gap-2 text-base sm:text-sm w-full sm:w-auto justify-center group ${isVisible ? animationClasses.fadeInRight + ' animation-delay-450' : 'opacity-0 translate-x-8'}`}
