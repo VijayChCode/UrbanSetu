@@ -17,6 +17,7 @@ const SocialSharePanel = ({ isOpen, onClose, url, title = "Join UrbanSetu!", des
     : `${title}\n${description}`;
   const shareFooter = referralCode ? "\n(Get 50 SetuCoins Starter Bonus! ✨)" : "";
   const [copied, setCopied] = useState(false);
+  const [codeCopied, setCodeCopied] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
@@ -50,6 +51,19 @@ const SocialSharePanel = ({ isOpen, onClose, url, title = "Join UrbanSetu!", des
     } catch (err) {
       console.error('Failed to copy: ', err);
       toast.error('Failed to copy link');
+    }
+  };
+
+  const copyCodeToClipboard = async (e) => {
+    e.stopPropagation();
+    if (!referralCode) return;
+    try {
+      await navigator.clipboard.writeText(referralCode);
+      setCodeCopied(true);
+      toast.success('Referral code copied! 🎁');
+      setTimeout(() => setCodeCopied(false), 2000);
+    } catch (err) {
+      toast.error('Failed to copy code');
     }
   };
 
@@ -324,9 +338,18 @@ const SocialSharePanel = ({ isOpen, onClose, url, title = "Join UrbanSetu!", des
               {referralCode && (
                 <div className="mt-3 flex items-center justify-center gap-2">
                   <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">Your Referral Code:</span>
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg font-mono font-black text-sm tracking-[0.2em] text-amber-900" style={{ background: 'linear-gradient(135deg, #f6d365, #fda085)' }}>
+                  <span 
+                    onClick={copyCodeToClipboard}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg font-mono font-black text-sm tracking-[0.2em] text-amber-900 cursor-pointer hover:scale-105 active:scale-95 transition-all shadow-sm group/code" 
+                    style={{ background: 'linear-gradient(135deg, #f6d365, #fda085)' }}
+                    title="Click to copy code"
+                  >
                     {referralCode}
-                    <FaCopy className="text-[10px] text-amber-800/60" />
+                    {codeCopied ? (
+                      <FaCheck className="text-[10px] text-green-700" />
+                    ) : (
+                      <FaCopy className="text-[10px] text-amber-800/60 group-hover/code:text-amber-900 transition-colors" />
+                    )}
                   </span>
                 </div>
               )}
