@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import VideoPreview from '../components/VideoPreview';
 import { FaPlay, FaExclamationTriangle, FaClock, FaArrowLeft, FaShieldAlt } from 'react-icons/fa';
 
@@ -7,6 +8,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const VideoEmbed = () => {
     const { token } = useParams();
+    const { currentUser } = useSelector((state) => state.user);
     const [videoUrl, setVideoUrl] = useState(null);
     const [title, setTitle] = useState('UrbanSetu Video');
     const [listingId, setListingId] = useState(null);
@@ -154,6 +156,16 @@ const VideoEmbed = () => {
                                 View Property Details →
                             </Link>
                         )}
+
+                        <div className={`${listingId ? 'mt-4' : ''}`}>
+                            <Link
+                                to={!currentUser ? "/" : (currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? "/admin" : "/user"}
+                                className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl font-semibold text-sm transition-all hover:scale-105"
+                            >
+                                <FaArrowLeft className="text-xs" />
+                                Go to UrbanSetu
+                            </Link>
+                        </div>
 
                         <p className="mt-10 text-gray-600 text-[10px] font-bold tracking-widest uppercase">
                             UrbanSetu Native Player 2.5
