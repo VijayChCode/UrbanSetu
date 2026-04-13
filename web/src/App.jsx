@@ -117,6 +117,7 @@ const AdminAI = lazy(() => import('./pages/AdminAI'));
 const SharedChatView = lazy(() => import('./pages/SharedChatView'));
 const ViewDocument = lazy(() => import('./pages/ViewDocument'));
 const ViewChatDocument = lazy(() => import('./pages/ViewChatDocument'));
+const VideoEmbed = lazy(() => import('./pages/VideoEmbed'));
 const InvestmentTools = lazy(() => import('./pages/InvestmentTools'));
 const Settings = lazy(() => import('./pages/Settings'));
 const PropertyVerification = lazy(() => import('./pages/PropertyVerification'));
@@ -896,6 +897,7 @@ function AppRoutes({ bootstrapped }) {
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="/updates" element={<Updates />} />
             <Route path="/ai/share/:shareToken" element={<SharedChatView />} />
+            <Route path="/v/:token" element={<VideoEmbed />} />
             <Route path="/view/:documentId" element={<ViewDocument />} />
             <Route path="/view-chat/preview" element={<ViewChatDocument />} />
             <Route path="/security/lock-account/:token" element={<LockAccount />} />

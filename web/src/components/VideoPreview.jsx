@@ -75,6 +75,8 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
   const [autoScale, setAutoScale] = useState(1);
   const [videoBlobUrl, setVideoBlobUrl] = useState(null); // State for Blob URL
   const speedMenuRef = useRef(null);
+  const [shareUrl, setShareUrl] = useState(null);
+  const [isGeneratingShare, setIsGeneratingShare] = useState(false);
 
   // Transform States
   const [scale, setScale] = useState(1);
@@ -1308,15 +1310,45 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
     }
   };
 
-  const toggleShare = (e) => {
+  const toggleShare = async (e) => {
     e?.stopPropagation();
-    setShowSharePanel(true);
     if (videoRef.current && !videoRef.current.paused) {
-      wasPlayingRef.current = true; // Remember we were playing
+      wasPlayingRef.current = true;
       videoRef.current.pause();
       setIsPlaying(false);
     } else {
       wasPlayingRef.current = false;
+    }
+
+    // Generate a shareable UrbanSetu link (hides the Cloudinary URL)
+    setIsGeneratingShare(true);
+    setShowSharePanel(true);
+
+    try {
+      const res = await authenticatedFetch(`${API_BASE_URL}/api/video/share`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          videoUrl: videos[currentIndex],
+          listingId: listingId,
+          title: 'Property Video Tour'
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        // Build the full shareable URL
+        const baseUrl = window.location.origin;
+        setShareUrl(`${baseUrl}/v/${data.token}`);
+      } else {
+        // Fallback to raw URL if share creation fails
+        setShareUrl(videos[currentIndex] || '');
+      }
+    } catch (err) {
+      console.warn('Failed to generate share link, using raw URL:', err);
+      setShareUrl(videos[currentIndex] || '');
+    } finally {
+      setIsGeneratingShare(false);
     }
   };
 
@@ -2666,7 +2698,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
       )
       }
 
-      <SocialSharePanel isOpen={showSharePanel} onClose={() => { setShowSharePanel(false); if (wasPlayingRef.current) setIsPlaying(true); }} url={videos[currentIndex] || ""} title="Check out this video on UrbanSetu!" />
+      <SocialSharePanel isOpen={showSharePanel} onClose={() => { setShowSharePanel(false); setShareUrl(null); if (wasPlayingRef.current) setIsPlaying(true); }} url={shareUrl || videos[currentIndex] || ""} title="Check out this video on UrbanSetu!" />
     </div >
   );
 
