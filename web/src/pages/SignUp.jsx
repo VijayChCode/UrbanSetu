@@ -502,8 +502,8 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
       // Fallback chain: ref → window.location.search (belt-and-suspenders)
       let redirectUrl = pendingRedirectRef.current;
       if (!redirectUrl) {
-          const fallbackParams = new URLSearchParams(window.location.search);
-          redirectUrl = fallbackParams.get('redirect');
+        const fallbackParams = new URLSearchParams(window.location.search);
+        redirectUrl = fallbackParams.get('redirect');
       }
 
       if (redirectUrl && redirectUrl.startsWith('/')) {
@@ -1063,7 +1063,7 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                           label={undefined}
                           id="referralCodeInput"
                           type="text"
-                          placeholder="Enter referral code (e.g., ABCD1234)"
+                          placeholder="Enter referral code (ABCD1234)"
                           value={referralCodeInput}
                           onChange={(e) => {
                             const val = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
