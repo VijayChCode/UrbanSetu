@@ -82,7 +82,7 @@ const SocialSharePanel = ({ isOpen, onClose, url, title = "Join UrbanSetu!", des
       try {
         await navigator.share({
           title: title,
-          text: referralCode ? `${description}\n\n🎁 Use my referral code: ${referralCode}\n Or sign up via this link:` : description,
+          text: referralCode ? `${description}\n\n🎁 Use my referral code: ${referralCode}\nOr sign up via this link:` : description,
           url: url + shareFooter,
         });
       } catch (err) {
