@@ -1932,6 +1932,15 @@ export const sendWelcomeEmail = async (email, userDetails) => {
               <h2 style="color: #1f2937; margin: 0 0 15px; font-size: 24px; font-weight: 600;">Account Created Successfully!</h2>
               <p style="color: #6b7280; margin: 0; font-size: 16px; line-height: 1.6;">Hello ${username}, welcome to UrbanSetu! Your account has been successfully created and you're ready to start your real estate journey.</p>
             </div>
+
+            <!-- Starter Bonus Notice -->
+            <div style="background-color: #fef3c7; border: 1px dashed #f59e0b; border-radius: 8px; padding: 20px; margin-bottom: 30px; text-align: center;">
+              <span style="font-size: 24px;">🎁</span>
+              <h3 style="color: #92400e; margin: 10px 0 5px; font-size: 18px; font-weight: 700;">Claim Your Starter Bonus!</h3>
+              <p style="color: #92400e; margin: 0; font-size: 14px; line-height: 1.5;">
+                Complete your profile details to unlock your first <strong>20 SetuCoins</strong> reward instantly.
+              </p>
+            </div>
             
             <div style="background-color: #f3f4f6; padding: 25px; border-radius: 8px; margin-bottom: 30px;">
               <h3 style="color: #1f2937; margin: 0 0 15px; font-size: 18px; font-weight: 600;">Account Details</h3>
@@ -15426,7 +15435,7 @@ export const sendFestivalGreetingEmail = async (email, username, inputTheme) => 
   // Header Data
   // Header Data
   const combinedIcons = themes.map(t => t.icon).join(' ');
-  const combinedNames = themes.length > 2 
+  const combinedNames = themes.length > 2
     ? `${themes.slice(0, -1).map(t => t.name).join(', ')} & ${themes[themes.length - 1].name}`
     : themes.map(t => t.name).join(' & ');
 
@@ -16905,7 +16914,7 @@ export const sendAutoDebitRemovedEmail = async (email, details) => {
     `
   };
 
-    try {
+  try {
     const result = await sendEmailWithRetry(mailOptions);
     return result.success ? createSuccessResponse(result.messageId, 'autodebit_removed') : createErrorResponse(new Error(result.error), 'autodebit_removed');
   } catch (error) {

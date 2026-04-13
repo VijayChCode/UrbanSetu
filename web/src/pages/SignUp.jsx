@@ -1058,7 +1058,7 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                         )}
                         {!referralCodeStatus.loading && referralCodeStatus.valid === true && (
                           <span className="ml-2 text-green-600 text-xs font-bold flex items-center gap-1 inline-flex">
-                            <FaCheckCircle className="inline" /> 
+                            <FaCheckCircle className="inline" />
                             {(() => {
                               const params = new URLSearchParams(location.search);
                               const refParam = params.get('ref');
@@ -1082,7 +1082,7 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                           onChange={(e) => {
                             const val = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
                             setReferralCodeInput(val);
-                            
+
                             // Reset state if edited
                             if (val.length !== 8) {
                               setReferralCodeStatus({ loading: false, valid: null, name: '' });
@@ -1124,7 +1124,7 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
 
                       {referralCodeStatus.valid === true && (
                         <p className="mt-2 ml-1 text-[11px] text-green-600 dark:text-green-400 font-medium animate-fadeIn">
-                          ✨ Bonus unlocked: You'll receive <span className="font-bold">50 SetuCoins</span> on signup!
+                          ✨ Referral Applied: You'll receive <span className="font-bold">50 SetuCoins</span> on signup!
                         </p>
                       )}
                     </div>
