@@ -13,9 +13,17 @@ class CoinService {
      * @returns {Promise<Object>} { balance, totalEarned, currentStreak }
      */
     async getBalance(userId) {
-        const user = await User.findById(userId).select('gamification');
+        let user = await User.findById(userId).select('gamification');
         if (!user) {
             throw new Error('User not found');
+        }
+
+        // AUTO-GENERATE FOR EXISTING USERS: If no referral code exists, generate it now
+        // This triggers the pre-save hook in user.model.js
+        if (!user.gamification?.referralCode) {
+            await user.save();
+            // Re-fetch to get the generated code from the hook
+            user = await User.findById(userId).select('gamification');
         }
 
         const stats = user.gamification || {
