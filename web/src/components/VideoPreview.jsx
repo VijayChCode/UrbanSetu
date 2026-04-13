@@ -1713,9 +1713,9 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
   };
 
   const formatTime = (seconds, isRemaining = false) => {
-    // If it's a duration (isRemaining is false elsewhere, or specifically total), 
-    // and it's 0 or invalid, show placeholder
-    if (!isFinite(seconds) || (seconds === 0 && !isRemaining)) return isRemaining ? "--:--" : "--:--";
+    // Show placeholder only for truly invalid values (NaN, undefined, Infinity)
+    // Note: 0 is a valid elapsed time (start of video)
+    if (seconds == null || !isFinite(seconds) || seconds < 0) return "--:--";
 
     if (isRemaining) {
       const total = duration || videoRef.current?.duration || 0;
