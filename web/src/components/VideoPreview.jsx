@@ -755,8 +755,17 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
             }
           }
         } catch (e) {
-          // Silently handle AbortError which is common during rapid source changes
-          if (e.name !== 'AbortError' && e.name !== 'NotAllowedError') {
+          if (e.name === 'NotAllowedError' && isPlaying && active) {
+            // Browser blocked unmuted autoplay — retry muted (always allowed)
+            try {
+              videoRef.current.muted = true;
+              setIsMuted(true);
+              await videoRef.current.play();
+            } catch (mutedErr) {
+              // Even muted play failed — give up, user must click play
+              setIsPlaying(false);
+            }
+          } else if (e.name !== 'AbortError') {
             console.warn("Playback control error:", e);
           }
         }
