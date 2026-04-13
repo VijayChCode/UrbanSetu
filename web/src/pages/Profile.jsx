@@ -1683,19 +1683,22 @@ export default function Profile() {
                   )}
 
                   {/* Referral Code Card - Gold Premium Design */}
-                  {!isAdmin && coinData.referralCode && (
+                  {!isAdmin && (coinData.loading || coinData.referralCode) && (
                     <div
-                      className="sm:col-span-2 relative overflow-hidden rounded-xl p-4 cursor-pointer group transition-all duration-300 hover:shadow-lg hover:scale-[1.01] active:scale-[0.99]"
+                      className={`sm:col-span-2 relative overflow-hidden rounded-xl p-4 transition-all duration-300 ${!coinData.loading ? 'cursor-pointer group hover:shadow-lg hover:scale-[1.01] active:scale-[0.99]' : ''}`}
                       style={{ background: 'linear-gradient(135deg, #f6d365 0%, #fda085 50%, #f6d365 100%)' }}
                       onClick={() => {
+                        if (coinData.loading || !coinData.referralCode) return;
                         navigator.clipboard.writeText(coinData.referralCode);
                         setReferralCodeCopied(true);
                         setTimeout(() => setReferralCodeCopied(false), 2000);
                       }}
-                      title="Click to copy referral code"
+                      title={coinData.loading ? "Loading referral code..." : "Click to copy referral code"}
                     >
                       {/* Shimmer effect */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                      {!coinData.loading && (
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                      )}
                       <div className="relative flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 bg-white/30 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-inner">
@@ -1703,16 +1706,27 @@ export default function Profile() {
                           </div>
                           <div>
                             <p className="text-[10px] uppercase tracking-[0.15em] text-amber-900/70 font-bold">Your Referral Code</p>
-                            <p className="text-xl font-black tracking-[0.3em] text-amber-900 font-mono">{coinData.referralCode}</p>
+                            {coinData.loading ? (
+                              <div className="flex items-center gap-2 mt-1">
+                                <UrbanSetuSpinner size="sm" isBright={false} />
+                                <p className="text-xs sm:text-sm font-bold text-amber-900 animate-pulse">
+                                  {currentUser?.gamification?.referralCode ? 'Fetching Your referral code...' : 'Generating Your Referral code...'}
+                                </p>
+                              </div>
+                            ) : (
+                              <p className="text-xl font-black tracking-[0.3em] text-amber-900 font-mono">{coinData.referralCode}</p>
+                            )}
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          {referralCodeCopied ? (
-                            <span className="text-xs font-bold text-amber-900 bg-white/40 px-3 py-1.5 rounded-full flex items-center gap-1.5"><FaCheck className="text-green-700" /> Copied!</span>
-                          ) : (
-                            <span className="text-xs font-bold text-amber-900/80 bg-white/30 px-3 py-1.5 rounded-full flex items-center gap-1.5 group-hover:bg-white/50 transition-colors"><FaCopy /> Tap to copy</span>
-                          )}
-                        </div>
+                        {!coinData.loading && (
+                          <div className="flex items-center gap-2">
+                            {referralCodeCopied ? (
+                              <span className="text-xs font-bold text-amber-900 bg-white/40 px-3 py-1.5 rounded-full flex items-center gap-1.5 transition-all"><FaCheck className="text-green-700" /> Copied!</span>
+                            ) : (
+                              <span className="text-xs font-bold text-amber-900/80 bg-white/30 px-3 py-1.5 rounded-full flex items-center gap-1.5 group-hover:bg-white/50 transition-colors"><FaCopy /> Tap to copy</span>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
