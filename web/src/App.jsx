@@ -161,6 +161,7 @@ const MarketTrends = lazy(() => import('./pages/MarketTrends'));
 const AdminSponsorIntelligence = lazy(() => import('./pages/AdminSponsorIntelligence'));
 const AdminRentWallet = lazy(() => import('./pages/AdminRentWallet'));
 const SecurityIntelligence = lazy(() => import('./pages/SecurityIntelligence'));
+const AdminAuditTrail = lazy(() => import('./pages/AdminAuditTrail'));
 
 
 
@@ -1034,6 +1035,7 @@ function AppRoutes({ bootstrapped }) {
               <Route path="/admin/rental-loans" element={<AdminRentalLoans />} />
               <Route path="/admin/disputes" element={<AdminDisputeResolution />} />
               <Route path="/admin/coin-stats" element={<AdminCoinStats />} />
+              <Route path="/admin/audit-trail" element={<AdminAuditTrail />} />
               <Route path="/admin/year/:year" element={<YearInReview isAdmin={true} />} />
               <Route path="/admin/settings" element={<Settings />} />
               <Route path="/admin/view/:documentId" element={<ViewDocument />} />

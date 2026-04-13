@@ -8,6 +8,7 @@ import {
     reapproveAdminRequest,
     transferRootAdminRights
 } from '../controllers/admin.controller.js';
+import { getAdminLogs, getLogTypes } from '../controllers/adminLog.controller.js';
 import User from '../models/user.model.js';
 import { 
   getManagementUsers, 
@@ -99,6 +100,10 @@ router.get('/account-reminders/stats', verifyToken, getReminderStats);
 // Email monitoring endpoints (rootadmin only)
 router.post('/email-monitoring/trigger', verifyToken, triggerEmailMonitoring);
 router.get('/email-monitoring/stats', verifyToken, getEmailMonitoringStats);
+
+// Audit Log endpoints
+router.get('/audit-logs/all', verifyToken, requireApprovedAdmin, getAdminLogs);
+router.get('/audit-logs/types', verifyToken, requireApprovedAdmin, getLogTypes);
 
 // Test endpoint to verify route is working
 router.get('/email-monitoring/test', (req, res) => {

@@ -3,6 +3,8 @@ import { verifyToken } from '../utils/verify.js';
 import { logSecurityEvent } from '../middleware/security.js';
 import { getFraudStats } from '../utils/emailValidation.js';
 
+import AdminLog from '../models/adminLog.model.js';
+
 const router = express.Router();
 
 // Get fraud detection statistics (admin only)
@@ -41,9 +43,11 @@ router.get('/attempts', verifyToken, async (req, res, next) => {
       });
     }
 
-    // This would typically query a database for fraud attempts
-    // For now, return a placeholder
-    const attempts = [];
+    // Query database for logs of type 'fraud'
+    const attempts = await AdminLog.find({ type: 'fraud' })
+      .sort({ createdAt: -1 })
+      .limit(50);
+
     res.json({ 
       success: true, 
       attempts 

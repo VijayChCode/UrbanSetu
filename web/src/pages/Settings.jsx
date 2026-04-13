@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
-import { FaKey, FaTrash, FaSignOutAlt, FaUser, FaTools, FaCloudUploadAlt, FaClipboardList, FaMobileAlt, FaCrown, FaTimes, FaCheck, FaBell, FaEnvelope, FaLock, FaGlobe, FaPalette, FaDownload, FaHistory, FaCode, FaShieldAlt, FaEye, FaEyeSlash, FaMoon, FaSun, FaLanguage, FaClock, FaFileDownload, FaDatabase, FaExclamationTriangle, FaPhone, FaVideo, FaInfoCircle, FaUsers, FaBullhorn, FaDesktop, FaLocationArrow, FaChartLine, FaComments, FaMapMarkedAlt, FaRocket } from "react-icons/fa";
+import { FaKey, FaTrash, FaSignOutAlt, FaUser, FaTools, FaCloudUploadAlt, FaClipboardList, FaMobileAlt, FaCrown, FaTimes, FaCheck, FaBell, FaEnvelope, FaLock, FaGlobe, FaPalette, FaDownload, FaHistory, FaCode, FaShieldAlt, FaEye, FaEyeSlash, FaMoon, FaSun, FaLanguage, FaClock, FaFileDownload, FaDatabase, FaExclamationTriangle, FaPhone, FaVideo, FaInfoCircle, FaUsers, FaBullhorn, FaDesktop, FaLocationArrow, FaChartLine, FaComments, FaMapMarkedAlt, FaRocket, FaCoins } from "react-icons/fa";
 import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 import { authenticatedFetch } from '../utils/auth';
 import {
@@ -1301,6 +1301,39 @@ export default function Settings() {
             )}
           </div>
         </SettingSection>
+ 
+        {/* Administrative Access */}
+        {(currentUser.role === 'admin' || currentUser.role === 'rootadmin') && (
+          <SettingSection title="Administrative Access" icon={FaShieldAlt}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <button
+                onClick={() => navigate('/admin/audit-trail')}
+                className={`flex items-center gap-3 p-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-800/40 transition-all duration-300 group ${animationClasses.scaleIn}`}
+              >
+                <div className="p-3 bg-indigo-600 text-white rounded-lg shadow-lg shadow-indigo-500/30 group-hover:scale-110 transition-transform">
+                  <FaHistory className="w-5 h-5" />
+                </div>
+                <div className="text-left">
+                  <p className="font-bold text-gray-800 dark:text-gray-100">Audit Trail</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Security & Fraud Logs</p>
+                </div>
+              </button>
+
+              <button
+                onClick={() => navigate('/admin/coin-stats')}
+                className={`flex items-center gap-3 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-100 dark:border-yellow-800 rounded-xl hover:bg-yellow-100 dark:hover:bg-yellow-800/40 transition-all duration-300 group ${animationClasses.scaleIn}`}
+              >
+                <div className="p-3 bg-yellow-500 text-white rounded-lg shadow-lg shadow-yellow-500/30 group-hover:scale-110 transition-transform">
+                  <FaCoins className="w-5 h-5" />
+                </div>
+                <div className="text-left">
+                  <p className="font-bold text-gray-800 dark:text-gray-100">SetuCoins</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Loyalty & Management</p>
+                </div>
+              </button>
+            </div>
+          </SettingSection>
+        )}
 
         {/* Notification Preferences */}
         <SettingSection title={t('settings.section_notifications')} icon={FaBell}>

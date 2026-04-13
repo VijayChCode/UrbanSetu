@@ -4,7 +4,7 @@ const adminLogSchema = new mongoose.Schema({
     adminId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
-        required: true,
+        required: false, // Changed to false to allow system-generated logs
         index: true
     },
     action: {
@@ -13,20 +13,24 @@ const adminLogSchema = new mongoose.Schema({
     },
     targetId: {
         type: mongoose.Schema.Types.ObjectId,
-        required: false
+        required: false,
+        index: true
     },
     targetModel: {
-        type: String, // 'User', 'Listing', etc.
+        type: String, // 'User', 'Listing', 'Property', etc.
         required: false
     },
     details: {
         type: String,
         required: false
     },
-    ip: String,
+    ip: {
+        type: String,
+        default: 'SYSTEM'
+    },
     metadata: {
-        type: Map,
-        of: String
+        type: mongoose.Schema.Types.Mixed, // Use Mixed instead of Map for easier JSON storage
+        default: {}
     }
 }, { timestamps: true });
 

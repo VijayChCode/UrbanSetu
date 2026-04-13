@@ -309,14 +309,24 @@ export default function AdminCoinStats() {
                             SetuCoins Loyalty Management
                         </span>
                     </h1>
-                    <a
-                        href="/admin/leaderboard"
-                        className="text-xs font-black text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 flex items-center gap-1 uppercase tracking-widest transition-all hover:translate-x-1 w-fit group"
-                    >
-                        <FaTrophy className="text-yellow-500 group-hover:scale-110 transition-transform" />
-                        View Community Leaderboard
-                        <FaChevronRight size={8} className="opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </a>
+                    <div className="flex flex-wrap gap-4">
+                        <a
+                            href="/admin/leaderboard"
+                            className="text-xs font-black text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 flex items-center gap-1 uppercase tracking-widest transition-all hover:translate-x-1 w-fit group"
+                        >
+                            <FaTrophy className="text-yellow-500 group-hover:scale-110 transition-transform" />
+                            View Community Leaderboard
+                            <FaChevronRight size={8} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </a>
+                        <a
+                            href="/admin/audit-trail"
+                            className="text-xs font-black text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 flex items-center gap-1 uppercase tracking-widest transition-all hover:translate-x-1 w-fit group"
+                        >
+                            <FaHistory className="text-indigo-500 group-hover:scale-110 transition-transform" />
+                            View System Audit Logs
+                            <FaChevronRight size={8} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </a>
+                    </div>
                 </div>
 
                 {/* Search Bar */}

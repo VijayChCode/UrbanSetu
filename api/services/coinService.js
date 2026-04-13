@@ -68,33 +68,30 @@ class CoinService {
             throw new Error('Amount must be positive');
         }
 
-        const user = await User.findById(userId).session(session);
+        // Use atomic update to prevent race conditions during rapid operations
+        const user = await User.findByIdAndUpdate(
+            userId,
+            {
+                $inc: {
+                    "gamification.setuCoinsBalance": amount,
+                    "gamification.totalCoinsEarned": amount
+                },
+                $set: { "gamification.lastCoinTransaction": new Date() }
+            },
+            { 
+                new: true, 
+                session, 
+                runValidators: true,
+                setDefaultsOnInsert: true
+            }
+        ).select('gamification');
+
         if (!user) {
             throw new Error('User not found');
         }
 
-        // Initialize gamification if it doesn't exist
-        if (!user.gamification) {
-            user.gamification = {
-                setuCoinsBalance: 0,
-                totalCoinsEarned: 0,
-                currentStreak: 0,
-                lastRentPaymentDate: null
-            };
-        }
-
-        // Update balance
-        user.gamification.setuCoinsBalance += amount;
-        user.gamification.totalCoinsEarned += amount;
-
-        // Update expiry tracking
-        const now = new Date();
-        const oneYearFromNow = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
-        user.gamification.lastCoinTransaction = now;
-        // user.gamification.coinsExpiryDate = oneYearFromNow; // Removed: We now track expiry per transaction
-
-        // Save user
-        await user.save({ session });
+        // Expiry period (standard 1 year)
+        const expiryDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
 
         // Create transaction record
         const transaction = new CoinTransaction({
@@ -106,8 +103,8 @@ class CoinService {
             referenceModel,
             description,
             balanceAfter: user.gamification.setuCoinsBalance,
-            expiryDate: oneYearFromNow, // Per-transaction expiry
-            remainingBalance: amount,   // Initial remaining balance
+            expiryDate,
+            remainingBalance: amount, // For FIFO tracking
             adminId
         });
 

@@ -475,7 +475,10 @@ export default function AdminFraudManagement() {
           <h3 className="text-3xl font-extrabold text-blue-700 dark:text-indigo-400 drop-shadow">Fraud Management</h3>
           <div className="flex gap-2 flex-wrap">
             <button className="px-3 py-2 bg-blue-600 text-white rounded-lg disabled:opacity-60 text-sm hover:bg-blue-700 transition-colors" disabled={loading} onClick={fetchData}>{loading ? 'Scanning…' : 'Scan Now'}</button>
-            <button className="px-3 py-2 bg-gray-200 dark:bg-gray-700 dark:text-gray-200 rounded-lg text-sm hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors" onClick={() => navigate('/admin')}>Back</button>
+            <button className="px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 transition-colors flex items-center gap-1.5" onClick={() => navigate('/admin/audit-trail')}>
+              View Audit Trail
+            </button>
+            <button className="px-3 py-2 bg-gray-200 dark:bg-gray-700 dark:text-gray-200 rounded-lg text-sm hover:bg-gray-300 dark:hover:bg-gray-600 transition-all" onClick={() => navigate('/admin')}>Back</button>
             <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
               <input type="checkbox" className="rounded border-gray-300 dark:border-gray-600 dark:bg-gray-700" checked={includeLowSeverity} onChange={(e) => { setIncludeLowSeverity(e.target.checked); setPageL(1); setPageR(1); }} />
               Include low severity
