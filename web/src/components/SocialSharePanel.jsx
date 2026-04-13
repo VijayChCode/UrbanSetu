@@ -340,13 +340,17 @@ const SocialSharePanel = ({ isOpen, onClose, url, title = "Join UrbanSetu!", des
                   <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">Your Referral Code:</span>
                   <span 
                     onClick={copyCodeToClipboard}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg font-mono font-black text-sm tracking-[0.2em] text-amber-900 cursor-pointer hover:scale-105 active:scale-95 transition-all shadow-sm group/code" 
-                    style={{ background: 'linear-gradient(135deg, #f6d365, #fda085)' }}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg font-mono font-black text-sm tracking-[0.2em] cursor-pointer hover:scale-105 active:scale-95 transition-all duration-500 shadow-sm group/code ${codeCopied ? 'text-white' : 'text-amber-900'}`} 
+                    style={{ 
+                      background: codeCopied 
+                        ? 'linear-gradient(135deg, #10b981, #059669)' 
+                        : 'linear-gradient(135deg, #f6d365, #fda085)' 
+                    }}
                     title="Click to copy code"
                   >
                     {referralCode}
                     {codeCopied ? (
-                      <FaCheck className="text-[10px] text-green-700" />
+                      <FaCheck className="text-[10px] text-white" />
                     ) : (
                       <FaCopy className="text-[10px] text-amber-800/60 group-hover/code:text-amber-900 transition-colors" />
                     )}
