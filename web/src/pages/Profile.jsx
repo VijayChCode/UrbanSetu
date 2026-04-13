@@ -1729,14 +1729,14 @@ export default function Profile() {
 
                 {/* Member Since */}
                 <div className="text-center sm:text-left">
-                  <p className="text-sm text-gray-500 dark:text-gray-400 font-mono mb-4 transition-colors duration-300">
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-mono mb-2 transition-colors duration-300">
                     <FaCalendarAlt className="w-3 h-3 inline mr-1" />
                     Member since {formatDate(currentUser.createdAt)}
                   </p>
                 </div>
               </div>
             </div>
-            <div className="mt-6 flex justify-end w-full">
+            <div className="mt-3 flex justify-end w-full">
               <button
                 onClick={() => setIsEditing(!isEditing)}
                 className={`bg-gradient-to-r ${!isEditing && isProfileIncomplete ? 'from-amber-400 to-yellow-600 shadow-yellow-500/50' : 'from-blue-500 to-purple-500'} text-white px-5 sm:px-4 py-4 sm:py-2 rounded-lg ${!isEditing && isProfileIncomplete ? 'hover:from-amber-500 hover:to-yellow-700' : 'hover:from-blue-600 hover:to-purple-600'} transition-all transform hover:scale-105 hover:rotate-1 shadow-lg font-semibold flex items-center gap-2 sm:gap-2 text-base sm:text-sm w-full sm:w-auto justify-center group ${isVisible ? animationClasses.fadeInRight + ' animation-delay-450' : 'opacity-0 translate-x-8'}`}
