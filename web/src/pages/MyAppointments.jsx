@@ -8812,13 +8812,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                 </span>
                               </div>
                               <div className="text-sm text-gray-800 dark:text-gray-200 line-clamp-2">
-                                {pinnedMsg.audioUrl ? (
+                                {(pinnedMsg.audioUrl || pinnedMsg.type === 'audio') ? (
                                   <span className="flex items-center gap-1 text-gray-500 dark:text-gray-400"><FaMicrophone className="text-xs" /> Voice message</span>
-                                ) : pinnedMsg.videoUrl ? (
+                                ) : (pinnedMsg.videoUrl || pinnedMsg.type === 'video') ? (
                                   <span className="flex items-center gap-1 text-gray-500 dark:text-gray-400"><FaVideo className="text-xs" /> Video</span>
-                                ) : pinnedMsg.imageUrl ? (
+                                ) : (pinnedMsg.imageUrl || pinnedMsg.type === 'image') ? (
                                   <span className="flex items-center gap-1 text-gray-500 dark:text-gray-400">📷 Photo</span>
-                                ) : pinnedMsg.documentUrl ? (
+                                ) : (pinnedMsg.documentUrl || pinnedMsg.type === 'document') ? (
                                   <span className="flex items-center gap-1 text-gray-500 dark:text-gray-400"><FaFileAlt className="text-xs" /> Document</span>
                                 ) : pinnedMsg.message || ''}
                               </div>
@@ -12694,7 +12694,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                 ) : (
                                   <>
                                     {/* Audio Message */}
-                                    {message.audioUrl && (
+                                    {(message.audioUrl || message.type === 'audio') && (
                                       <div className="mb-2 flex items-center gap-2 py-1">
                                         <FaMicrophone className={`text-sm ${isMe ? 'text-blue-200' : 'text-purple-500'}`} />
                                         <span className={`text-sm ${isMe ? 'text-blue-100' : 'text-gray-600 dark:text-gray-300'}`}>Voice message</span>
