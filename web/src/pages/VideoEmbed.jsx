@@ -88,13 +88,12 @@ const VideoEmbed = () => {
         return (
             <div className="fixed inset-0 bg-gradient-to-br from-gray-950 via-black to-gray-900 flex items-center justify-center z-[9999]">
                 <div className="max-w-md w-full mx-4 text-center">
-                    <div className={`w-20 h-20 mx-auto mb-6 rounded-2xl flex items-center justify-center ${
-                        errorType === 'expired' 
-                            ? 'bg-amber-500/10 border-2 border-amber-500/20' 
+                    <div className={`w-20 h-20 mx-auto mb-6 rounded-2xl flex items-center justify-center ${errorType === 'expired'
+                            ? 'bg-amber-500/10 border-2 border-amber-500/20'
                             : errorType === 'notfound'
-                            ? 'bg-red-500/10 border-2 border-red-500/20'
-                            : 'bg-gray-500/10 border-2 border-gray-500/20'
-                    }`}>
+                                ? 'bg-red-500/10 border-2 border-red-500/20'
+                                : 'bg-gray-500/10 border-2 border-gray-500/20'
+                        }`}>
                         {errorType === 'expired' ? (
                             <FaClock className="text-amber-400 text-3xl" />
                         ) : errorType === 'notfound' ? (
@@ -103,18 +102,18 @@ const VideoEmbed = () => {
                             <FaExclamationTriangle className="text-gray-400 text-3xl" />
                         )}
                     </div>
-                    
+
                     <h1 className="text-2xl font-black text-white mb-3 tracking-tight">
                         {errorType === 'expired' ? 'Link Expired' : errorType === 'notfound' ? 'Video Not Found' : 'Something Went Wrong'}
                     </h1>
-                    
+
                     <p className="text-gray-400 mb-8 leading-relaxed">
                         {error}
                     </p>
 
                     <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                        <Link 
-                            to="/" 
+                        <Link
+                            to="/"
                             className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl font-semibold text-sm transition-all hover:scale-105"
                         >
                             <FaArrowLeft className="text-xs" />
@@ -146,9 +145,9 @@ const VideoEmbed = () => {
                         </button>
                         <h2 className="text-xl font-bold text-white mb-2">{title}</h2>
                         <p className="text-gray-500 text-sm mb-6">Tap to play</p>
-                        
+
                         {listingId && (
-                            <Link 
+                            <Link
                                 to={`/listing/${listingId}`}
                                 className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors"
                             >
@@ -157,7 +156,7 @@ const VideoEmbed = () => {
                         )}
 
                         <p className="mt-10 text-gray-600 text-[10px] font-bold tracking-widest uppercase">
-                            UrbanSetu Native Player
+                            UrbanSetu Native Player 2.5
                         </p>
                     </div>
                 </div>
