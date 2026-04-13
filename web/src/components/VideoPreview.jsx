@@ -155,6 +155,8 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
   const [showPreview, setShowPreview] = useState(false);
   const previewVideoRef = useRef(null);
   const abortControllerRef = useRef(null);
+  const savedTimeRef = useRef(0);
+  const isRecoveringRef = useRef(false);
 
   // Helper to optimize Cloudinary URLs
   const optimizeVideoUrl = (url) => {
@@ -222,6 +224,8 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
 
       setProgress(0);
       setLoadedProgress(0);
+      savedTimeRef.current = 0;
+      isRecoveringRef.current = false;
       setScale(1);
       setRotation(0);
       setPosition({ x: 0, y: 0 });
@@ -566,13 +570,10 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
         setIsManualRetrying(false);
         if (videoRef.current) {
           if (videoRef.current.networkState === 3 || videoRef.current.error || isLoading) {
-            const currentTime = videoRef.current.currentTime;
-            if (isFinite(currentTime)) {
-              videoRef.current.load();
-              videoRef.current.currentTime = currentTime;
-            } else {
-              videoRef.current.load();
-            }
+            // savedTimeRef already tracks the last valid playback position
+            isRecoveringRef.current = true;
+            videoRef.current.load();
+            // Time will be restored in onCanPlay/onLoadedData after buffering
             if (isPlaying) {
               videoRef.current.play().catch(e => console.warn("Failed to auto-resume:", e));
             }
@@ -939,6 +940,11 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
       const current = videoRef.current.currentTime;
       const total = videoRef.current.duration;
 
+      // Persist position for network recovery
+      if (isFinite(current) && current > 0) {
+        savedTimeRef.current = current;
+      }
+
       if (isFinite(total) && total > 0) {
         // Only update state duration if it's significantly different (avoid jitter)
         // or if it's the first time we've got a valid duration
@@ -1089,7 +1095,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
 
   const handleContextMenu = (e) => {
     e.preventDefault();
-    if (isMiniMode) return;
+    if (isMiniMode || isMobile) return;
 
     // Calculate position taking into account the viewport
     const menuWidth = 240;
@@ -1895,7 +1901,11 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
                   onClick={(e) => {
                     e.stopPropagation();
                     setIsManualRetrying(true);
+                    isRecoveringRef.current = true;
                     setRetryId(id => id + 1);
+                    if (videoRef.current) {
+                      videoRef.current.load();
+                    }
                   }}
                   className="pointer-events-auto bg-white/10 hover:bg-white/20 backdrop-blur-md px-4 py-2 rounded-xl text-white/90 text-sm font-semibold transition-all border border-white/5 shadow-xl active:scale-95 animate-fadeIn"
                 >
@@ -1935,6 +1945,11 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
             setIsManualRetrying(false);
             const d = e.currentTarget.duration;
             if (isFinite(d) && d > 0) setDuration(d);
+            // Restore saved position after network recovery
+            if (isRecoveringRef.current && savedTimeRef.current > 0 && isFinite(d)) {
+              e.currentTarget.currentTime = Math.min(savedTimeRef.current, d);
+              isRecoveringRef.current = false;
+            }
           }}
           onLoadedMetadata={(e) => {
             const d = e.currentTarget.duration;
@@ -1953,6 +1968,11 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
             setIsLoading(false);
             const d = e.currentTarget.duration;
             if (isFinite(d) && d > 0) setDuration(d);
+            // Restore saved position after network recovery
+            if (isRecoveringRef.current && savedTimeRef.current > 0 && isFinite(d)) {
+              e.currentTarget.currentTime = Math.min(savedTimeRef.current, d);
+              isRecoveringRef.current = false;
+            }
           }}
           onPlay={() => setIsPlaying(true)}
           onPlaying={(e) => {
