@@ -455,16 +455,20 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
             const loginData = await loginRes.json();
 
             if (loginRes.ok) {
-              setSuccess("Account created! Logging you in...");
+              setSuccess("Account Created Successfully! 🏠✨ Welcome to UrbanSetu. Please wait a moment while we're signing you in...");
 
               // Capture redirect URL BEFORE showing loader (ref avoids closure issues)
               const signupSearchParams = new URLSearchParams(location.search);
               pendingRedirectRef.current = signupSearchParams.get('redirect');
 
               setPendingLoginData(loginData);
-              setShowLoader(true);
+              
+              // Delay the premium loader slightly so user can read the success message
+              setTimeout(() => {
+                setShowLoader(true);
+              }, 2500);
             } else {
-              setSuccess("Account created successfully! Redirecting to login...");
+              setSuccess("Account Created Successfully! 🏠✨ Welcome to UrbanSetu. Please wait a moment while we're signing you in...");
               setTimeout(() => navigate("/sign-in"), 2000);
             }
           } catch (loginError) {
