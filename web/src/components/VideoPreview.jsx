@@ -2698,7 +2698,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
       )
       }
 
-      <SocialSharePanel isOpen={showSharePanel} onClose={() => { setShowSharePanel(false); setShareUrl(null); if (wasPlayingRef.current) setIsPlaying(true); }} url={shareUrl || videos[currentIndex] || ""} title="Check out this video on UrbanSetu!" />
+      <SocialSharePanel isOpen={showSharePanel} onClose={() => { setShowSharePanel(false); setShareUrl(null); if (wasPlayingRef.current) setIsPlaying(true); }} url={shareUrl || ""} title="Check out this video on UrbanSetu!" isLoading={isGeneratingShare} />
     </div >
   );
 

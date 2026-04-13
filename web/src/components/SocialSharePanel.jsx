@@ -10,7 +10,7 @@ import { FaXTwitter } from 'react-icons/fa6';
 import { SiKakaotalk, SiMix, SiGmail } from 'react-icons/si';
 import { toast } from 'react-toastify';
 
-const SocialSharePanel = ({ isOpen, onClose, url, title = "Join UrbanSetu!", description = "Discover the future of real estate with UrbanSetu.", referralCode = null }) => {
+const SocialSharePanel = ({ isOpen, onClose, url, title = "Join UrbanSetu!", description = "Discover the future of real estate with UrbanSetu.", referralCode = null, isLoading = false }) => {
   // Build share text that includes both referral code and link when available
   const shareText = referralCode
     ? `${title}\n${description}\n\n🎁 Use my referral code: ${referralCode}\nOr sign up via this link:`
@@ -312,11 +312,21 @@ const SocialSharePanel = ({ isOpen, onClose, url, title = "Join UrbanSetu!", des
           {/* Link Copy Section - More compact */}
           <div className="mt-4 p-3 bg-gray-50 dark:bg-[#0f0f0f] border border-gray-200 dark:border-gray-800 rounded-xl flex items-center gap-3">
             <div className="flex-1 overflow-hidden">
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate select-all">{url}</p>
+              {isLoading ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-blue-500 animate-pulse" />
+                  <p className="text-sm font-medium text-gray-400 dark:text-gray-500 animate-pulse">Generating share link...</p>
+                </div>
+              ) : (
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate select-all">{url}</p>
+              )}
             </div>
             <button
               onClick={copyToClipboard}
-              className={`px-4 py-2 rounded-full font-bold text-sm transition-all duration-300 shrink-0 ${copied
+              disabled={isLoading}
+              className={`px-4 py-2 rounded-full font-bold text-sm transition-all duration-300 shrink-0 ${isLoading
+                ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed'
+                : copied
                 ? 'bg-green-600 text-white'
                 : 'bg-blue-600 hover:bg-blue-700 text-white shadow-md'
                 }`}

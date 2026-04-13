@@ -32,10 +32,9 @@ export const createShareLink = async (req, res, next) => {
             }
         }
 
-        // Check if a share already exists for this exact URL by this user
+        // Check if a share already exists for this video URL (one permanent link per video)
         const existingShare = await VideoShare.findOne({
             videoUrl,
-            createdBy: req.user?.id || null,
             isActive: true,
             $or: [
                 { expiresAt: null },
