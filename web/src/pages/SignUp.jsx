@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { FaEye, FaEyeSlash, FaCheck, FaTimes, FaEdit, FaGift } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaCheck, FaTimes, FaEdit, FaGift, FaCheckCircle } from "react-icons/fa";
+import UrbanSetuSpinner from "../components/UrbanSetuSpinner";
 import Oauth from "../components/Oauth";
 import ContactSupportWrapper from "../components/ContactSupportWrapper";
 import RecaptchaWidget from "../components/RecaptchaWidget";
@@ -1047,18 +1048,31 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                       />
                     </div>
 
-                    {/* Referral Code Field (Optional) */}
-                    {!referredBy && (
-                      <div>
-                        <label htmlFor="referralCodeInput" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 ml-1">
-                          Referral Code <span className="text-xs text-gray-400 font-normal">(Optional)</span>
-                          {referralCodeStatus.valid === true && (
-                            <span className="ml-2 text-green-600 text-xs"><FaCheck className="inline" /> Referred by {referralCodeStatus.name}</span>
-                          )}
-                          {referralCodeStatus.valid === false && (
-                            <span className="ml-2 text-red-500 text-xs"><FaTimes className="inline" /> Invalid code</span>
-                          )}
-                        </label>
+                    {/* Referral Code Field */}
+                    <div className="relative">
+                      {/* Integrated Message/Label Area */}
+                      <label htmlFor="referralCodeInput" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 ml-1">
+                        Referral Code <span className="text-xs text-gray-400 font-normal">(Optional)</span>
+                        {referralCodeStatus.loading && (
+                          <span className="ml-2 text-indigo-500 text-xs animate-pulse font-medium">Verifying code...</span>
+                        )}
+                        {!referralCodeStatus.loading && referralCodeStatus.valid === true && (
+                          <span className="ml-2 text-green-600 text-xs font-bold flex items-center gap-1 inline-flex">
+                            <FaCheckCircle className="inline" /> 
+                            {(() => {
+                              const params = new URLSearchParams(location.search);
+                              const refParam = params.get('ref');
+                              const isObjectId = /^[0-9a-fA-F]{24}$/.test(refParam);
+                              return (referredBy && isObjectId) ? "Referral link applied!" : `Referred by ${referralCodeStatus.name}`;
+                            })()}
+                          </span>
+                        )}
+                        {!referralCodeStatus.loading && referralCodeStatus.valid === false && (
+                          <span className="ml-2 text-red-500 text-xs font-medium animate-shake"><FaTimes className="inline mr-1" />Invalid code</span>
+                        )}
+                      </label>
+
+                      <div className="relative group">
                         <FormField
                           label={undefined}
                           id="referralCodeInput"
@@ -1068,7 +1082,13 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                           onChange={(e) => {
                             const val = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
                             setReferralCodeInput(val);
-                            setReferralCodeStatus({ loading: false, valid: null, name: '' });
+                            
+                            // Reset state if edited
+                            if (val.length !== 8) {
+                              setReferralCodeStatus({ loading: false, valid: null, name: '' });
+                              if (val.length === 0) setReferredBy(null);
+                            }
+
                             // Auto-validate when 8 chars entered
                             if (val.length === 8) {
                               setReferralCodeStatus({ loading: true, valid: null, name: '' });
@@ -1076,6 +1096,7 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                                 .then(r => r.json())
                                 .then(data => {
                                   if (data.success && data.referrerId) {
+                                    setReferredBy(data.referrerId);
                                     setReferralCodeStatus({ loading: false, valid: true, name: data.referrerName });
                                   } else {
                                     setReferralCodeStatus({ loading: false, valid: false, name: '' });
@@ -1085,16 +1106,28 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                             }
                           }}
                           disabled={authInProgress === 'google'}
-                          startIcon={<FaGift className="w-4 h-4 text-amber-500" />}
-                          inputClassName={`transition-all duration-200 focus:ring-2 focus:ring-green-500/20 tracking-[0.2em] font-mono uppercase ${referralCodeStatus.valid === true ? 'border-green-500' : referralCodeStatus.valid === false ? 'border-red-500' : ''} ${authInProgress === 'google' ? 'bg-gray-100 cursor-not-allowed' : ''} hover:border-green-500`}
+                          startIcon={<FaGift className={`w-4 h-4 transition-colors duration-300 ${referralCodeStatus.valid === true ? 'text-green-500' : 'text-amber-500'}`} />}
+                          endAdornment={
+                            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                              {referralCodeStatus.loading ? (
+                                <UrbanSetuSpinner size="sm" />
+                              ) : referralCodeStatus.valid === true ? (
+                                <FaCheckCircle className="text-green-500 w-4 h-4" />
+                              ) : referralCodeStatus.valid === false ? (
+                                <FaTimes className="text-red-500 w-4 h-4" />
+                              ) : null}
+                            </div>
+                          }
+                          inputClassName={`transition-all duration-300 tracking-[0.2em] font-mono uppercase pr-10 hover:border-blue-400 ${referralCodeStatus.valid === true ? 'border-green-500 bg-green-50/10' : referralCodeStatus.valid === false ? 'border-red-500 bg-red-50/10' : 'focus:ring-blue-500/20'} ${authInProgress === 'google' ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                         />
                       </div>
-                    )}
-                    {referredBy && (
-                      <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3 text-center">
-                        <p className="text-sm text-green-700 dark:text-green-300 font-medium">🎉 Referral link applied! You'll receive <strong>50 SetuCoins</strong> on signup.</p>
-                      </div>
-                    )}
+
+                      {referralCodeStatus.valid === true && (
+                        <p className="mt-2 ml-1 text-[11px] text-green-600 dark:text-green-400 font-medium animate-fadeIn">
+                          ✨ Bonus unlocked: You'll receive <span className="font-bold">50 SetuCoins</span> on signup!
+                        </p>
+                      )}
+                    </div>
 
                     <div className="flex items-start mb-2">
                       <input
