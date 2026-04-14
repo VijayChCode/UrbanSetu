@@ -20,7 +20,8 @@ const SeasonalEffects = ({ className }) => {
                                 : theme.effect === 'ramnavami' ? 30
                                     : theme.effect === 'shivaratri' ? 28
                                         : theme.effect === 'hanuman' ? 25
-                                            : (theme.effect === 'sparkle' || theme.effect === 'sun') ? 35
+                                            : theme.effect === 'ambedkar' ? 32
+                                                : (theme.effect === 'sparkle' || theme.effect === 'sun') ? 35
                                                 : (theme.effect === 'bonfire' || theme.effect === 'candle' || theme.effect === 'peacock' || theme.effect === 'rakhi') ? 22
                                                     : 20;
 
@@ -31,6 +32,7 @@ const SeasonalEffects = ({ className }) => {
         const ramNavamiItems = ['🌸', '🌺', '🪷', '✨', '🏵️'];
         const shivaItems = ['🔱', '🕉️', '✨', '💠', '🌙'];
         const hanumanItems = ['🔥', '🪔', '✨', '🌺', '🏵️'];
+        const ambedkarItems = ['⚖️', '📖', '💙', '✨', '🌸'];
 
         const newParticles = Array.from({ length: particleCount }).map((_, i) => {
             // 3D depth layer: 0=far, 1=mid, 2=near
@@ -126,6 +128,17 @@ const SeasonalEffects = ({ className }) => {
                 };
             }
 
+            if (theme.effect === 'ambedkar') {
+                return {
+                    ...base,
+                    animationDuration: (Math.random() * 6 + 5) * depthSpeed + 's',
+                    size: (Math.random() * 22 + 16) * depthScale + 'px',
+                    emoji: ambedkarItems[Math.floor(Math.random() * ambedkarItems.length)],
+                    glowColor: ['#2563EB', '#3B82F6', '#1D4ED8', '#60A5FA'][Math.floor(Math.random() * 4)],
+                    isBlueSparkle: Math.random() < 0.3,
+                };
+            }
+
             // Default for existing effects (snow, confetti, tricolor, kite, etc.)
             return {
                 ...base,
@@ -156,7 +169,7 @@ const SeasonalEffects = ({ className }) => {
     if (!theme || !theme.effect || theme.effect === 'none') return null;
 
     // Check if this is one of our 3D-enhanced effects
-    const is3D = ['holi', 'eid', 'ugadi', 'ramnavami', 'shivaratri', 'hanuman'].includes(theme.effect);
+    const is3D = ['holi', 'eid', 'ugadi', 'ramnavami', 'shivaratri', 'hanuman', 'ambedkar'].includes(theme.effect);
 
     return (
         <div
@@ -414,6 +427,35 @@ const SeasonalEffects = ({ className }) => {
             0%, 100% { filter: drop-shadow(0 0 5px var(--glow, #FF6B00)); }
             50% { filter: drop-shadow(0 0 22px var(--glow, #FF4500)); }
           }
+
+          /* --- AMBEDKAR 3D: Blue theme with drifting wisdom items --- */
+          @keyframes ambedkar-3d {
+            0% {
+              transform: translate3d(0, -10vh, var(--dz)) rotateX(0deg) rotateY(0deg) scale(var(--ds, 0.4));
+              opacity: 0;
+            }
+            15% {
+              opacity: 0.9;
+              transform: translate3d(12px, 15vh, calc(var(--dz) + 30px)) rotateX(45deg) rotateY(30deg) scale(var(--ds, 0.8));
+              filter: drop-shadow(0 0 8px var(--glow, #2563EB));
+            }
+            40% {
+              transform: translate3d(-15px, 45vh, calc(var(--dz) - 20px)) rotateX(120deg) rotateY(180deg) scale(var(--ds, 1.1));
+              opacity: 0.7;
+            }
+            70% {
+              transform: translate3d(18px, 75vh, calc(var(--dz) + 25px)) rotateX(240deg) rotateY(280deg) scale(var(--ds, 0.9));
+              opacity: 0.4;
+            }
+            100% {
+              transform: translate3d(0, 105vh, var(--dz)) rotateX(360deg) rotateY(360deg) scale(var(--ds, 0.5));
+              opacity: 0;
+            }
+          }
+          @keyframes ambedkar-sparkle {
+            0%, 100% { opacity: 0.2; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+          }
         `}
             </style>
 
@@ -568,6 +610,22 @@ const SeasonalEffects = ({ className }) => {
                             '--glow': p.glowColor,
                         }}>
                             {p.emoji}
+                        </div>
+                    );
+                }
+
+                // === AMBEDKAR 3D ===
+                if (theme.effect === 'ambedkar') {
+                    return (
+                        <div key={p.id} className="absolute" style={{
+                            ...css3d, left: p.left, fontSize: p.size, opacity: p.opacity,
+                            animation: `ambedkar-3d ${p.animationDuration} ease-in-out ${p.animationDelay} infinite`,
+                            '--glow': p.glowColor,
+                        }}>
+                            {p.emoji}
+                            {p.isBlueSparkle && (
+                                <div className="absolute inset-0 bg-blue-400 rounded-full blur-xl opacity-20 animate-pulse" />
+                            )}
                         </div>
                     );
                 }

@@ -319,6 +319,7 @@ export function* getActiveThemes(dateInput = new Date()) {
         { id: 'hanuman', year: 2025, month: 3, day: 12, window: 1, name: 'Hanuman Jayanti', icon: '🙏', sec: '💪', greet: 'Jai Bajrangbali!', desc: 'Strength, devotion, and courage. Happy Hanuman Jayanti!', deco: 'mace' },
         { id: 'goodfriday', year: 2025, month: 3, day: 18, window: 0, name: 'Good Friday', icon: '✝️', sec: '🕯️', greet: 'Blessed Good Friday', desc: 'Remembering the sacrifice and love. Have a blessed day.', deco: 'cross' },
         { id: 'easter', year: 2025, month: 3, day: 20, window: 1, name: 'Easter', icon: '🥚', sec: '🐰', greet: 'Happy Easter!', desc: 'New life and new hope. Happy Easter!', deco: 'egg' },
+        { id: 'ambedkarjayanti', year: 2025, month: 3, day: 14, window: 0, name: 'Ambedkar Jayanti', icon: '⚖️', sec: '💐', greet: 'Happy Ambedkar Jayanti!', desc: 'Celebrating the birth anniversary of Dr. B.R. Ambedkar, the architect of the Indian Constitution.', deco: 'book' },
         { id: 'eidadha', year: 2025, month: 5, day: 7, window: 2, name: 'Eid al-Adha', icon: '🕌', sec: '🐑', greet: 'Eid Mubarak!', desc: 'Wishing you a blessed Eid al-Adha filled with sacrifice and faith.', deco: 'lantern' },
         { id: 'rathyatra', year: 2025, month: 5, day: 27, window: 1, name: 'Rath Yatra', icon: '🎡', sec: '🚩', greet: 'Jai Jagannath!', desc: 'May the divine chariot bring you good fortune.', deco: 'chariot' },
         { id: 'muharram', year: 2025, month: 6, day: 26, window: 1, name: 'Islamic New Year', icon: '☪️', sec: '📅', greet: 'Blessed Muharram', desc: 'Reflecting on the New Year with faith and hope.', deco: 'moon' },
@@ -364,6 +365,7 @@ export function* getActiveThemes(dateInput = new Date()) {
         { id: 'buddha', year: 2026, month: 4, day: 31, window: 0, name: 'Buddha Purnima', icon: '🏵️', sec: '🧘', greet: 'Happy Buddha Purnima', desc: 'Enlightenment and peace to all.', deco: 'lotus' },
         { id: 'gurunanak', year: 2026, month: 10, day: 24, window: 0, name: 'Guru Nanak Jayanti', icon: 'ੴ', sec: '🕯️', greet: 'Happy Gurpurab!', desc: 'Spreading the light of oneness and service.', deco: 'khanda' },
         { id: 'baisakhi', year: 2026, month: 3, day: 14, window: 0, name: 'Baisakhi', icon: '🌾', sec: ' drum', greet: 'Happy Baisakhi!', desc: 'Celebrating the harvest and the spirit of Punjab.', deco: 'harvest' },
+        { id: 'ambedkarjayanti', year: 2026, month: 3, day: 14, window: 0, name: 'Ambedkar Jayanti', icon: '⚖️', sec: '💐', greet: 'Happy Ambedkar Jayanti!', desc: 'Celebrating the birth anniversary of Dr. B.R. Ambedkar, the architect of the Indian Constitution.', deco: 'book' },
         { id: 'mothers', year: 2026, month: 4, day: 10, window: 0, name: 'Mother\'s Day', icon: '👩‍👧‍👦', sec: ' bouquet', greet: 'Happy Mother\'s Day!', desc: 'Celebrating the love and strength of mothers everywhere.', deco: 'heart' },
         { id: 'fathers', year: 2026, month: 5, day: 21, window: 0, name: 'Father\'s Day', icon: '👨‍👧‍👦', sec: '👔', greet: 'Happy Father\'s Day!', desc: 'Honoring fathers and their endless support.', deco: 'tie' },
 
@@ -379,6 +381,7 @@ export function* getActiveThemes(dateInput = new Date()) {
         { id: 'ugadi', year: 2027, month: 3, day: 7, window: 1, name: 'Ugadi', icon: '🥭', sec: '🌿', greet: 'Happy Ugadi!', desc: 'New beginnings and new hopes. Happy New Year!', deco: 'mango' },
         { id: 'gudipadwa', year: 2027, month: 3, day: 7, window: 1, name: 'Gudi Padwa', icon: '🪁', sec: '🎋', greet: 'Happy Gudi Padwa!', desc: 'New beginnings and success to you. Happy Nav Varsh!', deco: 'gudi' },
         { id: 'baisakhi', year: 2027, month: 3, day: 14, window: 0, name: 'Baisakhi', icon: '🌾', sec: '🥁', greet: 'Happy Baisakhi!', desc: 'Celebrating the harvest and the spirit of Punjab.', deco: 'harvest' },
+        { id: 'ambedkarjayanti', year: 2027, month: 3, day: 14, window: 0, name: 'Ambedkar Jayanti', icon: '⚖️', sec: '💐', greet: 'Happy Ambedkar Jayanti!', desc: 'Celebrating the birth anniversary of Dr. B.R. Ambedkar, the architect of the Indian Constitution.', deco: 'book' },
         { id: 'ramnavami', year: 2027, month: 3, day: 15, window: 1, name: 'Sri Rama Navami', icon: '🏹', sec: '🚩', greet: 'Jai Shri Ram!', desc: 'Celebrating the birth of Lord Rama. May righteousness prevail.', deco: 'bow' },
         { id: 'mahavir', year: 2027, month: 3, day: 18, window: 0, name: 'Mahavir Jayanti', icon: '🕉️', sec: '🙏', greet: 'Happy Mahavir Jayanti', desc: 'Celebrating peace and non-violence.', deco: 'peace' },
         { id: 'mothers', year: 2027, month: 4, day: 9, window: 0, name: 'Mother\'s Day', icon: '👩‍👧‍👦', sec: '💐', greet: 'Happy Mother\'s Day!', desc: 'Celebrating the love and strength of mothers everywhere.', deco: 'heart' },
