@@ -21,7 +21,8 @@ const SeasonalEffects = ({ className }) => {
                                     : theme.effect === 'shivaratri' ? 28
                                         : theme.effect === 'hanuman' ? 25
                                             : theme.effect === 'ambedkar' ? 32
-                                                : (theme.effect === 'sparkle' || theme.effect === 'sun') ? 35
+                                                : theme.effect === 'baisakhi' ? 30
+                                                    : (theme.effect === 'sparkle' || theme.effect === 'sun') ? 35
                                                 : (theme.effect === 'bonfire' || theme.effect === 'candle' || theme.effect === 'peacock' || theme.effect === 'rakhi') ? 22
                                                     : 20;
 
@@ -33,6 +34,7 @@ const SeasonalEffects = ({ className }) => {
         const shivaItems = ['🔱', '🕉️', '✨', '💠', '🌙'];
         const hanumanItems = ['🔥', '🪔', '✨', '🌺', '🏵️'];
         const ambedkarItems = ['⚖️', '📖', '💙', '✨', '🌸'];
+        const baisakhiItems = ['🌾', '🥁', '🌻', '✨', '🏵️'];
 
         const newParticles = Array.from({ length: particleCount }).map((_, i) => {
             // 3D depth layer: 0=far, 1=mid, 2=near
@@ -139,6 +141,16 @@ const SeasonalEffects = ({ className }) => {
                 };
             }
 
+            if (theme.effect === 'baisakhi') {
+                return {
+                    ...base,
+                    animationDuration: (Math.random() * 5 + 6) * depthSpeed + 's',
+                    size: (Math.random() * 24 + 18) * depthScale + 'px',
+                    emoji: baisakhiItems[Math.floor(Math.random() * baisakhiItems.length)],
+                    glowColor: ['#F59E0B', '#FCD34D', '#FBBF24', '#D97706'][Math.floor(Math.random() * 4)],
+                };
+            }
+
             // Default for existing effects (snow, confetti, tricolor, kite, etc.)
             return {
                 ...base,
@@ -169,7 +181,7 @@ const SeasonalEffects = ({ className }) => {
     if (!theme || !theme.effect || theme.effect === 'none') return null;
 
     // Check if this is one of our 3D-enhanced effects
-    const is3D = ['holi', 'eid', 'ugadi', 'ramnavami', 'shivaratri', 'hanuman', 'ambedkar'].includes(theme.effect);
+    const is3D = ['holi', 'eid', 'ugadi', 'ramnavami', 'shivaratri', 'hanuman', 'ambedkar', 'baisakhi'].includes(theme.effect);
 
     return (
         <div
@@ -456,6 +468,31 @@ const SeasonalEffects = ({ className }) => {
             0%, 100% { opacity: 0.2; transform: scale(0.8); }
             50% { opacity: 1; transform: scale(1.2); }
           }
+
+          /* --- BAISAKHI 3D: Golden harvest theme with drum tumble --- */
+          @keyframes baisakhi-3d {
+            0% {
+              transform: translate3d(0, -10vh, var(--dz)) rotateX(0deg) rotateY(0deg) scale(var(--ds, 0.4));
+              opacity: 0;
+            }
+            15% {
+              opacity: 0.95;
+              transform: translate3d(15px, 12vh, calc(var(--dz) + 40px)) rotateX(60deg) rotateY(45deg) scale(var(--ds, 0.9));
+              filter: drop-shadow(0 0 10px var(--glow, #F59E0B));
+            }
+            40% {
+              transform: translate3d(-20px, 40vh, calc(var(--dz) - 25px)) rotateX(150deg) rotateY(120deg) scale(var(--ds, 1.2));
+              opacity: 0.8;
+            }
+            70% {
+              transform: translate3d(25px, 70vh, calc(var(--dz) + 35px)) rotateX(280deg) rotateY(240deg) scale(var(--ds, 1));
+              opacity: 0.5;
+            }
+            100% {
+              transform: translate3d(0, 105vh, var(--dz)) rotateX(360deg) rotateY(360deg) scale(var(--ds, 0.6));
+              opacity: 0;
+            }
+          }
         `}
             </style>
 
@@ -626,6 +663,19 @@ const SeasonalEffects = ({ className }) => {
                             {p.isBlueSparkle && (
                                 <div className="absolute inset-0 bg-blue-400 rounded-full blur-xl opacity-20 animate-pulse" />
                             )}
+                        </div>
+                    );
+                }
+
+                // === BAISAKHI 3D ===
+                if (theme.effect === 'baisakhi') {
+                    return (
+                        <div key={p.id} className="absolute" style={{
+                            ...css3d, left: p.left, fontSize: p.size, opacity: p.opacity,
+                            animation: `baisakhi-3d ${p.animationDuration} ease-in-out ${p.animationDelay} infinite`,
+                            '--glow': p.glowColor,
+                        }}>
+                            {p.emoji}
                         </div>
                     );
                 }
