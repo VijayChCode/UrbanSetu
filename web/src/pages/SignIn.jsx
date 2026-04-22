@@ -10,7 +10,7 @@ import { usePageTitle } from '../hooks/usePageTitle';
 
 import { reconnectSocket } from "../utils/socket";
 import { FaEye, FaEyeSlash, FaEdit } from "react-icons/fa";
-import { areCookiesEnabled, createAuthenticatedFetchOptions } from '../utils/auth';
+import { createAuthenticatedFetchOptions } from '../utils/auth';
 import { focusWithoutKeyboard, isMobileDevice } from '../utils/mobileUtils';
 import { authenticatedFetch, getCSRFToken } from '../utils/csrf';
 import { LogIn, Mail, Lock } from "lucide-react";
@@ -499,8 +499,6 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
         dispatch(signInStart());
         setAuthInProgress('otp');
 
-        // Check if cookies are enabled for better UX
-        const cookiesEnabled = areCookiesEnabled();
 
         try {
             const apiUrl = `${API_BASE_URL}/api/auth/verify-login-otp`;
@@ -585,8 +583,6 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
         dispatch(signInStart());
         setAuthInProgress('password');
 
-        // Check if cookies are enabled for better UX
-        const cookiesEnabled = areCookiesEnabled();
 
         try {
             const apiUrl = `${API_BASE_URL}/api/auth/signin`;
