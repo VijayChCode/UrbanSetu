@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useSelector, useDispatch } from 'react-redux';
 import toast from 'react-hot-toast';
 import { signoutUserSuccess } from '../redux/user/userSlice';
+import { authenticatedFetch } from '../utils/csrf';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -40,22 +41,23 @@ export const ImageFavoritesProvider = ({ children }) => {
 
         try {
             setLoading(true);
-            const response = await axios.get(`${API_BASE_URL}/api/image-favorites/user/${currentUser._id}`, {
-                withCredentials: true
-            });
+            const response = await authenticatedFetch(`${API_BASE_URL}/api/image-favorites/user/${currentUser._id}`);
 
-            if (response.data.success) {
-                const favoriteIds = new Set(response.data.favorites.map(fav => fav.imageId));
-                setFavorites(favoriteIds);
-                setFavoritesData(response.data.favorites);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    const favoriteIds = new Set(data.favorites.map(fav => fav.imageId));
+                    setFavorites(favoriteIds);
+                    setFavoritesData(data.favorites);
+                }
+            } else if (response.status === 401) {
+                dispatch(signoutUserSuccess());
+            } else {
+                toast.error('Failed to load favorites');
             }
         } catch (error) {
             console.error('Failed to load favorites:', error);
-            if (error.response?.status === 401) {
-                dispatch(signoutUserSuccess());
-            } else if (error.response?.status !== 401) {
-                toast.error('Failed to load favorites');
-            }
+            toast.error('Failed to load favorites');
         } finally {
             setLoading(false);
         }
@@ -101,20 +103,26 @@ export const ImageFavoritesProvider = ({ children }) => {
         try {
             if (isFav) {
                 // Remove from favorites
-                await axios.delete(`${API_BASE_URL}/api/image-favorites/remove/${imageId}`, {
-                    withCredentials: true
+                const response = await authenticatedFetch(`${API_BASE_URL}/api/image-favorites/remove/${imageId}`, {
+                    method: 'DELETE'
                 });
 
-                // Update local state
-                setFavorites(prev => {
-                    const newFavorites = new Set(prev);
-                    newFavorites.delete(imageId);
-                    return newFavorites;
-                });
+                if (response.ok) {
+                    // Update local state
+                    setFavorites(prev => {
+                        const newFavorites = new Set(prev);
+                        newFavorites.delete(imageId);
+                        return newFavorites;
+                    });
 
-                setFavoritesData(prev => prev.filter(fav => fav.imageId !== imageId));
-                toast.success('Removed from favorites');
-                return false;
+                    setFavoritesData(prev => prev.filter(fav => fav.imageId !== imageId));
+                    toast.success('Removed from favorites');
+                    return false;
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    toast.error(errorData.message || 'Failed to remove favorite');
+                    return true;
+                }
             } else {
                 // Add to favorites
                 const favoriteData = {
@@ -129,33 +137,39 @@ export const ImageFavoritesProvider = ({ children }) => {
                     }
                 };
 
-                const response = await axios.post(`${API_BASE_URL}/api/image-favorites/add`, favoriteData, {
-                    withCredentials: true
+                const response = await authenticatedFetch(`${API_BASE_URL}/api/image-favorites/add`, {
+                    method: 'POST',
+                    body: JSON.stringify(favoriteData)
                 });
 
-                if (response.data.success) {
-                    // Update local state
-                    setFavorites(prev => new Set([...prev, imageId]));
-                    setFavoritesData(prev => [...prev, response.data.favorite]);
-                    toast.success('Added to favorites');
-                    return true;
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        // Update local state
+                        setFavorites(prev => new Set([...prev, imageId]));
+                        setFavoritesData(prev => [...prev, data.favorite]);
+                        toast.success('Added to favorites');
+                        return true;
+                    }
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    const errorMessage = errorData.message || 'Failed to update favorites';
+                    if (response.status === 400 && errorMessage.includes('already')) {
+                         if (!isFav) {
+                             setFavorites(prev => new Set([...prev, imageId]));
+                         }
+                         toast.success('Added to favorites');
+                         return true;
+                    } else {
+                         toast.error(errorMessage);
+                         return isFav;
+                    }
                 }
             }
         } catch (error) {
             console.error('Failed to toggle favorite:', error);
-            const errorMessage = error.response?.data?.message || 'Failed to update favorites';
-
-            if (error.response?.status === 400 && errorMessage.includes('already')) {
-                // Handle duplicate case
-                if (!isFav) {
-                    setFavorites(prev => new Set([...prev, imageId]));
-                }
-                toast.success('Added to favorites');
-                return true;
-            } else {
-                toast.error(errorMessage);
-                return isFav; // Return original state on error
-            }
+            toast.error('Failed to update favorites');
+            return isFav; // Return original state on error
         }
     };
 
@@ -197,16 +211,20 @@ export const ImageFavoritesProvider = ({ children }) => {
                 }
             })).filter(img => img.imageId);
 
-            const response = await axios.post(`${API_BASE_URL}/api/image-favorites/bulk/add`, {
-                images: imageData
-            }, {
-                withCredentials: true
+            const response = await authenticatedFetch(`${API_BASE_URL}/api/image-favorites/bulk/add`, {
+                method: 'POST',
+                body: JSON.stringify({ images: imageData })
             });
 
-            if (response.data.success) {
-                // Refresh favorites
-                await loadFavorites();
-                toast.success(`${response.data.addedCount} images added to favorites`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    // Refresh favorites
+                    await loadFavorites();
+                    toast.success(`${data.addedCount} images added to favorites`);
+                }
+            } else {
+                toast.error('Failed to add images to favorites');
             }
         } catch (error) {
             console.error('Failed to bulk add favorites:', error);
@@ -221,27 +239,31 @@ export const ImageFavoritesProvider = ({ children }) => {
         try {
             const imageIds = imageUrls.map(url => generateImageId(url)).filter(Boolean);
 
-            const response = await axios.post(`${API_BASE_URL}/api/image-favorites/bulk/remove`, {
-                imageIds
-            }, {
-                withCredentials: true
+            const response = await authenticatedFetch(`${API_BASE_URL}/api/image-favorites/bulk/remove`, {
+                method: 'POST',
+                body: JSON.stringify({ imageIds })
             });
 
-            if (response.data.success) {
-                // Update local state
-                const removedIds = new Set(imageIds);
-                setFavorites(prev => {
-                    const newFavorites = new Set();
-                    prev.forEach(id => {
-                        if (!removedIds.has(id)) {
-                            newFavorites.add(id);
-                        }
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    // Update local state
+                    const removedIds = new Set(imageIds);
+                    setFavorites(prev => {
+                        const newFavorites = new Set();
+                        prev.forEach(id => {
+                            if (!removedIds.has(id)) {
+                                newFavorites.add(id);
+                            }
+                        });
+                        return newFavorites;
                     });
-                    return newFavorites;
-                });
 
-                setFavoritesData(prev => prev.filter(fav => !removedIds.has(fav.imageId)));
-                toast.success(`${response.data.removedCount} images removed from favorites`);
+                    setFavoritesData(prev => prev.filter(fav => !removedIds.has(fav.imageId)));
+                    toast.success(`${data.removedCount} images removed from favorites`);
+                }
+            } else {
+                 toast.error('Failed to remove images from favorites');
             }
         } catch (error) {
             console.error('Failed to bulk remove favorites:', error);
