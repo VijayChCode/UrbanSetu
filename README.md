@@ -188,19 +188,7 @@ You can experience the platform using demo credentials:
 
 Or you can sign up and start your own property journey 🚀
 
----
 
-## ⚠️ Important: Third-Party Cookies Notice
-
-UrbanSetu uses **separate domains for frontend and backend** (e.g., Vercel + Render).  
-Because of this, authentication relies on cross-site cookies.
-
-👉 Please ensure **third-party cookies are enabled** in your browser.  
-Otherwise, login sessions may expire immediately.
-
-This is a browser security behavior — not a bug in the app.
-
----
 
 ## 🤝 Contributing
 
