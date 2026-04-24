@@ -1834,7 +1834,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
         : {}
       }
       className={`${isMiniMode
-        ? 'rounded-xl shadow-2xl border border-gray-700 overflow-hidden bg-black group'
+        ? 'rounded-xl shadow-2xl border border-gray-700 overflow-hidden bg-black group touch-none select-none'
         : 'fixed inset-0 bg-black z-[9999] flex items-center justify-center select-none touch-none'
         } transition-shadow duration-300`}
       onContextMenu={handleContextMenu}
