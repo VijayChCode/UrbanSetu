@@ -1,5 +1,5 @@
 import express from 'express';
-import { verifyToken } from '../utils/verify.js';
+import { verifyToken, optionalAuth } from '../utils/verify.js';
 import {
     createShareLink,
     resolveShareLink,
@@ -12,8 +12,8 @@ const router = express.Router();
 // Public: Resolve a share token to video URL (no auth needed)
 router.get('/resolve/:token', resolveShareLink);
 
-// Protected: Create a share link
-router.post('/share', verifyToken, createShareLink);
+// Public/Protected: Create a share link (works for both guests and logged-in users)
+router.post('/share', optionalAuth, createShareLink);
 
 // Protected: Revoke a share link
 router.delete('/share/:token', verifyToken, revokeShareLink);

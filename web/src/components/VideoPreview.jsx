@@ -77,6 +77,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
   const speedMenuRef = useRef(null);
   const [shareUrl, setShareUrl] = useState(null);
   const [isGeneratingShare, setIsGeneratingShare] = useState(false);
+  const [cachedShares, setCachedShares] = useState({});
 
   // Transform States
   const [scale, setScale] = useState(1);
@@ -1329,6 +1330,15 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
       wasPlayingRef.current = false;
     }
 
+    const currentUrl = videos[currentIndex];
+
+    // Use cached share link if already generated
+    if (cachedShares[currentUrl]) {
+      setShareUrl(cachedShares[currentUrl]);
+      setShowSharePanel(true);
+      return;
+    }
+
     // Generate a shareable UrbanSetu link (hides the Cloudinary URL)
     setIsGeneratingShare(true);
     setShowSharePanel(true);
@@ -1338,7 +1348,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          videoUrl: videos[currentIndex],
+          videoUrl: currentUrl,
           listingId: listingId,
           title: 'Property Video Tour'
         })
@@ -1348,14 +1358,18 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
         const data = await res.json();
         // Build the full shareable URL
         const baseUrl = window.location.origin;
-        setShareUrl(`${baseUrl}/v/${data.token}`);
+        const generatedUrl = `${baseUrl}/v/${data.token}`;
+        setShareUrl(generatedUrl);
+        setCachedShares(prev => ({ ...prev, [currentUrl]: generatedUrl }));
       } else {
         // Fallback to raw URL if share creation fails
-        setShareUrl(videos[currentIndex] || '');
+        setShareUrl(currentUrl || '');
+        setCachedShares(prev => ({ ...prev, [currentUrl]: currentUrl || '' }));
       }
     } catch (err) {
       console.warn('Failed to generate share link, using raw URL:', err);
-      setShareUrl(videos[currentIndex] || '');
+      setShareUrl(currentUrl || '');
+      setCachedShares(prev => ({ ...prev, [currentUrl]: currentUrl || '' }));
     } finally {
       setIsGeneratingShare(false);
     }
