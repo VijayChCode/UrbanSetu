@@ -156,6 +156,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
   const [previewTime, setPreviewTime] = useState(0);
   const [previewPos, setPreviewPos] = useState(0);
   const [showPreview, setShowPreview] = useState(false);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(true);
   const previewVideoRef = useRef(null);
   const abortControllerRef = useRef(null);
   const savedTimeRef = useRef(0);
@@ -761,6 +762,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
             try {
               videoRef.current.muted = true;
               setIsMuted(true);
+              setVolume(0);
               await videoRef.current.play();
             } catch (mutedErr) {
               // Even muted play failed — give up, user must click play
@@ -1007,6 +1009,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
     e.stopPropagation();
     if (isMuted) {
       setVolume(1);
+      setIsMuted(false);
       showFeedback(
         <div className="flex items-center gap-3">
           {getVolumeIcon(1)} <span>Unmuted</span>
@@ -1014,6 +1017,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
       );
     } else {
       setVolume(0);
+      setIsMuted(true);
       showFeedback(
         <div className="flex items-center gap-3">
           {getVolumeIcon(0)} <span>Muted</span>
@@ -2361,6 +2365,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
                 const rect = e.currentTarget.getBoundingClientRect();
                 const pos = (e.clientX - rect.left) / rect.width;
                 const time = pos * (duration || videoRef.current?.duration || 0);
+                if (Math.abs(previewTime - time) > 0.5) setIsPreviewLoading(true);
                 setPreviewTime(time);
                 setPreviewPos(pos * 100); // Store percentage
                 setShowPreview(true);
@@ -2389,24 +2394,37 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
                       <img
                         src={getThumbnailUrl(videos[currentIndex], previewTime)}
                         alt="preview"
-                        className="w-full h-full object-cover"
+                        className={`w-full h-full object-cover transition-opacity duration-200 ${isPreviewLoading ? 'opacity-0' : 'opacity-100'}`}
+                        onLoad={() => setIsPreviewLoading(false)}
+                        onError={() => setIsPreviewLoading(false)}
                       />
-                    ) : (
+                    ) : videoBlobUrl ? (
                       <video
                         ref={previewVideoRef}
-                        src={videoBlobUrl || ""}
-                        className="w-full h-full object-cover"
+                        src={videoBlobUrl}
+                        className={`w-full h-full object-cover transition-opacity duration-200 ${isPreviewLoading ? 'opacity-0' : 'opacity-100'}`}
                         muted
                         preload="auto"
                         playsInline
                         crossOrigin="anonymous"
-                        onLoadedData={(e) => e.target.currentTime = previewTime}
+                        onSeeked={() => setIsPreviewLoading(false)}
+                        onLoadedData={(e) => {
+                          e.target.currentTime = previewTime;
+                          setIsPreviewLoading(false);
+                        }}
                       />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center bg-gray-800 text-gray-500">
+                        <FaVideo size={24} className="mb-2 opacity-50" />
+                        <span className="text-[10px] uppercase font-bold tracking-widest opacity-50">No Preview</span>
+                      </div>
                     )}
                     {/* Tiny loading overlay if neither is ready */}
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <UrbanSetuSpinner size="sm" isBright={true} />
-                    </div>
+                    {isPreviewLoading && (getThumbnailUrl(videos[currentIndex], previewTime) || videoBlobUrl) && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-10 transition-opacity">
+                        <UrbanSetuSpinner size="sm" isBright={true} />
+                      </div>
+                    )}
                   </div>
                   <span className="text-white text-sm font-bold font-mono drop-shadow-[0_2px_4px_rgba(0,0,0,1)] tracking-wider">
                     {formatTime(previewTime)}
