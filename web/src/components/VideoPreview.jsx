@@ -2468,10 +2468,15 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
                   >
                     {isMuted || volume === 0 ? <FaVolumeMute size={20} /> : <FaVolumeUp size={20} />}
                   </button>
-                  <div className={`transition-all duration-300 flex items-center gap-2 ${isMobile
-                    ? 'absolute bottom-full left-0 mb-4 bg-black/90 backdrop-blur-xl p-3 pr-2 rounded-2xl border border-white/20 shadow-2xl z-50 w-48 justify-between'
-                    : `overflow-hidden ml-2 ${isVolumeHovered ? 'w-32 opacity-100' : 'w-0 opacity-0'}`
-                    } ${isMobile && isVolumeHovered ? 'opacity-100 scale-100 translate-y-0' : isMobile ? 'opacity-0 scale-95 translate-y-2 pointer-events-none' : ''}`}>
+                  <div 
+                    className={`transition-all duration-300 flex items-center gap-2 ${isMobile
+                      ? 'absolute bottom-full left-0 mb-4 bg-black/90 backdrop-blur-xl p-3 pr-2 rounded-2xl border border-white/20 shadow-2xl z-50 w-48 justify-between'
+                      : `overflow-hidden ml-2 ${isVolumeHovered ? 'w-32 opacity-100' : 'w-0 opacity-0'}`
+                      } ${isMobile && isVolumeHovered ? 'opacity-100 scale-100 translate-y-0' : isMobile ? 'opacity-0 scale-95 translate-y-2 pointer-events-none' : ''}`}
+                    onTouchStart={(e) => e.stopPropagation()}
+                    onTouchMove={(e) => e.stopPropagation()}
+                    onTouchEnd={(e) => e.stopPropagation()}
+                  >
                     <input
                       type="range"
                       min="0"
