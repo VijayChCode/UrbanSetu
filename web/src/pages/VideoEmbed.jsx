@@ -91,10 +91,10 @@ const VideoEmbed = () => {
             <div className="fixed inset-0 bg-gradient-to-br from-gray-950 via-black to-gray-900 flex items-center justify-center z-[9999]">
                 <div className="max-w-md w-full mx-4 text-center">
                     <div className={`w-20 h-20 mx-auto mb-6 rounded-2xl flex items-center justify-center ${errorType === 'expired'
-                            ? 'bg-amber-500/10 border-2 border-amber-500/20'
-                            : errorType === 'notfound'
-                                ? 'bg-red-500/10 border-2 border-red-500/20'
-                                : 'bg-gray-500/10 border-2 border-gray-500/20'
+                        ? 'bg-amber-500/10 border-2 border-amber-500/20'
+                        : errorType === 'notfound'
+                            ? 'bg-red-500/10 border-2 border-red-500/20'
+                            : 'bg-gray-500/10 border-2 border-gray-500/20'
                         }`}>
                         {errorType === 'expired' ? (
                             <FaClock className="text-amber-400 text-3xl" />
@@ -168,7 +168,7 @@ const VideoEmbed = () => {
                         </div>
 
                         <p className="mt-10 text-gray-600 text-[10px] font-bold tracking-widest uppercase">
-                            UrbanSetu Native Player 2.5
+                            UrbanSetu Native Player v2.5
                         </p>
                     </div>
                 </div>
