@@ -4063,7 +4063,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             sharePath = (currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? '/admin/ai' : '/user/ai';
         }
 
-        const shareUrl = `${window.location.origin}${sharePath}`;
+        const shareUrl = `${window.location.origin}${sharePath}?prompt=${encodeURIComponent(message.content)}`;
 
         setSocialShareConfig({
             url: shareUrl,
