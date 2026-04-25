@@ -299,6 +299,18 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [showTryPrompt, setShowTryPrompt] = useState(false);
     const [hasShownPrompt, setHasShownPrompt] = useState(false);
 
+    // Read prompt from URL
+    useEffect(() => {
+        const searchParams = new URLSearchParams(location.search);
+        const promptParam = searchParams.get('prompt');
+        if (promptParam) {
+            setInputMessage(promptParam);
+            if (!isOpen) {
+                setIsOpen(true);
+            }
+        }
+    }, [location.search]);
+
     // Show promotional prompt on mount (only once)
     useEffect(() => {
         if (hasShownPrompt || isOpen) return;

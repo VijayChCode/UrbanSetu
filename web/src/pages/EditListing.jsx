@@ -13,6 +13,8 @@ import { FaBrain, FaExclamationTriangle, FaCheckCircle, FaLightbulb } from 'reac
 import ImagePreview from '../components/ImagePreview';
 import ConfirmationModal from '../components/ConfirmationModal';
 import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
+
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 
