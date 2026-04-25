@@ -15,6 +15,7 @@ import ConfirmationModal from '../components/ConfirmationModal';
 import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+
 export default function EditListing() {
   // Set page title
   usePageTitle("Edit Listing - Update Property");
