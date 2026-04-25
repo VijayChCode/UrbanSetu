@@ -305,6 +305,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         const promptParam = searchParams.get('prompt');
         if (promptParam) {
             setInputMessage(promptParam);
+            const currentSessionId = sessionId || localStorage.getItem('gemini_session_id');
+            if (currentSessionId) {
+                localStorage.setItem(`gemini_draft_${currentSessionId}`, promptParam);
+            }
             if (!isOpen) {
                 setIsOpen(true);
             }
@@ -4057,13 +4061,32 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         setShowDislikeModal(false);
     };
 
-    const shareMessage = async (message) => {
+    const shareMessage = async (message, index) => {
         let sharePath = '/ai';
         if (currentUser) {
             sharePath = (currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? '/admin/ai' : '/user/ai';
         }
 
-        const shareUrl = `${window.location.origin}${sharePath}?prompt=${encodeURIComponent(message.content)}`;
+        let promptText = 'Hello';
+        if (index !== undefined && index > 0) {
+            // Find the nearest preceding user message
+            for (let i = index - 1; i >= 0; i--) {
+                if (messages[i].role === 'user') {
+                    promptText = messages[i].content;
+                    break;
+                }
+            }
+        } else {
+            // Fallback: search the entire array backwards from the end
+            for (let i = messages.length - 1; i >= 0; i--) {
+                if (messages[i].role === 'user') {
+                    promptText = messages[i].content;
+                    break;
+                }
+            }
+        }
+
+        const shareUrl = `${window.location.origin}${sharePath}?prompt=${encodeURIComponent(promptText)}`;
 
         setSocialShareConfig({
             url: shareUrl,
@@ -7924,7 +7947,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                             {/* Share button for assistant messages */}
                                                             {message.role === 'assistant' && !message.isError && (
                                                                 <button
-                                                                    onClick={() => shareMessage(message)}
+                                                                    onClick={() => shareMessage(message, index)}
                                                                     className="p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded transition-all duration-200"
                                                                     title="Share message"
                                                                     aria-label="Share message"
