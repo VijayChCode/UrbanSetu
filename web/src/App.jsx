@@ -379,8 +379,8 @@ function NormalizeRoute({ children }) {
         return <Navigate to={redirectUrl} replace />;
       }
     }
-    // Redirect to normalized route
-    return <Navigate to={normalized} replace />;
+    // Redirect to normalized route, preserving query parameters
+    return <Navigate to={`${normalized}${location.search || ''}`} replace />;
   }
   return children;
 }
