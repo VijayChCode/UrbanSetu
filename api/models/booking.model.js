@@ -167,6 +167,9 @@ const bookingSchema = new mongoose.Schema({
   sellerLastEmailSentAt: { type: Date, default: null },
   buyerUnreadMessageCount: { type: Number, default: 0 },
   sellerUnreadMessageCount: { type: Number, default: 0 },
+  buyerDraft: { type: String, default: "" },
+  sellerDraft: { type: String, default: "" },
+  adminDraft: { type: String, default: "" },
 
   // Rent-Lock Specific (for rental appointments)
   rentLockPlanSelected: {

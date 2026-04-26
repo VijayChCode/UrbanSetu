@@ -2402,24 +2402,79 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   // Persist draft per appointment when chat is open (placed after refs/state used)
   useEffect(() => {
     if (!showChatModal || !appt?._id || !currentUser?._id) return;
-    const draftKey = `appt_draft_${appt._id}_${currentUser._id}`;
-    const savedDraft = localStorage.getItem(draftKey);
-    if (savedDraft !== null && savedDraft !== undefined) {
-      setComment(savedDraft);
-      setTimeout(() => {
-        try {
-          if (inputRef.current) {
-            const length = inputRef.current.value.length;
-            // Removed auto-focus: Don't focus input automatically when chat opens
-            // inputRef.current.focus();
-            inputRef.current.setSelectionRange(length, length);
-            // Auto-resize textarea for drafted content
-            autoResizeTextarea(inputRef.current);
+    
+    const fetchDraftAndHandleUrl = async () => {
+      const searchParams = new URLSearchParams(location.search);
+      const messageParam = searchParams.get('message');
+      const draftKey = `appt_draft_${appt._id}_${currentUser._id}`;
+      
+      let finalDraft = "";
+      
+      // 1. Check URL parameter (highest priority)
+      if (messageParam && params.chatId === appt._id) {
+        finalDraft = messageParam;
+        localStorage.setItem(draftKey, messageParam);
+        // Sync URL message to backend immediately
+        authenticatedFetch(`${API_BASE_URL}/api/bookings/${appt._id}/draft`, {
+          method: 'PATCH',
+          body: JSON.stringify({ draft: messageParam })
+        }).catch(err => console.error('Failed to sync URL message to backend draft:', err));
+      } else {
+        // 2. Check localStorage
+        const savedDraft = localStorage.getItem(draftKey);
+        if (savedDraft !== null && savedDraft !== undefined && savedDraft !== "") {
+          finalDraft = savedDraft;
+        } else {
+          // 3. Check backend database (lowest priority fallback)
+          try {
+            const res = await authenticatedFetch(`${API_BASE_URL}/api/bookings/my`); // We need the draft from appt object or a specific get
+            // Actually, we can get it from the appt prop since it's populated?
+            // Let's check if appt has it.
+            const role = appt.buyerId?._id === currentUser._id ? 'buyer' : 'seller';
+            const dbDraft = role === 'buyer' ? appt.buyerDraft : appt.sellerDraft;
+            if (dbDraft) {
+              finalDraft = dbDraft;
+              localStorage.setItem(draftKey, dbDraft);
+            }
+          } catch (err) {
+            console.error('Failed to fetch draft from backend:', err);
           }
-        } catch (_) { }
-      }, 0);
-    }
-  }, [showChatModal, appt?._id]);
+        }
+      }
+
+      if (finalDraft) {
+        setComment(finalDraft);
+        setTimeout(() => {
+          try {
+            if (inputRef.current) {
+              const length = inputRef.current.value.length;
+              inputRef.current.setSelectionRange(length, length);
+              autoResizeTextarea(inputRef.current);
+            }
+          } catch (_) { }
+        }, 0);
+      }
+    };
+
+    fetchDraftAndHandleUrl();
+  }, [showChatModal, appt?._id, location.search, params.chatId]);
+
+  // Sync draft to backend as user types (debounced)
+  useEffect(() => {
+    if (!showChatModal || !appt?._id || !currentUser?._id) return;
+    
+    const timeoutId = setTimeout(() => {
+      const draftKey = `appt_draft_${appt._id}_${currentUser._id}`;
+      localStorage.setItem(draftKey, comment);
+      
+      authenticatedFetch(`${API_BASE_URL}/api/bookings/${appt._id}/draft`, {
+        method: 'PATCH',
+        body: JSON.stringify({ draft: comment })
+      }).catch(err => console.error('Failed to sync draft to backend:', err));
+    }, 1000);
+
+    return () => clearTimeout(timeoutId);
+  }, [comment, showChatModal, appt?._id]);
 
   // Fetch call history for appointment when chat modal opens
   useEffect(() => {
@@ -4737,6 +4792,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
     try {
       const draftKey = `appt_draft_${appt._id}_${currentUser._id}`;
       localStorage.removeItem(draftKey);
+      // Clear backend draft
+      authenticatedFetch(`${API_BASE_URL}/api/bookings/${appt._id}/draft`, {
+        method: 'PATCH',
+        body: JSON.stringify({ draft: "" })
+      }).catch(err => console.error('Failed to clear backend draft:', err));
     } catch (_) { }
     setDetectedUrl(null);
     setPreviewDismissed(false);

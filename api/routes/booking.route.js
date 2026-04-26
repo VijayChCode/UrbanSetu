@@ -819,6 +819,48 @@ router.post('/:id/comment', verifyToken, async (req, res) => {
   }
 });
 
+// PATCH: Update chat draft for an appointment
+router.patch('/:id/draft', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { draft } = req.body;
+    const userId = req.user.id;
+
+    const bookingDoc = await booking.findById(id);
+    if (!bookingDoc) {
+      return res.status(404).json({ message: 'Appointment not found.' });
+    }
+
+    const isBuyer = bookingDoc.buyerId.toString() === userId;
+    const isSeller = bookingDoc.sellerId.toString() === userId;
+    
+    // Check if user is admin
+    const user = await User.findById(userId);
+    const isAdmin = (user && user.role === 'admin' && user.adminApprovalStatus === 'approved') || (user && user.role === 'rootadmin');
+
+    if (!isBuyer && !isSeller && !isAdmin) {
+      return res.status(403).json({ message: "You can only update drafts for appointments you are part of or as an admin." });
+    }
+
+    const update = {};
+    if (isBuyer) update.buyerDraft = draft;
+    else if (isSeller) update.sellerDraft = draft;
+    else if (isAdmin) update.adminDraft = draft;
+
+    const updated = await booking.findByIdAndUpdate(id, { $set: update }, { new: true });
+    
+    let savedDraft = "";
+    if (isBuyer) savedDraft = updated.buyerDraft;
+    else if (isSeller) savedDraft = updated.sellerDraft;
+    else if (isAdmin) savedDraft = updated.adminDraft;
+
+    res.status(200).json({ message: 'Draft updated.', draft: savedDraft });
+  } catch (err) {
+    console.error('Error updating draft:', err);
+    res.status(500).json({ message: 'Failed to update draft.' });
+  }
+});
+
 // PATCH: Mark sale as Token Paid (Locks the property)
 router.patch('/:id/sale/token-paid', verifyToken, async (req, res) => {
   try {

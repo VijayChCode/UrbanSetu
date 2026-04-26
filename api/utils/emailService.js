@@ -2104,7 +2104,7 @@ export const sendAccountDeletionEmail = async (email, userDetails, revocationLin
                 <div style="background: rgba(255,255,255,0.6); padding: 10px; border-radius: 6px; font-family: monospace; font-size: 14px; color: #78350f; border: 1px solid #fcd34d; user-select: all; word-break: break-all;">
                   ${token}
                 </div>
-                <p style="color: #92400e; margin: 10px 0 0; font-size: 13px;">And paste it on the <a href="${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}/restore-account" style="color: #92400e; text-decoration: underline;">restoration page</a>.</p>
+                <p style="color: #92400e; margin: 10px 0 0; font-size: 13px;">And paste it on the <a href="${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}/restore-account/pastetokenfromemail" style="color: #92400e; text-decoration: underline;">restoration page</a>.</p>
               </div>
               <p style="color: #92400e; margin: 15px 0 0; font-size: 12px; text-align: center;">
                 This link will expire in 30 days
