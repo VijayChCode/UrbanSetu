@@ -8493,6 +8493,30 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                                 setIsImagePreviewOpen(true);
                                                                             }}
                                                                         />
+
+                                                                        {/* Sentinel Quality Badge */}
+                                                                        {!isAuditing[`chat_${img.id}`] && auditResults[`chat_${img.id}`] && (
+                                                                            <div className="absolute top-1 left-1 flex flex-col gap-0.5 z-10 pointer-events-none">
+                                                                                <div className={`px-1 py-0.5 rounded text-[8px] font-bold text-white shadow-sm flex items-center gap-0.5 ${
+                                                                                    auditResults[`chat_${img.id}`].sentinelScore >= 80 ? 'bg-green-500' :
+                                                                                    auditResults[`chat_${img.id}`].sentinelScore >= 50 ? 'bg-orange-500' : 'bg-red-500'
+                                                                                }`}>
+                                                                                    <FaShieldAlt size={6} />
+                                                                                    {auditResults[`chat_${img.id}`].sentinelScore}
+                                                                                </div>
+                                                                                {auditResults[`chat_${img.id}`].quality.sharpness === 'Blurry' && (
+                                                                                    <div className="px-1 py-0.5 bg-red-600 rounded text-[7px] font-bold text-white shadow-sm animate-pulse uppercase">
+                                                                                        Blurry
+                                                                                    </div>
+                                                                                )}
+                                                                                {auditResults[`chat_${img.id}`].privacyRisk && auditResults[`chat_${img.id}`].privacyRisk.risk === 'High' && (
+                                                                                    <div className="px-1 py-0.5 bg-yellow-500 rounded text-[7px] font-bold text-black shadow-sm flex items-center gap-0.5 uppercase">
+                                                                                        <FaUser size={6} /> Risk
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
+                                                                        )}
+
                                                                         {isAuditing[`chat_${img.id}`] && (
                                                                             <div className="absolute inset-0 flex flex-col items-center justify-center bg-blue-500/20 backdrop-blur-[1px]">
                                                                                 <UrbanSetuSpinner size="sm" isBright={true} />
