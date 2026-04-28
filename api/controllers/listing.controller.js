@@ -11,6 +11,7 @@ import DeletedListing from "../models/deletedListing.model.js"
 import crypto from 'crypto'
 import PropertyVerification from "../models/propertyVerification.model.js";
 import { vectorSearchListings, generateEmbedding, createListingDescription } from "../services/vectorSearchService.js";
+import SentinelSecurityService from "../services/SentinelSecurityService.js";
 
 
 export const createListing = async (req, res, next) => {
@@ -62,6 +63,17 @@ export const createListing = async (req, res, next) => {
 
     // Debug saved ESG data
     console.log('💾 CreateListing - ESG data saved:', JSON.stringify(listing.esg, null, 2));
+
+    // 🛡️ Sentinel AI Security Scan
+    try {
+      const fraudScan = await SentinelSecurityService.scanListingForFraud(listing._id);
+      if (!fraudScan.safe) {
+        console.log(`🚨 Sentinel AI flagged NEW listing ${listing._id} as fraudulent: ${fraudScan.reasons.join(', ')}`);
+        // The service already flags/suspends the listing and penalizes the user
+      }
+    } catch (scanErr) {
+      console.error("Sentinel scan failed during creation:", scanErr.message);
+    }
 
     // Get the user who will receive the email
     const listingOwner = await User.findById(userRef);
@@ -676,6 +688,16 @@ export const updateListing = async (req, res, next) => {
 
     // Debug updated ESG data
     console.log('💾 UpdateListing - ESG data saved:', JSON.stringify(updatedListing.esg, null, 2));
+
+    // 🛡️ Sentinel AI Security Scan
+    try {
+      const fraudScan = await SentinelSecurityService.scanListingForFraud(updatedListing._id);
+      if (!fraudScan.safe) {
+        console.log(`🚨 Sentinel AI flagged UPDATED listing ${updatedListing._id} as fraudulent: ${fraudScan.reasons.join(', ')}`);
+      }
+    } catch (scanErr) {
+      console.error("Sentinel scan failed during update:", scanErr.message);
+    }
 
     // Notify watchers if price dropped
     try {

@@ -25,6 +25,7 @@ import {
 } from '../utils/emailService.js';
 import { sendRentalNotification } from '../utils/rentalNotificationService.js';
 import { simulateEscrowLock } from "../utils/blockchainEscrow.js";
+import SentinelSecurityService from "../services/SentinelSecurityService.js";
 import fetch from 'node-fetch';
 import PDFDocument from 'pdfkit';
 
@@ -404,6 +405,13 @@ router.post("/verify", verifyToken, async (req, res) => {
     payment.completedAt = new Date();
     payment.clientIp = clientIp || req.ip;
     payment.userAgent = userAgent || req.headers['user-agent'];
+
+    // 🛡️ Sentinel AI Wallet Monitoring
+    try {
+        await SentinelSecurityService.monitorWalletActivity(req.user.id, payment.paymentType, payment.amount);
+    } catch (sentErr) {
+        console.error("Sentinel wallet monitoring failed:", sentErr.message);
+    }
 
     // DELAYED SAVE: We do NOT save payment here. See below.
     // await payment.save();

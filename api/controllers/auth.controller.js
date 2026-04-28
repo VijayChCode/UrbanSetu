@@ -23,6 +23,7 @@ import OtpTracking from "../models/otpTracking.model.js";
 import DeletedAccount from "../models/deletedAccount.model.js";
 import { validateEmail } from "../utils/emailValidation.js";
 import { getDeviceInfo, getLocationFromIP } from "../utils/sessionManager.js";
+import SentinelSecurityService from "../services/SentinelSecurityService.js";
 
 export const SignUp = async (req, res, next) => {
     const { username, email, password, role, mobileNumber, address, emailVerified } = req.body;
@@ -337,6 +338,16 @@ export const SignIn = async (req, res, next) => {
         // Check for suspicious login patterns
         const suspiciousCheck = await checkSuspiciousLogin(validUser._id, identifier, device);
 
+        // 🛡️ Sentinel AI Anomaly Check
+        try {
+            const sentinelCheck = await SentinelSecurityService.checkSecurityAnomalies(validUser._id, identifier, device.device);
+            if (!sentinelCheck.safe) {
+                console.log(`🚨 Sentinel AI flagged login for user ${validUser._id}: ${sentinelCheck.reason}`);
+            }
+        } catch (sentErr) {
+            console.error("Sentinel anomaly check failed during SignIn:", sentErr.message);
+        }
+
         // Create enhanced session
         const session = await createEnhancedSession(validUser._id, req);
 
@@ -524,6 +535,16 @@ export const Google = async (req, res, next) => {
             // Check concurrency & suspicious login
             const concurrentInfo = detectConcurrentLogins(validUser._id, session.sessionId);
             const suspiciousCheck = await checkSuspiciousLogin(validUser._id, ip, device);
+
+            // 🛡️ Sentinel AI Anomaly Check (Google)
+            try {
+                const sentinelCheck = await SentinelSecurityService.checkSecurityAnomalies(validUser._id, ip, device.device);
+                if (!sentinelCheck.safe) {
+                    console.log(`🚨 Sentinel AI flagged Google login for user ${validUser._id}: ${sentinelCheck.reason}`);
+                }
+            } catch (sentErr) {
+                console.error("Sentinel anomaly check failed during Google auth:", sentErr.message);
+            }
 
             // Capture Source
             const source = req.get('Origin') || req.get('Referer') || 'Unknown';
