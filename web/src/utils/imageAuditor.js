@@ -22,8 +22,17 @@ export const loadModel = async () => {
     }
 };
 
-const RESTRICTED_KEYWORDS = ['missile', 'projectile', 'weapon', 'gun', 'rifle', 'pistol', 'assault', 'tank', 'explosion', 'firearm', 'ammunition', 'grenade', 'war'];
-const REAL_ESTATE_INDICATORS = ['room', 'house', 'building', 'home', 'apartment', 'living', 'kitchen', 'bedroom', 'bathroom', 'interior', 'furniture', 'exterior', 'facade', 'garden', 'pool', 'garage', 'dining', 'desk', 'office'];
+const RESTRICTED_KEYWORDS = [
+    'missile', 'projectile', 'weapon', 'gun', 'rifle', 'pistol', 'assault', 'tank', 'explosion', 'firearm', 
+    'ammunition', 'grenade', 'war', 'blood', 'gore', 'violence', 'nudity', 'explicit', 'drug', 'syringe'
+];
+
+const REAL_ESTATE_INDICATORS = [
+    'room', 'house', 'building', 'home', 'apartment', 'living', 'kitchen', 'bedroom', 'bathroom', 
+    'interior', 'furniture', 'exterior', 'facade', 'garden', 'pool', 'garage', 'dining', 'desk', 
+    'office', 'staircase', 'window', 'floor', 'ceiling', 'door', 'balcony', 'terrace', 'lobby',
+    'fireplace', 'basement', 'attic', 'closet', 'pantry', 'laundry'
+];
 
 /**
  * Audit an image for quality and content
@@ -33,21 +42,30 @@ export const auditImage = async (imageSource) => {
     try {
         const loadedModel = await loadModel();
 
-        // 1. Content Prediction (What is in the image?) - Get Top 5 Classifications
-        const predictions = await loadedModel.classify(imageSource, 5);
+        // 1. Content Prediction (What is in the image?) - Get Top 8 Classifications for better context
+        const predictions = await loadedModel.classify(imageSource, 8);
 
-        // 2. Technical Quality (Blur & Brightness)
+        // 2. Technical Quality (Blur, Brightness, Contrast, Sharpness)
         const quality = await checkTechnicalQuality(imageSource);
 
-        // 3. Sophisticated Classification
+        // 3. Sophisticated Classification & Safety
         const classification = determineClassification(predictions);
+
+        // 4. Privacy Risk Heuristic (Detecting humans/faces in tags)
+        const privacyRisk = checkPrivacyRisk(predictions);
+
+        // 5. Sentinel Score Calculation (0-100)
+        const sentinelScore = calculateSentinelScore(quality, classification, privacyRisk);
 
         return {
             predictions,
             quality,
             classification,
+            privacyRisk,
+            sentinelScore,
             isRealEstateRelated: classification.type === 'Real Estate',
-            suggestions: classification.type === 'Real Estate' ? generateSuggestions(predictions) : []
+            suggestions: classification.type === 'Real Estate' ? generateSuggestions(predictions) : [],
+            timestamp: new Date().toISOString()
         };
     } catch (error) {
         console.error('Image Audit Error:', error);
@@ -61,7 +79,6 @@ export const auditImage = async (imageSource) => {
 const determineClassification = (predictions) => {
     if (!predictions || predictions.length === 0) return { type: 'Unknown', confidence: 0 };
 
-    const topPrediction = predictions[0].className.toLowerCase();
     const allPredictions = predictions.map(p => p.className.toLowerCase()).join(' ');
 
     // Check for Restricted/Red-Flag Content
@@ -70,21 +87,22 @@ const determineClassification = (predictions) => {
         return { 
             type: 'Restricted', 
             category: 'Safety/Security',
-            reason: 'Content identified as potentially hazardous or violating safety guidelines.',
+            status: 'Rejected',
+            reason: 'Content identified as potentially hazardous, violent, or violating safety guidelines.',
             confidence: predictions[0].probability 
         };
     }
 
     // Check for Real Estate Relevance
-    // We check if any of the REAL_ESTATE_INDICATORS appear in predictions OR if we found a room match
-    const isRE = REAL_ESTATE_INDICATORS.some(keyword => allPredictions.includes(keyword)) || 
-                 generateSuggestions(predictions).length > 0;
+    const suggestions = generateSuggestions(predictions);
+    const isRE = REAL_ESTATE_INDICATORS.some(keyword => allPredictions.includes(keyword)) || suggestions.length > 0;
     
     if (isRE) {
         return { 
             type: 'Real Estate', 
-            category: 'Property/Interior',
-            reason: 'Content identified as relevant to real estate or property listings.',
+            category: suggestions.length > 0 ? suggestions[0] : 'Property/Interior',
+            status: 'Approved',
+            reason: 'Relevant real estate content detected.',
             confidence: predictions[0].probability 
         };
     }
@@ -95,7 +113,8 @@ const determineClassification = (predictions) => {
         return { 
             type: 'Nature/Animal', 
             category: 'Non-Real Estate',
-            reason: 'Content identified as natural landscapes or animals.',
+            status: 'Flagged',
+            reason: 'Image appears to be nature or animals rather than property.',
             confidence: predictions[0].probability 
         };
     }
@@ -103,35 +122,110 @@ const determineClassification = (predictions) => {
     return { 
         type: 'General', 
         category: 'Miscellaneous',
+        status: 'Neutral',
         reason: 'General content without strong real estate or safety markers.',
         confidence: predictions[0].probability 
     };
 };
 
 /**
- * Analyzes brightness and basic contrast
+ * Advanced Technical Quality Check
+ * Includes Brightness, Contrast, and Blur Detection (Laplacian Variance)
  */
 const checkTechnicalQuality = async (imageSource) => {
     try {
-        const tensor = tf.browser.fromPixels(imageSource);
+        return await tf.tidy(() => {
+            const tensor = tf.browser.fromPixels(imageSource);
+            
+            // A. Calculate Mean Brightness
+            const brightness = tf.mean(tensor).dataSync()[0];
 
-        // Calculate Mean Brightness
-        const brightness = tf.mean(tensor).dataSync()[0];
+            // B. Calculate Standard Deviation (for contrast)
+            const moments = tf.moments(tensor);
+            const std = moments.variance.sqrt().dataSync()[0];
 
-        // Calculate Standard Deviation (for contrast)
-        const std = tf.moments(tensor).variance.sqrt().dataSync()[0];
+            // C. Blur Detection (Laplacian Variance Heuristic)
+            // We use a 3x3 Laplacian kernel to find edges
+            const gray = tensor.mean(2).expandDims(2); // Convert to grayscale
+            const laplacianKernel = tf.tensor4d([
+                0,  1, 0,
+                1, -4, 1,
+                0,  1, 0
+            ], [3, 3, 1, 1]);
+            
+            const edges = tf.conv2d(gray.toFloat(), laplacianKernel, 1, 'same');
+            const edgeVar = tf.moments(edges).variance.dataSync()[0];
 
-        tensor.dispose();
+            // D. Scoring & Interpretation
+            const isBlurry = edgeVar < 100; // Threshold for blurriness
+            const sharpnessScore = Math.min(100, Math.round((edgeVar / 1000) * 100));
 
-        return {
-            brightness: brightness > 220 ? 'Overexposed' : brightness < 30 ? 'Underexposed' : 'Good',
-            contrast: std < 15 ? 'Flat/Low Contrast' : 'Good',
-            score: Math.min(100, Math.round((brightness / 255) * 40 + (std / 128) * 60)) // Weight contrast slightly higher for "quality"
-        };
+            return {
+                brightness: brightness > 230 ? 'Overexposed' : brightness < 40 ? 'Underexposed' : 'Good',
+                brightnessValue: Math.round(brightness),
+                contrast: std < 20 ? 'Low' : 'Good',
+                contrastValue: Math.round(std),
+                sharpness: isBlurry ? 'Blurry' : sharpnessScore > 70 ? 'Sharp' : 'Acceptable',
+                sharpnessValue: sharpnessScore,
+                edgeVariance: Math.round(edgeVar),
+                isHighQuality: !isBlurry && brightness >= 40 && brightness <= 230 && std >= 20
+            };
+        });
     } catch (err) {
         console.warn('Technical quality check failed:', err);
-        return { brightness: 'Error', contrast: 'Error', score: 0 };
+        return { brightness: 'Error', contrast: 'Error', sharpness: 'Error', isHighQuality: false };
     }
+};
+
+/**
+ * Heuristic Privacy Risk Check
+ * Detects if people or faces are likely present in the image
+ */
+const checkPrivacyRisk = (predictions) => {
+    const privacyKeywords = ['person', 'human', 'man', 'woman', 'child', 'face', 'portrait', 'people', 'crowd'];
+    const matches = predictions.filter(p => 
+        privacyKeywords.some(key => p.className.toLowerCase().includes(key)) && p.probability > 0.25
+    );
+
+    if (matches.length > 0) {
+        return {
+            risk: 'High',
+            reason: 'Human presence detected. Ensure you have permission to share people\'s faces.',
+            detectedTags: matches.map(m => m.className)
+        };
+    }
+    return { risk: 'Low', reason: 'No significant human presence detected.' };
+};
+
+/**
+ * Calculates a final Sentinel Score (0-100)
+ */
+const calculateSentinelScore = (quality, classification, privacy) => {
+    let score = 0;
+
+    // 1. Technical Quality (40% weight)
+    if (quality.sharpness === 'Sharp') score += 20;
+    else if (quality.sharpness === 'Acceptable') score += 10;
+    
+    if (quality.brightness === 'Good') score += 10;
+    if (quality.contrast === 'Good') score += 10;
+
+    // 2. Relevance (40% weight)
+    if (classification.type === 'Real Estate') {
+        score += 40;
+    } else if (classification.type === 'General') {
+        score += 20;
+    }
+
+    // 3. Safety & Privacy (20% weight)
+    if (classification.status === 'Rejected') {
+        score = 0; // Immediate failure
+    } else if (classification.status === 'Approved') {
+        score += 10;
+        if (privacy.risk === 'Low') score += 10;
+    }
+
+    return Math.min(100, score);
 };
 
 /**
