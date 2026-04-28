@@ -1755,15 +1755,62 @@ export default function Profile() {
                   </div>
                 )}
 
-                {/* Member Since */}
-                <div className="text-center sm:text-left">
-                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-mono mb-2 transition-colors duration-300">
-                    <FaCalendarAlt className="w-3 h-3 inline mr-1" />
-                    Member since {formatDate(currentUser.createdAt)}
-                  </p>
+                  {/* Blockchain Trust Layer */}
+                  <div className={`bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 rounded-xl p-4 border border-indigo-100 dark:border-indigo-800/50 shadow-sm sm:col-span-2 ${isVisible ? animationClasses.fadeInUp + ' animation-delay-600' : 'opacity-0'}`}>
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-indigo-200 dark:shadow-none shadow-lg">
+                          <FaShieldAlt />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">Blockchain Trust Layer</p>
+                          <h4 className="text-sm font-black text-gray-800 dark:text-white">
+                            {currentUser.blockchain?.walletAddress
+                              ? `Linked: ${currentUser.blockchain.walletAddress.slice(0, 6)}...${currentUser.blockchain.walletAddress.slice(-4)}`
+                              : "Secure your identity on-chain"}
+                          </h4>
+                        </div>
+                      </div>
+
+                      {!currentUser.blockchain?.walletAddress ? (
+                        <button
+                          onClick={() => toast.info("Blockchain Wallet integration coming soon! Phase 1: Identity Linking.")}
+                          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-4 py-2 rounded-lg transition-all active:scale-95 shadow-md shadow-indigo-200 dark:shadow-none w-full sm:w-auto justify-center"
+                        >
+                          <FaHandshake /> Connect Wallet
+                        </button>
+                      ) : (
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-lg text-xs font-bold">
+                          <FaCheck /> Verified on Polygon
+                        </div>
+                      )}
+                    </div>
+
+                    {currentUser.blockchain?.walletAddress && (
+                      <div className="mt-3 pt-3 border-t border-indigo-100 dark:border-indigo-800/50 flex justify-between items-center">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-bold">Trust Score:</span>
+                          <span className="text-xs font-black text-indigo-600 dark:text-indigo-400">{currentUser.blockchain.trustScore || 0}/100</span>
+                        </div>
+                        <div className="h-1.5 flex-1 mx-4 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-indigo-500 to-blue-500 transition-all duration-1000"
+                            style={{ width: `${currentUser.blockchain.trustScore || 0}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Member Since */}
+                  <div className="text-center sm:text-left">
+                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-mono mb-2 transition-colors duration-300">
+                      <FaCalendarAlt className="w-3 h-3 inline mr-1" />
+                      Member since {formatDate(currentUser.createdAt)}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
             <div className="mt-3 flex justify-end w-full">
               <button
                 onClick={() => setIsEditing(!isEditing)}

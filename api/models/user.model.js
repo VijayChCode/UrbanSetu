@@ -391,6 +391,33 @@ const userSchema = new mongoose.Schema({
   lastViolationAt: {
     type: Date,
     default: null
+  },
+
+  // Blockchain Integration
+  blockchain: {
+    walletAddress: {
+      type: String,
+      unique: true,
+      sparse: true,
+      index: true,
+      lowercase: true,
+      trim: true
+    },
+    network: {
+      type: String,
+      enum: ['polygon', 'ethereum', 'none'],
+      default: 'none'
+    },
+    linkedAt: {
+      type: Date,
+      default: null
+    },
+    trustScore: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100
+    }
   }
 }, { timestamps: true });
 
