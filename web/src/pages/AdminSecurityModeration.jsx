@@ -215,7 +215,7 @@ export default function AdminSecurityModeration() {
       <div className="max-w-7xl mx-auto">
         {/* Enhanced Header Section */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
             <div className="flex items-center gap-4">
               <div className="relative">
                 <div className="p-4 bg-gradient-to-r from-indigo-500 via-purple-500 to-blue-500 rounded-2xl shadow-xl">
@@ -231,6 +231,14 @@ export default function AdminSecurityModeration() {
                   🛡️ Monitor and manage OTP and password lockouts, requests and admin unlocks
                 </p>
               </div>
+            </div>
+            <div className="flex gap-3 w-full md:w-auto">
+              <button 
+                onClick={() => window.location.href = '/admin/sentinel'}
+                className="flex-1 md:flex-none px-6 py-3 bg-indigo-600 text-white font-bold rounded-2xl shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
+              >
+                <FaShieldAlt /> Sentinel Command
+              </button>
             </div>
           </div>
 

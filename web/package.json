@@ -39,6 +39,7 @@
     "react-is": "^19.2.3",
     "react-markdown": "^10.1.0",
     "react-photo-sphere-viewer": "^6.2.3",
+    "@photo-sphere-viewer/core": "^5.11.4",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.3.0",
     "react-swipeable": "^7.0.2",

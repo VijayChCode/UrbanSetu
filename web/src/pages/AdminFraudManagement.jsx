@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 
 import { usePageTitle } from '../hooks/usePageTitle';
 import AdminFraudManagementSkeleton from '../components/skeletons/AdminFraudManagementSkeleton';
+import { FaShieldAlt } from 'react-icons/fa';
 import { authenticatedFetch } from '../utils/auth';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -475,7 +476,10 @@ export default function AdminFraudManagement() {
           <h3 className="text-3xl font-extrabold text-blue-700 dark:text-indigo-400 drop-shadow">Fraud Management</h3>
           <div className="flex gap-2 flex-wrap">
             <button className="px-3 py-2 bg-blue-600 text-white rounded-lg disabled:opacity-60 text-sm hover:bg-blue-700 transition-colors" disabled={loading} onClick={fetchData}>{loading ? 'Scanning…' : 'Scan Now'}</button>
-            <button className="px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 transition-colors flex items-center gap-1.5" onClick={() => navigate('/admin/audit-trail')}>
+            <button className="px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 transition-colors flex items-center gap-1.5" onClick={() => navigate('/admin/sentinel')}>
+              <FaShieldAlt /> Sentinel Command
+            </button>
+            <button className="px-3 py-2 bg-slate-600 text-white rounded-lg text-sm hover:bg-slate-700 transition-colors flex items-center gap-1.5" onClick={() => navigate('/admin/audit-trail')}>
               View Audit Trail
             </button>
             <button className="px-3 py-2 bg-gray-200 dark:bg-gray-700 dark:text-gray-200 rounded-lg text-sm hover:bg-gray-300 dark:hover:bg-gray-600 transition-all" onClick={() => navigate('/admin')}>Back</button>

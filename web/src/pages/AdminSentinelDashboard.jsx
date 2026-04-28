@@ -1,0 +1,339 @@
+import React, { useEffect, useState, useMemo } from 'react';
+import { useSelector } from 'react-redux';
+import { 
+  FaShieldAlt, FaExclamationTriangle, FaCheckCircle, FaTimesCircle, 
+  FaUserShield, FaHistory, FaFilter, FaSearch, FaArrowRight, 
+  FaLock, FaUnlock, FaWallet, FaMapMarkerAlt, FaEye, FaRedo
+} from 'react-icons/fa';
+import { formatDistanceToNow } from 'date-fns';
+import { authenticatedFetch } from '../utils/auth';
+import { socket } from '../utils/socket';
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
+import { usePageTitle } from '../hooks/usePageTitle';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+export default function AdminSentinelDashboard() {
+  usePageTitle("Sentinel AI Governance - Security Command Center");
+
+  const { currentUser } = useSelector((state) => state.user);
+  const [alerts, setAlerts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    total: 0,
+    pending: 0,
+    critical: 0,
+    high: 0,
+    medium: 0,
+    low: 0
+  });
+  const [filter, setFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('pending');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [actionLoading, setActionLoading] = useState(null);
+
+  const fetchAlerts = async () => {
+    try {
+      setLoading(true);
+      const res = await authenticatedFetch(`${API_BASE_URL}/api/admin/sentinel/alerts?status=${statusFilter}`);
+      const data = await res.json();
+      if (data.success) {
+        setAlerts(data.alerts);
+        setStats(data.stats);
+      }
+    } catch (error) {
+      console.error("Failed to fetch Sentinel alerts:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAlerts();
+
+    // Socket.io for real-time alerts
+    socket.on('sentinel_alert', (newAlert) => {
+      setAlerts(prev => [newAlert, ...prev]);
+      setStats(prev => ({
+        ...prev,
+        total: prev.total + 1,
+        pending: prev.pending + 1,
+        [newAlert.severity]: prev[newAlert.severity] + 1
+      }));
+    });
+
+    return () => {
+      socket.off('sentinel_alert');
+    };
+  }, [statusFilter]);
+
+  const handleResolve = async (alertId, action = 'resolved') => {
+    try {
+      setActionLoading(alertId);
+      const res = await authenticatedFetch(`${API_BASE_URL}/api/admin/sentinel/alerts/${alertId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: action })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAlerts(prev => prev.filter(a => a._id !== alertId));
+        setStats(prev => ({
+          ...prev,
+          pending: prev.pending - 1
+        }));
+      }
+    } catch (error) {
+      console.error("Failed to resolve alert:", error);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const filteredAlerts = useMemo(() => {
+    return alerts.filter(alert => {
+      const matchesSearch = 
+        alert.reason.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (alert.userId?.username || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (alert.listingId?.name || '').toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesType = filter === 'all' || alert.type === filter;
+      
+      return matchesSearch && matchesType;
+    });
+  }, [alerts, searchQuery, filter]);
+
+  const getSeverityColor = (severity) => {
+    switch (severity) {
+      case 'critical': return 'bg-red-600 text-white border-red-700';
+      case 'high': return 'bg-orange-500 text-white border-orange-600';
+      case 'medium': return 'bg-yellow-400 text-gray-900 border-yellow-500';
+      case 'low': return 'bg-blue-400 text-white border-blue-500';
+      default: return 'bg-gray-400 text-white border-gray-500';
+    }
+  };
+
+  const getTypeIcon = (type) => {
+    switch (type) {
+      case 'fraud_listing': return <FaExclamationTriangle className="text-orange-500" />;
+      case 'security_anomaly': return <FaUserShield className="text-red-500" />;
+      case 'wallet_anomaly': return <FaWallet className="text-blue-500" />;
+      case 'policy_violation': return <FaShieldAlt className="text-purple-500" />;
+      default: return <FaShieldAlt className="text-gray-500" />;
+    }
+  };
+
+  if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'rootadmin')) {
+    return <div className="p-10 text-center">Unauthorized Access</div>;
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 md:p-10">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+          <div>
+            <h1 className="text-4xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+              <span className="p-3 bg-indigo-600 rounded-2xl shadow-lg shadow-indigo-500/20">
+                <FaShieldAlt className="text-white text-3xl" />
+              </span>
+              Sentinel AI Command
+            </h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-2 font-medium">
+              Real-time governance and automated security audit logs.
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <button 
+              onClick={fetchAlerts}
+              className="p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-all text-slate-600 dark:text-slate-300 shadow-sm"
+            >
+              <FaRedo className={loading ? 'animate-spin' : ''} />
+            </button>
+            <div className="flex bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+              <button 
+                onClick={() => setStatusFilter('pending')}
+                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${statusFilter === 'pending' ? 'bg-indigo-600 text-white' : 'text-slate-500 dark:text-slate-400'}`}
+              >
+                Active
+              </button>
+              <button 
+                onClick={() => setStatusFilter('resolved')}
+                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${statusFilter === 'resolved' ? 'bg-indigo-600 text-white' : 'text-slate-500 dark:text-slate-400'}`}
+              >
+                Archive
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+          <StatCard title="Active Alerts" value={stats.pending} icon={<FaExclamationTriangle />} color="text-indigo-600" />
+          <StatCard title="Critical Risks" value={stats.critical} icon={<FaTimesCircle />} color="text-red-600" />
+          <StatCard title="High Risk" value={stats.high} icon={<FaLock />} color="text-orange-600" />
+          <StatCard title="Trust Penalties" value={stats.total} icon={<FaHistory />} color="text-blue-600" />
+        </div>
+
+        {/* Filters and Search */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-800 mb-8">
+          <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
+            <div className="relative w-full md:w-96">
+              <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input 
+                type="text" 
+                placeholder="Search alerts, users, or properties..." 
+                className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-indigo-500 dark:text-white"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <div className="flex gap-3 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
+              <FilterChip label="All" active={filter === 'all'} onClick={() => setFilter('all')} />
+              <FilterChip label="Fraud" active={filter === 'fraud_listing'} onClick={() => setFilter('fraud_listing')} />
+              <FilterChip label="Security" active={filter === 'security_anomaly'} onClick={() => setFilter('security_anomaly')} />
+              <FilterChip label="Wallet" active={filter === 'wallet_anomaly'} onClick={() => setFilter('wallet_anomaly')} />
+            </div>
+          </div>
+        </div>
+
+        {/* Alerts Feed */}
+        <div className="space-y-4">
+          {loading ? (
+            <div className="flex justify-center p-20">
+              <UrbanSetuSpinner size="xl" isBright={true} />
+            </div>
+          ) : filteredAlerts.length > 0 ? (
+            filteredAlerts.map((alert) => (
+              <AlertItem 
+                key={alert._id} 
+                alert={alert} 
+                onResolve={handleResolve} 
+                actionLoading={actionLoading === alert._id}
+                getSeverityColor={getSeverityColor}
+                getTypeIcon={getTypeIcon}
+              />
+            ))
+          ) : (
+            <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+              <div className="p-5 bg-slate-50 dark:bg-slate-800 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+                <FaCheckCircle className="text-green-500 text-3xl" />
+              </div>
+              <h3 className="text-xl font-bold dark:text-white">All Clear!</h3>
+              <p className="text-slate-500">No active Sentinel alerts found for these filters.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StatCard({ title, value, icon, color }) {
+  return (
+    <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 transition-transform hover:scale-[1.02]">
+      <div className="flex justify-between items-start">
+        <div>
+          <p className="text-slate-500 dark:text-slate-400 text-sm font-bold uppercase tracking-wider">{title}</p>
+          <h2 className="text-3xl font-black mt-2 dark:text-white">{value}</h2>
+        </div>
+        <div className={`p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl ${color}`}>
+          {icon}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FilterChip({ label, active, onClick }) {
+  return (
+    <button 
+      onClick={onClick}
+      className={`px-6 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all ${
+        active 
+          ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' 
+          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
+function AlertItem({ alert, onResolve, actionLoading, getSeverityColor, getTypeIcon }) {
+  return (
+    <div className={`group bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border-l-8 ${getSeverityColor(alert.severity).split(' ')[0]} border dark:border-slate-800 transition-all hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none`}>
+      <div className="flex flex-col md:flex-row justify-between gap-6">
+        <div className="flex gap-5">
+          <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl h-fit">
+            {getTypeIcon(alert.type)}
+          </div>
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter border ${getSeverityColor(alert.severity)}`}>
+                {alert.severity}
+              </span>
+              <span className="text-slate-400 text-xs font-medium">
+                {formatDistanceToNow(new Date(alert.createdAt), { addSuffix: true })}
+              </span>
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">
+              {alert.reason}
+            </h3>
+            <div className="flex flex-wrap gap-4 mt-3">
+              {alert.userId && (
+                <div className="flex items-center gap-2 text-xs text-slate-500 font-bold bg-slate-50 dark:bg-slate-800 px-3 py-1.5 rounded-lg">
+                  <FaUserShield className="text-indigo-500" />
+                  {alert.userId.username || alert.userId.email}
+                </div>
+              )}
+              {alert.listingId && (
+                <div className="flex items-center gap-2 text-xs text-slate-500 font-bold bg-slate-50 dark:bg-slate-800 px-3 py-1.5 rounded-lg">
+                  <FaMapMarkerAlt className="text-orange-500" />
+                  {alert.listingId.name}
+                </div>
+              )}
+              {alert.ipAddress && (
+                <div className="flex items-center gap-2 text-xs text-slate-500 font-bold bg-slate-50 dark:bg-slate-800 px-3 py-1.5 rounded-lg">
+                  <FaHistory className="text-blue-500" />
+                  {alert.ipAddress}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-3 self-end md:self-center">
+          {alert.status === 'pending' && (
+            <>
+              <button 
+                onClick={() => onResolve(alert._id, 'dismissed')}
+                disabled={actionLoading}
+                className="px-6 py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all text-sm disabled:opacity-50"
+              >
+                Dismiss
+              </button>
+              <button 
+                onClick={() => onResolve(alert._id, 'resolved')}
+                disabled={actionLoading}
+                className="px-6 py-3 bg-green-600 text-white font-bold rounded-2xl hover:bg-green-700 transition-all text-sm shadow-lg shadow-green-500/20 flex items-center gap-2 disabled:opacity-50"
+              >
+                {actionLoading ? <UrbanSetuSpinner size="sm" isBright={true} /> : <FaCheckCircle />}
+                Mark Resolved
+              </button>
+            </>
+          )}
+          {alert.status !== 'pending' && (
+            <div className="flex items-center gap-2 text-green-500 font-bold text-sm bg-green-50 dark:bg-green-900/20 px-4 py-2 rounded-xl">
+              <FaCheckCircle />
+              {alert.status.toUpperCase()}
+            </div>
+          )}
+          <button className="p-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-all">
+            <FaEye />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

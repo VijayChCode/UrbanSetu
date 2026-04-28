@@ -1,6 +1,7 @@
 import User from "../models/user.model.js";
 import Listing from "../models/listing.model.js";
 import AdminLog from "../models/adminLog.model.js";
+import SentinelAlert from "../models/sentinelAlert.model.js";
 import { logSecurityEvent } from "../middleware/security.js";
 import { calculateAndUpdateTrustScore } from "../utils/blockchainTrust.js";
 
@@ -14,6 +15,11 @@ class SentinelSecurityService {
         this.LOCATION_MISMATCH_THRESHOLD_KM = 500; // Flag if user IP is very far from listing
         this.BYPASS_ATTEMPT_KEYWORDS = ['gpay', 'phonepe', 'paytm', 'direct transfer', 'offline payment', 'whatsapp me'];
         this.MAX_BOOKING_ATTEMPTS_PER_HOUR = 3;
+        this.io = null;
+    }
+
+    setIo(io) {
+        this.io = io;
     }
 
     /**
@@ -134,6 +140,20 @@ class SentinelSecurityService {
 
             await user.save();
 
+            // 📢 Log Sentinel Alert
+            const alert = await SentinelAlert.create({
+                userId,
+                type: this._mapToAlertType(type),
+                severity: penaltyPoints >= 20 ? 'high' : 'medium',
+                reason: `${type}: ${details}`,
+                details: { penaltyPoints, originalType: type }
+            });
+
+            // 📢 Emit Real-time Alert to Admins
+            if (this.io) {
+                this.io.emit('sentinel_alert', alert);
+            }
+
             // Log it
             logSecurityEvent('sentinel_ai_flag', { userId, type, details });
 
@@ -167,6 +187,21 @@ class SentinelSecurityService {
             listing.availabilityStatus = 'suspended';
             await listing.save();
 
+            // 📢 Log Sentinel Alert
+            const alert = await SentinelAlert.create({
+                listingId,
+                userId: listing.userRef,
+                type: 'fraud_listing',
+                severity: 'high',
+                reason: `Listing Flagged: ${reason}`,
+                details: { originalType: type }
+            });
+
+            // 📢 Emit Real-time Alert to Admins
+            if (this.io) {
+                this.io.emit('sentinel_alert', alert);
+            }
+
             logSecurityEvent('sentinel_ai_listing_blocked', { listingId, type, reason });
             
             // Penalize owner
@@ -176,6 +211,12 @@ class SentinelSecurityService {
         } catch (e) {
             console.error("Sentinel Flag Listing Error:", e);
         }
+    }
+
+    _mapToAlertType(type) {
+        if (type.includes('WITHDRAWAL')) return 'wallet_anomaly';
+        if (type.includes('DEVICE') || type.includes('CHURN')) return 'security_anomaly';
+        return 'policy_violation';
     }
 }
 

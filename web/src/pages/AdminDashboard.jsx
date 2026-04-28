@@ -23,7 +23,8 @@ import {
   FaCoins,
   FaGem,
   FaTrophy,
-  FaRocket
+  FaRocket,
+  FaArrowRight
 } from "react-icons/fa";
 import GeminiAIWrapper from "../components/GeminiAIWrapper";
 import { toast } from 'react-toastify';
@@ -1154,22 +1155,54 @@ export default function AdminDashboard() {
             <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">(Requires Immediate Attention)</span>
           </div>
 
-          {/* Security & Fraud Monitoring */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6">
+            <Link to="/admin/sentinel" className="lg:col-span-2 group relative overflow-hidden bg-gradient-to-br from-indigo-600 via-indigo-700 to-blue-800 p-8 rounded-3xl shadow-xl hover:shadow-indigo-500/20 transition-all duration-300 hover:-translate-y-1">
+              <div className="absolute top-0 right-0 p-6 opacity-10 transform translate-x-1/4 -translate-y-1/4 group-hover:scale-110 transition-transform duration-500">
+                <FaShieldAlt className="text-9xl text-white" />
+              </div>
+              <div className="relative z-10">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-3 bg-white/20 backdrop-blur-md rounded-2xl">
+                    <FaShieldAlt className="text-2xl text-white" />
+                  </div>
+                  <span className="px-3 py-1 bg-green-400 text-green-950 text-[10px] font-black uppercase rounded-full tracking-tighter">AI Active</span>
+                </div>
+                <h3 className="text-2xl font-black text-white mb-2 tracking-tight">Sentinel Command Center</h3>
+                <p className="text-indigo-100 text-sm font-medium max-w-md">
+                  Real-time security governance, fraud scanning, and automated trust score penalties.
+                </p>
+                <div className="mt-6 flex items-center gap-2 text-white font-bold text-sm group-hover:gap-4 transition-all">
+                  Open Governance Dashboard <FaArrowRight />
+                </div>
+              </div>
+            </Link>
+
             {/* Active OTP Lockouts Card */}
             <div className="group bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 p-6 border border-white/50 dark:border-gray-700 hover:border-red-300 dark:hover:border-red-500/50 hover:-translate-y-1">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Active OTP Lockouts</p>
-                  <p className="text-3xl font-bold text-red-600 group-hover:scale-105 transition-transform duration-200">{securityStats.activeOtpLockouts}</p>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">OTP Lockouts</p>
+                  <p className="text-2xl font-bold text-red-600">{securityStats.activeOtpLockouts}</p>
                 </div>
-                <div className="bg-gradient-to-r from-red-100 to-red-200 p-3 rounded-xl group-hover:from-red-200 group-hover:to-red-300 transition-all duration-300">
-                  <FaShieldAlt className="text-2xl text-red-600" />
+                <div className="bg-red-100 dark:bg-red-900/30 p-3 rounded-xl">
+                  <FaShieldAlt className="text-xl text-red-600" />
                 </div>
               </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">
-                Users temporarily locked from OTP requests
+              <Link to="/admin/security" className="text-xs font-bold text-indigo-600 hover:underline">Manage Lockouts →</Link>
+            </div>
+
+            {/* Fraud Alerts Card */}
+            <div className="group bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 p-6 border border-white/50 dark:border-gray-700 hover:border-orange-300 dark:hover:border-orange-500/50 hover:-translate-y-1">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Fraud Alerts</p>
+                  <p className="text-2xl font-bold text-orange-600">{fraudStats.suspiciousListings}</p>
+                </div>
+                <div className="bg-orange-100 dark:bg-orange-900/30 p-3 rounded-xl">
+                  <FaExclamationTriangle className="text-xl text-orange-600" />
+                </div>
               </div>
+              <Link to="/admin/fraud-management" className="text-xs font-bold text-indigo-600 hover:underline">Review Flagged →</Link>
             </div>
 
             {/* Password Lockouts Card */}
@@ -1177,15 +1210,13 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex-1">
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Password Lockouts</p>
-                  <p className="text-3xl font-bold text-orange-600 group-hover:scale-105 transition-transform duration-200">{securityStats.passwordLockouts}</p>
+                  <p className="text-3xl font-bold text-orange-600">{securityStats.passwordLockouts}</p>
                 </div>
-                <div className="bg-gradient-to-r from-orange-100 to-orange-200 p-3 rounded-xl group-hover:from-orange-200 group-hover:to-orange-300 transition-all duration-300">
-                  <FaLock className="text-2xl text-orange-600" />
+                <div className="bg-orange-100 dark:bg-orange-900/30 p-3 rounded-xl">
+                  <FaLock className="text-xl text-orange-600" />
                 </div>
               </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">
-                Accounts locked due to failed login attempts
-              </div>
+              <Link to="/admin/security" className="text-xs font-bold text-indigo-600 hover:underline">View Details →</Link>
             </div>
 
             {/* Failed Attempts Card */}
@@ -1193,15 +1224,13 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex-1">
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Failed Attempts</p>
-                  <p className="text-3xl font-bold text-purple-600 group-hover:scale-105 transition-transform duration-200">{securityStats.totalFailedAttempts}</p>
+                  <p className="text-2xl font-bold text-purple-600">{securityStats.totalFailedAttempts}</p>
                 </div>
-                <div className="bg-gradient-to-r from-purple-100 to-purple-200 p-3 rounded-xl group-hover:from-purple-200 group-hover:to-purple-300 transition-all duration-300">
-                  <FaExclamationTriangle className="text-2xl text-purple-600" />
+                <div className="bg-purple-100 dark:bg-purple-900/30 p-3 rounded-xl">
+                  <FaExclamationTriangle className="text-xl text-purple-600" />
                 </div>
               </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">
-                Failed OTP verification attempts
-              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">Failed OTP verifications</div>
             </div>
 
             {/* Total OTP Requests Card */}

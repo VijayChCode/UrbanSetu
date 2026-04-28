@@ -65,6 +65,7 @@ import marketRouter from "./routes/market.route.js";
 import sitemapRouter from "./routes/sitemap.route.js";
 import securityIntelligenceRouter from "./routes/securityIntelligence.route.js";
 import videoShareRouter from "./routes/videoShare.route.js";
+import sentinelRouter from "./routes/sentinel.route.js";
 
 // Use S3 deployment route if AWS is configured, otherwise fallback to Cloudinary
 let deploymentRouter;
@@ -282,6 +283,8 @@ const io = new SocketIOServer(server, {
 });
 
 app.set('io', io);
+import sentinelSecurityService from "./services/SentinelSecurityService.js";
+sentinelSecurityService.setIo(io);
 
 // Routes
 app.use('/api/user', userRouter);
@@ -342,6 +345,7 @@ app.use("/api/agent", agentRouter);
 app.use("/api/subscription", subscriptionRouter);
 app.use("/api/security-intelligence", securityIntelligenceRouter);
 app.use("/api/video", videoShareRouter);
+app.use("/api/admin/sentinel", sentinelRouter);
 app.use("/", sitemapRouter);
 
 let onlineUsers = new Set();
