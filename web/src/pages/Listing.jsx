@@ -30,6 +30,7 @@ import RentPredictionDisplay from '../components/rental/RentPredictionDisplay';
 import LocalityScoreDisplay from '../components/rental/LocalityScoreDisplay';
 
 import VirtualTourViewer from "../components/VirtualTourViewer"; // Import the viewer component
+import ImmersiveTour from "../components/rental/ImmersiveTour"; // Import the Three.js based tour
 import VirtualStagingTool from "../components/VirtualStagingTool"; // Import Virtual Staging Tool
 import ListingSkeleton from "../components/skeletons/ListingSkeleton"; // Import ListingSkeleton
 import ListingItem from "../components/ListingItem";
@@ -155,6 +156,7 @@ export default function Listing() {
   const [showNearbyPlaces, setShowNearbyPlaces] = useState(false);
   const [showPriceAnalysis, setShowPriceAnalysis] = useState(false);
   const [showSmartPriceInsights, setShowSmartPriceInsights] = useState(false);
+  const [showImmersiveTour, setShowImmersiveTour] = useState(false);
   // Real-time analytics data
   const [rtAnalytics, setRtAnalytics] = useState(null);
   const [rtAnalyticsLoading, setRtAnalyticsLoading] = useState(false);
@@ -2100,6 +2102,30 @@ export default function Listing() {
                               <FaPlay className={`text-2xl sm:text-4xl drop-shadow-lg ${showVideoPreview && selectedVideoIndex === item.vIndex ? 'text-red-400 animate-pulse' : 'text-white'}`} />
                             </div>
                           </div>
+                        </div>
+                      )}
+
+                      {/* 360 Tour Trigger Overlay - Only on the first image if tour exists or for demo */}
+                      {index === 0 && (listing.virtualTourImages?.length > 0 || true) && (
+                        <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
+                            <motion.button
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setShowImmersiveTour(true);
+                                }}
+                                className="pointer-events-auto bg-black/40 hover:bg-blue-600/80 backdrop-blur-xl text-white px-6 py-3 rounded-2xl border border-white/20 shadow-2xl flex items-center gap-3 transition-all group cursor-pointer"
+                            >
+                                <div className="p-2 bg-white/10 rounded-xl group-hover:bg-white/20 transition-colors">
+                                    <FaVRCardboard className="text-xl md:text-2xl animate-pulse" />
+                                </div>
+                                <div className="text-left">
+                                    <span className="block text-[10px] font-black uppercase tracking-[0.2em] opacity-70">Experience in VR</span>
+                                    <span className="block text-sm md:text-base font-black uppercase tracking-widest">Start 360° Tour</span>
+                                </div>
+                            </motion.button>
                         </div>
                       )}
                       {/* Media type and AI Room Label Badge */}
@@ -5231,6 +5257,17 @@ export default function Listing() {
       )}
 
       <ContactSupportWrapper />
+      
+      <ImmersiveTour 
+        isOpen={showImmersiveTour} 
+        onClose={() => setShowImmersiveTour(false)} 
+        tourImages={listing.virtualTourImages?.length > 0 ? listing.virtualTourImages : [
+            "https://pannellum.org/images/alma.jpg",
+            "https://pannellum.org/images/cerro-tolo-s.jpg",
+            "https://p62.f3.n0.cdn.getcloudapp.com/items/2Nuv8x1O/360-Interior-Living-Room.jpg?v=784e2098696d7c7c4c1d63683a3f5f6c"
+        ]}
+        propertyName={listing.name}
+      />
     </>
   );
 }
