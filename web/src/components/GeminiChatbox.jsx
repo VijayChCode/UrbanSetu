@@ -3039,6 +3039,23 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 toast.warning('🔍 Please wait — Sentinel is scanning your images for safety & quality. Almost done!', { autoClose: 4000, toastId: 'img-audit-wait' });
                 return;
             }
+
+            // Block images that Sentinel has rejected (e.g. nudity, violence)
+            const rejectedImage = pendingImages.find(img => {
+                const audit = auditResults[`chat_${img.id}`];
+                return audit && audit.classification && audit.classification.status === 'Rejected';
+            });
+
+            if (rejectedImage) {
+                const audit = auditResults[`chat_${rejectedImage.id}`];
+                toast.error(`🚫 Security Alert: ${audit.classification.reason}`, { 
+                    autoClose: 5000, 
+                    toastId: 'sentinel-rejection' 
+                });
+                // Optional: show a suspicious activity bubble in chat? 
+                // For now, just blocking the submission and warning the user.
+                return;
+            }
         }
 
         // Check message limit (skip if unlimited)
@@ -3107,8 +3124,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 const audit = auditResults[`chat_${img.id}`];
                 let auditInfo = '';
                 if (audit) {
-                    const { quality, classification } = audit;
-                    auditInfo = ` [Sentinel Audit: Quality Score ${quality.score / 100}, Classification: ${classification.type} (${classification.category}), Reason: ${classification.reason}]`;
+                    const { sentinelScore, classification } = audit;
+                    auditInfo = ` [Sentinel Audit: Quality Score ${sentinelScore}, Classification: ${classification.type} (${classification.category}), Status: ${classification.status}, Reason: ${classification.reason}]`;
                 }
                 return `I've uploaded a image file: ${img.name}${auditInfo}. Please analyze it and help me with it. File URL: ${img.url}`;
             }).join('\n');
@@ -12014,9 +12031,6 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Analyze images from the web</p>
                                 </div>
                             </div>
-                            <button onClick={() => setShowImageLinkModal(false)} className={`p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                <FaTimes size={18} />
-                            </button>
                         </div>
 
                         <form onSubmit={handleImageLinkSubmit} className="space-y-4">
