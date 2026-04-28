@@ -333,6 +333,24 @@ const listingSchema = new mongoose.Schema({
         }
     },
 
+    // Blockchain Trust Requirements
+    trustRequirements: {
+        minTrustScore: {
+            type: Number,
+            default: 0,
+            min: 0,
+            max: 100
+        },
+        requireWalletLink: {
+            type: Boolean,
+            default: false
+        },
+        depositDiscountForHighTrust: {
+            type: Boolean,
+            default: true
+        }
+    },
+
     // Rent-specific fields
     monthlyRent: {
         type: Number,

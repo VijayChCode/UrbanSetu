@@ -226,6 +226,14 @@ export default function RentProperty() {
 
         setListing(listingData);
 
+        // Blockchain Trust Score Validation
+        const userTrustScore = currentUser?.blockchain?.trustScore || 0;
+        const requiredTrust = listingData.trustRequirements?.minTrustScore || 0;
+        
+        if (requiredTrust > 0 && userTrustScore < requiredTrust) {
+          toast.warning(`This property requires a Blockchain Trust Score of at least ${requiredTrust}. Your current score is ${userTrustScore}. You may still proceed, but the landlord might prioritize high-trust applicants.`);
+        }
+
         const ownerId = listingData?.userRef?._id || listingData?.userRef;
         if (listingData && currentUser && String(ownerId) === String(currentUser._id)) {
           setIsOwner(true);
@@ -1100,7 +1108,17 @@ export default function RentProperty() {
 
   // Calculate deposit and charges based on selected plan
   const getDepositDetails = () => {
-    const baseDepositMonths = listing.securityDepositMonths || 2;
+    let baseDepositMonths = listing.securityDepositMonths || 2;
+
+    // Trust-Based Discount Logic
+    const userTrustScore = currentUser?.blockchain?.trustScore || 0;
+    const hasHighTrust = userTrustScore >= 80;
+    const applyTrustDiscount = listing.trustRequirements?.depositDiscountForHighTrust && hasHighTrust;
+    
+    if (applyTrustDiscount) {
+      // Reward high-trust users with a reduction in security deposit
+      baseDepositMonths = Math.max(1, baseDepositMonths - 0.5); 
+    }
 
     switch (formData.depositPlan) {
       case 'low':
@@ -1565,6 +1583,19 @@ export default function RentProperty() {
 
             {/* Summary */}
             <div className="bg-blue-50 dark:bg-gray-700/50 p-4 rounded-lg mb-6 border border-blue-200 dark:border-blue-800">
+              {listing.trustRequirements?.depositDiscountForHighTrust && currentUser?.blockchain?.trustScore >= 80 && (
+                <div className="mb-4 p-3 bg-indigo-100 dark:bg-indigo-900/40 border border-indigo-200 dark:border-indigo-800 rounded-lg flex items-center gap-3 animate-pulse">
+                  <div className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white shadow-lg flex-shrink-0">
+                    <FaShieldAlt />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-indigo-700 dark:text-indigo-400 uppercase tracking-widest">High-Trust Reward</p>
+                    <p className="text-xs font-bold text-gray-800 dark:text-gray-100">
+                      Your score ({currentUser.blockchain.trustScore}) reduced your deposit by 0.5 months!
+                    </p>
+                  </div>
+                </div>
+              )}
               <h4 className="font-semibold mb-3 text-lg text-gray-800 dark:text-white">Summary</h4>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">

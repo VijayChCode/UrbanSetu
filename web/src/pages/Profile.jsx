@@ -1490,6 +1490,59 @@ export default function Profile() {
     return params ? `${base}?${params}` : base;
   };
 
+  const handleConnectWallet = async () => {
+    if (!window.ethereum) {
+      toast.error("MetaMask or compatible wallet not found. Please install a wallet extension.");
+      window.open('https://metamask.io/download/', '_blank');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      // 1. Request account access
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      const walletAddress = accounts[0];
+
+      // 2. Sign a message to prove ownership
+      const message = `Welcome to UrbanSetu! Sign this message to link your account to this wallet: ${walletAddress.toLowerCase()}`;
+      const signature = await window.ethereum.request({
+        method: 'personal_sign',
+        params: [message, walletAddress],
+      });
+
+      // 3. Send to backend
+      const res = await authenticatedFetch(`${API_BASE_URL}/api/user/link-wallet`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          walletAddress,
+          signature,
+          message
+        })
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        toast.success("Blockchain Wallet linked successfully!");
+        dispatch(updateUserSuccess(data.user));
+      } else {
+        toast.error(data.message || "Failed to link wallet");
+      }
+    } catch (error) {
+      console.error("Wallet Connection Error:", error);
+      if (error.code === 4001) {
+        toast.error("Connection or signature request denied.");
+      } else {
+        toast.error("An error occurred during wallet connection.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="bg-gradient-to-br from-blue-50 to-purple-100 dark:from-gray-900 dark:to-gray-950 min-h-screen py-10 px-2 md:px-8 transition-colors duration-300">
       {/* Signout Loading Modal */}
@@ -1774,7 +1827,7 @@ export default function Profile() {
 
                       {!currentUser.blockchain?.walletAddress ? (
                         <button
-                          onClick={() => toast.info("Blockchain Wallet integration coming soon! Phase 1: Identity Linking.")}
+                          onClick={handleConnectWallet}
                           className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-4 py-2 rounded-lg transition-all active:scale-95 shadow-md shadow-indigo-200 dark:shadow-none w-full sm:w-auto justify-center"
                         >
                           <FaHandshake /> Connect Wallet

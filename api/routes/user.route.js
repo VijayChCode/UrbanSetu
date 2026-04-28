@@ -7,6 +7,7 @@ import bcryptjs from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import User from '../models/user.model.js'
 import { errorHandler } from '../utils/error.js'
+import { calculateAndUpdateTrustScore } from '../utils/blockchainTrust.js'
 
 const router = express.Router()
 
@@ -208,5 +209,47 @@ router.get("/search", verifyToken, searchUsers);
 router.post("/unsubscribe", unsubscribeUser);
 router.post("/submit-unsubscribe-reason", submitUnsubscribeReason);
 router.patch("/toggle-subscription/:id", verifyToken, toggleUserSubscription);
+
+// Blockchain Wallet Routes
+router.post("/link-wallet", verifyToken, async (req, res, next) => {
+  try {
+    const { walletAddress, signature, message } = req.body;
+    
+    if (!walletAddress || !signature || !message) {
+      return next(errorHandler(400, "Wallet address, signature and message are required"));
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return next(errorHandler(404, "User not found"));
+    }
+
+    // Update user blockchain data
+    user.blockchain = {
+      ...user.blockchain,
+      walletAddress: walletAddress.toLowerCase(),
+      network: 'polygon', // Default to polygon as per our plan
+      linkedAt: new Date()
+    };
+
+    await user.save();
+
+    // Dynamically calculate trust score
+    const newTrustScore = await calculateAndUpdateTrustScore(user._id);
+
+    // Re-fetch user to get updated trust score
+    const updatedUser = await User.findById(user._id);
+
+    const { password, ...rest } = updatedUser._doc;
+    res.status(200).json({
+      success: true,
+      message: "Wallet linked and Trust Score calculated!",
+      trustScore: newTrustScore,
+      user: rest
+    });
+  } catch (error) {
+    next(error);
+  }
+});
 
 export default router

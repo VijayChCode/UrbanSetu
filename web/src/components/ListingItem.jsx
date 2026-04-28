@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { MdLocationOn } from 'react-icons/md';
 import { useWishlist } from '../WishlistContext';
-import { FaHeart, FaTrash, FaCheckCircle, FaLock, FaShareAlt } from 'react-icons/fa';
+import { FaHeart, FaTrash, FaCheckCircle, FaLock, FaShareAlt, FaShieldAlt } from 'react-icons/fa';
+
 import { useSelector } from 'react-redux';
 import { maskAddress } from '../utils/addressMasking';
 import PrimaryButton from "./ui/PrimaryButton";
@@ -198,6 +199,11 @@ export default function ListingItem({ listing, onDelete, onWishToggle }) {
               {listing.isVerified && (
                 <span className="px-2 py-0.5 bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-400 rounded-full text-[10px] font-semibold flex items-center gap-1 whitespace-nowrap">
                   <FaCheckCircle className="text-[10px]" /> Verified
+                </span>
+              )}
+              {listing.trustRequirements?.minTrustScore > 0 && (
+                <span className="px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-400 rounded-full text-[10px] font-semibold flex items-center gap-1 whitespace-nowrap border border-indigo-200 dark:border-indigo-800 shadow-sm">
+                  <FaShieldAlt className="text-[10px] text-indigo-500" /> Trust {listing.trustRequirements.minTrustScore}+
                 </span>
               )}
             </div>
