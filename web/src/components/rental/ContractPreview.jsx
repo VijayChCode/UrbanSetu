@@ -1,8 +1,9 @@
 import React from 'react';
-import { FaDownload, FaFileContract, FaCalendarAlt, FaMoneyBillWave, FaLock, FaHome, FaCheckCircle } from 'react-icons/fa';
+import { FaDownload, FaFileContract, FaCalendarAlt, FaMoneyBillWave, FaLock, FaHome, FaCheckCircle, FaShieldAlt, FaExternalLinkAlt } from 'react-icons/fa';
 import { authenticatedFetch } from '../../utils/auth';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const BLOCKCHAIN_EXPLORER_URL = import.meta.env.VITE_BLOCKCHAIN_EXPLORER_URL || 'https://polygonscan.com';
 
 export default function ContractPreview({ contract, listing, tenant, landlord, onDownload }) {
   if (!contract) return null;
@@ -248,6 +249,59 @@ export default function ContractPreview({ contract, listing, tenant, landlord, o
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-3 border-t border-purple-200 dark:border-purple-800 pt-2">
               Drafted by SetuAI Legal Assistant
             </p>
+          </div>
+        )}
+
+        {/* Blockchain Proof of Existence */}
+        {contract.blockchainProof?.agreementHash && (
+          <div className="bg-indigo-900 text-white p-6 rounded-xl border border-indigo-700 shadow-xl overflow-hidden relative group">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-bl-full pointer-events-none -mr-8 -mt-8"></div>
+
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center shadow-lg">
+                <FaShieldAlt className="text-xl" />
+              </div>
+              <div>
+                <h3 className="font-bold text-lg">Blockchain Proof of Existence</h3>
+                <p className="text-[10px] text-indigo-300 uppercase tracking-widest font-black">Verified on Polygon Network</p>
+              </div>
+            </div>
+
+            <div className="space-y-4 relative z-10">
+              <div className="p-3 bg-black/30 rounded-lg border border-white/10">
+                <p className="text-[10px] text-indigo-300 mb-1 font-bold uppercase">Agreement Fingerprint (SHA-256)</p>
+                <p className="font-mono text-xs break-all text-white/90 selection:bg-indigo-500">
+                  {contract.blockchainProof.agreementHash}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="p-3 bg-black/30 rounded-lg border border-white/10">
+                  <p className="text-[10px] text-indigo-300 mb-1 font-bold uppercase">On-Chain Proof</p>
+                  <p className="font-mono text-[10px] truncate text-indigo-200">
+                    {contract.blockchainProof.onChainTxHash}
+                  </p>
+                </div>
+                <div className="p-3 bg-black/30 rounded-lg border border-white/10">
+                  <p className="text-[10px] text-indigo-300 mb-1 font-bold uppercase">Verification Date</p>
+                  <p className="text-xs font-bold">
+                    {new Date(contract.blockchainProof.timestamp || contract.updatedAt).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 flex items-center justify-between text-[10px] text-indigo-300 font-medium">
+              <span className="flex items-center gap-1">
+                <FaCheckCircle className="text-green-400" /> Immutable Proof Active
+              </span>
+              <button
+                onClick={() => window.open(`https://polygonscan.com/tx/${contract.blockchainProof.onChainTxHash}`, '_blank')}
+                className="hover:text-white transition-colors flex items-center gap-1 underline"
+              >
+                View on PolygonScan
+              </button>
+            </div>
           </div>
         )}
 

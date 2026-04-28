@@ -187,6 +187,27 @@ const rentLockContractSchema = new mongoose.Schema({
     default: null
   },
 
+  // Blockchain Proof of Agreement
+  blockchainProof: {
+    agreementHash: {
+      type: String,
+      index: true,
+      default: null
+    },
+    onChainTxHash: {
+      type: String,
+      default: null
+    },
+    timestamp: {
+      type: Date,
+      default: null
+    },
+    network: {
+      type: String,
+      default: 'polygon'
+    }
+  },
+
   // Metadata
   contractDocumentUrl: String, // PDF contract
   termsAndConditions: String, // Stored text version

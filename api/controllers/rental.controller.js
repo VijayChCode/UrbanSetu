@@ -41,6 +41,7 @@ import {
   sendAutoDebitRemovedEmail
 } from "../utils/emailService.js";
 import { markListingUnderContract, markListingAsRented, releaseListingLock } from "../utils/listingAvailability.js";
+import { generateAgreementHash, simulateOnChainTxHash } from "../utils/agreementHashing.js";
 
 // Payment reminder function (can be called by cron job)
 export const sendPaymentReminders = async () => {
@@ -835,6 +836,17 @@ export const signContract = async (req, res, next) => {
     // Update status if both parties signed
     if (contract.tenantSignature.signed && contract.landlordSignature.signed) {
       contract.status = 'active';
+
+      // Generate Blockchain Proof of Agreement
+      const agreementHash = generateAgreementHash(contract);
+      const txHash = simulateOnChainTxHash();
+      
+      contract.blockchainProof = {
+        agreementHash,
+        onChainTxHash: txHash,
+        timestamp: new Date(),
+        network: 'polygon'
+      };
 
       // Update booking status
       const booking = await Booking.findById(contract.bookingId);

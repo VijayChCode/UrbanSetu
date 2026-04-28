@@ -538,6 +538,11 @@ export default function RentalContracts() {
                           <p className="text-sm text-gray-600 dark:text-gray-400 font-mono">
                             {contract.contractId}
                           </p>
+                          {contract.blockchainProof?.agreementHash && (
+                            <div className="flex items-center gap-1.5 mt-2 px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded text-[10px] font-black border border-indigo-200 dark:border-indigo-800 uppercase tracking-widest w-fit">
+                              <FaShieldAlt className="text-indigo-500" /> Blockchain Verified
+                            </div>
+                          )}
                           <div className="flex gap-2 mt-2">
                             {contract.moveInStatus === 'completed' && (
                               <span className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 px-2 py-0.5 rounded text-[10px] font-bold border border-green-200 dark:border-green-800 flex items-center gap-1">

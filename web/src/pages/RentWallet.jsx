@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { toast } from 'react-toastify';
-import { FaWallet, FaCalendarAlt, FaHistory, FaCog, FaMoneyBillWave, FaExclamationTriangle, FaCheckCircle, FaClock, FaDownload, FaTrophy, FaArrowRight, FaAward, FaRegGem, FaShieldAlt, FaDove, FaHandshake, FaFire, FaCoins, FaInfoCircle, FaTools, FaHome } from "react-icons/fa";
+import { FaWallet, FaCalendarAlt, FaHistory, FaCog, FaMoneyBillWave, FaExclamationTriangle, FaCheckCircle, FaClock, FaDownload, FaTrophy, FaArrowRight, FaAward, FaRegGem, FaShieldAlt, FaDove, FaHandshake, FaFire, FaCoins, FaInfoCircle, FaTools, FaHome, FaExternalLinkAlt } from "react-icons/fa";
 import { usePageTitle } from '../hooks/usePageTitle';
 import PaymentSchedule from '../components/rental/PaymentSchedule';
 import AutoDebitSettings from '../components/rental/AutoDebitSettings';
@@ -444,6 +444,42 @@ export default function RentWallet() {
                 </div>
               )}
             </div>
+
+            {/* Blockchain Proof Verification */}
+            {contract.blockchainProof?.agreementHash && (
+              <div className="bg-gradient-to-br from-indigo-900 to-blue-900 rounded-xl shadow-lg p-6 text-white border border-indigo-700/50 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-bl-full pointer-events-none -mr-8 -mt-8"></div>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold flex items-center gap-2 text-white">
+                    <FaShieldAlt className="text-indigo-400" />
+                    Agreement Proof
+                  </h2>
+                  <span className="px-2 py-0.5 bg-green-500/20 text-green-300 rounded text-[10px] font-black uppercase tracking-widest border border-green-500/30 flex items-center gap-1">
+                    <FaCheckCircle size={10} /> Immutable
+                  </span>
+                </div>
+                <p className="text-sm text-indigo-100/80 mb-4 leading-relaxed">
+                  This rental agreement is cryptographically verified on the <strong>Polygon Network</strong>. The terms are permanent and cannot be altered.
+                </p>
+                <div className="bg-black/30 p-3 rounded-lg border border-white/10 mb-4">
+                  <p className="text-[10px] text-indigo-300 mb-1 font-bold uppercase tracking-wider">Fingerprint (SHA-256)</p>
+                  <p className="font-mono text-xs break-all text-white/90 selection:bg-indigo-500">
+                    {contract.blockchainProof.agreementHash}
+                  </p>
+                </div>
+                <div className="flex items-center justify-between">
+                  <button 
+                    onClick={() => window.open(`https://polygonscan.com/tx/${contract.blockchainProof.onChainTxHash}`, '_blank')}
+                    className="text-xs font-bold text-indigo-300 hover:text-white transition-colors flex items-center gap-1 underline underline-offset-2"
+                  >
+                    View Ledger Proof <FaExternalLinkAlt size={10} />
+                  </button>
+                  <p className="text-[10px] text-indigo-300 italic">
+                    Verified {new Date(contract.blockchainProof.timestamp || contract.updatedAt).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Contract Summary */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
