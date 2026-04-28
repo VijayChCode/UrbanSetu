@@ -1027,7 +1027,6 @@ function AppRoutes({ bootstrapped }) {
               <Route path="/admin/marketing-intelligence" element={<AdminSponsorIntelligence />} />
               <Route path="/admin/security-intelligence" element={<SecurityIntelligence />} />
               <Route path="/admin/support" element={<AdminSupport />} />
-
               <Route path="/admin/ai" element={<AdminAI />} />
               <Route path="/admin/ai/share/:shareToken" element={<SharedChatView />} />
               <Route path="/admin/investment-tools" element={<InvestmentTools />} />
