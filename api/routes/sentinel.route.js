@@ -1,5 +1,5 @@
 import express from 'express';
-import { verifyToken } from '../utils/verifyUser.js';
+import { verifyToken } from '../utils/verify.js';
 import { getAlerts, updateAlertStatus } from '../controllers/sentinel.controller.js';
 
 const router = express.Router();
