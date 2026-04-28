@@ -832,7 +832,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [enableSystemPrompts, setEnableSystemPrompts] = useState(() => getUserSetting('gemini_system_prompts', 'true') !== 'false');
 
     // Image Auditing Hook (Extended from CreateListing)
-    const { performAudit, auditResults, isAuditing } = useImageAuditor();
+    const { performAudit, auditByUrl, auditResults, isAuditing } = useImageAuditor();
 
     // Notification Settings
     const [enableDesktopNotifications, setEnableDesktopNotifications] = useState(() => getUserSetting('gemini_desktop_notifications', 'true') !== 'false');
@@ -12016,6 +12016,46 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         <FaImage size={18} className={isDarkMode ? 'text-indigo-400' : 'text-indigo-500'} />
                                     </div>
                                 </div>
+
+                                {/* URL Image Preview */}
+                                {imageLinkInput.trim() && (
+                                    <div className="mt-4 animate-fadeIn">
+                                        <div className={`p-2 rounded-xl border-2 overflow-hidden transition-all duration-500 hover:scale-[1.02] ${isDarkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-gray-50 border-indigo-100'}`}>
+                                            <div className="relative aspect-video rounded-lg overflow-hidden group/preview bg-black/5">
+                                                <img
+                                                    src={imageLinkInput}
+                                                    alt="Preview"
+                                                    className="w-full h-full object-contain cursor-pointer transition-transform duration-500 group-hover/preview:scale-105"
+                                                    onError={(e) => {
+                                                        e.target.style.display = 'none';
+                                                        e.target.nextSibling.style.display = 'flex';
+                                                    }}
+                                                    onLoad={(e) => {
+                                                        e.target.style.display = 'block';
+                                                        e.target.nextSibling.style.display = 'none';
+                                                    }}
+                                                    onClick={() => {
+                                                        setPreviewImages([imageLinkInput]);
+                                                        setPreviewImageIndex(0);
+                                                        setIsImagePreviewOpen(true);
+                                                    }}
+                                                />
+                                                <div className="hidden absolute inset-0 flex-col items-center justify-center text-gray-400 gap-2">
+                                                    <FaImage size={32} className="opacity-20" />
+                                                    <span className="text-[10px] font-medium uppercase tracking-widest opacity-50">Invalid Image URL</span>
+                                                </div>
+                                                
+                                                {/* Hover Overlay for Preview */}
+                                                <div className="absolute inset-0 bg-black/0 group-hover/preview:bg-black/20 transition-all flex items-center justify-center opacity-0 group-hover/preview:opacity-100 pointer-events-none">
+                                                    <div className="bg-white/20 backdrop-blur-md p-2 rounded-full border border-white/30 text-white transform translate-y-4 group-hover/preview:translate-y-0 transition-all duration-300">
+                                                        <FaExpand size={14} />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                                
                                 <p className={`mt-2 text-[10px] leading-relaxed italic ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
                                     Tip: Right-click any image on the web and select "Copy image address" to get the direct link.
                                 </p>
