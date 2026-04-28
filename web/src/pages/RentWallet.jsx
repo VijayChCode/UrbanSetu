@@ -445,6 +445,58 @@ export default function RentWallet() {
               )}
             </div>
 
+            {/* Smart Escrow Status */}
+            {wallet.escrow?.status !== 'none' && (
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border-l-4 border-indigo-500">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-bold text-lg text-gray-800 dark:text-white flex items-center gap-2">
+                    <FaLock className="text-indigo-500" /> Security Deposit Escrow
+                  </h3>
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+                    wallet.escrow.status === 'locked' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' :
+                    wallet.escrow.status === 'disputed' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' :
+                    'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                  }`}>
+                    {wallet.escrow.status}
+                  </span>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="flex justify-between items-end">
+                    <div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Locked Amount</p>
+                      <p className="text-2xl font-black text-gray-800 dark:text-white">₹{wallet.escrow.depositAmount?.toLocaleString('en-IN')}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Locked on Polygon</p>
+                      <p className="text-xs font-bold text-gray-700 dark:text-gray-300">
+                        {wallet.escrow.lockedAt ? new Date(wallet.escrow.lockedAt).toLocaleDateString() : 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-bold mb-1 tracking-widest">Escrow Contract Address</p>
+                    <p className="font-mono text-[10px] break-all text-indigo-600 dark:text-indigo-400">
+                      {wallet.escrow.escrowAddress}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[10px]">
+                    <span className="text-gray-500 dark:text-gray-400 flex items-center gap-1 italic">
+                      <FaShieldAlt className="text-indigo-500" /> Protected by UrbanSetu Smart Contract
+                    </span>
+                    <button 
+                      onClick={() => window.open(`https://polygonscan.com/tx/${wallet.escrow.lockTxHash}`, '_blank')}
+                      className="text-indigo-600 dark:text-indigo-400 hover:underline font-bold flex items-center gap-1"
+                    >
+                      View Tx <FaExternalLinkAlt size={8} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Blockchain Proof Verification */}
             {contract.blockchainProof?.agreementHash && (
               <div className="bg-gradient-to-br from-indigo-900 to-blue-900 rounded-xl shadow-lg p-6 text-white border border-indigo-700/50 relative overflow-hidden group">

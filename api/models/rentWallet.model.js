@@ -124,6 +124,43 @@ const rentWalletSchema = new mongoose.Schema({
   reminderSentAt: Date,
   lastReminderDate: Date, // Track last reminder sent date
   
+  // Smart Escrow for Security Deposit
+  escrow: {
+    status: {
+      type: String,
+      enum: ['none', 'pending', 'locked', 'disputed', 'released', 'refunded'],
+      default: 'none'
+    },
+    depositAmount: {
+      type: Number,
+      default: 0
+    },
+    escrowAddress: {
+      type: String, // On-chain escrow contract address
+      default: null
+    },
+    lockTxHash: {
+      type: String, // Transaction hash when deposit is locked
+      default: null
+    },
+    releaseTxHash: {
+      type: String, // Transaction hash when deposit is released
+      default: null
+    },
+    lockedAt: Date,
+    releasedAt: Date,
+    escrowSettings: {
+      autoReleaseDays: {
+        type: Number,
+        default: 3 // Auto-release after 3 days of move-out if no dispute
+      },
+      disputePeriodDays: {
+        type: Number,
+        default: 7 // Period for landlord to raise dispute
+      }
+    }
+  },
+
   createdAt: {
     type: Date,
     default: Date.now

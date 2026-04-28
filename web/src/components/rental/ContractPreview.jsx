@@ -178,6 +178,44 @@ export default function ContractPreview({ contract, listing, tenant, landlord, o
           </div>
         </div>
 
+        {/* Blockchain Escrow Proof (if available via wallet data) */}
+        {contract.wallet?.escrow?.status === 'locked' && (
+          <div className="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-lg border border-indigo-200 dark:border-indigo-800">
+            <h3 className="font-semibold text-lg mb-3 flex items-center gap-2 text-gray-800 dark:text-white">
+              <FaShieldAlt className="text-indigo-600 dark:text-indigo-400" /> Smart Escrow Proof
+            </h3>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600 dark:text-gray-400">Escrow Status:</span>
+                <span className="px-2 py-0.5 bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 rounded text-[10px] font-black border border-green-200 dark:border-green-800 uppercase tracking-widest">
+                  LOCKED ON-CHAIN
+                </span>
+              </div>
+              {contract.wallet.escrow.escrowAddress && (
+                <div className="flex flex-col gap-1">
+                  <span className="text-gray-600 dark:text-gray-400 font-medium">Escrow Contract:</span>
+                  <code className="text-[10px] bg-white dark:bg-gray-900 p-1.5 rounded border border-gray-200 dark:border-gray-700 break-all text-indigo-600 dark:text-indigo-400 font-mono">
+                    {contract.wallet.escrow.escrowAddress}
+                  </code>
+                </div>
+              )}
+              {contract.wallet.escrow.lockTxHash && (
+                <div className="flex flex-col gap-1">
+                  <span className="text-gray-600 dark:text-gray-400 font-medium">Transaction Hash:</span>
+                  <a
+                    href={`${BLOCKCHAIN_EXPLORER_URL}/tx/${contract.wallet.escrow.lockTxHash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[10px] bg-white dark:bg-gray-900 p-1.5 rounded border border-gray-200 dark:border-gray-700 break-all text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 font-mono"
+                  >
+                    {contract.wallet.escrow.lockTxHash} <FaExternalLinkAlt size={8} />
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Dates */}
         <div className="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-lg border border-indigo-200 dark:border-indigo-800">
           <h3 className="font-semibold text-lg mb-3 flex items-center gap-2 text-gray-800 dark:text-white">

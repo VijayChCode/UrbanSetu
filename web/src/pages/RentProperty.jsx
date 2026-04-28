@@ -2121,6 +2121,22 @@ export default function RentProperty() {
                 )}
               </div>
             </div>
+            
+            {/* Blockchain Escrow Protection Info */}
+            <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-lg p-4 mb-6">
+              <div className="flex gap-3">
+                <div className="mt-1">
+                  <FaShieldAlt className="text-indigo-600 dark:text-indigo-400 text-xl" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-indigo-900 dark:text-indigo-300 text-sm">Smart Escrow Protection Active</h4>
+                  <p className="text-xs text-indigo-800 dark:text-indigo-400 mt-1 leading-relaxed">
+                    Your security deposit will be automatically tokenized and locked in a decentralized escrow contract on the Polygon blockchain. 
+                    This ensures the funds are immutable and can only be released upon mutual agreement or contract termination, protecting you from unauthorized deductions.
+                  </p>
+                </div>
+              </div>
+            </div>
 
             {/* SetuCoins Earning Banner (1% cashback: 1 coin per ₹10) */}
             {getTotalAmount() >= 10 && (

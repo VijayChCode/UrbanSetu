@@ -2485,6 +2485,13 @@ export default function Listing() {
                 {listing.type === "rent" ? "For Rent" : "For Sale"}
               </span>
 
+              {listing.type === 'rent' && (
+                <span className="px-3 py-1 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded-md flex items-center gap-1.5 font-bold border border-indigo-200 dark:border-indigo-800 text-xs sm:text-sm">
+                  <FaShieldAlt className="text-indigo-600 dark:text-indigo-400" />
+                  Smart Escrow Protected
+                </span>
+              )}
+
               {/* Show verification status for admins and rootadmins */}
               {isAdmin && (
                 <>

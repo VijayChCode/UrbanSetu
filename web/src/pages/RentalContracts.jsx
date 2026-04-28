@@ -543,6 +543,11 @@ export default function RentalContracts() {
                               <FaShieldAlt className="text-indigo-500" /> Blockchain Verified
                             </div>
                           )}
+                          {contract.wallet?.escrow?.status === 'locked' && (
+                            <div className="flex items-center gap-1.5 mt-1 px-2 py-0.5 bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 rounded text-[10px] font-black border border-green-200 dark:border-green-800 uppercase tracking-widest w-fit">
+                              <FaLock className="text-green-500" size={8} /> Deposit In Escrow
+                            </div>
+                          )}
                           <div className="flex gap-2 mt-2">
                             {contract.moveInStatus === 'completed' && (
                               <span className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 px-2 py-0.5 rounded text-[10px] font-bold border border-green-200 dark:border-green-800 flex items-center gap-1">

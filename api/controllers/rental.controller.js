@@ -397,13 +397,14 @@ export const getContract = async (req, res, next) => {
       try {
         const RentWallet = (await import('../models/rentWallet.model.js')).default;
         const wallet = await RentWallet.findById(contract.walletId)
-          .select('paymentSchedule totalPaid totalDue');
+          .select('paymentSchedule totalPaid totalDue escrow');
 
         if (wallet) {
           contractObj.wallet = {
             paymentSchedule: wallet.paymentSchedule || [],
             totalPaid: wallet.totalPaid || 0,
-            totalDue: wallet.totalDue || 0
+            totalDue: wallet.totalDue || 0,
+            escrow: wallet.escrow || { status: 'none' }
           };
         }
       } catch (error) {
@@ -475,7 +476,8 @@ export const listContracts = async (req, res, next) => {
               contractObj.wallet = {
                 paymentSchedule: wallet.paymentSchedule || [],
                 totalPaid: wallet.totalPaid || 0,
-                totalDue: wallet.totalDue || 0
+                totalDue: wallet.totalDue || 0,
+                escrow: wallet.escrow || { status: 'none' }
               };
             }
           } catch (error) {

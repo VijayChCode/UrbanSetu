@@ -24,6 +24,7 @@ import {
   sendRentPaymentReceivedEmail
 } from '../utils/emailService.js';
 import { sendRentalNotification } from '../utils/rentalNotificationService.js';
+import { simulateEscrowLock } from "../utils/blockchainEscrow.js";
 import fetch from 'node-fetch';
 import PDFDocument from 'pdfkit';
 
@@ -446,6 +447,20 @@ router.post("/verify", verifyToken, async (req, res) => {
               contractId: contract._id
             });
             wallet.generatePaymentSchedule(contract);
+            
+            // Initiate Blockchain Escrow Lock
+            const escrowResult = simulateEscrowLock(contract.securityDeposit);
+            if (escrowResult.success) {
+              wallet.escrow = {
+                status: 'locked',
+                depositAmount: contract.securityDeposit,
+                escrowAddress: escrowResult.escrowAddress,
+                lockTxHash: escrowResult.txHash,
+                lockedAt: escrowResult.timestamp
+              };
+              console.log(`🔐 Security Deposit Locked in Smart Escrow: ${escrowResult.txHash}`);
+            }
+
             await wallet.save();
           }
 
