@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ReactPhotoSphereViewer } from 'react-photo-sphere-viewer';
-import { FaTimes, FaExpand, FaCompress, FaInfoCircle, FaMapMarkerAlt, FaArrowsAlt, FaVRCardboard, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { FaTimes, FaExpand, FaCompress, FaInfoCircle, FaMapMarkerAlt, FaArrowsAlt, FaVrCardboard, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import UrbanSetuSpinner from '../UrbanSetuSpinner';
 
@@ -56,7 +56,7 @@ export default function ImmersiveTour({ isOpen, onClose, tourImages, propertyNam
               transition={{ delay: 0.2 }}
               className="p-3 bg-blue-600 rounded-2xl text-white shadow-2xl shadow-blue-500/40 border border-white/10"
             >
-              <FaVRCardboard className="text-xl md:text-2xl" />
+              <FaVrCardboard className="text-xl md:text-2xl" />
             </motion.div>
             <div>
               <motion.h2 
