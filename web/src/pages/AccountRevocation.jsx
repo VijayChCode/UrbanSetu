@@ -224,14 +224,14 @@ export default function AccountRevocation() {
           {!loading && !error && !success && !isPurged && accountData && (
             <div>
               <div className="flex items-center justify-center mb-6">
-                <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center animate-pulse-soft">
-                  <User className="w-8 h-8 text-blue-600" />
+                <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900/30 rounded-full flex items-center justify-center animate-pulse-soft">
+                  <User className="w-8 h-8 text-blue-600 dark:text-blue-400" />
                 </div>
               </div>
 
               <div className="text-center mb-8">
-                <h3 className="text-xl font-bold text-gray-900">Welcome Back, {accountData.username}!</h3>
-                <p className="text-gray-500 text-sm mt-1">Ready to restore your account?</p>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">Welcome Back, {accountData.username}!</h3>
+                <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Ready to restore your account?</p>
               </div>
 
               {/* Status Bar */}
