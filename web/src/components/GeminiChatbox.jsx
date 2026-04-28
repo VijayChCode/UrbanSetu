@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { FaComments, FaTimes, FaWifi, FaPaperPlane, FaRobot, FaCopy, FaSync, FaUser, FaCheck, FaHome, FaFileAlt, FaDownload, FaUpload, FaPaperclip, FaCog, FaLightbulb, FaHistory, FaBookmark, FaShare, FaThumbsUp, FaThumbsDown, FaRegBookmark, FaBookmark as FaBookmarkSolid, FaMicrophone, FaStop, FaImage, FaMagic, FaStar, FaMoon, FaSun, FaPalette, FaVolumeUp, FaVolumeMute, FaExpand, FaCompress, FaSearch, FaFilter, FaSort, FaEye, FaEyeSlash, FaEdit, FaCheck as FaCheckCircle, FaTimes as FaTimesCircle, FaFlag, FaShieldAlt, FaClipboardList, FaCommentAlt, FaArrowDown, FaTrash, FaEllipsisH, FaEllipsisV, FaShareAlt, FaBan, FaChevronLeft, FaChevronRight, FaSave } from 'react-icons/fa';
+import { FaComments, FaTimes, FaWifi, FaPaperPlane, FaRobot, FaCopy, FaSync, FaUser, FaCheck, FaHome, FaFileAlt, FaDownload, FaUpload, FaPaperclip, FaCog, FaLightbulb, FaHistory, FaBookmark, FaShare, FaThumbsUp, FaThumbsDown, FaRegBookmark, FaBookmark as FaBookmarkSolid, FaMicrophone, FaStop, FaImage, FaMagic, FaStar, FaMoon, FaSun, FaPalette, FaVolumeUp, FaVolumeMute, FaExpand, FaCompress, FaSearch, FaFilter, FaSort, FaEye, FaEyeSlash, FaEdit, FaCheck as FaCheckCircle, FaTimes as FaTimesCircle, FaFlag, FaShieldAlt, FaClipboardList, FaCommentAlt, FaArrowDown, FaTrash, FaEllipsisH, FaEllipsisV, FaShareAlt, FaBan, FaChevronLeft, FaChevronRight, FaSave, FaLink } from 'react-icons/fa';
 import EqualizerButton from './EqualizerButton';
 import ShareChatModal from './ShareChatModal';
 import SocialSharePanel from './SocialSharePanel';
@@ -483,6 +483,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [shareTargetSessionId, setShareTargetSessionId] = useState(null);
     const [showSocialShare, setShowSocialShare] = useState(false);
     const [socialShareConfig, setSocialShareConfig] = useState({ url: '', title: '', description: '' });
+    const [showImageLinkModal, setShowImageLinkModal] = useState(false);
+    const [imageLinkInput, setImageLinkInput] = useState('');
     const [renameInput, setRenameInput] = useState('');
     const [refreshingBookmarks, setRefreshingBookmarks] = useState(false);
     const [initialSettingsSnapshot, setInitialSettingsSnapshot] = useState(null);
@@ -5311,6 +5313,52 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         setUploadedFiles(prev => prev.filter((_, i) => i !== index));
     };
 
+    const handleImageLinkSubmit = async (e) => {
+        if (e) e.preventDefault();
+        
+        if (!imageLinkInput.trim()) {
+            toast.error('Please enter a valid image URL');
+            return;
+        }
+
+        const url = imageLinkInput.trim();
+        
+        // Basic URL validation
+        try {
+            new URL(url);
+        } catch (_) {
+            toast.error('Invalid URL format');
+            return;
+        }
+
+        // Check image limit
+        const currentImagesCount = pendingImages.length;
+        if (currentImagesCount >= 5) {
+            toast.error('You can only upload up to 5 images. Please remove some before adding more.');
+            return;
+        }
+
+        const tempId = Date.now() + Math.random();
+        
+        // Add to pending images
+        setPendingImages(prev => [...prev, {
+            id: tempId,
+            name: 'External Image',
+            type: 'image',
+            url: url,
+            uploading: false,
+            isExternal: true
+        }]);
+
+        setImageLinkInput('');
+        setShowImageLinkModal(false);
+
+        // Start Sentinel AI auditing
+        // Key is 'chat_<id>' as expected by handleSubmit and UI
+        await auditByUrl(url, tempId, 'chat');
+    };
+
+
 
 
     // Helper functions for new settings
@@ -8389,6 +8437,25 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                 <FaMicrophone size={14} />
                                                             </div>
                                                             <span className="text-sm font-medium">Voice Input</span>
+                                                        </button>
+
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                if (isBlockedByPolicy) {
+                                                                    toast.warning('Image auditing is disabled during your policy cooldown.');
+                                                                    return;
+                                                                }
+                                                                setShowImageLinkModal(true);
+                                                                setShowInputOptions(false);
+                                                            }}
+                                                            disabled={isBlockedByPolicy}
+                                                            className={`w-full text-left px-4 py-3 flex items-center gap-3 transition-colors ${isDarkMode ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-50 text-gray-700'} ${isBlockedByPolicy ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                        >
+                                                            <div className={`p-1.5 rounded-lg ${isDarkMode ? 'bg-indigo-500/20 text-indigo-400' : 'bg-indigo-100 text-indigo-600'}`}>
+                                                                <FaImage size={14} />
+                                                            </div>
+                                                            <span className="text-sm font-medium">Image Link</span>
                                                         </button>
                                                     </div>
                                                 )}
@@ -11908,6 +11975,85 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 currentIndex={previewImageIndex}
                 setCurrentIndex={setPreviewImageIndex}
             />
+
+            {/* Image Link Modal */}
+            {showImageLinkModal && (
+                <div className="fixed inset-0 z-[160] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn" onClick={() => setShowImageLinkModal(false)}>
+                    <div className={`w-full max-w-md p-6 rounded-2xl shadow-2xl overflow-hidden border-2 transform transition-all scale-100 ${isDarkMode ? 'bg-gray-900 border-indigo-900/50 text-white' : 'bg-white border-indigo-100 text-gray-900'}`} onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between mb-6">
+                            <div className="flex items-center gap-3">
+                                <div className={`p-2.5 rounded-xl ${isDarkMode ? 'bg-indigo-500/20 text-indigo-400' : 'bg-indigo-100 text-indigo-600'}`}>
+                                    <FaLink size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold">Image URL</h3>
+                                    <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Analyze images from the web</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setShowImageLinkModal(false)} className={`p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                <FaTimes size={18} />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleImageLinkSubmit} className="space-y-4">
+                            <div>
+                                <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                    Paste Image Address
+                                </label>
+                                <div className="relative group">
+                                    <input
+                                        type="text"
+                                        value={imageLinkInput}
+                                        onChange={(e) => setImageLinkInput(e.target.value)}
+                                        placeholder="https://example.com/image.jpg"
+                                        className={`w-full pl-4 pr-12 py-3 rounded-xl border-2 focus:outline-none transition-all duration-300 ${isDarkMode
+                                            ? 'bg-gray-800 border-gray-700 text-white focus:border-indigo-500/50'
+                                            : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-indigo-400/50'
+                                            }`}
+                                        autoFocus
+                                    />
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-30 group-focus-within:opacity-100 transition-opacity">
+                                        <FaImage size={18} className={isDarkMode ? 'text-indigo-400' : 'text-indigo-500'} />
+                                    </div>
+                                </div>
+                                <p className={`mt-2 text-[10px] leading-relaxed italic ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                                    Tip: Right-click any image on the web and select "Copy image address" to get the direct link.
+                                </p>
+                            </div>
+
+                            <div className={`p-4 rounded-xl border border-dashed flex items-center gap-3 ${isDarkMode ? 'bg-indigo-900/10 border-indigo-800/50' : 'bg-indigo-50/50 border-indigo-200'}`}>
+                                <div className="p-2 bg-indigo-500 rounded-lg text-white animate-pulse">
+                                    <FaShieldAlt size={16} />
+                                </div>
+                                <div className="flex-1">
+                                    <div className={`text-[11px] font-bold uppercase ${isDarkMode ? 'text-indigo-300' : 'text-indigo-600'}`}>Sentinel AI Protection</div>
+                                    <div className={`text-[10px] ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>External images are scanned for safety and quality compliance before submission.</div>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowImageLinkModal(false)}
+                                    className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${isDarkMode ? 'bg-gray-800 hover:bg-gray-700 text-gray-300' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'}`}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={!imageLinkInput.trim()}
+                                    className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all shadow-lg shadow-indigo-500/25 ${imageLinkInput.trim()
+                                        ? `bg-gradient-to-r ${themeColors.primary} text-white hover:opacity-90 active:scale-[0.98]`
+                                        : 'bg-gray-300 dark:bg-gray-700 text-white cursor-not-allowed'
+                                        }`}
+                                >
+                                    Analyze & Add
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
 
             {/* Coin Burst Animation for Token Usage Feedback */}
             {showCoinBurst && (
