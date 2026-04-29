@@ -567,6 +567,7 @@ export default function AccountConflictResolution() {
 
               <div className="flex justify-center mb-6">
                 <RecaptchaWidget
+                  ref={recaptchaRef}
                   onVerify={(token) => {
                     setRecaptchaToken(token);
                     setRecaptchaError("");

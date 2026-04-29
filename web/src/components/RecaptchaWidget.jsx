@@ -1,17 +1,28 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useImperativeHandle, forwardRef } from 'react';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { getCurrentCaptchaConfig, validateCaptchaConfig } from '../config/recaptcha';
 import UrbanSetuSpinner from './UrbanSetuSpinner';
 
-const RecaptchaWidget = ({
+const RecaptchaWidget = forwardRef(({
   onVerify,
   onExpire,
   onError,
   disabled = false,
   className = "",
   size = "normal"
-}) => {
+}, ref) => {
   const recaptchaRef = useRef(null);
+
+  useImperativeHandle(ref, () => ({
+    reset: () => {
+      if (recaptchaRef.current) {
+        recaptchaRef.current.reset();
+      }
+    },
+    getValue: () => {
+      return recaptchaRef.current ? recaptchaRef.current.getValue() : null;
+    }
+  }));
   const [isLoaded, setIsLoaded] = useState(false);
   const [error, setError] = useState(null);
   const [activeTheme, setActiveTheme] = useState('light');
@@ -152,6 +163,6 @@ const RecaptchaWidget = ({
   }
 
   return null;
-};
+});
 
 export default RecaptchaWidget;
