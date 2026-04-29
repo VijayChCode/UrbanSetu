@@ -129,7 +129,7 @@ export const SignUp = async (req, res, next) => {
                     // Generate a temporary token for data export
                     const conflictToken = jwt.sign(
                         { email: emailLower, conflictId: activeRevocation._id, purpose: 'conflict_resolution' },
-                        process.env.JWT_SECRET,
+                        process.env.JWT_TOKEN,
                         { expiresIn: '1h' }
                     );
 

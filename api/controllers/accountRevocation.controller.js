@@ -20,7 +20,7 @@ export const exportDeletedData = async (req, res, next) => {
     // Verify conflict token
     let decoded;
     try {
-      decoded = jwt.verify(conflictToken, process.env.JWT_SECRET);
+      decoded = jwt.verify(conflictToken, process.env.JWT_TOKEN);
     } catch (err) {
       return next(errorHandler(401, "Invalid or expired conflict token"));
     }
