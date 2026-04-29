@@ -107,17 +107,11 @@ export const SignUp = async (req, res, next) => {
                     return next(errorHandler(403, `Please wait ${daysLeft} more day(s) before signing up again.`));
                 }
             }
-            // Show contextual messages
-            if (policy.category === 'inactive_auto') {
-                return next(errorHandler(403, "This account was deactivated due to long inactivity. You may create a new account or contact support to restore."));
-            }
-            if (policy.category === 'requested_by_user') {
-                return next(errorHandler(403, "This account was deleted at your request. You may sign up again anytime."));
-            }
-
             // If the deleted account is still in the 30-day grace period and has an active
             // revocation token, show the mediator page to let the user choose between
             // restoring their previous account or starting fresh.
+            // NOTE: This MUST run before contextual messages, otherwise 'requested_by_user'
+            // and 'inactive_auto' policies would block users from ever seeing the conflict page.
             if (!existingSoftban.purgedAt && !req.body.forceCreate) {
                 const activeRevocation = await AccountRevocation.findOne({
                     email: emailLower,
@@ -146,6 +140,14 @@ export const SignUp = async (req, res, next) => {
                         }
                     });
                 }
+            }
+
+            // Show contextual messages (only reached when no active revocation token exists)
+            if (policy.category === 'inactive_auto') {
+                return next(errorHandler(403, "This account was deactivated due to long inactivity. You may create a new account or contact support to restore."));
+            }
+            if (policy.category === 'requested_by_user') {
+                return next(errorHandler(403, "This account was deleted at your request. You may sign up again anytime."));
             }
 
             // If forceCreate is set, purge the old deleted account and expire all revocation tokens
@@ -741,6 +743,35 @@ export const Google = async (req, res, next) => {
                             return next(errorHandler(403, `This account is temporarily suspended. Please try again after ${waitMsg}.`));
                         }
                     }
+
+                    // Account is in the 30-day grace period — check for active revocation token
+                    // and redirect to conflict resolution page
+                    const activeRevocation = await AccountRevocation.findOne({
+                        email: email.toLowerCase(),
+                        isUsed: false,
+                        expiresAt: { $gt: new Date() }
+                    });
+
+                    if (activeRevocation) {
+                        const conflictToken = jwt.sign(
+                            { email: email.toLowerCase(), conflictId: activeRevocation._id, purpose: 'conflict_resolution' },
+                            process.env.JWT_TOKEN,
+                            { expiresIn: '1h' }
+                        );
+
+                        return res.status(409).json({
+                            deletedAccountFound: true,
+                            conflictToken,
+                            deletedAccountData: {
+                                username: activeRevocation.username,
+                                email: activeRevocation.email,
+                                role: activeRevocation.role,
+                                deletedAt: activeRevocation.deletedAt,
+                                expiresAt: activeRevocation.expiresAt,
+                                daysRemaining: Math.max(0, Math.ceil((new Date(activeRevocation.expiresAt) - new Date()) / (1000 * 60 * 60 * 24)))
+                            }
+                        });
+                    }
                 }
             } catch (_) { }
 
@@ -1231,7 +1262,7 @@ export const resetPassword = async (req, res, next) => {
         if (user.passwordHistory && user.passwordHistory.length > 0) {
             const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
             const changesLast24h = user.passwordHistory.filter(h => new Date(h.changedAt) >= twentyFourHoursAgo).length;
-            
+
             if (changesLast24h >= 3) {
                 return next(errorHandler(429, "You have reached the daily limit for password changes. Please try again after 24 hours."));
             }
@@ -1291,7 +1322,7 @@ export const resetPassword = async (req, res, next) => {
 
         // Check if new password is different from current password
         const isSameAsCurrent = await bcryptjs.compare(newPassword, user.password);
-        
+
         // Check password history
         let isSameAsHistory = false;
         if (user.passwordHistory && user.passwordHistory.length > 0) {
@@ -1322,15 +1353,15 @@ export const resetPassword = async (req, res, next) => {
                 { upsert: true, new: true, setDefaultsOnInsert: true }
             );
 
-            const errorMessage = isSameAsCurrent 
-                ? "Your new password cannot be the same as your current password." 
+            const errorMessage = isSameAsCurrent
+                ? "Your new password cannot be the same as your current password."
                 : "This password has been used by you previously. Please choose a different one.";
             return next(errorHandler(400, errorMessage));
         }
 
         // Update history - add current password to history before overriding it
         if (!user.passwordHistory) user.passwordHistory = [];
-        user.passwordHistory.push({ 
+        user.passwordHistory.push({
             hashedPassword: user.password,
             changedAt: new Date(),
             ip: ipAddress,
