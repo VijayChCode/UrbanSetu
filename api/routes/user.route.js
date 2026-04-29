@@ -138,6 +138,12 @@ router.post("/google", validateRecaptcha({ required: false }), async (req, res, 
     if (forceCreate) {
       const existingSoftban = await DeletedAccount.findOne({ email: emailLower });
       if (existingSoftban && !existingSoftban.purgedAt) {
+        // Fetch revocation details before expiring them to use in the email
+        const activeRevocationRecord = await AccountRevocation.findOne({
+          email: emailLower,
+          isUsed: false
+        });
+
         existingSoftban.purgedAt = new Date();
         existingSoftban.purgedBy = 'google_signup_replacement';
         await existingSoftban.save();
@@ -150,7 +156,7 @@ router.post("/google", validateRecaptcha({ required: false }), async (req, res, 
         // Notify user of permanent purge
         try {
           const { sendPermanentPurgeEmail } = await import('../utils/emailService.js');
-          await sendPermanentPurgeEmail(emailLower, activeRevocation?.username || name, new Date());
+          await sendPermanentPurgeEmail(emailLower, activeRevocationRecord?.username || name, new Date());
         } catch (e) {
           console.error("Failed to send purge email:", e);
         }

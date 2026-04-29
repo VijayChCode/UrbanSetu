@@ -150,6 +150,12 @@ export const SignUp = async (req, res, next) => {
 
             // If forceCreate is set, purge the old deleted account and expire all revocation tokens
             if (req.body.forceCreate && !existingSoftban.purgedAt) {
+                // Fetch revocation details before expiring them to use in the email
+                const activeRevocation = await AccountRevocation.findOne({
+                    email: emailLower,
+                    isUsed: false
+                });
+
                 existingSoftban.purgedAt = new Date();
                 existingSoftban.purgedBy = 'signup_replacement';
                 await existingSoftban.save();
@@ -161,7 +167,7 @@ export const SignUp = async (req, res, next) => {
 
                 // Send permanent purge notification email
                 try {
-                    await sendPermanentPurgeEmail(emailLower, activeRevocation.username, new Date());
+                    await sendPermanentPurgeEmail(emailLower, activeRevocation?.username || 'User', new Date());
                 } catch (emailError) {
                     console.error(`❌ Failed to send permanent purge email:`, emailError);
                 }
