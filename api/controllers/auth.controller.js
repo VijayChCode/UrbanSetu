@@ -17,7 +17,7 @@ import {
     logSessionAction,
     revokeSessionFromDB
 } from "../utils/sessionManager.js";
-import { sendNewLoginEmail, sendSuspiciousLoginEmail, sendAccountLockoutEmail, sendAccountLockedEmail, sendAccountUnlockedEmail } from "../utils/emailService.js";
+import { sendNewLoginEmail, sendSuspiciousLoginEmail, sendAccountLockoutEmail, sendAccountLockedEmail, sendAccountUnlockedEmail, sendPermanentPurgeEmail } from "../utils/emailService.js";
 
 import OtpTracking from "../models/otpTracking.model.js";
 import DeletedAccount from "../models/deletedAccount.model.js";
@@ -126,8 +126,16 @@ export const SignUp = async (req, res, next) => {
                 });
 
                 if (activeRevocation) {
+                    // Generate a temporary token for data export
+                    const conflictToken = jwt.sign(
+                        { email: emailLower, conflictId: activeRevocation._id, purpose: 'conflict_resolution' },
+                        process.env.JWT_SECRET,
+                        { expiresIn: '1h' }
+                    );
+
                     return res.status(409).json({
                         deletedAccountFound: true,
+                        conflictToken,
                         deletedAccountData: {
                             username: activeRevocation.username,
                             email: activeRevocation.email,
@@ -150,6 +158,13 @@ export const SignUp = async (req, res, next) => {
                     { email: emailLower, isUsed: false },
                     { $set: { isUsed: true, usedAt: new Date(), restoredBy: 'expired_by_new_signup' } }
                 );
+
+                // Send permanent purge notification email
+                try {
+                    await sendPermanentPurgeEmail(emailLower, activeRevocation.username, new Date());
+                } catch (emailError) {
+                    console.error(`❌ Failed to send permanent purge email:`, emailError);
+                }
             }
             // Otherwise allow signup to proceed (non-banned)
         }

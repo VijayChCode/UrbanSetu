@@ -2150,6 +2150,99 @@ export const sendAccountDeletionEmail = async (email, userDetails, revocationLin
   }
 };
 
+/**
+ * Sends a confirmation email that a previous deleted account has been permanently purged
+ * to make way for a new signup with the same email.
+ */
+export const sendPermanentPurgeEmail = async (email, username, newSignupDate) => {
+  try {
+    const subject = `Account Permanently Deleted - UrbanSetu`;
+    const formattedDate = new Date(newSignupDate).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Account Permanently Deleted - UrbanSetu</title>
+      </head>
+      <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc;">
+        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-top: 20px;">
+          
+          <!-- Header -->
+          <div style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%); padding: 40px 30px; text-align: center;">
+            <div style="width: 70px; height: 70px; background: rgba(255,255,255,0.1); border-radius: 20px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+              <span style="font-size: 35px;">🗑️</span>
+            </div>
+            <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 700;">Account Data Purged</h1>
+            <p style="color: #cbd5e1; margin: 10px 0 0; font-size: 15px;">Permanent deletion confirmation</p>
+          </div>
+          
+          <!-- Content -->
+          <div style="padding: 40px 30px;">
+            <p style="color: #475569; font-size: 16px; line-height: 1.6; margin-bottom: 25px;">
+              Hello <strong>${username}</strong>,
+            </p>
+            <p style="color: #475569; font-size: 16px; line-height: 1.6; margin-bottom: 25px;">
+              As per your request during the new account creation process, your previous UrbanSetu account and all its associated data have been <strong>permanently deleted</strong>.
+            </p>
+            
+            <div style="background-color: #f1f5f9; padding: 25px; border-radius: 12px; margin-bottom: 30px;">
+              <h3 style="color: #0f172a; margin: 0 0 15px; font-size: 17px; font-weight: 600;">Deletion Summary</h3>
+              <ul style="color: #475569; margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.8;">
+                <li><strong>Account Email:</strong> ${email}</li>
+                <li><strong>Purge Date:</strong> ${formattedDate}</li>
+                <li><strong>Action:</strong> Permanent data removal</li>
+                <li><strong>Reason:</strong> New account creation conflict resolution</li>
+              </ul>
+            </div>
+            
+            <div style="background-color: #f0fdf4; border: 1px solid #dcfce7; padding: 20px; border-radius: 12px; margin-bottom: 25px;">
+              <h3 style="color: #166534; margin: 0 0 10px; font-size: 16px; display: flex; align-items: center;">
+                <span style="margin-right: 8px;">✨</span> New Journey Started
+              </h3>
+              <p style="color: #166534; margin: 0; font-size: 14px; line-height: 1.5;">
+                Your new account has been successfully initialized. You can now sign in using your new credentials and start fresh with UrbanSetu.
+              </p>
+            </div>
+            
+            <p style="color: #64748b; font-size: 14px; line-height: 1.6; margin-bottom: 30px; font-style: italic;">
+              Note: This action is irreversible. All listings, appointments, and personal preferences from the old account are no longer accessible.
+            </p>
+            
+            <!-- Footer -->
+            <div style="text-align: center; border-top: 1px solid #e2e8f0; padding-top: 30px;">
+              <p style="color: #94a3b8; font-size: 12px; margin: 0;">
+                © ${new Date().getFullYear()} UrbanSetu. All rights reserved.
+              </p>
+              <p style="color: #94a3b8; font-size: 11px; margin: 5px 0 0;">
+                This is an automated notification.
+              </p>
+            </div>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    return await sendEmailWithRetry({
+      to: email,
+      subject: subject,
+      html: html
+    });
+  } catch (error) {
+    console.error('Error sending permanent purge email:', error);
+    return createErrorResponse(error, 'permanent_purge_email');
+  }
+};
+
 // Send Move-In Checklist Approved Email
 export const sendMoveInChecklistApprovedEmail = async (tenantEmail, landlordEmail, tenantName, landlordName, propertyAddress, checklistId, contractId) => {
   const clientBaseUrl = process.env.CLIENT_URL || 'https://urbansetu.vercel.app';

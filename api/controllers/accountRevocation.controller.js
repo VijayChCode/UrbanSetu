@@ -1,10 +1,73 @@
 import crypto from 'crypto';
 import bcryptjs from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import AccountRevocation from '../models/accountRevocation.model.js';
 import DeletedAccount from '../models/deletedAccount.model.js';
 import User from '../models/user.model.js';
-import { sendAccountDeletionEmail, sendAccountActivationEmail } from '../utils/emailService.js';
+import DataExport from '../models/dataExport.model.js';
+import { sendAccountDeletionEmail, sendAccountActivationEmail, sendDataExportEmail } from '../utils/emailService.js';
 import { errorHandler } from '../utils/error.js';
+import { gatherExportData } from "../utils/dataExportHelper.js";
+
+export const exportDeletedData = async (req, res, next) => {
+  try {
+    const { email, conflictToken, selectedModules } = req.body;
+
+    if (!email || !conflictToken) {
+      return next(errorHandler(400, "Email and conflict token are required"));
+    }
+
+    // Verify conflict token
+    let decoded;
+    try {
+      decoded = jwt.verify(conflictToken, process.env.JWT_SECRET);
+    } catch (err) {
+      return next(errorHandler(401, "Invalid or expired conflict token"));
+    }
+
+    if (decoded.email !== email || decoded.purpose !== 'conflict_resolution') {
+      return next(errorHandler(401, "Unauthorized token for this email"));
+    }
+
+    const activeRevocation = await AccountRevocation.findOne({
+      email,
+      isUsed: false,
+      expiresAt: { $gt: new Date() }
+    });
+
+    if (!activeRevocation) {
+      return next(errorHandler(404, "No active deleted account found for this email"));
+    }
+
+    // Use the originalData to reconstruct a temporary user object for the helper
+    const tempUser = {
+      _id: activeRevocation.accountId,
+      ...activeRevocation.originalData
+    };
+
+    const userData = await gatherExportData(tempUser, selectedModules || []);
+
+    // Convert to JSON string
+    const dataStr = JSON.stringify(userData, null, 2);
+
+    // Create data export entry
+    const exportToken = crypto.randomBytes(32).toString('hex');
+    await DataExport.create({
+      userId: activeRevocation.accountId,
+      token: exportToken,
+      data: dataStr,
+      username: activeRevocation.username,
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+    });
+
+    const downloadLink = `${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}/api/user/download-export/${exportToken}`;
+    await sendDataExportEmail(email, activeRevocation.username, downloadLink);
+
+    res.status(200).json({ success: true, message: "Export email sent successfully" });
+  } catch (error) {
+    next(error);
+  }
+};
 
 // Create revocation token for deleted account
 export const createRevocationToken = async (req, res, next) => {

@@ -223,6 +223,8 @@ export default function Settings() {
   const [selectedExportModules, setSelectedExportModules] = useState([]);
 
   // Account deletion states
+  const [showBackupPromptModal, setShowBackupPromptModal] = useState(false);
+  const [pendingDeletionFromBackup, setPendingDeletionFromBackup] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
   const [deleteError, setDeleteError] = useState("");
@@ -449,7 +451,7 @@ export default function Settings() {
       setShowAdminModal(true);
       return;
     }
-    setShowPasswordModal(true);
+    setShowBackupPromptModal(true);
   };
 
   const handleConfirmDelete = async () => {
@@ -1137,6 +1139,17 @@ export default function Settings() {
     setExportPasswordAttempts(0);
   };
 
+  const handleBackupPromptAccept = () => {
+    setShowBackupPromptModal(false);
+    setPendingDeletionFromBackup(true);
+    handleExportDataClick();
+  };
+
+  const handleBackupPromptDecline = () => {
+    setShowBackupPromptModal(false);
+    setShowPasswordModal(true);
+  };
+
   const handleVerifyExportPassword = async () => {
     setExportPasswordError("");
     if (!exportPassword) {
@@ -1204,6 +1217,13 @@ export default function Settings() {
         return;
       }
       toast.success(t('messages.export_success'));
+      
+      // If we were doing this as part of account deletion, proceed to deletion
+      if (pendingDeletionFromBackup) {
+        setPendingDeletionFromBackup(false);
+        // Add a small delay for better UX
+        setTimeout(() => setShowPasswordModal(true), 1500);
+      }
     } catch (error) {
       toast.error(t('messages.export_failed'));
     } finally {
@@ -1863,6 +1883,44 @@ export default function Settings() {
         </div>
       )}
 
+      {/* Backup Prompt Modal */}
+      {showBackupPromptModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-[fadeIn_0.3s_ease-out]">
+          <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full animate-[scaleIn_0.3s_ease-out]`}>
+            <div className="p-6 text-center">
+              <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                <FaDatabase className="w-10 h-10 text-blue-600 dark:text-blue-400 animate-float" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-3">Backup Your Data?</h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-8 leading-relaxed">
+                Before you proceed with account deletion, would you like to download a complete backup of your listings, appointments, and personal data?
+              </p>
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={handleBackupPromptAccept}
+                  className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 group"
+                >
+                  <FaFileDownload className="group-hover:animate-bounce" />
+                  Yes, Export My Data First
+                </button>
+                <button
+                  onClick={handleBackupPromptDecline}
+                  className="w-full py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-xl font-semibold transition-all"
+                >
+                  No, Skip and Delete Account
+                </button>
+                <button
+                  onClick={() => setShowBackupPromptModal(false)}
+                  className="w-full py-2 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Delete Account Modal */}
       {showPasswordModal && (
         <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-[fadeIn_0.3s_ease-out]">
@@ -2230,7 +2288,13 @@ export default function Settings() {
 
             <div className="p-6 pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-end gap-3">
               <button
-                onClick={() => setShowExportSelectionModal(false)}
+                onClick={() => {
+                  setShowExportSelectionModal(false);
+                  if (pendingDeletionFromBackup) {
+                    setPendingDeletionFromBackup(false);
+                    setShowPasswordModal(true);
+                  }
+                }}
                 className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
               >
                 Cancel

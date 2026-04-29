@@ -23,6 +23,9 @@ export default function AccountConflictResolution() {
   const [creatingFresh, setCreatingFresh] = useState(false);
   const [error, setError] = useState('');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showBackupPrompt, setShowBackupPrompt] = useState(false);
+  const [exportingData, setExportingData] = useState(false);
+  const [exportSuccess, setExportSuccess] = useState(false);
   const [success, setSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [showLoader, setShowLoader] = useState(false);
@@ -134,6 +137,51 @@ export default function AccountConflictResolution() {
 
   // Option 2: Create fresh account (with confirmation)
   const handleCreateFresh = () => {
+    setShowBackupPrompt(true);
+  };
+
+  const handleBackupAccept = async () => {
+    if (!conflictData || !conflictData.conflictToken) return;
+    setExportingData(true);
+    setError('');
+
+    try {
+      const res = await authenticatedFetch(`${API_BASE_URL}/api/account-revocation/export-deleted-data`, {
+        method: 'POST',
+        body: JSON.stringify({
+          email: conflictData.signupFormData.email,
+          conflictToken: conflictData.conflictToken,
+          selectedModules: ['listings', 'appointments', 'reviews', 'payments', 'wishlist', 'watchlist', 'gamification']
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setExportSuccess(true);
+        setTimeout(() => {
+          setShowBackupPrompt(false);
+          setShowConfirmModal(true);
+        }, 2000);
+      } else {
+        setError(data.message || 'Failed to trigger data backup. You can still proceed with fresh start.');
+        setTimeout(() => {
+          setShowBackupPrompt(false);
+          setShowConfirmModal(true);
+        }, 3000);
+      }
+    } catch {
+      setError('Connection error during backup. Proceeding to confirmation.');
+      setTimeout(() => {
+        setShowBackupPrompt(false);
+        setShowConfirmModal(true);
+      }, 2000);
+    } finally {
+      setExportingData(false);
+    }
+  };
+
+  const handleBackupDecline = () => {
+    setShowBackupPrompt(false);
     setShowConfirmModal(true);
   };
 
@@ -376,6 +424,69 @@ export default function AccountConflictResolution() {
           </div>
         )}
       </div>
+
+      {/* Backup Prompt Modal */}
+      {showBackupPrompt && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[70] p-4 animate-in fade-in duration-300">
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="p-8 text-center">
+              <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center mx-auto mb-6 rotate-3 hover:rotate-0 transition-transform duration-300">
+                <Mail className="w-10 h-10 text-blue-600 dark:text-blue-400" />
+              </div>
+              
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">Backup Previous Data?</h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-8 leading-relaxed">
+                Before you permanently delete your previous account, would you like us to email you a complete backup of your listings and data?
+              </p>
+
+              {error && (
+                <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 rounded-2xl text-red-600 dark:text-red-400 text-sm flex items-start gap-3">
+                  <XCircle className="w-5 h-5 shrink-0 mt-0.5" />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              {exportSuccess ? (
+                <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-900/30 rounded-2xl text-green-600 dark:text-green-400 text-sm flex items-center justify-center gap-3 animate-bounce">
+                  <CheckCircle2 className="w-5 h-5" />
+                  <span className="font-semibold">Backup Email Sent!</span>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  <button
+                    onClick={handleBackupAccept}
+                    disabled={exportingData}
+                    className="w-full py-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-70 text-white rounded-2xl font-bold transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center gap-3 group active:scale-95"
+                  >
+                    {exportingData ? (
+                      <UrbanSetuSpinner size="sm" isBright={true} />
+                    ) : (
+                      <Mail className="w-5 h-5 group-hover:animate-bounce" />
+                    )}
+                    {exportingData ? 'Preparing Backup...' : 'Yes, Email My Data'}
+                  </button>
+                  
+                  <button
+                    onClick={handleBackupDecline}
+                    disabled={exportingData}
+                    className="w-full py-4 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 text-gray-700 dark:text-gray-200 rounded-2xl font-semibold transition-all active:scale-95"
+                  >
+                    No, Proceed to Fresh Start
+                  </button>
+                  
+                  <button
+                    onClick={() => setShowBackupPrompt(false)}
+                    disabled={exportingData}
+                    className="text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-400 transition-colors mt-2"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Confirmation Modal */}
       {showConfirmModal && (

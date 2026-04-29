@@ -423,7 +423,8 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
             referredBy,
             referralCode: (!referredBy && referralCodeInput) ? referralCodeInput : undefined
           },
-          deletedAccountData: data.deletedAccountData
+          deletedAccountData: data.deletedAccountData,
+          conflictToken: data.conflictToken
         }));
         setLoading(false);
         setAuthInProgress(null);
