@@ -226,9 +226,12 @@ export default function AccountConflictResolution() {
 
       const data = await res.json();
 
-      if (data.success === false && res.status !== 201 && res.status !== 200) {
+      if (res.status !== 201 && res.status !== 200) {
         setError(data.message || 'Failed to create account. Please try again.');
         setCreatingFresh(false);
+        // Reset recaptcha on error so user can try again
+        recaptchaRef.current?.reset();
+        setRecaptchaToken(null);
         return;
       }
 
@@ -262,8 +265,22 @@ export default function AccountConflictResolution() {
 
   if (!conflictData) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <UrbanSetuSpinner size="xl" />
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
+        <div className="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-xl max-w-md w-full text-center border border-gray-100 dark:border-gray-700">
+            <div className="w-16 h-16 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                <AlertTriangle className="w-8 h-8 text-red-500" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Session Expired</h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-8">
+                We couldn't find your signup information. Please go back to the signup page and try again.
+            </p>
+            <button 
+                onClick={() => navigate('/sign-up')}
+                className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold transition-all active:scale-95"
+            >
+                Back to Sign Up
+            </button>
+        </div>
       </div>
     );
   }

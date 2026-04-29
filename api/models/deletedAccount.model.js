@@ -21,7 +21,7 @@ const deletedAccountSchema = new mongoose.Schema({
   },
   // Purge metadata (if later permanently deleted)
   purgedAt: { type: Date, default: null },
-  purgedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null }
+  purgedBy: { type: mongoose.Schema.Types.Mixed, default: null } // ObjectId of admin or string like 'signup_replacement'
 }, { timestamps: true });
 
 const DeletedAccount = mongoose.model('DeletedAccount', deletedAccountSchema);
