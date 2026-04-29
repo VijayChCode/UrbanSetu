@@ -13,9 +13,8 @@ import ChatHistory from "../models/chatHistory.model.js";
 import CallHistory from "../models/callHistory.model.js";
 import ForumPost from "../models/forumPost.model.js";
 import Blog from "../models/blog.model.js";
-import SavedRoute from "../models/savedRoute.model.js";
+import Route from "../models/Route.js";
 import CalculationHistory from "../models/calculationHistory.model.js";
-import ClientError from "../models/clientError.model.js";
 
 /**
  * Helper to gather all user data for export.
@@ -44,11 +43,10 @@ export const gatherExportData = async (user, modulesToFetch) => {
         rentalRatings: () => RentalRating.find({ targetUserId: user._id }).lean(),
         calls: () => CallHistory.find({ $or: [{ callerId: user._id }, { receiverId: user._id }] }).lean(),
         community: () => ForumPost.find({ userId: user._id }).lean(),
-        routes: () => SavedRoute.find({ userId: user._id }).lean(),
+        routes: () => Route.find({ userId: user._id }).lean(),
         investments: () => CalculationHistory.find({ userId: user._id }).lean(),
         blogComments: () => Blog.find({ 'comments.userId': user._id }, { 'comments.$': 1, title: 1 }).lean(),
-        referrals: () => User.countDocuments({ referredBy: user._id }),
-        clientErrors: () => ClientError.find({}).sort({ timestamp: -1 }).limit(1000).lean()
+        referrals: () => User.countDocuments({ referredBy: user._id })
     };
 
     // Phase 1: Fetch all data in parallel
@@ -87,7 +85,6 @@ export const gatherExportData = async (user, modulesToFetch) => {
     const calculationHistoryItems = results.investments || [];
     const blogCommentsAgg = results.blogComments || [];
     const referralCount = typeof results.referrals === 'number' ? results.referrals : 0;
-    const clientErrors = results.clientErrors || [];
 
     // Phase 2: Dependent data - Reviews Received
     let reviewsReceived = [];
@@ -329,13 +326,6 @@ export const gatherExportData = async (user, modulesToFetch) => {
             result: calc.result,
             createdAt: calc.createdAt
         }));
-    }
-
-    if (modulesToFetch.includes('clientErrors') && (user.role === 'admin' || user.role === 'rootadmin')) {
-        userData.clientErrorsSummary = {
-            totalErrors: clientErrors.length,
-            errors: clientErrors.slice(0, 1000)
-        };
     }
 
     userData.exportDate = new Date().toISOString();
