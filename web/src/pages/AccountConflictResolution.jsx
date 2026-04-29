@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle2, XCircle, Clock, User, Shield, AlertTriangle, ArrowRight, RefreshCw, Mail, Calendar, HelpCircle, Sparkles, UserPlus, CheckCircle } from 'lucide-react';
 import { useDispatch } from 'react-redux';
@@ -166,9 +166,9 @@ export default function AccountConflictResolution() {
       } else {
         setError(data.message || 'Failed to trigger data backup.');
         if (res.status === 429) {
-            // Rate limit hit - show success-like state so they can proceed, but with a warning
-            setExportSuccess(true);
-            toast.warning(data.message || 'A backup was recently sent. You can request again in 24 hours.');
+          // Rate limit hit - show success-like state so they can proceed, but with a warning
+          setExportSuccess(true);
+          toast.warning(data.message || 'A backup was recently sent. You can request again in 24 hours.');
         }
       }
     } catch (err) {
@@ -202,21 +202,21 @@ export default function AccountConflictResolution() {
       }
 
       const isGoogleAuth = ['google', 'google_one_tap'].includes(conflictData.signupFormData.authMethod);
-      const apiUrl = isGoogleAuth 
+      const apiUrl = isGoogleAuth
         ? `${API_BASE_URL}/api/auth/google`
         : `${API_BASE_URL}/api/auth/signup`;
 
       const requestBody = isGoogleAuth
         ? {
-            ...conflictData.signupFormData,
-            forceCreate: true,
-            recaptchaToken,
-          }
+          ...conflictData.signupFormData,
+          forceCreate: true,
+          recaptchaToken,
+        }
         : {
-            ...conflictData.signupFormData,
-            forceCreate: true,
-            recaptchaToken,
-          };
+          ...conflictData.signupFormData,
+          forceCreate: true,
+          recaptchaToken,
+        };
 
       // Call appropriate auth route with forceCreate flag
       const res = await authenticatedFetch(apiUrl, {
@@ -463,7 +463,7 @@ export default function AccountConflictResolution() {
               <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center mx-auto mb-6 rotate-3 hover:rotate-0 transition-transform duration-300">
                 <Mail className="w-10 h-10 text-blue-600 dark:text-blue-400" />
               </div>
-              
+
               <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">Backup Previous Data?</h3>
               <p className="text-gray-600 dark:text-gray-400 mb-8 leading-relaxed">
                 Before you permanently delete your previous account, would you like us to email you a complete backup of your listings and data?
@@ -476,7 +476,7 @@ export default function AccountConflictResolution() {
                 </div>
               )}
 
-               {exportSuccess ? (
+              {exportSuccess ? (
                 <div className="text-center py-4 animate-fade-in">
                   <div className="w-16 h-16 bg-green-50 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
                     <CheckCircle className="w-8 h-8 text-green-500" />
@@ -507,7 +507,7 @@ export default function AccountConflictResolution() {
                     )}
                     {exportingData ? 'Preparing Backup...' : 'Yes, Email My Data'}
                   </button>
-                  
+
                   <button
                     onClick={handleBackupDecline}
                     disabled={exportingData}
@@ -515,7 +515,7 @@ export default function AccountConflictResolution() {
                   >
                     No, Proceed to Fresh Start
                   </button>
-                  
+
                   <button
                     onClick={() => setShowBackupPrompt(false)}
                     disabled={exportingData}
