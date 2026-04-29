@@ -176,6 +176,11 @@ export const SignUp = async (req, res, next) => {
             }
             // Otherwise allow signup to proceed (non-banned)
         }
+        // Validate username length (minimum 5 characters)
+        if (!username || username.trim().length < 5) {
+            return next(errorHandler(400, "Username must be at least 5 characters long."));
+        }
+
         // Check if email already exists
         const existingEmail = await User.findOne({ email: emailLower });
         if (existingEmail) {

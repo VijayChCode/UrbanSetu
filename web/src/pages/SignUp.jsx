@@ -248,7 +248,7 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
     });
 
     // Clear field-specific errors when user starts typing
-    if (id === "email" || id === "mobileNumber") {
+    if (id === "email" || id === "mobileNumber" || id === "username") {
       setFieldErrors(prev => ({
         ...prev,
         [id]: ""
@@ -384,8 +384,14 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
     setAuthInProgress('form');
     setError("");
     setSuccess("");
-    setFieldErrors({ email: "", mobileNumber: "" });
+    setFieldErrors({ email: "", mobileNumber: "", username: "" });
     setRecaptchaError("");
+
+    if (!formData.username || formData.username.trim().length < 5) {
+      setFieldErrors(prev => ({ ...prev, username: "Username must be at least 5 characters long." }));
+      setLoading(false);
+      return;
+    }
 
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords are not matching");
@@ -438,6 +444,11 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
           setFieldErrors(prev => ({
             ...prev,
             email: data.message
+          }));
+        } else if (data.message.toLowerCase().includes("username")) {
+          setFieldErrors(prev => ({
+            ...prev,
+            username: data.message
           }));
         } else if (data.message.includes("mobile number already exists")) {
           setFieldErrors(prev => ({
@@ -666,10 +677,12 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                         id="username"
                         type="text"
                         placeholder="Enter your full name"
+                        value={formData.username}
                         onChange={handleChange}
                         disabled={authInProgress === 'google'}
                         startIcon={<User className="w-5 h-5 text-gray-400" />}
-                        inputClassName={`transition-all duration-200 focus:ring-2 focus:ring-green-500/20 ${authInProgress === 'google' ? 'bg-gray-100 cursor-not-allowed' : ''} hover:border-green-500`}
+                        errorText={fieldErrors.username}
+                        inputClassName={`transition-all duration-200 focus:ring-2 focus:ring-green-500/20 ${fieldErrors.username ? 'border-red-500' : ''} ${authInProgress === 'google' ? 'bg-gray-100 cursor-not-allowed' : ''} hover:border-green-500`}
                         required
                       />
                     </div>
