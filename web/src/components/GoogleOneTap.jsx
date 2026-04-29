@@ -89,6 +89,24 @@ const GoogleOneTap = () => {
 
                 const data = await res.json();
 
+                // Deleted account found in the 30-day grace period — redirect to conflict resolution
+                if (res.status === 409 && data.deletedAccountFound) {
+                    sessionStorage.setItem('signupConflictData', JSON.stringify({
+                        signupFormData: {
+                            name: user.displayName,
+                            email: user.email,
+                            photo: user.photoURL,
+                            referredBy: new URLSearchParams(location.search).get('ref') || localStorage.getItem('urbansetu_ref'),
+                            authMethod: 'google_one_tap'
+                        },
+                        deletedAccountData: data.deletedAccountData,
+                        conflictToken: data.conflictToken
+                    }));
+                    setIsLoading(false);
+                    navigate('/account-conflict');
+                    return;
+                }
+
                 if (data.success === false) {
                     console.error('Backend auth failed:', data.message);
                     setIsLoading(false);

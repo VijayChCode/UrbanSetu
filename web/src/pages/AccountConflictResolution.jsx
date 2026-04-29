@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle2, XCircle, Clock, User, Shield, AlertTriangle, ArrowRight, RefreshCw, Mail, Calendar, HelpCircle, Sparkles, UserPlus } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, User, Shield, AlertTriangle, ArrowRight, RefreshCw, Mail, Calendar, HelpCircle, Sparkles, UserPlus, CheckCircle } from 'lucide-react';
 import { useDispatch } from 'react-redux';
 import { signInSuccess } from '../redux/user/userSlice.js';
 import { usePageTitle } from '../hooks/usePageTitle';
@@ -10,6 +10,7 @@ import { reconnectSocket } from '../utils/socket';
 import ContactSupportWrapper from '../components/ContactSupportWrapper';
 import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 import PremiumLoader from '../components/ui/PremiumLoader';
+import RecaptchaWidget from "../components/RecaptchaWidget";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function AccountConflictResolution() {
@@ -26,6 +27,9 @@ export default function AccountConflictResolution() {
   const [showBackupPrompt, setShowBackupPrompt] = useState(false);
   const [exportingData, setExportingData] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
+  const [recaptchaToken, setRecaptchaToken] = useState(null);
+  const [recaptchaError, setRecaptchaError] = useState("");
+  const recaptchaRef = useRef(null);
   const [success, setSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [showLoader, setShowLoader] = useState(false);
@@ -158,26 +162,25 @@ export default function AccountConflictResolution() {
       const data = await res.json();
       if (res.ok) {
         setExportSuccess(true);
-        setTimeout(() => {
-          setShowBackupPrompt(false);
-          setShowConfirmModal(true);
-        }, 2000);
+        // We now wait for user to click "Proceed" button added in the UI
       } else {
-        setError(data.message || 'Failed to trigger data backup. You can still proceed with fresh start.');
-        setTimeout(() => {
-          setShowBackupPrompt(false);
-          setShowConfirmModal(true);
-        }, 3000);
+        setError(data.message || 'Failed to trigger data backup.');
+        if (res.status === 429) {
+            // Rate limit hit - show success-like state so they can proceed, but with a warning
+            setExportSuccess(true);
+            toast.warning(data.message || 'A backup was recently sent. You can request again in 24 hours.');
+        }
       }
-    } catch {
-      setError('Connection error during backup. Proceeding to confirmation.');
-      setTimeout(() => {
-        setShowBackupPrompt(false);
-        setShowConfirmModal(true);
-      }, 2000);
+    } catch (err) {
+      setError('Connection error during backup. You can still proceed.');
     } finally {
       setExportingData(false);
     }
+  };
+
+  const handleProceedAfterBackup = () => {
+    setShowBackupPrompt(false);
+    setShowConfirmModal(true);
   };
 
   const handleBackupDecline = () => {
@@ -192,18 +195,38 @@ export default function AccountConflictResolution() {
     setError('');
 
     try {
-      // Call signup with forceCreate flag to purge old account + create new
-      const res = await authenticatedFetch(`${API_BASE_URL}/api/auth/signup`, {
+      if (!recaptchaToken) {
+        setError("Please complete the reCAPTCHA verification");
+        setCreatingFresh(false);
+        return;
+      }
+
+      const isGoogleAuth = ['google', 'google_one_tap'].includes(conflictData.signupFormData.authMethod);
+      const apiUrl = isGoogleAuth 
+        ? `${API_BASE_URL}/api/auth/google`
+        : `${API_BASE_URL}/api/auth/signup`;
+
+      const requestBody = isGoogleAuth
+        ? {
+            ...conflictData.signupFormData,
+            forceCreate: true,
+            recaptchaToken,
+          }
+        : {
+            ...conflictData.signupFormData,
+            forceCreate: true,
+            recaptchaToken,
+          };
+
+      // Call appropriate auth route with forceCreate flag
+      const res = await authenticatedFetch(apiUrl, {
         method: 'POST',
-        body: JSON.stringify({
-          ...conflictData.signupFormData,
-          forceCreate: true,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       const data = await res.json();
 
-      if (data.success === false && res.status !== 201) {
+      if (data.success === false && res.status !== 201 && res.status !== 200) {
         setError(data.message || 'Failed to create account. Please try again.');
         setCreatingFresh(false);
         return;
@@ -214,15 +237,22 @@ export default function AccountConflictResolution() {
       setLoaderMode('signup');
 
       // For admin accounts that need approval
-      if (conflictData.signupFormData.role === 'admin' || conflictData.signupFormData.role === 'rootadmin') {
+      if (conflictData.signupFormData.role === 'admin' || conflictData.signupFormData.role === 'rootadmin' || data.requiresApproval) {
         sessionStorage.removeItem('signupConflictData');
         setSuccessMessage('Admin account created! Please wait for approval.');
         setTimeout(() => navigate('/sign-in', { replace: true }), 3000);
         return;
       }
 
+      // Handle successful login
       setTimeout(() => {
-        autoLogin(conflictData.signupFormData.email, conflictData.signupFormData.password);
+        if (isGoogleAuth && data.token) {
+          // For Google, we already have the token in the response
+          setPendingLoginData(data);
+          setShowLoader(true);
+        } else {
+          autoLogin(conflictData.signupFormData.email, conflictData.signupFormData.password);
+        }
       }, 1500);
     } catch {
       setError('Something went wrong. Please try again.');
@@ -446,10 +476,22 @@ export default function AccountConflictResolution() {
                 </div>
               )}
 
-              {exportSuccess ? (
-                <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-900/30 rounded-2xl text-green-600 dark:text-green-400 text-sm flex items-center justify-center gap-3 animate-bounce">
-                  <CheckCircle2 className="w-5 h-5" />
-                  <span className="font-semibold">Backup Email Sent!</span>
+               {exportSuccess ? (
+                <div className="text-center py-4 animate-fade-in">
+                  <div className="w-16 h-16 bg-green-50 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <CheckCircle className="w-8 h-8 text-green-500" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Backup Email Sent!</h3>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-6">
+                    We've sent your backup data to {deletedAccountData.email}.
+                  </p>
+                  <button
+                    onClick={handleProceedAfterBackup}
+                    className="w-full py-4 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-bold transition-all shadow-lg shadow-green-500/25 flex items-center justify-center gap-3 active:scale-95"
+                  >
+                    Proceed to Confirm Account
+                    <ArrowRight className="w-5 h-5" />
+                  </button>
                 </div>
               ) : (
                 <div className="flex flex-col gap-3">
@@ -500,11 +542,26 @@ export default function AccountConflictResolution() {
               <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
                 Confirm New Account
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-6">
                 By continuing, your previous account associated with{' '}
                 <span className="font-semibold text-gray-900 dark:text-white">{deletedAccountData.email}</span>{' '}
                 will be <span className="font-semibold text-red-600 dark:text-red-400">permanently deleted</span> and cannot be recovered.
               </p>
+
+              <div className="flex justify-center mb-6">
+                <RecaptchaWidget
+                  onVerify={(token) => {
+                    setRecaptchaToken(token);
+                    setRecaptchaError("");
+                  }}
+                  onExpire={() => setRecaptchaToken(null)}
+                  disabled={creatingFresh}
+                />
+              </div>
+
+              {recaptchaError && (
+                <p className="text-xs text-red-500 mb-4">{recaptchaError}</p>
+              )}
             </div>
 
             <div className="bg-red-50 dark:bg-red-900/10 rounded-xl p-4 mb-6 border border-red-100 dark:border-red-800/30">

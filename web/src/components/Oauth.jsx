@@ -59,11 +59,25 @@ export default function Oauth({ pageType, disabled = false, onAuthStart = null, 
                 })
             });
 
-            if (!res.ok) {
-                throw new Error(`HTTP error! status: ${res.status}`);
-            }
-
             const data = await res.json();
+
+            // Deleted account found in the 30-day grace period — redirect to conflict resolution
+            if (res.status === 409 && data.deletedAccountFound) {
+                sessionStorage.setItem('signupConflictData', JSON.stringify({
+                    signupFormData: {
+                        name: result.user.displayName,
+                        email: result.user.email,
+                        photo: result.user.photoURL,
+                        referredBy: isObjectId ? refParam : undefined,
+                        referralCode: (!isObjectId && refParam) ? refParam : undefined,
+                        authMethod: 'google'
+                    },
+                    deletedAccountData: data.deletedAccountData,
+                    conflictToken: data.conflictToken
+                }));
+                navigate('/account-conflict');
+                return;
+            }
 
             if (data.success === false) {
                 throw new Error(data.message || 'Authentication failed');

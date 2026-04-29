@@ -6,8 +6,11 @@ import { dataExportRateLimit } from '../middleware/rateLimiter.js'
 import bcryptjs from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import User from '../models/user.model.js'
+import DeletedAccount from '../models/deletedAccount.model.js'
+import AccountRevocation from '../models/accountRevocation.model.js'
 import { errorHandler } from '../utils/error.js'
 import { calculateAndUpdateTrustScore } from '../utils/blockchainTrust.js'
+import { validateRecaptcha } from '../middleware/recaptcha.js';
 
 const router = express.Router()
 
@@ -97,10 +100,64 @@ router.post("/signin", async (req, res, next) => {
   }
 });
 
-router.post("/google", async (req, res, next) => {
-  const { email, name, googlePhotoUrl } = req.body;
+router.post("/google", validateRecaptcha({ required: false }), async (req, res, next) => {
+  const { email, name, googlePhotoUrl, forceCreate } = req.body;
+  const emailLower = email.toLowerCase();
+
   try {
-    const user = await User.findOne({ email });
+    // Check if account is in grace period (deleted but not purged)
+    const activeRevocation = await AccountRevocation.findOne({
+      email: emailLower,
+      isUsed: false,
+      expiresAt: { $gt: new Date() }
+    });
+
+    if (activeRevocation && !forceCreate) {
+      // Generate a temporary token for data export
+      const conflictToken = jwt.sign(
+        { email: emailLower, conflictId: activeRevocation._id, purpose: 'conflict_resolution' },
+        process.env.JWT_TOKEN,
+        { expiresIn: '1h' }
+      );
+
+      return res.status(409).json({
+        deletedAccountFound: true,
+        conflictToken,
+        deletedAccountData: {
+          username: activeRevocation.username,
+          email: activeRevocation.email,
+          role: activeRevocation.role,
+          deletedAt: activeRevocation.deletedAt,
+          expiresAt: activeRevocation.expiresAt,
+          daysRemaining: Math.max(0, Math.ceil((new Date(activeRevocation.expiresAt) - new Date()) / (1000 * 60 * 60 * 24)))
+        }
+      });
+    }
+
+    // If forceCreate is set, purge the old deleted account
+    if (forceCreate) {
+      const existingSoftban = await DeletedAccount.findOne({ email: emailLower });
+      if (existingSoftban && !existingSoftban.purgedAt) {
+        existingSoftban.purgedAt = new Date();
+        existingSoftban.purgedBy = 'google_signup_replacement';
+        await existingSoftban.save();
+
+        await AccountRevocation.updateMany(
+          { email: emailLower, isUsed: false },
+          { $set: { isUsed: true, usedAt: new Date(), restoredBy: 'expired_by_new_signup' } }
+        );
+
+        // Notify user of permanent purge
+        try {
+          const { sendPermanentPurgeEmail } = await import('../utils/emailService.js');
+          await sendPermanentPurgeEmail(emailLower, activeRevocation?.username || name, new Date());
+        } catch (e) {
+          console.error("Failed to send purge email:", e);
+        }
+      }
+    }
+
+    const user = await User.findOne({ email: emailLower });
     if (user) {
       const token = jwt.sign(
         { id: user._id, isAdmin: user.isAdmin },
@@ -214,7 +271,7 @@ router.patch("/toggle-subscription/:id", verifyToken, toggleUserSubscription);
 router.post("/link-wallet", verifyToken, async (req, res, next) => {
   try {
     const { walletAddress, signature, message } = req.body;
-    
+
     if (!walletAddress || !signature || !message) {
       return next(errorHandler(400, "Wallet address, signature and message are required"));
     }

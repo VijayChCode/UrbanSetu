@@ -57,6 +57,54 @@ export const createRateLimiter = (windowMs, maxAttempts, message) => {
 };
 
 // Global rate limiter for all requests
+// Rate limiter for data export during conflict resolution (email-based, 24 hours cooldown)
+export const deletedAccountExportRateLimit = async (req, res, next) => {
+    try {
+        const { email } = req.body;
+        if (!email) return next();
+
+        const now = new Date();
+        const windowMs = 24 * 60 * 60 * 1000;
+        
+        // Check DB for existing export for this email (since user is not logged in)
+        const existingExport = await DataExport.findOne({ 
+            userId: req.body.email, // We use email as ID for public exports in DataExport model if needed, or search by username/email
+            expiresAt: { $gt: now }
+        });
+
+        // Better: Search for exports created within the last 24h for this email
+        const recentExport = await DataExport.findOne({
+            userId: { $ne: null }, // Just in case
+            $or: [
+                { userId: req.body.email },
+                { username: req.body.email } // In some cases email might be stored in userId or username field for guest exports
+            ],
+            createdAt: { $gt: new Date(Date.now() - windowMs) }
+        });
+
+        if (recentExport) {
+            const expiresAt = new Date(recentExport.createdAt.getTime() + windowMs);
+            const timeRemainingMs = expiresAt - now;
+            const timeRemainingHours = Math.floor(timeRemainingMs / (60 * 60 * 1000));
+            const timeRemainingMinutes = Math.ceil(timeRemainingMs / (60 * 1000));
+
+            let timeMessage;
+            if (timeRemainingHours >= 1) {
+                timeMessage = timeRemainingHours === 1 ? '1 hour' : `${timeRemainingHours} hours`;
+            } else {
+                timeMessage = timeRemainingMinutes <= 1 ? 'a few moments' : `${timeRemainingMinutes} minutes`;
+            }
+
+            return next(errorHandler(429, `A backup was recently sent to this email. You can request another one in ${timeMessage}.`));
+        }
+
+        next();
+    } catch (error) {
+        console.error('Deleted account export rate limiter error:', error);
+        next();
+    }
+};
+
 export const globalRateLimiter = createRateLimiter(
     15 * 60 * 1000, // 15 minutes window
     300, // max 300 requests per 15 minutes
