@@ -1219,6 +1219,7 @@ export const exportData = async (req, res, next) => {
             token: exportToken,
             data: dataStr,
             username: user.username,
+            email: user.email.toLowerCase(),
             expiresAt: expiresAt
         });
 

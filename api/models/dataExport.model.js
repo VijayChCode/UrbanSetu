@@ -20,6 +20,11 @@ const dataExportSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    email: {
+        type: String,
+        required: true,
+        index: true
+    },
     expiresAt: {
         type: Date,
         required: true

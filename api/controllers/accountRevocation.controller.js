@@ -57,6 +57,7 @@ export const exportDeletedData = async (req, res, next) => {
       token: exportToken,
       data: dataStr,
       username: activeRevocation.username,
+      email: email.toLowerCase(),
       expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
     });
 

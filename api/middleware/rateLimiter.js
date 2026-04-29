@@ -66,19 +66,9 @@ export const deletedAccountExportRateLimit = async (req, res, next) => {
         const now = new Date();
         const windowMs = 24 * 60 * 60 * 1000;
         
-        // Check DB for existing export for this email (since user is not logged in)
-        const existingExport = await DataExport.findOne({ 
-            userId: req.body.email, // We use email as ID for public exports in DataExport model if needed, or search by username/email
-            expiresAt: { $gt: now }
-        });
-
-        // Better: Search for exports created within the last 24h for this email
+        // Check DB for existing export for this email within the last 24h
         const recentExport = await DataExport.findOne({
-            userId: { $ne: null }, // Just in case
-            $or: [
-                { userId: req.body.email },
-                { username: req.body.email } // In some cases email might be stored in userId or username field for guest exports
-            ],
+            email: email.toLowerCase(),
             createdAt: { $gt: new Date(Date.now() - windowMs) }
         });
 
