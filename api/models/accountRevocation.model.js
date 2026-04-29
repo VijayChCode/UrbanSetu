@@ -51,7 +51,7 @@ const accountRevocationSchema = new mongoose.Schema({
   restoredBy: { 
     type: String, 
     default: null,
-    enum: ['user_link', 'admin_manual', null]
+    enum: ['user_link', 'admin_manual', 'signup_restore', 'expired_by_new_signup', 'signup_restore_cleanup', null]
   },
   originalData: { 
     type: mongoose.Schema.Types.Mixed, 

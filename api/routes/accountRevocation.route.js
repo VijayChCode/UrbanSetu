@@ -3,7 +3,8 @@ import {
   createRevocationToken, 
   verifyRevocationToken, 
   restoreAccount, 
-  getRevocationStatus 
+  getRevocationStatus,
+  restoreForSignup 
 } from '../controllers/accountRevocation.controller.js';
 
 const router = express.Router();
@@ -11,6 +12,7 @@ const router = express.Router();
 // Public routes (no authentication required)
 router.get('/verify-revocation-token/:token', verifyRevocationToken);
 router.post('/restore-account', restoreAccount);
+router.post('/restore-for-signup', restoreForSignup);
 
 // Admin routes (authentication required)
 router.post('/create-token', createRevocationToken);

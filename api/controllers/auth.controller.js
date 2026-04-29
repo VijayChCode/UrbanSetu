@@ -21,6 +21,7 @@ import { sendNewLoginEmail, sendSuspiciousLoginEmail, sendAccountLockoutEmail, s
 
 import OtpTracking from "../models/otpTracking.model.js";
 import DeletedAccount from "../models/deletedAccount.model.js";
+import AccountRevocation from "../models/accountRevocation.model.js";
 import { validateEmail } from "../utils/emailValidation.js";
 import { getDeviceInfo, getLocationFromIP } from "../utils/sessionManager.js";
 import SentinelSecurityService from "../services/SentinelSecurityService.js";
@@ -112,6 +113,43 @@ export const SignUp = async (req, res, next) => {
             }
             if (policy.category === 'requested_by_user') {
                 return next(errorHandler(403, "This account was deleted at your request. You may sign up again anytime."));
+            }
+
+            // If the deleted account is still in the 30-day grace period and has an active
+            // revocation token, show the mediator page to let the user choose between
+            // restoring their previous account or starting fresh.
+            if (!existingSoftban.purgedAt && !req.body.forceCreate) {
+                const activeRevocation = await AccountRevocation.findOne({
+                    email: emailLower,
+                    isUsed: false,
+                    expiresAt: { $gt: new Date() }
+                });
+
+                if (activeRevocation) {
+                    return res.status(409).json({
+                        deletedAccountFound: true,
+                        deletedAccountData: {
+                            username: activeRevocation.username,
+                            email: activeRevocation.email,
+                            role: activeRevocation.role,
+                            deletedAt: activeRevocation.deletedAt,
+                            expiresAt: activeRevocation.expiresAt,
+                            daysRemaining: Math.max(0, Math.ceil((new Date(activeRevocation.expiresAt) - new Date()) / (1000 * 60 * 60 * 24)))
+                        }
+                    });
+                }
+            }
+
+            // If forceCreate is set, purge the old deleted account and expire all revocation tokens
+            if (req.body.forceCreate && !existingSoftban.purgedAt) {
+                existingSoftban.purgedAt = new Date();
+                existingSoftban.purgedBy = 'signup_replacement';
+                await existingSoftban.save();
+
+                await AccountRevocation.updateMany(
+                    { email: emailLower, isUsed: false },
+                    { $set: { isUsed: true, usedAt: new Date(), restoredBy: 'expired_by_new_signup' } }
+                );
             }
             // Otherwise allow signup to proceed (non-banned)
         }

@@ -412,6 +412,25 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
         }),
       });
       const data = await res.json();
+
+      // Deleted account found in the 30-day grace period — redirect to conflict resolution
+      if (res.status === 409 && data.deletedAccountFound) {
+        sessionStorage.setItem('signupConflictData', JSON.stringify({
+          signupFormData: {
+            ...formData,
+            emailVerified: true,
+            recaptchaToken,
+            referredBy,
+            referralCode: (!referredBy && referralCodeInput) ? referralCodeInput : undefined
+          },
+          deletedAccountData: data.deletedAccountData
+        }));
+        setLoading(false);
+        setAuthInProgress(null);
+        navigate('/account-conflict');
+        return;
+      }
+
       if (data.success === false) {
         // Handle field-specific errors
         if (data.message.includes("email already exists")) {

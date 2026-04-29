@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import bcryptjs from 'bcryptjs';
 import AccountRevocation from '../models/accountRevocation.model.js';
 import DeletedAccount from '../models/deletedAccount.model.js';
 import User from '../models/user.model.js';
@@ -216,5 +217,101 @@ export const getRevocationStatus = async (req, res, next) => {
   } catch (error) {
     console.error('Error getting revocation status:', error);
     next(errorHandler(500, 'Failed to get revocation status'));
+  }
+};
+
+// Restore account during signup flow (by email, not token)
+// Updates the restored account's password so the user can sign in with the new one they entered
+export const restoreForSignup = async (req, res, next) => {
+  try {
+    const { email, newPassword } = req.body;
+
+    if (!email || !newPassword) {
+      return next(errorHandler(400, 'Email and password are required'));
+    }
+
+    const emailLower = email.toLowerCase();
+
+    // Find active revocation token by email
+    const revocationRecord = await AccountRevocation.findOne({
+      email: emailLower,
+      isUsed: false,
+      expiresAt: { $gt: new Date() }
+    });
+
+    if (!revocationRecord) {
+      return next(errorHandler(404, 'No restorable account found for this email'));
+    }
+
+    // Check if the account has been purged
+    const deletedAccount = await DeletedAccount.findOne({
+      accountId: revocationRecord.accountId,
+      purgedAt: { $exists: true, $ne: null }
+    });
+
+    if (deletedAccount) {
+      return res.status(410).json({
+        success: false,
+        message: 'Account has been permanently deleted and cannot be restored.'
+      });
+    }
+
+    // Check if an account with this email already exists
+    const existingUser = await User.findOne({ email: emailLower });
+    if (existingUser) {
+      return next(errorHandler(400, 'Account with this email already exists'));
+    }
+
+    // Restore user with original data and original _id to preserve all relationships
+    const restoredUser = new User({
+      _id: revocationRecord.accountId,
+      ...revocationRecord.originalData
+    });
+
+    // Update password to the new one the user entered in the signup form
+    restoredUser.password = bcryptjs.hashSync(newPassword, 10);
+
+    await restoredUser.save();
+
+    // Mark revocation token as used
+    revocationRecord.isUsed = true;
+    revocationRecord.usedAt = new Date();
+    revocationRecord.restoredAt = new Date();
+    revocationRecord.restoredBy = 'signup_restore';
+    await revocationRecord.save();
+
+    // Expire any other active revocation tokens for this email
+    await AccountRevocation.updateMany(
+      { email: emailLower, isUsed: false, _id: { $ne: revocationRecord._id } },
+      { $set: { isUsed: true, usedAt: new Date(), restoredBy: 'signup_restore_cleanup' } }
+    );
+
+    // Remove the deleted account record
+    await DeletedAccount.findOneAndDelete({ accountId: revocationRecord.accountId });
+
+    // Send activation email
+    try {
+      await sendAccountActivationEmail(revocationRecord.email, {
+        username: revocationRecord.username,
+        role: revocationRecord.role
+      });
+      console.log(`✅ Account restored via signup flow - activation email sent to: ${revocationRecord.email}`);
+    } catch (emailError) {
+      console.error(`❌ Failed to send activation email to ${revocationRecord.email}:`, emailError);
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Account restored successfully',
+      user: {
+        id: restoredUser._id,
+        username: restoredUser.username,
+        email: restoredUser.email,
+        role: restoredUser.role
+      }
+    });
+  } catch (error) {
+    console.error('Error in restoreForSignup:', error);
+    next(errorHandler(500, 'Failed to restore account'));
   }
 };

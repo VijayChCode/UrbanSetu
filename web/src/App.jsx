@@ -24,6 +24,7 @@ import SitemapNav from "./components/SitemapNav";
 import UserChangePassword from './pages/UserChangePassword';
 import AdminChangePassword from './pages/AdminChangePassword';
 import AccountRevocation from './pages/AccountRevocation';
+import AccountConflictResolution from './pages/AccountConflictResolution';
 import RestoreProperty from './pages/RestoreProperty';
 import NotFound from './pages/NotFound';
 import Terms from "./pages/Terms";
@@ -893,6 +894,7 @@ function AppRoutes({ bootstrapped }) {
             <Route path="/community/post/:postId" element={currentUser ? <Navigate to="/user/community" /> : <Community />} />
             <Route path="/community-guidelines" element={currentUser ? <NotFound /> : <CommunityGuidelines />} />
             <Route path="/restore-account/:token" element={<AccountRevocation />} />
+            <Route path="/account-conflict" element={<AccountConflictResolution />} />
             <Route path="/restore-property" element={<RestoreProperty />} />
 
             <Route path="/unsubscribe" element={<Unsubscribe />} />
