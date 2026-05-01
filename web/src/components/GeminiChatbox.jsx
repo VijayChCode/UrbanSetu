@@ -2390,7 +2390,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         }
     };
 
-    const acceptTerms = () => {
+    const acceptTerms = (e) => {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
         const TERMS_VERSION = 'v1.0';
         if (currentUser) {
             localStorage.setItem(`gemini_consent_${currentUser._id}`, JSON.stringify({
@@ -11336,11 +11340,12 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
             {/* Mandatory Consent Modal */}
             {
-                showConsentModal && (
-                    <div className="fixed inset-0 z-[65] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn cursor-default">
+                showConsentModal && createPortal(
+                    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn cursor-default">
                         <div className={`w-full max-w-md rounded-3xl shadow-2xl p-8 text-center transform transition-all animate-bounceIn ${isDarkMode ? 'bg-gray-900 text-gray-100 border border-gray-700' : 'bg-white text-gray-900'}`}>
                             <button
-                                onClick={() => {
+                                onClick={(e) => {
+                                    e.stopPropagation();
                                     setShowConsentModal(false);
                                     if (onModalClose) onModalClose();
                                     else setIsOpen(false);
@@ -11367,7 +11372,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     Accept & Continue
                                 </button>
                                 <button
-                                    onClick={() => setShowTermsModal(true)}
+                                    onClick={(e) => { e.stopPropagation(); setShowTermsModal(true); }}
                                     className={`w-full py-3 rounded-xl font-medium transition-colors ${isDarkMode ? 'hover:bg-gray-800 text-gray-300' : 'hover:bg-gray-100 text-gray-600'}`}
                                 >
                                     Read Full Terms
@@ -11379,7 +11384,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             </p>
                         </div>
                     </div>
-                )
+                    , document.body)
             }
 
             {
