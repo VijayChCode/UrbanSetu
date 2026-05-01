@@ -36,7 +36,7 @@ class SentinelSecurityService {
             // 1. Check for contact info / bypass keywords in description
             const desc = listing.description.toLowerCase();
             const foundKeywords = this.BYPASS_ATTEMPT_KEYWORDS.filter(k => desc.includes(k));
-            
+
             if (foundKeywords.length > 0) {
                 fraudScore += 0.4 * foundKeywords.length;
                 reasons.push(`Escrow bypass keywords detected: ${foundKeywords.join(', ')}`);
@@ -62,15 +62,15 @@ class SentinelSecurityService {
             }
 
             const isFraudulent = fraudScore >= 0.8;
-            
+
             if (isFraudulent) {
                 await this.flagListing(listingId, 'SENTINEL_AI_CONTENT', reasons.join(' | '));
             }
 
-            return { 
-                safe: !isFraudulent, 
-                score: Math.min(fraudScore, 1.0), 
-                reasons 
+            return {
+                safe: !isFraudulent,
+                score: Math.min(fraudScore, 1.0),
+                reasons
             };
         } catch (error) {
             console.error("Sentinel Listing Scan Error:", error);
@@ -104,7 +104,7 @@ class SentinelSecurityService {
             if (!user) return { safe: true };
 
             // Check for device jumping (frequent logins from different devices in short time)
-            const recentSessions = user.activeSessions.filter(s => 
+            const recentSessions = user.activeSessions.filter(s =>
                 new Date(s.loginTime) > new Date(Date.now() - 60 * 60 * 1000)
             );
 
@@ -132,7 +132,7 @@ class SentinelSecurityService {
             // Increment policy violations
             user.policyViolations = (user.policyViolations || 0) + 1;
             user.lastViolationAt = new Date();
-            
+
             // Apply trust decay
             if (user.blockchain && user.blockchain.trustScore) {
                 user.blockchain.trustScore = Math.max(0, user.blockchain.trustScore - penaltyPoints);
@@ -169,7 +169,7 @@ class SentinelSecurityService {
 
             // Recalculate (to ensure standard metrics are still applied but with penalty)
             await calculateAndUpdateTrustScore(userId);
-            
+
             return true;
         } catch (error) {
             console.error("Sentinel Penalty Error:", error);
@@ -203,7 +203,7 @@ class SentinelSecurityService {
             }
 
             logSecurityEvent('sentinel_ai_listing_blocked', { listingId, type, reason });
-            
+
             // Penalize owner
             if (listing.userRef) {
                 await this.penalizeTrustScore(listing.userRef, 20, 'FRAUDULENT_LISTING_ATTEMPT', reason);
