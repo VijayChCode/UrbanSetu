@@ -13,6 +13,8 @@ import { Search as SearchIcon, IndianRupee, MapPin, Grid, List, RefreshCw, XCirc
 
 import { authenticatedFetch } from "../utils/auth";
 import UrbanSetuSpinner from "../components/UrbanSetuSpinner";
+import duckImg from "../assets/duck-go-final.gif";
+import duckDarkImg from "../assets/duck-go.gif";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -58,6 +60,15 @@ export default function AdminExplore() {
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
   const [locationFilter, setLocationFilter] = useState({ state: "", district: "", city: "" });
   const [isAiMode, setIsAiMode] = useState(false); // Track if we are showing AI results
+  const [isDark, setIsDark] = useState(document.documentElement.classList.contains('dark'));
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search);
@@ -584,12 +595,12 @@ export default function AdminExplore() {
               {loading ? (
                 Array(6).fill(0).map((_, i) => <ListingSkeletonGrid key={i} />)
               ) : listings.length === 0 ? (
-                <div className="col-span-full py-32 text-center bg-white dark:bg-gray-800 rounded-3xl border-2 border-dashed border-gray-200 dark:border-gray-700">
-                  <div className="opacity-20 flex flex-col items-center">
-                    <XCircle size={80} className="mb-4" />
-                    <h4 className="text-2xl font-black uppercase">Anomaly Detected: No Results</h4>
-                    <p className="font-bold tracking-widest text-xs mt-2 uppercase">Adjust parameters to re-scan</p>
-                    <button onClick={clearAllFilters} className="mt-8 px-8 py-3 bg-indigo-600 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg">Wipe Filters</button>
+                <div className="col-span-full py-20 text-center bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 animate-fade-in-up transition-colors duration-300">
+                  <div className="flex flex-col items-center">
+                    <img src={isDark ? duckDarkImg : duckImg} alt="No listings found" className="w-[280px] h-[280px] object-contain mx-auto opacity-90 hover:scale-105 transition-transform duration-500" />
+                    <h4 className="text-2xl font-black uppercase text-gray-800 dark:text-gray-200 mt-4">Anomaly Detected: No Results</h4>
+                    <p className="font-bold tracking-widest text-xs mt-2 uppercase text-gray-500 dark:text-gray-400">Adjust parameters to re-scan</p>
+                    <button onClick={clearAllFilters} className="mt-8 px-10 py-4 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-indigo-600/30 hover:bg-indigo-700 transition-all active:scale-95">Wipe Filters</button>
                   </div>
                 </div>
               ) : (

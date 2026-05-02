@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { Search, Home, ArrowLeft } from "lucide-react";
 import duckImg from "../assets/duck-go-final.gif";
+import duckDarkImg from "../assets/duck-go.gif";
 import SEO from "../components/SEO";
 import { usePageTitle } from '../hooks/usePageTitle';
 import ListingItem from "../components/ListingItem";
@@ -21,6 +22,15 @@ export default function NotFound() {
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [visibleRecsCount, setVisibleRecsCount] = useState(4);
+  const [isDark, setIsDark] = useState(document.documentElement.classList.contains('dark'));
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const fetchListings = async () => {
@@ -120,7 +130,7 @@ export default function NotFound() {
           <div className="relative w-48 h-48 mx-auto mb-8">
             <div className="absolute inset-0 bg-gradient-to-tr from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 rounded-full animate-pulse-soft"></div>
             <img
-              src={duckImg}
+              src={isDark ? duckDarkImg : duckImg}
               alt="Lost Explorer"
               className="w-full h-full object-contain relative z-10 drop-shadow-xl hover:scale-105 transition-transform duration-300"
             />

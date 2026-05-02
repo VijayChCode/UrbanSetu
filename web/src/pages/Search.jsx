@@ -5,6 +5,7 @@ import GeminiAIWrapper from "../components/GeminiAIWrapper";
 import LocationSelector from "../components/LocationSelector";
 import data from "../data/countries+states+cities.json";
 import duckImg from "../assets/duck-go-final.gif";
+import duckDarkImg from "../assets/duck-go.gif";
 import ContactSupportWrapper from '../components/ContactSupportWrapper';
 import SearchSuggestions from '../components/SearchSuggestions';
 import FormField from "../components/ui/FormField";
@@ -51,6 +52,15 @@ export default function Search() {
     const [isFiltersOpen, setIsFiltersOpen] = useState(false); // Mobile filter toggle
     const [useAI, setUseAI] = useState(false); // AI Search Toggle
     const [aiPrompt, setAiPrompt] = useState(""); // AI Search Input State
+    const [isDark, setIsDark] = useState(document.documentElement.classList.contains('dark'));
+
+    useEffect(() => {
+        const observer = new MutationObserver(() => {
+            setIsDark(document.documentElement.classList.contains('dark'));
+        });
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+        return () => observer.disconnect();
+    }, []);
 
     useEffect(() => {
         const urlParams = new URLSearchParams(location.search);
@@ -1129,7 +1139,7 @@ export default function Search() {
 
                     {!loading && !error && listings.length === 0 && (
                         <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-12 text-center animate-fade-in-up transition-colors duration-300">
-                            <img src={duckImg} alt="No listings found" className="w-[280px] h-[280px] object-contain mx-auto opacity-90 hover:scale-105 transition-transform duration-500" />
+                            <img src={isDark ? duckDarkImg : duckImg} alt="No listings found" className="w-[280px] h-[280px] object-contain mx-auto opacity-90 hover:scale-105 transition-transform duration-500" />
                             <h3 className="text-2xl font-bold text-gray-700 dark:text-gray-200 mb-2">No properties matched your search</h3>
                             <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">
                                 We couldn't find exactly what you're looking for. Try adjusting your filters or use our Smart Search.
