@@ -73,10 +73,22 @@ const userSlice = createSlice({
         signoutUserFailure: (state, action) => {
             state.error = action.payload
             state.loading = false;
+            state.isSigningOut = true; // Keep true to show error in modal
+        },
+        resetSignoutState: (state) => {
             state.isSigningOut = false;
+            state.error = null;
+            state.loading = false;
         }
     }
 });
 
-export const { signInStart, signInSuccess, signInFailure, verifyAuthStart, verifyAuthSuccess, verifyAuthFailure, updateUserStart, updateUserSuccess, updateUserFailure, deleteUserStart, deleteUserSuccess, deleteUserFailure, signoutUserStart, signoutUserSuccess, signoutUserFailure } = userSlice.actions;
+export const { 
+    signInStart, signInSuccess, signInFailure, 
+    verifyAuthStart, verifyAuthSuccess, verifyAuthFailure, 
+    updateUserStart, updateUserSuccess, updateUserFailure, 
+    deleteUserStart, deleteUserSuccess, deleteUserFailure, 
+    signoutUserStart, signoutUserSuccess, signoutUserFailure,
+    resetSignoutState
+} = userSlice.actions;
 export default userSlice.reducer;

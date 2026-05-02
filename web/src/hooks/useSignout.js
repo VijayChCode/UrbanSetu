@@ -21,8 +21,16 @@ export const useSignout = () => {
       delay = 50,
       onSuccess,
       onError,
-      preventEvent = false
+      preventEvent = false,
+      forceLocal = false
     } = options;
+
+    if (forceLocal) {
+      await clearLocalAuthState();
+      dispatch(signoutUserSuccess());
+      navigate(navigateTo, { replace: true });
+      return;
+    }
 
     try {
       dispatch(signoutUserStart());
@@ -36,29 +44,7 @@ export const useSignout = () => {
       }
 
       dispatch(signoutUserSuccess(data));
-
-      // Clear persisted state
-      await persistor.purge();
-
-      // Clear all tokens and cookies
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('sessionId');
-      localStorage.removeItem('refreshToken');
-      localStorage.setItem('logout', Date.now()); // Notify other tabs
-      document.cookie = 'access_token=; Max-Age=0; path=/; SameSite=None; Secure';
-      document.cookie = 'refresh_token=; Max-Age=0; path=/; SameSite=None; Secure';
-      document.cookie = 'session_id=; Max-Age=0; path=/; SameSite=None; Secure';
-
-      // Reset user settings (theme, fontSize, etc.) to defaults
-      resetSettingsToDefaults();
-
-      // Disconnect socket completely before reconnecting
-      if (socket && socket.connected) {
-        socket.disconnect();
-      }
-
-      // Reconnect socket with cleared auth
-      reconnectSocket();
+      await clearLocalAuthState();
 
       if (showToast) {
         toast.info("You have been signed out.");
@@ -70,38 +56,34 @@ export const useSignout = () => {
       navigate(navigateTo, { replace: true });
 
     } catch (error) {
-      dispatch(signoutUserFailure(error.message));
-
-      // Clear all authentication state even on error
-      dispatch(signoutUserSuccess());
-      await persistor.purge();
-
-      // Clear all tokens and cookies
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('sessionId');
-      localStorage.removeItem('refreshToken');
-      document.cookie = 'access_token=; Max-Age=0; path=/; SameSite=None; Secure';
-      document.cookie = 'refresh_token=; Max-Age=0; path=/; SameSite=None; Secure';
-      document.cookie = 'session_id=; Max-Age=0; path=/; SameSite=None; Secure';
-
-      // Reset user settings (theme, fontSize, etc.) to defaults
-      resetSettingsToDefaults();
-
-      // Disconnect socket completely before reconnecting
-      if (socket && socket.connected) {
-        socket.disconnect();
-      }
-
-      // Reconnect socket with cleared auth
-      reconnectSocket();
-
-      if (showToast) {
-        toast.info("You have been signed out.");
-      }
-
+      dispatch(signoutUserFailure(error.message || "Network error. Please try again."));
       if (onError) onError(error.message);
-      navigate(navigateTo, { replace: true });
     }
+  };
+
+  const clearLocalAuthState = async () => {
+    // Clear persisted state
+    await persistor.purge();
+
+    // Clear all tokens and cookies
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('sessionId');
+    localStorage.removeItem('refreshToken');
+    localStorage.setItem('logout', Date.now()); // Notify other tabs
+    document.cookie = 'access_token=; Max-Age=0; path=/; SameSite=None; Secure';
+    document.cookie = 'refresh_token=; Max-Age=0; path=/; SameSite=None; Secure';
+    document.cookie = 'session_id=; Max-Age=0; path=/; SameSite=None; Secure';
+
+    // Reset user settings (theme, fontSize, etc.) to defaults
+    resetSettingsToDefaults();
+
+    // Disconnect socket completely before reconnecting
+    if (socket && socket.connected) {
+      socket.disconnect();
+    }
+
+    // Reconnect socket with cleared auth
+    reconnectSocket();
   };
 
   return { signout };
