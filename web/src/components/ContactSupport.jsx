@@ -158,6 +158,41 @@ export default function ContactSupport({ forceModalOpen = false, onModalClose = 
     }
   }, [activeTab, checkIfAtBottom]);
 
+  // Filter messages logic
+  const filteredMessages = React.useMemo(() => {
+    return userMessages.filter(msg => {
+      // Status filter
+      if (statusFilter !== 'all' && msg.status !== statusFilter) return false;
+
+      // Date range filter
+      const msgDate = new Date(msg.createdAt);
+      if (startDate && msgDate < new Date(startDate)) return false;
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        if (msgDate > end) return false;
+      }
+
+      // Search filter
+      if (searchTerm.trim()) {
+        const lowerSearch = searchTerm.toLowerCase();
+        const searchableFields = [
+          msg.subject || '',
+          msg.message || '',
+          msg.ticketId || '',
+          msg.adminReply || ''
+        ];
+        return searchableFields.some(field => field.toLowerCase().includes(lowerSearch));
+      }
+
+      return true;
+    }).sort((a, b) => {
+      const dateA = new Date(a.createdAt);
+      const dateB = new Date(b.createdAt);
+      return dateSort === 'desc' ? dateB - dateA : dateA - dateB;
+    });
+  }, [userMessages, statusFilter, startDate, endDate, searchTerm, dateSort]);
+
   // Re-check position when messages change
   useEffect(() => {
     if (activeTab === 'messages') {
@@ -398,38 +433,6 @@ export default function ContactSupport({ forceModalOpen = false, onModalClose = 
     }
   };
 
-  // Filter messages logic
-  const filteredMessages = userMessages.filter(msg => {
-    // Status filter
-    if (statusFilter !== 'all' && msg.status !== statusFilter) return false;
-
-    // Date range filter
-    const msgDate = new Date(msg.createdAt);
-    if (startDate && msgDate < new Date(startDate)) return false;
-    if (endDate) {
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
-      if (msgDate > end) return false;
-    }
-
-    // Search filter
-    if (searchTerm.trim()) {
-      const lowerSearch = searchTerm.toLowerCase();
-      const searchableFields = [
-        msg.subject || '',
-        msg.message || '',
-        msg.ticketId || '',
-        msg.adminReply || ''
-      ];
-      return searchableFields.some(field => field.toLowerCase().includes(lowerSearch));
-    }
-
-    return true;
-  }).sort((a, b) => {
-    const dateA = new Date(a.createdAt);
-    const dateB = new Date(b.createdAt);
-    return dateSort === 'desc' ? dateB - dateA : dateA - dateB;
-  });
 
   return (
     <>
