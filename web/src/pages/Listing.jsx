@@ -40,6 +40,7 @@ import { authenticatedFetch } from "../utils/auth";
 import { trackInteraction, getLiveRecommendations } from "../utils/sentinelLiveEngine";
 import AdvancedImage from "../components/AdvancedImage";
 import UrbanSetuSpinner from "../components/UrbanSetuSpinner";
+import VerifiedBadge from '../components/VerifiedBadge';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const UNAVAILABLE_STATUSES = ['reserved', 'under_contract', 'rented', 'sold', 'suspended'];
@@ -2312,13 +2313,12 @@ export default function Listing() {
                 {listing.name}
                 {listing.isVerified && (
                   <>
-                    <button
+                    <div 
                       onClick={() => setShowVerifiedModal(true)}
-                      className="ml-3 px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold flex items-center gap-1 cursor-pointer hover:bg-green-200 transition-colors focus:outline-none"
-                      title="Click to see whatVerified means"
+                      className="ml-2"
                     >
-                      <FaCheckCircle /> Verified Property
-                    </button>
+                      <VerifiedBadge size="md" />
+                    </div>
                     {(currentUser?.role === 'rootadmin' || currentUser?.role === 'admin') && (
                       <button
                         onClick={() => openConfirm('root-unpublish', { message: 'Unpublish this property?' })}

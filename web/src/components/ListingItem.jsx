@@ -11,6 +11,7 @@ import { MapPin, Bath, BedDouble, Tag } from "lucide-react";
 import AdvancedImage from "./AdvancedImage";
 
 import SocialSharePanel from './SocialSharePanel';
+import VerifiedBadge from './VerifiedBadge';
 
 export default function ListingItem({ listing, onDelete, onWishToggle }) {
   const wishlistContext = useWishlist() || {
@@ -197,10 +198,9 @@ export default function ListingItem({ listing, onDelete, onWishToggle }) {
                 {listing.name}
               </p>
               {listing.isVerified && (
-                <span className="px-2 py-0.5 bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-400 rounded-full text-[10px] font-semibold flex items-center gap-1 whitespace-nowrap">
-                  <FaCheckCircle className="text-[10px]" /> Verified
-                </span>
+                <VerifiedBadge size="xs" className="ml-1" />
               )}
+
               {listing.trustRequirements?.minTrustScore > 0 && (
                 <span className="px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-400 rounded-full text-[10px] font-semibold flex items-center gap-1 whitespace-nowrap border border-indigo-200 dark:border-indigo-800 shadow-sm">
                   <FaShieldAlt className="text-[10px] text-indigo-500" /> Trust {listing.trustRequirements.minTrustScore}+
