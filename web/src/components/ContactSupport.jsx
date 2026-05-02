@@ -139,8 +139,14 @@ export default function ContactSupport({ forceModalOpen = false, onModalClose = 
   const checkIfAtBottom = useCallback(() => {
     if (messagesContainerRef.current) {
       const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
-      const atBottom = scrollHeight - scrollTop - clientHeight < 5; // 5px threshold
-      setIsAtBottom(atBottom);
+      // Use a slightly larger threshold (10px) to handle sub-pixel differences and zoom levels
+      const threshold = 10;
+      const atBottom = scrollHeight - scrollTop - clientHeight <= threshold;
+      
+      // Also hide if the content is not even scrollable (less than the container height)
+      const isScrollable = scrollHeight > clientHeight + threshold;
+      
+      setIsAtBottom(atBottom || !isScrollable);
     }
   }, []);
 
