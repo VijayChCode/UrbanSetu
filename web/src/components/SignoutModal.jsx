@@ -14,11 +14,19 @@ export default function SignoutModal() {
     ];
 
     useEffect(() => {
-        const interval = setInterval(() => {
-            setIndex((prev) => (prev + 1) % states.length);
-        }, 1500); // Change text every 1.5 seconds for better readability
-        return () => clearInterval(interval);
-    }, []);
+        let timeoutId;
+        const nextState = () => {
+            setIndex((prev) => {
+                const next = (prev + 1) % states.length;
+                const duration = next === states.length - 1 ? 3000 : 1500;
+                timeoutId = setTimeout(nextState, duration);
+                return next;
+            });
+        };
+
+        timeoutId = setTimeout(nextState, 1500);
+        return () => clearTimeout(timeoutId);
+    }, [states.length]);
 
     const current = states[index];
 
