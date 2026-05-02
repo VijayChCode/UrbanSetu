@@ -1704,6 +1704,14 @@ export default function Settings() {
                 {t('settings.android_security_intelligence')}
               </button>
 
+              <button
+                onClick={() => navigate('/admin/sentinel')}
+                className={`w-full bg-indigo-900 text-white px-6 py-3 rounded-lg hover:bg-indigo-800 transition-all duration-300 transform hover:scale-105 hover:shadow-lg flex items-center justify-center font-semibold group ${animationClasses.slideInUp}`}
+              >
+                <FaShieldAlt className={`w-4 h-4 mr-2 transition-transform duration-300 group-hover:animate-pulse text-indigo-400`} />
+                Sentinel Dashboard
+              </button>
+
 
             </div>
           </SettingSection>

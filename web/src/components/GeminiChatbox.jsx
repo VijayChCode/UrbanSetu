@@ -7126,6 +7126,20 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                             )}
 
                                             {(currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) && (
+                                                <li>
+                                                    <button
+                                                        onClick={() => { navigate('/admin/sentinel'); setIsHeaderMenuOpen(false); }}
+                                                        className={`w-full text-left px-4 py-3 ${isDarkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-100/80'} flex items-center gap-3 transition-all duration-200 hover:scale-[1.02] group`}
+                                                    >
+                                                        <div className={`p-1.5 rounded-lg ${isDarkMode ? 'bg-indigo-900/40' : 'bg-indigo-100'} group-hover:scale-110 transition-transform duration-200`}>
+                                                            <FaShieldAlt size={14} className="text-indigo-600" />
+                                                        </div>
+                                                        <span className="font-medium">Sentinel Dashboard</span>
+                                                    </button>
+                                                </li>
+                                            )}
+
+                                            {(currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) && (
                                                 <li className={`border-t ${isDarkMode ? 'border-gray-600/50' : 'border-gray-200/50'} my-2`}></li>
                                             )}
 
