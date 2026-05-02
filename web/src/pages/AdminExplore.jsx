@@ -597,7 +597,7 @@ export default function AdminExplore() {
               ) : listings.length === 0 ? (
                 <div className="col-span-full py-20 text-center bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 animate-fade-in-up transition-colors duration-300">
                   <div className="flex flex-col items-center">
-                    <img src={isDark ? duckDarkImg : duckImg} alt="No listings found" className="w-[280px] h-[280px] object-contain mx-auto opacity-90 hover:scale-105 transition-transform duration-500" />
+                    <img src={isDark ? duckDarkImg : duckImg} alt="No listings found" className={`w-[280px] h-[280px] object-contain mx-auto opacity-90 hover:scale-105 transition-transform duration-500 ${isDark ? 'mix-blend-screen' : ''}`} />
                     <h4 className="text-2xl font-black uppercase text-gray-800 dark:text-gray-200 mt-4">Anomaly Detected: No Results</h4>
                     <p className="font-bold tracking-widest text-xs mt-2 uppercase text-gray-500 dark:text-gray-400">Adjust parameters to re-scan</p>
                     <button onClick={clearAllFilters} className="mt-8 px-10 py-4 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-indigo-600/30 hover:bg-indigo-700 transition-all active:scale-95">Wipe Filters</button>

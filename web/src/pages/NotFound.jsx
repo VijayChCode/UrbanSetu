@@ -132,7 +132,7 @@ export default function NotFound() {
             <img
               src={isDark ? duckDarkImg : duckImg}
               alt="Lost Explorer"
-              className="w-full h-full object-contain relative z-10 drop-shadow-xl hover:scale-105 transition-transform duration-300"
+              className={`w-full h-full object-contain relative z-10 drop-shadow-xl hover:scale-105 transition-transform duration-300 ${isDark ? 'mix-blend-screen' : ''}`}
             />
           </div>
 
