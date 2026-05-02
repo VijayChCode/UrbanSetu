@@ -55,6 +55,8 @@ const showToast = (message, type = 'info') => {
   }
 };
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+
 const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = null, metadata = {} }) => {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [scale, setScale] = useState(1);
@@ -76,6 +78,11 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
   const [showSocialShare, setShowSocialShare] = useState(false);
   const [showAboutViewer, setShowAboutViewer] = useState(false);
   const [autoScale, setAutoScale] = useState(1);
+
+  // Sharing State
+  const [shareUrl, setShareUrl] = useState(null);
+  const [isGeneratingShare, setIsGeneratingShare] = useState(false);
+  const [cachedShares, setCachedShares] = useState({});
 
   const imageRef = useRef(null);
   const containerRef = useRef(null);
@@ -718,8 +725,51 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
     });
   };
 
-  const handleShare = () => {
+  const handleShare = async () => {
+    const currentUrl = imagesArray[safeIndex] || imagesArray[0];
+    if (!currentUrl) return;
+
+    // Use cached share link if already generated
+    if (cachedShares[currentUrl]) {
+      setShareUrl(cachedShares[currentUrl]);
+      setShowSocialShare(true);
+      return;
+    }
+
+    // Generate a shareable UrbanSetu link (hides the raw image URL)
+    setIsGeneratingShare(true);
     setShowSocialShare(true);
+
+    try {
+      const res = await authenticatedFetch(`${API_BASE_URL}/api/image/share`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageUrl: currentUrl,
+          listingId: listingId,
+          title: 'Property Image'
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        // Build the full shareable URL
+        const baseUrl = window.location.origin;
+        const generatedUrl = `${baseUrl}/i/${data.token}`;
+        setShareUrl(generatedUrl);
+        setCachedShares(prev => ({ ...prev, [currentUrl]: generatedUrl }));
+      } else {
+        // Fallback to raw URL if share creation fails
+        setShareUrl(currentUrl);
+        setCachedShares(prev => ({ ...prev, [currentUrl]: currentUrl }));
+      }
+    } catch (err) {
+      console.warn('Failed to generate share link, using raw URL:', err);
+      setShareUrl(currentUrl);
+      setCachedShares(prev => ({ ...prev, [currentUrl]: currentUrl }));
+    } finally {
+      setIsGeneratingShare(false);
+    }
   };
 
   const handleImageLoad = () => {
@@ -1332,10 +1382,11 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
       {/* Social Share Panel */}
       <SocialSharePanel
         isOpen={showSocialShare}
-        onClose={() => setShowSocialShare(false)}
-        url={currentImageUrl}
+        onClose={() => { setShowSocialShare(false); setShareUrl(null); }}
+        url={shareUrl || ""}
         title="Check out this property image!"
         description="Amazing property image from our listing"
+        isLoading={isGeneratingShare}
       />
 
       {/* About Viewer Modal */}
