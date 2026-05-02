@@ -12,6 +12,7 @@ import AdvancedImage from "./AdvancedImage";
 
 import SocialSharePanel from './SocialSharePanel';
 import VerifiedBadge from './VerifiedBadge';
+import VerifiedModal from './VerifiedModal';
 
 export default function ListingItem({ listing, onDelete, onWishToggle }) {
   const wishlistContext = useWishlist() || {
@@ -25,6 +26,7 @@ export default function ListingItem({ listing, onDelete, onWishToggle }) {
   const [showRentTooltip, setShowRentTooltip] = useState(false);
   const [showWishlistTooltip, setShowWishlistTooltip] = useState(false);
   const [isSharePanelOpen, setIsSharePanelOpen] = useState(false);
+  const [showVerifiedModal, setShowVerifiedModal] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { currentUser } = useSelector((state) => state.user);
@@ -198,7 +200,16 @@ export default function ListingItem({ listing, onDelete, onWishToggle }) {
                 {listing.name}
               </p>
               {listing.isVerified && (
-                <VerifiedBadge size="xs" className="ml-1" />
+                <div 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowVerifiedModal(true);
+                  }}
+                  className="z-30"
+                >
+                  <VerifiedBadge size="xs" className="ml-1" />
+                </div>
               )}
 
               {listing.trustRequirements?.minTrustScore > 0 && (
@@ -327,6 +338,10 @@ export default function ListingItem({ listing, onDelete, onWishToggle }) {
           </div>
         )}
       </div>
+      <VerifiedModal 
+        isOpen={showVerifiedModal} 
+        onClose={() => setShowVerifiedModal(false)} 
+      />
     </div>
   );
 }
