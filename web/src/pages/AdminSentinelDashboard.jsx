@@ -1,8 +1,10 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import ContactSupportWrapper from '../components/ContactSupportWrapper';
+import GeminiAIWrapper from '../components/GeminiAIWrapper';
 import { useSelector } from 'react-redux';
-import { 
-  FaShieldAlt, FaExclamationTriangle, FaCheckCircle, FaTimesCircle, 
-  FaUserShield, FaHistory, FaFilter, FaSearch, FaArrowRight, 
+import {
+  FaShieldAlt, FaExclamationTriangle, FaCheckCircle, FaTimesCircle,
+  FaUserShield, FaHistory, FaFilter, FaSearch, FaArrowRight,
   FaLock, FaUnlock, FaWallet, FaMapMarkerAlt, FaEye, FaRedo
 } from 'react-icons/fa';
 import { formatDistanceToNow } from 'date-fns';
@@ -92,13 +94,13 @@ export default function AdminSentinelDashboard() {
 
   const filteredAlerts = useMemo(() => {
     return alerts.filter(alert => {
-      const matchesSearch = 
+      const matchesSearch =
         alert.reason.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (alert.userId?.username || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
         (alert.listingId?.name || '').toLowerCase().includes(searchQuery.toLowerCase());
-      
+
       const matchesType = filter === 'all' || alert.type === filter;
-      
+
       return matchesSearch && matchesType;
     });
   }, [alerts, searchQuery, filter]);
@@ -144,20 +146,20 @@ export default function AdminSentinelDashboard() {
             </p>
           </div>
           <div className="flex gap-3">
-            <button 
+            <button
               onClick={fetchAlerts}
               className="p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-all text-slate-600 dark:text-slate-300 shadow-sm"
             >
               <FaRedo className={loading ? 'animate-spin' : ''} />
             </button>
             <div className="flex bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-              <button 
+              <button
                 onClick={() => setStatusFilter('pending')}
                 className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${statusFilter === 'pending' ? 'bg-indigo-600 text-white' : 'text-slate-500 dark:text-slate-400'}`}
               >
                 Active
               </button>
-              <button 
+              <button
                 onClick={() => setStatusFilter('resolved')}
                 className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${statusFilter === 'resolved' ? 'bg-indigo-600 text-white' : 'text-slate-500 dark:text-slate-400'}`}
               >
@@ -180,9 +182,9 @@ export default function AdminSentinelDashboard() {
           <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
             <div className="relative w-full md:w-96">
               <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input 
-                type="text" 
-                placeholder="Search alerts, users, or properties..." 
+              <input
+                type="text"
+                placeholder="Search alerts, users, or properties..."
                 className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-indigo-500 dark:text-white"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -205,10 +207,10 @@ export default function AdminSentinelDashboard() {
             </div>
           ) : filteredAlerts.length > 0 ? (
             filteredAlerts.map((alert) => (
-              <AlertItem 
-                key={alert._id} 
-                alert={alert} 
-                onResolve={handleResolve} 
+              <AlertItem
+                key={alert._id}
+                alert={alert}
+                onResolve={handleResolve}
                 actionLoading={actionLoading === alert._id}
                 getSeverityColor={getSeverityColor}
                 getTypeIcon={getTypeIcon}
@@ -225,6 +227,8 @@ export default function AdminSentinelDashboard() {
           )}
         </div>
       </div>
+      <ContactSupportWrapper />
+      <GeminiAIWrapper />
     </div>
   );
 }
@@ -247,13 +251,12 @@ function StatCard({ title, value, icon, color }) {
 
 function FilterChip({ label, active, onClick }) {
   return (
-    <button 
+    <button
       onClick={onClick}
-      className={`px-6 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all ${
-        active 
-          ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' 
+      className={`px-6 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all ${active
+          ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'
           : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-      }`}
+        }`}
     >
       {label}
     </button>
@@ -302,18 +305,18 @@ function AlertItem({ alert, onResolve, actionLoading, getSeverityColor, getTypeI
             </div>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-3 self-end md:self-center">
           {alert.status === 'pending' && (
             <>
-              <button 
+              <button
                 onClick={() => onResolve(alert._id, 'dismissed')}
                 disabled={actionLoading}
                 className="px-6 py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all text-sm disabled:opacity-50"
               >
                 Dismiss
               </button>
-              <button 
+              <button
                 onClick={() => onResolve(alert._id, 'resolved')}
                 disabled={actionLoading}
                 className="px-6 py-3 bg-green-600 text-white font-bold rounded-2xl hover:bg-green-700 transition-all text-sm shadow-lg shadow-green-500/20 flex items-center gap-2 disabled:opacity-50"
