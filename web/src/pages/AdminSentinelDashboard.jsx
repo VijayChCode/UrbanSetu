@@ -93,11 +93,15 @@ export default function AdminSentinelDashboard() {
   };
 
   const filteredAlerts = useMemo(() => {
+    const query = searchQuery.toLowerCase();
     return alerts.filter(alert => {
       const matchesSearch =
-        alert.reason.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (alert.userId?.username || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (alert.listingId?.name || '').toLowerCase().includes(searchQuery.toLowerCase());
+        alert.reason.toLowerCase().includes(query) ||
+        (alert.userId?.username || '').toLowerCase().includes(query) ||
+        (alert.userId?.email || '').toLowerCase().includes(query) ||
+        (alert.listingId?.name || '').toLowerCase().includes(query) ||
+        alert.type.toLowerCase().includes(query) ||
+        alert.severity.toLowerCase().includes(query);
 
       const matchesType = filter === 'all' || alert.type === filter;
 
@@ -195,6 +199,7 @@ export default function AdminSentinelDashboard() {
               <FilterChip label="Fraud" active={filter === 'fraud_listing'} onClick={() => setFilter('fraud_listing')} />
               <FilterChip label="Security" active={filter === 'security_anomaly'} onClick={() => setFilter('security_anomaly')} />
               <FilterChip label="Wallet" active={filter === 'wallet_anomaly'} onClick={() => setFilter('wallet_anomaly')} />
+              <FilterChip label="Policy" active={filter === 'policy_violation'} onClick={() => setFilter('policy_violation')} />
             </div>
           </div>
         </div>
