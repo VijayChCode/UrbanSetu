@@ -158,10 +158,24 @@ export default function ContactSupport({ forceModalOpen = false, onModalClose = 
     }
   }, [activeTab, checkIfAtBottom]);
 
+  // Re-check position when messages change
+  useEffect(() => {
+    if (activeTab === 'messages') {
+      // Small timeout to allow DOM update
+      const timer = setTimeout(checkIfAtBottom, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [filteredMessages, activeTab, checkIfAtBottom]);
+
   // Function to scroll to bottom
   const scrollToBottom = useCallback(() => {
     if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    } else if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTo({
+        top: messagesContainerRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
     }
   }, []);
 
@@ -470,7 +484,7 @@ export default function ContactSupport({ forceModalOpen = false, onModalClose = 
       {/* Enhanced Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-slideUp transition-colors">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative animate-slideUp transition-colors">
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-800 bg-gradient-to-r from-gray-50 dark:from-gray-800/50 to-white dark:to-gray-900 rounded-t-2xl transition-colors">
               <div className="flex items-center gap-3">
@@ -927,6 +941,7 @@ export default function ContactSupport({ forceModalOpen = false, onModalClose = 
                           </div>
                         ))
                       )}
+                      <div ref={messagesEndRef} className="h-0" />
                     </div>
                   </div>
                 )}

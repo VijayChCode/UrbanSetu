@@ -3052,9 +3052,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
             if (rejectedImage) {
                 const audit = auditResults[`chat_${rejectedImage.id}`];
-                toast.error(`🚫 Security Alert: ${audit.classification.reason}`, { 
-                    autoClose: 5000, 
-                    toastId: 'sentinel-rejection' 
+                toast.error(`🚫 Security Alert: ${audit.classification.reason}`, {
+                    autoClose: 5000,
+                    toastId: 'sentinel-rejection'
                 });
                 // Optional: show a suspicious activity bubble in chat? 
                 // For now, just blocking the submission and warning the user.
@@ -5336,14 +5336,14 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
     const handleImageLinkSubmit = async (e) => {
         if (e) e.preventDefault();
-        
+
         if (!imageLinkInput.trim()) {
             toast.error('Please enter a valid image URL');
             return;
         }
 
         const url = imageLinkInput.trim();
-        
+
         // Basic URL validation
         try {
             new URL(url);
@@ -5360,7 +5360,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         }
 
         const tempId = Date.now() + Math.random();
-        
+
         // Add to pending images
         setPendingImages(prev => [...prev, {
             id: tempId,
@@ -8518,10 +8518,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                         {/* Sentinel Quality Badge */}
                                                                         {!isAuditing[`chat_${img.id}`] && auditResults[`chat_${img.id}`] && (
                                                                             <div className="absolute top-1 left-1 flex flex-col gap-0.5 z-10 pointer-events-none">
-                                                                                <div className={`px-1 py-0.5 rounded text-[8px] font-bold text-white shadow-sm flex items-center gap-0.5 ${
-                                                                                    auditResults[`chat_${img.id}`].sentinelScore >= 80 ? 'bg-green-500' :
-                                                                                    auditResults[`chat_${img.id}`].sentinelScore >= 50 ? 'bg-orange-500' : 'bg-red-500'
-                                                                                }`}>
+                                                                                <div className={`px-1 py-0.5 rounded text-[8px] font-bold text-white shadow-sm flex items-center gap-0.5 ${auditResults[`chat_${img.id}`].sentinelScore >= 80 ? 'bg-green-500' :
+                                                                                        auditResults[`chat_${img.id}`].sentinelScore >= 50 ? 'bg-orange-500' : 'bg-red-500'
+                                                                                    }`}>
                                                                                     <FaShieldAlt size={6} />
                                                                                     {auditResults[`chat_${img.id}`].sentinelScore}
                                                                                 </div>
@@ -12087,7 +12086,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                     <FaImage size={32} className="opacity-20" />
                                                     <span className="text-[10px] font-medium uppercase tracking-widest opacity-50">Invalid Image URL</span>
                                                 </div>
-                                                
+
                                                 {/* Hover Overlay for Preview */}
                                                 <div className="absolute inset-0 bg-black/0 group-hover/preview:bg-black/20 transition-all flex items-center justify-center opacity-0 group-hover/preview:opacity-100 pointer-events-none">
                                                     <div className="bg-white/20 backdrop-blur-md p-2 rounded-full border border-white/30 text-white transform translate-y-4 group-hover/preview:translate-y-0 transition-all duration-300">
@@ -12098,7 +12097,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         </div>
                                     </div>
                                 )}
-                                
+
                                 <p className={`mt-2 text-[10px] leading-relaxed italic ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
                                     Tip: Right-click any image on the web and select "Copy image address" to get the direct link.
                                 </p>
