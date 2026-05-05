@@ -929,47 +929,10 @@ export default function Home() {
                 </h3>
                 <Link to={`${linkPrefix}/watchlist`} className="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline">View Watchlist</Link>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {priceDropListings.map((listing, i) => {
-                  const savings = listing.baselinePrice - listing.currentPrice;
-                  const pct = ((savings / listing.baselinePrice) * 100).toFixed(0);
-                  return (
-                    <Link
-                      key={listing._id}
-                      to={`/listing/${listing._id}`}
-                      className="group bg-white dark:bg-gray-800 rounded-xl overflow-hidden border border-green-100 dark:border-green-900/50 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 animate-sentinel-fade-in"
-                      style={{ animationDelay: `${i * 100}ms` }}
-                    >
-                      <div className="relative aspect-[16/10] overflow-hidden">
-                        <img
-                          src={listing.imageUrls?.[0] || '/placeholder.jpg'}
-                          alt={listing.name}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                        />
-                        <div className="absolute top-2 left-2 px-2 py-1 bg-green-500 text-white text-[10px] font-bold rounded-lg flex items-center gap-1 shadow-lg">
-                          <FaArrowDown className="text-[8px]" /> {pct}% OFF
-                        </div>
-                      </div>
-                      <div className="p-3">
-                        <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{listing.name}</p>
-                        <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate flex items-center gap-1 mt-0.5">
-                          <FaMapMarkerAlt className="text-[8px]" /> {listing.city || listing.address}
-                        </p>
-                        <div className="flex items-center gap-2 mt-2">
-                          <span className="text-sm font-bold text-green-600 dark:text-green-400">
-                            ₹{listing.currentPrice?.toLocaleString('en-IN')}
-                          </span>
-                          <span className="text-xs text-gray-400 line-through">
-                            ₹{listing.baselinePrice?.toLocaleString('en-IN')}
-                          </span>
-                        </div>
-                        <p className="text-[10px] text-green-600 dark:text-green-400 font-semibold mt-1">
-                          You save ₹{savings.toLocaleString('en-IN')}
-                        </p>
-                      </div>
-                    </Link>
-                  );
-                })}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {priceDropListings.map((listing) => (
+                  <ListingItem key={listing._id} listing={listing} />
+                ))}
               </div>
             </section>
           )}

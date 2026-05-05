@@ -1,7 +1,9 @@
 import VisitorLog from '../models/visitorLog.model.js';
 import User from '../models/user.model.js';
 import Notification from '../models/notification.model.js';
+import Listing from '../models/listing.model.js';
 import crypto from 'crypto';
+import geoip from 'geoip-lite';
 import { getDeviceInfo, getBrowserInfo, getOSInfo, getDeviceType, getLocationFromIP } from '../utils/sessionManager.js';
 
 // Generate fingerprint for visitor (IP + User-Agent + Source hash)
@@ -825,27 +827,33 @@ export const getMarketingStats = async (req, res, next) => {
 export const getMyLocation = async (req, res, next) => {
   try {
     const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || req.connection.remoteAddress;
-    const location = getLocationFromIP(ip);
+    const locationStr = getLocationFromIP(ip);
 
-    // Also get raw geo data for coordinates
-    const geoip = await import('geoip-lite');
+    // Parse city from the location string (format: "City, Region, Country")
+    const locationParts = locationStr && locationStr !== 'Unknown' && locationStr !== 'Local Development' && locationStr !== 'Private Network'
+      ? locationStr.split(',').map(s => s.trim())
+      : [];
+
+    // Also try geoip-lite directly for more structured data
     const pureIp = String(ip).split(',')[0].trim();
-    const geo = geoip.default.lookup(pureIp);
+    let geo = null;
+    try {
+      geo = geoip.lookup(pureIp);
+    } catch { /* geoip lookup failed silently */ }
+
+    const detectedCity = geo?.city || locationParts[0] || null;
 
     const result = {
-      location, // "City, Region, Country" string
-      city: geo?.city || null,
-      region: geo?.region || null,
-      country: geo?.country || null,
-      ll: geo?.ll || null, // [lat, lng]
+      location: locationStr,
+      city: detectedCity,
+      region: geo?.region || locationParts[1] || null,
+      country: geo?.country || locationParts[2] || null,
+      ll: geo?.ll || null,
       nearbyCities: []
     };
 
-    // Find top cities that have active listings (always runs, doesn't depend on IP resolution)
+    // Find top cities that have active listings (always runs)
     try {
-      const Listing = (await import('../models/listing.model.js')).default;
-
-      // Get distinct cities from listings sorted by listing count
       const nearbyCities = await Listing.aggregate([
         {
           $match: {
