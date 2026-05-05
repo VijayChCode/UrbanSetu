@@ -32,6 +32,22 @@ export const clearSentinelData = (userId) => {
 };
 
 /**
+ * Returns the raw interaction history for a given user.
+ * Useful for "Recently Viewed" and activity summary UI.
+ * @param {string} userId - The current user's ID
+ * @returns {Array} Array of interaction objects sorted by most recent first
+ */
+export const getInteractionHistory = (userId) => {
+    const key = getStorageKey(userId);
+    if (!key) return [];
+    try {
+        return JSON.parse(localStorage.getItem(key) || '[]');
+    } catch {
+        return [];
+    }
+};
+
+/**
  * Tracks a user interaction with a listing (view/click/wishlist/watchlist)
  * Stores essential features for client-side TF processing
  * @param {Object} listing - The listing object

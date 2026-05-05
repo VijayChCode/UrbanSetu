@@ -17,14 +17,14 @@ import {
   FaHome, FaSearch, FaHeart, FaStar, FaMapMarkerAlt, FaPhone, FaEnvelope,
   FaShieldAlt, FaAward, FaUsers, FaChartLine, FaLightbulb, FaRocket, FaGem,
   FaQuoteLeft, FaQuoteRight, FaCheckCircle, FaClock, FaHandshake, FaGlobe,
-  FaMobile, FaDesktop, FaTablet, FaInfoCircle, FaArrowRight, FaRobot
+  FaMobile, FaDesktop, FaTablet, FaInfoCircle, FaArrowRight, FaEye, FaCalendarAlt, FaListAlt, FaBell, FaRobot
 } from "react-icons/fa";
 import SeasonalEffects from "../components/SeasonalEffects";
 import DailyQuote from "../components/DailyQuote";
 import { useSeasonalTheme, useAllSeasonalThemes } from "../hooks/useSeasonalTheme";
 import ThemeDetailModal from "../components/ThemeDetailModal";
 import { authenticatedFetch } from "../utils/auth";
-import { getLiveRecommendations } from "../utils/sentinelLiveEngine";
+import { getLiveRecommendations, getInteractionHistory } from "../utils/sentinelLiveEngine";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -57,6 +57,11 @@ export default function Home() {
   const [hasMoreRecs, setHasMoreRecs] = useState(true);
   const [sentinelCandidates, setSentinelCandidates] = useState([]);
   const [sentinelPreferences, setSentinelPreferences] = useState([]);
+
+  // Dashboard sections state
+  const [recentlyViewed, setRecentlyViewed] = useState([]);
+  const [myListingsCount, setMyListingsCount] = useState(0);
+  const [upcomingAppointments, setUpcomingAppointments] = useState([]);
 
   // Helper to determine if we are in user dashboard context for links
   const isUser = true; // Since this is Home.jsx, it usually implies a logged-in user context or main entry. 
@@ -179,6 +184,50 @@ export default function Home() {
       }
     };
     fetchUserLists();
+  }, [currentUser?._id, currentUser?.role]);
+
+  // Dashboard: Fetch recently viewed, user's listings count, and upcoming appointments
+  useEffect(() => {
+    if (!currentUser?._id || currentUser.role === 'admin' || currentUser.role === 'rootadmin') return;
+
+    // Recently viewed from Sentinel localStorage
+    const history = getInteractionHistory(currentUser._id);
+    const viewedIds = history.filter(h => h.interactionType === 'view').slice(0, 6).map(h => h._id);
+    setRecentlyViewed(viewedIds);
+
+    // Fetch user's own listings count
+    const fetchMyListings = async () => {
+      try {
+        const res = await authenticatedFetch(`${API_BASE_URL}/api/user/listing/${currentUser._id}`);
+        if (res.ok) {
+          const data = await res.json();
+          setMyListingsCount(Array.isArray(data) ? data.length : 0);
+        }
+      } catch (e) { console.error("Dashboard: listings count error", e); }
+    };
+
+    // Fetch upcoming appointments
+    const fetchAppointments = async () => {
+      try {
+        const res = await authenticatedFetch(`${API_BASE_URL}/api/bookings/my`);
+        if (res.ok) {
+          const data = await res.json();
+          const now = new Date();
+          const upcoming = (Array.isArray(data) ? data : [])
+            .filter(b => {
+              if (!b.date) return false;
+              const apptDate = new Date(b.date);
+              return apptDate >= now && (b.status === 'pending' || b.status === 'accepted');
+            })
+            .sort((a, b) => new Date(a.date) - new Date(b.date))
+            .slice(0, 3);
+          setUpcomingAppointments(upcoming);
+        }
+      } catch (e) { console.error("Dashboard: appointments error", e); }
+    };
+
+    fetchMyListings();
+    fetchAppointments();
   }, [currentUser?._id, currentUser?.role]);
 
   // STN-LIVE: Process local session recommendations + Wishlist/Watchlist
@@ -565,6 +614,151 @@ export default function Home() {
         {/* Categories / Listings Sections */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-20 py-16">
 
+          {/* ─── Quick Activity Dashboard (logged-in regular users) ─── */}
+          {currentUser && currentUser.role !== 'admin' && currentUser.role !== 'rootadmin' && (
+            <section className="animate-fade-in">
+              <div className="flex items-center gap-3 mb-6">
+                <h2 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white flex items-center gap-3">
+                  <span className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-xl shadow-lg">
+                    <FaChartLine className="text-lg" />
+                  </span>
+                  Your Dashboard
+                </h2>
+              </div>
+
+              <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                {/* Recently Viewed */}
+                <Link to={`${linkPrefix}/search`} className="group bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                  <div className="w-11 h-11 bg-blue-50 dark:bg-blue-900/30 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                    <FaEye className="text-lg text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">{recentlyViewed.length}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 font-medium mt-0.5">Recently Viewed</div>
+                </Link>
+
+                {/* Wishlist */}
+                <Link to={`${linkPrefix}/wishlist`} className="group bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                  <div className="w-11 h-11 bg-red-50 dark:bg-red-900/30 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                    <FaHeart className="text-lg text-red-500 dark:text-red-400" />
+                  </div>
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">{wishlistItems.length}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 font-medium mt-0.5">Wishlist</div>
+                </Link>
+
+                {/* Watchlist */}
+                <Link to={`${linkPrefix}/watchlist`} className="group bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                  <div className="w-11 h-11 bg-amber-50 dark:bg-amber-900/30 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                    <FaBell className="text-lg text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">{watchlistItems.length}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 font-medium mt-0.5">Watchlist</div>
+                </Link>
+
+                {/* My Listings */}
+                <Link to={`${linkPrefix}/my-listings`} className="group bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                  <div className="w-11 h-11 bg-green-50 dark:bg-green-900/30 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                    <FaListAlt className="text-lg text-green-600 dark:text-green-400" />
+                  </div>
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">{myListingsCount}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 font-medium mt-0.5">My Listings</div>
+                </Link>
+
+                {/* Upcoming Appointments */}
+                <Link to={`${linkPrefix}/appointments`} className="group bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 col-span-2 lg:col-span-1">
+                  <div className="w-11 h-11 bg-purple-50 dark:bg-purple-900/30 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                    <FaCalendarAlt className="text-lg text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">{upcomingAppointments.length}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 font-medium mt-0.5">Upcoming Appts</div>
+                </Link>
+              </div>
+
+              {/* Upcoming Appointments Preview */}
+              {upcomingAppointments.length > 0 && (
+                <div className="mt-6 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+                  <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                    <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2 text-sm">
+                      <FaCalendarAlt className="text-purple-500" /> Upcoming Appointments
+                    </h3>
+                    <Link to={`${linkPrefix}/appointments`} className="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline">View All</Link>
+                  </div>
+                  <div className="divide-y divide-gray-50 dark:divide-gray-700/50">
+                    {upcomingAppointments.map((appt, idx) => (
+                      <Link key={appt._id || idx} to={`${linkPrefix}/appointments`} className="flex items-center gap-4 px-5 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold ${appt.status === 'accepted' ? 'bg-green-50 dark:bg-green-900/30 text-green-600' : 'bg-amber-50 dark:bg-amber-900/30 text-amber-600'}`}>
+                          {new Date(appt.date).getDate()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                            {appt.propertyName || appt.listingId?.name || 'Property Viewing'}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {new Date(appt.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} · {appt.time || 'TBD'}
+                          </p>
+                        </div>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${appt.status === 'accepted' ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400' : 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400'}`}>
+                          {appt.status}
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Recently Viewed Properties (horizontal scroll) */}
+              {recentlyViewed.length > 0 && (() => {
+                // Match viewed IDs against all fetched listings to get full objects
+                const allListings = [...offerListings, ...rentListings, ...saleListings];
+                const viewedListings = recentlyViewed
+                  .map(id => allListings.find(l => l._id === id))
+                  .filter(Boolean)
+                  .slice(0, 6);
+
+                if (viewedListings.length === 0) return null;
+
+                return (
+                  <div className="mt-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                        <FaEye className="text-blue-500" /> Recently Viewed
+                      </h3>
+                      <Link to={`${linkPrefix}/search`} className="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline flex items-center gap-1">
+                        Browse More <FaArrowRight className="text-[10px]" />
+                      </Link>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+                      {viewedListings.map((listing, i) => (
+                        <Link
+                          key={listing._id}
+                          to={`/listing/${listing._id}`}
+                          className="group bg-white dark:bg-gray-800 rounded-xl overflow-hidden border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 animate-sentinel-fade-in"
+                          style={{ animationDelay: `${i * 80}ms` }}
+                        >
+                          <div className="aspect-[4/3] overflow-hidden">
+                            <img
+                              src={listing.imageUrls?.[0] || '/placeholder.jpg'}
+                              alt={listing.name}
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                            />
+                          </div>
+                          <div className="p-3">
+                            <p className="text-xs font-bold text-gray-900 dark:text-white truncate">{listing.name}</p>
+                            <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate flex items-center gap-1 mt-0.5">
+                              <FaMapMarkerAlt className="text-[8px]" /> {listing.city || listing.address}
+                            </p>
+                            <p className="text-xs font-bold text-blue-600 dark:text-blue-400 mt-1">
+                              ₹{(listing.offer ? listing.discountPrice : listing.regularPrice)?.toLocaleString('en-IN')}
+                            </p>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+            </section>
+          )}
+
           {/* Sentinel Live Section (Real-time Session Based) - regular users only */}
           {currentUser && currentUser.role !== 'admin' && currentUser.role !== 'rootadmin' && (
             <section className="relative overflow-hidden p-1 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-blue-600/10 rounded-[2.5rem] mt-[-2rem]">
@@ -602,11 +796,10 @@ export default function Home() {
                       {liveRecommendations.slice(0, visibleRecsCount).map((listing, index) => (
                         <div
                           key={`live-${listing._id}`}
-                          className={`relative group overflow-visible transition-all duration-500 ${
-                            newlyLoadedIds.has(listing._id)
+                          className={`relative group overflow-visible transition-all duration-500 ${newlyLoadedIds.has(listing._id)
                               ? 'animate-sentinel-fade-in'
                               : ''
-                          }`}
+                            }`}
                           style={{
                             animationDelay: newlyLoadedIds.has(listing._id)
                               ? `${(index % 4) * 120}ms`
@@ -802,135 +995,135 @@ export default function Home() {
           {/* Marketing sections — only shown for public/guest visitors */}
           {!currentUser && (
             <>
-          {/* How It Works Section */}
-          <section>
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">How It Works</h2>
-              <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">Your journey to a new home in 4 simple steps.</p>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {[
-                { icon: FaSearch, title: "Search", desc: "Filter and find your dream property.", color: "text-blue-600", bg: "bg-blue-50 dark:bg-blue-900/30" },
-                { icon: FaHeart, title: "Save", desc: "Shortlist your favorites easily.", color: "text-green-600", bg: "bg-green-50 dark:bg-green-900/30" },
-                { icon: FaPhone, title: "Connect", desc: "Contact agents or owners directly.", color: "text-purple-600", bg: "bg-purple-50 dark:bg-purple-900/30" },
-                { icon: FaHandshake, title: "Deal", desc: "Close the deal securely.", color: "text-orange-600", bg: "bg-orange-50 dark:bg-orange-900/30" }
-              ].map((step, idx) => (
-                <div key={idx} className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 text-center hover:shadow-md transition-all duration-300">
-                  <div className={`w-16 h-16 ${step.bg} rounded-full flex items-center justify-center mx-auto mb-4`}>
-                    <step.icon className={`text-2xl ${step.color}`} />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{step.title}</h3>
-                  <p className="text-gray-600 dark:text-gray-300 text-sm">{step.desc}</p>
+              {/* How It Works Section */}
+              <section>
+                <div className="text-center mb-12">
+                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">How It Works</h2>
+                  <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">Your journey to a new home in 4 simple steps.</p>
                 </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Why Choose Us */}
-          <section className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700 p-8 md:p-12 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-bl-full -mr-20 -mt-20 opacity-50 pointer-events-none"></div>
-
-            <div className="text-center mb-12 relative z-10">
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">Why Choose UrbanSetu?</h2>
-              <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">We provide a premium, secure, and seamless real estate experience tailored to your needs.</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10">
-              {[
-                { icon: FaSearch, title: "Smart Search", desc: "AI-powered search filters to find exactly what you need.", color: "text-blue-600", bg: "bg-blue-50 dark:bg-blue-900/30" },
-                { icon: FaShieldAlt, title: "Secure & Verified", desc: "All listings are verified for your peace of mind.", color: "text-green-600", bg: "bg-green-50 dark:bg-green-900/30" },
-                { icon: FaRocket, title: "Fast Processing", desc: "Quick documentation and approval process.", color: "text-purple-600", bg: "bg-purple-50 dark:bg-purple-900/30" },
-                { icon: FaHeart, title: "24/7 Support", desc: "Dedicated support team available round the clock.", color: "text-red-500", bg: "bg-red-50 dark:bg-red-900/30" },
-                { icon: FaDesktop, title: "Cross-Platform", desc: "Seamless experience across Mobile, Tablet, and Desktop.", color: "text-indigo-600", bg: "bg-indigo-50 dark:bg-indigo-900/30" },
-                { icon: FaGem, title: "Premium Listings", desc: "Access to exclusive luxury properties.", color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-900/30" }
-              ].map((feature, idx) => (
-                <div key={idx} className="flex gap-4 p-4 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-300">
-                  <div className={`w-12 h-12 ${feature.bg} rounded-xl flex-shrink-0 flex items-center justify-center`}>
-                    <feature.icon className={`text-xl ${feature.color}`} />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">{feature.title}</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">{feature.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Multi-Platform Access */}
-          <section className="py-8">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Access From Anywhere</h2>
-              <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">Enjoy a seamless experience across all your favorite devices.</p>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              {[
-                { icon: FaDesktop, title: "Desktop", desc: "Full-featured experience." },
-                { icon: FaMobile, title: "Mobile", desc: "Optimized for your pocket." },
-                { icon: FaTablet, title: "Tablet", desc: "Perfect for browsing on the go." }
-              ].map((platform, idx) => (
-                <div key={idx} className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col items-center hover:-translate-y-1 transition-transform">
-                  <div className="w-14 h-14 bg-gray-50 dark:bg-gray-700 rounded-2xl flex items-center justify-center mb-3 text-gray-700 dark:text-gray-200 text-2xl">
-                    <platform.icon />
-                  </div>
-                  <h3 className="font-bold text-gray-900 dark:text-white">{platform.title}</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{platform.desc}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Testimonials */}
-          <section>
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Trusted by Thousands</h2>
-              <p className="text-gray-600 dark:text-gray-400">See what our community has to say about their experience.</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {[
-                { name: "Priya Sharma", role: "Home Buyer", quote: "Found my dream apartment in just 2 days! The interface is so intuitive.", bg: "bg-blue-100 dark:bg-blue-900/30", text: "text-blue-600 dark:text-blue-400" },
-                { name: "Rajesh Kumar", role: "Property Investor", quote: "The best platform for real estate analytics and verified listings.", bg: "bg-green-100 dark:bg-green-900/30", text: "text-green-600 dark:text-green-400" },
-                { name: "Anjali Patel", role: "Tenant", quote: "Seamless rental process. The support team was incredibly helpful.", bg: "bg-purple-100 dark:bg-purple-900/30", text: "text-purple-600 dark:text-purple-400" }
-              ].map((t, i) => (
-                <div key={i} className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 hover:-translate-y-2 transition-transform duration-300">
-                  <FaQuoteLeft className={`text-4xl ${t.text} opacity-20 mb-4`} />
-                  <p className="text-gray-600 dark:text-gray-300 italic mb-6">"{t.quote}"</p>
-                  <div className="flex items-center mb-6">
-                    {[...Array(5)].map((_, starIndex) => (
-                      <FaStar key={starIndex} className="text-yellow-400 text-sm animate-pulse" style={{ animationDelay: `${starIndex * 0.1}s` }} />
-                    ))}
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-full ${t.bg} flex items-center justify-center font-bold ${t.text}`}>
-                      {t.name[0]}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                  {[
+                    { icon: FaSearch, title: "Search", desc: "Filter and find your dream property.", color: "text-blue-600", bg: "bg-blue-50 dark:bg-blue-900/30" },
+                    { icon: FaHeart, title: "Save", desc: "Shortlist your favorites easily.", color: "text-green-600", bg: "bg-green-50 dark:bg-green-900/30" },
+                    { icon: FaPhone, title: "Connect", desc: "Contact agents or owners directly.", color: "text-purple-600", bg: "bg-purple-50 dark:bg-purple-900/30" },
+                    { icon: FaHandshake, title: "Deal", desc: "Close the deal securely.", color: "text-orange-600", bg: "bg-orange-50 dark:bg-orange-900/30" }
+                  ].map((step, idx) => (
+                    <div key={idx} className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 text-center hover:shadow-md transition-all duration-300">
+                      <div className={`w-16 h-16 ${step.bg} rounded-full flex items-center justify-center mx-auto mb-4`}>
+                        <step.icon className={`text-2xl ${step.color}`} />
+                      </div>
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{step.title}</h3>
+                      <p className="text-gray-600 dark:text-gray-300 text-sm">{step.desc}</p>
                     </div>
-                    <div>
-                      <h4 className="font-bold text-gray-900 dark:text-white">{t.name}</h4>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t.role}</p>
+                  ))}
+                </div>
+              </section>
+
+              {/* Why Choose Us */}
+              <section className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700 p-8 md:p-12 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-bl-full -mr-20 -mt-20 opacity-50 pointer-events-none"></div>
+
+                <div className="text-center mb-12 relative z-10">
+                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">Why Choose UrbanSetu?</h2>
+                  <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">We provide a premium, secure, and seamless real estate experience tailored to your needs.</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10">
+                  {[
+                    { icon: FaSearch, title: "Smart Search", desc: "AI-powered search filters to find exactly what you need.", color: "text-blue-600", bg: "bg-blue-50 dark:bg-blue-900/30" },
+                    { icon: FaShieldAlt, title: "Secure & Verified", desc: "All listings are verified for your peace of mind.", color: "text-green-600", bg: "bg-green-50 dark:bg-green-900/30" },
+                    { icon: FaRocket, title: "Fast Processing", desc: "Quick documentation and approval process.", color: "text-purple-600", bg: "bg-purple-50 dark:bg-purple-900/30" },
+                    { icon: FaHeart, title: "24/7 Support", desc: "Dedicated support team available round the clock.", color: "text-red-500", bg: "bg-red-50 dark:bg-red-900/30" },
+                    { icon: FaDesktop, title: "Cross-Platform", desc: "Seamless experience across Mobile, Tablet, and Desktop.", color: "text-indigo-600", bg: "bg-indigo-50 dark:bg-indigo-900/30" },
+                    { icon: FaGem, title: "Premium Listings", desc: "Access to exclusive luxury properties.", color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-900/30" }
+                  ].map((feature, idx) => (
+                    <div key={idx} className="flex gap-4 p-4 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-300">
+                      <div className={`w-12 h-12 ${feature.bg} rounded-xl flex-shrink-0 flex items-center justify-center`}>
+                        <feature.icon className={`text-xl ${feature.color}`} />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">{feature.title}</h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">{feature.desc}</p>
+                      </div>
                     </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* Multi-Platform Access */}
+              <section className="py-8">
+                <div className="text-center mb-12">
+                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Access From Anywhere</h2>
+                  <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">Enjoy a seamless experience across all your favorite devices.</p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                  {[
+                    { icon: FaDesktop, title: "Desktop", desc: "Full-featured experience." },
+                    { icon: FaMobile, title: "Mobile", desc: "Optimized for your pocket." },
+                    { icon: FaTablet, title: "Tablet", desc: "Perfect for browsing on the go." }
+                  ].map((platform, idx) => (
+                    <div key={idx} className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col items-center hover:-translate-y-1 transition-transform">
+                      <div className="w-14 h-14 bg-gray-50 dark:bg-gray-700 rounded-2xl flex items-center justify-center mb-3 text-gray-700 dark:text-gray-200 text-2xl">
+                        <platform.icon />
+                      </div>
+                      <h3 className="font-bold text-gray-900 dark:text-white">{platform.title}</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{platform.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* Testimonials */}
+              <section>
+                <div className="text-center mb-12">
+                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Trusted by Thousands</h2>
+                  <p className="text-gray-600 dark:text-gray-400">See what our community has to say about their experience.</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  {[
+                    { name: "Priya Sharma", role: "Home Buyer", quote: "Found my dream apartment in just 2 days! The interface is so intuitive.", bg: "bg-blue-100 dark:bg-blue-900/30", text: "text-blue-600 dark:text-blue-400" },
+                    { name: "Rajesh Kumar", role: "Property Investor", quote: "The best platform for real estate analytics and verified listings.", bg: "bg-green-100 dark:bg-green-900/30", text: "text-green-600 dark:text-green-400" },
+                    { name: "Anjali Patel", role: "Tenant", quote: "Seamless rental process. The support team was incredibly helpful.", bg: "bg-purple-100 dark:bg-purple-900/30", text: "text-purple-600 dark:text-purple-400" }
+                  ].map((t, i) => (
+                    <div key={i} className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 hover:-translate-y-2 transition-transform duration-300">
+                      <FaQuoteLeft className={`text-4xl ${t.text} opacity-20 mb-4`} />
+                      <p className="text-gray-600 dark:text-gray-300 italic mb-6">"{t.quote}"</p>
+                      <div className="flex items-center mb-6">
+                        {[...Array(5)].map((_, starIndex) => (
+                          <FaStar key={starIndex} className="text-yellow-400 text-sm animate-pulse" style={{ animationDelay: `${starIndex * 0.1}s` }} />
+                        ))}
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-full ${t.bg} flex items-center justify-center font-bold ${t.text}`}>
+                          {t.name[0]}
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-gray-900 dark:text-white">{t.name}</h4>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t.role}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* CTA Section */}
+              <section className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-blue-700 to-indigo-800 text-white shadow-2xl">
+                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80')] opacity-10 bg-cover bg-center"></div>
+                <div className="relative z-10 px-8 py-16 md:py-24 text-center max-w-4xl mx-auto">
+                  <h2 className="text-3xl md:text-5xl font-bold mb-6">Ready to Start Your Journey?</h2>
+                  <p className="text-blue-100 text-lg md:text-xl mb-10">Join thousands of satisfied users who have found their perfect property with UrbanSetu.</p>
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <Link to="/search" className="px-8 py-4 bg-white text-blue-700 rounded-xl font-bold text-lg hover:bg-gray-100 transition-colors shadow-lg">
+                      Find a Home
+                    </Link>
+                    <Link to="/about" className="px-8 py-4 bg-transparent border-2 border-white text-white rounded-xl font-bold text-lg hover:bg-white hover:text-blue-700 transition-all">
+                      Learn More
+                    </Link>
                   </div>
                 </div>
-              ))}
-            </div>
-          </section>
-
-          {/* CTA Section */}
-          <section className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-blue-700 to-indigo-800 text-white shadow-2xl">
-            <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80')] opacity-10 bg-cover bg-center"></div>
-            <div className="relative z-10 px-8 py-16 md:py-24 text-center max-w-4xl mx-auto">
-              <h2 className="text-3xl md:text-5xl font-bold mb-6">Ready to Start Your Journey?</h2>
-              <p className="text-blue-100 text-lg md:text-xl mb-10">Join thousands of satisfied users who have found their perfect property with UrbanSetu.</p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link to="/search" className="px-8 py-4 bg-white text-blue-700 rounded-xl font-bold text-lg hover:bg-gray-100 transition-colors shadow-lg">
-                  Find a Home
-                </Link>
-                <Link to="/about" className="px-8 py-4 bg-transparent border-2 border-white text-white rounded-xl font-bold text-lg hover:bg-white hover:text-blue-700 transition-all">
-                  Learn More
-                </Link>
-              </div>
-            </div>
-          </section>
+              </section>
             </>
           )}
 
