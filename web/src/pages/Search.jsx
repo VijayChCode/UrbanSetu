@@ -1170,7 +1170,7 @@ export default function Search() {
                     <div className="mb-8 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-5 animate-fade-in transition-colors duration-300">
                         <div className="flex items-center gap-2 mb-3">
                             <MapPin className="w-4 h-4 text-indigo-500" />
-                            <h3 className="text-sm font-bold text-gray-800 dark:text-white">Near You{detectedCity ? ` • ${detectedCity}` : ''}</h3>
+                            <h3 className="text-sm font-bold text-gray-800 dark:text-white">Nearest to You{detectedCity ? ` • ${detectedCity}` : ''}</h3>
                             <span className="text-[10px] bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full font-bold">Based on your location</span>
                         </div>
                         <div className="flex flex-wrap gap-2">
@@ -1182,11 +1182,10 @@ export default function Search() {
                                         params.set('city', nc.city);
                                         navigate(`?${params.toString()}`);
                                     }}
-                                    className={`group flex items-center gap-2 px-4 py-2 rounded-xl border shadow-sm hover:shadow-md transition-all duration-300 animate-fade-in-up ${
-                                        nc.city === detectedCity
-                                            ? 'bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/30 dark:to-purple-900/30 border-indigo-200 dark:border-indigo-700 ring-1 ring-indigo-100 dark:ring-indigo-800'
-                                            : 'bg-gray-50 dark:bg-gray-800 border-gray-100 dark:border-gray-700 hover:border-indigo-200 dark:hover:border-indigo-700'
-                                    }`}
+                                    className={`group flex items-center gap-2 px-4 py-2 rounded-xl border shadow-sm hover:shadow-md transition-all duration-300 animate-fade-in-up ${nc.city === detectedCity
+                                        ? 'bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/30 dark:to-purple-900/30 border-indigo-200 dark:border-indigo-700 ring-1 ring-indigo-100 dark:ring-indigo-800'
+                                        : 'bg-gray-50 dark:bg-gray-800 border-gray-100 dark:border-gray-700 hover:border-indigo-200 dark:hover:border-indigo-700'
+                                        }`}
                                     style={{ animationDelay: `${i * 60}ms` }}
                                 >
                                     <MapPin className={`w-3.5 h-3.5 group-hover:scale-110 transition-transform ${nc.city === detectedCity ? 'text-indigo-600 dark:text-indigo-400' : 'text-indigo-500'}`} />
