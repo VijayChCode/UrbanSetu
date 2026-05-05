@@ -177,6 +177,8 @@ export default function Listing() {
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [comparisonRecommendations, setComparisonRecommendations] = useState([]);
+  const [comparisonRecsLoading, setComparisonRecsLoading] = useState(false);
   const [showPriceAnalysisTooltip, setShowPriceAnalysisTooltip] = useState(false);
   const [showInsightsTooltip, setShowInsightsTooltip] = useState(false);
   const [showSmartPriceInsightsTooltip, setShowSmartPriceInsightsTooltip] = useState(false);
@@ -1089,6 +1091,150 @@ export default function Listing() {
     // Remove from search results
     setSearchResults(prev => prev.filter(p => p._id !== property._id));
   };
+
+  // Smart Comparison Recommendations - Analyzes attributes of ALL added comparison properties
+  const fetchComparisonRecommendations = async () => {
+    if (!currentUser || !listing) return;
+
+    setComparisonRecsLoading(true);
+    try {
+      // Build a profile from all comparison properties + current listing
+      const allProps = [...comparisonProperties];
+      if (listing && !allProps.some(p => p._id === listing._id)) {
+        allProps.push(listing);
+      }
+
+      // Extract dominant attributes from the comparison set
+      const cities = [...new Set(allProps.map(p => p.city).filter(Boolean))];
+      const types = [...new Set(allProps.map(p => p.type).filter(Boolean))];
+      const bhks = allProps.map(p => p.bedrooms || p.bhk).filter(Boolean);
+      const prices = allProps.map(p => p.offer ? p.discountPrice : p.regularPrice).filter(Boolean);
+      const furnishedCount = allProps.filter(p => p.furnished).length;
+      const isMostlyFurnished = furnishedCount > allProps.length / 2;
+
+      // Calculate ranges
+      const minBhk = Math.max(1, Math.min(...bhks) - 1);
+      const maxBhk = Math.max(...bhks) + 1;
+      const avgPrice = prices.length > 0 ? prices.reduce((a, b) => a + b, 0) / prices.length : 0;
+      const minPrice = Math.max(0, Math.round(Math.min(...prices) * 0.7));
+      const maxPrice = Math.round(Math.max(...prices) * 1.3);
+
+      // IDs to exclude (current listing + already-added comparison properties)
+      const excludeIds = new Set([
+        listing._id,
+        ...comparisonProperties.map(p => p._id)
+      ]);
+
+      let recommendations = [];
+
+      // Strategy 1: AI Vector Search with a rich descriptive query
+      try {
+        const dominantCity = cities[0] || '';
+        const dominantType = types.length === 1 ? types[0] : 'residential';
+        const avgBhk = Math.round(bhks.reduce((a, b) => a + b, 0) / bhks.length);
+        const aiQuery = `A ${avgBhk} BHK ${dominantType} property in ${dominantCity}${cities.length > 1 ? ` or ${cities.slice(1).join(', ')}` : ''} with ${isMostlyFurnished ? 'furnished' : 'semi-furnished or unfurnished'} interior around ₹${avgPrice.toLocaleString('en-IN')} budget`;
+
+        const aiRes = await authenticatedFetch(`${API_BASE_URL}/api/listing/ai-search?query=${encodeURIComponent(aiQuery)}&limit=12`);
+        if (aiRes.ok) {
+          const aiData = await aiRes.json();
+          if (aiData.success && aiData.data?.length > 0) {
+            recommendations = aiData.data.filter(p => !excludeIds.has(p._id));
+          }
+        }
+      } catch (aiErr) {
+        console.warn('AI comparison recommendations failed:', aiErr.message);
+      }
+
+      // Strategy 2: Classic API search if AI returned insufficient results
+      if (recommendations.length < 4) {
+        try {
+          // Build query params matching comparison property attributes
+          const queryParams = new URLSearchParams();
+          queryParams.set('limit', '12');
+          queryParams.set('forSuggestion', 'true');
+          if (types.length === 1) queryParams.set('type', types[0]);
+          if (cities[0]) queryParams.set('city', cities[0]);
+          if (minPrice > 0) queryParams.set('minPrice', String(minPrice));
+          if (maxPrice < Number.MAX_SAFE_INTEGER) queryParams.set('maxPrice', String(maxPrice));
+
+          const classicRes = await authenticatedFetch(`${API_BASE_URL}/api/listing/get?${queryParams.toString()}`);
+          if (classicRes.ok) {
+            const classicData = await classicRes.json();
+            const filtered = classicData.filter(p => !excludeIds.has(p._id));
+            // Merge without duplicates
+            const existingIds = new Set(recommendations.map(r => r._id));
+            for (const prop of filtered) {
+              if (!existingIds.has(prop._id)) {
+                recommendations.push(prop);
+              }
+            }
+          }
+        } catch (classicErr) {
+          console.warn('Classic comparison recommendations fallback failed:', classicErr.message);
+        }
+      }
+
+      // Strategy 3: If still insufficient, try broader search across all comparison cities
+      if (recommendations.length < 4 && cities.length > 1) {
+        try {
+          for (const city of cities.slice(1)) {
+            if (recommendations.length >= 6) break;
+            const res = await authenticatedFetch(`${API_BASE_URL}/api/listing/get?city=${encodeURIComponent(city)}&limit=4&forSuggestion=true`);
+            if (res.ok) {
+              const data = await res.json();
+              const existingIds = new Set(recommendations.map(r => r._id));
+              for (const prop of data) {
+                if (!excludeIds.has(prop._id) && !existingIds.has(prop._id)) {
+                  recommendations.push(prop);
+                }
+              }
+            }
+          }
+        } catch (broadErr) {
+          console.warn('Broader city search failed:', broadErr.message);
+        }
+      }
+
+      // Score and sort recommendations by relevance to comparison set
+      const scoredRecs = recommendations.map(rec => {
+        let score = 0;
+        // City match bonus (highest weight)
+        if (cities.includes(rec.city)) score += 30;
+        // Type match bonus
+        if (types.includes(rec.type)) score += 25;
+        // BHK proximity bonus
+        const recBhk = rec.bedrooms || rec.bhk || 0;
+        if (recBhk >= minBhk && recBhk <= maxBhk) score += 20;
+        // Price range bonus
+        const recPrice = rec.offer ? rec.discountPrice : rec.regularPrice;
+        if (recPrice >= minPrice && recPrice <= maxPrice) score += 15;
+        // Furnished match bonus
+        if (isMostlyFurnished && rec.furnished) score += 5;
+        if (!isMostlyFurnished && !rec.furnished) score += 5;
+        // Verified properties get a small bonus
+        if (rec.isVerified) score += 3;
+        // Higher rated properties get a small bonus
+        if (rec.averageRating >= 4) score += 2;
+        return { ...rec, _relevanceScore: score };
+      });
+
+      scoredRecs.sort((a, b) => b._relevanceScore - a._relevanceScore);
+      setComparisonRecommendations(scoredRecs.slice(0, 6));
+    } catch (error) {
+      console.error('Failed to fetch comparison recommendations:', error);
+      // Fallback to similarProperties if available
+      setComparisonRecommendations(similarProperties);
+    } finally {
+      setComparisonRecsLoading(false);
+    }
+  };
+
+  // Trigger comparison recommendations when search modal opens or comparison properties change
+  useEffect(() => {
+    if (showPropertySearch && currentUser && listing) {
+      fetchComparisonRecommendations();
+    }
+  }, [showPropertySearch, comparisonProperties.length]);
 
   // Function to show sign-in prompt for specific features
   const showSignInPrompt = (tooltipType) => {
@@ -4989,63 +5135,108 @@ export default function Listing() {
                     </div>
                   )}
 
-                  {/* Enhanced Similar Properties Section */}
-                  {currentUser && similarProperties.length > 0 && (
-                    <div className="mt-12 pt-8 border-t border-gray-100">
-                      <div className="flex items-center gap-3 mb-6">
-                        <div className="p-2 bg-indigo-100 text-indigo-700 rounded-lg">
-                          <FaChartLine />
+                  {/* Smart Comparison Recommendations - Context-aware based on added properties */}
+                  {currentUser && (comparisonRecsLoading || comparisonRecommendations.length > 0) && (
+                    <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2.5 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/40 dark:to-purple-900/40 text-indigo-600 dark:text-indigo-400 rounded-xl shadow-sm">
+                            <FaChartLine className="text-lg" />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-bold text-gray-800 dark:text-white">Recommendations for You</h3>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {comparisonProperties.length > 0
+                                ? `Based on ${comparisonProperties.length} selected ${comparisonProperties.length === 1 ? 'property' : 'properties'} & current listing`
+                                : 'Based on current listing attributes'
+                              }
+                            </p>
+                          </div>
                         </div>
-                        <h3 className="text-lg font-bold text-gray-800 dark:text-white">Recommendations for You</h3>
+                        {comparisonProperties.length > 0 && (
+                          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 rounded-full border border-indigo-100 dark:border-indigo-800">
+                            <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse" />
+                            <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Smart Match</span>
+                          </div>
+                        )}
                       </div>
 
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {similarProperties.map((property) => {
-                          const isAlreadyAdded = comparisonProperties.some(p => p._id === property._id);
-                          const canAdd = !isAlreadyAdded && comparisonProperties.length < 4;
-
-                          return (
-                            <div key={property._id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 hover:shadow-lg transition-all duration-300 hover:border-blue-300">
+                      {comparisonRecsLoading ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {[...Array(3)].map((_, i) => (
+                            <div key={i} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 animate-pulse">
                               <div className="flex gap-3">
-                                <img
-                                  src={property.imageUrls?.[0] || 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'}
-                                  alt={property.name}
-                                  onError={(e) => { e.target.onerror = null; e.target.src = 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'; }}
-                                  className="w-16 h-16 object-cover rounded-lg shadow-sm"
-                                />
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <h4 className="font-bold text-gray-800 dark:text-white text-sm line-clamp-1">{property.name}</h4>
-                                    {property.isVerified && property.type === 'rent' && (
-                                      <span className="px-1.5 py-0.5 bg-green-100 text-green-700 rounded-full text-[9px] font-semibold flex items-center gap-0.5 whitespace-nowrap">
-                                        <FaCheckCircle className="text-[9px]" /> Verified
-                                      </span>
+                                <div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+                                <div className="flex-1 space-y-2">
+                                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
+                                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
+                                  <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-2/3" />
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {comparisonRecommendations.map((property) => {
+                            const isAlreadyAdded = comparisonProperties.some(p => p._id === property._id);
+                            const canAdd = !isAlreadyAdded && comparisonProperties.length < 4;
+                            // Check which attributes match comparison set
+                            const matchesCity = comparisonProperties.some(p => p.city?.toLowerCase() === property.city?.toLowerCase());
+                            const matchesType = comparisonProperties.some(p => p.type === property.type);
+
+                            return (
+                              <div key={property._id} className={`bg-white dark:bg-gray-800 border rounded-xl p-4 hover:shadow-lg transition-all duration-300 group ${matchesCity && matchesType ? 'border-indigo-200 dark:border-indigo-700 hover:border-indigo-400' : 'border-gray-200 dark:border-gray-700 hover:border-blue-300'}`}>
+                                <div className="flex gap-3">
+                                  <div className="relative w-16 h-16 flex-shrink-0">
+                                    <img
+                                      src={property.imageUrls?.[0] || 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'}
+                                      alt={property.name}
+                                      onError={(e) => { e.target.onerror = null; e.target.src = 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'; }}
+                                      className="w-full h-full object-cover rounded-lg shadow-sm group-hover:scale-105 transition-transform duration-300"
+                                    />
+                                    {matchesCity && matchesType && (
+                                      <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-indigo-500 rounded-full flex items-center justify-center shadow-sm" title="Strong match">
+                                        <FaStar className="text-white text-[8px]" />
+                                      </div>
                                     )}
                                   </div>
-                                  <p className="text-gray-600 text-xs mb-2">{property.city}, {property.state}</p>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <h4 className="font-bold text-gray-800 dark:text-white text-sm line-clamp-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{property.name}</h4>
+                                      {property.isVerified && (
+                                        <span className="px-1.5 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full text-[9px] font-semibold flex items-center gap-0.5 whitespace-nowrap">
+                                          <FaCheckCircle className="text-[9px]" /> Verified
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p className="text-gray-500 dark:text-gray-400 text-xs mb-2 flex items-center gap-1">
+                                      <FaMapMarkerAlt className="text-[9px] text-gray-400" /> {property.city}, {property.state}
+                                    </p>
 
-                                  <div className="flex items-center gap-2 mb-2">
-                                    <span className={`px-2 py-1 text-xs rounded-full font-medium ${property.type === 'rent' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
-                                      }`}>
-                                      {property.type}
-                                    </span>
-                                    <span className="text-xs text-gray-500">{property.bhk} BHK</span>
-                                  </div>
-
-                                  <div className="flex items-center justify-between">
-                                    <div>
-                                      <p className="font-bold text-green-600 text-sm">
-                                        ₹{(property.offer ? property.discountPrice : property.regularPrice).toLocaleString('en-IN')}
-                                      </p>
-                                      {property.offer && (
-                                        <p className="text-xs text-gray-500 line-through">
-                                          ₹{property.regularPrice.toLocaleString('en-IN')}
-                                        </p>
+                                    <div className="flex items-center gap-2 mb-2 flex-wrap">
+                                      <span className={`px-2 py-0.5 text-[10px] rounded-full font-bold ${property.type === 'rent' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'}`}>
+                                        {property.type}
+                                      </span>
+                                      <span className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">{property.bhk || property.bedrooms} BHK</span>
+                                      {property.furnished && (
+                                        <span className="text-[10px] text-orange-600 dark:text-orange-400 font-medium">Furnished</span>
                                       )}
                                     </div>
 
-                                    <div className="relative">
+                                    <div className="flex items-center justify-between">
+                                      <div>
+                                        <p className="font-bold text-green-600 dark:text-green-400 text-sm">
+                                          ₹{(property.offer ? property.discountPrice : property.regularPrice).toLocaleString('en-IN')}
+                                          {property.type === 'rent' && <span className="text-[10px] text-gray-500 font-normal">/mo</span>}
+                                        </p>
+                                        {property.offer && (
+                                          <p className="text-[10px] text-gray-400 line-through">
+                                            ₹{property.regularPrice.toLocaleString('en-IN')}
+                                          </p>
+                                        )}
+                                      </div>
+
                                       <button
                                         onClick={() => {
                                           if (!currentUser) {
@@ -5055,29 +5246,23 @@ export default function Listing() {
                                           addPropertyFromSearch(property);
                                         }}
                                         disabled={!canAdd}
-                                        className={`px-3 py-1 text-xs rounded-lg font-medium transition-colors ${isAlreadyAdded
-                                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                        className={`px-3 py-1.5 text-xs rounded-lg font-bold transition-all shadow-sm ${isAlreadyAdded
+                                          ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 cursor-default'
                                           : canAdd
-                                            ? 'bg-blue-600 text-white hover:bg-blue-700'
-                                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                            ? 'bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-md active:scale-95'
+                                            : 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
                                           }`}
                                       >
-                                        {isAlreadyAdded ? 'Added' : canAdd ? 'Add' : 'Max'}
+                                        {isAlreadyAdded ? <span className="flex items-center gap-1"><FaCheckCircle className="text-[10px]" /> Added</span> : canAdd ? '+ Add' : 'Max'}
                                       </button>
-                                      {showComparisonTooltip && (
-                                        <div className="absolute top-full left-0 mt-2 bg-red-600 text-white px-3 py-2 rounded-lg text-sm whitespace-nowrap z-50">
-                                          Please login to use comparison tool
-                                          <div className="absolute -top-1 left-4 w-2 h-2 bg-red-600 transform rotate-45"></div>
-                                        </div>
-                                      )}
                                     </div>
                                   </div>
                                 </div>
                               </div>
-                            </div>
-                          );
-                        })}
-                      </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   )}
 
