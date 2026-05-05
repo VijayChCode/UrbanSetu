@@ -60,8 +60,8 @@ export default function NotFound() {
             ]);
             const wishData = wishRes.ok ? await wishRes.json() : [];
             const watchData = watchRes.ok ? await watchRes.json() : [];
-            const wishItems = Array.isArray(wishData) ? wishData.filter(x => x.listingId).map(x => x.listingId) : [];
-            const watchItems = Array.isArray(watchData) ? watchData.filter(x => x.listingId).map(x => x.listingId) : [];
+            const wishItems = Array.isArray(wishData) ? wishData.filter(x => x.listingId).map(x => ({ ...x.listingId, _sentinelType: 'wishlist' })) : [];
+            const watchItems = Array.isArray(watchData) ? watchData.filter(x => x.listingId).map(x => ({ ...x.listingId, _sentinelType: 'watchlist' })) : [];
             userPreferences = [...wishItems, ...watchItems];
           } catch (e) {
             console.error("Error fetching user preferences:", e);

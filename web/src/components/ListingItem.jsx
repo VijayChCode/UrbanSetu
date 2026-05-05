@@ -6,6 +6,7 @@ import { FaHeart, FaTrash, FaCheckCircle, FaLock, FaShareAlt, FaShieldAlt } from
 
 import { useSelector } from 'react-redux';
 import { maskAddress } from '../utils/addressMasking';
+import { trackInteraction } from '../utils/sentinelLiveEngine';
 import PrimaryButton from "./ui/PrimaryButton";
 import { MapPin, Bath, BedDouble, Tag } from "lucide-react";
 import AdvancedImage from "./AdvancedImage";
@@ -53,6 +54,7 @@ export default function ListingItem({ listing, onDelete, onWishToggle }) {
     } else {
       await addToWishlist(listing);
       setIsInWishlistState(true);
+      trackInteraction(listing, 'wishlist'); // STN-LIVE: Wishlist = strongest interest signal
       if (typeof onWishToggle === 'function') onWishToggle(listing._id, true);
     }
   };

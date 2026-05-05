@@ -200,8 +200,10 @@ export default function Home() {
         );
       }
 
-      // Combine wishlist and watchlist interactions
-      const userPreferences = [...wishlistItems, ...watchlistItems];
+      // Tag wishlist and watchlist items with their source for weighted scoring
+      const taggedWishlist = wishlistItems.map(item => ({ ...item, _sentinelType: 'wishlist' }));
+      const taggedWatchlist = watchlistItems.map(item => ({ ...item, _sentinelType: 'watchlist' }));
+      const userPreferences = [...taggedWishlist, ...taggedWatchlist];
       const uniquePreferences = Array.from(new Map(userPreferences.filter(p => p && p._id).map(item => [item._id, item])).values());
 
       // Request all matches (limit 1000) to allow infinite "View More"
