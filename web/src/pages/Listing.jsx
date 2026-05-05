@@ -459,7 +459,7 @@ export default function Listing() {
         });
         if (res.ok) {
           setIsInWatchlist(true);
-          trackInteraction(listing, 'watchlist'); // STN-LIVE: Watchlist = strong interest signal
+          trackInteraction(listing, 'watchlist', currentUser._id); // STN-LIVE: Watchlist = strong interest signal
           toast.success(
             <div>
               Property added to watchlist! Future price insights will be notified. <Link to="/user/watchlist" className="font-bold underline ml-1">View Watchlist</Link>
@@ -1449,7 +1449,7 @@ export default function Listing() {
       // ONLY track/record for logged-in regular users (not guest, not admin, not rootadmin)
       if (currentUser && currentUser.role !== 'admin' && currentUser.role !== 'rootadmin') {
         trackPropertyView();
-        trackInteraction(listing, 'view'); // STN-LIVE: Record session activity with interaction type
+        trackInteraction(listing, 'view', currentUser._id); // STN-LIVE: Record session activity with user-scoped tracking
       }
 
       fetchSimilarProperties();
@@ -1529,8 +1529,8 @@ export default function Listing() {
             l.sellerId !== currentUser._id
           );
 
-          const recs = await getLiveRecommendations(validListings, 12, userPreferences);
-          setRecommendations(recs.length > 0 ? recs : listings.sort(() => 0.5 - Math.random()).slice(0, 8));
+          const recs = await getLiveRecommendations(validListings, 12, userPreferences, currentUser._id);
+          setRecommendations(recs);
         } else {
           setRecommendations(listings.sort(() => 0.5 - Math.random()).slice(0, 8));
         }

@@ -54,7 +54,7 @@ export default function ListingItem({ listing, onDelete, onWishToggle }) {
     } else {
       await addToWishlist(listing);
       setIsInWishlistState(true);
-      trackInteraction(listing, 'wishlist'); // STN-LIVE: Wishlist = strongest interest signal
+      trackInteraction(listing, 'wishlist', currentUser?._id); // STN-LIVE: Wishlist = strongest interest signal
       if (typeof onWishToggle === 'function') onWishToggle(listing._id, true);
     }
   };

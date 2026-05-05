@@ -1,6 +1,6 @@
 import * as tf from '@tensorflow/tfjs';
 
-const STORAGE_KEY = 'sentinel_interactions';
+const STORAGE_KEY_PREFIX = 'sentinel_interactions_';
 const MAX_INTERACTIONS = 30; // Increased from 12 for richer preference learning
 
 // Interaction type weights — stronger signals get more influence
@@ -11,16 +11,41 @@ const INTERACTION_WEIGHTS = {
 };
 
 /**
+ * Builds a user-scoped storage key for Sentinel interactions.
+ * Each user gets their own isolated interaction history.
+ * Returns null if no userId is provided (prevents ghost data for public users).
+ */
+const getStorageKey = (userId) => {
+    if (!userId) return null;
+    return `${STORAGE_KEY_PREFIX}${userId}`;
+};
+
+/**
+ * Clears Sentinel interaction data for a specific user.
+ * Call this on account deletion or data reset requests.
+ */
+export const clearSentinelData = (userId) => {
+    const key = getStorageKey(userId);
+    if (key) localStorage.removeItem(key);
+    // Also clean up legacy global key if it exists (migration)
+    localStorage.removeItem('sentinel_interactions');
+};
+
+/**
  * Tracks a user interaction with a listing (view/click/wishlist/watchlist)
  * Stores essential features for client-side TF processing
  * @param {Object} listing - The listing object
  * @param {string} interactionType - 'view' | 'wishlist' | 'watchlist'
+ * @param {string} userId - The current user's ID (required — no tracking without a user)
  */
-export const trackInteraction = (listing, interactionType = 'view') => {
-    if (!listing || !listing._id) return;
+export const trackInteraction = (listing, interactionType = 'view', userId = null) => {
+    if (!listing || !listing._id || !userId) return;
+
+    const storageKey = getStorageKey(userId);
+    if (!storageKey) return;
 
     try {
-        let interactions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+        let interactions = JSON.parse(localStorage.getItem(storageKey) || '[]');
 
         // Check if this listing already exists in history
         const existingIndex = interactions.findIndex(i => i._id === listing._id);
@@ -63,7 +88,7 @@ export const trackInteraction = (listing, interactionType = 'view') => {
         };
 
         interactions.unshift(interactionData);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(interactions.slice(0, MAX_INTERACTIONS)));
+        localStorage.setItem(storageKey, JSON.stringify(interactions.slice(0, MAX_INTERACTIONS)));
     } catch (error) {
         console.warn('Sentinel Live: Failed to track interaction', error);
     }
@@ -143,10 +168,20 @@ const buildFrequencyMap = (interactions, field) => {
  * Uses TensorFlow.js to calculate similarity scores between user history and candidates
  * Enhanced with: recency decay, interaction type weights, frequency-based categorical matching,
  * and a 10-dimensional feature vector
+ * 
+ * @param {Array} allCandidates - All available listing objects to score
+ * @param {number} limit - Max number of results to return
+ * @param {Array} additionalInteractions - Wishlist/Watchlist items (with _sentinelType tag)
+ * @param {string} userId - The current user's ID (required — returns [] without it)
  */
-export const getLiveRecommendations = async (allCandidates, limit = 4, additionalInteractions = []) => {
+export const getLiveRecommendations = async (allCandidates, limit = 4, additionalInteractions = [], userId = null) => {
     try {
-        let rawInteractions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+        // Read user-scoped interaction history from localStorage
+        let rawInteractions = [];
+        if (userId) {
+            const storageKey = getStorageKey(userId);
+            rawInteractions = JSON.parse(localStorage.getItem(storageKey) || '[]');
+        }
 
         // Merge with additional interactions (Wishlist/Watchlist) if provided
         if (additionalInteractions && additionalInteractions.length > 0) {

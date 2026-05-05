@@ -74,7 +74,7 @@ export default function NotFound() {
           );
 
           // Get all matches (limit 1000)
-          const recs = await getLiveRecommendations(validListings, 1000, userPreferences);
+          const recs = await getLiveRecommendations(validListings, 1000, userPreferences, currentUser._id);
           setRecommendations(recs);
         } else {
           // Public users: Randomize

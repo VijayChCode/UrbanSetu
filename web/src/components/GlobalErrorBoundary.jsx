@@ -143,7 +143,7 @@ class GlobalErrorBoundary extends React.Component {
                 } catch (e) { }
 
                 const validListings = listings.filter(l => l.userRef !== currentUser._id && l.sellerId !== currentUser._id);
-                const recs = await getLiveRecommendations(validListings, 100, userPreferences);
+                const recs = await getLiveRecommendations(validListings, 100, userPreferences, currentUser._id);
                 this.setState({ recommendations: recs });
             } else {
                 this.setState({ recommendations: listings.sort(() => 0.5 - Math.random()) });

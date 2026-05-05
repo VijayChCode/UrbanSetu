@@ -207,7 +207,7 @@ export default function Home() {
       const uniquePreferences = Array.from(new Map(userPreferences.filter(p => p && p._id).map(item => [item._id, item])).values());
 
       // Request all matches (limit 1000) to allow infinite "View More"
-      const recs = await getLiveRecommendations(uniqueCandidates, 1000, uniquePreferences);
+      const recs = await getLiveRecommendations(uniqueCandidates, 1000, uniquePreferences, currentUser._id);
       setLiveRecommendations(recs);
     };
 
