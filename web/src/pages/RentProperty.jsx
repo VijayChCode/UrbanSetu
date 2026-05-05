@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { toast } from 'react-toastify';
-import { FaLock, FaCalendarAlt, FaMoneyBillWave, FaCheckCircle, FaCheck, FaChevronRight, FaHome, FaShieldAlt, FaFileContract, FaTimesCircle, FaCreditCard, FaChevronLeft, FaMapMarkerAlt, FaReceipt, FaDownload, FaCoins, FaFire, FaAward, FaTrophy } from "react-icons/fa";
+import { FaLock, FaCalendarAlt, FaMoneyBillWave, FaInfoCircle, FaCheckCircle, FaCheck, FaChevronRight, FaHome, FaShieldAlt, FaFileContract, FaTimesCircle, FaCreditCard, FaChevronLeft, FaMapMarkerAlt, FaReceipt, FaDownload, FaCoins, FaFire, FaAward, FaTrophy } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePageTitle } from '../hooks/usePageTitle';
 import PaymentModal from '../components/PaymentModal';
@@ -242,7 +242,7 @@ export default function RentProperty() {
         // Blockchain Trust Score Validation
         const userTrustScore = currentUser?.blockchain?.trustScore || 0;
         const requiredTrust = listingData.trustRequirements?.minTrustScore || 0;
-        
+
         if (requiredTrust > 0 && userTrustScore < requiredTrust) {
           toast.warning(`This property requires a Blockchain Trust Score of at least ${requiredTrust}. Your current score is ${userTrustScore}. You may still proceed, but the landlord might prioritize high-trust applicants.`);
         }
@@ -1127,10 +1127,10 @@ export default function RentProperty() {
     const userTrustScore = currentUser?.blockchain?.trustScore || 0;
     const hasHighTrust = userTrustScore >= 80;
     const applyTrustDiscount = listing.trustRequirements?.depositDiscountForHighTrust && hasHighTrust;
-    
+
     if (applyTrustDiscount) {
       // Reward high-trust users with a reduction in security deposit
-      baseDepositMonths = Math.max(1, baseDepositMonths - 0.5); 
+      baseDepositMonths = Math.max(1, baseDepositMonths - 0.5);
     }
 
     switch (formData.depositPlan) {
@@ -2143,7 +2143,7 @@ export default function RentProperty() {
                 )}
               </div>
             </div>
-            
+
             {/* Blockchain Escrow Protection Info */}
             <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-lg p-4 mb-6">
               <div className="flex gap-3">
@@ -2153,7 +2153,7 @@ export default function RentProperty() {
                 <div>
                   <h4 className="font-bold text-indigo-900 dark:text-indigo-300 text-sm">Smart Escrow Protection Active</h4>
                   <p className="text-xs text-indigo-800 dark:text-indigo-400 mt-1 leading-relaxed">
-                    Your security deposit will be automatically tokenized and locked in a decentralized escrow contract on the Polygon blockchain. 
+                    Your security deposit will be automatically tokenized and locked in a decentralized escrow contract on the Polygon blockchain.
                     This ensures the funds are immutable and can only be released upon mutual agreement or contract termination, protecting you from unauthorized deductions.
                   </p>
                 </div>

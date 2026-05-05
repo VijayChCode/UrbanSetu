@@ -4,7 +4,7 @@ import { useSelector } from "react-redux";
 import ContactSupportWrapper from './ContactSupportWrapper';
 import PaymentModal from './PaymentModal';
 import SetuCoinParticles from './SetuCoins/SetuCoinParticles';
-import { FaMapMarkerAlt, FaCoins } from "react-icons/fa";
+import { FaMapMarkerAlt, FaCoins, FaInfoCircle } from "react-icons/fa";
 import { toast } from 'react-toastify';
 import { authenticatedFetch } from '../utils/auth';
 import { usePageTitle } from '../hooks/usePageTitle';
