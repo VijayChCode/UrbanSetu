@@ -1420,6 +1420,15 @@ export default function RentProperty() {
                   </select>
                 </div>
               </div>
+
+              {/* Scheduling Info Note */}
+              <div className="mt-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-lg p-3 flex items-start gap-3">
+                <FaInfoCircle className="text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                <p className="text-xs text-blue-800 dark:text-blue-300 leading-relaxed">
+                  <span className="font-bold">Note:</span> Your preferred date and time are flexible and can be further negotiated with the owner. You can reschedule your visit either in person or conveniently through UrbanSetu.
+                </p>
+              </div>
+
               <div className="mt-4">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Message (optional)</label>
                 <textarea
