@@ -11,9 +11,9 @@ import WishlistProvider from '../WishlistContext';
 class GlobalErrorBoundary extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { 
-            hasError: false, 
-            error: null, 
+        this.state = {
+            hasError: false,
+            error: null,
             redirectCountdown: 10,
             switchCount: parseInt(sessionStorage.getItem('err_switch_count') || '0'),
             isPersistentError: false,
@@ -221,8 +221,8 @@ class GlobalErrorBoundary extends React.Component {
 
             return (
                 <div className={`min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center p-4 gap-12 py-12`}>
-                    <SEO 
-                        title={this.state.isPersistentError ? "System Disruption - UrbanSetu" : "Something Went Wrong - UrbanSetu"} 
+                    <SEO
+                        title={this.state.isPersistentError ? "System Disruption - UrbanSetu" : "Something Went Wrong - UrbanSetu"}
                         description="UrbanSetu is experiencing a temporary service disruption. We are working to restore normal operations as soon as possible."
                         noindex={true}
                     />
@@ -230,8 +230,8 @@ class GlobalErrorBoundary extends React.Component {
                         {/* Status bar for switch count */}
                         {this.state.switchCount > 0 && !this.state.isPersistentError && (
                             <div className="absolute top-0 left-0 right-0 h-1 bg-gray-100 dark:bg-gray-700">
-                                <div 
-                                    className="h-full bg-blue-500 transition-all duration-500" 
+                                <div
+                                    className="h-full bg-blue-500 transition-all duration-500"
                                     style={{ width: `${(this.state.switchCount / 3) * 100}%` }}
                                 />
                             </div>
@@ -239,9 +239,9 @@ class GlobalErrorBoundary extends React.Component {
 
                         <div className="flex flex-col items-center mb-10">
                             <div className="flex items-center gap-3">
-                                <img 
-                                    src="/favicon.png" 
-                                    alt="UrbanSetu Logo" 
+                                <img
+                                    src="/favicon.png"
+                                    alt="UrbanSetu Logo"
                                     className="w-12 h-12 rounded-xl shadow-lg transform transition-transform hover:scale-105 active:scale-95 duration-300 object-contain"
                                 />
                                 <div className="flex flex-col items-start leading-none">
@@ -260,7 +260,7 @@ class GlobalErrorBoundary extends React.Component {
                         </h1>
 
                         <p className="text-gray-500 dark:text-gray-400 mb-8">
-                            {this.state.isPersistentError 
+                            {this.state.isPersistentError
                                 ? "We apologize for the continued disruption. Our automated systems have flagged this persistent issue, and our engineering team is actively investigating to restore normal service."
                                 : "We encountered an unexpected error while loading the application. Attempting to switch to our backup server for better stability."
                             }
@@ -344,84 +344,84 @@ class GlobalErrorBoundary extends React.Component {
                         <div className="w-full max-w-6xl animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
                             <div className="relative overflow-hidden p-1 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-blue-600/10 rounded-[2.5rem]">
                                 <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-8 rounded-[2.4rem] border border-white/50 dark:border-gray-700/50 shadow-xl text-left">
-                                        <BrowserRouter>
-                                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-                                                <div className="flex flex-col md:flex-row md:items-center gap-4">
-                                                    <h2 className="text-2xl font-black text-gray-900 dark:text-white flex items-center gap-3">
-                                                        <span className="p-2 bg-blue-600 text-white rounded-xl shadow-lg ring-4 ring-blue-50 dark:ring-blue-900/10">
-                                                            {this.getCurrentUser() ? <FaRobot className="animate-pulse" /> : <FaRocket className="animate-bounce" />}
+                                    <BrowserRouter>
+                                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                                            <div className="flex flex-col md:flex-row md:items-center gap-4">
+                                                <h2 className="text-2xl font-black text-gray-900 dark:text-white flex items-center gap-3">
+                                                    <span className="p-2 bg-blue-600 text-white rounded-xl shadow-lg ring-4 ring-blue-50 dark:ring-blue-900/10">
+                                                        {this.getCurrentUser() ? <FaRobot className="animate-pulse" /> : <FaRocket className="animate-bounce" />}
+                                                    </span>
+                                                    {this.getCurrentUser() ? "Sentinel Live" : "Explore Properties"}
+                                                </h2>
+                                                <div className="flex flex-col">
+                                                    <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 rounded-full w-fit">
+                                                        <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">
+                                                            {this.getCurrentUser() ? (this.state.recommendations.length > 0 ? "PERSONALIZED RECOMMENDATIONS BASED ON YOUR ACTIVITY & LIKES" : "AI PERSONALIZATION ENGINE") : "HANDPICKED RECOMMENDATIONS"}
                                                         </span>
-                                                        {this.getCurrentUser() ? "Sentinel Live" : "Explore Properties"}
-                                                    </h2>
-                                                    <div className="flex flex-col">
-                                                        <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 rounded-full w-fit">
-                                                            <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">
-                                                                {this.getCurrentUser() ? (this.state.recommendations.length > 0 ? "RECOMMENDING BASED ON YOUR CURRENT SESSION" : "AI PERSONALIZATION ENGINE") : "HANDPICKED RECOMMENDATIONS"}
-                                                            </span>
-                                                        </div>
-                                                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-1 font-medium italic">
-                                                            {this.getCurrentUser() ? "Tensor-mode active · Browse while we fix the connection" : "Real-time updates · Discover your next home"}
-                                                        </p>
                                                     </div>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-1 font-medium italic">
+                                                        {this.getCurrentUser() ? "Tensor-mode active · Browse while we fix the connection" : "Real-time updates · Discover your next home"}
+                                                    </p>
                                                 </div>
-                                                {(this.state.recommendations.length > 0 || !this.getCurrentUser()) && (
-                                                    <Link
-                                                        to={this.getExplorePath()}
-                                                        className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-bold hover:text-blue-700 dark:hover:text-blue-300 transition-all hover:translate-x-1"
-                                                    >
-                                                        View All <FaArrowRight />
-                                                    </Link>
-                                                )}
                                             </div>
-
-                                            {this.state.recommendations.length > 0 ? (
-                                                <>
-                                                    <WishlistProvider>
-                                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                                                            {this.state.recommendations.slice(0, this.state.visibleRecsCount).map((listing) => (
-                                                                <div key={`err-rec-${listing._id}`} className="relative group">
-                                                                    {listing.isLiveMatch && (
-                                                                        <div className="absolute -top-2 -right-2 z-20 bg-blue-600 text-white text-[10px] font-black px-2 py-1 rounded-lg shadow-lg transform rotate-12 group-hover:rotate-0 transition-transform">
-                                                                            {Math.round(listing.sentinelScore * 100)}% MATCH
-                                                                        </div>
-                                                                    )}
-                                                                    <ListingItem listing={listing} />
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </WishlistProvider>
-                                                    {this.state.recommendations.length > this.state.visibleRecsCount && (
-                                                        <div className="mt-8 text-center">
-                                                            <button
-                                                                onClick={() => this.setState(prev => ({ visibleRecsCount: prev.visibleRecsCount + 4 }))}
-                                                                className="px-6 py-3 bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 font-bold rounded-xl shadow-lg border border-blue-100 dark:border-blue-900 hover:bg-blue-50 dark:hover:bg-gray-700 transition-all transform hover:scale-105 flex items-center gap-2 mx-auto"
-                                                            >
-                                                                View More Recommendations <FaArrowRight />
-                                                            </button>
-                                                        </div>
-                                                    )}
-                                                </>
-                                            ) : (
-                                                this.getCurrentUser() && (
-                                                    <div className="py-12 px-6 text-center animate-fade-in">
-                                                        <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/30 rounded-3xl flex items-center justify-center mx-auto mb-6 transform -rotate-6">
-                                                            <FaRocket className="text-4xl text-blue-600 dark:text-blue-400" />
-                                                        </div>
-                                                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Sentinel is getting ready! 🤖</h3>
-                                                        <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto leading-relaxed">
-                                                            Our AI engine is still learning your preferences. Browse properties while we restore service to see your personalized recommendations.
-                                                        </p>
-                                                        <Link
-                                                            to="/search"
-                                                            className="mt-6 inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg hover:bg-blue-700 transition-all hover:scale-105 active:scale-95"
-                                                        >
-                                                            Start Browsing <FaArrowRight />
-                                                        </Link>
-                                                    </div>
-                                                )
+                                            {(this.state.recommendations.length > 0 || !this.getCurrentUser()) && (
+                                                <Link
+                                                    to={this.getExplorePath()}
+                                                    className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-bold hover:text-blue-700 dark:hover:text-blue-300 transition-all hover:translate-x-1"
+                                                >
+                                                    View All <FaArrowRight />
+                                                </Link>
                                             )}
-                                        </BrowserRouter>
-                                    
+                                        </div>
+
+                                        {this.state.recommendations.length > 0 ? (
+                                            <>
+                                                <WishlistProvider>
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                                        {this.state.recommendations.slice(0, this.state.visibleRecsCount).map((listing) => (
+                                                            <div key={`err-rec-${listing._id}`} className="relative group">
+                                                                {listing.isLiveMatch && (
+                                                                    <div className="absolute -top-2 -right-2 z-20 bg-blue-600 text-white text-[10px] font-black px-2 py-1 rounded-lg shadow-lg transform rotate-12 group-hover:rotate-0 transition-transform">
+                                                                        {Math.round(listing.sentinelScore * 100)}% MATCH
+                                                                    </div>
+                                                                )}
+                                                                <ListingItem listing={listing} />
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </WishlistProvider>
+                                                {this.state.recommendations.length > this.state.visibleRecsCount && (
+                                                    <div className="mt-8 text-center">
+                                                        <button
+                                                            onClick={() => this.setState(prev => ({ visibleRecsCount: prev.visibleRecsCount + 4 }))}
+                                                            className="px-6 py-3 bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 font-bold rounded-xl shadow-lg border border-blue-100 dark:border-blue-900 hover:bg-blue-50 dark:hover:bg-gray-700 transition-all transform hover:scale-105 flex items-center gap-2 mx-auto"
+                                                        >
+                                                            View More Recommendations <FaArrowRight />
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </>
+                                        ) : (
+                                            this.getCurrentUser() && (
+                                                <div className="py-12 px-6 text-center animate-fade-in">
+                                                    <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/30 rounded-3xl flex items-center justify-center mx-auto mb-6 transform -rotate-6">
+                                                        <FaRocket className="text-4xl text-blue-600 dark:text-blue-400" />
+                                                    </div>
+                                                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Sentinel is getting ready! 🤖</h3>
+                                                    <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto leading-relaxed">
+                                                        Our AI engine is still learning your preferences. Browse properties while we restore service to see your personalized recommendations.
+                                                    </p>
+                                                    <Link
+                                                        to="/search"
+                                                        className="mt-6 inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg hover:bg-blue-700 transition-all hover:scale-105 active:scale-95"
+                                                    >
+                                                        Start Browsing <FaArrowRight />
+                                                    </Link>
+                                                </div>
+                                            )
+                                        )}
+                                    </BrowserRouter>
+
                                     <div className="mt-8 text-center border-t border-gray-100 dark:border-gray-700 pt-6">
                                         <p className="text-sm text-gray-500 dark:text-gray-400 font-medium italic">
                                             Don't worry, we've got you covered. You can explore these properties while we work on restoring full service.

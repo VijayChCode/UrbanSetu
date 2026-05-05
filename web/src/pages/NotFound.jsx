@@ -185,7 +185,7 @@ export default function NotFound() {
                     <div className="flex flex-col">
                       <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 rounded-full w-fit">
                         <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest flex items-center gap-2">
-                          {currentUser ? (recommendations.length > 0 ? "RECOMMENDING BASED ON YOUR CURRENT SESSION" : "AI PERSONALIZATION ENGINE") : "HANDPICKED RECOMMENDATIONS"}
+                          {currentUser ? (recommendations.length > 0 ? "PERSONALIZED RECOMMENDATIONS BASED ON YOUR ACTIVITY & LIKES" : "AI PERSONALIZATION ENGINE") : "HANDPICKED RECOMMENDATIONS"}
                         </span>
                       </div>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-1 font-medium italic">

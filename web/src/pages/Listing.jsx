@@ -1633,7 +1633,7 @@ export default function Listing() {
                       <div className="flex flex-col">
                         <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 rounded-full w-fit">
                           <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest flex items-center gap-2">
-                            {currentUser ? "SMART ALTERNATIVES BASED ON YOUR INTERESTS" : "HANDPICKED PROPERTIES FOR YOU"}
+                            {currentUser ? "PERSONALIZED RECOMMENDATIONS BASED ON YOUR ACTIVITY & LIKES" : "HANDPICKED PROPERTIES FOR YOU"}
                           </span>
                         </div>
                       </div>
@@ -2109,24 +2109,24 @@ export default function Listing() {
                       {/* 360 Tour Trigger Overlay - Only on the first image if tour exists or for demo */}
                       {index === 0 && (listing.virtualTourImages?.length > 0 || true) && (
                         <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
-                            <motion.button
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.9 }}
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    setShowImmersiveTour(true);
-                                }}
-                                className="pointer-events-auto bg-black/40 hover:bg-blue-600/80 backdrop-blur-xl text-white px-6 py-3 rounded-2xl border border-white/20 shadow-2xl flex items-center gap-3 transition-all group cursor-pointer"
-                            >
-                                <div className="p-2 bg-white/10 rounded-xl group-hover:bg-white/20 transition-colors">
-                                    <FaVrCardboard className="text-xl md:text-2xl animate-pulse" />
-                                </div>
-                                <div className="text-left">
-                                    <span className="block text-[10px] font-black uppercase tracking-[0.2em] opacity-70">Experience in VR</span>
-                                    <span className="block text-sm md:text-base font-black uppercase tracking-widest">Start 360° Tour</span>
-                                </div>
-                            </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setShowImmersiveTour(true);
+                            }}
+                            className="pointer-events-auto bg-black/40 hover:bg-blue-600/80 backdrop-blur-xl text-white px-6 py-3 rounded-2xl border border-white/20 shadow-2xl flex items-center gap-3 transition-all group cursor-pointer"
+                          >
+                            <div className="p-2 bg-white/10 rounded-xl group-hover:bg-white/20 transition-colors">
+                              <FaVrCardboard className="text-xl md:text-2xl animate-pulse" />
+                            </div>
+                            <div className="text-left">
+                              <span className="block text-[10px] font-black uppercase tracking-[0.2em] opacity-70">Experience in VR</span>
+                              <span className="block text-sm md:text-base font-black uppercase tracking-widest">Start 360° Tour</span>
+                            </div>
+                          </motion.button>
                         </div>
                       )}
                       {/* Media type and AI Room Label Badge */}
@@ -2313,7 +2313,7 @@ export default function Listing() {
                 {listing.name}
                 {listing.isVerified && (
                   <>
-                    <div 
+                    <div
                       onClick={() => setShowVerifiedModal(true)}
                       className="ml-2"
                     >
@@ -5257,14 +5257,14 @@ export default function Listing() {
       )}
 
       <ContactSupportWrapper />
-      
-      <ImmersiveTour 
-        isOpen={showImmersiveTour} 
-        onClose={() => setShowImmersiveTour(false)} 
+
+      <ImmersiveTour
+        isOpen={showImmersiveTour}
+        onClose={() => setShowImmersiveTour(false)}
         tourImages={listing.virtualTourImages?.length > 0 ? listing.virtualTourImages : [
-            "https://pannellum.org/images/alma.jpg",
-            "https://pannellum.org/images/cerro-tolo-s.jpg",
-            "https://p62.f3.n0.cdn.getcloudapp.com/items/2Nuv8x1O/360-Interior-Living-Room.jpg?v=784e2098696d7c7c4c1d63683a3f5f6c"
+          "https://pannellum.org/images/alma.jpg",
+          "https://pannellum.org/images/cerro-tolo-s.jpg",
+          "https://p62.f3.n0.cdn.getcloudapp.com/items/2Nuv8x1O/360-Interior-Living-Room.jpg?v=784e2098696d7c7c4c1d63683a3f5f6c"
         ]}
         propertyName={listing.name}
       />
