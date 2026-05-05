@@ -23,6 +23,125 @@ import { getLiveRecommendations, getInteractionHistory } from "../utils/sentinel
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+// Animation CSS classes from Profile.jsx
+const animationClasses = {
+  fadeInUp: "animate-[fadeInUp_0.6s_ease-out_forwards] opacity-0 translate-y-8",
+  fadeInLeft: "animate-[fadeInLeft_0.6s_ease-out_forwards] opacity-0 -translate-x-8",
+  fadeInRight: "animate-[fadeInRight_0.6s_ease-out_forwards] opacity-0 translate-x-8",
+  fadeIn: "animate-[fadeIn_0.6s_ease-out_forwards] opacity-0",
+  scaleIn: "animate-[scaleIn_0.5s_ease-out_forwards] opacity-0 scale-95",
+  slideInUp: "animate-[slideInUp_0.5s_ease-out_forwards] opacity-0 translate-y-4",
+  staggerDelay: (index) => `animation-delay-${index * 150}ms`,
+  bounceIn: "animate-[bounceIn_0.7s_ease-out_forwards] opacity-0 scale-50",
+  pulse: "animate-pulse",
+  spin: "animate-spin",
+  bounce: "animate-bounce",
+  wiggle: "animate-[wiggle_1s_ease-in-out_infinite]",
+  heartbeat: "animate-[heartbeat_1.5s_ease-in-out_infinite]",
+  float: "animate-[float_3s_ease-in-out_infinite]",
+  shimmer: "animate-[shimmer_2s_linear_infinite]",
+};
+
+// Custom keyframe animations from Profile.jsx
+const customAnimations = `
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeInLeft {
+  from { opacity: 0; transform: translateX(-30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes fadeInRight {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes slideInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes bounceIn {
+  0% { opacity: 0; transform: scale(0.3); }
+  50% { opacity: 1; transform: scale(1.05); }
+  70% { transform: scale(0.9); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes wiggle {
+  0%, 7% { transform: rotateZ(0); }
+  15% { transform: rotateZ(-15deg); }
+  20% { transform: rotateZ(10deg); }
+  25% { transform: rotateZ(-10deg); }
+  30% { transform: rotateZ(6deg); }
+  35% { transform: rotateZ(-4deg); }
+  40%, 100% { transform: rotateZ(0); }
+}
+@keyframes heartbeat {
+  0%, 50%, 100% { transform: scale(1); }
+  25% { transform: scale(1.1); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+@keyframes shimmer {
+  0% { background-position: -200px 0; }
+  100% { background-position: calc(200px + 100%) 0; }
+}
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animation-delay-0 { animation-delay: 0ms; }
+.animation-delay-150 { animation-delay: 150ms; }
+.animation-delay-300 { animation-delay: 300ms; }
+.animation-delay-450 { animation-delay: 450ms; }
+.animation-delay-600 { animation-delay: 600ms; }
+.animation-delay-750 { animation-delay: 750ms; }
+.animation-delay-800 { animation-delay: 800ms; }
+.animation-delay-850 { animation-delay: 850ms; }
+.animation-delay-900 { animation-delay: 900ms; }
+`;
+
+// Custom Counter Component with Animation
+const AnimatedCounter = ({ end, duration = 1000, delay = 0 }) => {
+  const [count, setCount] = useState(0);
+  const [started, setStarted] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setStarted(true);
+      let start = 0;
+      const increment = end / (duration / 50);
+      const counter = setInterval(() => {
+        start += increment;
+        if (start >= end) {
+          setCount(end);
+          clearInterval(counter);
+        } else {
+          setCount(Math.floor(start));
+        }
+      }, 50);
+      return () => clearInterval(counter);
+    }, delay);
+
+    return () => clearTimeout(timer);
+  }, [end, duration, delay]);
+
+  return (
+    <span className={`${started ? 'animate-[countUp_0.6s_ease-out_forwards]' : 'opacity-0'}`}>
+      {count}
+    </span>
+  );
+};
+
 export default function Home() {
   const theme = useSeasonalTheme();
   const allThemes = useAllSeasonalThemes();
@@ -63,6 +182,10 @@ export default function Home() {
   const [recentlyViewedListings, setRecentlyViewedListings] = useState([]);
   const [detectedCity, setDetectedCity] = useState(null);
   const [nearbyCities, setNearbyCities] = useState([]);
+
+  // Animation states for dashboard
+  const [isVisible, setIsVisible] = useState(false);
+  const [statsAnimated, setStatsAnimated] = useState(false);
 
   // Helper to determine if we are in user dashboard context for links
   const isUser = true; // Since this is Home.jsx, it usually implies a logged-in user context or main entry. 
@@ -437,6 +560,28 @@ export default function Home() {
     }
   };
 
+  // Add custom animations to head and trigger visibility
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = customAnimations;
+    document.head.appendChild(style);
+
+    // Trigger visibility for animations
+    const timer = setTimeout(() => setIsVisible(true), 100);
+
+    return () => {
+      document.head.removeChild(style);
+      clearTimeout(timer);
+    };
+  }, []);
+
+  // Trigger stats animation when data is loaded
+  useEffect(() => {
+    if (!loading && (recentlyViewed.length > 0 || wishlistItems.length > 0 || watchlistItems.length > 0 || myListingsCount > 0 || upcomingAppointments.length > 0)) {
+      setStatsAnimated(true);
+    }
+  }, [loading, recentlyViewed.length, wishlistItems.length, watchlistItems.length, myListingsCount, upcomingAppointments.length]);
+
   const handleSlideChange = (swiper) => {
     setCurrentSlideIndex(swiper.realIndex);
   };
@@ -730,50 +875,75 @@ export default function Home() {
                 </h2>
               </div>
 
-              <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-6">
                 {/* Recently Viewed */}
-                <Link to={`${linkPrefix}/search`} className="group bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-                  <div className="w-11 h-11 bg-blue-50 dark:bg-blue-900/30 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                    <FaEye className="text-lg text-blue-600 dark:text-blue-400" />
+                <Link
+                  to={`${linkPrefix}/search`}
+                  className={`bg-white dark:bg-gray-800 rounded-xl shadow-lg p-3 sm:p-4 text-center group hover:shadow-2xl transition-all duration-500 hover:scale-105 hover:-translate-y-2 ${isVisible ? animationClasses.scaleIn + ' animation-delay-450' : 'opacity-0 scale-95'}`}
+                >
+                  <div className={`bg-blue-100 dark:bg-blue-900 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3 group-hover:bg-blue-200 dark:group-hover:bg-blue-800 transition-all duration-300 ${animationClasses.float} group-hover:scale-110`}>
+                    <FaEye className="w-5 h-5 text-blue-600 dark:text-blue-400 group-hover:text-blue-700 transition-colors duration-300" />
                   </div>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white">{recentlyViewed.length}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 font-medium mt-0.5">Recently Viewed</div>
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300">
+                    {statsAnimated ? <AnimatedCounter end={recentlyViewed.length} delay={500} /> : recentlyViewed.length}
+                  </h3>
+                  <p className="text-[10px] sm:text-sm text-gray-600 dark:text-gray-400 group-hover:text-blue-500 transition-colors duration-300">Recently Viewed</p>
                 </Link>
 
                 {/* Wishlist */}
-                <Link to={`${linkPrefix}/wishlist`} className="group bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-                  <div className="w-11 h-11 bg-red-50 dark:bg-red-900/30 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                    <FaHeart className="text-lg text-red-500 dark:text-red-400" />
+                <Link
+                  to={`${linkPrefix}/wishlist`}
+                  className={`bg-white dark:bg-gray-800 rounded-xl shadow-lg p-3 sm:p-4 text-center group hover:shadow-2xl transition-all duration-500 hover:scale-105 hover:-translate-y-2 ${isVisible ? animationClasses.scaleIn + ' animation-delay-600' : 'opacity-0 scale-95'}`}
+                >
+                  <div className={`bg-red-100 dark:bg-red-900 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3 group-hover:bg-red-200 dark:group-hover:bg-red-800 transition-all duration-300 ${animationClasses.heartbeat} group-hover:scale-110`}>
+                    <FaHeart className="w-5 h-5 text-red-600 dark:text-red-400 group-hover:text-red-700 transition-colors duration-300" />
                   </div>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white">{wishlistItems.length}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 font-medium mt-0.5">Wishlist</div>
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors duration-300">
+                    {statsAnimated ? <AnimatedCounter end={wishlistItems.length} delay={650} /> : wishlistItems.length}
+                  </h3>
+                  <p className="text-[10px] sm:text-sm text-gray-600 dark:text-gray-400 group-hover:text-red-500 transition-colors duration-300">Wishlist</p>
                 </Link>
 
                 {/* Watchlist */}
-                <Link to={`${linkPrefix}/watchlist`} className="group bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-                  <div className="w-11 h-11 bg-amber-50 dark:bg-amber-900/30 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                    <FaBell className="text-lg text-amber-600 dark:text-amber-400" />
+                <Link
+                  to={`${linkPrefix}/watchlist`}
+                  className={`bg-white dark:bg-gray-800 rounded-xl shadow-lg p-3 sm:p-4 text-center group hover:shadow-2xl transition-all duration-500 hover:scale-105 hover:-translate-y-2 ${isVisible ? animationClasses.scaleIn + ' animation-delay-750' : 'opacity-0 scale-95'}`}
+                >
+                  <div className={`bg-orange-100 dark:bg-orange-900 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3 group-hover:bg-orange-200 dark:group-hover:bg-orange-800 transition-all duration-300 ${animationClasses.float} group-hover:scale-110`}>
+                    <FaBell className="w-5 h-5 text-orange-600 dark:text-orange-400 group-hover:text-orange-700 transition-colors duration-300" />
                   </div>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white">{watchlistItems.length}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 font-medium mt-0.5">Watchlist</div>
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors duration-300">
+                    {statsAnimated ? <AnimatedCounter end={watchlistItems.length} delay={800} /> : watchlistItems.length}
+                  </h3>
+                  <p className="text-[10px] sm:text-sm text-gray-600 dark:text-gray-400 group-hover:text-orange-500 transition-colors duration-300">Watchlist</p>
                 </Link>
 
                 {/* My Listings */}
-                <Link to={`${linkPrefix}/my-listings`} className="group bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-                  <div className="w-11 h-11 bg-green-50 dark:bg-green-900/30 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                    <FaListAlt className="text-lg text-green-600 dark:text-green-400" />
+                <Link
+                  to={`${linkPrefix}/my-listings`}
+                  className={`bg-white dark:bg-gray-800 rounded-xl shadow-lg p-3 sm:p-4 text-center group hover:shadow-2xl transition-all duration-500 hover:scale-105 hover:-translate-y-2 ${isVisible ? animationClasses.scaleIn + ' animation-delay-800' : 'opacity-0 scale-95'}`}
+                >
+                  <div className={`bg-green-100 dark:bg-green-900 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3 group-hover:bg-green-200 dark:group-hover:bg-green-800 transition-all duration-300 ${animationClasses.float} group-hover:scale-110`}>
+                    <FaListAlt className="w-5 h-5 text-green-600 dark:text-green-400 group-hover:text-green-700 transition-colors duration-300" />
                   </div>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white">{myListingsCount}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 font-medium mt-0.5">My Listings</div>
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors duration-300">
+                    {statsAnimated ? <AnimatedCounter end={myListingsCount} delay={900} /> : myListingsCount}
+                  </h3>
+                  <p className="text-[10px] sm:text-sm text-gray-600 dark:text-gray-400 group-hover:text-green-500 transition-colors duration-300">My Listings</p>
                 </Link>
 
                 {/* Upcoming Appointments */}
-                <Link to={`${linkPrefix}/my-appointments`} className="group bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 col-span-2 lg:col-span-1">
-                  <div className="w-11 h-11 bg-purple-50 dark:bg-purple-900/30 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                    <FaCalendarAlt className="text-lg text-purple-600 dark:text-purple-400" />
+                <Link
+                  to={`${linkPrefix}/my-appointments`}
+                  className={`bg-white dark:bg-gray-800 rounded-xl shadow-lg p-3 sm:p-4 text-center group hover:shadow-2xl transition-all duration-500 hover:scale-105 hover:-translate-y-2 col-span-2 lg:col-span-1 ${isVisible ? animationClasses.scaleIn + ' animation-delay-850' : 'opacity-0 scale-95'}`}
+                >
+                  <div className={`bg-purple-100 dark:bg-purple-900 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3 group-hover:bg-purple-200 dark:group-hover:bg-purple-800 transition-all duration-300 ${animationClasses.float} group-hover:scale-110`}>
+                    <FaCalendarAlt className="w-5 h-5 text-purple-600 dark:text-purple-400 group-hover:text-purple-700 transition-colors duration-300" />
                   </div>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white">{upcomingAppointments.length}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 font-medium mt-0.5">Upcoming Appts</div>
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors duration-300">
+                    {statsAnimated ? <AnimatedCounter end={upcomingAppointments.length} delay={1000} /> : upcomingAppointments.length}
+                  </h3>
+                  <p className="text-[10px] sm:text-sm text-gray-600 dark:text-gray-400 group-hover:text-purple-500 transition-colors duration-300">Upcoming Appts</p>
                 </Link>
               </div>
 
