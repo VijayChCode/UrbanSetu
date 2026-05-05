@@ -79,6 +79,19 @@ export default function RentProperty() {
     badges: []
   });
 
+  // Ellipsis animation for loading text
+  const [ellipsis, setEllipsis] = useState("");
+  useEffect(() => {
+    if (loading || draftingClause || otpVerifying || otpResending) {
+      const interval = setInterval(() => {
+        setEllipsis(prev => (prev.length >= 3 ? "" : prev + "."));
+      }, 500);
+      return () => clearInterval(interval);
+    } else {
+      setEllipsis("");
+    }
+  }, [loading, draftingClause, otpVerifying, otpResending]);
+
   // OTP Timer logic
   useEffect(() => {
     let interval = null;
@@ -1449,7 +1462,7 @@ export default function RentProperty() {
                     {draftingClause ? (
                       <>
                         <UrbanSetuSpinner size="sm" isBright={true} />
-                        Drafting...
+                        Drafting{ellipsis}
                       </>
                     ) : (
                       <>
@@ -1695,7 +1708,7 @@ export default function RentProperty() {
                 disabled={!!contract || loading || !formData.moveInDate || formData.moveInDate.trim() === ''}
                 className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
               >
-                {loading ? 'Processing...' : 'Continue to Contract Review'}
+                {loading ? `Processing${ellipsis}` : 'Continue to Contract Review'}
                 <FaChevronRight className="ml-2" />
               </button>
 
@@ -1962,7 +1975,7 @@ export default function RentProperty() {
                     disabled={loading}
                     className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200 dark:shadow-blue-900/40 disabled:opacity-50"
                   >
-                    {loading ? 'Sending Code...' : 'Confirm & Proceed'}
+                    {loading ? `Sending Code${ellipsis}` : 'Confirm & Proceed'}
                   </button>
                 </div>
               </div>
@@ -2018,7 +2031,7 @@ export default function RentProperty() {
                     {otpVerifying ? (
                       <>
                         <UrbanSetuSpinner size="sm" isBright={true} />
-                        Verifying...
+                        Verifying{ellipsis}
                       </>
                     ) : (
                       <>

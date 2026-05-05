@@ -59,6 +59,19 @@ export default function Appointment() {
   const [showCoinBurst, setShowCoinBurst] = useState(false);
   const [coinsEarned, setCoinsEarned] = useState(0);
 
+  // Ellipsis animation for loading text
+  const [ellipsis, setEllipsis] = useState("");
+  useEffect(() => {
+    if (checkingActive || loading) {
+      const interval = setInterval(() => {
+        setEllipsis(prev => (prev.length >= 3 ? "" : prev + "."));
+      }, 500);
+      return () => clearInterval(interval);
+    } else {
+      setEllipsis("");
+    }
+  }, [checkingActive, loading]);
+
   const handleChange = (e) => {
     setFormData((prev) => ({
       ...prev,
@@ -536,7 +549,7 @@ export default function Appointment() {
                   className="w-full bg-blue-600 dark:bg-blue-500 text-white font-bold py-3 rounded-lg shadow-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={loading || !agreed || hasActiveAppointment || checkingActive}
                 >
-                  {checkingActive ? "Checking..." : loading ? "Booking..." : hasActiveAppointment ? "Already Booked" : "Book Appointment"}
+                  {checkingActive ? `Checking${ellipsis}` : loading ? `Booking${ellipsis}` : hasActiveAppointment ? "Already Booked" : "Book Appointment"}
                 </button>
               </div>
               {hasActiveAppointment && (
