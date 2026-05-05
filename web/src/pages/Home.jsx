@@ -870,8 +870,8 @@ export default function Home() {
               }
             });
 
-            // Limit to 6 city pills
-            const displayCities = allCities.slice(0, 6);
+            // Limit to 4 city pills (Present + 3 others)
+            const displayCities = allCities.slice(0, 4);
 
             return (
               <section className="animate-fade-in">
@@ -902,7 +902,7 @@ export default function Home() {
                         item.type === 'detected' ? 'text-indigo-600 dark:text-indigo-400' : 'text-indigo-500'
                       }`} />
                       <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                        {item.type === 'detected' ? `📍 ${item.city}` : `Properties in ${item.city}`}
+                        {item.type === 'detected' ? `📍 Properties in ${item.city}` : `Properties in ${item.city}`}
                       </span>
                       {item.count && (
                         <span className="text-[10px] bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded-full font-bold">

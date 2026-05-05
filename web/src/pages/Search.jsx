@@ -1174,7 +1174,7 @@ export default function Search() {
                             <span className="text-[10px] bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full font-bold">Based on your location</span>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                            {nearYouCities.map((nc, i) => (
+                            {nearYouCities.slice(0, 4).map((nc, i) => (
                                 <button
                                     key={nc.city}
                                     onClick={() => {
@@ -1191,7 +1191,7 @@ export default function Search() {
                                 >
                                     <MapPin className={`w-3.5 h-3.5 group-hover:scale-110 transition-transform ${nc.city === detectedCity ? 'text-indigo-600 dark:text-indigo-400' : 'text-indigo-500'}`} />
                                     <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                                        {nc.city === detectedCity ? `📍 ${nc.city}` : nc.city}
+                                        {nc.city === detectedCity ? `📍 Properties in ${nc.city}` : `Properties in ${nc.city}`}
                                     </span>
                                     {nc.state && <span className="text-[10px] text-gray-400 dark:text-gray-500">{nc.state}</span>}
                                     <span className="text-[10px] bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded-full font-bold">
