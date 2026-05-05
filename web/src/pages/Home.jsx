@@ -60,6 +60,7 @@ export default function Home() {
   const [quickSearchCities, setQuickSearchCities] = useState([]);
   const [priceDropListings, setPriceDropListings] = useState([]);
   const [totalUnreadMessages, setTotalUnreadMessages] = useState(0);
+  const [recentlyViewedListings, setRecentlyViewedListings] = useState([]);
 
   // Helper to determine if we are in user dashboard context for links
   const isUser = true; // Since this is Home.jsx, it usually implies a logged-in user context or main entry. 
@@ -190,8 +191,9 @@ export default function Home() {
 
     // Recently viewed from Sentinel localStorage + Quick Search Cities
     const history = getInteractionHistory(currentUser._id);
-    const viewedIds = history.filter(h => h.interactionType === 'view').slice(0, 6).map(h => h._id);
-    setRecentlyViewed(viewedIds);
+    const viewedIds = history.slice(0, 8).map(h => h._id);
+    const uniqueViewedIds = [...new Set(viewedIds)];
+    setRecentlyViewed(uniqueViewedIds);
 
     // Extract top cities from browsing history for Quick Search
     const cityFreq = {};
@@ -277,6 +279,24 @@ export default function Home() {
     fetchMyListings();
     fetchAppointments();
     fetchPriceDrops();
+
+    // Fetch recently viewed listings by their IDs
+    const fetchRecentlyViewed = async () => {
+      if (uniqueViewedIds.length === 0) return;
+      try {
+        const fetched = await Promise.all(
+          uniqueViewedIds.slice(0, 8).map(async (id) => {
+            try {
+              const res = await authenticatedFetch(`${API_BASE_URL}/api/listing/get/${id}`);
+              if (res.ok) return await res.json();
+            } catch { /* skip failed */ }
+            return null;
+          })
+        );
+        setRecentlyViewedListings(fetched.filter(Boolean));
+      } catch (e) { console.error("Dashboard: recently viewed error", e); }
+    };
+    fetchRecentlyViewed();
   }, [currentUser?._id, currentUser?.role]);
 
   // STN-LIVE: Process local session recommendations + Wishlist/Watchlist
@@ -754,35 +774,24 @@ export default function Home() {
                 </div>
               )}
 
-              {/* Recently Viewed Properties (horizontal scroll) */}
-              {recentlyViewed.length > 0 && (() => {
-                // Match viewed IDs against all fetched listings to get full objects
-                const allListings = [...offerListings, ...rentListings, ...saleListings];
-                const viewedListings = recentlyViewed
-                  .map(id => allListings.find(l => l._id === id))
-                  .filter(Boolean)
-                  .slice(0, 6);
-
-                if (viewedListings.length === 0) return null;
-
-                return (
-                  <div className="mt-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                        <FaEye className="text-blue-500" /> Recently Viewed
-                      </h3>
-                      <Link to={`${linkPrefix}/search`} className="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline flex items-center gap-1">
-                        Browse More <FaArrowRight className="text-[10px]" />
-                      </Link>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                      {viewedListings.map((listing) => (
-                        <ListingItem key={listing._id} listing={listing} />
-                      ))}
-                    </div>
+              {/* Recently Viewed Properties */}
+              {recentlyViewedListings.length > 0 && (
+                <div className="mt-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                      <FaEye className="text-blue-500" /> Recently Viewed
+                    </h3>
+                    <Link to={`${linkPrefix}/search`} className="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline flex items-center gap-1">
+                      Browse More <FaArrowRight className="text-[10px]" />
+                    </Link>
                   </div>
-                );
-              })()}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {recentlyViewedListings.map((listing) => (
+                      <ListingItem key={listing._id} listing={listing} />
+                    ))}
+                  </div>
+                </div>
+              )}
             </section>
           )}
 
