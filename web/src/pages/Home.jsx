@@ -61,6 +61,8 @@ export default function Home() {
   const [priceDropListings, setPriceDropListings] = useState([]);
   const [totalUnreadMessages, setTotalUnreadMessages] = useState(0);
   const [recentlyViewedListings, setRecentlyViewedListings] = useState([]);
+  const [detectedCity, setDetectedCity] = useState(null);
+  const [nearbyCities, setNearbyCities] = useState([]);
 
   // Helper to determine if we are in user dashboard context for links
   const isUser = true; // Since this is Home.jsx, it usually implies a logged-in user context or main entry. 
@@ -208,6 +210,23 @@ export default function Home() {
       .slice(0, 4)
       .map(([city]) => city);
     setQuickSearchCities(topCities);
+
+    // Fetch IP-based location + nearby cities with listings
+    const fetchLocation = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/visitor/my-location`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success) {
+            if (data.city) setDetectedCity(data.city);
+            if (data.nearbyCities?.length > 0) {
+              setNearbyCities(data.nearbyCities);
+            }
+          }
+        }
+      } catch (e) { /* silent - location is enhancement only */ }
+    };
+    fetchLocation();
 
     // Fetch user's own listings count
     const fetchMyListings = async () => {
@@ -795,52 +814,108 @@ export default function Home() {
             </section>
           )}
 
-          {/* ─── Quick Search Shortcuts (city-based from browsing history) ─── */}
-          {currentUser && currentUser.role !== 'admin' && currentUser.role !== 'rootadmin' && quickSearchCities.length > 0 && (
-            <section className="animate-fade-in">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                  <FaSearch className="text-indigo-500" /> Quick Search
-                </h3>
-                <Link to={`${linkPrefix}/search`} className="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline">Advanced Search</Link>
-              </div>
-              <div className="flex flex-wrap gap-3">
-                {quickSearchCities.map((city, i) => (
+          {/* ─── Quick Search Shortcuts (IP-location + browsing history + nearby cities) ─── */}
+          {currentUser && currentUser.role !== 'admin' && currentUser.role !== 'rootadmin' && (quickSearchCities.length > 0 || nearbyCities.length > 0 || detectedCity) && (() => {
+            // Build merged, deduplicated city list: detected city first, then nearby cities, then history cities
+            const allCities = [];
+            const seen = new Set();
+
+            // 1. IP-detected current city (highlighted)
+            if (detectedCity && !seen.has(detectedCity.toLowerCase())) {
+              allCities.push({ city: detectedCity, type: 'detected' });
+              seen.add(detectedCity.toLowerCase());
+            }
+
+            // 2. Nearby cities from backend (with listing counts)
+            nearbyCities.forEach(nc => {
+              const key = nc.city.toLowerCase();
+              if (!seen.has(key)) {
+                allCities.push({ city: nc.city, type: 'nearby', count: nc.count, state: nc.state });
+                seen.add(key);
+              }
+            });
+
+            // 3. Browsing history cities
+            quickSearchCities.forEach(city => {
+              const key = city.toLowerCase();
+              if (!seen.has(key)) {
+                allCities.push({ city, type: 'history' });
+                seen.add(key);
+              }
+            });
+
+            // Limit to 6 city pills
+            const displayCities = allCities.slice(0, 6);
+
+            return (
+              <section className="animate-fade-in">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <FaSearch className="text-indigo-500" /> Quick Search
+                    {detectedCity && (
+                      <span className="text-xs font-medium text-gray-400 dark:text-gray-500 ml-1">• Near {detectedCity}</span>
+                    )}
+                  </h3>
+                  <Link to={`${linkPrefix}/search`} className="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline">Advanced Search</Link>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  {displayCities.map((item, i) => (
+                    <Link
+                      key={item.city}
+                      to={`/search?city=${encodeURIComponent(item.city)}`}
+                      className={`group flex items-center gap-2 px-4 py-2.5 rounded-xl border shadow-sm hover:shadow-md transition-all duration-300 animate-sentinel-fade-in ${
+                        item.type === 'detected'
+                          ? 'bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/30 dark:to-purple-900/30 border-indigo-200 dark:border-indigo-700 ring-1 ring-indigo-100 dark:ring-indigo-800'
+                          : item.type === 'nearby'
+                            ? 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 hover:border-indigo-200 dark:hover:border-indigo-700'
+                            : 'bg-gray-50 dark:bg-gray-800/60 border-gray-100 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-700'
+                      }`}
+                      style={{ animationDelay: `${i * 80}ms` }}
+                    >
+                      <FaMapMarkerAlt className={`group-hover:scale-110 transition-transform text-sm ${
+                        item.type === 'detected' ? 'text-indigo-600 dark:text-indigo-400' : 'text-indigo-500'
+                      }`} />
+                      <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                        {item.type === 'detected' ? `📍 ${item.city}` : `Properties in ${item.city}`}
+                      </span>
+                      {item.count && (
+                        <span className="text-[10px] bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded-full font-bold">
+                          {item.count}
+                        </span>
+                      )}
+                      {item.type === 'history' && (
+                        <span className="text-[9px] bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded-full font-bold uppercase">
+                          Viewed
+                        </span>
+                      )}
+                    </Link>
+                  ))}
+                  {/* Quick type filters */}
                   <Link
-                    key={city}
-                    to={`/search?city=${encodeURIComponent(city)}`}
-                    className="group flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-700 transition-all duration-300 animate-sentinel-fade-in"
-                    style={{ animationDelay: `${i * 100}ms` }}
+                    to="/search?type=rent"
+                    className="group flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-xl border border-emerald-100 dark:border-emerald-800 shadow-sm hover:shadow-md transition-all duration-300"
                   >
-                    <FaMapMarkerAlt className="text-indigo-500 group-hover:scale-110 transition-transform text-sm" />
-                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Properties in {city}</span>
+                    <FaHome className="text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform text-sm" />
+                    <span className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">For Rent</span>
                   </Link>
-                ))}
-                {/* Quick type filters */}
-                <Link
-                  to="/search?type=rent"
-                  className="group flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-xl border border-emerald-100 dark:border-emerald-800 shadow-sm hover:shadow-md transition-all duration-300"
-                >
-                  <FaHome className="text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform text-sm" />
-                  <span className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">For Rent</span>
-                </Link>
-                <Link
-                  to="/search?type=sale"
-                  className="group flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-50 to-sky-50 dark:from-blue-900/20 dark:to-sky-900/20 rounded-xl border border-blue-100 dark:border-blue-800 shadow-sm hover:shadow-md transition-all duration-300"
-                >
-                  <FaHome className="text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform text-sm" />
-                  <span className="text-sm font-semibold text-blue-700 dark:text-blue-300">For Sale</span>
-                </Link>
-                <Link
-                  to="/search?offer=true"
-                  className="group flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl border border-amber-100 dark:border-amber-800 shadow-sm hover:shadow-md transition-all duration-300"
-                >
-                  <FaStar className="text-amber-600 dark:text-amber-400 group-hover:scale-110 transition-transform text-sm" />
-                  <span className="text-sm font-semibold text-amber-700 dark:text-amber-300">Special Offers</span>
-                </Link>
-              </div>
-            </section>
-          )}
+                  <Link
+                    to="/search?type=sale"
+                    className="group flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-50 to-sky-50 dark:from-blue-900/20 dark:to-sky-900/20 rounded-xl border border-blue-100 dark:border-blue-800 shadow-sm hover:shadow-md transition-all duration-300"
+                  >
+                    <FaHome className="text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform text-sm" />
+                    <span className="text-sm font-semibold text-blue-700 dark:text-blue-300">For Sale</span>
+                  </Link>
+                  <Link
+                    to="/search?offer=true"
+                    className="group flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl border border-amber-100 dark:border-amber-800 shadow-sm hover:shadow-md transition-all duration-300"
+                  >
+                    <FaStar className="text-amber-600 dark:text-amber-400 group-hover:scale-110 transition-transform text-sm" />
+                    <span className="text-sm font-semibold text-amber-700 dark:text-amber-300">Special Offers</span>
+                  </Link>
+                </div>
+              </section>
+            );
+          })()}
 
           {/* ─── Price Drop Alerts ─── */}
           {currentUser && currentUser.role !== 'admin' && currentUser.role !== 'rootadmin' && priceDropListings.length > 0 && (

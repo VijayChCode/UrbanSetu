@@ -820,3 +820,66 @@ export const getMarketingStats = async (req, res, next) => {
     next(error);
   }
 };
+
+// Get user's current location from IP for Quick Search suggestions
+export const getMyLocation = async (req, res, next) => {
+  try {
+    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || req.connection.remoteAddress;
+    const location = getLocationFromIP(ip);
+
+    // Also get raw geo data for coordinates
+    const geoip = await import('geoip-lite');
+    const pureIp = String(ip).split(',')[0].trim();
+    const geo = geoip.default.lookup(pureIp);
+
+    const result = {
+      location, // "City, Region, Country" string
+      city: geo?.city || null,
+      region: geo?.region || null,
+      country: geo?.country || null,
+      ll: geo?.ll || null, // [lat, lng]
+      nearbyCities: []
+    };
+
+    // Find top nearby cities that have active listings
+    if (geo?.ll) {
+      try {
+        const Listing = (await import('../models/listing.model.js')).default;
+
+        // Get distinct cities from listings that have coordinates, sorted by proximity
+        const nearbyCities = await Listing.aggregate([
+          {
+            $match: {
+              visibility: 'public',
+              city: { $exists: true, $ne: '' }
+            }
+          },
+          {
+            $group: {
+              _id: '$city',
+              state: { $first: '$state' },
+              count: { $sum: 1 },
+              sampleImage: { $first: { $arrayElemAt: ['$imageUrls', 0] } }
+            }
+          },
+          { $sort: { count: -1 } },
+          { $limit: 8 }
+        ]);
+
+        result.nearbyCities = nearbyCities.map(c => ({
+          city: c._id,
+          state: c.state || '',
+          count: c.count,
+          image: c.sampleImage || null
+        }));
+      } catch (dbErr) {
+        console.error('Error fetching nearby cities:', dbErr);
+      }
+    }
+
+    res.status(200).json({ success: true, ...result });
+  } catch (error) {
+    console.error('Error getting user location:', error);
+    next(error);
+  }
+};

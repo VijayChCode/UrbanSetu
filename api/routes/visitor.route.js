@@ -7,7 +7,8 @@ import {
   clearOldVisitorLogs,
   getClientErrors,
   getVisitorById,
-  getMarketingStats
+  getMarketingStats,
+  getMyLocation
 } from '../controllers/visitor.controller.js';
 import { verifyToken, verifyAdmin } from '../utils/verify.js';
 
@@ -16,6 +17,7 @@ const router = express.Router();
 // Public routes
 router.post('/track', trackVisitor); // Track visitor when accepting cookies
 router.get('/count/daily', getDailyVisitorCount); // Get today's visitor count
+router.get('/my-location', getMyLocation); // Get user's location from IP for Quick Search
 
 // Admin routes (require authentication)
 router.get('/stats', verifyToken, verifyAdmin, getVisitorStats); // Get visitor statistics
