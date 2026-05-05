@@ -815,7 +815,7 @@ export default function Home() {
           )}
 
           {/* ─── Quick Search Shortcuts (IP-location + browsing history + nearby cities) ─── */}
-          {currentUser && currentUser.role !== 'admin' && currentUser.role !== 'rootadmin' && (quickSearchCities.length > 0 || nearbyCities.length > 0 || detectedCity) && (() => {
+          {currentUser && currentUser.role !== 'admin' && currentUser.role !== 'rootadmin' && (() => {
             // Build merged, deduplicated city list: detected city first, then nearby cities, then history cities
             const allCities = [];
             const seen = new Set();

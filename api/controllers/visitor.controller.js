@@ -841,40 +841,37 @@ export const getMyLocation = async (req, res, next) => {
       nearbyCities: []
     };
 
-    // Find top nearby cities that have active listings
-    if (geo?.ll) {
-      try {
-        const Listing = (await import('../models/listing.model.js')).default;
+    // Find top cities that have active listings (always runs, doesn't depend on IP resolution)
+    try {
+      const Listing = (await import('../models/listing.model.js')).default;
 
-        // Get distinct cities from listings that have coordinates, sorted by proximity
-        const nearbyCities = await Listing.aggregate([
-          {
-            $match: {
-              visibility: 'public',
-              city: { $exists: true, $ne: '' }
-            }
-          },
-          {
-            $group: {
-              _id: '$city',
-              state: { $first: '$state' },
-              count: { $sum: 1 },
-              sampleImage: { $first: { $arrayElemAt: ['$imageUrls', 0] } }
-            }
-          },
-          { $sort: { count: -1 } },
-          { $limit: 8 }
-        ]);
+      // Get distinct cities from listings sorted by listing count
+      const nearbyCities = await Listing.aggregate([
+        {
+          $match: {
+            city: { $exists: true, $ne: '' }
+          }
+        },
+        {
+          $group: {
+            _id: '$city',
+            state: { $first: '$state' },
+            count: { $sum: 1 },
+            sampleImage: { $first: { $arrayElemAt: ['$imageUrls', 0] } }
+          }
+        },
+        { $sort: { count: -1 } },
+        { $limit: 8 }
+      ]);
 
-        result.nearbyCities = nearbyCities.map(c => ({
-          city: c._id,
-          state: c.state || '',
-          count: c.count,
-          image: c.sampleImage || null
-        }));
-      } catch (dbErr) {
-        console.error('Error fetching nearby cities:', dbErr);
-      }
+      result.nearbyCities = nearbyCities.map(c => ({
+        city: c._id,
+        state: c.state || '',
+        count: c.count,
+        image: c.sampleImage || null
+      }));
+    } catch (dbErr) {
+      console.error('Error fetching nearby cities:', dbErr);
     }
 
     res.status(200).json({ success: true, ...result });
