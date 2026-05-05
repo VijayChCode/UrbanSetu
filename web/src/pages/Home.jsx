@@ -860,6 +860,16 @@ export default function Home() {
               }
             });
 
+            // 4. Fallback popular cities (ensure we always have a good selection)
+            const fallbackCities = ['Hyderabad', 'Bangalore', 'Mumbai', 'Delhi', 'Pune'];
+            fallbackCities.forEach(city => {
+              const key = city.toLowerCase();
+              if (!seen.has(key) && allCities.length < 8) {
+                allCities.push({ city, type: 'fallback' });
+                seen.add(key);
+              }
+            });
+
             // Limit to 6 city pills
             const displayCities = allCities.slice(0, 6);
 

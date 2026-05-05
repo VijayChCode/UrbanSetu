@@ -92,7 +92,16 @@ export default function Search() {
                             }
                         });
                     }
-                    if (sessionCities.length > 0) setNearYouCities(sessionCities);
+                    // Add fallback cities to ensure a rich selection
+                    const fallbacks = ['Hyderabad', 'Bangalore', 'Mumbai', 'Delhi', 'Pune'];
+                    fallbacks.forEach(city => {
+                        if (!seen.has(city.toLowerCase()) && sessionCities.length < 8) {
+                            sessionCities.push({ city, state: '', type: 'fallback' });
+                            seen.add(city.toLowerCase());
+                        }
+                    });
+
+                    setNearYouCities(sessionCities);
                 }
             } catch { /* silent */ }
         };
