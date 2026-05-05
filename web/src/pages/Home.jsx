@@ -799,6 +799,9 @@ export default function Home() {
             </section>
           )}
 
+          {/* Marketing sections — only shown for public/guest visitors */}
+          {!currentUser && (
+            <>
           {/* How It Works Section */}
           <section>
             <div className="text-center mb-12">
@@ -928,6 +931,8 @@ export default function Home() {
               </div>
             </div>
           </section>
+            </>
+          )}
 
           {/* Ads Section */}
           <div className="text-center py-6">
