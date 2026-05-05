@@ -229,7 +229,7 @@ export default function NotFound() {
                           className="px-6 py-3 bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 font-bold rounded-xl shadow-lg border border-blue-100 dark:border-blue-900 hover:bg-blue-50 dark:hover:bg-gray-700 transition-all transform hover:scale-105 active:scale-95 flex items-center gap-2 mx-auto"
                         >
                           <FaRobot className="text-sm" />
-                          Load More Recommendations <FaArrowRight />
+                          View More Recommendations <FaArrowRight />
                         </button>
                       </div>
                     )}
