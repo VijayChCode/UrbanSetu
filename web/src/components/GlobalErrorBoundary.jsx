@@ -340,7 +340,7 @@ class GlobalErrorBoundary extends React.Component {
                     </div>
 
                     {/* Persistent Error Recommendations Section */}
-                    {this.state.isPersistentError && !this.state.loadingRecs && (
+                    {this.state.isPersistentError && (
                         <div className="w-full max-w-6xl animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
                             <div className="relative overflow-hidden p-1 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-blue-600/10 rounded-[2.5rem]">
                                 <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-8 rounded-[2.4rem] border border-white/50 dark:border-gray-700/50 shadow-xl text-left">
@@ -356,15 +356,15 @@ class GlobalErrorBoundary extends React.Component {
                                                 <div className="flex flex-col">
                                                     <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 rounded-full w-fit">
                                                         <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">
-                                                            {this.getCurrentUser() ? (this.state.recommendations.length > 0 ? "PERSONALIZED RECOMMENDATIONS BASED ON YOUR ACTIVITY & LIKES" : "AI PERSONALIZATION ENGINE") : "HANDPICKED RECOMMENDATIONS"}
+                                                            {this.state.loadingRecs ? "GENERATING RECOMMENDATIONS..." : (this.getCurrentUser() ? (this.state.recommendations.length > 0 ? "PERSONALIZED RECOMMENDATIONS BASED ON YOUR ACTIVITY & LIKES" : "AI PERSONALIZATION ENGINE") : "HANDPICKED RECOMMENDATIONS")}
                                                         </span>
                                                     </div>
                                                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-1 font-medium italic">
-                                                        {this.getCurrentUser() ? "Tensor-mode active · Browse while we fix the connection" : "Real-time updates · Discover your next home"}
+                                                        {this.state.loadingRecs ? "Analyzing your preferences" : (this.getCurrentUser() ? "Tensor-mode active · Browse while we fix the connection" : "Real-time updates · Discover your next home")}
                                                     </p>
                                                 </div>
                                             </div>
-                                            {(this.state.recommendations.length > 0 || !this.getCurrentUser()) && (
+                                            {!this.state.loadingRecs && (this.state.recommendations.length > 0 || !this.getCurrentUser()) && (
                                                 <Link
                                                     to={this.getExplorePath()}
                                                     className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-bold hover:text-blue-700 dark:hover:text-blue-300 transition-all hover:translate-x-1"
@@ -374,7 +374,25 @@ class GlobalErrorBoundary extends React.Component {
                                             )}
                                         </div>
 
-                                        {this.state.recommendations.length > 0 ? (
+                                        {this.state.loadingRecs ? (
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                                {[...Array(4)].map((_, i) => (
+                                                    <div key={`skel-${i}`} className="animate-pulse rounded-2xl overflow-hidden bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-lg">
+                                                        <div className="aspect-[16/10] bg-gray-200 dark:bg-gray-700" />
+                                                        <div className="p-4 space-y-3">
+                                                            <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded-lg w-3/4" />
+                                                            <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
+                                                            <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-lg w-2/3" />
+                                                            <div className="flex gap-3">
+                                                                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16" />
+                                                                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16" />
+                                                            </div>
+                                                            <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-xl w-full mt-2" />
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : this.state.recommendations.length > 0 ? (
                                             <>
                                                 <WishlistProvider>
                                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
