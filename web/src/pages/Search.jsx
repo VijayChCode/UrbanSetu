@@ -19,6 +19,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 import { usePageTitle } from '../hooks/usePageTitle';
 import { authenticatedFetch } from "../utils/auth";
+import { getInteractionHistory } from "../utils/sentinelLiveEngine";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function Search() {
@@ -101,7 +102,17 @@ export default function Search() {
                         }
                     });
 
-                    setNearYouCities(sessionCities);
+                    // Get viewed cities from interaction history for functional tagging
+                    const history = getInteractionHistory(currentUser._id);
+                    const viewedCities = new Set(history.map(h => h.city?.toLowerCase()).filter(Boolean));
+
+                    // Tag all cities with isViewed
+                    const taggedCities = sessionCities.map(sc => ({
+                        ...sc,
+                        isViewed: viewedCities.has(sc.city.toLowerCase())
+                    }));
+
+                    setNearYouCities(taggedCities);
                 }
             } catch { /* silent */ }
         };
@@ -1174,7 +1185,7 @@ export default function Search() {
                             <span className="text-[10px] bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full font-bold">Based on your location</span>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                            {nearYouCities.slice(0, 4).map((nc, i) => (
+                            {nearYouCities.slice(0, 5).map((nc, i) => (
                                 <button
                                     key={nc.city}
                                     onClick={() => {
@@ -1196,6 +1207,11 @@ export default function Search() {
                                     <span className="text-[10px] bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded-full font-bold">
                                         {nc.count}
                                     </span>
+                                    {nc.isViewed && (
+                                        <span className="text-[9px] bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded-full font-bold uppercase">
+                                            Viewed
+                                        </span>
+                                    )}
                                 </button>
                             ))}
                         </div>

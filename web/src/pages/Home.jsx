@@ -835,43 +835,38 @@ export default function Home() {
             // Build merged, deduplicated city list: detected city first, then session cities, then history cities
             const allCities = [];
             const seen = new Set();
+            const viewedCities = new Set(quickSearchCities.map(c => c.toLowerCase()));
+
+            // Helper to add city with viewed check
+            const addCity = (cityName, type) => {
+              const key = cityName.toLowerCase();
+              if (!seen.has(key)) {
+                allCities.push({ 
+                  city: cityName, 
+                  type, 
+                  isViewed: viewedCities.has(key)
+                });
+                seen.add(key);
+              }
+            };
 
             // 1. Current login city (highlighted)
-            if (detectedCity && !seen.has(detectedCity.toLowerCase())) {
-              allCities.push({ city: detectedCity, type: 'detected' });
-              seen.add(detectedCity.toLowerCase());
-            }
+            if (detectedCity) addCity(detectedCity, 'detected');
 
             // 2. Cities from other active sessions (login locations from DB)
-            nearbyCities.forEach(nc => {
-              const key = nc.city.toLowerCase();
-              if (!seen.has(key)) {
-                allCities.push({ city: nc.city, type: 'nearby' });
-                seen.add(key);
-              }
-            });
+            nearbyCities.forEach(nc => addCity(nc.city, 'nearby'));
 
-            // 3. Browsing history cities
-            quickSearchCities.forEach(city => {
-              const key = city.toLowerCase();
-              if (!seen.has(key)) {
-                allCities.push({ city, type: 'history' });
-                seen.add(key);
-              }
-            });
+            // 3. Browsing history cities (already marked as viewed)
+            quickSearchCities.forEach(city => addCity(city, 'history'));
 
             // 4. Fallback popular cities (ensure we always have a good selection)
             const fallbackCities = ['Hyderabad', 'Bangalore', 'Mumbai', 'Delhi', 'Pune'];
             fallbackCities.forEach(city => {
-              const key = city.toLowerCase();
-              if (!seen.has(key) && allCities.length < 8) {
-                allCities.push({ city, type: 'fallback' });
-                seen.add(key);
-              }
+              if (allCities.length < 8) addCity(city, 'fallback');
             });
 
-            // Limit to 4 city pills (Present + 3 others)
-            const displayCities = allCities.slice(0, 4);
+            // Limit to 5 city pills (Present + 4 others) for a richer variety
+            const displayCities = allCities.slice(0, 5);
 
             return (
               <section className="animate-fade-in">
@@ -909,7 +904,7 @@ export default function Home() {
                           {item.count}
                         </span>
                       )}
-                      {item.type === 'history' && (
+                      {item.isViewed && (
                         <span className="text-[9px] bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded-full font-bold uppercase">
                           Viewed
                         </span>
