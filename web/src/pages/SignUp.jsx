@@ -63,7 +63,7 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
   const [recaptchaToken, setRecaptchaToken] = useState(null);
   const [recaptchaError, setRecaptchaError] = useState("");
   const [recaptchaKey, setRecaptchaKey] = useState(0);
-  const [recaptchaJustVerified, setRecaptchaJustVerified] = useState(false);
+  const [showRecaptcha, setShowRecaptcha] = useState(false);
   const recaptchaRef = useRef(null);
 
   // Email verification states
@@ -96,24 +96,15 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
   const handleRecaptchaVerify = (token) => {
     setRecaptchaToken(token);
     setRecaptchaError("");
-    // Show tick for ~1s before hiding
-    setRecaptchaJustVerified(true);
-    setTimeout(() => setRecaptchaJustVerified(false), 1000);
-    // If OTP resend captcha was required, auto-hide the widget + any OTP error after 1s
-    if (otpCaptchaRequired) {
-      setTimeout(() => {
-        setOtpCaptchaRequired(false);
-        setOtpError("");
-      }, 1000);
-    }
+    // If OTP resend captcha was required, it stays visible as per user request to remove all hiding
   };
 
   const handleRecaptchaExpire = () => {
     setRecaptchaToken(null);
     setRecaptchaError("reCAPTCHA expired. Please verify again.");
     setRecaptchaKey((k) => k + 1);
-    // Show captcha again on expire
-    // Rendering is gated by !recaptchaToken, so this will make it visible
+    // Rendering is gated by showRecaptcha
+    setShowRecaptcha(true);
   };
 
   const handleRecaptchaError = (error) => {
@@ -375,7 +366,7 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
       return;
     }
 
-    if (!recaptchaToken) {
+    if (showRecaptcha && !recaptchaToken) {
       setError("Please complete the reCAPTCHA verification.");
       return;
     }
@@ -457,6 +448,7 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
           }));
         } else if (data.message.includes("reCAPTCHA")) {
           setRecaptchaError(data.message);
+          setShowRecaptcha(true);
           resetRecaptcha();
         } else {
           setError(data.message);
@@ -1184,8 +1176,8 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                       </label>
                     </div>
 
-                    {/* reCAPTCHA Widget - show if not verified or briefly after verify */}
-                    {(!recaptchaToken || recaptchaJustVerified) && (
+                    {/* reCAPTCHA Widget - show only when required */}
+                    {showRecaptcha && (
                       <div className="flex justify-center mb-4">
                         <RecaptchaWidget
                           key={recaptchaKey}
