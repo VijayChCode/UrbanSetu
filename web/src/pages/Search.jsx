@@ -19,7 +19,6 @@ import { motion, AnimatePresence } from "framer-motion";
 
 import { usePageTitle } from '../hooks/usePageTitle';
 import { authenticatedFetch } from "../utils/auth";
-import { getInteractionHistory } from "../utils/sentinelLiveEngine";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function Search() {
@@ -102,14 +101,18 @@ export default function Search() {
                         }
                     });
 
-                    // Get viewed cities from interaction history for functional tagging
-                    const history = getInteractionHistory(currentUser._id);
-                    const viewedCities = new Set(history.map(h => h.city?.toLowerCase()).filter(Boolean));
+                    // Get actually clicked city links from localStorage (not interaction history)
+                    const clickedCitiesKey = `urbansetu_clicked_cities_${currentUser._id}`;
+                    let clickedCities = new Set();
+                    try {
+                        const stored = JSON.parse(localStorage.getItem(clickedCitiesKey) || '[]');
+                        clickedCities = new Set(stored.map(c => c.toLowerCase()));
+                    } catch { /* silent */ }
 
-                    // Tag all cities with isViewed
+                    // Tag all cities with isViewed based on actual clicks
                     const taggedCities = sessionCities.map(sc => ({
                         ...sc,
-                        isViewed: viewedCities.has(sc.city.toLowerCase())
+                        isViewed: clickedCities.has(sc.city.toLowerCase())
                     }));
 
                     setNearYouCities(taggedCities);
@@ -1189,6 +1192,22 @@ export default function Search() {
                                 <button
                                     key={nc.city}
                                     onClick={() => {
+                                        // Track this city click in localStorage for "Viewed" badge
+                                        if (currentUser?._id) {
+                                            const clickedCitiesKey = `urbansetu_clicked_cities_${currentUser._id}`;
+                                            try {
+                                                const stored = JSON.parse(localStorage.getItem(clickedCitiesKey) || '[]');
+                                                const cityLower = nc.city.toLowerCase();
+                                                if (!stored.includes(cityLower)) {
+                                                    stored.push(cityLower);
+                                                    localStorage.setItem(clickedCitiesKey, JSON.stringify(stored));
+                                                }
+                                                // Update local state immediately to show badge
+                                                setNearYouCities(prev => prev.map(c =>
+                                                    c.city.toLowerCase() === cityLower ? { ...c, isViewed: true } : c
+                                                ));
+                                            } catch { /* silent */ }
+                                        }
                                         const params = new URLSearchParams(location.search);
                                         params.set('city', nc.city);
                                         navigate(`?${params.toString()}`);

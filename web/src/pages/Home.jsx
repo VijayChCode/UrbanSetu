@@ -835,16 +835,22 @@ export default function Home() {
             // Build merged, deduplicated city list: detected city first, then session cities, then history cities
             const allCities = [];
             const seen = new Set();
-            const viewedCities = new Set(quickSearchCities.map(c => c.toLowerCase()));
+            // Get actually clicked city links from localStorage (not browsing history)
+            const clickedCitiesKey = `urbansetu_clicked_cities_${currentUser._id}`;
+            let clickedCities = new Set();
+            try {
+              const stored = JSON.parse(localStorage.getItem(clickedCitiesKey) || '[]');
+              clickedCities = new Set(stored.map(c => c.toLowerCase()));
+            } catch { /* silent */ }
 
-            // Helper to add city with viewed check
+            // Helper to add city with viewed check based on actual clicks
             const addCity = (cityName, type) => {
               const key = cityName.toLowerCase();
               if (!seen.has(key)) {
-                allCities.push({ 
-                  city: cityName, 
-                  type, 
-                  isViewed: viewedCities.has(key)
+                allCities.push({
+                  city: cityName,
+                  type,
+                  isViewed: clickedCities.has(key)
                 });
                 seen.add(key);
               }
@@ -884,18 +890,27 @@ export default function Home() {
                     <Link
                       key={item.city}
                       to={`/search?city=${encodeURIComponent(item.city)}`}
-                      className={`group flex items-center gap-2 px-4 py-2.5 rounded-xl border shadow-sm hover:shadow-md transition-all duration-300 animate-sentinel-fade-in ${
-                        item.type === 'detected'
+                      onClick={() => {
+                        // Track this city click in localStorage for "Viewed" badge
+                        try {
+                          const stored = JSON.parse(localStorage.getItem(clickedCitiesKey) || '[]');
+                          const cityLower = item.city.toLowerCase();
+                          if (!stored.includes(cityLower)) {
+                            stored.push(cityLower);
+                            localStorage.setItem(clickedCitiesKey, JSON.stringify(stored));
+                          }
+                        } catch { /* silent */ }
+                      }}
+                      className={`group flex items-center gap-2 px-4 py-2.5 rounded-xl border shadow-sm hover:shadow-md transition-all duration-300 animate-sentinel-fade-in ${item.type === 'detected'
                           ? 'bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/30 dark:to-purple-900/30 border-indigo-200 dark:border-indigo-700 ring-1 ring-indigo-100 dark:ring-indigo-800'
                           : item.type === 'nearby'
                             ? 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 hover:border-indigo-200 dark:hover:border-indigo-700'
                             : 'bg-gray-50 dark:bg-gray-800/60 border-gray-100 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-700'
-                      }`}
+                        }`}
                       style={{ animationDelay: `${i * 80}ms` }}
                     >
-                      <FaMapMarkerAlt className={`group-hover:scale-110 transition-transform text-sm ${
-                        item.type === 'detected' ? 'text-indigo-600 dark:text-indigo-400' : 'text-indigo-500'
-                      }`} />
+                      <FaMapMarkerAlt className={`group-hover:scale-110 transition-transform text-sm ${item.type === 'detected' ? 'text-indigo-600 dark:text-indigo-400' : 'text-indigo-500'
+                        }`} />
                       <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                         {item.type === 'detected' ? `📍 Properties in ${item.city}` : `Properties in ${item.city}`}
                       </span>
@@ -1024,8 +1039,8 @@ export default function Home() {
                         <div
                           key={`live-${listing._id}`}
                           className={`relative group overflow-visible transition-all duration-500 ${newlyLoadedIds.has(listing._id)
-                              ? 'animate-sentinel-fade-in'
-                              : ''
+                            ? 'animate-sentinel-fade-in'
+                            : ''
                             }`}
                           style={{
                             animationDelay: newlyLoadedIds.has(listing._id)
