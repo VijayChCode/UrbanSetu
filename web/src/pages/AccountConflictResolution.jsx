@@ -249,6 +249,9 @@ export default function AccountConflictResolution() {
 
       // Handle successful login
       setTimeout(() => {
+        // Clear referral code from localStorage on success
+        localStorage.removeItem('urbansetu_ref');
+        
         if (isGoogleAuth && data.token) {
           // For Google, we already have the token in the response
           setPendingLoginData(data);

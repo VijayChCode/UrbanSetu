@@ -465,6 +465,10 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
       } else {
         setError("");
         setLoading(false);
+
+        // Clear referral code from localStorage on success
+        localStorage.removeItem('urbansetu_ref');
+
         if (formData.role === 'admin' || formData.role === 'rootadmin') {
           setSuccess("Admin account created successfully. Please wait for an existing admin to approve your request.");
           setTimeout(() => {

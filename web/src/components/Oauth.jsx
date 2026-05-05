@@ -87,6 +87,9 @@ export default function Oauth({ pageType, disabled = false, onAuthStart = null, 
                 localStorage.setItem('accessToken', data.token);
                 if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken);
                 localStorage.setItem('login', Date.now()); // Notify other tabs
+                
+                // Clear referral code from localStorage on success
+                localStorage.removeItem('urbansetu_ref');
             }
 
             // If component provides a custom success handler (e.g. for showing a loader)
