@@ -1,9 +1,7 @@
 import VisitorLog from '../models/visitorLog.model.js';
 import User from '../models/user.model.js';
 import Notification from '../models/notification.model.js';
-import Listing from '../models/listing.model.js';
 import crypto from 'crypto';
-import geoip from 'geoip-lite';
 import { getDeviceInfo, getBrowserInfo, getOSInfo, getDeviceType, getLocationFromIP } from '../utils/sessionManager.js';
 
 // Generate fingerprint for visitor (IP + User-Agent + Source hash)
@@ -819,72 +817,6 @@ export const getMarketingStats = async (req, res, next) => {
     });
   } catch (error) {
     console.error('Error getting marketing stats:', error);
-    next(error);
-  }
-};
-
-// Get user's current location from IP for Quick Search suggestions
-export const getMyLocation = async (req, res, next) => {
-  try {
-    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || req.connection.remoteAddress;
-    const locationStr = getLocationFromIP(ip);
-
-    // Parse city from the location string (format: "City, Region, Country")
-    const locationParts = locationStr && locationStr !== 'Unknown' && locationStr !== 'Local Development' && locationStr !== 'Private Network'
-      ? locationStr.split(',').map(s => s.trim())
-      : [];
-
-    // Also try geoip-lite directly for more structured data
-    const pureIp = String(ip).split(',')[0].trim();
-    let geo = null;
-    try {
-      geo = geoip.lookup(pureIp);
-    } catch { /* geoip lookup failed silently */ }
-
-    const detectedCity = geo?.city || locationParts[0] || null;
-
-    const result = {
-      location: locationStr,
-      city: detectedCity,
-      region: geo?.region || locationParts[1] || null,
-      country: geo?.country || locationParts[2] || null,
-      ll: geo?.ll || null,
-      nearbyCities: []
-    };
-
-    // Find top cities that have active listings (always runs)
-    try {
-      const nearbyCities = await Listing.aggregate([
-        {
-          $match: {
-            city: { $exists: true, $ne: '' }
-          }
-        },
-        {
-          $group: {
-            _id: '$city',
-            state: { $first: '$state' },
-            count: { $sum: 1 },
-            sampleImage: { $first: { $arrayElemAt: ['$imageUrls', 0] } }
-          }
-        },
-        { $sort: { count: -1 } },
-        { $limit: 8 }
-      ]);
-
-      result.nearbyCities = nearbyCities.map(c => ({
-        city: c._id,
-        state: c.state || '',
-        count: c.count,
-        image: c.sampleImage || null
-      }));
-    } catch (dbErr) {
-      console.error('Error fetching nearby cities:', dbErr);
-    }
-
-    res.status(200).json({ success: true, ...result });
-  } catch (error) {
-    console.error('Error getting user location:', error);
     next(error);
   }
 };
