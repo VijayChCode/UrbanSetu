@@ -257,7 +257,6 @@ const PublicBlogs = () => {
         setResendTimer(30);
         setCanResend(false);
         setRequiresCaptcha(false);
-        setShowRecaptcha(false);
         setRecaptchaToken(null);
       } else {
         if (data.requiresCaptcha) {
@@ -350,7 +349,6 @@ const PublicBlogs = () => {
         setResendTimer(30);
         setCanResend(false);
         setUnsubRequiresCaptcha(false);
-        setShowUnsubRecaptcha(false);
         setUnsubRecaptchaToken(null);
       } else {
         if (data.requiresCaptcha) {
@@ -1002,7 +1000,7 @@ const PublicBlogs = () => {
                         />
                         <button
                           onClick={handleSendSubscribeOtp}
-                          disabled={sendingOtp}
+                          disabled={sendingOtp || (requiresCaptcha && !recaptchaToken)}
                           className="px-8 py-4 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all transform hover:scale-105 shadow-lg shadow-blue-900/40 disabled:opacity-70 disabled:cursor-not-allowed whitespace-nowrap min-w-[140px] flex items-center justify-center gap-2"
                         >
                           {sendingOtp ? (
@@ -1021,7 +1019,6 @@ const PublicBlogs = () => {
                             onVerify={(token) => {
                               setRecaptchaToken(token);
                               setOtpError('');
-                              setTimeout(() => setShowRecaptcha(false), 1000);
                             }}
                             onExpire={() => {
                               setRecaptchaToken(null);
@@ -1144,7 +1141,6 @@ const PublicBlogs = () => {
                           onVerify={(token) => {
                             setUnsubRecaptchaToken(token);
                             setOtpError('');
-                            setTimeout(() => setShowUnsubRecaptcha(false), 1000);
                           }}
                           onExpire={() => {
                             setUnsubRecaptchaToken(null);
@@ -1170,7 +1166,7 @@ const PublicBlogs = () => {
                       </button>
                       <button
                         onClick={handleSendUnsubscribeOtp}
-                        disabled={sendingOtp}
+                        disabled={sendingOtp || (unsubRequiresCaptcha && !unsubRecaptchaToken)}
                         className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors disabled:opacity-70 flex items-center justify-center gap-2 min-w-[80px]"
                       >
                         {sendingOtp ? (

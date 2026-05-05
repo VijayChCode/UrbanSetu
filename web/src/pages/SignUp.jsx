@@ -1206,7 +1206,7 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                         loading ||
                         !meetsMinimumRequirements(formData.password) ||
                         !emailVerified ||
-                        !recaptchaToken ||
+                        (showRecaptcha && !recaptchaToken) ||
                         authInProgress === 'google'
                       }
                       className="w-full py-3 text-base font-semibold shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"

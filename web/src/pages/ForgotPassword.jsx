@@ -768,7 +768,7 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
                   variant="orange"
                   loading={loading}
                   loadingText="Verifying..."
-                  disabled={loading || !emailVerified || !recaptchaToken}
+                  disabled={loading || !emailVerified || (showRecaptcha && !recaptchaToken)}
                   className="w-full py-3 text-base font-semibold shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
                 >
                   Continue to Reset Password

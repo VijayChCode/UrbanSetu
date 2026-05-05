@@ -279,7 +279,6 @@ const PublicGuides = () => {
                 setResendTimer(30);
                 setCanResend(false);
                 setRequiresCaptcha(false);
-                setShowRecaptcha(false);
                 setRecaptchaToken(null);
             } else {
                 if (data.requiresCaptcha) {
@@ -372,7 +371,6 @@ const PublicGuides = () => {
                 setResendTimer(30);
                 setCanResend(false);
                 setUnsubRequiresCaptcha(false);
-                setShowUnsubRecaptcha(false);
                 setUnsubRecaptchaToken(null);
             } else {
                 if (data.requiresCaptcha) {
@@ -920,7 +918,7 @@ const PublicGuides = () => {
                                             />
                                             <button
                                                 onClick={handleSendSubscribeOtp}
-                                                disabled={sendingOtp}
+                                                disabled={sendingOtp || (requiresCaptcha && !recaptchaToken)}
                                                 className="px-8 py-4 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl transition-colors shadow-lg shadow-purple-900/20 w-full sm:w-auto hover:-translate-y-1 disabled:opacity-70 disabled:cursor-not-allowed whitespace-nowrap"
                                             >
                                                 {sendingOtp ? 'Sending...' : 'Subscribe'}
@@ -934,7 +932,6 @@ const PublicGuides = () => {
                                                     onVerify={(token) => {
                                                         setRecaptchaToken(token);
                                                         setOtpError('');
-                                                        setTimeout(() => setShowRecaptcha(false), 1000);
                                                     }}
                                                     onExpire={() => {
                                                         setRecaptchaToken(null);
@@ -1053,7 +1050,6 @@ const PublicGuides = () => {
                                                 onVerify={(token) => {
                                                     setUnsubRecaptchaToken(token);
                                                     setOtpError('');
-                                                    setTimeout(() => setShowUnsubRecaptcha(false), 1000);
                                                 }}
                                                 onExpire={() => {
                                                     setUnsubRecaptchaToken(null);
@@ -1079,7 +1075,7 @@ const PublicGuides = () => {
                                         </button>
                                         <button
                                             onClick={handleSendUnsubscribeOtp}
-                                            disabled={sendingOtp}
+                                            disabled={sendingOtp || (unsubRequiresCaptcha && !unsubRecaptchaToken)}
                                             className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors disabled:opacity-70 flex items-center justify-center gap-2 min-w-[80px]"
                                         >
                                             {sendingOtp ? (
