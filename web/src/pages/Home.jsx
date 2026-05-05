@@ -206,16 +206,7 @@ export default function Home() {
 
       // Request all matches (limit 1000) to allow infinite "View More"
       const recs = await getLiveRecommendations(uniqueCandidates, 1000, uniquePreferences);
-      if (recs.length > 0) {
-        setLiveRecommendations(recs);
-      } else if (uniqueCandidates.length > 0) {
-        // Fallback: If no session history / no TensorFlow matches, show randomized candidates
-        const fallback = uniqueCandidates
-          .sort(() => 0.5 - Math.random())
-          .slice(0, 8)
-          .map(listing => ({ ...listing, sentinelScore: 0.5 + Math.random() * 0.3, isLiveMatch: false }));
-        setLiveRecommendations(fallback);
-      }
+      setLiveRecommendations(recs);
     };
 
     processLiveRecs();
@@ -503,7 +494,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-20 py-16">
 
           {/* Sentinel Live Section (Real-time Session Based) - regular users only */}
-          {currentUser && currentUser.role !== 'admin' && currentUser.role !== 'rootadmin' && liveRecommendations.length > 0 && (
+          {currentUser && currentUser.role !== 'admin' && currentUser.role !== 'rootadmin' && (
             <section className="relative overflow-hidden p-1 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-blue-600/10 rounded-[2.5rem] mt-[-2rem]">
               <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-8 rounded-[2.4rem] border border-white/50 dark:border-gray-700/50">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
@@ -517,41 +508,63 @@ export default function Home() {
                     <div className="flex flex-col">
                       <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 rounded-full w-fit">
                         <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest flex items-center gap-2">
-                          Recommending based on your current session
+                          {liveRecommendations.length > 0 ? "Recommending based on your current session" : "AI Personalization Engine"}
                         </span>
                       </div>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-1 font-medium italic">Tensor-mode active</p>
                     </div>
                   </div>
-                  <Link
-                    to={`${linkPrefix}/search`}
-                    className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-bold hover:text-blue-700 dark:hover:text-blue-300 transition-all hover:translate-x-1"
-                  >
-                    View All <FaArrowRight />
-                  </Link>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {liveRecommendations.slice(0, visibleRecsCount).map((listing) => (
-                    <div key={`live-${listing._id}`} className="relative group overflow-visible">
-                      {listing.isLiveMatch && (
-                        <div className="absolute -top-2 -right-2 z-20 bg-blue-600 text-white text-[10px] font-black px-2 py-1 rounded-lg shadow-lg transform rotate-12 group-hover:rotate-0 transition-transform">
-                          {Math.round(listing.sentinelScore * 100)}% MATCH
-                        </div>
-                      )}
-                      <ListingItem listing={listing} />
-                    </div>
-                  ))}
-                </div>
-
-                {liveRecommendations.length > visibleRecsCount && (
-                  <div className="mt-8 text-center">
-                    <button
-                      onClick={() => setVisibleRecsCount(prev => prev + 4)}
-                      className="px-6 py-3 bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 font-bold rounded-xl shadow-lg border border-blue-100 dark:border-blue-900 hover:bg-blue-50 dark:hover:bg-gray-700 transition-all transform hover:scale-105 flex items-center gap-2 mx-auto"
+                  {liveRecommendations.length > 0 && (
+                    <Link
+                      to={`${linkPrefix}/search`}
+                      className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-bold hover:text-blue-700 dark:hover:text-blue-300 transition-all hover:translate-x-1"
                     >
-                      View More Recommendations <FaArrowRight />
-                    </button>
+                      View All <FaArrowRight />
+                    </Link>
+                  )}
+                </div>
+
+                {liveRecommendations.length > 0 ? (
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                      {liveRecommendations.slice(0, visibleRecsCount).map((listing) => (
+                        <div key={`live-${listing._id}`} className="relative group overflow-visible">
+                          {listing.isLiveMatch && (
+                            <div className="absolute -top-2 -right-2 z-20 bg-blue-600 text-white text-[10px] font-black px-2 py-1 rounded-lg shadow-lg transform rotate-12 group-hover:rotate-0 transition-transform">
+                              {Math.round(listing.sentinelScore * 100)}% MATCH
+                            </div>
+                          )}
+                          <ListingItem listing={listing} />
+                        </div>
+                      ))}
+                    </div>
+
+                    {liveRecommendations.length > visibleRecsCount && (
+                      <div className="mt-8 text-center">
+                        <button
+                          onClick={() => setVisibleRecsCount(prev => prev + 4)}
+                          className="px-6 py-3 bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 font-bold rounded-xl shadow-lg border border-blue-100 dark:border-blue-900 hover:bg-blue-50 dark:hover:bg-gray-700 transition-all transform hover:scale-105 flex items-center gap-2 mx-auto"
+                        >
+                          View More Recommendations <FaArrowRight />
+                        </button>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="py-12 px-6 text-center animate-fade-in">
+                    <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/30 rounded-3xl flex items-center justify-center mx-auto mb-6 transform -rotate-6">
+                      <FaRocket className="text-4xl text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Sentinel is getting ready! 🤖</h3>
+                    <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto leading-relaxed">
+                      Start exploring properties, adding items to your wishlist, or tracking listings to unlock your personalized **Sentinel Live** recommendations tailored to your unique tastes.
+                    </p>
+                    <Link
+                      to="/search"
+                      className="mt-6 inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg hover:bg-blue-700 transition-all hover:scale-105 active:scale-95"
+                    >
+                      Start Exploring <FaSearch />
+                    </Link>
                   </div>
                 )}
               </div>
