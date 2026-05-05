@@ -982,12 +982,15 @@ export default function Home() {
               {/* Recently Viewed Properties */}
               {recentlyViewedListings.length > 0 && (
                 <div className="mt-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                      <FaEye className="text-blue-500" /> Recently Viewed
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white flex items-center gap-3">
+                      <span className="p-1.5 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-xl shadow-lg">
+                        <FaEye className="text-base" />
+                      </span>
+                      Recently Viewed
                     </h3>
-                    <Link to={`${linkPrefix}/search`} className="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline flex items-center gap-1">
-                      Browse More <FaArrowRight className="text-[10px]" />
+                    <Link to={`${linkPrefix}/search`} className="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline flex items-center gap-1 group">
+                      Browse More <FaArrowRight className="text-[10px] group-hover:translate-x-1 transition-transform" />
                     </Link>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -1046,14 +1049,19 @@ export default function Home() {
 
             return (
               <section className="animate-fade-in">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                    <FaSearch className="text-indigo-500" /> Quick Search
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white flex items-center gap-3">
+                    <span className="p-1.5 bg-gradient-to-br from-indigo-500 to-blue-600 text-white rounded-xl shadow-lg">
+                      <FaSearch className="text-base" />
+                    </span>
+                    Quick Search
                     {detectedCity && (
                       <span className="text-xs font-medium text-gray-400 dark:text-gray-500 ml-1">• Near {detectedCity}</span>
                     )}
                   </h3>
-                  <Link to={`${linkPrefix}/search`} className="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline">Advanced Search</Link>
+                  <Link to={`${linkPrefix}/search`} className="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline flex items-center gap-1 group">
+                    Advanced Search <FaArrowRight className="text-[10px] group-hover:translate-x-1 transition-transform" />
+                  </Link>
                 </div>
                 <div className="flex flex-wrap gap-3">
                   {displayCities.map((item, i) => (
@@ -1126,14 +1134,19 @@ export default function Home() {
           {/* ─── Price Drop Alerts ─── */}
           {currentUser && currentUser.role !== 'admin' && currentUser.role !== 'rootadmin' && priceDropListings.length > 0 && (
             <section className="animate-fade-in">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                  <FaArrowDown className="text-green-500" /> Price Drop Alerts
-                  <span className="px-2 py-0.5 bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 text-[10px] font-bold rounded-full uppercase">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white flex items-center gap-3">
+                  <span className="p-1.5 bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-xl shadow-lg">
+                    <FaArrowDown className="text-base" />
+                  </span>
+                  Price Drop Alerts
+                  <span className="px-2 py-0.5 bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 text-[10px] font-black rounded-full uppercase ml-1">
                     {priceDropListings.length} drop{priceDropListings.length !== 1 ? 's' : ''}
                   </span>
                 </h3>
-                <Link to={`${linkPrefix}/watchlist`} className="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline">View Watchlist</Link>
+                <Link to={`${linkPrefix}/watchlist`} className="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline flex items-center gap-1 group">
+                  View Watchlist <FaArrowRight className="text-[10px] group-hover:translate-x-1 transition-transform" />
+                </Link>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {priceDropListings.map((listing) => (
@@ -1296,8 +1309,10 @@ export default function Home() {
             <section>
               <div className="flex flex-row items-center justify-between gap-4 mb-8">
                 <div className="flex flex-col md:flex-row md:items-center gap-4">
-                  <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2 sm:gap-3">
-                    <span className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400"><FaStar className="text-lg sm:text-xl" /></span>
+                  <h2 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white flex items-center gap-3">
+                    <span className="p-2 bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-xl shadow-lg">
+                      <FaStar className="text-lg sm:text-xl" />
+                    </span>
                     Recommended for You
                   </h2>
                   <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-full h-fit w-fit">
@@ -1322,8 +1337,10 @@ export default function Home() {
           {(trendingListings.length > 0 || offerListings.length > 0) && (
             <section>
               <div className="flex justify-between items-center mb-8">
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2 sm:gap-3">
-                  <span className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg text-red-600 dark:text-red-400"><FaChartLine className="text-lg sm:text-xl" /></span>
+                <h2 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white flex items-center gap-3">
+                  <span className="p-2 bg-gradient-to-br from-red-500 to-pink-600 text-white rounded-xl shadow-lg">
+                    <FaChartLine className="text-lg sm:text-xl" />
+                  </span>
                   {trendingListings.length > 0 ? 'Popular / Trending' : 'Featured Properties'}
                 </h2>
                 <Link to={`${linkPrefix}/search`} className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-medium hover:text-blue-800 dark:hover:text-blue-300 transition-colors text-sm sm:text-base whitespace-nowrap">
@@ -1348,8 +1365,10 @@ export default function Home() {
           {offerListings.length > 0 && (
             <section>
               <div className="flex justify-between items-center mb-8">
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2 sm:gap-3">
-                  <span className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg text-orange-600 dark:text-orange-400"><FaGem className="text-lg sm:text-xl" /></span>
+                <h2 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white flex items-center gap-3">
+                  <span className="p-2 bg-gradient-to-br from-orange-500 to-amber-600 text-white rounded-xl shadow-lg">
+                    <FaGem className="text-lg sm:text-xl" />
+                  </span>
                   Exclusive Offers
                 </h2>
                 <Link to={`${linkPrefix}/search?offer=true`} className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-medium hover:text-blue-800 dark:hover:text-blue-300 transition-colors text-sm sm:text-base whitespace-nowrap">
@@ -1368,8 +1387,10 @@ export default function Home() {
           {rentListings.length > 0 && (
             <section>
               <div className="flex justify-between items-center mb-8">
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2 sm:gap-3">
-                  <span className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg text-green-600 dark:text-green-400"><FaHome className="text-lg sm:text-xl" /></span>
+                <h2 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white flex items-center gap-3">
+                  <span className="p-2 bg-gradient-to-br from-green-500 to-teal-600 text-white rounded-xl shadow-lg">
+                    <FaHome className="text-lg sm:text-xl" />
+                  </span>
                   Homes for Rent
                 </h2>
                 <Link to={`${linkPrefix}/search?type=rent`} className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-medium hover:text-blue-800 dark:hover:text-blue-300 transition-colors text-sm sm:text-base whitespace-nowrap">
@@ -1388,8 +1409,10 @@ export default function Home() {
           {saleListings.length > 0 && (
             <section>
               <div className="flex justify-between items-center mb-8">
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2 sm:gap-3">
-                  <span className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg text-purple-600 dark:text-purple-400"><FaHome className="text-lg sm:text-xl" /></span>
+                <h2 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white flex items-center gap-3">
+                  <span className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-xl shadow-lg">
+                    <FaHome className="text-lg sm:text-xl" />
+                  </span>
                   Homes for Sale
                 </h2>
                 <Link to={`${linkPrefix}/search?type=sale`} className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-medium hover:text-blue-800 dark:hover:text-blue-300 transition-colors text-sm sm:text-base whitespace-nowrap">
