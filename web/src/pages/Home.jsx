@@ -13,12 +13,7 @@ import ContactSupportWrapper from "../components/ContactSupportWrapper";
 import GeminiAIWrapper from "../components/GeminiAIWrapper";
 import { usePageTitle } from '../hooks/usePageTitle';
 import Typewriter from "../components/ui/Typewriter";
-import {
-  FaHome, FaSearch, FaHeart, FaStar, FaMapMarkerAlt, FaPhone, FaEnvelope,
-  FaShieldAlt, FaAward, FaUsers, FaChartLine, FaLightbulb, FaRocket, FaGem,
-  FaQuoteLeft, FaQuoteRight, FaCheckCircle, FaClock, FaHandshake, FaGlobe,
-  FaMobile, FaDesktop, FaTablet, FaInfoCircle, FaArrowRight, FaEye, FaCalendarAlt, FaListAlt, FaBell, FaRobot
-} from "react-icons/fa";
+import { FaEye, FaCalendarAlt, FaListAlt, FaBell, FaCommentDots, FaArrowDown, FaSearch, FaHome, FaHeart, FaStar, FaMapMarkerAlt, FaPhone, FaEnvelope, FaShieldAlt, FaAward, FaUsers, FaChartLine, FaLightbulb, FaRocket, FaGem, FaQuoteLeft, FaQuoteRight, FaCheckCircle, FaClock, FaHandshake, FaGlobe, FaMobile, FaDesktop, FaTablet, FaInfoCircle, FaArrowRight, FaRobot } from "react-icons/fa";
 import SeasonalEffects from "../components/SeasonalEffects";
 import DailyQuote from "../components/DailyQuote";
 import { useSeasonalTheme, useAllSeasonalThemes } from "../hooks/useSeasonalTheme";
@@ -62,6 +57,9 @@ export default function Home() {
   const [recentlyViewed, setRecentlyViewed] = useState([]);
   const [myListingsCount, setMyListingsCount] = useState(0);
   const [upcomingAppointments, setUpcomingAppointments] = useState([]);
+  const [quickSearchCities, setQuickSearchCities] = useState([]);
+  const [priceDropListings, setPriceDropListings] = useState([]);
+  const [totalUnreadMessages, setTotalUnreadMessages] = useState(0);
 
   // Helper to determine if we are in user dashboard context for links
   const isUser = true; // Since this is Home.jsx, it usually implies a logged-in user context or main entry. 
@@ -186,14 +184,28 @@ export default function Home() {
     fetchUserLists();
   }, [currentUser?._id, currentUser?.role]);
 
-  // Dashboard: Fetch recently viewed, user's listings count, and upcoming appointments
+  // Dashboard: Fetch recently viewed, user's listings count, appointments, price drops, unread messages
   useEffect(() => {
     if (!currentUser?._id || currentUser.role === 'admin' || currentUser.role === 'rootadmin') return;
 
-    // Recently viewed from Sentinel localStorage
+    // Recently viewed from Sentinel localStorage + Quick Search Cities
     const history = getInteractionHistory(currentUser._id);
     const viewedIds = history.filter(h => h.interactionType === 'view').slice(0, 6).map(h => h._id);
     setRecentlyViewed(viewedIds);
+
+    // Extract top cities from browsing history for Quick Search
+    const cityFreq = {};
+    history.forEach(h => {
+      if (h.city) {
+        const city = h.city.charAt(0).toUpperCase() + h.city.slice(1);
+        cityFreq[city] = (cityFreq[city] || 0) + 1;
+      }
+    });
+    const topCities = Object.entries(cityFreq)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 4)
+      .map(([city]) => city);
+    setQuickSearchCities(topCities);
 
     // Fetch user's own listings count
     const fetchMyListings = async () => {
@@ -206,14 +218,15 @@ export default function Home() {
       } catch (e) { console.error("Dashboard: listings count error", e); }
     };
 
-    // Fetch upcoming appointments
+    // Fetch upcoming appointments + unread message count
     const fetchAppointments = async () => {
       try {
         const res = await authenticatedFetch(`${API_BASE_URL}/api/bookings/my`);
         if (res.ok) {
           const data = await res.json();
+          const allAppts = Array.isArray(data) ? data : (data.appointments || []);
           const now = new Date();
-          const upcoming = (Array.isArray(data) ? data : [])
+          const upcoming = allAppts
             .filter(b => {
               if (!b.date) return false;
               const apptDate = new Date(b.date);
@@ -222,12 +235,48 @@ export default function Home() {
             .sort((a, b) => new Date(a.date) - new Date(b.date))
             .slice(0, 3);
           setUpcomingAppointments(upcoming);
+
+          // Calculate total unread messages across all appointments
+          let unread = 0;
+          allAppts.forEach(appt => {
+            const isBuyer = appt.buyerId?._id === currentUser._id || appt.buyerId === currentUser._id;
+            const isSeller = appt.sellerId?._id === currentUser._id || appt.sellerId === currentUser._id;
+            if (isBuyer && appt.buyerUnreadMessageCount > 0) unread += appt.buyerUnreadMessageCount;
+            if (isSeller && appt.sellerUnreadMessageCount > 0) unread += appt.sellerUnreadMessageCount;
+          });
+          setTotalUnreadMessages(unread);
         }
       } catch (e) { console.error("Dashboard: appointments error", e); }
     };
 
+    // Fetch watchlist items to detect price drops
+    const fetchPriceDrops = async () => {
+      try {
+        const res = await authenticatedFetch(`${API_BASE_URL}/api/watchlist/user/${currentUser._id}`);
+        if (res.ok) {
+          const data = await res.json();
+          const drops = (Array.isArray(data) ? data : [])
+            .filter(w => {
+              if (!w.listingId || w.effectivePriceAtAdd == null) return false;
+              const current = w.listingId.offer && w.listingId.discountPrice
+                ? w.listingId.discountPrice : w.listingId.regularPrice;
+              return current != null && current < w.effectivePriceAtAdd;
+            })
+            .map(w => ({
+              ...w.listingId,
+              baselinePrice: w.effectivePriceAtAdd,
+              currentPrice: w.listingId.offer && w.listingId.discountPrice
+                ? w.listingId.discountPrice : w.listingId.regularPrice
+            }))
+            .slice(0, 4);
+          setPriceDropListings(drops);
+        }
+      } catch (e) { console.error("Dashboard: price drops error", e); }
+    };
+
     fetchMyListings();
     fetchAppointments();
+    fetchPriceDrops();
   }, [currentUser?._id, currentUser?.role]);
 
   // STN-LIVE: Process local session recommendations + Wishlist/Watchlist
@@ -757,6 +806,138 @@ export default function Home() {
                 );
               })()}
             </section>
+          )}
+
+          {/* ─── Quick Search Shortcuts (city-based from browsing history) ─── */}
+          {currentUser && currentUser.role !== 'admin' && currentUser.role !== 'rootadmin' && quickSearchCities.length > 0 && (
+            <section className="animate-fade-in">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                  <FaSearch className="text-indigo-500" /> Quick Search
+                </h3>
+                <Link to={`${linkPrefix}/search`} className="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline">Advanced Search</Link>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                {quickSearchCities.map((city, i) => (
+                  <Link
+                    key={city}
+                    to={`/search?city=${encodeURIComponent(city)}`}
+                    className="group flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-700 transition-all duration-300 animate-sentinel-fade-in"
+                    style={{ animationDelay: `${i * 100}ms` }}
+                  >
+                    <FaMapMarkerAlt className="text-indigo-500 group-hover:scale-110 transition-transform text-sm" />
+                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Properties in {city}</span>
+                  </Link>
+                ))}
+                {/* Quick type filters */}
+                <Link
+                  to="/search?type=rent"
+                  className="group flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-xl border border-emerald-100 dark:border-emerald-800 shadow-sm hover:shadow-md transition-all duration-300"
+                >
+                  <FaHome className="text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform text-sm" />
+                  <span className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">For Rent</span>
+                </Link>
+                <Link
+                  to="/search?type=sale"
+                  className="group flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-50 to-sky-50 dark:from-blue-900/20 dark:to-sky-900/20 rounded-xl border border-blue-100 dark:border-blue-800 shadow-sm hover:shadow-md transition-all duration-300"
+                >
+                  <FaHome className="text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform text-sm" />
+                  <span className="text-sm font-semibold text-blue-700 dark:text-blue-300">For Sale</span>
+                </Link>
+                <Link
+                  to="/search?offer=true"
+                  className="group flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl border border-amber-100 dark:border-amber-800 shadow-sm hover:shadow-md transition-all duration-300"
+                >
+                  <FaStar className="text-amber-600 dark:text-amber-400 group-hover:scale-110 transition-transform text-sm" />
+                  <span className="text-sm font-semibold text-amber-700 dark:text-amber-300">Special Offers</span>
+                </Link>
+              </div>
+            </section>
+          )}
+
+          {/* ─── Price Drop Alerts ─── */}
+          {currentUser && currentUser.role !== 'admin' && currentUser.role !== 'rootadmin' && priceDropListings.length > 0 && (
+            <section className="animate-fade-in">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                  <FaArrowDown className="text-green-500" /> Price Drop Alerts
+                  <span className="px-2 py-0.5 bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 text-[10px] font-bold rounded-full uppercase">
+                    {priceDropListings.length} drop{priceDropListings.length !== 1 ? 's' : ''}
+                  </span>
+                </h3>
+                <Link to={`${linkPrefix}/watchlist`} className="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline">View Watchlist</Link>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {priceDropListings.map((listing, i) => {
+                  const savings = listing.baselinePrice - listing.currentPrice;
+                  const pct = ((savings / listing.baselinePrice) * 100).toFixed(0);
+                  return (
+                    <Link
+                      key={listing._id}
+                      to={`/listing/${listing._id}`}
+                      className="group bg-white dark:bg-gray-800 rounded-xl overflow-hidden border border-green-100 dark:border-green-900/50 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 animate-sentinel-fade-in"
+                      style={{ animationDelay: `${i * 100}ms` }}
+                    >
+                      <div className="relative aspect-[16/10] overflow-hidden">
+                        <img
+                          src={listing.imageUrls?.[0] || '/placeholder.jpg'}
+                          alt={listing.name}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        />
+                        <div className="absolute top-2 left-2 px-2 py-1 bg-green-500 text-white text-[10px] font-bold rounded-lg flex items-center gap-1 shadow-lg">
+                          <FaArrowDown className="text-[8px]" /> {pct}% OFF
+                        </div>
+                      </div>
+                      <div className="p-3">
+                        <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{listing.name}</p>
+                        <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate flex items-center gap-1 mt-0.5">
+                          <FaMapMarkerAlt className="text-[8px]" /> {listing.city || listing.address}
+                        </p>
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="text-sm font-bold text-green-600 dark:text-green-400">
+                            ₹{listing.currentPrice?.toLocaleString('en-IN')}
+                          </span>
+                          <span className="text-xs text-gray-400 line-through">
+                            ₹{listing.baselinePrice?.toLocaleString('en-IN')}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-green-600 dark:text-green-400 font-semibold mt-1">
+                          You save ₹{savings.toLocaleString('en-IN')}
+                        </p>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          {/* ─── Unread Messages Quick Access ─── */}
+          {currentUser && currentUser.role !== 'admin' && currentUser.role !== 'rootadmin' && totalUnreadMessages > 0 && (
+            <Link
+              to={`${linkPrefix}/my-appointments`}
+              className="group block bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-5 shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 animate-fade-in"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <FaCommentDots className="text-xl text-white" />
+                    </div>
+                    <span className="absolute -top-1.5 -right-1.5 w-6 h-6 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-lg animate-pulse">
+                      {totalUnreadMessages > 9 ? '9+' : totalUnreadMessages}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-white font-bold text-lg">
+                      {totalUnreadMessages} Unread Message{totalUnreadMessages !== 1 ? 's' : ''}
+                    </p>
+                    <p className="text-white/70 text-xs font-medium">Tap to view your appointment chats</p>
+                  </div>
+                </div>
+                <FaArrowRight className="text-white/60 group-hover:text-white group-hover:translate-x-1 transition-all" />
+              </div>
+            </Link>
           )}
 
           {/* Sentinel Live Section (Real-time Session Based) - regular users only */}
