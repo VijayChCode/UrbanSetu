@@ -206,8 +206,12 @@ export default function NotFound() {
                 {recommendations.length > 0 ? (
                   <>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                      {recommendations.slice(0, visibleRecsCount).map((listing) => (
-                        <div key={`rec-${listing._id}`} className="relative group overflow-visible">
+                      {recommendations.slice(0, visibleRecsCount).map((listing, index) => (
+                        <div
+                          key={`rec-${listing._id}`}
+                          className="relative group overflow-visible animate-sentinel-fade-in"
+                          style={{ animationDelay: `${(index % 4) * 120}ms` }}
+                        >
                           {listing.isLiveMatch && (
                             <div className="absolute -top-2 -right-2 z-20 bg-blue-600 text-white text-[10px] font-black px-2 py-1 rounded-lg shadow-lg transform rotate-12 group-hover:rotate-0 transition-transform">
                               {Math.round(listing.sentinelScore * 100)}% MATCH
@@ -222,9 +226,10 @@ export default function NotFound() {
                       <div className="mt-8 text-center">
                         <button
                           onClick={() => setVisibleRecsCount(prev => prev + 4)}
-                          className="px-6 py-3 bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 font-bold rounded-xl shadow-lg border border-blue-100 dark:border-blue-900 hover:bg-blue-50 dark:hover:bg-gray-700 transition-all transform hover:scale-105 flex items-center gap-2 mx-auto"
+                          className="px-6 py-3 bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 font-bold rounded-xl shadow-lg border border-blue-100 dark:border-blue-900 hover:bg-blue-50 dark:hover:bg-gray-700 transition-all transform hover:scale-105 active:scale-95 flex items-center gap-2 mx-auto"
                         >
-                          View More Recommendations <FaArrowRight />
+                          <FaRobot className="text-sm" />
+                          Load More Recommendations <FaArrowRight />
                         </button>
                       </div>
                     )}

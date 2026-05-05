@@ -52,6 +52,11 @@ export default function Home() {
   const [wishlistItems, setWishlistItems] = useState([]);
   const [watchlistItems, setWatchlistItems] = useState([]);
   const [visibleRecsCount, setVisibleRecsCount] = useState(4);
+  const [loadingMoreRecs, setLoadingMoreRecs] = useState(false);
+  const [newlyLoadedIds, setNewlyLoadedIds] = useState(new Set());
+  const [hasMoreRecs, setHasMoreRecs] = useState(true);
+  const [sentinelCandidates, setSentinelCandidates] = useState([]);
+  const [sentinelPreferences, setSentinelPreferences] = useState([]);
 
   // Helper to determine if we are in user dashboard context for links
   const isUser = true; // Since this is Home.jsx, it usually implies a logged-in user context or main entry. 
@@ -206,13 +211,78 @@ export default function Home() {
       const userPreferences = [...taggedWishlist, ...taggedWatchlist];
       const uniquePreferences = Array.from(new Map(userPreferences.filter(p => p && p._id).map(item => [item._id, item])).values());
 
-      // Request all matches (limit 1000) to allow infinite "View More"
-      const recs = await getLiveRecommendations(uniqueCandidates, 1000, uniquePreferences, currentUser._id);
+      // Store candidates and preferences for batch loading
+      setSentinelCandidates(uniqueCandidates);
+      setSentinelPreferences(uniquePreferences);
+
+      // Initial fetch: only 8 items for fast first paint
+      const recs = await getLiveRecommendations(uniqueCandidates, 8, uniquePreferences, currentUser._id);
       setLiveRecommendations(recs);
+      setHasMoreRecs(recs.length >= 8);
+      setVisibleRecsCount(4);
     };
 
     processLiveRecs();
   }, [loading, offerListings, rentListings, saleListings, wishlistItems, watchlistItems, currentUser?._id, currentUser?.role]);
+
+  // Handler for loading more Sentinel recommendations in batches
+  const handleLoadMoreRecs = async () => {
+    if (loadingMoreRecs || !currentUser) return;
+    setLoadingMoreRecs(true);
+
+    try {
+      // If we already have more pre-fetched items to reveal, just show them
+      if (liveRecommendations.length > visibleRecsCount) {
+        const nextBatch = liveRecommendations.slice(visibleRecsCount, visibleRecsCount + 4);
+        const newIds = new Set(nextBatch.map(r => r._id));
+        setNewlyLoadedIds(newIds);
+        setVisibleRecsCount(prev => prev + 4);
+
+        // Clear animation markers after animation completes
+        setTimeout(() => setNewlyLoadedIds(new Set()), 800);
+        setLoadingMoreRecs(false);
+        return;
+      }
+
+      // Fetch a new batch from the engine (next 8 items, excluding already shown)
+      const excludeIds = new Set(liveRecommendations.map(r => r._id));
+      const remainingCandidates = sentinelCandidates.filter(c => !excludeIds.has(c._id));
+
+      if (remainingCandidates.length === 0) {
+        setHasMoreRecs(false);
+        setLoadingMoreRecs(false);
+        return;
+      }
+
+      // Simulate a brief loading period for skeleton visibility (min 600ms)
+      const [recs] = await Promise.all([
+        getLiveRecommendations(remainingCandidates, 8, sentinelPreferences, currentUser._id),
+        new Promise(resolve => setTimeout(resolve, 600))
+      ]);
+
+      if (recs.length === 0) {
+        setHasMoreRecs(false);
+        setLoadingMoreRecs(false);
+        return;
+      }
+
+      // Track newly loaded IDs for animation
+      const newIds = new Set(recs.map(r => r._id));
+      setNewlyLoadedIds(newIds);
+
+      // Append new recommendations
+      setLiveRecommendations(prev => [...prev, ...recs]);
+      setVisibleRecsCount(prev => prev + 4);
+      setHasMoreRecs(recs.length >= 8);
+
+      // Clear animation markers after animation completes
+      setTimeout(() => setNewlyLoadedIds(new Set()), 800);
+    } catch (error) {
+      console.error('Sentinel: Failed to load more recommendations', error);
+    } finally {
+      setLoadingMoreRecs(false);
+    }
+  };
 
   const handleSlideChange = (swiper) => {
     setCurrentSlideIndex(swiper.realIndex);
@@ -529,8 +599,20 @@ export default function Home() {
                 {liveRecommendations.length > 0 ? (
                   <>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                      {liveRecommendations.slice(0, visibleRecsCount).map((listing) => (
-                        <div key={`live-${listing._id}`} className="relative group overflow-visible">
+                      {liveRecommendations.slice(0, visibleRecsCount).map((listing, index) => (
+                        <div
+                          key={`live-${listing._id}`}
+                          className={`relative group overflow-visible transition-all duration-500 ${
+                            newlyLoadedIds.has(listing._id)
+                              ? 'animate-sentinel-fade-in'
+                              : ''
+                          }`}
+                          style={{
+                            animationDelay: newlyLoadedIds.has(listing._id)
+                              ? `${(index % 4) * 120}ms`
+                              : '0ms'
+                          }}
+                        >
                           {listing.isLiveMatch && (
                             <div className="absolute -top-2 -right-2 z-20 bg-blue-600 text-white text-[10px] font-black px-2 py-1 rounded-lg shadow-lg transform rotate-12 group-hover:rotate-0 transition-transform">
                               {Math.round(listing.sentinelScore * 100)}% MATCH
@@ -539,16 +621,47 @@ export default function Home() {
                           <ListingItem listing={listing} />
                         </div>
                       ))}
+
+                      {/* Skeleton cards while loading more */}
+                      {loadingMoreRecs && (
+                        [...Array(4)].map((_, i) => (
+                          <div key={`skel-${i}`} className="animate-pulse rounded-2xl overflow-hidden bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-lg">
+                            <div className="aspect-[16/10] bg-gray-200 dark:bg-gray-700" />
+                            <div className="p-4 space-y-3">
+                              <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded-lg w-3/4" />
+                              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
+                              <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-lg w-2/3" />
+                              <div className="flex gap-3">
+                                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16" />
+                                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16" />
+                              </div>
+                              <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-xl w-full mt-2" />
+                            </div>
+                          </div>
+                        ))
+                      )}
                     </div>
 
-                    {liveRecommendations.length > visibleRecsCount && (
+                    {/* View More Button */}
+                    {hasMoreRecs && !loadingMoreRecs && (liveRecommendations.length > visibleRecsCount || sentinelCandidates.length > liveRecommendations.length) && (
                       <div className="mt-8 text-center">
                         <button
-                          onClick={() => setVisibleRecsCount(prev => prev + 4)}
-                          className="px-6 py-3 bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 font-bold rounded-xl shadow-lg border border-blue-100 dark:border-blue-900 hover:bg-blue-50 dark:hover:bg-gray-700 transition-all transform hover:scale-105 flex items-center gap-2 mx-auto"
+                          onClick={handleLoadMoreRecs}
+                          className="px-6 py-3 bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 font-bold rounded-xl shadow-lg border border-blue-100 dark:border-blue-900 hover:bg-blue-50 dark:hover:bg-gray-700 transition-all transform hover:scale-105 active:scale-95 flex items-center gap-2 mx-auto"
                         >
-                          View More Recommendations <FaArrowRight />
+                          <FaRobot className="text-sm" />
+                          Load More Recommendations
+                          <FaArrowRight />
                         </button>
+                      </div>
+                    )}
+
+                    {/* End of recommendations message */}
+                    {!hasMoreRecs && liveRecommendations.length > 4 && (
+                      <div className="mt-8 text-center">
+                        <p className="text-sm text-gray-500 dark:text-gray-400 font-medium italic">
+                          ✨ You've seen all personalized recommendations
+                        </p>
                       </div>
                     )}
                   </>
