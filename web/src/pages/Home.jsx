@@ -775,31 +775,9 @@ export default function Home() {
                         Browse More <FaArrowRight className="text-[10px]" />
                       </Link>
                     </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-                      {viewedListings.map((listing, i) => (
-                        <Link
-                          key={listing._id}
-                          to={`/listing/${listing._id}`}
-                          className="group bg-white dark:bg-gray-800 rounded-xl overflow-hidden border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 animate-sentinel-fade-in"
-                          style={{ animationDelay: `${i * 80}ms` }}
-                        >
-                          <div className="aspect-[4/3] overflow-hidden">
-                            <img
-                              src={listing.imageUrls?.[0] || '/placeholder.jpg'}
-                              alt={listing.name}
-                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                            />
-                          </div>
-                          <div className="p-3">
-                            <p className="text-xs font-bold text-gray-900 dark:text-white truncate">{listing.name}</p>
-                            <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate flex items-center gap-1 mt-0.5">
-                              <FaMapMarkerAlt className="text-[8px]" /> {listing.city || listing.address}
-                            </p>
-                            <p className="text-xs font-bold text-blue-600 dark:text-blue-400 mt-1">
-                              ₹{(listing.offer ? listing.discountPrice : listing.regularPrice)?.toLocaleString('en-IN')}
-                            </p>
-                          </div>
-                        </Link>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                      {viewedListings.map((listing) => (
+                        <ListingItem key={listing._id} listing={listing} />
                       ))}
                     </div>
                   </div>
