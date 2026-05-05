@@ -211,18 +211,34 @@ export default function Home() {
       .map(([city]) => city);
     setQuickSearchCities(topCities);
 
-    // Fetch IP-based location + nearby cities with listings
+    // Fetch user's login location from DB (tracked on every login)
     const fetchLocation = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/visitor/my-location`);
+        const res = await authenticatedFetch(`${API_BASE_URL}/api/user/id/${currentUser._id}`);
         if (res.ok) {
-          const data = await res.json();
-          if (data.success) {
-            if (data.city) setDetectedCity(data.city);
-            if (data.nearbyCities?.length > 0) {
-              setNearbyCities(data.nearbyCities);
-            }
+          const userData = await res.json();
+
+          // Parse city from lastLoginLocation (format: "Warangal, TG, IN")
+          if (userData.lastLoginLocation && userData.lastLoginLocation !== 'Unknown' && userData.lastLoginLocation !== 'Local Development' && userData.lastLoginLocation !== 'Private Network') {
+            const parts = userData.lastLoginLocation.split(',').map(s => s.trim());
+            if (parts[0]) setDetectedCity(parts[0]);
           }
+
+          // Extract unique cities from all active session locations
+          const sessionCities = [];
+          const seen = new Set();
+          if (userData.activeSessions?.length > 0) {
+            userData.activeSessions.forEach(session => {
+              if (session.location && session.location !== 'Unknown' && session.location !== 'Local Development' && session.location !== 'Private Network') {
+                const city = session.location.split(',')[0]?.trim();
+                if (city && !seen.has(city.toLowerCase())) {
+                  sessionCities.push({ city, type: 'session' });
+                  seen.add(city.toLowerCase());
+                }
+              }
+            });
+          }
+          if (sessionCities.length > 0) setNearbyCities(sessionCities);
         }
       } catch (e) { /* silent - location is enhancement only */ }
     };
@@ -814,23 +830,23 @@ export default function Home() {
             </section>
           )}
 
-          {/* ─── Quick Search Shortcuts (IP-location + browsing history + nearby cities) ─── */}
+          {/* ─── Quick Search Shortcuts (login location + browsing history) ─── */}
           {currentUser && currentUser.role !== 'admin' && currentUser.role !== 'rootadmin' && (() => {
-            // Build merged, deduplicated city list: detected city first, then nearby cities, then history cities
+            // Build merged, deduplicated city list: detected city first, then session cities, then history cities
             const allCities = [];
             const seen = new Set();
 
-            // 1. IP-detected current city (highlighted)
+            // 1. Current login city (highlighted)
             if (detectedCity && !seen.has(detectedCity.toLowerCase())) {
               allCities.push({ city: detectedCity, type: 'detected' });
               seen.add(detectedCity.toLowerCase());
             }
 
-            // 2. Nearby cities from backend (with listing counts)
+            // 2. Cities from other active sessions (login locations from DB)
             nearbyCities.forEach(nc => {
               const key = nc.city.toLowerCase();
               if (!seen.has(key)) {
-                allCities.push({ city: nc.city, type: 'nearby', count: nc.count, state: nc.state });
+                allCities.push({ city: nc.city, type: 'nearby' });
                 seen.add(key);
               }
             });

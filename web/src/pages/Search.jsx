@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import ListingItem from "../components/ListingItem";
 import GeminiAIWrapper from "../components/GeminiAIWrapper";
@@ -26,6 +27,7 @@ export default function Search() {
 
     const location = useLocation();
     const navigate = useNavigate();
+    const { currentUser } = useSelector((state) => state.user);
     const [formData, setFormData] = useState({
         searchTerm: "",
         type: "all",
@@ -64,22 +66,38 @@ export default function Search() {
         return () => observer.disconnect();
     }, []);
 
-    // Fetch IP-based location for "Near You" suggestions
+    // Fetch user's login location from DB for "Near You" suggestions
     useEffect(() => {
+        if (!currentUser?._id) return;
         const fetchLocation = async () => {
             try {
-                const res = await fetch(`${API_BASE_URL}/api/visitor/my-location`);
+                const res = await authenticatedFetch(`${API_BASE_URL}/api/user/id/${currentUser._id}`);
                 if (res.ok) {
-                    const data = await res.json();
-                    if (data.success) {
-                        if (data.city) setDetectedCity(data.city);
-                        if (data.nearbyCities?.length > 0) setNearYouCities(data.nearbyCities);
+                    const userData = await res.json();
+                    if (userData.lastLoginLocation && userData.lastLoginLocation !== 'Unknown' && userData.lastLoginLocation !== 'Local Development' && userData.lastLoginLocation !== 'Private Network') {
+                        const parts = userData.lastLoginLocation.split(',').map(s => s.trim());
+                        if (parts[0]) setDetectedCity(parts[0]);
                     }
+                    // Extract unique cities from active sessions
+                    const sessionCities = [];
+                    const seen = new Set();
+                    if (userData.activeSessions?.length > 0) {
+                        userData.activeSessions.forEach(session => {
+                            if (session.location && session.location !== 'Unknown' && session.location !== 'Local Development' && session.location !== 'Private Network') {
+                                const city = session.location.split(',')[0]?.trim();
+                                if (city && !seen.has(city.toLowerCase())) {
+                                    sessionCities.push({ city, state: session.location.split(',')[1]?.trim() || '' });
+                                    seen.add(city.toLowerCase());
+                                }
+                            }
+                        });
+                    }
+                    if (sessionCities.length > 0) setNearYouCities(sessionCities);
                 }
             } catch { /* silent */ }
         };
         fetchLocation();
-    }, []);
+    }, [currentUser?._id]);
 
     useEffect(() => {
         const urlParams = new URLSearchParams(location.search);

@@ -53,8 +53,6 @@ export default function PublicSearch() {
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [isFiltersOpen, setIsFiltersOpen] = useState(false); // Mobile filter toggle
     const [isDark, setIsDark] = useState(document.documentElement.classList.contains('dark'));
-    const [nearYouCities, setNearYouCities] = useState([]);
-    const [detectedCity, setDetectedCity] = useState(null);
 
     useEffect(() => {
         const observer = new MutationObserver(() => {
@@ -64,22 +62,7 @@ export default function PublicSearch() {
         return () => observer.disconnect();
     }, []);
 
-    // Fetch IP-based location for "Near You" suggestions
-    useEffect(() => {
-        const fetchLocation = async () => {
-            try {
-                const res = await fetch(`${API_BASE_URL}/api/visitor/my-location`);
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.success) {
-                        if (data.city) setDetectedCity(data.city);
-                        if (data.nearbyCities?.length > 0) setNearYouCities(data.nearbyCities);
-                    }
-                }
-            } catch { /* silent */ }
-        };
-        fetchLocation();
-    }, []);
+
 
     useEffect(() => {
         const urlParams = new URLSearchParams(location.search);
@@ -535,43 +518,6 @@ export default function PublicSearch() {
                     <FilterChips formData={formData} onClear={clearAllFilters} onRemove={removeFilter} />
                 </div>
 
-                {/* Near You - Location-based Quick City Suggestions */}
-                {nearYouCities.length > 0 && !formData.searchTerm && (
-                    <div className="mb-8 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-5 animate-fade-in transition-colors duration-300">
-                        <div className="flex items-center gap-2 mb-3">
-                            <MapPin className="w-4 h-4 text-indigo-500" />
-                            <h3 className="text-sm font-bold text-gray-800 dark:text-white">Near You{detectedCity ? ` • ${detectedCity}` : ''}</h3>
-                            <span className="text-[10px] bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full font-bold">Based on your location</span>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                            {nearYouCities.map((nc, i) => (
-                                <button
-                                    key={nc.city}
-                                    onClick={() => {
-                                        const params = new URLSearchParams();
-                                        params.set('searchTerm', nc.city);
-                                        navigate(`?${params.toString()}`);
-                                    }}
-                                    className={`group flex items-center gap-2 px-4 py-2 rounded-xl border shadow-sm hover:shadow-md transition-all duration-300 animate-fade-in-up ${
-                                        nc.city === detectedCity
-                                            ? 'bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/30 dark:to-purple-900/30 border-indigo-200 dark:border-indigo-700 ring-1 ring-indigo-100 dark:ring-indigo-800'
-                                            : 'bg-gray-50 dark:bg-gray-800 border-gray-100 dark:border-gray-700 hover:border-indigo-200 dark:hover:border-indigo-700'
-                                    }`}
-                                    style={{ animationDelay: `${i * 60}ms` }}
-                                >
-                                    <MapPin className={`w-3.5 h-3.5 group-hover:scale-110 transition-transform ${nc.city === detectedCity ? 'text-indigo-600 dark:text-indigo-400' : 'text-indigo-500'}`} />
-                                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                                        {nc.city === detectedCity ? `📍 ${nc.city}` : nc.city}
-                                    </span>
-                                    {nc.state && <span className="text-[10px] text-gray-400 dark:text-gray-500">{nc.state}</span>}
-                                    <span className="text-[10px] bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded-full font-bold">
-                                        {nc.count}
-                                    </span>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                )}
 
                 {/* Listings Grid */}
                 <div className="flex flex-col gap-6">
