@@ -664,7 +664,7 @@ export default function Home() {
                 </Link>
 
                 {/* Upcoming Appointments */}
-                <Link to={`${linkPrefix}/appointments`} className="group bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 col-span-2 lg:col-span-1">
+                <Link to={`${linkPrefix}/my-appointments`} className="group bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 col-span-2 lg:col-span-1">
                   <div className="w-11 h-11 bg-purple-50 dark:bg-purple-900/30 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                     <FaCalendarAlt className="text-lg text-purple-600 dark:text-purple-400" />
                   </div>
@@ -680,11 +680,11 @@ export default function Home() {
                     <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2 text-sm">
                       <FaCalendarAlt className="text-purple-500" /> Upcoming Appointments
                     </h3>
-                    <Link to={`${linkPrefix}/appointments`} className="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline">View All</Link>
+                    <Link to={`${linkPrefix}/my-appointments`} className="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline">View All</Link>
                   </div>
                   <div className="divide-y divide-gray-50 dark:divide-gray-700/50">
                     {upcomingAppointments.map((appt, idx) => (
-                      <Link key={appt._id || idx} to={`${linkPrefix}/appointments`} className="flex items-center gap-4 px-5 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                      <Link key={appt._id || idx} to={`${linkPrefix}/my-appointments`} className="flex items-center gap-4 px-5 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold ${appt.status === 'accepted' ? 'bg-green-50 dark:bg-green-900/30 text-green-600' : 'bg-amber-50 dark:bg-amber-900/30 text-amber-600'}`}>
                           {new Date(appt.date).getDate()}
                         </div>
