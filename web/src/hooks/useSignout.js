@@ -1,4 +1,4 @@
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { signoutUserStart, signoutUserSuccess, signoutUserFailure } from '../redux/user/userSlice';
@@ -8,10 +8,12 @@ import { socket } from '../utils/socket';
 import { toast } from 'react-toastify';
 import { authenticatedFetch } from '../utils/auth';
 import { resetSettingsToDefaults } from '../utils/settingsSync';
+import { clearSentinelData } from '../utils/sentinelLiveEngine';
 
 export const useSignout = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { currentUser } = useSelector((state) => state.user);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   const signout = async (options = {}) => {
@@ -76,6 +78,11 @@ export const useSignout = () => {
 
     // Reset user settings (theme, fontSize, etc.) to defaults
     resetSettingsToDefaults();
+
+    // Clear Sentinel interaction history (Recently Viewed data)
+    if (currentUser?._id) {
+      clearSentinelData(currentUser._id);
+    }
 
     // Disconnect socket completely before reconnecting
     if (socket && socket.connected) {

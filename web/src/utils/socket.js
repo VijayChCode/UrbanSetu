@@ -1,6 +1,7 @@
 import { io } from "socket.io-client";
 import { getAuthToken, refreshAccessToken } from './auth';
 import { API_BASE_URL } from '../config/api';
+import { clearAllSentinelData } from './sentinelLiveEngine';
 
 // Prefer explicit socket URL, then API base URL, then same-origin
 const SOCKET_URL = API_BASE_URL;
@@ -125,6 +126,7 @@ socket.on('forceLogout', ({ reason }) => {
   try {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('sessionId');
+    clearAllSentinelData();
   } catch (_) { }
   document.cookie = 'access_token=; Max-Age=0; path=/; SameSite=None; Secure';
   document.cookie = 'refresh_token=; Max-Age=0; path=/; SameSite=None; Secure';
@@ -137,7 +139,7 @@ socket.on('forceLogoutSession', ({ sessionId, reason }) => {
   const current = (document.cookie.split('; ').find(r => r.startsWith('session_id='))?.split('=')[1]) || null;
   if (current && sessionId && current === sessionId) {
     console.log('[Socket] Targeted force logout for this session:', reason);
-    try { localStorage.removeItem('accessToken'); localStorage.removeItem('sessionId'); } catch (_) { }
+    try { localStorage.removeItem('accessToken'); localStorage.removeItem('sessionId'); clearAllSentinelData(); } catch (_) { }
     document.cookie = 'access_token=; Max-Age=0; path=/; SameSite=None; Secure';
     document.cookie = 'refresh_token=; Max-Age=0; path=/; SameSite=None; Secure';
     document.cookie = 'session_id=; Max-Age=0; path=/; SameSite=None; Secure';
@@ -216,7 +218,7 @@ export function reconnectSocket() {
 
   socket.on('forceLogout', ({ reason }) => {
     console.log('[Socket] Force logout received:', reason);
-    try { localStorage.removeItem('accessToken'); localStorage.removeItem('sessionId'); } catch (_) { }
+    try { localStorage.removeItem('accessToken'); localStorage.removeItem('sessionId'); clearAllSentinelData(); } catch (_) { }
     document.cookie = 'access_token=; Max-Age=0; path=/; SameSite=None; Secure';
     document.cookie = 'refresh_token=; Max-Age=0; path=/; SameSite=None; Secure';
     document.cookie = 'session_id=; Max-Age=0; path=/; SameSite=None; Secure';
@@ -226,7 +228,7 @@ export function reconnectSocket() {
     const current = (document.cookie.split('; ').find(r => r.startsWith('session_id='))?.split('=')[1]) || null;
     if (current && sessionId && current === sessionId) {
       console.log('[Socket] Targeted force logout for this session:', reason);
-      try { localStorage.removeItem('accessToken'); localStorage.removeItem('sessionId'); } catch (_) { }
+      try { localStorage.removeItem('accessToken'); localStorage.removeItem('sessionId'); clearAllSentinelData(); } catch (_) { }
       document.cookie = 'access_token=; Max-Age=0; path=/; SameSite=None; Secure';
       document.cookie = 'refresh_token=; Max-Age=0; path=/; SameSite=None; Secure';
       document.cookie = 'session_id=; Max-Age=0; path=/; SameSite=None; Secure';

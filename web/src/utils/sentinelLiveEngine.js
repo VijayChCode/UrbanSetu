@@ -2,6 +2,7 @@ import * as tf from '@tensorflow/tfjs';
 
 const STORAGE_KEY_PREFIX = 'sentinel_interactions_';
 const MAX_INTERACTIONS = 30; // Increased from 12 for richer preference learning
+const STALE_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000; // 7 days — entries older than this are auto-pruned
 
 // Interaction type weights — stronger signals get more influence
 const INTERACTION_WEIGHTS = {
@@ -22,7 +23,7 @@ const getStorageKey = (userId) => {
 
 /**
  * Clears Sentinel interaction data for a specific user.
- * Call this on account deletion or data reset requests.
+ * Call this on sign-out, account deletion, or data reset requests.
  */
 export const clearSentinelData = (userId) => {
     const key = getStorageKey(userId);
@@ -32,8 +33,28 @@ export const clearSentinelData = (userId) => {
 };
 
 /**
+ * Clears ALL Sentinel interaction data from localStorage (all users).
+ * Use this for force-logout scenarios where the userId is not available.
+ */
+export const clearAllSentinelData = () => {
+    try {
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith(STORAGE_KEY_PREFIX)) {
+                keysToRemove.push(key);
+            }
+        }
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+        // Also clean up legacy global key
+        localStorage.removeItem('sentinel_interactions');
+    } catch { /* silent */ }
+};
+
+/**
  * Returns the raw interaction history for a given user.
- * Useful for "Recently Viewed" and activity summary UI.
+ * Automatically prunes entries older than STALE_THRESHOLD_MS (7 days)
+ * on every read to keep the data fresh and relevant.
  * @param {string} userId - The current user's ID
  * @returns {Array} Array of interaction objects sorted by most recent first
  */
@@ -41,10 +62,42 @@ export const getInteractionHistory = (userId) => {
     const key = getStorageKey(userId);
     if (!key) return [];
     try {
-        return JSON.parse(localStorage.getItem(key) || '[]');
+        const raw = JSON.parse(localStorage.getItem(key) || '[]');
+        const now = Date.now();
+        const fresh = raw.filter(item => {
+            // Keep items that have no timestamp (legacy) or are within threshold
+            if (!item.timestamp) return true;
+            return (now - item.timestamp) < STALE_THRESHOLD_MS;
+        });
+        // Persist the pruned list back if any stale items were removed
+        if (fresh.length !== raw.length) {
+            localStorage.setItem(key, JSON.stringify(fresh));
+        }
+        return fresh;
     } catch {
         return [];
     }
+};
+
+/**
+ * Explicitly prunes stale interactions (older than 7 days) for a user.
+ * Can be called on app init or login for a proactive cleanup.
+ * @param {string} userId - The current user's ID
+ */
+export const pruneStaleSentinelData = (userId) => {
+    const key = getStorageKey(userId);
+    if (!key) return;
+    try {
+        const raw = JSON.parse(localStorage.getItem(key) || '[]');
+        const now = Date.now();
+        const fresh = raw.filter(item => {
+            if (!item.timestamp) return true;
+            return (now - item.timestamp) < STALE_THRESHOLD_MS;
+        });
+        if (fresh.length !== raw.length) {
+            localStorage.setItem(key, JSON.stringify(fresh));
+        }
+    } catch { /* silent */ }
 };
 
 /**
