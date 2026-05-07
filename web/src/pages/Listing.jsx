@@ -6,7 +6,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/navigation";
 import { Navigation } from "swiper/modules";
-import { FaBath, FaBed, FaChair, FaMapMarkerAlt, FaParking, FaShare, FaEdit, FaTrash, FaUndo, FaArrowLeft, FaArrowRight, FaStar, FaLock, FaHeart, FaExpand, FaCheckCircle, FaFlag, FaRuler, FaBuilding, FaTree, FaWifi, FaSwimmingPool, FaCar, FaShieldAlt, FaClock, FaPhone, FaEnvelope, FaCalendarAlt, FaEye, FaThumbsUp, FaThumbsDown, FaRegThumbsUp, FaRegThumbsDown, FaComments, FaCalculator, FaChartLine, FaHome, FaUtensils, FaHospital, FaSchool, FaShoppingCart, FaPlane, FaUser, FaTimes, FaSearch, FaTable, FaRocket, FaQuestionCircle, FaChevronDown, FaChevronUp, FaBookOpen, FaTag, FaCompass, FaInfoCircle, FaCalendar, FaRobot, FaBan, FaExclamationTriangle, FaUserTie, FaChevronLeft, FaChevronRight, FaVrCardboard } from "react-icons/fa";
+import { FaBath, FaBed, FaChair, FaMapMarkerAlt, FaParking, FaShare, FaEdit, FaTrash, FaUndo, FaArrowLeft, FaArrowRight, FaArrowDown, FaStar, FaLock, FaHeart, FaExpand, FaCheckCircle, FaFlag, FaRuler, FaBuilding, FaTree, FaWifi, FaSwimmingPool, FaCar, FaShieldAlt, FaClock, FaPhone, FaEnvelope, FaCalendarAlt, FaEye, FaThumbsUp, FaThumbsDown, FaRegThumbsUp, FaRegThumbsDown, FaComments, FaCalculator, FaChartLine, FaHome, FaUtensils, FaHospital, FaSchool, FaShoppingCart, FaPlane, FaUser, FaTimes, FaSearch, FaTable, FaRocket, FaQuestionCircle, FaChevronDown, FaChevronUp, FaBookOpen, FaTag, FaCompass, FaInfoCircle, FaCalendar, FaRobot, FaBan, FaExclamationTriangle, FaUserTie, FaChevronLeft, FaChevronRight, FaVrCardboard } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import ContactSupportWrapper from "../components/ContactSupportWrapper";
 import ReviewForm from "../components/ReviewForm.jsx";
@@ -198,6 +198,7 @@ export default function Listing() {
   const [selectedComparisonProperty, setSelectedComparisonProperty] = useState(null);
   const [isInWatchlist, setIsInWatchlist] = useState(false);
   const [watchlistLoading, setWatchlistLoading] = useState(false);
+  const [priceDropInfo, setPriceDropInfo] = useState(null); // { baselinePrice, currentPrice, dropAmount, dropPercentage }
   const [rootVerificationReason, setRootVerificationReason] = useState("");
   const [rootUnpublishReason, setRootUnpublishReason] = useState("");
   const [watchlistCount, setWatchlistCount] = useState(0);
@@ -338,7 +339,7 @@ export default function Listing() {
 
   const closeConfirm = () => setConfirmModal({ open: false, type: null, propertyId: null, origin: null, message: '' });
 
-  // Check if property is in watchlist
+  // Check if property is in watchlist and detect price drops
   const checkWatchlistStatus = async () => {
     if (!currentUser || currentUser.role === 'admin' || currentUser.role === 'rootadmin') return;
 
@@ -347,6 +348,25 @@ export default function Listing() {
       if (res.ok) {
         const data = await res.json();
         setIsInWatchlist(data.isInWatchlist);
+
+        // Detect price drop for watchlisted properties
+        if (data.isInWatchlist && data.effectivePriceAtAdd != null) {
+          const currentPrice = (listing.offer && listing.discountPrice) ? listing.discountPrice : listing.regularPrice;
+          if (currentPrice != null && currentPrice < data.effectivePriceAtAdd) {
+            const dropAmount = data.effectivePriceAtAdd - currentPrice;
+            const dropPercentage = Math.round((dropAmount / data.effectivePriceAtAdd) * 100);
+            setPriceDropInfo({
+              baselinePrice: data.effectivePriceAtAdd,
+              currentPrice,
+              dropAmount,
+              dropPercentage
+            });
+          } else {
+            setPriceDropInfo(null);
+          }
+        } else {
+          setPriceDropInfo(null);
+        }
       }
     } catch (error) {
       console.error('Error checking watchlist status:', error);
@@ -446,6 +466,7 @@ export default function Listing() {
         });
         if (res.ok) {
           setIsInWatchlist(false);
+          setPriceDropInfo(null);
           toast.success('Property removed from watchlist');
         } else {
           toast.error('Failed to remove from watchlist');
@@ -2580,6 +2601,35 @@ export default function Listing() {
                 </p>
               )}
             </div>
+
+            {/* Price Drop Alert Banner - For watchlisted properties */}
+            {priceDropInfo && isInWatchlist && currentUser && !(currentUser.role === 'admin' || currentUser.role === 'rootadmin') && (
+              <div className="mb-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-800 rounded-xl p-3 sm:p-4 shadow-sm animate-fade-in-up">
+                <div className="flex items-center gap-3">
+                  <div className="flex-shrink-0 p-2 bg-green-500 text-white rounded-lg shadow-md">
+                    <FaArrowDown className="text-sm sm:text-base" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                      <h4 className="text-sm sm:text-base font-bold text-green-800 dark:text-green-300 flex items-center gap-1.5">
+                        Price Dropped!
+                        <span className="px-1.5 py-0.5 bg-green-500 text-white text-[10px] sm:text-xs font-bold rounded-full">
+                          {priceDropInfo.dropPercentage}% OFF
+                        </span>
+                      </h4>
+                      <p className="text-xs sm:text-sm text-green-700 dark:text-green-400">
+                        Was <span className="line-through font-medium">₹{priceDropInfo.baselinePrice.toLocaleString('en-IN')}</span>
+                        <span className="mx-1">→</span>
+                        Now <span className="font-bold">₹{priceDropInfo.currentPrice.toLocaleString('en-IN')}</span>
+                      </p>
+                    </div>
+                    <p className="text-[10px] sm:text-xs text-green-600 dark:text-green-500 mt-1">
+                      You save ₹{priceDropInfo.dropAmount.toLocaleString('en-IN')} since you added this to your watchlist
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Verification Warning Banner - For Property Owners Only */}
             {isOwnerMatch && !listing.isVerified && (

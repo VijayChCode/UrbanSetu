@@ -114,7 +114,11 @@ export const checkWatchlistStatus = async (req, res, next) => {
     const { listingId } = req.params;
     const userId = req.user._id;
     const exists = await PropertyWatchlist.findOne({ userId, listingId });
-    res.status(200).json({ isInWatchlist: !!exists });
+    res.status(200).json({
+      isInWatchlist: !!exists,
+      effectivePriceAtAdd: exists?.effectivePriceAtAdd ?? null,
+      addedAt: exists?.createdAt ?? null
+    });
   } catch (error) {
     next(error);
   }
