@@ -25,6 +25,7 @@ export default function Watchlist() {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('dateAdded');
   const [filterType, setFilterType] = useState('all');
+  const [priceChangeFilter, setPriceChangeFilter] = useState('all');
   const [showAddProperty, setShowAddProperty] = useState(false);
   const [propertySearchTerm, setPropertySearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -351,6 +352,24 @@ export default function Watchlist() {
     });
   };
 
+  // Helper to check price change status for an item
+  const getPriceChangeStatus = (item) => {
+    const effective = getEffectivePrice(item);
+    const baseline = baselineMap.get(item._id);
+    if (effective == null || baseline == null) return 'neutral';
+    if (effective < baseline) return 'dropped';
+    if (effective > baseline) return 'increased';
+    return 'neutral';
+  };
+
+  // Count price changes for filter badges
+  const priceChangeCounts = items.reduce((acc, item) => {
+    const status = getPriceChangeStatus(item);
+    if (status === 'dropped') acc.dropped++;
+    if (status === 'increased') acc.increased++;
+    return acc;
+  }, { dropped: 0, increased: 0 });
+
   // Filter and sort items
   const filteredAndSortedItems = items
     .filter(item => {
@@ -358,9 +377,23 @@ export default function Watchlist() {
         item.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.state?.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesType = filterType === 'all' || item.type === filterType;
-      return matchesSearch && matchesType;
+      let matchesPriceChange = true;
+      if (priceChangeFilter !== 'all') {
+        matchesPriceChange = getPriceChangeStatus(item) === priceChangeFilter;
+      }
+      return matchesSearch && matchesType && matchesPriceChange;
     })
     .sort((a, b) => {
+      // Prioritize price-changed items to top
+      const aStatus = getPriceChangeStatus(a);
+      const bStatus = getPriceChangeStatus(b);
+      const aChanged = (aStatus !== 'neutral') ? 1 : 0;
+      const bChanged = (bStatus !== 'neutral') ? 1 : 0;
+      if (aChanged !== bChanged) return bChanged - aChanged;
+      if (aChanged && bChanged) {
+        if (aStatus === 'dropped' && bStatus === 'increased') return -1;
+        if (aStatus === 'increased' && bStatus === 'dropped') return 1;
+      }
       switch (sortBy) {
         case 'price-low':
           return (a.regularPrice || 0) - (b.regularPrice || 0);
@@ -779,6 +812,22 @@ export default function Watchlist() {
                 </select>
               </div>
 
+              {/* Price Change Filter */}
+              <div className="flex items-center gap-2">
+                <FaChartLine className="text-gray-500" />
+                <div className="flex items-center gap-1 flex-wrap">
+                  <button onClick={() => setPriceChangeFilter('all')} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${priceChangeFilter === 'all' ? 'bg-purple-600 text-white shadow-md' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'}`}>All</button>
+                  <button onClick={() => setPriceChangeFilter('dropped')} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 flex items-center gap-1 ${priceChangeFilter === 'dropped' ? 'bg-green-600 text-white shadow-md shadow-green-500/20' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-green-50 dark:hover:bg-green-900/20 hover:text-green-600 dark:hover:text-green-400'}`}>
+                    <FaArrowDown className="text-[10px]" /> Dropped
+                    {priceChangeCounts.dropped > 0 && <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] ${priceChangeFilter === 'dropped' ? 'bg-green-500' : 'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400'}`}>{priceChangeCounts.dropped}</span>}
+                  </button>
+                  <button onClick={() => setPriceChangeFilter('increased')} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 flex items-center gap-1 ${priceChangeFilter === 'increased' ? 'bg-red-600 text-white shadow-md shadow-red-500/20' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400'}`}>
+                    <FaArrowUp className="text-[10px]" /> Increased
+                    {priceChangeCounts.increased > 0 && <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] ${priceChangeFilter === 'increased' ? 'bg-red-500' : 'bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400'}`}>{priceChangeCounts.increased}</span>}
+                  </button>
+                </div>
+              </div>
+
               {/* Sort Options */}
               <div className="flex items-center gap-2">
                 <FaSort className="text-gray-500" />
@@ -849,7 +898,7 @@ export default function Watchlist() {
               const hasChangeInfo = stats && stats.baseline != null && stats.current != null;
               const statusColor = stats.status === 'dropped' ? 'text-green-600 dark:text-green-400' : (stats.status === 'increased' ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400');
               return (
-                <div key={listing._id} className={`relative group ${viewMode === 'list' ? 'flex items-center gap-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 w-full overflow-hidden' : ''}`}>
+                <div key={listing._id} className={`relative group ${isPriceDropped(listing) ? 'ring-2 ring-green-400/70 dark:ring-green-500/50 rounded-xl shadow-lg shadow-green-500/10' : ''} ${isPriceIncreased(listing) ? 'ring-2 ring-red-400/70 dark:ring-red-500/50 rounded-xl shadow-lg shadow-red-500/10' : ''} ${viewMode === 'list' ? 'flex items-center gap-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 w-full overflow-hidden' : ''}`}>
                   {isPriceDropped(listing) && (
                     <div className="absolute top-2 left-2 z-10">
                       <span className="bg-green-500 text-white text-[10px] sm:text-xs font-semibold px-2 py-1 rounded-full shadow-md flex items-center gap-1">
