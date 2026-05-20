@@ -1216,7 +1216,7 @@ export default function AdminEditListing() {
                         title="AI Audit this URL"
                         disabled={isAuditing[`main_${index}`]}
                       >
-                        <UrbanSetuSpinner size="sm" isBright={true} />
+                        {isAuditing[`main_${index}`] ? <UrbanSetuSpinner size="sm" isBright={true} /> : <FaBrain />}
                       </button>
                       <button
                         type="button"
@@ -1474,7 +1474,7 @@ export default function AdminEditListing() {
                         title="AI Audit this 360 URL"
                         disabled={isAuditing[`tour_${index}`]}
                       >
-                        <UrbanSetuSpinner size="sm" isBright={true} />
+                        {isAuditing[`tour_${index}`] ? <UrbanSetuSpinner size="sm" isBright={true} /> : <FaBrain />}
                       </button>
                       <button
                         type="button"

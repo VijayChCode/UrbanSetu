@@ -7,13 +7,48 @@ import {
   FaUserShield, FaHistory, FaFilter, FaSearch, FaArrowRight,
   FaLock, FaUnlock, FaWallet, FaMapMarkerAlt, FaEye, FaRedo
 } from 'react-icons/fa';
-import { formatDistanceToNow } from 'date-fns';
 import { authenticatedFetch } from '../utils/auth';
 import { socket } from '../utils/socket';
 import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 import { usePageTitle } from '../hooks/usePageTitle';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+const formatDistanceToNow = (date, options = {}) => {
+  const now = new Date();
+  const diffInSeconds = Math.floor((now - date) / 1000);
+
+  if (isNaN(diffInSeconds)) return 'some time ago';
+
+  const suffix = options.addSuffix ? ' ago' : '';
+
+  if (diffInSeconds < 60) {
+    return 'just now';
+  }
+
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  if (diffInMinutes < 60) {
+    return `${diffInMinutes} minute${diffInMinutes > 1 ? 's' : ''}${suffix}`;
+  }
+
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) {
+    return `${diffInHours} hour${diffInHours > 1 ? 's' : ''}${suffix}`;
+  }
+
+  const diffInDays = Math.floor(diffInHours / 24);
+  if (diffInDays < 30) {
+    return `${diffInDays} day${diffInDays > 1 ? 's' : ''}${suffix}`;
+  }
+
+  const diffInMonths = Math.floor(diffInDays / 30);
+  if (diffInMonths < 12) {
+    return `${diffInMonths} month${diffInMonths > 1 ? 's' : ''}${suffix}`;
+  }
+
+  const diffInYears = Math.floor(diffInMonths / 12);
+  return `${diffInYears} year${diffInYears > 1 ? 's' : ''}${suffix}`;
+};
 
 export default function AdminSentinelDashboard() {
   usePageTitle("Sentinel AI Governance - Security Command Center");

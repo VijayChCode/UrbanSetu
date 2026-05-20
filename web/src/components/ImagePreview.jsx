@@ -885,6 +885,56 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
     };
   };
 
+  const handleImageClick = (e) => {
+    // Check if we should ignore click (due to drag/pinch)
+    if (ignoreClickRef.current) {
+      ignoreClickRef.current = false;
+      return;
+    }
+
+    // On touch devices, single tap toggles controls rather than zooming
+    if (isTouchRef.current) {
+      return;
+    }
+
+    e.stopPropagation(); // Prevent container click (which would toggle controls back and forth)
+
+    if (scale > 1) {
+      // Zoom out to normal
+      setScale(1);
+      setPosition({ x: 0, y: 0 });
+      showFeedback("100%");
+    } else {
+      // Zoom in to 2.5x at the clicked position
+      const targetScale = 2.5;
+
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+
+        const dx = e.clientX - centerX;
+        const dy = e.clientY - centerY;
+
+        // Rotate the click offset vector back by the rotation angle
+        // to get coordinates in the image's local space
+        const rad = -rotation * Math.PI / 180;
+        const localX = dx * Math.cos(rad) - dy * Math.sin(rad);
+        const localY = dx * Math.sin(rad) + dy * Math.cos(rad);
+
+        // Calculate and clamp new position so the clicked point aligns with the container center (0,0)
+        const clampedPos = getClampedPosition(-localX, -localY, targetScale);
+
+        setScale(targetScale);
+        setPosition(clampedPos);
+        showFeedback("250%");
+        
+        // Hide controls for an immersive zoomed-in view
+        setShowControls(false);
+      }
+    }
+  };
+
   const handleWrapperMouseMove = (e) => {
     // Mouse Dragging Logic
     if (isDragging && scale > 1) {
@@ -977,11 +1027,12 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
           ref={imageRef}
           src={currentImageUrl}
           alt={`Property image ${currentIndex + 1}`}
-          className={`max-w-full max-h-full object-contain cursor-move transition-opacity duration-300 ${imageLoading ? 'opacity-0' : 'opacity-100'
+          className={`max-w-full max-h-full object-contain transition-opacity duration-300 ${imageLoading ? 'opacity-0' : 'opacity-100'
             }`}
           style={{
             transform: `scale(${scale * autoScale}) rotate(${rotation}deg) translate(${position.x + swipeOffset}px, ${position.y}px)`,
-            transition: (isDragging || (Math.abs(swipeOffset) > 0 && !isAnimatingSwipe)) ? 'none' : 'transform 0.3s ease-out'
+            transition: (isDragging || (Math.abs(swipeOffset) > 0 && !isAnimatingSwipe)) ? 'none' : 'transform 0.3s ease-out',
+            cursor: scale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'zoom-in'
           }}
           onMouseDown={handleMouseDown}
           onTouchStart={handleTouchStart}
@@ -989,6 +1040,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
           onTouchEnd={handleTouchEnd}
           onLoad={handleImageLoad}
           onError={handleImageError}
+          onClick={handleImageClick}
           draggable={false}
         />
       </div>
