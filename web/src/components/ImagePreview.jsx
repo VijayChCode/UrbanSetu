@@ -200,6 +200,25 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
     };
   }, [isSlideshow, slideshowSpeed, imagesArray.length]);
 
+  // Keep isFullscreen React state synchronized with actual browser fullscreen state
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+    };
+  }, []);
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (!isOpen) return;
@@ -209,7 +228,12 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
 
       switch (e.key) {
         case 'Escape':
-          onClose();
+          e.preventDefault();
+          if (document.fullscreenElement || isFullscreen) {
+            toggleFullscreen();
+          } else {
+            onClose();
+          }
           break;
         case 'ArrowLeft':
           setCurrentIndex(prev => {
@@ -300,7 +324,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('click', handleClickOutside);
     };
-  }, [isOpen, imagesArray.length, onClose, showControls, showSettings, showInfo]);
+  }, [isOpen, imagesArray.length, onClose, showControls, showSettings, showInfo, isFullscreen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -706,7 +730,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
   };
 
   const toggleFullscreen = () => {
-    if (isFullscreen) {
+    if (document.fullscreenElement || isFullscreen) {
       document.exitFullscreen?.();
       setIsFullscreen(false);
       showFeedback("Exit Fullscreen");
@@ -957,6 +981,14 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
     isTouchRef.current = true;
   };
 
+  const handleCloseClick = () => {
+    if (document.fullscreenElement || isFullscreen) {
+      toggleFullscreen();
+    } else {
+      onClose();
+    }
+  };
+
   if (!isOpen || !imagesArray || imagesArray.length === 0) return null;
 
   const content = (
@@ -971,7 +1003,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
     >
       {/* Close Button */}
       <button
-        onClick={onClose}
+        onClick={handleCloseClick}
         className={`absolute top-4 right-4 text-white hover:text-red-400 z-10 bg-black bg-opacity-70 rounded-full p-3 transition-all duration-300 hover:bg-opacity-90 hover:scale-110 ${showControls ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'
           }`}
       >
