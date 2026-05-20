@@ -500,29 +500,36 @@ function AppRoutes({ bootstrapped }) {
   const isYearPath = location.pathname.includes('/year/');
   const hideHeaderRoutes = ["/appointments"];
 
-  // Persistent session check on app load
+  // Persistent session check on app load — single source of truth for auth verification
   useEffect(() => {
     const checkSession = async () => {
+      // If no token exists at all, user is not logged in — skip server verification
+      if (!localStorage.getItem('accessToken')) {
+        setSessionChecked(true);
+        return;
+      }
+
       dispatch(verifyAuthStart());
       try {
-        const token = localStorage.getItem('accessToken');
-        const sessionId = localStorage.getItem('sessionId');
         const res = await authenticatedFetch(`${API_BASE_URL}/api/auth/verify`, {
           method: 'GET'
         });
         const data = await res.json();
-        if (res.ok && data.authenticated !== false) {
+        if (res.ok && data.authenticated !== false && data._id) {
+          // Server confirmed session is valid — update Redux with fresh user data
           dispatch(verifyAuthSuccess(data));
         } else {
+          // Server explicitly confirmed session is invalid — clean up completely
           localStorage.removeItem('accessToken');
           localStorage.removeItem('sessionId');
+          localStorage.removeItem('refreshToken');
           await persistor.purge();
           dispatch(verifyAuthFailure(data.message || 'Session invalid'));
           dispatch(signoutUserSuccess());
         }
       } catch (err) {
         console.warn('Session verification network error, keeping existing state:', err);
-        // Do NOT sign out on network error - allow offline usage or retry later
+        // Do NOT sign out on network error — trust local persisted state for resilience
       } finally {
         setSessionChecked(true);
       }
@@ -1094,9 +1101,7 @@ function AppRoutes({ bootstrapped }) {
 
 import MaintenancePage from "./pages/MaintenancePage";
 
-export default function App() {
-  const dispatch = useDispatch();
-  const [bootstrapped, setBootstrapped] = useState(false);
+export default function App({ bootstrapped }) {
 
   // MAINTENANCE MODE TOGGLE
   // Set this to true to halt all services and show the maintenance page
@@ -1124,28 +1129,6 @@ export default function App() {
     }
   }, []);
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const res = await authenticatedFetch(`${API_BASE_URL}/api/auth/verify`);
-        const data = await res.json();
-        if (data.success === false) {
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('sessionId');
-          dispatch(signoutUserSuccess());
-        }
-      } catch (error) {
-        console.error("Auth check failed:", error);
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('sessionId');
-        dispatch(signoutUserSuccess());
-      } finally {
-        setBootstrapped(true);
-      }
-    };
-
-    checkAuth();
-  }, [dispatch]);
 
   if (MAINTENANCE_MODE) {
     return <MaintenancePage />;
