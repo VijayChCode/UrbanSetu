@@ -4,7 +4,7 @@ import bcryptjs from "bcryptjs";
 import crypto from 'crypto';
 import { errorHandler } from "../utils/error.js";
 import jwt from 'jsonwebtoken'
-import { generateOTP, sendSignupOTPEmail, sendLoginOTPEmail, sendPasswordResetSuccessEmail, sendPasswordChangeSuccessEmail, sendWelcomeEmail, sendReferralBonusEmail, sendReferredWelcomeEmail } from "../utils/emailService.js";
+import { generateOTP, sendSignupOTPEmail, sendLoginOTPEmail, sendPasswordResetSuccessEmail, sendPasswordChangeSuccessEmail, sendWelcomeEmail, sendReferralBonusEmail, sendReferredWelcomeEmail, sendCreatorFeedbackEmail } from "../utils/emailService.js";
 import { generateTokenPair, setSecureCookies, clearAuthCookies, verifyRefreshToken, generateAccessToken } from "../utils/jwtUtils.js";
 import { trackFailedAttempt, clearFailedAttempts, logSecurityEvent, sendAdminAlert, isAccountLocked, checkSuspiciousSignup, getAccountLockRemainingMs } from "../middleware/security.js";
 import {
@@ -293,6 +293,15 @@ export const SignUp = async (req, res, next) => {
             console.log(`✅ Welcome email sent to: ${emailLower}`);
         } catch (emailError) {
             console.error(`❌ Failed to send welcome email to ${emailLower}:`, emailError);
+            // Don't fail the signup if email fails, just log the error
+        }
+
+        // Send personal creator feedback email (async, non-blocking)
+        try {
+            await sendCreatorFeedbackEmail(emailLower, newUser.username);
+            console.log(`✅ Creator feedback email sent to: ${emailLower}`);
+        } catch (emailError) {
+            console.error(`❌ Failed to send creator feedback email to ${emailLower}:`, emailError);
             // Don't fail the signup if email fails, just log the error
         }
 
@@ -923,6 +932,15 @@ export const Google = async (req, res, next) => {
                 console.log(`✅ New login email sent to Google user: ${newUser.email}`);
             } catch (emailError) {
                 console.error(`❌ Failed to send new login email to Google user ${newUser.email}:`, emailError);
+                // Don't fail the signup if email fails, just log the error
+            }
+
+            // Send personal creator feedback email (async, non-blocking)
+            try {
+                await sendCreatorFeedbackEmail(newUser.email, newUser.username);
+                console.log(`✅ Creator feedback email sent to new Google user: ${newUser.email}`);
+            } catch (emailError) {
+                console.error(`❌ Failed to send creator feedback email to Google user ${newUser.email}:`, emailError);
                 // Don't fail the signup if email fails, just log the error
             }
 

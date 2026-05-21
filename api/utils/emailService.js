@@ -17074,3 +17074,217 @@ export const sendBadgeEarnedEmail = async (email, username, badgeName, coinsEarn
     return createErrorResponse(error, 'badge_earned');
   }
 };
+
+// Personal Creator Feedback & Welcome Email - Sent on new user signup
+export const sendCreatorFeedbackEmail = async (email, username) => {
+  const clientBaseUrl = process.env.CLIENT_URL || 'https://urbansetu.vercel.app';
+  const unsubscribeUrl = getUnsubscribeUrl(email);
+
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: `A Personal Note from the Creator of UrbanSetu — Welcome, ${username || 'there'}! 💌`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>A Message from the Creator</title>
+      </head>
+      <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f4f8;">
+        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
+          
+          <!-- Header with creator branding -->
+          <div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%); padding: 45px 30px; text-align: center; position: relative;">
+            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 80 80%22><circle cx=%2240%22 cy=%2240%22 r=%2235%22 fill=%22none%22 stroke=%22rgba(255,255,255,0.08)%22 stroke-width=%222%22/></svg>') repeat; opacity: 0.3;"></div>
+            <div style="position: relative; z-index: 1;">
+              <div style="width: 70px; height: 70px; background: rgba(255,255,255,0.2); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 15px; backdrop-filter: blur(10px); border: 2px solid rgba(255,255,255,0.3);">
+                <span style="font-size: 32px;">👋</span>
+              </div>
+              <h1 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 700; line-height: 1.3;">A Personal Note from<br/>the Creator of UrbanSetu</h1>
+              <p style="color: #e0e7ff; margin: 12px 0 0; font-size: 15px; font-style: italic;">Built with passion, shaped by your feedback</p>
+            </div>
+          </div>
+          
+          <!-- Main Content -->
+          <div style="padding: 40px 30px;">
+            
+            <!-- Personal greeting -->
+            <div style="margin-bottom: 28px;">
+              <p style="color: #1f2937; font-size: 17px; line-height: 1.7; margin: 0 0 15px;">
+                Hey ${username || 'there'}, 👋
+              </p>
+              <p style="color: #4b5563; font-size: 15px; line-height: 1.7; margin: 0 0 15px;">
+                I'm <strong style="color: #6366f1;">Vijay Chalendra</strong>, the creator of UrbanSetu. I noticed you recently signed up and explored our platform — and I genuinely want to say <strong>thank you</strong> for giving UrbanSetu a chance!
+              </p>
+              <p style="color: #4b5563; font-size: 15px; line-height: 1.7; margin: 0;">
+                UrbanSetu started as a passion project to simplify real estate for everyone — whether you're searching for your dream home, listing a property, or building meaningful connections in the market. Every feature you see was crafted with care, and it's users like you who make this journey worthwhile.
+              </p>
+            </div>
+
+            <!-- Feedback Request Section -->
+            <div style="background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border: 1px solid #e9d5ff; border-radius: 12px; padding: 25px; margin-bottom: 28px;">
+              <div style="display: flex; align-items: flex-start; gap: 12px;">
+                <span style="font-size: 28px; line-height: 1;">💡</span>
+                <div>
+                  <h3 style="color: #6d28d9; margin: 0 0 10px; font-size: 18px; font-weight: 700;">Your Feedback Matters — A Lot!</h3>
+                  <p style="color: #5b21b6; font-size: 14px; line-height: 1.7; margin: 0 0 12px;">
+                    I'd love to hear about your experience so far. Whether it's a tiny UI glitch, a feature idea, something that confused you, or even just a "Hey, this is cool!" — <strong>every piece of feedback helps me make UrbanSetu better</strong>.
+                  </p>
+                  <p style="color: #5b21b6; font-size: 14px; line-height: 1.7; margin: 0;">
+                    Here are some things I'd especially love your insights on:
+                  </p>
+                  <ul style="color: #5b21b6; font-size: 14px; line-height: 1.8; margin: 10px 0 0; padding-left: 18px;">
+                    <li>Was the signup process smooth?</li>
+                    <li>Did you find what you were looking for?</li>
+                    <li>Any features you wish existed?</li>
+                    <li>Did anything feel broken or confusing?</li>
+                    <li>How does the platform compare to others you've used?</li>
+                    <li>Performance and loading speed on your device?</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bug Reports & Issues Section -->
+            <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 1px solid #fbbf24; border-radius: 12px; padding: 25px; margin-bottom: 28px;">
+              <div style="display: flex; align-items: flex-start; gap: 12px;">
+                <span style="font-size: 28px; line-height: 1;">🐛</span>
+                <div>
+                  <h3 style="color: #92400e; margin: 0 0 10px; font-size: 18px; font-weight: 700;">Found a Bug? Report It!</h3>
+                  <p style="color: #78350f; font-size: 14px; line-height: 1.7; margin: 0;">
+                    Encountered any issues, errors, or unexpected behavior? Don't hesitate to report it. I take every bug report seriously and work to fix them as quickly as possible. You're not just reporting a problem — you're helping the entire community!
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Contact Methods -->
+            <div style="background-color: #f8fafc; border-radius: 12px; padding: 25px; margin-bottom: 28px; border: 1px solid #e2e8f0;">
+              <h3 style="color: #1e293b; margin: 0 0 18px; font-size: 17px; font-weight: 700; text-align: center;">📬 Reach Out to Me Directly</h3>
+              
+              <!-- Email Contact 1 -->
+              <div style="display: flex; align-items: center; gap: 12px; padding: 12px 15px; background: #ffffff; border-radius: 10px; margin-bottom: 10px; border: 1px solid #e5e7eb; transition: all 0.2s;">
+                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #3b82f6, #1d4ed8); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                  <span style="color: white; font-size: 18px;">✉️</span>
+                </div>
+                <div>
+                  <p style="margin: 0; font-size: 12px; color: #6b7280; font-weight: 500;">General Feedback & Support</p>
+                  <a href="mailto:urbansetu.noreply@gmail.com" style="color: #2563eb; text-decoration: none; font-size: 14px; font-weight: 600;">urbansetu.noreply@gmail.com</a>
+                </div>
+              </div>
+
+              <!-- Email Contact 2 -->
+              <div style="display: flex; align-items: center; gap: 12px; padding: 12px 15px; background: #ffffff; border-radius: 10px; margin-bottom: 10px; border: 1px solid #e5e7eb;">
+                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                  <span style="color: white; font-size: 18px;">📧</span>
+                </div>
+                <div>
+                  <p style="margin: 0; font-size: 12px; color: #6b7280; font-weight: 500;">Authentication & Account Issues</p>
+                  <a href="mailto:auth.urbansetu@gmail.com" style="color: #059669; text-decoration: none; font-size: 14px; font-weight: 600;">auth.urbansetu@gmail.com</a>
+                </div>
+              </div>
+
+              <!-- LinkedIn -->
+              <div style="display: flex; align-items: center; gap: 12px; padding: 12px 15px; background: #ffffff; border-radius: 10px; margin-bottom: 10px; border: 1px solid #e5e7eb;">
+                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #0077b5, #005885); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                  <span style="color: white; font-size: 18px; font-weight: bold;">in</span>
+                </div>
+                <div>
+                  <p style="margin: 0; font-size: 12px; color: #6b7280; font-weight: 500;">Connect with me on LinkedIn</p>
+                  <a href="https://www.linkedin.com/in/vijaychalendra09" style="color: #0077b5; text-decoration: none; font-size: 14px; font-weight: 600;">linkedin.com/in/vijaychalendra09</a>
+                </div>
+              </div>
+
+              <!-- GitHub -->
+              <div style="display: flex; align-items: center; gap: 12px; padding: 12px 15px; background: #ffffff; border-radius: 10px; border: 1px solid #e5e7eb;">
+                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #333333, #1a1a1a); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                  <span style="color: white; font-size: 18px;">⌨️</span>
+                </div>
+                <div>
+                  <p style="margin: 0; font-size: 12px; color: #6b7280; font-weight: 500;">Explore the Source Code</p>
+                  <a href="https://github.com/VijayChCode/UrbanSetu" style="color: #333333; text-decoration: none; font-size: 14px; font-weight: 600;">github.com/VijayChCode/UrbanSetu</a>
+                </div>
+              </div>
+            </div>
+
+            <!-- Open Source Contribution Invitation -->
+            <div style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border: 1px solid #6ee7b7; border-radius: 12px; padding: 25px; margin-bottom: 28px;">
+              <div style="display: flex; align-items: flex-start; gap: 12px;">
+                <span style="font-size: 28px; line-height: 1;">🌟</span>
+                <div>
+                  <h3 style="color: #065f46; margin: 0 0 10px; font-size: 18px; font-weight: 700;">You Can Shape UrbanSetu!</h3>
+                  <p style="color: #047857; font-size: 14px; line-height: 1.7; margin: 0 0 12px;">
+                    UrbanSetu is built in the open! If you're a developer, designer, or just curious, you're welcome to explore the codebase, suggest improvements, or even contribute directly. Every star ⭐ on the repo and every issue you raise helps!
+                  </p>
+                  <a href="https://github.com/VijayChCode/UrbanSetu" style="display: inline-block; background: linear-gradient(135deg, #059669 0%, #047857 100%); color: #ffffff; text-decoration: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; font-size: 14px; box-shadow: 0 2px 8px rgba(5, 150, 105, 0.3);">
+                    ⭐ Star on GitHub
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <!-- Personal Closing -->
+            <div style="border-top: 2px solid #e5e7eb; padding-top: 25px; margin-bottom: 20px;">
+              <p style="color: #4b5563; font-size: 15px; line-height: 1.7; margin: 0 0 15px;">
+                I read every single piece of feedback personally. Your words — whether it's praise, criticism, or a feature request — go directly into shaping the future of UrbanSetu. This platform is as much yours as it is mine.
+              </p>
+              <p style="color: #4b5563; font-size: 15px; line-height: 1.7; margin: 0 0 5px;">
+                Thank you for being part of this journey. Let's build something amazing together! 🚀
+              </p>
+              <div style="margin-top: 20px;">
+                <p style="color: #1f2937; font-size: 16px; margin: 0; font-weight: 600;">
+                  Warm regards,
+                </p>
+                <p style="color: #6366f1; font-size: 18px; margin: 5px 0 0; font-weight: 700; font-style: italic;">
+                  Vijay Chalendra
+                </p>
+                <p style="color: #6b7280; font-size: 13px; margin: 3px 0 0;">
+                  Creator & Developer, UrbanSetu
+                </p>
+              </div>
+            </div>
+
+            <!-- Quick Action Buttons -->
+            <div style="text-align: center; margin: 25px 0;">
+              <a href="${clientBaseUrl}" style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 10px; font-weight: 700; font-size: 15px; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35); margin: 5px;">
+                🏠 Explore UrbanSetu
+              </a>
+              <a href="mailto:urbansetu.noreply@gmail.com?subject=Feedback from ${encodeURIComponent(username || 'User')}&body=Hi Vijay,%0A%0AHere's my feedback about UrbanSetu:%0A%0A" style="display: inline-block; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 10px; font-weight: 700; font-size: 15px; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35); margin: 5px;">
+                💬 Share Feedback
+              </a>
+            </div>
+          </div>
+          
+          <!-- Footer -->
+          <div style="background-color: #f8fafc; padding: 25px 30px; border-top: 1px solid #e2e8f0;">
+            <div style="text-align: center;">
+              <p style="color: #6b7280; font-size: 13px; margin: 0 0 8px; line-height: 1.6;">
+                This is a one-time personal welcome note from the creator of UrbanSetu.<br/>
+                You received this because you recently joined our community.
+              </p>
+              <p style="color: #9ca3af; margin: 0 0 8px; font-size: 12px;">
+                © ${new Date().getFullYear()} UrbanSetu. All rights reserved.
+              </p>
+              <p style="margin: 0;">
+                <a href="${unsubscribeUrl}" style="color: #9ca3af; text-decoration: underline; font-size: 11px;">Unsubscribe from promotional emails</a>
+              </p>
+            </div>
+          </div>
+        </div>
+      </body>
+      </html>
+    `
+  };
+
+  try {
+    const result = await sendEmailWithRetry(mailOptions, 3, 1000, 'promotional');
+    return result.success ?
+      createSuccessResponse(result.messageId, 'creator_feedback') :
+      createErrorResponse(new Error(result.error), 'creator_feedback');
+  } catch (error) {
+    console.error('Error sending creator feedback email:', error);
+    return createErrorResponse(error, 'creator_feedback');
+  }
+};
