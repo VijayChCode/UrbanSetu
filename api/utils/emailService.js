@@ -17268,43 +17268,6 @@ export const sendCreatorFeedbackEmail = async (email, username) => {
               </div>
             </div>
 
-            <!-- What is UrbanSetu Section -->
-            <div style="background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); padding: 25px; border-radius: 12px; border: 1px solid #bbf7d0; margin-bottom: 28px;">
-              <h3 style="color: #065f46; margin: 0 0 15px; font-size: 18px; font-weight: 700; text-align: center;">🏡 What is UrbanSetu?</h3>
-              <p style="color: #047857; font-size: 14px; line-height: 1.7; margin: 0 0 15px;">
-                UrbanSetu is an <strong>AI-Powered Smart Real Estate Platform</strong> — a next-gen ecosystem built to bridge the gap between people and property. From intelligent property discovery to secure transactions, we bring enterprise-level technology to your real estate journey.
-              </p>
-              <div style="display: grid; gap: 8px;">
-                <div style="background: #ffffff; padding: 10px 14px; border-radius: 8px; border-left: 3px solid #10b981;">
-                  <strong style="color: #065f46; font-size: 13px;">🏠 Smart Discovery</strong>
-                  <p style="color: #047857; font-size: 12px; margin: 3px 0 0; line-height: 1.5;">AI-powered search (Llama 3.3), Route Planner, ESG Analytics, property management & bookings.</p>
-                </div>
-                <div style="background: #ffffff; padding: 10px 14px; border-radius: 8px; border-left: 3px solid #f59e0b;">
-                  <strong style="color: #92400e; font-size: 13px;">💰 Fintech Suite</strong>
-                  <p style="color: #78350f; font-size: 12px; margin: 3px 0 0; line-height: 1.5;">Rent Wallet, ROI Calculators, Digital Rental Loans & Monthly Payment Gateways.</p>
-                </div>
-                <div style="background: #ffffff; padding: 10px 14px; border-radius: 8px; border-left: 3px solid #8b5cf6;">
-                  <strong style="color: #5b21b6; font-size: 13px;">🎮 Gamified Loyalty</strong>
-                  <p style="color: #6d28d9; font-size: 12px; margin: 3px 0 0; line-height: 1.5;">Earn SetuCoins, unlock Badges & climb Leaderboards through community interactions.</p>
-                </div>
-                <div style="background: #ffffff; padding: 10px 14px; border-radius: 8px; border-left: 3px solid #ef4444;">
-                  <strong style="color: #991b1b; font-size: 13px;">🛡️ Fortified Security</strong>
-                  <p style="color: #b91c1c; font-size: 12px; margin: 3px 0 0; line-height: 1.5;">Real-time session management, device audits, fraud detection, CSRF protection & force logout.</p>
-                </div>
-                <div style="background: #ffffff; padding: 10px 14px; border-radius: 8px; border-left: 3px solid #3b82f6;">
-                  <strong style="color: #1e40af; font-size: 13px;">🤝 Signature Features</strong>
-                  <p style="color: #1d4ed8; font-size: 12px; margin: 3px 0 0; line-height: 1.5;">RentLock (fixed-rent digital contracts) & SaleLock (token-based property blocking).</p>
-                </div>
-                <div style="background: #ffffff; padding: 10px 14px; border-radius: 8px; border-left: 3px solid #06b6d4;">
-                  <strong style="color: #155e75; font-size: 13px;">🗣️ Community & Support</strong>
-                  <p style="color: #0e7490; font-size: 12px; margin: 3px 0 0; line-height: 1.5;">User blogs, community forums, 24/7 AI chatbot, WhatsApp-style messaging & Help Center.</p>
-                </div>
-                <div style="background: #ffffff; padding: 10px 14px; border-radius: 8px; border-left: 3px solid #ec4899;">
-                  <strong style="color: #9d174d; font-size: 13px;">🔔 Smart Notifications</strong>
-                  <p style="color: #be185d; font-size: 12px; margin: 3px 0 0; line-height: 1.5;">Omni-channel notifications, watchlist alerts & automated email reports.</p>
-                </div>
-              </div>
-            </div>
 
             <!-- Personal Closing -->
             <div style="border-top: 2px solid #e5e7eb; padding-top: 25px; margin-bottom: 20px;">
