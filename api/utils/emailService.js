@@ -1999,6 +1999,44 @@ export const sendWelcomeEmail = async (email, userDetails) => {
                 <li>${role === 'admin' ? 'Wait for admin approval to access administrative features' : 'Start your real estate journey with us'}</li>
               </ul>
             </div>
+
+            <!-- What is UrbanSetu Section -->
+            <div style="margin-top: 30px; background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); padding: 25px; border-radius: 12px; border: 1px solid #bbf7d0;">
+              <h3 style="color: #065f46; margin: 0 0 15px; font-size: 18px; font-weight: 700; text-align: center;">🏡 What is UrbanSetu?</h3>
+              <p style="color: #047857; font-size: 14px; line-height: 1.7; margin: 0 0 15px;">
+                UrbanSetu is an <strong>AI-Powered Smart Real Estate Platform</strong> — a next-gen ecosystem built to bridge the gap between people and property. From intelligent property discovery to secure transactions, UrbanSetu brings enterprise-level technology to your real estate journey.
+              </p>
+              <div style="display: grid; gap: 10px;">
+                <div style="background: #ffffff; padding: 12px 15px; border-radius: 8px; border-left: 3px solid #10b981;">
+                  <strong style="color: #065f46; font-size: 13px;">🏠 Smart Discovery</strong>
+                  <p style="color: #047857; font-size: 13px; margin: 4px 0 0; line-height: 1.5;">AI-powered search (Llama 3.3), Route Planner, ESG Analytics, property management, and bookings.</p>
+                </div>
+                <div style="background: #ffffff; padding: 12px 15px; border-radius: 8px; border-left: 3px solid #f59e0b;">
+                  <strong style="color: #92400e; font-size: 13px;">💰 Fintech Suite</strong>
+                  <p style="color: #78350f; font-size: 13px; margin: 4px 0 0; line-height: 1.5;">Rent Wallet, ROI Calculators, Digital Rental Loans, and Monthly Payment Gateways.</p>
+                </div>
+                <div style="background: #ffffff; padding: 12px 15px; border-radius: 8px; border-left: 3px solid #8b5cf6;">
+                  <strong style="color: #5b21b6; font-size: 13px;">🎮 Gamified Loyalty</strong>
+                  <p style="color: #6d28d9; font-size: 13px; margin: 4px 0 0; line-height: 1.5;">Earn SetuCoins, unlock Badges, and climb Leaderboards through community interactions.</p>
+                </div>
+                <div style="background: #ffffff; padding: 12px 15px; border-radius: 8px; border-left: 3px solid #ef4444;">
+                  <strong style="color: #991b1b; font-size: 13px;">🛡️ Fortified Security</strong>
+                  <p style="color: #b91c1c; font-size: 13px; margin: 4px 0 0; line-height: 1.5;">Real-time session management, device audits, fraud detection, CSRF protection, and force logout.</p>
+                </div>
+                <div style="background: #ffffff; padding: 12px 15px; border-radius: 8px; border-left: 3px solid #3b82f6;">
+                  <strong style="color: #1e40af; font-size: 13px;">🤝 Signature Features</strong>
+                  <p style="color: #1d4ed8; font-size: 13px; margin: 4px 0 0; line-height: 1.5;">RentLock (fixed-rent digital contracts) and SaleLock (token-based property blocking).</p>
+                </div>
+                <div style="background: #ffffff; padding: 12px 15px; border-radius: 8px; border-left: 3px solid #06b6d4;">
+                  <strong style="color: #155e75; font-size: 13px;">🗣️ Community & Support</strong>
+                  <p style="color: #0e7490; font-size: 13px; margin: 4px 0 0; line-height: 1.5;">User blogs, community forums, 24/7 AI chatbot, WhatsApp-style real-time messaging, and Help Center.</p>
+                </div>
+                <div style="background: #ffffff; padding: 12px 15px; border-radius: 8px; border-left: 3px solid #ec4899;">
+                  <strong style="color: #9d174d; font-size: 13px;">🔔 Smart Notifications</strong>
+                  <p style="color: #be185d; font-size: 13px; margin: 4px 0 0; line-height: 1.5;">Omni-channel notifications, watchlist alerts, and automated email reports.</p>
+                </div>
+              </div>
+            </div>
             
             <!-- Footer -->
             <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
@@ -2008,7 +2046,12 @@ export const sendWelcomeEmail = async (email, userDetails) => {
               <p style="color: #6b7280; font-size: 12px; margin: 10px 0 0;">
                 This is an automated message. Please do not reply to this email.
               </p>
-              <p style="color: #9ca3af; margin: 15px 0 0; font-size: 12px;">
+              <p style="margin: 12px 0 0; font-size: 12px;">
+                <a href="${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}/terms" style="color: #6b7280; text-decoration: underline;">Terms of Use</a>
+                &nbsp;·&nbsp;
+                <a href="${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}/privacy" style="color: #6b7280; text-decoration: underline;">Privacy Policy</a>
+              </p>
+              <p style="color: #9ca3af; margin: 10px 0 0; font-size: 12px;">
                 © ${new Date().getFullYear()} UrbanSetu. All rights reserved.
               </p>
             </div>
@@ -17116,7 +17159,7 @@ export const sendCreatorFeedbackEmail = async (email, username) => {
                 Hey ${username || 'there'}, 👋
               </p>
               <p style="color: #4b5563; font-size: 15px; line-height: 1.7; margin: 0 0 15px;">
-                I'm <strong style="color: #6366f1;">Vijay Chalendra</strong>, the creator of UrbanSetu. I noticed you recently signed up and explored our platform — and I genuinely want to say <strong>thank you</strong> for giving UrbanSetu a chance!
+                We're <strong style="color: #6366f1;">Vijay Chalendra & the UrbanSetu team</strong>. We noticed you recently signed up and explored our platform — and we genuinely want to say <strong>thank you</strong> for giving UrbanSetu a chance!
               </p>
               <p style="color: #4b5563; font-size: 15px; line-height: 1.7; margin: 0;">
                 UrbanSetu started as a passion project to simplify real estate for everyone — whether you're searching for your dream home, listing a property, or building meaningful connections in the market. Every feature you see was crafted with care, and it's users like you who make this journey worthwhile.
@@ -17130,10 +17173,10 @@ export const sendCreatorFeedbackEmail = async (email, username) => {
                 <div>
                   <h3 style="color: #6d28d9; margin: 0 0 10px; font-size: 18px; font-weight: 700;">Your Feedback Matters — A Lot!</h3>
                   <p style="color: #5b21b6; font-size: 14px; line-height: 1.7; margin: 0 0 12px;">
-                    I'd love to hear about your experience so far. Whether it's a tiny UI glitch, a feature idea, something that confused you, or even just a "Hey, this is cool!" — <strong>every piece of feedback helps me make UrbanSetu better</strong>.
+                    We'd love to hear about your experience so far. Whether it's a tiny UI glitch, a feature idea, something that confused you, or even just a "Hey, this is cool!" — <strong>every piece of feedback helps us make UrbanSetu better</strong>.
                   </p>
                   <p style="color: #5b21b6; font-size: 14px; line-height: 1.7; margin: 0;">
-                    Here are some things I'd especially love your insights on:
+                    Here are some things we'd especially love your insights on:
                   </p>
                   <ul style="color: #5b21b6; font-size: 14px; line-height: 1.8; margin: 10px 0 0; padding-left: 18px;">
                     <li>Was the signup process smooth?</li>
@@ -17154,7 +17197,7 @@ export const sendCreatorFeedbackEmail = async (email, username) => {
                 <div>
                   <h3 style="color: #92400e; margin: 0 0 10px; font-size: 18px; font-weight: 700;">Found a Bug? Report It!</h3>
                   <p style="color: #78350f; font-size: 14px; line-height: 1.7; margin: 0;">
-                    Encountered any issues, errors, or unexpected behavior? Don't hesitate to report it. I take every bug report seriously and work to fix them as quickly as possible. You're not just reporting a problem — you're helping the entire community!
+                    Encountered any issues, errors, or unexpected behavior? Don't hesitate to report it. We take every bug report seriously and work to fix them as quickly as possible. You're not just reporting a problem — you're helping the entire community!
                   </p>
                 </div>
               </div>
@@ -17162,7 +17205,7 @@ export const sendCreatorFeedbackEmail = async (email, username) => {
 
             <!-- Contact Methods -->
             <div style="background-color: #f8fafc; border-radius: 12px; padding: 25px; margin-bottom: 28px; border: 1px solid #e2e8f0;">
-              <h3 style="color: #1e293b; margin: 0 0 18px; font-size: 17px; font-weight: 700; text-align: center;">📬 Reach Out to Me Directly</h3>
+              <h3 style="color: #1e293b; margin: 0 0 18px; font-size: 17px; font-weight: 700; text-align: center;">📬 Reach Out to Us Directly</h3>
               
               <!-- Email Contact 1 -->
               <div style="display: flex; align-items: center; gap: 12px; padding: 12px 15px; background: #ffffff; border-radius: 10px; margin-bottom: 10px; border: 1px solid #e5e7eb; transition: all 0.2s;">
@@ -17192,7 +17235,7 @@ export const sendCreatorFeedbackEmail = async (email, username) => {
                   <span style="color: white; font-size: 18px; font-weight: bold;">in</span>
                 </div>
                 <div>
-                  <p style="margin: 0; font-size: 12px; color: #6b7280; font-weight: 500;">Connect with me on LinkedIn</p>
+                  <p style="margin: 0; font-size: 12px; color: #6b7280; font-weight: 500;">Connect with the creator on LinkedIn</p>
                   <a href="https://www.linkedin.com/in/vijaychalendra09" style="color: #0077b5; text-decoration: none; font-size: 14px; font-weight: 600;">linkedin.com/in/vijaychalendra09</a>
                 </div>
               </div>
@@ -17225,10 +17268,48 @@ export const sendCreatorFeedbackEmail = async (email, username) => {
               </div>
             </div>
 
+            <!-- What is UrbanSetu Section -->
+            <div style="background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); padding: 25px; border-radius: 12px; border: 1px solid #bbf7d0; margin-bottom: 28px;">
+              <h3 style="color: #065f46; margin: 0 0 15px; font-size: 18px; font-weight: 700; text-align: center;">🏡 What is UrbanSetu?</h3>
+              <p style="color: #047857; font-size: 14px; line-height: 1.7; margin: 0 0 15px;">
+                UrbanSetu is an <strong>AI-Powered Smart Real Estate Platform</strong> — a next-gen ecosystem built to bridge the gap between people and property. From intelligent property discovery to secure transactions, we bring enterprise-level technology to your real estate journey.
+              </p>
+              <div style="display: grid; gap: 8px;">
+                <div style="background: #ffffff; padding: 10px 14px; border-radius: 8px; border-left: 3px solid #10b981;">
+                  <strong style="color: #065f46; font-size: 13px;">🏠 Smart Discovery</strong>
+                  <p style="color: #047857; font-size: 12px; margin: 3px 0 0; line-height: 1.5;">AI-powered search (Llama 3.3), Route Planner, ESG Analytics, property management & bookings.</p>
+                </div>
+                <div style="background: #ffffff; padding: 10px 14px; border-radius: 8px; border-left: 3px solid #f59e0b;">
+                  <strong style="color: #92400e; font-size: 13px;">💰 Fintech Suite</strong>
+                  <p style="color: #78350f; font-size: 12px; margin: 3px 0 0; line-height: 1.5;">Rent Wallet, ROI Calculators, Digital Rental Loans & Monthly Payment Gateways.</p>
+                </div>
+                <div style="background: #ffffff; padding: 10px 14px; border-radius: 8px; border-left: 3px solid #8b5cf6;">
+                  <strong style="color: #5b21b6; font-size: 13px;">🎮 Gamified Loyalty</strong>
+                  <p style="color: #6d28d9; font-size: 12px; margin: 3px 0 0; line-height: 1.5;">Earn SetuCoins, unlock Badges & climb Leaderboards through community interactions.</p>
+                </div>
+                <div style="background: #ffffff; padding: 10px 14px; border-radius: 8px; border-left: 3px solid #ef4444;">
+                  <strong style="color: #991b1b; font-size: 13px;">🛡️ Fortified Security</strong>
+                  <p style="color: #b91c1c; font-size: 12px; margin: 3px 0 0; line-height: 1.5;">Real-time session management, device audits, fraud detection, CSRF protection & force logout.</p>
+                </div>
+                <div style="background: #ffffff; padding: 10px 14px; border-radius: 8px; border-left: 3px solid #3b82f6;">
+                  <strong style="color: #1e40af; font-size: 13px;">🤝 Signature Features</strong>
+                  <p style="color: #1d4ed8; font-size: 12px; margin: 3px 0 0; line-height: 1.5;">RentLock (fixed-rent digital contracts) & SaleLock (token-based property blocking).</p>
+                </div>
+                <div style="background: #ffffff; padding: 10px 14px; border-radius: 8px; border-left: 3px solid #06b6d4;">
+                  <strong style="color: #155e75; font-size: 13px;">🗣️ Community & Support</strong>
+                  <p style="color: #0e7490; font-size: 12px; margin: 3px 0 0; line-height: 1.5;">User blogs, community forums, 24/7 AI chatbot, WhatsApp-style messaging & Help Center.</p>
+                </div>
+                <div style="background: #ffffff; padding: 10px 14px; border-radius: 8px; border-left: 3px solid #ec4899;">
+                  <strong style="color: #9d174d; font-size: 13px;">🔔 Smart Notifications</strong>
+                  <p style="color: #be185d; font-size: 12px; margin: 3px 0 0; line-height: 1.5;">Omni-channel notifications, watchlist alerts & automated email reports.</p>
+                </div>
+              </div>
+            </div>
+
             <!-- Personal Closing -->
             <div style="border-top: 2px solid #e5e7eb; padding-top: 25px; margin-bottom: 20px;">
               <p style="color: #4b5563; font-size: 15px; line-height: 1.7; margin: 0 0 15px;">
-                I read every single piece of feedback personally. Your words — whether it's praise, criticism, or a feature request — go directly into shaping the future of UrbanSetu. This platform is as much yours as it is mine.
+                We read every single piece of feedback personally. Your words — whether it's praise, criticism, or a feature request — go directly into shaping the future of UrbanSetu. This platform is as much yours as it is ours.
               </p>
               <p style="color: #4b5563; font-size: 15px; line-height: 1.7; margin: 0 0 5px;">
                 Thank you for being part of this journey. Let's build something amazing together! 🚀
@@ -17238,7 +17319,7 @@ export const sendCreatorFeedbackEmail = async (email, username) => {
                   Warm regards,
                 </p>
                 <p style="color: #6366f1; font-size: 18px; margin: 5px 0 0; font-weight: 700; font-style: italic;">
-                  Vijay Chalendra
+                  Vijay Chalendra & the UrbanSetu Team
                 </p>
                 <p style="color: #6b7280; font-size: 13px; margin: 3px 0 0;">
                   Creator & Developer, UrbanSetu
@@ -17251,7 +17332,7 @@ export const sendCreatorFeedbackEmail = async (email, username) => {
               <a href="${clientBaseUrl}" style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 10px; font-weight: 700; font-size: 15px; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35); margin: 5px;">
                 🏠 Explore UrbanSetu
               </a>
-              <a href="mailto:urbansetu.noreply@gmail.com?subject=Feedback from ${encodeURIComponent(username || 'User')}&body=Hi Vijay,%0A%0AHere's my feedback about UrbanSetu:%0A%0A" style="display: inline-block; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 10px; font-weight: 700; font-size: 15px; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35); margin: 5px;">
+              <a href="mailto:urbansetu.noreply@gmail.com?subject=Feedback from ${encodeURIComponent(username || 'User')}&body=Hi UrbanSetu Team,%0A%0AHere's my feedback about UrbanSetu:%0A%0A" style="display: inline-block; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 10px; font-weight: 700; font-size: 15px; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35); margin: 5px;">
                 💬 Share Feedback
               </a>
             </div>
@@ -17263,6 +17344,11 @@ export const sendCreatorFeedbackEmail = async (email, username) => {
               <p style="color: #6b7280; font-size: 13px; margin: 0 0 8px; line-height: 1.6;">
                 This is a one-time personal welcome note from the creator of UrbanSetu.<br/>
                 You received this because you recently joined our community.
+              </p>
+              <p style="margin: 8px 0; font-size: 12px;">
+                <a href="${clientBaseUrl}/terms" style="color: #6b7280; text-decoration: underline;">Terms of Use</a>
+                &nbsp;·&nbsp;
+                <a href="${clientBaseUrl}/privacy" style="color: #6b7280; text-decoration: underline;">Privacy Policy</a>
               </p>
               <p style="color: #9ca3af; margin: 0 0 8px; font-size: 12px;">
                 © ${new Date().getFullYear()} UrbanSetu. All rights reserved.
