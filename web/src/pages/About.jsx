@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { authenticatedFetch } from '../utils/auth';
 import { motion, AnimatePresence } from 'framer-motion';
 import AboutSkeleton from '../components/skeletons/AboutSkeleton';
@@ -336,6 +336,27 @@ export default function About() {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* 11. Share Your Feedback */}
+        <div className="bg-gradient-to-br from-purple-50 via-white to-blue-50 dark:from-purple-900/20 dark:via-gray-900 dark:to-blue-900/20 rounded-xl shadow-lg dark:shadow-purple-900/10 p-8 text-center transition-colors border border-purple-100 dark:border-purple-800/50">
+          <span className="text-4xl mb-3 block">📋</span>
+          <h2 className="text-3xl font-bold text-purple-700 dark:text-purple-400 mb-3">Share Your Feedback</h2>
+          <p className="text-slate-600 dark:text-gray-300 text-lg max-w-2xl mx-auto mb-2 leading-relaxed">
+            Your voice shapes the future of UrbanSetu. Tell us what you love, what needs improvement, and what features you'd like to see next.
+          </p>
+          <p className="text-amber-600 dark:text-amber-400 font-semibold text-sm mb-6">
+            🪙 Fill the survey & earn 10 SetuCoins!
+          </p>
+          <a
+            href="https://docs.google.com/forms/d/e/1FAIpQLSfczXodXme_kSsff2XNktDp6y9r0DyXm_abV9VIqK3PcBKhVg/viewform"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-3.5 rounded-xl font-bold text-lg transition-all transform hover:scale-105 shadow-lg hover:shadow-xl"
+          >
+            📋 Take the 2-Minute Survey
+          </a>
+          <p className="text-gray-400 dark:text-gray-500 text-xs mt-3">Takes ~2 minutes • Completely anonymous • Helps us build better</p>
         </div>
       </div>
       <ContactSupportWrapper />
