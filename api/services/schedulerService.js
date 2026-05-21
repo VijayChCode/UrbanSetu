@@ -14,6 +14,7 @@ import {
 } from './engagementService.js';
 import { cleanupAllStaleSessions } from '../utils/sessionManager.js';
 import { publishScheduledBlogs } from '../controllers/blog.controller.js';
+import { initializeCreatorFeedbackScheduler } from '../schedulers/creatorFeedbackScheduler.js';
 
 // Schedule appointment reminders to run every day at 9:00 AM
 const scheduleAppointmentReminders = () => {
@@ -276,6 +277,7 @@ export const startScheduler = (app) => {
   scheduleEngagementJobs();
   scheduleSessionCleanup();
   scheduleBlogPublication();
+  initializeCreatorFeedbackScheduler();
   console.log('✅ Scheduler service started successfully');
 };
 

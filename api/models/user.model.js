@@ -160,6 +160,10 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+  creatorFeedbackEmailSentAt: {
+    type: Date,
+    default: null
+  },
 
   profileVisibility: {
     type: String,
