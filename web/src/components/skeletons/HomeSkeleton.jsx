@@ -1,91 +1,402 @@
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import ListingSkeletonGrid from "./ListingSkeletonGrid";
 
+/* ─────────────────── Loading status messages for regular users ─────────────────── */
+const LOADING_STAGES = [
+  { label: 'Connecting to UrbanSetu secure gateway...', icon: '🔗' },
+  { label: 'Authenticating active session credentials...', icon: '🔑' },
+  { label: 'Detecting local geo-coordinates...', icon: '📍' },
+  { label: 'Fetching recently viewed properties...', icon: '👁️' },
+  { label: 'Retrieving properties near your location...', icon: '🏠' },
+  { label: 'Syncing your price drop watchlist...', icon: '📉' },
+  { label: 'Generating AI matching weights...', icon: '🤖' },
+  { label: 'Mapping scheduling calendar...', icon: '📅' },
+  { label: 'Finalizing premium dashboard widgets...', icon: '✨' },
+];
+
+/* ─────────────────── Custom shimmer keyframes via inline style tag ─────────── */
+const SkeletonStyles = () => (
+  <style>{`
+    @keyframes hsk-shimmer {
+      0%   { background-position: -700px 0; }
+      100% { background-position: 700px 0; }
+    }
+    @keyframes hsk-grow {
+      0%   { transform: scaleY(0.15); opacity: 0.3; }
+      60%  { transform: scaleY(1); opacity: 1; }
+      100% { transform: scaleY(1); opacity: 1; }
+    }
+    @keyframes hsk-float {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-6px); }
+    }
+    @keyframes hsk-progress-glow {
+      0%, 100% { box-shadow: 0 0 6px rgba(244,63,94,0.4); }
+      50%      { box-shadow: 0 0 20px rgba(244,63,94,0.8); }
+    }
+    @keyframes hsk-fade-in-up {
+      0%   { opacity: 0; transform: translateY(12px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes hsk-status-swap {
+      0%   { opacity: 0; transform: translateY(8px); }
+      15%  { opacity: 1; transform: translateY(0); }
+      85%  { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-8px); }
+    }
+    @keyframes hsk-pulse-ring {
+      0%   { transform: scale(0.8); opacity: 0.6; }
+      50%  { transform: scale(1.15); opacity: 0; }
+      100% { transform: scale(0.8); opacity: 0; }
+    }
+    @keyframes hsk-wave {
+      0%, 60%, 100% { transform: scaleY(0.4); }
+      30%           { transform: scaleY(1); }
+    }
+    .hsk-shimmer {
+      background: linear-gradient(
+        90deg,
+        rgba(148,163,184,0.06) 0%,
+        rgba(148,163,184,0.15) 40%,
+        rgba(148,163,184,0.06) 80%
+      );
+      background-size: 700px 100%;
+      animation: hsk-shimmer 1.8s infinite linear;
+    }
+    .dark .hsk-shimmer {
+      background: linear-gradient(
+        90deg,
+        rgba(100,116,139,0.08) 0%,
+        rgba(100,116,139,0.22) 40%,
+        rgba(100,116,139,0.08) 80%
+      );
+      background-size: 700px 100%;
+    }
+  `}</style>
+);
+
+/* ─────────────────── Shimmer Block (replaces plain pulse) ─────────────────── */
+const Shimmer = ({ className = '', style = {}, delay = 0 }) => (
+  <div
+    className={`hsk-shimmer rounded-lg ${className}`}
+    style={{
+      animationDelay: `${delay}ms`,
+      ...style,
+    }}
+  />
+);
+
+/* ─────────────────── Audio-wave loading indicator ─────────────────── */
+const WaveLoader = () => (
+  <div className="flex items-center gap-[3px] h-5">
+    {[0, 1, 2, 3, 4].map(i => (
+      <div
+        key={i}
+        className="w-[3px] h-full bg-gradient-to-t from-rose-500 to-pink-500 rounded-full"
+        style={{
+          animation: `hsk-wave 1.2s ${i * 0.12}s infinite ease-in-out`,
+        }}
+      />
+    ))}
+  </div>
+);
+
+/* ─────────────────── Stat Pill Card Skeleton ─────────────────── */
+const StatCardSkeleton = ({ delay = 0, accentColor = '#f43f5e', label, icon }) => (
+  <div
+    className="relative bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-2xl p-5 border border-gray-200/50 dark:border-gray-700/50 overflow-hidden flex items-center justify-between shadow-sm group hover:shadow-md transition-shadow"
+    style={{
+      animation: `hsk-fade-in-up 0.6s ${delay}ms both ease-out`,
+    }}
+  >
+    <div className="space-y-1.5 flex-1">
+      <Shimmer className="h-6 w-12 rounded-lg" delay={delay + 100} />
+      <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 block">{label}</span>
+    </div>
+    <div className="relative">
+      <div
+        className="h-10 w-10 rounded-xl flex items-center justify-center text-lg"
+        style={{
+          background: `${accentColor}18`,
+          color: accentColor,
+          animation: `hsk-float 2.5s ${delay + 200}ms infinite ease-in-out`,
+        }}
+      >
+        {icon}
+      </div>
+      <div
+        className="absolute inset-0 rounded-xl"
+        style={{
+          background: `${accentColor}10`,
+          animation: `hsk-pulse-ring 2s ${delay + 200}ms infinite ease-out`,
+        }}
+      />
+    </div>
+  </div>
+);
+
 export default function HomeSkeleton() {
-    return (
-        <div className="bg-gray-50 dark:bg-gray-950 min-h-screen relative overflow-hidden font-sans transition-colors duration-300">
-            {/* Background Elements Skeleton */}
-            <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
-                <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-gray-200 dark:bg-gray-800 rounded-full filter blur-3xl opacity-30"></div>
-            </div>
+  const [progress, setProgress] = useState(0);
+  const [stageIndex, setStageIndex] = useState(0);
+  const progressRef = useRef(null);
 
-            <div className="relative z-10">
-                {/* Hero Section Skeleton */}
-                <div className="relative pt-20 pb-16 lg:pt-32 lg:pb-28 overflow-hidden">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative text-center flex flex-col items-center">
+  // Simulate dashboard loading progress
+  useEffect(() => {
+    const totalDuration = 10000; // 10s simulated loading time
+    const intervalMs = 70;
+    let elapsed = 0;
 
-                        {/* Greeting Pill */}
-                        <div className="mb-8 w-64 h-12 bg-gray-200 dark:bg-gray-800 rounded-full animate-pulse transition-colors duration-300"></div>
+    progressRef.current = setInterval(() => {
+      elapsed += intervalMs;
+      const linear = Math.min(elapsed / totalDuration, 1);
+      const eased = 1 - Math.pow(1 - linear, 3);
+      const pct = Math.min(Math.round(eased * 97), 97); // Holds at 97% until fully loaded
+      setProgress(pct);
 
-                        {/* Badge */}
-                        <div className="w-48 h-8 bg-gray-200 dark:bg-gray-800 rounded-full mb-6 animate-pulse transition-colors duration-300"></div>
+      const newStage = Math.min(
+        Math.floor((pct / 100) * LOADING_STAGES.length),
+        LOADING_STAGES.length - 1
+      );
+      setStageIndex(newStage);
+    }, intervalMs);
 
-                        {/* Title */}
-                        <div className="w-3/4 md:w-1/2 h-16 bg-gray-200 dark:bg-gray-800 rounded-lg mb-6 animate-pulse transition-colors duration-300"></div>
+    return () => clearInterval(progressRef.current);
+  }, []);
 
-                        {/* Subtitle */}
-                        <div className="w-full md:w-2/3 h-6 bg-gray-200 dark:bg-gray-800 rounded mb-2 animate-pulse transition-colors duration-300"></div>
-                        <div className="w-2/3 md:w-1/2 h-6 bg-gray-200 dark:bg-gray-800 rounded mb-10 animate-pulse transition-colors duration-300"></div>
+  const stage = LOADING_STAGES[stageIndex];
 
-                        {/* CTA Buttons */}
-                        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center w-full">
-                            <div className="w-full sm:w-48 h-14 bg-gray-200 dark:bg-gray-800 rounded-xl animate-pulse transition-colors duration-300"></div>
-                            <div className="w-full sm:w-48 h-14 bg-gray-200 dark:bg-gray-800 rounded-xl animate-pulse transition-colors duration-300"></div>
-                        </div>
+  return (
+    <div className="bg-gradient-to-br from-rose-50/30 via-indigo-50/20 to-purple-50/30 dark:from-slate-950 dark:via-indigo-950/10 dark:to-purple-950/10 min-h-screen pb-16 font-sans transition-colors duration-500 relative overflow-hidden">
+      <SkeletonStyles />
 
-                        {/* Stats Cards Skeleton */}
-                        <div className="mt-16 grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto w-full">
-                            {[1, 2, 3, 4].map((i) => (
-                                <div key={i} className="bg-white/50 dark:bg-gray-800/50 p-6 rounded-2xl shadow-lg border border-white/50 dark:border-gray-700 animate-pulse transition-colors duration-300">
-                                    <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-xl mx-auto mb-3"></div>
-                                    <div className="w-24 h-8 bg-gray-200 dark:bg-gray-700 rounded mx-auto mb-2"></div>
-                                    <div className="w-16 h-4 bg-gray-200 dark:bg-gray-700 rounded mx-auto"></div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Slider Skeleton */}
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-                    <div className="flex flex-col items-center mb-8 gap-4 text-center">
-                        <div className="w-64 h-10 bg-gray-200 dark:bg-gray-800 rounded mb-2 animate-pulse transition-colors duration-300"></div>
-                        <div className="w-48 h-5 bg-gray-200 dark:bg-gray-800 rounded animate-pulse transition-colors duration-300"></div>
-                    </div>
-                    <div className="rounded-3xl overflow-hidden shadow-2xl bg-gray-200 dark:bg-gray-800 h-[400px] md:h-[500px] lg:h-[600px] w-full animate-pulse relative transition-colors duration-300">
-                        <div className="absolute bottom-12 left-12 space-y-4">
-                            <div className="w-32 h-8 bg-gray-300 dark:bg-gray-700 rounded-full"></div>
-                            <div className="w-96 h-12 bg-gray-300 dark:bg-gray-700 rounded"></div>
-                            <div className="w-40 h-6 bg-gray-300 dark:bg-gray-700 rounded"></div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Listing Sections Skeleton */}
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-20 py-16">
-                    {/* Section 1 */}
-                    <section>
-                        <div className="flex justify-between items-center mb-8">
-                            <div className="w-64 h-10 bg-gray-200 dark:bg-gray-800 rounded animate-pulse transition-colors duration-300"></div>
-                            <div className="w-32 h-6 bg-gray-200 dark:bg-gray-800 rounded animate-pulse transition-colors duration-300"></div>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                            <ListingSkeletonGrid count={4} />
-                        </div>
-                    </section>
-
-                    {/* Section 2 */}
-                    <section>
-                        <div className="flex justify-between items-center mb-8">
-                            <div className="w-64 h-10 bg-gray-200 dark:bg-gray-800 rounded animate-pulse transition-colors duration-300"></div>
-                            <div className="w-32 h-6 bg-gray-200 dark:bg-gray-800 rounded animate-pulse transition-colors duration-300"></div>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                            <ListingSkeletonGrid count={4} />
-                        </div>
-                    </section>
-                </div>
-            </div>
+      {/* ─── Top Progress Bar ─── */}
+      <div className="sticky top-0 z-50">
+        <div className="h-1 bg-gray-200/50 dark:bg-gray-800/50 backdrop-blur-md">
+          <div
+            className="h-full rounded-r-full transition-all duration-300 ease-out"
+            style={{
+              width: `${progress}%`,
+              background: 'linear-gradient(90deg, #f43f5e, #ec4899, #8b5cf6)',
+              animation: 'hsk-progress-glow 2s infinite',
+            }}
+          />
         </div>
-    );
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+        
+        {/* ─── Status banner ─── */}
+        <div
+          className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-md rounded-2xl p-5 shadow-xl border border-white/30 dark:border-gray-700/50 mb-8"
+          style={{ animation: 'hsk-fade-in-up 0.5s both ease-out' }}
+        >
+          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+            <div className="flex-shrink-0">
+              <div className="p-3 bg-gradient-to-br from-rose-500/10 to-pink-500/10 rounded-xl">
+                <WaveLoader />
+              </div>
+            </div>
+
+            <div className="flex-1 min-w-0 text-center sm:text-left">
+              <div className="flex items-center gap-2 justify-center sm:justify-start mb-1.5">
+                <span className="text-lg font-black bg-gradient-to-r from-rose-600 to-purple-600 bg-clip-text text-transparent">
+                  Loading Your Dashboard
+                </span>
+                <span className="text-xs font-bold text-rose-500 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded-full border border-rose-100/50 dark:border-rose-900/10">
+                  {progress}% Sync
+                </span>
+              </div>
+
+              {/* Status message */}
+              <div className="h-5 overflow-hidden relative">
+                <p
+                  key={stageIndex}
+                  className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2 justify-center sm:justify-start font-medium"
+                  style={{ animation: 'hsk-status-swap 2s both ease-in-out' }}
+                >
+                  <span className="text-base">{stage.icon}</span>
+                  <span>{stage.label}</span>
+                </p>
+              </div>
+            </div>
+
+            <div className="flex-shrink-0 hidden sm:block">
+              <svg width="48" height="48" viewBox="0 0 48 48">
+                <circle cx="24" cy="24" r="20" fill="none" strokeWidth="3"
+                  className="text-gray-200 dark:text-gray-700" stroke="currentColor" />
+                <circle cx="24" cy="24" r="20" fill="none" strokeWidth="3"
+                  stroke="url(#rose-grad)"
+                  strokeDasharray={`${2 * Math.PI * 20}`}
+                  strokeDashoffset={`${2 * Math.PI * 20 * (1 - progress / 100)}`}
+                  strokeLinecap="round"
+                  className="transition-all duration-300 ease-out"
+                  style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
+                />
+                <defs>
+                  <linearGradient id="rose-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#f43f5e" />
+                    <stop offset="100%" stopColor="#8b5cf6" />
+                  </linearGradient>
+                </defs>
+                <text x="24" y="24" textAnchor="middle" dominantBaseline="central"
+                  className="fill-gray-700 dark:fill-gray-200 text-[10px] font-black"
+                >
+                  {progress}%
+                </text>
+              </svg>
+            </div>
+          </div>
+
+          <div className="mt-4 h-1.5 bg-gray-100 dark:bg-gray-700/50 rounded-full overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all duration-300 ease-out relative"
+              style={{
+                width: `${progress}%`,
+                background: 'linear-gradient(90deg, #f43f5e, #ec4899, #a855f7, #8b5cf6)',
+              }}
+            >
+              <div
+                className="absolute inset-0 rounded-full"
+                style={{
+                  background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)',
+                  backgroundSize: '200% 100%',
+                  animation: 'hsk-shimmer 1.2s infinite linear',
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* ─── Hero / Welcome Section Skeleton ─── */}
+        <div
+          className="relative overflow-hidden bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-3xl shadow-lg border border-white/20 dark:border-gray-700/50 mb-8"
+          style={{ animation: 'hsk-fade-in-up 0.6s 150ms both ease-out' }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-rose-500/5 via-indigo-500/5 to-purple-500/5" />
+          <div className="relative flex flex-col md:flex-row md:items-center md:justify-between p-6 md:p-8 gap-6">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div
+                  className="h-10 w-10 rounded-xl bg-gradient-to-br from-rose-500/20 to-pink-500/20 flex items-center justify-center text-lg shadow-sm"
+                  style={{ animation: 'hsk-float 3s infinite ease-in-out' }}
+                >
+                  👋
+                </div>
+                <div className="space-y-1.5">
+                  <Shimmer className="h-6 w-48" delay={200} />
+                  <Shimmer className="h-4 w-32" delay={280} />
+                </div>
+              </div>
+              <Shimmer className="h-4 w-full max-w-md" delay={350} />
+            </div>
+            <div className="flex gap-3">
+              <Shimmer className="h-10 w-28 rounded-xl" delay={450} />
+              <Shimmer className="h-10 w-28 rounded-xl" delay={500} />
+            </div>
+          </div>
+        </div>
+
+        {/* ─── Dashboard Stats Grid Skeleton ─── */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+          <StatCardSkeleton label="My Listings" icon="🏠" accentColor="#3b82f6" delay={200} />
+          <StatCardSkeleton label="Watchlist Items" icon="❤️" accentColor="#f43f5e" delay={300} />
+          <StatCardSkeleton label="Saved Enquiries" icon="💬" accentColor="#10b981" delay={400} />
+          <StatCardSkeleton label="Upcoming Appts" icon="📅" accentColor="#8b5cf6" delay={500} />
+        </div>
+
+        {/* ─── Upcoming Appointments Preview Skeleton ─── */}
+        <div 
+          className="bg-white/60 dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700/50 rounded-2xl p-5 mb-10"
+          style={{ animation: 'hsk-fade-in-up 0.6s 450ms both ease-out' }}
+        >
+          <div className="flex justify-between items-center mb-4 pb-3 border-b border-gray-100 dark:border-gray-700">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 bg-purple-500/10 text-purple-600 rounded-lg text-sm">📅</span>
+              <Shimmer className="h-4 w-36" delay={500} />
+            </div>
+            <Shimmer className="h-3 w-16" delay={550} />
+          </div>
+          <div className="space-y-3">
+            {[1, 2].map((_, i) => (
+              <div key={i} className="flex items-center gap-4 p-3 rounded-xl bg-gray-50/50 dark:bg-gray-700/10">
+                <div className="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0 animate-pulse" />
+                <div className="flex-1 space-y-2">
+                  <Shimmer className="h-4.5 w-1/2" delay={600 + i * 100} />
+                  <Shimmer className="h-3 w-1/3" delay={650 + i * 100} />
+                </div>
+                <div className="h-6 w-16 rounded-full bg-purple-100/50 dark:bg-purple-900/20" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ─── Section 1: Recently Viewed Skeleton ─── */}
+        <section className="mb-12">
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center gap-3">
+              <span className="p-1.5 bg-blue-500/10 text-blue-600 rounded-xl">👁️</span>
+              <Shimmer className="h-5.5 w-44 rounded-lg" delay={600} />
+            </div>
+            <Shimmer className="h-4 w-20 rounded" delay={650} />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <ListingSkeletonGrid count={4} />
+          </div>
+        </section>
+
+        {/* ─── Section 2: Quick Search Pills Skeleton ─── */}
+        <section className="mb-12 bg-white/40 dark:bg-gray-800/40 backdrop-blur-sm border border-gray-100/50 dark:border-gray-700/40 rounded-3xl p-6">
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center gap-3">
+              <span className="p-1.5 bg-indigo-500/10 text-indigo-600 rounded-xl">🔍</span>
+              <Shimmer className="h-5.5 w-32 rounded-lg" delay={700} />
+            </div>
+            <Shimmer className="h-4 w-24 rounded" delay={750} />
+          </div>
+          <div className="flex flex-wrap gap-3">
+            {[1, 2, 3, 4, 5].map((_, i) => (
+              <div key={i} className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-800 rounded-xl border border-gray-200/50 dark:border-gray-700 shadow-sm animate-pulse" style={{ animationDelay: `${i * 80}ms` }}>
+                <span className="text-sm opacity-60">📍</span>
+                <Shimmer className="h-3 w-20" delay={750 + i * 80} />
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ─── Section 3: Properties Near You Skeleton (Rose Gradient Accent) ─── */}
+        <section className="mb-12">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="p-1.5 bg-gradient-to-br from-rose-500 to-pink-600 text-white rounded-xl shadow-md shrink-0 animate-pulse">
+                📍
+              </span>
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <Shimmer className="h-6 w-48 rounded-lg" delay={800} />
+                <div className="h-6 w-20 bg-rose-100/50 dark:bg-rose-950/20 rounded-full border border-rose-100/20" />
+              </div>
+            </div>
+            <Shimmer className="h-4 w-20 rounded self-start sm:self-auto" delay={850} />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <ListingSkeletonGrid count={4} />
+          </div>
+        </section>
+
+        {/* ─── Section 4: Price Drop Alerts Skeleton ─── */}
+        <section className="mb-12">
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center gap-3">
+              <span className="p-1.5 bg-green-500/10 text-green-600 rounded-xl">📉</span>
+              <Shimmer className="h-5.5 w-40 rounded-lg" delay={900} />
+            </div>
+            <Shimmer className="h-4 w-24 rounded" delay={950} />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <ListingSkeletonGrid count={4} />
+          </div>
+        </section>
+
+      </div>
+    </div>
+  );
 }
