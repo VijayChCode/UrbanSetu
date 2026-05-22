@@ -1173,29 +1173,39 @@ export default function Home() {
           {/* ─── Properties Near You (based on detected login city) ─── */}
           {currentUser && currentUser.role !== 'admin' && currentUser.role !== 'rootadmin' && detectedCity && (
             <section className="animate-fade-in">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white flex items-center gap-3">
-                  <span className="p-1.5 bg-gradient-to-br from-rose-500 to-pink-600 text-white rounded-xl shadow-lg">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className="p-1.5 bg-gradient-to-br from-rose-500 to-pink-600 text-white rounded-xl shadow-lg shrink-0">
                     <FaMapMarkerAlt className="text-base" />
                   </span>
-                  Properties Near You
-                  <span className="text-xs font-medium text-gray-400 dark:text-gray-500 ml-1">• {detectedCity}</span>
-                  {nearbyListings.length > 0 && (
-                    <span className="px-2 py-0.5 bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-400 text-[10px] font-black rounded-full uppercase ml-1">
-                      {nearbyListings.length} found
-                    </span>
-                  )}
-                </h3>
+                  <div className="flex flex-wrap items-baseline gap-2">
+                    <h3 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white">
+                      Properties Near You
+                    </h3>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[11px] sm:text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/30 px-2 py-0.5 rounded-full border border-rose-100/50 dark:border-rose-900/20">
+                        📍 {detectedCity}
+                      </span>
+                      {nearbyListings.length > 0 && (
+                        <span className="px-2 py-0.5 bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-400 text-[10px] font-black rounded-full uppercase">
+                          {nearbyListings.length} found
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
                 <Link
                   to={`${linkPrefix}/search?city=${encodeURIComponent(detectedCity)}`}
-                  className="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline flex items-center gap-1 group"
+                  className="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline flex items-center gap-1 group self-start sm:self-auto"
                 >
                   View All <FaArrowRight className="text-[10px] group-hover:translate-x-1 transition-transform" />
                 </Link>
               </div>
 
               {nearbyListingsLoading ? (
-                <ListingSkeletonGrid count={4} />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  <ListingSkeletonGrid count={4} />
+                </div>
               ) : nearbyListings.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {nearbyListings.map((listing) => (
