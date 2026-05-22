@@ -378,8 +378,8 @@ export const getLiveRecommendations = async (allCandidates, limit = 4, additiona
             return [];
         }
 
-        // Filter out only VIEWED candidates from recommendations
-        // Wishlist/Watchlist items are allowed to occasionally appear (they validate user preferences)
+        // Allow ALL candidates through — viewed/wishlisted/watchlisted items can occasionally appear
+        // to build user trust and act as reminders. Capping is applied after scoring.
         const viewedIds = new Set(
             rawInteractions
                 .filter(i => i.interactionType === 'view')
@@ -390,7 +390,7 @@ export const getLiveRecommendations = async (allCandidates, limit = 4, additiona
                 .filter(i => i.interactionType === 'wishlist' || i.interactionType === 'watchlist')
                 .map(i => i._id)
         );
-        const filteredCandidates = allCandidates.filter(c => !viewedIds.has(c._id));
+        const filteredCandidates = allCandidates;
 
         if (filteredCandidates.length === 0) return [];
 
@@ -459,14 +459,16 @@ export const getLiveRecommendations = async (allCandidates, limit = 4, additiona
                 score += 0.15 * stateFrequency[stateKey];
             }
 
-            // Tag if this is a wishlisted/watchlisted item (for UI badges & capping)
-            const isFromWishlistOrWatchlist = wishlistWatchlistIds.has(listing._id);
+            // Tag source for UI badges & capping
+            const isFromSaved = wishlistWatchlistIds.has(listing._id);
+            const isFromViewed = viewedIds.has(listing._id);
 
             return {
                 ...listing,
                 sentinelScore: score,
                 isLiveMatch: true,
-                _fromSaved: isFromWishlistOrWatchlist
+                _fromSaved: isFromSaved,
+                _fromViewed: isFromViewed
             };
         });
 
@@ -482,13 +484,19 @@ export const getLiveRecommendations = async (allCandidates, limit = 4, additiona
         // Sort by score
         finalResults.sort((a, b) => b.sentinelScore - a.sentinelScore);
 
-        // Cap wishlist/watchlist items to max 2 in final results so they don't dominate
-        const MAX_SAVED_IN_RECS = 2;
+        // Cap previously-interacted items so they don't dominate fresh discoveries
+        const MAX_SAVED_IN_RECS = 2;   // Max wishlisted/watchlisted items
+        const MAX_VIEWED_IN_RECS = 1;  // Max previously viewed items (trust-building recall)
         let savedCount = 0;
+        let viewedCount = 0;
         const cappedResults = finalResults.filter(item => {
             if (item._fromSaved) {
                 savedCount++;
                 return savedCount <= MAX_SAVED_IN_RECS;
+            }
+            if (item._fromViewed) {
+                viewedCount++;
+                return viewedCount <= MAX_VIEWED_IN_RECS;
             }
             return true;
         });
