@@ -5368,11 +5368,68 @@ export default function Listing() {
 
                         {comparisonProperties.length > 0 && (
                           <div className="flex items-center gap-2">
-                            <div className="text-sm text-gray-600">Selected:</div>
-                            <div className="flex gap-1">
+                            <div className="text-sm text-gray-600 dark:text-gray-400">Selected:</div>
+                            <div className="flex gap-1.5">
                               {comparisonProperties.map((property, index) => (
-                                <div key={property._id} className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center text-xs font-bold text-purple-700">
-                                  {index + 1}
+                                <div key={property._id} className="relative group/chip">
+                                  {/* Numbered circle with thumbnail hint */}
+                                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold cursor-pointer transition-all duration-200 group-hover/chip:scale-110 group-hover/chip:shadow-lg border-2 border-purple-400 dark:border-purple-500 bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 overflow-hidden relative">
+                                    {property.imageUrls?.[0] && (
+                                      <img
+                                        src={property.imageUrls[0]}
+                                        alt=""
+                                        className="absolute inset-0 w-full h-full object-cover opacity-30 group-hover/chip:opacity-50 transition-opacity"
+                                      />
+                                    )}
+                                    <span className="relative z-10">{index + 1}</span>
+                                  </div>
+
+                                  {/* Hover tooltip - property preview card */}
+                                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-56 opacity-0 invisible group-hover/chip:opacity-100 group-hover/chip:visible transition-all duration-200 z-50 pointer-events-none group-hover/chip:pointer-events-auto">
+                                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                                      {/* Property image */}
+                                      <div className="relative h-24 w-full">
+                                        <img
+                                          src={property.imageUrls?.[0] || 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'}
+                                          alt={property.name}
+                                          className="w-full h-full object-cover"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                                        <div className="absolute top-2 left-2">
+                                          <span className={`px-1.5 py-0.5 text-[9px] rounded-full font-bold ${property.type === 'rent' ? 'bg-blue-500 text-white' : 'bg-green-500 text-white'}`}>
+                                            {property.type}
+                                          </span>
+                                        </div>
+                                        <div className="absolute bottom-2 left-2 right-2">
+                                          <p className="text-white font-bold text-xs line-clamp-1 drop-shadow">{property.name}</p>
+                                        </div>
+                                      </div>
+                                      {/* Property details */}
+                                      <div className="p-2.5">
+                                        <p className="text-[10px] text-gray-500 dark:text-gray-400 flex items-center gap-1 mb-1.5">
+                                          <FaMapMarkerAlt className="text-[8px]" /> {property.city}{property.state ? `, ${property.state}` : ''}
+                                        </p>
+                                        <div className="flex items-center justify-between">
+                                          <p className="font-bold text-green-600 dark:text-green-400 text-xs">
+                                            ₹{(property.offer ? property.discountPrice : property.regularPrice)?.toLocaleString('en-IN')}
+                                            {property.type === 'rent' && <span className="text-[9px] text-gray-400 font-normal">/mo</span>}
+                                          </p>
+                                          <span className="text-[10px] text-gray-500 dark:text-gray-400">{property.bhk || property.bedrooms} BHK</span>
+                                        </div>
+                                        {/* Remove button */}
+                                        <button
+                                          onClick={(e) => { e.stopPropagation(); removeFromComparison(property._id); }}
+                                          className="mt-2 w-full flex items-center justify-center gap-1.5 px-2 py-1.5 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg text-[11px] font-semibold hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors border border-red-100 dark:border-red-800/50"
+                                        >
+                                          <FaTimes className="text-[9px]" /> Remove
+                                        </button>
+                                      </div>
+                                    </div>
+                                    {/* Tooltip arrow */}
+                                    <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-[1px]">
+                                      <div className="w-3 h-3 bg-white dark:bg-gray-800 border-r border-b border-gray-200 dark:border-gray-700 rotate-45 -translate-y-1.5" />
+                                    </div>
+                                  </div>
                                 </div>
                               ))}
                             </div>
