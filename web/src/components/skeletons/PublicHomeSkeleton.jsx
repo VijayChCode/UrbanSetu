@@ -155,7 +155,7 @@ const FeatureCardSkeleton = ({ delay = 0, icon, accentColor = '#3b82f6' }) => (
       {icon}
     </div>
     <div className="flex-1 space-y-2 pt-1">
-      <Shimmer className="h-4.5 w-28 rounded-lg" delay={delay + 50} />
+      <Shimmer className="h-4 w-28 rounded-lg" delay={delay + 50} />
       <Shimmer className="h-3 w-full max-w-[200px] rounded" delay={delay + 120} />
     </div>
   </div>
@@ -575,7 +575,7 @@ export default function PublicHomeSkeleton() {
                   >
                     {device.icon}
                   </div>
-                  <Shimmer className="h-4.5 w-20 rounded-lg mb-1" delay={2700 + i * 100} />
+                  <Shimmer className="h-4 w-20 rounded-lg mb-1" delay={2700 + i * 100} />
                   <Shimmer className="h-3 w-36 rounded" delay={2750 + i * 100} />
                 </div>
               ))}

@@ -323,7 +323,7 @@ export default function HomeSkeleton() {
               <div key={i} className="flex items-center gap-4 p-3 rounded-xl bg-gray-50/50 dark:bg-gray-700/10">
                 <div className="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0 animate-pulse" />
                 <div className="flex-1 space-y-2">
-                  <Shimmer className="h-4.5 w-1/2" delay={600 + i * 100} />
+                  <Shimmer className="h-4 w-1/2" delay={600 + i * 100} />
                   <Shimmer className="h-3 w-1/3" delay={650 + i * 100} />
                 </div>
                 <div className="h-6 w-16 rounded-full bg-purple-100/50 dark:bg-purple-900/20" />
