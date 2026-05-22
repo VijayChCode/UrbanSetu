@@ -1117,7 +1117,14 @@ export default function Listing() {
   const fetchComparisonRecommendations = async () => {
     if (!currentUser || !listing) return;
 
-    setComparisonRecsLoading(true);
+    // Only show full loading skeleton on the very first load (no existing data)
+    const isFirstLoad = comparisonRecommendations.length === 0;
+    if (isFirstLoad) {
+      setComparisonRecsLoading(true);
+    } else {
+      setComparisonRecsLoading('refreshing'); // Signal: keep existing visible, append skeletons at bottom
+    }
+
     try {
       // Build a profile from all comparison properties + current listing
       const allProps = [...comparisonProperties];
@@ -1240,11 +1247,20 @@ export default function Listing() {
       });
 
       scoredRecs.sort((a, b) => b._relevanceScore - a._relevanceScore);
-      setComparisonRecommendations(scoredRecs.slice(0, 6));
+
+      // Track which items are brand-new for entrance animation
+      const prevIds = new Set(comparisonRecommendations.map(r => r._id));
+      const finalRecs = scoredRecs.slice(0, 6).map(rec => ({
+        ...rec,
+        _isNewlyAdded: !prevIds.has(rec._id)
+      }));
+      setComparisonRecommendations(finalRecs);
     } catch (error) {
       console.error('Failed to fetch comparison recommendations:', error);
-      // Fallback to similarProperties if available
-      setComparisonRecommendations(similarProperties);
+      // Fallback to similarProperties if available and no existing recs
+      if (comparisonRecommendations.length === 0) {
+        setComparisonRecommendations(similarProperties);
+      }
     } finally {
       setComparisonRecsLoading(false);
     }
@@ -5211,7 +5227,8 @@ export default function Listing() {
                         )}
                       </div>
 
-                      {comparisonRecsLoading ? (
+                      {comparisonRecsLoading === true ? (
+                        /* Full skeleton: only shown on first load when no existing recs */
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                           {[...Array(3)].map((_, i) => (
                             <div key={i} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 animate-pulse">
@@ -5236,7 +5253,10 @@ export default function Listing() {
                             const matchesType = comparisonProperties.some(p => p.type === property.type);
 
                             return (
-                              <div key={property._id} className={`bg-white dark:bg-gray-800 border rounded-xl p-4 hover:shadow-lg transition-all duration-300 group ${matchesCity && matchesType ? 'border-indigo-200 dark:border-indigo-700 hover:border-indigo-400' : 'border-gray-200 dark:border-gray-700 hover:border-blue-300'}`}>
+                              <div key={property._id}
+                                className={`bg-white dark:bg-gray-800 border rounded-xl p-4 hover:shadow-lg transition-all duration-300 group ${property._isNewlyAdded ? 'animate-[fadeSlideIn_0.4s_ease-out]' : ''} ${matchesCity && matchesType ? 'border-indigo-200 dark:border-indigo-700 hover:border-indigo-400' : 'border-gray-200 dark:border-gray-700 hover:border-blue-300'}`}
+                                style={property._isNewlyAdded ? { animation: 'fadeSlideIn 0.4s ease-out' } : {}}
+                              >
                                 <div className="flex gap-3">
                                   <div className="relative w-16 h-16 flex-shrink-0">
                                     <img
@@ -5311,6 +5331,23 @@ export default function Listing() {
                               </div>
                             );
                           })}
+                          {/* Bottom loading skeletons: shown during refresh (not first load) */}
+                          {comparisonRecsLoading === 'refreshing' && (
+                            <>
+                              {[...Array(2)].map((_, i) => (
+                                <div key={`skel-${i}`} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 animate-pulse">
+                                  <div className="flex gap-3">
+                                    <div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+                                    <div className="flex-1 space-y-2">
+                                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
+                                      <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
+                                      <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-2/3" />
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </>
+                          )}
                         </div>
                       )}
                     </div>
