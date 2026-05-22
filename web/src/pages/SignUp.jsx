@@ -63,7 +63,7 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
   const [recaptchaToken, setRecaptchaToken] = useState(null);
   const [recaptchaError, setRecaptchaError] = useState("");
   const [recaptchaKey, setRecaptchaKey] = useState(0);
-  const [showRecaptcha, setShowRecaptcha] = useState(false);
+  const [recaptchaJustVerified, setRecaptchaJustVerified] = useState(false);
   const recaptchaRef = useRef(null);
 
   // Email verification states
@@ -96,15 +96,24 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
   const handleRecaptchaVerify = (token) => {
     setRecaptchaToken(token);
     setRecaptchaError("");
-    // If OTP resend captcha was required, it stays visible as per user request to remove all hiding
+    // Show tick for ~1s before hiding
+    setRecaptchaJustVerified(true);
+    setTimeout(() => setRecaptchaJustVerified(false), 1000);
+    // If OTP resend captcha was required, auto-hide the widget + any OTP error after 1s
+    if (otpCaptchaRequired) {
+      setTimeout(() => {
+        setOtpCaptchaRequired(false);
+        setOtpError("");
+      }, 1000);
+    }
   };
 
   const handleRecaptchaExpire = () => {
     setRecaptchaToken(null);
     setRecaptchaError("reCAPTCHA expired. Please verify again.");
     setRecaptchaKey((k) => k + 1);
-    // Rendering is gated by showRecaptcha
-    setShowRecaptcha(true);
+    // Show captcha again on expire
+    // Rendering is gated by !recaptchaToken, so this will make it visible
   };
 
   const handleRecaptchaError = (error) => {
@@ -366,7 +375,7 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
       return;
     }
 
-    if (showRecaptcha && !recaptchaToken) {
+    if (!recaptchaToken) {
       setError("Please complete the reCAPTCHA verification.");
       return;
     }
@@ -448,7 +457,6 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
           }));
         } else if (data.message.includes("reCAPTCHA")) {
           setRecaptchaError(data.message);
-          setShowRecaptcha(true);
           resetRecaptcha();
         } else {
           setError(data.message);
@@ -488,7 +496,7 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
               pendingRedirectRef.current = signupSearchParams.get('redirect');
 
               setPendingLoginData(loginData);
-              
+
               // Delay the premium loader slightly so user can read the success message
               setTimeout(() => {
                 setShowLoader(true);
@@ -1176,8 +1184,8 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                       </label>
                     </div>
 
-                    {/* reCAPTCHA Widget - show only when required */}
-                    {showRecaptcha && (
+                    {/* reCAPTCHA Widget - show if not verified or briefly after verify */}
+                    {(!recaptchaToken || recaptchaJustVerified) && (
                       <div className="flex justify-center mb-4">
                         <RecaptchaWidget
                           key={recaptchaKey}
@@ -1206,7 +1214,7 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                         loading ||
                         !meetsMinimumRequirements(formData.password) ||
                         !emailVerified ||
-                        (showRecaptcha && !recaptchaToken) ||
+                        !recaptchaToken ||
                         authInProgress === 'google'
                       }
                       className="w-full py-3 text-base font-semibold shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
