@@ -6415,7 +6415,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     };
 
     // Combined function to render text with both links and markdown
-    const renderTextWithMarkdownAndLinks = (text, isSentMessage = false) => {
+    const renderTextWithMarkdownAndLinks = (text, isSentMessage = false, message = null) => {
         if (!text || typeof text !== 'string') return text;
 
         // If markdown is disabled, just use link formatting
@@ -6488,7 +6488,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 let foundImgUrl = null;
 
                                 // Look in current message first
-                                const currentImages = message.images || (message.imageUrl ? [message.imageUrl] : []);
+                                const currentImages = message?.images || (message?.imageUrl ? [message.imageUrl] : []);
                                 foundImgUrl = currentImages.find(url => url.toLowerCase().includes(item.toLowerCase()));
 
                                 // If not found, check previous messages (max 10)
@@ -7909,7 +7909,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                             id={screenReaderSupport ? `message-${index}-content` : undefined}
                                                         >
                                                             <div className="message-content-text">
-                                                                {renderTextWithMarkdownAndLinks(message.content, message.role === 'user')}
+                                                                {renderTextWithMarkdownAndLinks(message.content, message.role === 'user', message)}
                                                             </div>
 
                                                             {/* Recommended Properties Slider */}
