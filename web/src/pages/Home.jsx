@@ -470,7 +470,7 @@ export default function Home() {
       setNearbyListingsLoading(true);
       try {
         const res = await authenticatedFetch(
-          `${API_BASE_URL}/api/listing/get?city=${encodeURIComponent(detectedCity)}&visibility=public&limit=8`
+          `${API_BASE_URL}/api/listing/get?city=${encodeURIComponent(detectedCity)}&visibility=public&limit=16`
         );
         if (res.ok) {
           const data = await res.json();
