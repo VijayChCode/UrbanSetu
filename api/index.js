@@ -591,6 +591,7 @@ app.use("/api/security-intelligence", securityIntelligenceRouter);
 app.use('/api/video', videoShareRouter);
 app.use('/api/image', imageShareRouter);
 app.use('/api/admin/sentinel', sentinelRouter);
+app.use('/api/sentinel', sentinelRouter); // User-facing Sentinel preference sync/restore
 app.use("/", sitemapRouter);
 
 let onlineUsers = new Set();

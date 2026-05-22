@@ -1,8 +1,13 @@
 import * as tf from '@tensorflow/tfjs';
+import { authenticatedFetch } from './auth';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const STORAGE_KEY_PREFIX = 'sentinel_interactions_';
 const MAX_INTERACTIONS = 30; // Increased from 12 for richer preference learning
 const STALE_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000; // 7 days — entries older than this are auto-pruned
+
+// ─── DB Sync: Debounce timers per user ───
+const _syncTimers = {};
 
 // Interaction type weights — stronger signals get more influence
 const INTERACTION_WEIGHTS = {
@@ -100,6 +105,85 @@ export const pruneStaleSentinelData = (userId) => {
     } catch { /* silent */ }
 };
 
+// ─── Server Sync & Restore ───
+
+/**
+ * Debounced sync of localStorage interactions to the server (DB).
+ * Called automatically after each trackInteraction.
+ * Batches rapid interactions with a 2-second delay to avoid excessive API calls.
+ * @param {string} userId - The current user's ID
+ */
+const syncToServer = (userId) => {
+    if (!userId) return;
+
+    // Clear any pending sync for this user
+    if (_syncTimers[userId]) {
+        clearTimeout(_syncTimers[userId]);
+    }
+
+    // Debounce: wait 2 seconds after last interaction before syncing
+    _syncTimers[userId] = setTimeout(async () => {
+        try {
+            const key = getStorageKey(userId);
+            if (!key) return;
+            const interactions = JSON.parse(localStorage.getItem(key) || '[]');
+            if (interactions.length === 0) return;
+
+            await authenticatedFetch(`${API_BASE_URL}/api/sentinel/preferences/sync`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ interactions })
+            });
+        } catch (error) {
+            // Silent failure — localStorage is the primary store, DB is backup
+            console.warn('Sentinel: Background sync to server failed', error);
+        }
+    }, 2000);
+};
+
+/**
+ * Restores Sentinel interaction history from the server (DB) to localStorage.
+ * Called on login / app-load so that returning users get their preferences back.
+ * Merges server data with any existing local data (local takes priority for same IDs).
+ * @param {string} userId - The current user's ID
+ * @returns {boolean} true if data was restored, false if no server data or error
+ */
+export const restoreFromServer = async (userId) => {
+    if (!userId) return false;
+
+    try {
+        const key = getStorageKey(userId);
+        if (!key) return false;
+
+        const res = await authenticatedFetch(`${API_BASE_URL}/api/sentinel/preferences`);
+        if (!res.ok) return false;
+
+        const data = await res.json();
+        const serverInteractions = Array.isArray(data?.interactions) ? data.interactions : [];
+
+        if (serverInteractions.length === 0) return false;
+
+        // Get current local data
+        const localInteractions = JSON.parse(localStorage.getItem(key) || '[]');
+
+        if (localInteractions.length === 0) {
+            // No local data — just restore from server directly
+            localStorage.setItem(key, JSON.stringify(serverInteractions.slice(0, MAX_INTERACTIONS)));
+            return true;
+        }
+
+        // Merge: local takes priority (it's more recent within this session)
+        const localIds = new Set(localInteractions.map(i => i._id));
+        const newFromServer = serverInteractions.filter(i => !localIds.has(i._id));
+        const merged = [...localInteractions, ...newFromServer].slice(0, MAX_INTERACTIONS);
+        localStorage.setItem(key, JSON.stringify(merged));
+        return true;
+    } catch (error) {
+        console.warn('Sentinel: Failed to restore from server', error);
+        return false;
+    }
+};
+
 /**
  * Tracks a user interaction with a listing (view/click/wishlist/watchlist)
  * Stores essential features for client-side TF processing
@@ -158,6 +242,9 @@ export const trackInteraction = (listing, interactionType = 'view', userId = nul
 
         interactions.unshift(interactionData);
         localStorage.setItem(storageKey, JSON.stringify(interactions.slice(0, MAX_INTERACTIONS)));
+
+        // Debounced background sync to DB (fire-and-forget)
+        syncToServer(userId);
     } catch (error) {
         console.warn('Sentinel Live: Failed to track interaction', error);
     }

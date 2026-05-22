@@ -19,7 +19,7 @@ import DailyQuote from "../components/DailyQuote";
 import { useSeasonalTheme, useAllSeasonalThemes } from "../hooks/useSeasonalTheme";
 import ThemeDetailModal from "../components/ThemeDetailModal";
 import { authenticatedFetch } from "../utils/auth";
-import { getLiveRecommendations, getInteractionHistory } from "../utils/sentinelLiveEngine";
+import { getLiveRecommendations, getInteractionHistory, restoreFromServer } from "../utils/sentinelLiveEngine";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -455,6 +455,13 @@ export default function Home() {
       } catch (e) { console.error("Dashboard: recently viewed error", e); }
     };
     fetchRecentlyViewed();
+  }, [currentUser?._id, currentUser?.role]);
+
+  // STN-LIVE: Restore preferences from server (DB) on mount for returning users
+  // This ensures localStorage is populated from DB after a logout/login cycle
+  useEffect(() => {
+    if (!currentUser?._id || currentUser.role === 'admin' || currentUser.role === 'rootadmin') return;
+    restoreFromServer(currentUser._id).catch(() => { /* silent */ });
   }, [currentUser?._id, currentUser?.role]);
 
   // STN-LIVE: Process local session recommendations + Wishlist/Watchlist

@@ -2,7 +2,7 @@ import React from 'react';
 import { FaServer, FaExclamationTriangle, FaSync, FaArrowRight, FaRobot, FaRocket } from 'react-icons/fa';
 import UrbanSetuSpinner from './UrbanSetuSpinner';
 import ListingItem from './ListingItem';
-import { getLiveRecommendations } from '../utils/sentinelLiveEngine';
+import { getLiveRecommendations, restoreFromServer } from '../utils/sentinelLiveEngine';
 import { authenticatedFetch } from '../utils/auth';
 import SEO from './SEO';
 import { BrowserRouter, Link } from 'react-router-dom';
@@ -121,6 +121,11 @@ class GlobalErrorBoundary extends React.Component {
         }
 
         try {
+            // Restore Sentinel preferences from DB for returning users
+            if (currentUser?._id) {
+                await restoreFromServer(currentUser._id).catch(() => { /* silent */ });
+            }
+
             // Fetch public listings
             const res = await authenticatedFetch(`${API_BASE_URL}/api/listing/get?limit=100&visibility=public`);
             if (!res.ok) throw new Error("Failed to fetch");
