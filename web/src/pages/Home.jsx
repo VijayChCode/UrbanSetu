@@ -7,6 +7,7 @@ import "swiper/css/bundle";
 import "swiper/css/effect-fade";
 import "swiper/css/pagination";
 import ListingItem from "../components/ListingItem";
+import ListingSkeletonGrid from "../components/skeletons/ListingSkeletonGrid";
 import { useSelector } from "react-redux";
 import EncryptedText from "../components/ui/EncryptedText";
 import ContactSupportWrapper from "../components/ContactSupportWrapper";
@@ -182,6 +183,8 @@ export default function Home() {
   const [recentlyViewedListings, setRecentlyViewedListings] = useState([]);
   const [detectedCity, setDetectedCity] = useState(null);
   const [nearbyCities, setNearbyCities] = useState([]);
+  const [nearbyListings, setNearbyListings] = useState([]);
+  const [nearbyListingsLoading, setNearbyListingsLoading] = useState(false);
 
   // Animation states for dashboard
   const [isVisible, setIsVisible] = useState(false);
@@ -456,6 +459,35 @@ export default function Home() {
     };
     fetchRecentlyViewed();
   }, [currentUser?._id, currentUser?.role]);
+
+  // Fetch nearby listings when detectedCity is available
+  useEffect(() => {
+    if (!detectedCity || !currentUser?._id || currentUser.role === 'admin' || currentUser.role === 'rootadmin') {
+      setNearbyListings([]);
+      return;
+    }
+    const fetchNearbyListings = async () => {
+      setNearbyListingsLoading(true);
+      try {
+        const res = await authenticatedFetch(
+          `${API_BASE_URL}/api/listing/get?city=${encodeURIComponent(detectedCity)}&visibility=public&limit=8`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          // Filter out user's own listings
+          const filtered = (Array.isArray(data) ? data : []).filter(
+            (l) => l.userRef !== currentUser._id && l.sellerId !== currentUser._id
+          );
+          setNearbyListings(filtered.slice(0, 8));
+        }
+      } catch (e) {
+        console.error('Dashboard: nearby listings error', e);
+      } finally {
+        setNearbyListingsLoading(false);
+      }
+    };
+    fetchNearbyListings();
+  }, [detectedCity, currentUser?._id, currentUser?.role]);
 
   // STN-LIVE: Restore preferences from server (DB) on mount for returning users
   // This ensures localStorage is populated from DB after a logout/login cycle
@@ -1137,6 +1169,56 @@ export default function Home() {
               </section>
             );
           })()}
+
+          {/* ─── Properties Near You (based on detected login city) ─── */}
+          {currentUser && currentUser.role !== 'admin' && currentUser.role !== 'rootadmin' && detectedCity && (
+            <section className="animate-fade-in">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white flex items-center gap-3">
+                  <span className="p-1.5 bg-gradient-to-br from-rose-500 to-pink-600 text-white rounded-xl shadow-lg">
+                    <FaMapMarkerAlt className="text-base" />
+                  </span>
+                  Properties Near You
+                  <span className="text-xs font-medium text-gray-400 dark:text-gray-500 ml-1">• {detectedCity}</span>
+                  {nearbyListings.length > 0 && (
+                    <span className="px-2 py-0.5 bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-400 text-[10px] font-black rounded-full uppercase ml-1">
+                      {nearbyListings.length} found
+                    </span>
+                  )}
+                </h3>
+                <Link
+                  to={`${linkPrefix}/search?city=${encodeURIComponent(detectedCity)}`}
+                  className="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline flex items-center gap-1 group"
+                >
+                  View All <FaArrowRight className="text-[10px] group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </div>
+
+              {nearbyListingsLoading ? (
+                <ListingSkeletonGrid count={4} />
+              ) : nearbyListings.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {nearbyListings.map((listing) => (
+                    <ListingItem key={listing._id} listing={listing} />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-2xl border border-gray-100 dark:border-gray-700">
+                  <div className="w-16 h-16 bg-rose-50 dark:bg-rose-900/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <FaMapMarkerAlt className="text-2xl text-rose-400 dark:text-rose-500" />
+                  </div>
+                  <p className="text-gray-500 dark:text-gray-400 font-semibold">No properties found near {detectedCity} yet</p>
+                  <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">Check back soon or explore other locations</p>
+                  <Link
+                    to={`${linkPrefix}/search`}
+                    className="inline-flex items-center gap-2 mt-4 px-5 py-2.5 bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-rose-500/20 hover:shadow-xl hover:scale-105 transition-all duration-300"
+                  >
+                    <FaSearch className="text-xs" /> Explore All Properties
+                  </Link>
+                </div>
+              )}
+            </section>
+          )}
 
           {/* ─── Price Drop Alerts ─── */}
           {currentUser && currentUser.role !== 'admin' && currentUser.role !== 'rootadmin' && priceDropListings.length > 0 && (
