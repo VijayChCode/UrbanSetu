@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import ListingSkeletonGrid from "./ListingSkeletonGrid";
+import ContactSupportWrapper from "../ContactSupportWrapper";
+import GeminiAIWrapper from "../GeminiAIWrapper";
 
 /* ─────────────────── Loading status messages for regular users ─────────────────── */
 const LOADING_STAGES = [
@@ -396,6 +398,21 @@ export default function HomeSkeleton() {
           </div>
         </section>
 
+      </div>
+
+      {/* ─── Bottom Floating Support & AI Wrappers ─── */}
+      <div 
+        className="fixed inset-0 pointer-events-none z-50"
+        style={{
+          animation: 'hsk-fade-in-up 0.8s 1200ms both cubic-bezier(0.16, 1, 0.3, 1)'
+        }}
+      >
+        <div className="pointer-events-auto">
+          <ContactSupportWrapper />
+        </div>
+        <div className="pointer-events-auto">
+          <GeminiAIWrapper />
+        </div>
       </div>
     </div>
   );
