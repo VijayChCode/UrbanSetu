@@ -245,17 +245,22 @@ app.use(cookieParser());
 // Health check endpoint for Render
 app.get('/api/health', (req, res) => {
   res.status(200).json({
-    status: 'OK',
-    message: 'Server is running',
-    timestamp: new Date().toISOString()
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    service: 'UrbanSetu API',
+    uptime: Math.floor(process.uptime()),
+    version: '2.0.0'
   });
 });
 
-// Root endpoint
-app.get('/', (req, res) => {
+// API info endpoint (JSON)
+app.get('/api', (req, res) => {
   res.status(200).json({
-    message: 'UrbanSetu API is running',
+    name: 'UrbanSetu API',
     version: '2.0.0',
+    status: 'running',
+    uptime: `${Math.floor(process.uptime())}s`,
+    timestamp: new Date().toISOString(),
     endpoints: {
       health: '/api/health',
       auth: '/api/auth',
@@ -269,8 +274,246 @@ app.get('/', (req, res) => {
       agent: '/api/agent',
       subscription: '/api/subscription',
       market: '/api/market'
-    }
+    },
+    documentation: 'All endpoints require authentication via Bearer token unless specified otherwise.'
   });
+});
+
+// Root endpoint — Premium HTML Landing Page
+app.get('/', (req, res) => {
+  const uptime = process.uptime();
+  const hours = Math.floor(uptime / 3600);
+  const minutes = Math.floor((uptime % 3600) / 60);
+  const seconds = Math.floor(uptime % 60);
+  const uptimeStr = `${hours}h ${minutes}m ${seconds}s`;
+
+  res.status(200).send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UrbanSetu API</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0a0a0f;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Animated background */
+    body::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(ellipse at 20% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+                  radial-gradient(ellipse at 80% 50%, rgba(139, 92, 246, 0.06) 0%, transparent 50%),
+                  radial-gradient(ellipse at 50% 100%, rgba(59, 130, 246, 0.05) 0%, transparent 50%);
+      animation: bgPulse 8s ease-in-out infinite alternate;
+    }
+
+    @keyframes bgPulse {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(-2%, -1%) scale(1.05); }
+    }
+
+    /* Glow line at top */
+    .glow-line {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #6366f1, #8b5cf6, #3b82f6, transparent);
+      animation: glowSlide 3s linear infinite;
+    }
+
+    @keyframes glowSlide {
+      0% { opacity: 0.4; }
+      50% { opacity: 1; }
+      100% { opacity: 0.4; }
+    }
+
+    .container {
+      text-align: center;
+      position: relative;
+      z-index: 1;
+      padding: 2rem;
+    }
+
+    /* Logo */
+    .logo {
+      font-size: 2.8rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+    }
+
+    .logo-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+      animation: iconPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes iconPulse {
+      0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.4); }
+      50% { box-shadow: 0 0 35px rgba(99, 102, 241, 0.6); }
+    }
+
+    .logo-text { color: #ffffff; }
+    .logo-highlight {
+      background: linear-gradient(135deg, #6366f1, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Version badge */
+    .version {
+      display: inline-block;
+      padding: 0.35rem 1rem;
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #818cf8;
+      background: rgba(99, 102, 241, 0.08);
+      margin-bottom: 1.5rem;
+      letter-spacing: 0.5px;
+    }
+
+    /* Status */
+    .status {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+      color: #94a3b8;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: #22c55e;
+      border-radius: 50%;
+      box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(1.2); }
+    }
+
+    .uptime {
+      font-size: 0.78rem;
+      color: #64748b;
+      margin-bottom: 2rem;
+    }
+
+    /* Buttons */
+    .buttons {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+    }
+
+    .btn {
+      padding: 0.6rem 1.4rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      color: #c7d2fe;
+      background: rgba(99, 102, 241, 0.08);
+    }
+
+    .btn:hover {
+      background: rgba(99, 102, 241, 0.18);
+      border-color: rgba(99, 102, 241, 0.5);
+      color: #e0e7ff;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
+      border-color: rgba(99, 102, 241, 0.4);
+      color: #e0e7ff;
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.3));
+    }
+
+    .btn .arrow { transition: transform 0.2s; display: inline-block; }
+    .btn:hover .arrow { transform: translateX(3px); }
+
+    /* Footer */
+    .footer {
+      font-size: 0.75rem;
+      color: #475569;
+      letter-spacing: 0.3px;
+    }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      .logo { font-size: 2rem; }
+      .buttons { flex-direction: column; align-items: center; }
+    }
+  </style>
+</head>
+<body>
+  <div class="glow-line"></div>
+  <div class="container">
+    <div class="logo">
+      <div class="logo-icon">🏠</div>
+      <span class="logo-text">URBAN</span><span class="logo-highlight">SETU</span>
+    </div>
+    <div class="version">API Server v2.0.0</div>
+    <div class="status">
+      <span class="status-dot"></span>
+      All systems operational
+    </div>
+    <div class="uptime">Uptime: ${uptimeStr}</div>
+    <div class="buttons">
+      <a href="/api" class="btn btn-primary">API Info</a>
+      <a href="/api/health" class="btn">Health Check</a>
+      <a href="https://urbansetu.vercel.app" class="btn">Open App <span class="arrow">→</span></a>
+    </div>
+    <div class="footer">© ${new Date().getFullYear()} UrbanSetu. Real Estate Platform API.</div>
+  </div>
+</body>
+</html>`);
 });
 
 const server = http.createServer(app);
