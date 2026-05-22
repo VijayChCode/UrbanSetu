@@ -868,6 +868,8 @@ export default function Profile() {
   const handleProfileRecaptchaVerify = (token) => {
     setProfileRecaptchaToken(token);
     setProfileRecaptchaError("");
+    // Hide after a brief delay to show the tick
+    setTimeout(() => setShowProfileRecaptcha(false), 1000);
   };
 
   const handleProfileRecaptchaExpire = () => {
