@@ -378,9 +378,19 @@ export const getLiveRecommendations = async (allCandidates, limit = 4, additiona
             return [];
         }
 
-        // Filter out candidates already in history
-        const historyIds = new Set(rawInteractions.map(i => i._id));
-        const filteredCandidates = allCandidates.filter(c => !historyIds.has(c._id));
+        // Filter out only VIEWED candidates from recommendations
+        // Wishlist/Watchlist items are allowed to occasionally appear (they validate user preferences)
+        const viewedIds = new Set(
+            rawInteractions
+                .filter(i => i.interactionType === 'view')
+                .map(i => i._id)
+        );
+        const wishlistWatchlistIds = new Set(
+            rawInteractions
+                .filter(i => i.interactionType === 'wishlist' || i.interactionType === 'watchlist')
+                .map(i => i._id)
+        );
+        const filteredCandidates = allCandidates.filter(c => !viewedIds.has(c._id));
 
         if (filteredCandidates.length === 0) return [];
 
@@ -449,10 +459,14 @@ export const getLiveRecommendations = async (allCandidates, limit = 4, additiona
                 score += 0.15 * stateFrequency[stateKey];
             }
 
+            // Tag if this is a wishlisted/watchlisted item (for UI badges & capping)
+            const isFromWishlistOrWatchlist = wishlistWatchlistIds.has(listing._id);
+
             return {
                 ...listing,
                 sentinelScore: score,
-                isLiveMatch: true
+                isLiveMatch: true,
+                _fromSaved: isFromWishlistOrWatchlist
             };
         });
 
@@ -465,10 +479,21 @@ export const getLiveRecommendations = async (allCandidates, limit = 4, additiona
         weightedSims.dispose();
         weightsTensor.dispose();
 
-        // Sort by score and return limited results
-        return finalResults
-            .sort((a, b) => b.sentinelScore - a.sentinelScore)
-            .slice(0, limit);
+        // Sort by score
+        finalResults.sort((a, b) => b.sentinelScore - a.sentinelScore);
+
+        // Cap wishlist/watchlist items to max 2 in final results so they don't dominate
+        const MAX_SAVED_IN_RECS = 2;
+        let savedCount = 0;
+        const cappedResults = finalResults.filter(item => {
+            if (item._fromSaved) {
+                savedCount++;
+                return savedCount <= MAX_SAVED_IN_RECS;
+            }
+            return true;
+        });
+
+        return cappedResults.slice(0, limit);
 
     } catch (error) {
         console.error('Sentinel Live: Recommendation failed', error);
