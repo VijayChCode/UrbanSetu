@@ -66,6 +66,7 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
   const [recaptchaError, setRecaptchaError] = useState("");
   const [showRecaptcha, setShowRecaptcha] = useState(false);
   const [recaptchaKey, setRecaptchaKey] = useState(0);
+  const [recaptchaJustVerified, setRecaptchaJustVerified] = useState(false);
   const recaptchaRef = useRef(null);
 
   // Failed attempts tracking
@@ -371,6 +372,18 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
     console.log('reCAPTCHA verified:', token);
     setRecaptchaToken(token);
     setRecaptchaError("");
+    setRecaptchaJustVerified(true);
+    setTimeout(() => setRecaptchaJustVerified(false), 1000);
+    setTimeout(() => setShowRecaptcha(false), 1000);
+    // If OTP-specific captcha was required (either under email or OTP), hide that widget + message after 1s
+    if (otpCaptchaRequired) {
+      setTimeout(() => {
+        // Hide UI and clear flag so widget disappears
+        setOtpCaptchaRequired(false);
+        setOtpCaptchaMessage("");
+        setOtpError("");
+      }, 1000);
+    }
   };
 
   const handleRecaptchaExpire = () => {
@@ -742,8 +755,8 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
                   </div>
                 )}
 
-                {/* reCAPTCHA Widget - show only when required */}
-                {showRecaptcha && (
+                {/* reCAPTCHA Widget - show if not verified or briefly after verify */}
+                {(!recaptchaToken || recaptchaJustVerified) && (
                   <div className="flex justify-center mb-4">
                     <RecaptchaWidget
                       key={recaptchaKey}
@@ -768,7 +781,7 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
                   variant="orange"
                   loading={loading}
                   loadingText="Verifying..."
-                  disabled={loading || !emailVerified || (showRecaptcha && !recaptchaToken)}
+                  disabled={loading || !emailVerified || !recaptchaToken}
                   className="w-full py-3 text-base font-semibold shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
                 >
                   Continue to Reset Password
