@@ -513,7 +513,7 @@ export default function AdminManagement() {
   const handleAccountClick = async (account, type) => {
     setShowAccountModal(true);
     setAccountLoading(true);
-    setSelectedAccount(null);
+    setSelectedAccount({ type });
     setAccountStats({
       listings: 0,
       appointments: 0,
@@ -1737,8 +1737,8 @@ export default function AdminManagement() {
       </div>
       {/* Account Details Modal */}
       {showAccountModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-4xl mx-2 sm:mx-4 max-h-[90vh] flex flex-col md:flex-row overflow-hidden relative animate-scale-in border border-white/20 dark:border-gray-700">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-1.5 sm:p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[95vh] sm:max-h-[90vh] flex flex-col md:flex-row overflow-hidden relative animate-scale-in border border-white/20 dark:border-gray-700">
             {/* Close button */}
             <button
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full p-2 transition-colors z-10 shadow"
@@ -1760,7 +1760,7 @@ export default function AdminManagement() {
             ) : selectedAccount ? (
               <>
                 {/* Left Panel: Profile Summary */}
-                <div className="w-full md:w-80 md:flex-shrink-0 bg-gradient-to-b from-blue-50/50 via-indigo-50/10 to-transparent dark:from-gray-900/60 dark:via-gray-800/10 dark:to-transparent border-b md:border-b-0 md:border-r border-gray-100 dark:border-gray-700 flex flex-col items-center md:justify-center p-5 md:p-8 text-center">
+                <div className="w-full md:w-80 md:flex-shrink-0 bg-gradient-to-b from-blue-50/50 via-indigo-50/10 to-transparent dark:from-gray-900/60 dark:via-gray-800/10 dark:to-transparent border-b md:border-b-0 md:border-r border-gray-100 dark:border-gray-700 flex flex-col items-center md:justify-center p-3.5 md:p-8 text-center">
                   <div className="flex flex-col items-center gap-3 md:gap-4 text-center mt-4 md:mt-0">
                     <div className="relative">
                       <img
@@ -1810,11 +1810,11 @@ export default function AdminManagement() {
                 </div>
 
                 {/* Right Panel: Detailed Metrics & Stats */}
-                <div className="flex-1 overflow-y-auto p-5 sm:p-6 md:p-8 space-y-5 md:space-y-6">
+                <div className="flex-1 overflow-y-auto p-3.5 sm:p-6 md:p-8 space-y-5 md:space-y-6">
                   {/* Section 1: Profile Details */}
                   <div>
                     <h3 className="text-xs md:text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 md:mb-3">Profile Information</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 bg-gray-50/50 dark:bg-gray-900/30 p-4 md:p-5 rounded-2xl border border-gray-100 dark:border-gray-700/60">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 bg-gray-50/50 dark:bg-gray-900/30 p-3 md:p-5 rounded-2xl border border-gray-100 dark:border-gray-700/60">
                       <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300 text-xs md:text-sm">
                         <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-lg"><FaPhone className="text-blue-500" /></div>
                         <div>
