@@ -1537,34 +1537,52 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
       )}
 
       {/* Image Info Panel */}
-      {showInfo && (
-        <div
-          data-info-panel
-          className="absolute top-20 left-4 md:left-4 right-4 md:right-auto bg-black bg-opacity-90 backdrop-blur-sm rounded-xl p-4 text-white min-w-64 max-w-xs md:max-w-none transition-all duration-300"
-        >
-          <h3 className="text-lg font-semibold mb-3">Image Info</h3>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span>Image:</span>
-              <span>{currentIndex + 1} of {imagesArray.length}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Zoom:</span>
-              <span>{Math.round(scale * 100)}%</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Rotation:</span>
-              <span>{rotation}°</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Status:</span>
-              <span className={isCurrentImageFavorited ? 'text-red-400' : 'text-gray-400'}>
-                {isCurrentImageFavorited ? 'Favorited' : 'Not favorited'}
-              </span>
+      {showInfo && (() => {
+        const matchedFavorite = favoritesData?.find(fav => fav.imageUrl === currentImageUrl);
+        const favoritedAt = matchedFavorite ? (matchedFavorite.addedAt || matchedFavorite.createdAt) : null;
+        return (
+          <div
+            data-info-panel
+            className="absolute top-20 left-4 md:left-4 right-4 md:right-auto bg-black bg-opacity-90 backdrop-blur-sm rounded-xl p-4 text-white min-w-64 max-w-xs md:max-w-none transition-all duration-300"
+          >
+            <h3 className="text-lg font-semibold mb-3">Image Info</h3>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span>Image:</span>
+                <span>{currentIndex + 1} of {imagesArray.length}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Zoom:</span>
+                <span>{Math.round(scale * 100)}%</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Rotation:</span>
+                <span>{rotation}°</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Status:</span>
+                <span className={isCurrentImageFavorited ? 'text-red-400 font-semibold' : 'text-gray-400'}>
+                  {isCurrentImageFavorited ? 'Favorited' : 'Not favorited'}
+                </span>
+              </div>
+              {isCurrentImageFavorited && favoritedAt && (
+                <div className="flex justify-between gap-4 pt-1.5 border-t border-white/10 mt-1.5">
+                  <span className="text-gray-400">Favorited on:</span>
+                  <span className="text-red-400 text-xs text-right font-medium max-w-[150px]">
+                    {new Date(favoritedAt).toLocaleDateString(undefined, {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Image Counter & Favorites Back Button */}
       <div className={`absolute top-4 left-4 flex items-center gap-2 z-10 transition-all duration-300 ${showControls && !showFavoritesGallery ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'}`}>
