@@ -117,74 +117,18 @@ export default function About() {
           </div>
         </div>
 
-        {/* 3. Core Values & Department Contacts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Core Values (Spans 2 columns on desktop) */}
-          <div className="lg:col-span-2 bg-white dark:bg-gray-900 rounded-xl shadow-lg dark:shadow-green-900/10 p-8 transition-colors">
-            <h2 className="text-3xl font-bold text-green-700 dark:text-green-400 flex items-center gap-3 mb-6 text-center justify-center lg:justify-start">
-              <FaHeart className="text-green-500" /> Our Core Values
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {(aboutData.coreValues || []).map((value, idx) => (
-                <div key={idx} className="bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-800 dark:to-blue-900/20 rounded-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
-                  <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-3">{value.title}</h3>
-                  <p className="text-slate-700 dark:text-gray-300 text-sm leading-relaxed">{value.description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Departmental Contacts (Spans 1 column on desktop) */}
-          <div className="lg:col-span-1 bg-white dark:bg-gray-900 rounded-xl shadow-lg dark:shadow-indigo-900/10 p-8 transition-colors flex flex-col">
-            <h2 className="text-3xl font-bold text-indigo-700 dark:text-indigo-400 flex items-center gap-3 mb-6 text-center justify-center lg:justify-start">
-              <FaEnvelope className="text-indigo-500" /> Mail us at
-            </h2>
-            <p className="text-slate-600 dark:text-gray-400 text-sm leading-relaxed mb-6">
-              Have specific queries? Reach out to our dedicated departments directly for faster response:
-            </p>
-            <div className="space-y-4 flex-1">
-              {/* Support */}
-              <a 
-                href="mailto:urbansetu.noreply@gmail.com" 
-                className="group flex items-start gap-4 p-4 rounded-xl border border-blue-100 dark:border-blue-900/40 bg-gradient-to-br from-blue-50/30 to-white dark:from-blue-900/10 dark:to-gray-900 hover:shadow-md transition-all duration-300 transform hover:scale-[1.01]"
-              >
-                <div className="w-10 h-10 rounded-xl bg-blue-500/10 dark:bg-blue-400/10 flex items-center justify-center text-blue-600 dark:text-blue-400 group-hover:scale-115 transition-transform duration-300 flex-shrink-0">
-                  <FaEnvelope className="text-base" />
-                </div>
-                <div className="min-w-0">
-                  <h4 className="text-xs font-bold text-gray-800 dark:text-gray-200">Support & Feedback</h4>
-                  <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5 break-all font-medium">urbansetu.noreply@gmail.com</p>
-                </div>
-              </a>
-
-              {/* General Inquiries */}
-              <a 
-                href="mailto:info.urbansetu@gmail.com" 
-                className="group flex items-start gap-4 p-4 rounded-xl border border-amber-100 dark:border-amber-900/40 bg-gradient-to-br from-amber-50/30 to-white dark:from-amber-900/10 dark:to-gray-900 hover:shadow-md transition-all duration-300 transform hover:scale-[1.01]"
-              >
-                <div className="w-10 h-10 rounded-xl bg-amber-500/10 dark:bg-amber-400/10 flex items-center justify-center text-amber-600 dark:text-amber-400 group-hover:scale-115 transition-transform duration-300 flex-shrink-0">
-                  <span className="text-base font-bold">ℹ️</span>
-                </div>
-                <div className="min-w-0">
-                  <h4 className="text-xs font-bold text-gray-800 dark:text-gray-200">General Inquiries</h4>
-                  <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5 break-all font-medium">info.urbansetu@gmail.com</p>
-                </div>
-              </a>
-
-              {/* Legal & Auth */}
-              <a 
-                href="mailto:auth.urbansetu@gmail.com" 
-                className="group flex items-start gap-4 p-4 rounded-xl border border-green-100 dark:border-green-900/40 bg-gradient-to-br from-green-50/30 to-white dark:from-green-900/10 dark:to-gray-900 hover:shadow-md transition-all duration-300 transform hover:scale-[1.01]"
-              >
-                <div className="w-10 h-10 rounded-xl bg-green-500/10 dark:bg-green-400/10 flex items-center justify-center text-green-600 dark:text-green-400 group-hover:scale-115 transition-transform duration-300 flex-shrink-0">
-                  <FaShieldAlt className="text-base" />
-                </div>
-                <div className="min-w-0">
-                  <h4 className="text-xs font-bold text-gray-800 dark:text-gray-200">Accounts & Legal</h4>
-                  <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5 break-all font-medium">auth.urbansetu@gmail.com</p>
-                </div>
-              </a>
-            </div>
+        {/* 3. Core Values */}
+        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg dark:shadow-green-900/10 p-8 transition-colors">
+          <h2 className="text-3xl font-bold text-green-700 dark:text-green-400 flex items-center gap-3 mb-6 text-center justify-center">
+            <FaHeart className="text-green-500" /> Our Core Values
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {(aboutData.coreValues || []).map((value, idx) => (
+              <div key={idx} className="bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-800 dark:to-blue-900/20 rounded-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
+                <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-3">{value.title}</h3>
+                <p className="text-slate-700 dark:text-gray-300">{value.description}</p>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -391,6 +335,56 @@ export default function About() {
                 </AnimatePresence>
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* 10.5 Department Contacts Section */}
+        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg dark:shadow-blue-900/10 p-8 border border-transparent dark:border-gray-800 transition-colors">
+          <h2 className="text-3xl font-bold text-indigo-700 dark:text-indigo-400 flex items-center gap-3 mb-4 text-center justify-center">
+            <FaEnvelope className="text-indigo-500 animate-pulse" /> Contact Our Departments
+          </h2>
+          <p className="text-slate-600 dark:text-gray-400 text-center max-w-2xl mx-auto mb-8">
+            Have specific questions? Reach out to our dedicated departments directly for a faster response. We are here to help!
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Support */}
+            <a 
+              href="mailto:urbansetu.noreply@gmail.com" 
+              className="group flex flex-col items-center text-center p-6 rounded-xl border border-blue-100 dark:border-blue-900/40 bg-gradient-to-br from-blue-50/30 to-white dark:from-blue-900/10 dark:to-gray-900 hover:shadow-md transition-all duration-300 transform hover:scale-[1.02]"
+            >
+              <div className="w-12 h-12 rounded-full bg-blue-500/10 dark:bg-blue-400/10 flex items-center justify-center text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform duration-300 mb-4">
+                <FaEnvelope className="text-xl" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200">Support & Feedback</h3>
+              <p className="text-sm text-slate-500 dark:text-gray-400 mt-2">For bug reports, feature suggestions, or general assistance.</p>
+              <p className="text-sm font-semibold text-blue-600 dark:text-blue-400 mt-4 break-all">urbansetu.noreply@gmail.com</p>
+            </a>
+
+            {/* General Inquiries */}
+            <a 
+              href="mailto:info.urbansetu@gmail.com" 
+              className="group flex flex-col items-center text-center p-6 rounded-xl border border-amber-100 dark:border-amber-900/40 bg-gradient-to-br from-amber-50/30 to-white dark:from-amber-900/10 dark:to-gray-900 hover:shadow-md transition-all duration-300 transform hover:scale-[1.02]"
+            >
+              <div className="w-12 h-12 rounded-full bg-amber-500/10 dark:bg-amber-400/10 flex items-center justify-center text-amber-600 dark:text-amber-400 group-hover:scale-110 transition-transform duration-300 mb-4">
+                <span className="text-xl font-bold">ℹ️</span>
+              </div>
+              <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200">General Inquiries</h3>
+              <p className="text-sm text-slate-500 dark:text-gray-400 mt-2">For platform information, partnerships, or media inquiries.</p>
+              <p className="text-sm font-semibold text-amber-600 dark:text-amber-400 mt-4 break-all">info.urbansetu@gmail.com</p>
+            </a>
+
+            {/* Legal & Auth */}
+            <a 
+              href="mailto:auth.urbansetu@gmail.com" 
+              className="group flex flex-col items-center text-center p-6 rounded-xl border border-green-100 dark:border-green-900/40 bg-gradient-to-br from-green-50/30 to-white dark:from-green-900/10 dark:to-gray-900 hover:shadow-md transition-all duration-300 transform hover:scale-[1.02]"
+            >
+              <div className="w-12 h-12 rounded-full bg-green-500/10 dark:bg-green-400/10 flex items-center justify-center text-green-600 dark:text-green-400 group-hover:scale-110 transition-transform duration-300 mb-4">
+                <FaShieldAlt className="text-xl" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200">Accounts & Legal</h3>
+              <p className="text-sm text-slate-500 dark:text-gray-400 mt-2">For authentication issues, account recovery, or privacy concerns.</p>
+              <p className="text-sm font-semibold text-green-600 dark:text-green-400 mt-4 break-all">auth.urbansetu@gmail.com</p>
+            </a>
           </div>
         </div>
 
