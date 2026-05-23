@@ -252,7 +252,7 @@ export default function Terms() {
           <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-200 mb-2 transition-colors">Contact Information</h3>
           <p className="text-gray-700 dark:text-gray-300 transition-colors">For questions about these terms or our services, please contact us:</p>
           <ul className="mt-2 space-y-1 text-gray-700 dark:text-gray-300 transition-colors">
-            <li>📧 Email: legal@urbansetu.com</li>
+            <li>📧 Email: auth.urbansetu@gmail.com</li>
             <li>📞 Phone: +1 (555) 123-4567</li>
             <li>🏢 Address: UrbanSetu Legal Team, Real Estate Platform</li>
           </ul>

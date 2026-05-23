@@ -79,10 +79,10 @@ const aboutSchema = new mongoose.Schema({
   contact: {
     type: String,
     required: true,
-    default: "Have questions or feedback?\n📧 Email us at: support@urbansetu.com\n🧑‍💻 Or visit our Help Center"
+    default: "Have questions or feedback?\n📧 Email us at: info.urbansetu@gmail.com\n🧑‍💻 Or visit our Help Center"
   },
   socialLinks: {
-    email: { type: String, default: "contact@urbansetu.com" },
+    email: { type: String, default: "info.urbansetu@gmail.com" },
     instagram: { type: String, default: "https://instagram.com/urbansetu" },
     x: { type: String, default: "https://x.com/urbansetu" },
     facebook: { type: String, default: "https://facebook.com/urbansetu" },

@@ -293,7 +293,7 @@ const AdminCookiePolicy = () => {
                 <Mail className="w-6 h-6 text-blue-200" />
                 <div>
                   <div className="text-xs text-blue-200 uppercase tracking-wider">Email Us</div>
-                  <div className="font-medium">privacy@urbansetu.com</div>
+                  <div className="font-medium">auth.urbansetu@gmail.com</div>
                 </div>
               </div>
               <div className="flex items-center gap-4 p-4 bg-white/10 backdrop-blur-sm rounded-xl">

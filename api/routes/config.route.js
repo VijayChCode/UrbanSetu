@@ -23,7 +23,7 @@ router.get('/', (req, res) => {
         message: process.env.MAINTENANCE_MESSAGE || "We're currently renovating our digital infrastructure to serve you better. Just like a prime property, quality takes time. We'll be back online shortly to help you find your dream space."
       }, */
       contact: {
-        email: process.env.CONTACT_EMAIL || 'support@urbansetu.com',
+        email: process.env.CONTACT_EMAIL || 'info.urbansetu@gmail.com',
         phone: process.env.CONTACT_PHONE || '+91 9876543210',
         address: process.env.CONTACT_ADDRESS || '123 Main Street, City, State 12345'
       },

@@ -25,7 +25,7 @@ export const generateReceiptPdf = (payment) => {
                 .fontSize(10)
                 .text('Real Estate Excellence', 50, 80)
                 .text('123, Tech Park, Bangalore, India', 200, 65, { align: 'right' })
-                .text('support@urbansetu.com', 200, 80, { align: 'right' })
+                .text('urbansetu.noreply@gmail.com', 200, 80, { align: 'right' })
                 .moveDown();
 
             // --- Receipt Title ---

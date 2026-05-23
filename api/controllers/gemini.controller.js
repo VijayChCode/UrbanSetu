@@ -526,7 +526,7 @@ export const chatWithGemini = async (req, res) => {
             ${LEGAL_POLICIES}
             
             CONTACT & SUPPORT:
-            - Email: support@urbansetu.com, legal@urbansetu.com, privacy@urbansetu.com
+            - Email: urbansetu.noreply@gmail.com, auth.urbansetu@gmail.com, info.urbansetu@gmail.com
             - Phone: +1 (555) 123-4567
             `;
 

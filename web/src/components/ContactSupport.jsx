@@ -731,6 +731,52 @@ export default function ContactSupport({ forceModalOpen = false, onModalClose = 
                   </p>
                 </div>
 
+                {/* Visual Departmental Contact Directory */}
+                <div className="pt-6 border-t border-gray-100 dark:border-gray-800 transition-colors">
+                  <div className="text-center mb-4">
+                    <span className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 text-gray-500 dark:text-gray-400 text-[10px] md:text-xs font-semibold tracking-wider uppercase rounded-full border border-gray-100 dark:border-gray-800 transition-all">
+                      Or Reach Out Directly
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {/* Support Card */}
+                    <a 
+                      href="mailto:urbansetu.noreply@gmail.com"
+                      className="group flex flex-col items-center p-4 bg-gradient-to-br from-blue-50/50 to-indigo-50/10 dark:from-blue-900/10 dark:to-indigo-900/5 hover:from-blue-50 dark:hover:from-blue-900/20 border border-blue-100/50 dark:border-blue-900/20 rounded-2xl text-center transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-0.5"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-blue-500/10 dark:bg-blue-400/10 flex items-center justify-center text-blue-600 dark:text-blue-400 mb-2 group-hover:scale-110 transition-transform duration-300">
+                        <FaEnvelope className="text-base" />
+                      </div>
+                      <span className="text-xs font-bold text-gray-800 dark:text-gray-200 transition-colors">Support & Feedback</span>
+                      <span className="text-[10px] text-gray-500 dark:text-gray-400 mt-1 break-all truncate max-w-full font-medium">urbansetu.noreply@gmail.com</span>
+                    </a>
+
+                    {/* General Info Card */}
+                    <a 
+                      href="mailto:info.urbansetu@gmail.com"
+                      className="group flex flex-col items-center p-4 bg-gradient-to-br from-amber-50/50 to-yellow-50/10 dark:from-amber-900/10 dark:to-yellow-900/5 hover:from-amber-50 dark:hover:from-amber-900/20 border border-amber-100/50 dark:border-amber-900/20 rounded-2xl text-center transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-0.5"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-amber-500/10 dark:bg-amber-400/10 flex items-center justify-center text-amber-600 dark:text-amber-400 mb-2 group-hover:scale-110 transition-transform duration-300">
+                        <span className="text-base font-bold">ℹ️</span>
+                      </div>
+                      <span className="text-xs font-bold text-gray-800 dark:text-gray-200 transition-colors">General Inquiries</span>
+                      <span className="text-[10px] text-gray-500 dark:text-gray-400 mt-1 break-all truncate max-w-full font-medium">info.urbansetu@gmail.com</span>
+                    </a>
+
+                    {/* Legal/Auth Card */}
+                    <a 
+                      href="mailto:auth.urbansetu@gmail.com"
+                      className="group flex flex-col items-center p-4 bg-gradient-to-br from-green-50/50 to-emerald-50/10 dark:from-green-900/10 dark:to-emerald-900/5 hover:from-green-50 dark:hover:from-green-900/20 border border-green-100/50 dark:border-green-900/20 rounded-2xl text-center transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-0.5"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-green-500/10 dark:bg-green-400/10 flex items-center justify-center text-green-600 dark:text-green-400 mb-2 group-hover:scale-110 transition-transform duration-300">
+                        <FaShieldAlt className="text-base" />
+                      </div>
+                      <span className="text-xs font-bold text-gray-800 dark:text-gray-200 transition-colors">Accounts & Legal</span>
+                      <span className="text-[10px] text-gray-500 dark:text-gray-400 mt-1 break-all truncate max-w-full font-medium">auth.urbansetu@gmail.com</span>
+                    </a>
+                  </div>
+                </div>
+
                 {/* Action Buttons */}
                 <div className="flex gap-3 pt-4">
                   <button

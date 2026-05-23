@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { useSelector } from 'react-redux';
 import PublicFAQsSkeleton from '../components/skeletons/PublicFAQsSkeleton';
@@ -531,7 +531,7 @@ const PublicFAQs = () => {
                 <MessageSquare className="w-5 h-5" />
                 Contact Support
               </a>
-              <a href="mailto:support@urbansetu.com" className="flex items-center justify-center gap-2 px-8 py-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-xl font-bold hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
+              <a href="mailto:urbansetu.noreply@gmail.com" className="flex items-center justify-center gap-2 px-8 py-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-xl font-bold hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
                 <Mail className="w-5 h-5" />
                 Email Us
               </a>

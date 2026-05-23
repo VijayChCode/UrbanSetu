@@ -4173,7 +4173,7 @@ export const sendOutdatedAppointmentEmail = async (email, appointmentDetails, us
             <div style="text-align: center; color: #6b7280; font-size: 14px; line-height: 1.6;">
               <p style="margin: 0 0 10px;">
                 <strong>Need Help?</strong> Contact us at 
-                <a href="mailto:support@urbansetu.com" style="color: #3b82f6; text-decoration: none;">support@urbansetu.com</a>
+                <a href="mailto:urbansetu.noreply@gmail.com" style="color: #3b82f6; text-decoration: none;">urbansetu.noreply@gmail.com</a>
               </p>
               <p style="margin: 0;">
                 Visit our website: 
@@ -17272,6 +17272,17 @@ export const sendCreatorFeedbackEmail = async (email, username) => {
                 <div>
                   <p style="margin: 0; font-size: 12px; color: #6b7280; font-weight: 500;">General Feedback & Support</p>
                   <a href="mailto:urbansetu.noreply@gmail.com" style="color: #2563eb; text-decoration: none; font-size: 14px; font-weight: 600;">urbansetu.noreply@gmail.com</a>
+                </div>
+              </div>
+
+              <!-- Email Contact 1.5 (General Info) -->
+              <div style="display: flex; align-items: center; gap: 12px; padding: 12px 15px; background: #ffffff; border-radius: 10px; margin-bottom: 10px; border: 1px solid #e5e7eb;">
+                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #f59e0b, #d97706); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                  <span style="color: white; font-size: 18px;">ℹ️</span>
+                </div>
+                <div>
+                  <p style="margin: 0; font-size: 12px; color: #6b7280; font-weight: 500;">General Inquiries & Platform Info</p>
+                  <a href="mailto:info.urbansetu@gmail.com" style="color: #d97706; text-decoration: none; font-size: 14px; font-weight: 600;">info.urbansetu@gmail.com</a>
                 </div>
               </div>
 

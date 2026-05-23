@@ -17,7 +17,7 @@ router.get('/', (req, res) => {
         adminPanel: process.env.FEATURE_ADMIN_PANEL === 'true'
       },
       contact: {
-        email: process.env.CONTACT_EMAIL || 'support@urbansetu.com',
+        email: process.env.CONTACT_EMAIL || 'info.urbansetu@gmail.com',
         phone: process.env.CONTACT_PHONE || '+91 9876543210',
         address: process.env.CONTACT_ADDRESS || '123 Main Street, City, State 12345'
       },

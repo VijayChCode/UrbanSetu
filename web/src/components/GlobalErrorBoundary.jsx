@@ -279,7 +279,7 @@ class GlobalErrorBoundary extends React.Component {
                                     </p>
                                 </div>
                                 <button
-                                    onClick={() => window.location.href = 'mailto:support@urbansetu.com'}
+                                    onClick={() => window.location.href = 'mailto:urbansetu.noreply@gmail.com'}
                                     className="w-full py-3 px-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl font-bold transition-all shadow-lg flex items-center justify-center gap-2 hover:scale-[1.02]"
                                 >
                                     <FaServer /> Contact Support

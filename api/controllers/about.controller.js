@@ -165,13 +165,13 @@ export const getAbout = async (req, res, next) => {
           },
           {
             question: "How can I contact support?",
-            answer: "You can reach our support team through email at support@urbansetu.com, use our in-app chat support, or call our helpline. We also have a comprehensive help center with detailed guides and FAQs."
+            answer: "You can reach our support team through email at info.urbansetu@gmail.com, use our in-app chat support, or call our helpline. We also have a comprehensive help center with detailed guides and FAQs."
           }
         ],
         trust: "Every listing goes through a verification process, and reviews help ensure transparency. Our platform is designed with user security and data privacy at its core.",
-        contact: "Have questions or feedback?\n📧 Email us at: support@urbansetu.com\n🧑‍💻 Or visit our Help Center",
+        contact: "Have questions or feedback?\n📧 Email us at: info.urbansetu@gmail.com\n🧑‍💻 Or visit our Help Center",
         socialLinks: {
-          email: "contact@urbansetu.com",
+          email: "info.urbansetu@gmail.com",
           instagram: "https://instagram.com/urbansetu",
           x: "https://x.com/urbansetu",
           facebook: "https://facebook.com/urbansetu",
@@ -350,14 +350,14 @@ export const migrateAbout = async (req, res, next) => {
         },
         {
           question: "How can I contact support?",
-          answer: "You can reach our support team through email at support@urbansetu.com, use our in-app chat support, or call our helpline. We also have a comprehensive help center with detailed guides and FAQs."
+          answer: "You can reach our support team through email at info.urbansetu@gmail.com, use our in-app chat support, or call our helpline. We also have a comprehensive help center with detailed guides and FAQs."
         }
       ];
     }
     
     if (!about.socialLinks) {
       updateData.socialLinks = {
-        email: "contact@urbansetu.com",
+        email: "info.urbansetu@gmail.com",
         instagram: "https://instagram.com/urbansetu",
         x: "https://x.com/urbansetu",
         facebook: "https://facebook.com/urbansetu",
