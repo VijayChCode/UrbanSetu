@@ -137,7 +137,7 @@ export default function About() {
           {/* Departmental Contacts (Spans 1 column on desktop) */}
           <div className="lg:col-span-1 bg-white dark:bg-gray-900 rounded-xl shadow-lg dark:shadow-indigo-900/10 p-8 transition-colors flex flex-col">
             <h2 className="text-3xl font-bold text-indigo-700 dark:text-indigo-400 flex items-center gap-3 mb-6 text-center justify-center lg:justify-start">
-              <FaEnvelope className="text-indigo-500" /> Direct Contact
+              <FaEnvelope className="text-indigo-500" /> Mail us at
             </h2>
             <p className="text-slate-600 dark:text-gray-400 text-sm leading-relaxed mb-6">
               Have specific queries? Reach out to our dedicated departments directly for faster response:

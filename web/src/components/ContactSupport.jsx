@@ -768,7 +768,7 @@ export default function ContactSupport({ forceModalOpen = false, onModalClose = 
                 <div className="pt-6 border-t border-gray-100 dark:border-gray-800 transition-colors">
                   <div className="text-center mb-4">
                     <span className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 text-gray-500 dark:text-gray-400 text-[10px] md:text-xs font-semibold tracking-wider uppercase rounded-full border border-gray-100 dark:border-gray-800 transition-all">
-                      Or Reach Out Directly
+                      Or reach us out at
                     </span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
