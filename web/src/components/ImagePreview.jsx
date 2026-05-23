@@ -21,6 +21,7 @@ import {
   FaTh,
   FaArrowLeft
 } from 'react-icons/fa';
+import { useSelector } from 'react-redux';
 import { useImageFavorites } from '../contexts/ImageFavoritesContext';
 import SocialSharePanel from './SocialSharePanel';
 import UrbanSetuSpinner from './UrbanSetuSpinner';
@@ -119,6 +120,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
 
   // Use image favorites context
   const { isFavorite, toggleFavorite, favoritesData, loadFavorites } = useImageFavorites();
+  const { currentUser } = useSelector(state => state.user);
 
   const favoritesUrls = (favoritesData || []).map(fav => fav.imageUrl);
 
@@ -165,6 +167,11 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
     // Prevent overriding with generic name if metadata is spread
     if (!metadata.imageName) {
       imageMetadata.imageName = generatedName;
+    }
+
+    if (!currentUser) {
+      showFeedback("Sign in to Favorite");
+      return;
     }
 
     try {
@@ -1690,10 +1697,24 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
                   <FaHeart className="text-red-500 animate-bounce" size={24} />
                 </div>
               </div>
-              <h3 className="text-lg font-semibold text-white mb-1">No favorites saved yet</h3>
-              <p className="text-white/40 text-sm max-w-xs">
-                Heart images while browsing listings to view them here in your favorites gallery.
+              <h3 className="text-lg font-semibold text-white mb-1">
+                {!currentUser ? 'Sign in to Favorite' : 'No favorites saved yet'}
+              </h3>
+              <p className="text-white/40 text-sm max-w-xs mb-6">
+                {!currentUser 
+                  ? 'Create an account or sign in to save your favorite images and view them anytime in your custom gallery.' 
+                  : 'Heart images while browsing listings to view them here in your favorites gallery.'}
               </p>
+              {!currentUser && (
+                <button
+                  onClick={() => {
+                    window.location.href = '/sign-in';
+                  }}
+                  className="px-6 py-2.5 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-red-500/20 transition-all hover:scale-105 active:scale-95 cursor-pointer pointer-events-auto"
+                >
+                  Sign In / Register
+                </button>
+              )}
             </div>
           ) : (
             <div className="flex-1 overflow-y-auto pb-12 pr-1">
