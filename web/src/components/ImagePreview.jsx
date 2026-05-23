@@ -831,6 +831,18 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
       return;
     }
 
+    // Determine the proper listing ID and title for this image
+    let activeListingId = listingId;
+    let activeTitle = 'Property Image';
+
+    if (isFavoritesMode && favoritesData) {
+      const favObj = favoritesData[safeIndex] || favoritesData.find(f => f.imageUrl === currentUrl);
+      if (favObj) {
+        activeListingId = favObj.listingId?._id || favObj.listingId || null;
+        activeTitle = favObj.metadata?.imageName || 'Property Image';
+      }
+    }
+
     // Generate a shareable UrbanSetu link (hides the raw image URL)
     setIsGeneratingShare(true);
     setShowSocialShare(true);
@@ -841,8 +853,8 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           imageUrl: currentUrl,
-          listingId: listingId,
-          title: 'Property Image'
+          listingId: activeListingId,
+          title: activeTitle
         })
       });
 

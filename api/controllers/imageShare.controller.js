@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import ImageShare from "../models/imageShare.model.js";
 import Listing from "../models/listing.model.js";
 import { errorHandler } from "../utils/error.js";
@@ -21,14 +22,15 @@ export const createShareLink = async (req, res, next) => {
         }
 
         // If listingId provided, verify the listing exists and has this image
-        if (listingId) {
-            const listing = await Listing.findById(listingId);
-            if (!listing) {
-                return next(errorHandler(404, "Listing not found"));
-            }
-            // Verify image belongs to this listing
-            if (!listing.imageUrls?.includes(imageUrl)) {
-                return next(errorHandler(400, "Image does not belong to this listing"));
+        let finalListingId = null;
+        if (listingId && mongoose.Types.ObjectId.isValid(listingId)) {
+            try {
+                const listing = await Listing.findById(listingId);
+                if (listing && listing.imageUrls?.includes(imageUrl)) {
+                    finalListingId = listingId;
+                }
+            } catch (err) {
+                // Ignore finding errors to avoid blocking the share link creation
             }
         }
 
@@ -56,7 +58,7 @@ export const createShareLink = async (req, res, next) => {
         // Create new share
         const shareData = {
             imageUrl,
-            listingId: listingId || null,
+            listingId: finalListingId,
             createdBy: req.user?.id || null,
             title: title || 'UrbanSetu Image'
         };
