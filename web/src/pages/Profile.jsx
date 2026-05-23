@@ -1558,104 +1558,117 @@ export default function Profile() {
         <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 mb-6 ${isVisible ? animationClasses.fadeInUp : 'opacity-0 translate-y-8'}`}>
           <div className="flex flex-col gap-6 w-full">
             {/* Row 1: Avatar + Name/Role Section */}
-            <div className="flex flex-row items-center space-x-4 sm:space-x-6 w-full text-left">
-              {/* Avatar Section */}
-              <div className={`relative flex-shrink-0 group ${isVisible ? animationClasses.scaleIn + ' animation-delay-150' : 'opacity-0 scale-95'}`}>
-                <div className="transform transition-all duration-300 group-hover:scale-110">
-                  <UserAvatar
-                    user={currentUser}
-                    size="h-16 w-16 sm:h-24 sm:w-24"
-                    textSize="text-xl sm:text-2xl"
-                  />
+            <div className="flex flex-row items-center justify-between space-x-4 sm:space-x-6 w-full text-left">
+              <div className="flex flex-row items-center space-x-4 sm:space-x-6 flex-1 min-w-0">
+                {/* Avatar Section */}
+                <div className={`relative flex-shrink-0 group ${isVisible ? animationClasses.scaleIn + ' animation-delay-150' : 'opacity-0 scale-95'}`}>
+                  <div className="transform transition-all duration-300 group-hover:scale-110">
+                    <UserAvatar
+                      user={currentUser}
+                      size="h-16 w-16 sm:h-24 sm:w-24"
+                      textSize="text-xl sm:text-2xl"
+                    />
+                  </div>
+                  {currentUser.role === 'admin' && (
+                    <div className={`absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-blue-500 text-white rounded-full p-1.5 sm:p-3 shadow-xl z-20 ${animationClasses.bounceIn} animation-delay-300 ${animationClasses.float}`}>
+                      <FaCrown className="w-3 h-3 sm:w-5 sm:h-5" />
+                    </div>
+                  )}
+                  {currentUser.isDefaultAdmin && (
+                    <div className={`absolute -bottom-1 -right-1 sm:-bottom-2 sm:-right-2 bg-red-500 text-white rounded-full p-1.5 sm:p-3 ${animationClasses.bounceIn} animation-delay-450 ${animationClasses.pulse}`}>
+                      <FaCrown className="w-3 h-3 sm:w-5 sm:h-5" />
+                    </div>
+                  )}
                 </div>
-                {currentUser.role === 'admin' && (
-                  <div className={`absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-blue-500 text-white rounded-full p-1.5 sm:p-3 shadow-xl z-20 ${animationClasses.bounceIn} animation-delay-300 ${animationClasses.float}`}>
-                    <FaCrown className="w-3 h-3 sm:w-5 sm:h-5" />
+
+                {/* Name and Role Section */}
+                <div className={`flex-1 min-w-0 ${isVisible ? animationClasses.fadeInLeft + ' animation-delay-300' : 'opacity-0 -translate-x-8'}`}>
+                  <div className="text-left mb-1.5">
+                    <h1 className="text-xl sm:text-3xl font-bold text-gray-800 dark:text-white mb-1 transition-colors duration-300 flex flex-col sm:flex-row sm:items-center justify-start gap-2">
+                      <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent break-all line-clamp-2">
+                        <EncryptedText text={currentUser.username} />
+                      </span>
+                      {/* Seasonal Animated Icon */}
+                      {theme?.logoDecoration && THEME_DECORATIONS[theme.logoDecoration] && (
+                        <span
+                          className={`text-2xl sm:text-3xl filter drop-shadow-md cursor-pointer hover:scale-110 transition-transform`}
+                          style={THEME_DECORATIONS[theme.logoDecoration].style || {}}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setShowThemeInfo(true);
+                          }}
+                          title={theme.name}
+                        >
+                          {THEME_DECORATIONS[theme.logoDecoration].icon}
+                        </span>
+                      )}
+                      {/* Fallback */}
+                      {theme?.icon && !theme?.logoDecoration && (
+                        <span
+                          className="text-2xl sm:text-3xl filter drop-shadow-md cursor-pointer hover:scale-110 transition-transform"
+                          title={theme.name}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setShowThemeInfo(true);
+                          }}
+                        >
+                          {theme.icon}
+                        </span>
+                      )}
+                      {currentUser.role === 'admin' && (
+                        <div className="flex flex-wrap items-center justify-start gap-2">
+                          <span className="bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 text-xs sm:text-sm px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full font-medium transform transition-all duration-300 hover:scale-110 hover:bg-purple-200 dark:hover:bg-purple-800 flex items-center gap-1">
+                            <FaCrown className="w-3 h-3 text-blue-500" />
+                            Admin
+                          </span>
+                          {renderBadges(coinData.badges.length > 0 ? coinData.badges : currentUser.gamification?.badges)}
+                        </div>
+                      )}
+                      {currentUser.isDefaultAdmin && (
+                        <div className="flex flex-wrap items-center justify-start gap-2">
+                          <span className="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 text-xs sm:text-sm px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full font-medium transform transition-all duration-300 hover:scale-110 hover:bg-red-200 dark:hover:bg-red-800 animate-pulse flex items-center gap-1">
+                            <FaCrown className="w-3 h-3 text-red-500" />
+                            Default Admin
+                          </span>
+                          {renderBadges(coinData.badges.length > 0 ? coinData.badges : currentUser.gamification?.badges)}
+                        </div>
+                      )}
+                      {currentUser.role === 'user' && (
+                        <div className="flex flex-wrap items-center justify-start gap-2">
+                          <span className="bg-blue-100 text-blue-800 text-xs sm:text-sm px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full font-medium transform transition-all duration-300 hover:scale-110 hover:bg-blue-200">
+                            User
+                          </span>
+                          {renderBadges(coinData.badges.length > 0 ? coinData.badges : currentUser.gamification?.badges)}
+                          {currentUser.gamification?.currentStreak > 0 && !(coinData.badges.length > 0 || currentUser.gamification?.badges?.length > 0) && (
+                            <span className="flex items-center gap-1 text-[10px] sm:text-[11px] text-orange-600 dark:text-orange-400 font-bold bg-orange-50 dark:bg-orange-900/20 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full border border-orange-100 dark:border-orange-800 shadow-sm animate-pulse">
+                              <FaFire /> {currentUser.gamification.currentStreak} Mo Streak
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </h1>
                   </div>
-                )}
-                {currentUser.isDefaultAdmin && (
-                  <div className={`absolute -bottom-1 -right-1 sm:-bottom-2 sm:-right-2 bg-red-500 text-white rounded-full p-1.5 sm:p-3 ${animationClasses.bounceIn} animation-delay-450 ${animationClasses.pulse}`}>
-                    <FaCrown className="w-3 h-3 sm:w-5 sm:h-5" />
+                  {/* Member since (aligned next to name) */}
+                  <div className="text-left">
+                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-mono transition-colors duration-300">
+                      <FaCalendarAlt className="w-3 h-3 inline mr-1" />
+                      Member since {formatDate(currentUser.createdAt)}
+                    </p>
                   </div>
-                )}
+                </div>
               </div>
 
-              {/* Name and Role Section */}
-              <div className={`flex-1 min-w-0 ${isVisible ? animationClasses.fadeInLeft + ' animation-delay-300' : 'opacity-0 -translate-x-8'}`}>
-                <div className="text-left mb-1.5">
-                  <h1 className="text-xl sm:text-3xl font-bold text-gray-800 dark:text-white mb-1 transition-colors duration-300 flex flex-col sm:flex-row sm:items-center justify-start gap-2">
-                    <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent break-all line-clamp-2">
-                      <EncryptedText text={currentUser.username} />
-                    </span>
-                    {/* Seasonal Animated Icon */}
-                    {theme?.logoDecoration && THEME_DECORATIONS[theme.logoDecoration] && (
-                      <span
-                        className={`text-2xl sm:text-3xl filter drop-shadow-md cursor-pointer hover:scale-110 transition-transform`}
-                        style={THEME_DECORATIONS[theme.logoDecoration].style || {}}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setShowThemeInfo(true);
-                        }}
-                        title={theme.name}
-                      >
-                        {THEME_DECORATIONS[theme.logoDecoration].icon}
-                      </span>
-                    )}
-                    {/* Fallback */}
-                    {theme?.icon && !theme?.logoDecoration && (
-                      <span
-                        className="text-2xl sm:text-3xl filter drop-shadow-md cursor-pointer hover:scale-110 transition-transform"
-                        title={theme.name}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setShowThemeInfo(true);
-                        }}
-                      >
-                        {theme.icon}
-                      </span>
-                    )}
-                    {currentUser.role === 'admin' && (
-                      <div className="flex flex-wrap items-center justify-start gap-2">
-                        <span className="bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 text-xs sm:text-sm px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full font-medium transform transition-all duration-300 hover:scale-110 hover:bg-purple-200 dark:hover:bg-purple-800 flex items-center gap-1">
-                          <FaCrown className="w-3 h-3 text-blue-500" />
-                          Admin
-                        </span>
-                        {renderBadges(coinData.badges.length > 0 ? coinData.badges : currentUser.gamification?.badges)}
-                      </div>
-                    )}
-                    {currentUser.isDefaultAdmin && (
-                      <div className="flex flex-wrap items-center justify-start gap-2">
-                        <span className="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 text-xs sm:text-sm px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full font-medium transform transition-all duration-300 hover:scale-110 hover:bg-red-200 dark:hover:bg-red-800 animate-pulse flex items-center gap-1">
-                          <FaCrown className="w-3 h-3 text-red-500" />
-                          Default Admin
-                        </span>
-                        {renderBadges(coinData.badges.length > 0 ? coinData.badges : currentUser.gamification?.badges)}
-                      </div>
-                    )}
-                    {currentUser.role === 'user' && (
-                      <div className="flex flex-wrap items-center justify-start gap-2">
-                        <span className="bg-blue-100 text-blue-800 text-xs sm:text-sm px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full font-medium transform transition-all duration-300 hover:scale-110 hover:bg-blue-200">
-                          User
-                        </span>
-                        {renderBadges(coinData.badges.length > 0 ? coinData.badges : currentUser.gamification?.badges)}
-                        {currentUser.gamification?.currentStreak > 0 && !(coinData.badges.length > 0 || currentUser.gamification?.badges?.length > 0) && (
-                          <span className="flex items-center gap-1 text-[10px] sm:text-[11px] text-orange-600 dark:text-orange-400 font-bold bg-orange-50 dark:bg-orange-900/20 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full border border-orange-100 dark:border-orange-800 shadow-sm animate-pulse">
-                            <FaFire /> {currentUser.gamification.currentStreak} Mo Streak
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </h1>
-                </div>
-                {/* Member since (aligned next to name) */}
-                <div className="text-left">
-                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-mono transition-colors duration-300">
-                    <FaCalendarAlt className="w-3 h-3 inline mr-1" />
-                    Member since {formatDate(currentUser.createdAt)}
-                  </p>
-                </div>
+              {/* Desktop Edit Button (visible on sm/desktop only) */}
+              <div className={`hidden sm:flex flex-shrink-0 ${isVisible ? animationClasses.fadeInRight + ' animation-delay-450' : 'opacity-0 translate-x-8'}`}>
+                <button
+                  onClick={() => setIsEditing(!isEditing)}
+                  className={`bg-gradient-to-r ${!isEditing && isProfileIncomplete ? 'from-amber-400 to-yellow-600 shadow-yellow-500/50' : 'from-blue-500 to-purple-500'} text-white px-4 py-2 rounded-lg ${!isEditing && isProfileIncomplete ? 'hover:from-amber-500 hover:to-yellow-700' : 'hover:from-blue-600 hover:to-purple-600'} transition-all transform hover:scale-105 hover:rotate-1 shadow-lg font-semibold flex items-center gap-2 text-sm group`}
+                >
+                  <FaEdit className={`w-4 h-4 transition-transform duration-300 ${isEditing ? 'rotate-180' : ''} group-hover:${animationClasses.wiggle}`} />
+                  {isEditing ? 'Cancel Edit' : (isProfileIncomplete ? 'Complete Profile' : 'Edit Profile')}
+                </button>
               </div>
             </div>
 
@@ -1867,8 +1880,8 @@ export default function Profile() {
               </div>
             </div>
 
-            {/* Edit Profile Button */}
-            <div className="mt-3 flex justify-end w-full">
+            {/* Edit Profile Button (Mobile only) */}
+            <div className="mt-3 flex justify-end w-full sm:hidden">
               <button
                 onClick={() => setIsEditing(!isEditing)}
                 className={`bg-gradient-to-r ${!isEditing && isProfileIncomplete ? 'from-amber-400 to-yellow-600 shadow-yellow-500/50' : 'from-blue-500 to-purple-500'} text-white px-5 sm:px-4 py-4 sm:py-2 rounded-lg ${!isEditing && isProfileIncomplete ? 'hover:from-amber-500 hover:to-yellow-700' : 'hover:from-blue-600 hover:to-purple-600'} transition-all transform hover:scale-105 hover:rotate-1 shadow-lg font-semibold flex items-center gap-2 sm:gap-2 text-base sm:text-sm w-full sm:w-auto justify-center group ${isVisible ? animationClasses.fadeInRight + ' animation-delay-450' : 'opacity-0 translate-x-8'}`}
