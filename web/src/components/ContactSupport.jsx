@@ -731,6 +731,39 @@ export default function ContactSupport({ forceModalOpen = false, onModalClose = 
                   </p>
                 </div>
 
+                {/* Action Buttons */}
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={handleModalClose}
+                    disabled={isSubmitting}
+                    className="flex-1 px-6 py-3 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200 font-medium contact-support-action-btn disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="flex-1 px-6 py-3 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium flex items-center justify-center gap-2 contact-support-action-btn"
+                    style={{
+                      backgroundColor: getIconColor(),
+                      boxShadow: `0 4px 14px ${getIconColor()}40`
+                    }}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <UrbanSetuSpinner size="sm" isBright={true} />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <FaPaperPlane className="w-4 h-4" />
+                        Send Message
+                      </>
+                    )}
+                  </button>
+                </div>
+
                 {/* Visual Departmental Contact Directory */}
                 <div className="pt-6 border-t border-gray-100 dark:border-gray-800 transition-colors">
                   <div className="text-center mb-4">
@@ -775,39 +808,6 @@ export default function ContactSupport({ forceModalOpen = false, onModalClose = 
                       <span className="text-[10px] text-gray-500 dark:text-gray-400 mt-1 break-all truncate max-w-full font-medium">auth.urbansetu@gmail.com</span>
                     </a>
                   </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={handleModalClose}
-                    disabled={isSubmitting}
-                    className="flex-1 px-6 py-3 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200 font-medium contact-support-action-btn disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="flex-1 px-6 py-3 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium flex items-center justify-center gap-2 contact-support-action-btn"
-                    style={{
-                      backgroundColor: getIconColor(),
-                      boxShadow: `0 4px 14px ${getIconColor()}40`
-                    }}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <UrbanSetuSpinner size="sm" isBright={true} />
-                        Sending...
-                      </>
-                    ) : (
-                      <>
-                        <FaPaperPlane className="w-4 h-4" />
-                        Send Message
-                      </>
-                    )}
-                  </button>
                 </div>
               </form>
             ) : (
